@@ -1,4 +1,4 @@
-def hello_world(name: string): int
+fn hello_world(name: string): int
     print('Hello, World!')
 
     return 0

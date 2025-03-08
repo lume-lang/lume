@@ -58,13 +58,14 @@ module Lume
         unless
         else
         end
-        def
+        fn
         class
         struct
         return
         true
         false
         nil
+        new
       ].freeze
 
       SYMBOLS_PATTERN = %r(!=|!|==|=|\+=|-=|/=|\*=|,|\.|\+|-|/|\*|\(|\)|\{|\}|\[|\]|\||&|:|\+\+|--)

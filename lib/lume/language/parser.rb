@@ -70,7 +70,7 @@ module Lume
         *CONTROL_TYPES,
         :struct,
         :class,
-        :def,
+        :fn,
         :let,
         :const
       ].freeze
@@ -348,7 +348,7 @@ module Lume
         return parse_class_definition if peek(:class)
 
         # If the statement is a method definition, parse it as a method definition
-        return parse_method_definition if peek(:def)
+        return parse_method_definition if peek(:fn)
 
         # If the statement starts with `let` or `const`, parse it as a variable declaration
         return parse_variable_declaration if peek(%i[let const])
@@ -744,25 +744,13 @@ module Lume
         expression
       end
 
-      ## Parses a list of expressions within the current class-level scope.
-      ##
-      ## @return [Array<Expression>] The parsed expressions.
-      # def parse_member_expressions
-      #  iterate_all! do
-      #    next nil if peek(:eof)
-      #    next nil unless peek(CLASS_LEVEL_TYPES)
-
-      #    parse_expression
-      #  end
-      # end
-
       # Parses a single method definition.
       #
       # @return [MethodDefinition] The parsed method definition.
       #
       # @see MethodDefinition
       def parse_method_definition
-        consume!(value: :def)
+        consume!(value: :fn)
         name = consume!(type: :name, error: 'Expected method name in signature').value
 
         parameters = parse_parameters

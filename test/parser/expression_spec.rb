@@ -18,6 +18,6 @@ describe Parser do
   it_parses 'a = b.c.d()', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd'))
   it_parses 'a = b.c.d(1)', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd', 1.int8))
 
-  it_parses 'def foo(): void end', MethodDefinition.new('foo', [], Void.new, [])
-  it_parses 'def foo(a: int): void end', MethodDefinition.new('foo', [Parameter.new('a', Scalar.new('int'))], Void.new, [])
+  it_parses 'fn foo(): void end', MethodDefinition.new('foo', [], Void.new, [])
+  it_parses 'fn foo(a: int): void end', MethodDefinition.new('foo', [Parameter.new('a', Scalar.new('int'))], Void.new, [])
 end

@@ -159,11 +159,11 @@ module Lume
 
     # Represents a method definition.
     #
-    #   'def' [ target '.' ] name '(' ')' ':' return
+    #   'fn' [ target '.' ] name '(' ')' ':' return
     #     expressions
     #   'end'
     # |
-    #   'def' [ target '.' ] name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   'fn' [ target '.' ] name '(' parameters [ ',' parameters ]* ')' ':' return
     #     expressions
     #   'end'
     class MethodDefinition < Expression
