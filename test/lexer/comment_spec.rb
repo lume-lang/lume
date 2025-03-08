@@ -48,6 +48,6 @@ describe 'lexer comments' do
 
     tokens = lexer.all!(include_comments: true)
 
-    assert_tokens_equal([[:name, 'a'], [:comment, 'content'], [:equal, '='], [:number, 1], [:eof, nil]], tokens)
+    assert_tokens_equal([[:name, 'a'], [:comment, 'content'], [:'=', '='], [:number, 1], [:eof, nil]], tokens)
   end
 end

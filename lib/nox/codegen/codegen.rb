@@ -6,6 +6,8 @@ require 'llvm/transforms/scalar'
 
 module Nox
   module Codegen # :nodoc:
+    include Nox::Language
+
     MAIN_NAME = 'main'
 
     # initializes the backend components for Nox (such as LLVM, JIT, etc.)
@@ -40,7 +42,7 @@ module Nox
 
     # Compiles the given node expressions into LLVM IR.
     #
-    # @param node [Nox::Language::Node] The node to compile.
+    # @param node [Node] The node to compile.
     #
     # @return [void]
     def codegen_node!(node)
@@ -117,15 +119,15 @@ module Nox
 
     # Visits a node in the AST and generates LLVM IR.
     #
-    # @param node [Nox::Language::Node] The node to visit.
+    # @param node [Node] The node to visit.
     #
     # @return [void]
     def visit(node)
       case node
-      when Nox::Language::Expression then visit_expression(node)
-      when Nox::Language::Literal then visit_literal(node)
-      when Nox::Language::Type then visit_type(node)
-      when Nox::Language::Token then retrieve_var(node.value)
+      when Expression then visit_expression(node)
+      when Literal then visit_literal(node)
+      when Type then visit_type(node)
+      when Token then retrieve_var(node.value)
       when String then retrieve_var(node)
       else
         raise "Unsupported node type: #{node.class}"
@@ -136,18 +138,18 @@ module Nox
 
     # Visits an expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::Expression] The expression to visit.
+    # @param expression [Expression] The expression to visit.
     #
     # @return [void]
     def visit_expression(expression)
       case expression
-      when Nox::Language::Assignment then visit_assignment_expression(expression)
-      when Nox::Language::OperatorExpression then visit_operator_expression(expression)
-      when Nox::Language::VariableDeclaration then visit_variable_declaration(expression)
-      when Nox::Language::VariableReference then visit_variable_reference(expression)
-      when Nox::Language::MethodDefinition then visit_method_definition(expression)
-      when Nox::Language::FunctionInvocation then visit_function_invocation(expression)
-      when Nox::Language::Return then visit_return_expression(expression)
+      when Assignment then visit_assignment_expression(expression)
+      when OperatorExpression then visit_operator_expression(expression)
+      when VariableDeclaration then visit_variable_declaration(expression)
+      when VariableReference then visit_variable_reference(expression)
+      when MethodDefinition then visit_method_definition(expression)
+      when FunctionInvocation then visit_function_invocation(expression)
+      when Return then visit_return_expression(expression)
       else
         raise "Unsupported expression type: #{expression.class}"
       end
@@ -155,7 +157,7 @@ module Nox
 
     # Visits an assignment expression in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::Assignment] The expression to visit.
+    # @param expression [Assignment] The expression to visit.
     #
     # @return [void]
     def visit_assignment_expression(expression)
@@ -167,12 +169,12 @@ module Nox
 
     # Visits an operator expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::OperatorExpression] The expression to visit.
+    # @param expression [OperatorExpression] The expression to visit.
     #
     # @return [LLVM::Instruction]
     def visit_operator_expression(expression)
       case expression
-      when Nox::Language::Addition then visit_addition_expression(expression)
+      when Addition then visit_addition_expression(expression)
       else
         raise "Unsupported operator expression type: #{expression.class}"
       end
@@ -180,7 +182,7 @@ module Nox
 
     # Visits an addition expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::Addition] The expression to visit.
+    # @param expression [Addition] The expression to visit.
     #
     # @return [LLVM::Instruction]
     def visit_addition_expression(expression)
@@ -197,7 +199,7 @@ module Nox
 
     # Visits a variable declaration expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::VariableDeclaration] The expression to visit.
+    # @param expression [VariableDeclaration] The expression to visit.
     #
     # @return [LLVM::Instruction]
     def visit_variable_declaration(expression)
@@ -210,7 +212,7 @@ module Nox
 
     # Visits a variable reference expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::VariableReference] The expression to visit.
+    # @param expression [VariableReference] The expression to visit.
     #
     # @return [LLVM::Value]
     def visit_variable_reference(expression)
@@ -221,7 +223,7 @@ module Nox
 
     # Visits a method definition expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::MethodDefinition] The expression to visit.
+    # @param expression [MethodDefinition] The expression to visit.
     #
     # @return [LLVM::Value]
     def visit_method_definition(expression)
@@ -236,7 +238,7 @@ module Nox
 
     # Visits a function invocation expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::FunctionInvocation] The expression to visit.
+    # @param expression [FunctionInvocation] The expression to visit.
     #
     # @return [LLVM::Value]
     def visit_function_invocation(expression)
@@ -245,7 +247,7 @@ module Nox
 
     # Visits a return expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Nox::Language::Return] The expression to visit.
+    # @param expression [Return] The expression to visit.
     #
     # @return [LLVM::Value]
     def visit_return_expression(expression)
@@ -254,13 +256,13 @@ module Nox
 
     # Visits a literal node in the AST and generates LLVM IR.
     #
-    # @param literal [Nox::Language::Literal] The literal to visit.
+    # @param literal [Literal] The literal to visit.
     #
     # @return [void]
     def visit_literal(literal)
       case literal
-      when Nox::Language::NumberLiteral then visit_number_literal(literal)
-      when Nox::Language::BooleanLiteral then visit_boolean_literal(literal)
+      when NumberLiteral then visit_number_literal(literal)
+      when BooleanLiteral then visit_boolean_literal(literal)
       else
         raise "Unsupported literal type: #{literal.class}"
       end
@@ -268,33 +270,16 @@ module Nox
 
     # Visits a number literal node in the AST and generates LLVM IR.
     #
-    # @param literal [Nox::Language::NumberLiteral] The literal to visit.
+    # @param literal [NumberLiteral] The literal to visit.
     #
     # @return [LLVM::Value]
     def visit_number_literal(literal)
-      case literal
-      when Nox::Language::ByteLiteral then LLVM::Int8.from_i(literal.value, true)
-      when Nox::Language::UnsignedByteLiteral then LLVM::Int8.from_i(literal.value, false)
-
-      when Nox::Language::ShortLiteral then LLVM::Int16.from_i(literal.value, true)
-      when Nox::Language::UnsignedShortLiteral then LLVM::Int16.from_i(literal.value, false)
-
-      when Nox::Language::WordLiteral then LLVM::Int32.from_i(literal.value, true)
-      when Nox::Language::UnsignedWordLiteral then LLVM::Int32.from_i(literal.value, false)
-
-      when Nox::Language::LongLiteral then LLVM::Int64.from_i(literal.value, true)
-      when Nox::Language::UnsignedLongLiteral then LLVM::Int64.from_i(literal.value, false)
-
-      when Nox::Language::FloatLiteral then LLVM.Float(literal.value)
-      when Nox::Language::DoubleLiteral then LLVM.Double(literal.value)
-      else
-        raise "Unsupported number literal type: #{literal.class}"
-      end
+      literal.to_ir
     end
 
     # Visits a boolean literal node in the AST and generates LLVM IR.
     #
-    # @param literal [Nox::Language::BooleanLiteral] The literal to visit.
+    # @param literal [BooleanLiteral] The literal to visit.
     #
     # @return [LLVM::Value]
     def visit_boolean_literal(literal)
@@ -303,13 +288,13 @@ module Nox
 
     # Visits a type node in the AST and generates LLVM IR.
     #
-    # @param type [Nox::Language::Type] The type to visit.
+    # @param type [Type] The type to visit.
     #
     # @return [void]
     def visit_type(type)
       case type
-      when Nox::Language::Void then LLVM.Void
-      when Nox::Language::Scalar then visit_scalar_type(type)
+      when Void then LLVM.Void
+      when Scalar then visit_scalar_type(type)
       else
         raise "Unsupported type: #{type.class}"
       end
@@ -317,20 +302,46 @@ module Nox
 
     # Visits a scalar type node in the AST and generates LLVM IR.
     #
-    # @param type [Nox::Language::Scalar] The type to visit.
+    # @param type [Scalar] The type to visit.
     #
     # @return [void]
     def visit_scalar_type(type)
+      return visit_integer_scalar_type(type) if type.integer?
+
+      return visit_integer_float_type(type) if type.floating?
+
+      return LLVM::Int1 if type.boolean?
+
+      raise "Unsupported scalar type: #{type.name}"
+    end
+
+    # Visits an integer scalar type node in the AST and generates LLVM IR.
+    #
+    # @param type [Scalar] The type to visit.
+    #
+    # @return [void]
+    def visit_integer_scalar_type(type)
       case type.name
       when 'Int8', 'UInt8' then LLVM::Int8
       when 'Int16', 'UInt16' then LLVM::Int16
       when 'Int32', 'UInt32' then LLVM::Int32
       when 'Int64', 'UInt64' then LLVM::Int64
-      when 'Boolean' then LLVM::Int1
-      when 'Float' then LLVM::Float
-      when 'Double' then LLVM::Double
       else
-        raise "Unsupported scalar type: #{type.name}"
+        raise "Unsupported integer scalar type: #{type.name}"
+      end
+    end
+
+    # Visits a float scalar type node in the AST and generates LLVM IR.
+    #
+    # @param type [Scalar] The type to visit.
+    #
+    # @return [void]
+    def visit_float_scalar_type(type)
+      case type.name
+      when 'Float32' then LLVM::Float32
+      when 'Float64' then LLVM::Float64
+      else
+        raise "Unsupported float scalar type: #{type.name}"
       end
     end
 
@@ -415,7 +426,7 @@ module Nox
     # Creates a new instruction to invoke a function.
     #
     # @param target     [String|LLVM::Function]       The function to invoke.
-    # @param arguments  [Array<Nox::Language::Node>]  The arguments to pass to the function.
+    # @param arguments  [Array<Node>]  The arguments to pass to the function.
     #
     # @return [LLVM::Instruction] The invoke instruction.
     def invoke(target, arguments)
@@ -427,7 +438,7 @@ module Nox
       end
 
       # If the target is an expression, visit it to get the LLVM function
-      target = visit(target) if target.is_a?(Nox::Language::Expression)
+      target = visit(target) if target.is_a?(Expression)
 
       # Convert all function arguments into LLVM expressions
       arguments = arguments.map { |value| visit(value) }
@@ -442,7 +453,7 @@ module Nox
     # @return [LLVM::Instruction] The return instruction.
     def ret(value)
       # Parse the value into an LLVM expression, if it's an AST node
-      value = visit(value) if value.is_a?(Nox::Language::Node)
+      value = visit(value) if value.is_a?(Node)
 
       @builder.ret(value)
     end

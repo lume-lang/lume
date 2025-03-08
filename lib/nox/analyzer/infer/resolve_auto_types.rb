@@ -7,11 +7,11 @@ module Nox
       #
       # Effectively, if a type is not defined, it will be inferred from the context. So, code such as:
       #
-      #   i = true
+      #   let i = true
       #
       # Will be rewritten as:
       #
-      #   i: Boolean = true
+      #   let i: Boolean = true
       class ResolveAutoTypes < Pass
         # Renames the given scalar node, if it refers to an alias of a built-in type.
         #

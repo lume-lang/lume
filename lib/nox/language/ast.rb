@@ -14,8 +14,8 @@ module Nox
     class Node # :nodoc:
       attr_accessor :parent, :location
 
-      def call(name, *args)
-        Call.new(self, name, *args)
+      def call(name, ...)
+        Call.new(self, name, ...)
       end
     end
 
@@ -54,18 +54,25 @@ module Nox
       end
     end
 
-    # Represents a single argument definition.
+    # Represents a single parameter.
     #
     #   name ':' type
-    class ArgumentDefinition < Node
+    class Parameter < Node
       attr_accessor :name, :type
+
+      def initialize(name, type)
+        super()
+
+        @name = name
+        @type = type
+      end
 
       def accept_children(visitor)
         visitor.accept(@type)
       end
 
       def ==(other)
-        other.is_a?(ArgumentDefinition) && @name == other.name && @type == other.type
+        other.is_a?(Parameter) && @name == other.name && @type == other.type
       end
     end
 
@@ -156,29 +163,48 @@ module Nox
     #     expressions
     #   'end'
     # |
-    #   'def' [ target '.' ] name '(' arguments [ ',' arguments ]* ')' ':' return
+    #   'def' [ target '.' ] name '(' parameters [ ',' parameters ]* ')' ':' return
     #     expressions
     #   'end'
     class MethodDefinition < Expression
-      attr_accessor :name, :arguments, :return, :expressions
+      attr_accessor :name, :parameters, :return, :expressions
+
+      def initialize(name, parameters, return_value, expressions)
+        super()
+
+        @name = name
+        @parameters = parameters
+        @return = return_value
+        @expressions = expressions
+      end
 
       def accept_children(visitor)
+        @parameters.each { |ex| visitor.accept(ex) }
         @expressions.each { |ex| visitor.accept(ex) }
 
         visitor.accept(@return)
+      end
+
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        @name == other.name && @parameters == other.parameters && @return == other.return && @expressions == other.expressions
       end
     end
 
     # Represents a variable declaration.
     #
-    #   name ':' type [ '=' value ]
+    #   [ 'let' | 'const' ] name ':' type [ '=' value ]
     class VariableDeclaration < Expression
-      attr_accessor :name, :type, :value
+      attr_accessor :name, :type, :value, :const
 
-      def initialize
-        super
+      def initialize(name, type, value = nil, const: false)
+        super()
 
-        @value = NilLiteral.new
+        @name = name
+        @type = type
+        @value = value || NilLiteral.new
+        @const = const
       end
 
       def accept_children(visitor)
@@ -187,7 +213,7 @@ module Nox
       end
 
       def ==(other)
-        other.is_a?(self.class) && @name == other.name && @type == other.type && @value == other.value
+        other.is_a?(self.class) && @name == other.name && @type == other.type && @value == other.value && @const == other.const
       end
     end
 
@@ -206,6 +232,28 @@ module Nox
       def ==(other)
         other.is_a?(self.class) && @name == other.name
       end
+    end
+
+    # Represents an abstract access operator.
+    class Access < Expression
+      attr_accessor :target, :property
+
+      def initialize(target, property)
+        super()
+
+        @target = target
+        @property = property
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @target == other.target && @property == other.property
+      end
+    end
+
+    # Represents a member access expression on a target object.
+    #
+    #   target '.' property
+    class MemberAccess < Access
     end
 
     # Represents an return expression.
@@ -312,6 +360,10 @@ module Nox
       def self.can_contain?(value)
         raise NotImplementedError, 'Subclasses must implement the `can_contain?` method'
       end
+
+      def to_ir
+        raise NotImplementedError, 'Subclasses must implement the `to_ir` method'
+      end
     end
 
     # Represents an abstract integer literal.
@@ -323,12 +375,20 @@ module Nox
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= -128 && value <= 127
       end
+
+      def to_ir
+        ::LLVM::Int8.from_i(value, true)
+      end
     end
 
     # Represents an unsigned, 1-byte integer literal.
     class UnsignedByteLiteral < NumberLiteral
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= 0 && value <= 255
+      end
+
+      def to_ir
+        ::LLVM::Int8.from_i(value, false)
       end
     end
 
@@ -337,12 +397,20 @@ module Nox
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= -32_768 && value <= 32_767
       end
+
+      def to_ir
+        ::LLVM::Int16.from_i(value, true)
+      end
     end
 
     # Represents an unsigned, 2-byte integer literal.
     class UnsignedShortLiteral < NumberLiteral
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= 0 && value <= 65_535
+      end
+
+      def to_ir
+        ::LLVM::Int16.from_i(value, false)
       end
     end
 
@@ -351,12 +419,20 @@ module Nox
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= -2_147_483_648 && value <= 2_147_483_647
       end
+
+      def to_ir
+        ::LLVM::Int32.from_i(value, true)
+      end
     end
 
     # Represents an unsigned, 4-byte integer literal.
     class UnsignedWordLiteral < NumberLiteral
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= 0 && value <= 4_294_967_295
+      end
+
+      def to_ir
+        ::LLVM::Int32.from_i(value, false)
       end
     end
 
@@ -365,12 +441,20 @@ module Nox
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= -9_223_372_036_854_775_808 && value <= 9_223_372_036_854_775_807
       end
+
+      def to_ir
+        ::LLVM::Int64.from_i(value, true)
+      end
     end
 
     # Represents an unsigned, 8-byte integer literal.
     class UnsignedLongLiteral < NumberLiteral
       def self.can_contain?(value)
         value.is_a?(Integer) && value >= 0 && value <= 18_446_744_073_709_551_615
+      end
+
+      def to_ir
+        ::LLVM::Int32.from_i(value, false)
       end
     end
 
@@ -387,6 +471,10 @@ module Nox
 
         value.round(PRECISION_DIGITS - 1) == value
       end
+
+      def to_ir
+        ::LLVM.Float(value)
+      end
     end
 
     # Represents a double-precision floating-point literal.
@@ -397,6 +485,10 @@ module Nox
         return false unless value.is_a?(Float) || value.is_a?(Integer)
 
         value.round(PRECISION_DIGITS - 1) == value
+      end
+
+      def to_ir
+        ::LLVM.Double(value)
       end
     end
 
@@ -425,8 +517,23 @@ module Nox
       end
     end
 
+    # Represents a unary expression.
+    class Unary < Expression
+      attr_accessor :operator, :right
+
+      def initialize(operator, right)
+        super()
+
+        @operator = operator
+        @right = right
+      end
+    end
+
     # Represents an abstract type node.
     class Type < Node
+      def ==(other)
+        other.is_a?(self.class)
+      end
     end
 
     # Represents a void type.
@@ -442,10 +549,31 @@ module Nox
 
         @name = name
       end
-    end
 
-    # Represents a void type.
-    class Void < Type
+      # Determines whether the scalar is an integer type.
+      #
+      # @return [Boolean]
+      def integer?
+        name.start_with?('Int') || name.start_with?('UInt')
+      end
+
+      # Determines whether the scalar is a floating-point type.
+      #
+      # @return [Boolean]
+      def floating?
+        name.start_with?('Float') || name.start_with?('Double')
+      end
+
+      # Determines whether the scalar is a boolean type.
+      #
+      # @return [Boolean]
+      def boolean?
+        name == 'Boolean'
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && other.name == name
+      end
     end
   end
 end

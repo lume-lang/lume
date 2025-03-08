@@ -14,7 +14,7 @@ describe 'lexer numbers' do
     lexer = Nox::Language::Lexer.new('-1')
     tokens = lexer.all!
 
-    assert_tokens_equal([[:dash, '-'], [:number, 1], [:eof, nil]], tokens)
+    assert_tokens_equal([[:'-', '-'], [:number, 1], [:eof, nil]], tokens)
   end
 
   it 'lexes floating point numbers' do
@@ -28,7 +28,7 @@ describe 'lexer numbers' do
     lexer = Nox::Language::Lexer.new('-1.23456')
     tokens = lexer.all!
 
-    assert_tokens_equal([[:dash, '-'], [:number, 1.23456], [:eof, nil]], tokens)
+    assert_tokens_equal([[:'-', '-'], [:number, 1.23456], [:eof, nil]], tokens)
   end
 
   it 'lexes numbers in scientific notation' do
@@ -64,5 +64,16 @@ describe 'lexer numbers' do
     tokens = lexer.all!
 
     assert_tokens_equal([[:number, 170], [:eof, nil]], tokens)
+  end
+
+  ['i8', 'u8', 'i16', 'u16', 'i32', 'u32', 'i64', 'u64', 'i128', 'u128', 'f32', 'f64'].each do |type|
+    it "lexes numbers with explicit type (#{type})" do
+      lexer = Nox::Language::Lexer.new("1_#{type}")
+      token = lexer.next_token!
+
+      assert_equal(:number, token.type)
+      assert_equal(1, token.value)
+      assert_equal(type, token.kind)
+    end
   end
 end

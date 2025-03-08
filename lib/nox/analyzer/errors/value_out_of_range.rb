@@ -22,6 +22,8 @@ module Nox
           if type.is_a?(Nox::Language::IntegerLiteral)
             add_help!('Numeric types can only hold values within a specific range, depending on the type.')
           end
+
+          add_help!('Numeric types can only hold values within a specific range, depending on the type.')
         end
       end
     end

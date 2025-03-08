@@ -55,24 +55,10 @@ module Nox
       #
       # @return [Nox::Language::AST] The parsed expression tree in the source code.
       def parse
-        nodes = iterate_all! do
-          next nil if peek(:eof)
-
-          next parse_expression if peek(TOP_LEVEL_TYPES)
-
-          unexpected_token(TOP_LEVEL_TYPES)
-        end
+        nodes = parse_statements
 
         AST.new(nodes)
       end
-
-      def render_error(error)
-        puts %(#{'error'.red}: #{error.message.bold})
-
-        render_error_section(error.location) if error.location.is_a?(Location)
-      end
-
-      private
 
       CONTROL_TYPES = %i[
         return
@@ -80,43 +66,74 @@ module Nox
         unless
       ].freeze
 
-      EXPRESSION_TYPES = [
+      STATEMENT_TYPES = [
         *CONTROL_TYPES,
-        :name,
-        :string,
-        :number,
-        :true,
-        :false,
-        :nil,
-        :lparen,
-        :dash
-      ].freeze
-
-      TOP_LEVEL_TYPES = [
-        *EXPRESSION_TYPES,
-        :def,
+        :struct,
         :class,
-        :struct
-      ].freeze
-
-      CLASS_LEVEL_TYPES = [
-        *EXPRESSION_TYPES,
-        :def
+        :def,
+        :let,
+        :const
       ].freeze
 
       OPERATORS = %i[
-        plus
-        dash
-        asterisk
-        slash
+        +
+        -
+        *
+        /
+        ++
+        --
+        +=
+        -=
+        *=
+        /=
+        !=
+        ==
+        =
       ].freeze
 
       OPERATOR_PRECEDENCE = {
-        '+': 1,
-        '-': 2,
-        '*': 3,
-        '/': 4
+        '=': 1,
+        '+=': 1,
+        '-=': 1,
+        '*=': 1,
+        '/=': 1,
+        '==': 3,
+        '!=': 3,
+        '+': 4,
+        '-': 4,
+        '*': 5,
+        '/': 5,
+        '++': 6,
+        '--': 6
       }.freeze
+
+      NUMERIC_TYPE_MAP = {
+        'i8' => ByteLiteral,
+        'u8' => UnsignedByteLiteral,
+        'i16' => ShortLiteral,
+        'u16' => UnsignedShortLiteral,
+        'i32' => WordLiteral,
+        'u32' => UnsignedWordLiteral,
+        'i64' => LongLiteral,
+        'u64' => UnsignedLongLiteral,
+        'f32' => FloatLiteral,
+        'f64' => DoubleLiteral
+      }.freeze
+
+      NUMERIC_LITERAL_TYPES = [
+        ByteLiteral,
+        UnsignedByteLiteral,
+        ShortLiteral,
+        UnsignedShortLiteral,
+        WordLiteral,
+        UnsignedWordLiteral,
+        LongLiteral,
+        UnsignedLongLiteral,
+        FloatLiteral,
+        DoubleLiteral
+      ].freeze
+
+      private
 
       # Peeks the current token's type.
       #
@@ -229,6 +246,20 @@ module Nox
         token
       end
 
+      # Iterates over the given parser method or block until it returns `nil`.
+      #
+      # @param parser [String|Proc] The parser method or block to iterate over.
+      # @param block  [Proc]        Anonymous block to consume the next token.
+      #
+      # @return       [Array]       The array of consumed tokens.
+      #
+      # @example Parsing an argument list
+      #   iterate_all! do |index|
+      #     # If the next token is a comma, there's still more arguments
+      #     return nil unless index.positive? && peek(:comma)
+      #
+      #     parse_argument
+      #   end
       def iterate_all!(parser = nil, &block)
         parser = method(parser).to_proc unless parser.nil?
         parser = block if block_given?
@@ -266,25 +297,6 @@ module Nox
         Location.new(line: line, column: column, file: @filename)
       end
 
-      # Returns the line of the given line number.
-      #
-      # @param line [Integer] The line number to get the line of.
-      #
-      # @return [String] The line of the given line number.
-      def line(line)
-        @lines[line]
-      end
-
-      # Returns the lines of the given line numbers.
-      #
-      # @param lines [Array<Integer>] The line numbers to get the lines of.
-      #
-      # @return [Array<String>] The lines of the given line numbers.
-      def lines(lines)
-        lines = [lines] unless lines.is_a?(Array)
-        lines.map { |l| line(l) }
-      end
-
       # Raises an unexpected token error.
       #
       # @param expected   [String] The expected token type.
@@ -293,128 +305,172 @@ module Nox
         raise UnexpectedTokenError.new(expected, @token, location_of(@token), message)
       end
 
-      # Renders an error section with the given token location to the console.
+      # Gets the precedence of the given token.
       #
-      # @param location [Location] The location to render the error section at.
-      def render_error_section(location)
-        highlighted_line = ''.rjust(location.column - 1) + '^'.red
+      # @param token   [Token] The token to get the precedence of.
+      #
+      # @return [Integer] The precedence of the token.
+      def precedence_of(token)
+        return 0 unless OPERATOR_PRECEDENCE.key?(token.type)
 
-        render_code_section('')
-        render_code_section(location.line)
-        render_code_section('', content: highlighted_line)
+        OPERATOR_PRECEDENCE[token.type]
       end
 
-      # Renders a code section with the given line number and content to the console.
+      # Parses the statement at the current cursor position.
       #
-      # @param line     [Integer] The line number to render.
-      # @param content  [String]  The content to render.
-      def render_code_section(line, content: nil)
-        content ||= line(line - 1) if line.is_a?(Integer)
+      # @return [Node] The parsed statement.
+      def parse_statement
+        # If we've reached the last token, return `nil` so `iterate_all!` can return.
+        return nil if peek(:eof)
 
-        puts "#{line.to_s.rjust(4)} | #{content}"
+        # If the token is a statement token, parse it as such.
+        return parse_statement_expression if peek(STATEMENT_TYPES)
+
+        # If the current token isn't a statement token, parse it as an expression.
+        parse_expression
       end
 
-      # Parses a list of argument definitions. These are used in function- and method-definitions.
+      # Parses a list of statements within the top-level namespace, function or method.
       #
-      # @return [Array<ArgumentDefinition>] The parsed argument definitions.
-      def parse_argument_definitions
-        consume_wrapped!(left: :'(', right: :')') do
-          arguments = []
-
-          loop do
-            definition = parse_argument_definition
-            arguments << definition unless definition.nil?
-
-            break unless peek(:comma)
-
-            skip!
-          end
-
-          arguments
-        end
+      # @return [Array<Node>] The parsed statements.
+      def parse_statements
+        iterate_all! { parse_statement }
       end
 
-      # Parses a single argument definition. These are used in function- and method-definitions.
+      # Parses the statement expression at the current cursor position.
       #
-      # @return [ArgumentDefinition] The parsed argument definition.
-      def parse_argument_definition
-        return nil unless peek(:name)
+      # @return [Node] The parsed expression.
+      def parse_statement_expression
+        # If the statement is a struct definition, parse it as a struct definition
+        return parse_struct_definition if peek(:struct)
 
-        name = consume!(type: :name).value
-        consume!(type: :colon, error: 'Expected colon between argument name and type')
+        # If the statement is a class definition, parse it as a class definition
+        return parse_class_definition if peek(:class)
 
-        type = parse_type
+        # If the statement is a method definition, parse it as a method definition
+        return parse_method_definition if peek(:def)
 
-        definition = ArgumentDefinition.new
-        definition.name = name
-        definition.type = type
+        # If the statement starts with `let` or `const`, parse it as a variable declaration
+        return parse_variable_declaration if peek(%i[let const])
 
-        definition
+        # If the consumed token is a control token, parse it as a control statement
+        return parse_control_expression if peek(CONTROL_TYPES)
+
+        unexpected_token(STATEMENT_TYPES)
       end
 
-      # Parses a list of argument values. These are used in function- and method-invocations.
+      # Parses the expression at the current cursor position.
       #
-      # @return [Array<Expression>] The parsed argument values.
-      def parse_arguments
-        consume_wrapped!(left: :'(', right: :')') { parse_values }
+      # @return [Expression] The parsed expression.
+      def parse_expression(precedence: 0)
+        return nil if peek(:eof)
+
+        left = parse_prefix_expression
+        left = parse_infix_expression(left) while precedence < precedence_of(@token)
+
+        left
       end
 
       # Parses a list of expressions within the top-level namespace, function or method.
       #
       # @return [Array<Expression>] The parsed expressions.
       def parse_expressions
-        iterate_all! do
-          next nil if peek(:eof)
-          next nil unless peek(EXPRESSION_TYPES)
+        iterate_all! { parse_expression }
+      end
 
-          parse_expression
+      # Parses a prefix expression at the current cursor position.
+      #
+      # Prefix expressions are expressions which appear at the start of an expression,
+      # such as literals of prefix operators. In Pratt Parsing, this is also called "Nud" or "Null Denotation".
+      #
+      # @return [Expression] The parsed expression.
+      def parse_prefix_expression
+        return nil if peek(:eof)
+
+        return parse_nested_expression if nested_expression?
+
+        # If the expression is a name-token, parse it as a named expression
+        return parse_named_expression if peek(:name)
+
+        return parse_literal_expression if literal?
+
+        return parse_unary_expression if unary?
+
+        nil
+      end
+
+      # Parses a infix expression at the current cursor position.
+      #
+      # Infix expressions are expressions which appear in the middle of an expression,
+      # such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
+      #
+      # @param left   [Expression]  The left-hand side of the infix expression.
+      #
+      # @return [Expression] The parsed expression.
+      def parse_infix_expression(left)
+        token = consume!(type: OPERATORS)
+        right = parse_expression(precedence: precedence_of(token))
+
+        left.call(token.value, right)
+      end
+
+      # Parses a list of parameter definitions. These are used in function- and method-definitions.
+      #
+      # @return [Array<Parameter>] The parsed parameter definitions.
+      def parse_parameters
+        consume_wrapped!(left: :'(', right: :')') do
+          parameters = []
+
+          loop do
+            definition = parse_parameter
+            parameters << definition unless definition.nil?
+
+            break unless peek(:',')
+
+            skip!
+          end
+
+          parameters
         end
       end
 
-      # Parses a single expression within the top-level namespace, function or method.
+      # Parses a single parameter definition. These are used in function- and method-definitions.
       #
-      # @return [Expression] The parsed expression.
-      def parse_expression
-        expression = parse_subexpression
+      # @return [Parameter] The parsed parameter definition.
+      def parse_parameter
+        return nil unless peek(:name)
 
-        # If the expression is followed by an operator, nest it within a new operator expression
-        return parse_operator_expression(left: expression) if peek(OPERATORS)
+        name = consume!(type: :name).value
+        consume!(type: :':', error: 'Expected colon between parameter name and type')
 
-        # If the expression is followed by an opening parenthesis, nest it within a new invocation expression
-        return parse_function_invocation(action: expression) if peek(:lparen)
-
-        expression
+        Parameter.new(name, parse_type)
       end
 
-      # Parses a subexpression within the top-level namespace, function or method.
+      # Parses a list of argument values. These are used in function- and method-invocations.
       #
-      # @return [Expression] The parsed sub-expression.
-      def parse_subexpression
-        # If the expression is wrapped in parentheses, parse it as a nested expression
-        return parse_nested_expression if nested_expression?
+      # @return [Array<Expression>] The parsed argument values.
+      def parse_arguments
+        consume_wrapped!(left: :'(', right: :')') do
+          arguments = []
 
-        # If the expression contains a literal, parse it as a literal expression
-        return parse_literal_expression if literal?
+          return arguments if peek(:')')
 
-        # If the expression is a dash, parse it as a negative subexpression
-        return parse_negative_expression if peek(:dash)
+          loop do
+            definition = parse_argument
+            arguments << definition unless definition.nil?
 
-        # If the expression is a struct definition, parse it as a struct definition
-        return parse_struct_definition if peek(:struct)
+            break unless consume(type: :',')
+          end
 
-        # If the expression is a class definition, parse it as a class definition
-        return parse_class_definition if peek(:class)
+          arguments
+        end
+      end
 
-        # If the expression is a method definition, parse it as a method definition
-        return parse_method_definition if peek(:def)
-
-        # If the expression starts with a name, parse it as a named expression
-        return parse_named_expression if peek(:name)
-
-        # If the consumed token is a control token, parse it as a control expression
-        return parse_control_expression if peek(CONTROL_TYPES)
-
-        unexpected_token(EXPRESSION_TYPES)
+      # Parses a single argument value. This is used in function- and method-invocations.
+      #
+      # @return [Expression] The parsed argument value.
+      def parse_argument
+        parse_value
       end
 
       # Parses a nested expression. A nested expression is an expression that is wrapped in parentheses.
@@ -431,19 +487,13 @@ module Nox
         target = consume!(type: :name)
 
         # If the next token is a left parenthesis, parse it as a function invocation
-        return parse_function_invocation(action: target) if peek(:lparen)
+        return parse_function_invocation(action: target) if peek(:'(')
 
-        # If the next token is a dot, parse it as a method invocation
-        return parse_method_invocation(target: target) if peek(:dot)
-
-        # If the next token is a colon, parse it as a variable declaration
-        return parse_variable_declaration(name: target) if peek(:colon)
+        # If the next token is a dot, parse it as some form of member access (method invocation, property access, etc.)
+        return parse_member_access(target: target) if peek(:'.')
 
         # If the next token is an equal sign, parse it as an assignment
-        return parse_assignment(target: target) if peek(:equal)
-
-        # If the next token is an operator, parse it as an operator expression
-        return parse_operator_expression(left: target) if peek(OPERATORS)
+        return parse_assignment(target: target) if peek(:'=')
 
         # If the name stands alone, parse it as a variable reference
         parse_variable_reference(name: target)
@@ -537,7 +587,31 @@ module Nox
       #
       # @return [Call] The parsed function invocation.
       def parse_function_invocation(action:)
-        Call.new(nil, action.value, parse_arguments)
+        Call.new(nil, action.value, *parse_arguments)
+      end
+
+      # Parses a single member access expression.
+      #
+      # @param target [Expression|Token] The target object.
+      #
+      # @return [Expression] The parsed member access.
+      def parse_member_access(target:)
+        target = target.value if target.is_a?(Token)
+
+        # Consume dot symbol
+        consume(type: :'.')
+        name = consume!(type: %i[name]).value
+
+        # If the next token is an opening parenthesis, it's a method invocation
+        return Call.new(target, name, *parse_arguments) if peek(:'(')
+
+        expression = MemberAccess.new(target, name)
+
+        # If there is yet another dot, it's part of a longer expression.
+        return parse_member_access(target: expression) if peek(:'.')
+
+        # Otherwise, return the expression, as-is.
+        expression
       end
 
       # Parses a single method invocation expression.
@@ -546,31 +620,30 @@ module Nox
       #
       # @return [Call] The parsed method invocation.
       def parse_method_invocation(target:)
-        # Skip dot symbol
-        skip!
+        target = target.value if target.is_a?(Token)
+
+        # Consume dot symbol
+        consume(type: :'.')
 
         name = consume!(type: %i[name]).value
 
-        Call.new(target.value, name, parse_arguments)
+        Call.new(target, name, parse_arguments)
       end
 
       # Parses a single variable declaration expression.
       #
-      # @param name [String] The name of the variable.
-      #
       # @return [VariableDeclaration] The parsed variable declaration.
-      def parse_variable_declaration(name:)
-        # Skip colon symbol
-        skip!
+      def parse_variable_declaration
+        is_const = consume!(type: %i[let const]).value == 'const'
+        name = consume!(type: :name).value
 
-        expression = VariableDeclaration.new
-        expression.name = name.value
-        expression.type = parse_type
+        # Skip the colon before the type
+        consume!(type: :':')
 
-        if peek(:equal)
-          skip!
-          expression.value = parse_expression
-        end
+        type = parse_type
+
+        expression = VariableDeclaration.new(name, type, const: is_const)
+        expression.value = parse_expression if consume(type: :'=')
 
         expression
       end
@@ -582,22 +655,30 @@ module Nox
         parse_value
       end
 
-      # Parses a negative subexpression.
+      # Parses a single unary expression.
       #
-      # @return [Call] The parsed literal value.
-      def parse_negative_expression
-        # Consume the negative symbol
-        consume!(type: :dash)
+      # @return [Expression] The parsed unary expression.
+      def parse_unary_expression
+        operator = consume!(type: %i[-])
+        right = parse_expression(precedence: 3)
 
-        expression = parse_expression
+        # As a quality of life feature, we can apply the unary operator directly to the expression,
+        # if it can be done at parsing time. If not, we create an ordinary unary expression.
+        apply_unary_operator(operator, right) || Unary.new(operator.value, right)
+      end
 
-        return Call.new(expression, :'-', -1.int32) unless expression.is_a?(NumberLiteral)
+      # Applies a unary operator to an expression, if possible given the combination.
+      #
+      # @param operator [Token]       The unary operator token.
+      # @param right    [Expression]  The right-hand side expression.
+      #
+      # @return [nil|Expression] The resulting expression after applying the unary operator.
+      def apply_unary_operator(operator, right)
+        # If the operator is a unary minus and the right-hand side is a number literal, we can negate
+        # the value directly.
+        return right.class.new(-right.value) if operator.type == :- && right.is_a?(NumberLiteral)
 
-        # If the expression is a numeric literal, negate it's value directly.
-        # This won't work if the returned expression is a sub-expression which results to a numeric literal.
-        expression.value *= -1
-
-        expression
+        nil
       end
 
       # Parses a single variable reference expression.
@@ -627,32 +708,6 @@ module Nox
         Assignment.new(target, parse_expression)
       end
 
-      # Parses a single operator expression.
-      #
-      # @return [OperatorExpression] The parsed operator expression.
-      def parse_operator_expression(left: nil, right: nil)
-        left ||= parse_expression
-        operator = consume!(type: OPERATORS).value
-        right ||= parse_expression
-
-        # If neither side of the expression is a sub-expression, parse them together in sequence.
-        return left.call(operator, right) unless left.is_a?(Call) || right.is_a?(Call)
-
-        left_precedence = parse_operator_precedence(left, operator)
-        right_precedence = parse_operator_precedence(right, operator)
-
-        # If the RHS has a higher precedence than the LHS, encase it within the left-hand expression.
-        return left.call(operator, right) if left_precedence <= right_precedence
-
-        right.first_arg.call(right.action, left.call(operator, right.target))
-      end
-
-      def parse_operator_precedence(expression, operator)
-        operator = expression.action if expression.is_a?(Call)
-
-        OPERATOR_PRECEDENCE[operator.to_sym] || 0
-      end
-
       # Parses a single struct definition.
       #
       # @return [StructDefinition] The parsed struct definition.
@@ -664,7 +719,7 @@ module Nox
 
         expression = StructDefinition.new
         expression.name = name
-        expression.expressions = parse_member_expressions
+        expression.expressions = parse_statements
 
         consume!(type: :end, error: 'Expected \'end\' after struct definition')
 
@@ -682,24 +737,24 @@ module Nox
 
         expression = ClassDefinition.new
         expression.name = name
-        expression.expressions = parse_member_expressions
+        expression.expressions = parse_statements
 
         consume!(type: :end, error: 'Expected \'end\' after class definition')
 
         expression
       end
 
-      # Parses a list of expressions within the current class-level scope.
-      #
-      # @return [Array<Expression>] The parsed expressions.
-      def parse_member_expressions
-        iterate_all! do
-          next nil if peek(:eof)
-          next nil unless peek(CLASS_LEVEL_TYPES)
+      ## Parses a list of expressions within the current class-level scope.
+      ##
+      ## @return [Array<Expression>] The parsed expressions.
+      # def parse_member_expressions
+      #  iterate_all! do
+      #    next nil if peek(:eof)
+      #    next nil unless peek(CLASS_LEVEL_TYPES)
 
-          parse_expression
-        end
-      end
+      #    parse_expression
+      #  end
+      # end
 
       # Parses a single method definition.
       #
@@ -710,12 +765,11 @@ module Nox
         consume!(value: :def)
         name = consume!(type: :name, error: 'Expected method name in signature').value
 
-        expression = MethodDefinition.new
-        expression.name = name
-        expression.arguments = parse_argument_definitions
-        expression.return = parse_return_type
+        parameters = parse_parameters
+        return_type = parse_return_type
+        expressions = parse_statements
 
-        expression.expressions = parse_expressions
+        expression = MethodDefinition.new(name, parameters, return_type, expressions)
 
         consume!(type: :end, error: 'Expected \'end\' after method definition')
 
@@ -726,9 +780,7 @@ module Nox
       #
       # @return [Type] The parsed type.
       def parse_return_type
-        return Void.new unless peek(:colon)
-
-        consume!(type: :colon)
+        return Void.new unless consume(type: :':')
 
         parse_type
       end
@@ -738,6 +790,7 @@ module Nox
       # @return [TypeDefinition] The parsed type definition.
       def parse_type
         type = consume!(type: :name).value
+        return Void.new if type == 'void'
 
         Scalar.new(type)
       end
@@ -747,13 +800,13 @@ module Nox
       # @return [Array<Expression>] The parsed values.
       def parse_values
         iterate_all! do |index|
-          next nil if peek(:rparen)
+          next nil if peek(:'(')
 
           # We shouldn't break on the first iteration, as we haven't read any values yet.
-          next nil if !peek(:comma) && index.positive?
+          next nil if !peek(:',') && index.positive?
 
           # If the next token is a comma, consume it.
-          consume!(type: :comma) if peek(:comma) && index.positive?
+          consume(type: :',') if index.positive?
 
           parse_expression
         end
@@ -784,20 +837,19 @@ module Nox
       #
       # @return [NumberLiteral] The parsed number value.
       def parse_number_value
-        value = consume!(type: :number).value
+        token = consume!(type: :number)
 
-        return value.int8 if ByteLiteral.can_contain?(value)
-        return value.uint8 if UnsignedByteLiteral.can_contain?(value)
-        return value.int16 if ShortLiteral.can_contain?(value)
-        return value.uint16 if UnsignedShortLiteral.can_contain?(value)
-        return value.int32 if WordLiteral.can_contain?(value)
-        return value.uint32 if UnsignedWordLiteral.can_contain?(value)
-        return value.int64 if LongLiteral.can_contain?(value)
-        return value.uint64 if UnsignedLongLiteral.can_contain?(value)
-        return value.float32 if FloatLiteral.can_contain?(value)
-        return value.float64 if DoubleLiteral.can_contain?(value)
+        # If an explicit type was given in the literal, use that to create the value.
+        return NUMERIC_TYPE_MAP[token.kind].new(token.value) if NUMERIC_TYPE_MAP.key?(token.kind)
 
-        raise "Number out of range (#{value})"
+        # If no explicit type was given, try to infer the type from the value.
+        # We're looping through all numeric values to see if the value can be contained.
+        # If it can be contained within a given type, create a new instance of that type and return it.
+        NUMERIC_LITERAL_TYPES.each do |type|
+          return type.new(token.value) if type.can_contain?(token.value)
+        end
+
+        raise "Number out of range (#{token.value})"
       end
 
       # Parses a single boolean value from an expression.
@@ -823,7 +875,7 @@ module Nox
       #
       # @return [Boolean]
       def nested_expression?
-        peek(:lparen)
+        peek(:'(')
       end
 
       # Determines whether the current token is a literal expression.
@@ -831,6 +883,13 @@ module Nox
       # @return [Boolean]
       def literal?
         peek(%i[string number true false nil])
+      end
+
+      # Determines whether the current token is a unary expression.
+      #
+      # @return [Boolean]
+      def unary?
+        peek(%i[-])
       end
     end
   end

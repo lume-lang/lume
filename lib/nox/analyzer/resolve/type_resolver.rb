@@ -11,7 +11,7 @@ module Nox
       #     return 42
       #   end
       #
-      #   a = some_value()
+      #   let a = some_value()
       #
       # We can then infer, since `some_value` returns an `int`, that `a` is also an `int`.
       class TypeResolver < Pass
@@ -31,6 +31,13 @@ module Nox
         #
         # @param node [Nox::Language::VariableDeclaration] The variable declaration node to resolve.
         def accept_variable_declaration(node)
+          define_var(node.name, node)
+        end
+
+        # Resolves resulting type of the given parameter node.
+        #
+        # @param node [Nox::Language::Parameter] The parameter node to resolve.
+        def accept_parameter(node)
           define_var(node.name, node)
         end
       end

@@ -3,28 +3,24 @@
 require 'pp'
 require_relative 'lib/nox'
 
-# SOURCE = %(
-# struct String
-#   def String(value: String)
-#     self.value = value
-#   end
-# end
-# )
-
-SOURCE = '2 * 3 + 4'
-
-# 2 * (3 + (4))
-# (2 * (3)) + 4
+SOURCE = %(
+struct String
+  def String(value: String)
+    self.value = value
+  end
+end
+)
 
 parser = Nox::Language::Parser.with_source(SOURCE)
+# pp parser.tokens
+
 tree = parser.parse
+pp tree.nodes
 
-pp tree
+analyzer = Nox::Analyzer.with_tree(tree)
+analyzer.add_default_passes!
+analyzer.analyze!
 
-# analyzer = Nox::Analyzer.with_tree(tree)
-# analyzer.add_default_passes!
-# analyzer.analyze!
-#
 # compiler = Nox::Compiler.new
 # compiler.add_ast!(tree)
 #

@@ -5,6 +5,10 @@ Gem::Specification.new do |s|
   s.version       = '1.0.0'
   s.required_ruby_version = '>= 3.4'
 
+  s.metadata = {
+    'rubygems_mfa_required' => 'true'
+  }
+
   s.authors       = ['Max T. Kristiansen']
   s.email         = ['me@maxtrier.dk']
   s.summary       = 'Comfortable and succinct programming language'

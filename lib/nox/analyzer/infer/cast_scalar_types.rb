@@ -20,8 +20,6 @@ module Nox
           node.value = convert_literal_type(node.type, node.value)
         end
 
-        private
-
         VALUE_TYPE_MAP = {
           'String' => Nox::Language::StringLiteral,
           'Int8' => Nox::Language::ByteLiteral,
@@ -36,6 +34,8 @@ module Nox
           'Double' => Nox::Language::DoubleLiteral,
           'Boolean' => Nox::Language::BooleanLiteral
         }.freeze
+
+        private
 
         # Converts the given literal from the existing type to the type defined in `value`.
         #

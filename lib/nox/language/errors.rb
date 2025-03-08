@@ -6,7 +6,7 @@ module Nox
       attr_accessor :message
 
       def initialize(message)
-        super(message)
+        super
 
         @message = message
       end
@@ -21,7 +21,8 @@ module Nox
 
         message ||= "unexpected token: expected #{format_expected(expected)}, found '#{token.value}' (#{token.type})"
         message += " at line #{@location.line}, column #{@location.column}."
-        message += " Found '#{token.value}'"
+        message += ' Found EOF.' if token.type == :eof
+        message += " Found '#{token.type}'" unless token.type == :eof
 
         super(message)
       end

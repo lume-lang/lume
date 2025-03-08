@@ -1,2 +1,20 @@
+plugins:
+  - rubocop-minitest
+  - rubocop-rake
+
+AllCops:
+  NewCops: enable
+  Exclude:
+    - "test/**/*"
+
 Metrics/ClassLength:
+  Enabled: false
+
+Metrics/MethodLength:
+  Max: 20
+
+Layout/LineLength:
+  Max: 140
+
+Lint/BooleanSymbol:
   Enabled: false

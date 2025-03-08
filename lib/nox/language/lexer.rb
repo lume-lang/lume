@@ -44,8 +44,6 @@ module Nox
         tokens
       end
 
-      private
-
       WHITESPACE_TOKENS = [
         "\r",
         "\t",
@@ -54,6 +52,8 @@ module Nox
       ].freeze
 
       KEYWORDS = %i[
+        let
+        const
         if
         unless
         else
@@ -67,25 +67,9 @@ module Nox
         nil
       ].freeze
 
-      SYMBOLS = {
-        ',' => :comma,
-        '.' => :dot,
-        '+' => :plus,
-        '-' => :dash,
-        '/' => :slash,
-        '*' => :asterisk,
-        '(' => :lparen,
-        ')' => :rparen,
-        '[' => :lsquare,
-        ']' => :rsquare,
-        '{' => :lbrace,
-        '}' => :rbrace,
-        '|' => :pipe,
-        '!' => :exclamation,
-        '&' => :ampersand,
-        '=' => :equal,
-        ':' => :colon
-      }.freeze
+      SYMBOLS_PATTERN = %r(!=|!|==|=|\+=|-=|/=|\*=|,|\.|\+|-|/|\*|\(|\)|\{|\}|\[|\]|\||&|:|\+\+|--)
+
+      private
 
       # Creates a new token with the given type and value.
       #
@@ -180,10 +164,12 @@ module Nox
       #
       # @return [Token] The parsed token from the source.
       def parse_symbol_token
-        symbol = @source[@index]
-        return token(SYMBOLS[symbol], value: symbol) if SYMBOLS.key?(symbol)
+        match = @source.match(SYMBOLS_PATTERN, @index)
+        return token(:unknown) if match.nil?
 
-        token(:unknown)
+        value = match.to_s
+
+        token(value.to_sym, value: value)
       end
 
       # Parses the current token at the internal cursor as a block token. Block tokens can be either:
@@ -215,32 +201,35 @@ module Nox
         # Forcefully ignore keywords and send them back up the chain
         return token(:unknown) if KEYWORDS.include?(word.to_sym)
 
-        if word.match?(/^[a-zA-Z_][a-zA-Z0-9_]*$/)
-          return token(:name, value: word, start: @index, last: @index + word.length)
-        end
+        return token(:unknown) unless word.match?(/^[a-zA-Z_][a-zA-Z0-9_]*$/)
 
-        token(:unknown)
+        token(:name, value: word, start: @index, last: @index + word.length)
       end
 
       # Parses the current token at the internal cursor as a numeric literal.
       #
       # @return [Token] The parsed token from the source.
       def parse_number_token
-        slice = parse_number_value
+        slice, kind = parse_number_value
 
         number = parse_integer_number_token(slice) || parse_float_number_token(slice)
         return token(:unknown) if number.nil?
 
-        token(:number, value: number, start: @index, last: @index + slice.length)
+        token = token(:number, value: number, start: @index, last: @index + slice.length)
+        token.kind = kind if kind
+        token.end = @index + slice.length + kind.length + 1 if kind
+
+        token
       end
 
       # Parses the value at the current cursor position as a numeric literal.
       #
       # @return [String] The parsed number content from the source.
       def parse_number_value
-        pattern = /[-+]?((?:[\d_.]+(?:e-?\d+)?)|(?:0[dxob]\w+))\b/
+        pattern = /[-+]?(?<value>(?:[\d_.]+(?:e-?\d+)?)|(?:0[dxob]\w+))(?:_(?<kind>\w+))?\b/
+        match = @source.match(pattern, @index)
 
-        @source.match(pattern, @index).to_s
+        [match[:value], match[:kind]]
       end
 
       # Parses the current token at the internal cursor as an integer literal.
@@ -282,7 +271,7 @@ module Nox
       #
       # @return [Token] The parsed token from the source.
       def parse_comment_block
-        end_index = @source.index('*/', @index) || @source.length - 1
+        end_index = @source.index('*/', @index) || (@source.length - 1)
         comment_content = @source[@index + 2...end_index]
 
         token(:comment, value: comment_content.strip, start: @index, last: end_index + 3)
@@ -297,7 +286,7 @@ module Nox
 
         index, slice = parse_string_content(@index + 1, quote: quote_character)
 
-        token(:string, value: slice, start: @index, last: index + 1)
+        token(:string, value: slice, start: @index, last: index)
       end
 
       # Parses the content of a string literal, enclosed in single or double quotes.
@@ -339,7 +328,7 @@ module Nox
       #
       # @return [String] The parsed word.
       def next_word
-        index = @source.index(/(\W|$)/, @index + 1) || @source.length - 1
+        index = @source.index(/(\W|$)/, @index + 1) || (@source.length - 1)
 
         @source.slice(@index, index - @index)
       end
