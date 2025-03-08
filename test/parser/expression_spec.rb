@@ -2,7 +2,7 @@
 
 require_relative 'test_helper'
 
-include Nox::Language
+include Lume::Language
 
 describe Parser do
   it_parses 'a = 1', Assignment.new('a'.var, 1.int8)

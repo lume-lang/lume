@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Analyzer
     # Base class for all anaylizer errors.
     class Error < StandardError
@@ -19,7 +19,7 @@ module Nox
 
       # Attaches a location to the error, so the error can be pinpointed to a specific line in a source file.
       #
-      # @param location [Nox::Language::Location] The location to attach.
+      # @param location [Lume::Language::Location] The location to attach.
       def attach_location!(location)
         @location = location
       end

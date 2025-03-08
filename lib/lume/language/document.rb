@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   module Language
     class Document # :nodoc:
       attr_reader :content

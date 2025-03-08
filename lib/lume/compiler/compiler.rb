@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Compiler # :nodoc:
-    include Nox::Codegen
+    include Lume::Codegen
 
     def initialize
       @nodes = []
@@ -12,7 +12,7 @@ module Nox
 
     # Adds nodes from the given AST to the compiler.
     #
-    # @param tree [Array<Nox::Language::AST>]  AST containing all the nodes to add.
+    # @param tree [Array<Lume::Language::AST>]  AST containing all the nodes to add.
     def add_ast!(tree)
       @nodes.concat(tree.nodes)
     end

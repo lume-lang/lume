@@ -6,7 +6,7 @@ require_relative 'infer/cast_scalar_types'
 require_relative 'infer/resolve_auto_types'
 require_relative 'resolve/type_resolver'
 
-module Nox
+module Lume
   class Analyzer # :nodoc:
     def initialize(nodes = [])
       @passes = []
@@ -15,7 +15,7 @@ module Nox
 
     # Creates a new analyzer with the given AST.
     #
-    # @param tree [Nox::Language::AST] The AST to analyze.
+    # @param tree [Lume::Language::AST] The AST to analyze.
     #
     # @return [Analyzer]
     def self.with_tree(tree)
@@ -27,9 +27,9 @@ module Nox
     # @return [Array<Pass>]
     def self.default_passes
       [
-        Nox::Analyzer::Pass::ResolveAutoTypes,
-        Nox::Analyzer::Pass::TypeResolver,
-        Nox::Analyzer::Pass::CastScalarTypes
+        Lume::Analyzer::Pass::ResolveAutoTypes,
+        Lume::Analyzer::Pass::TypeResolver,
+        Lume::Analyzer::Pass::CastScalarTypes
       ]
     end
 
@@ -75,14 +75,14 @@ module Nox
 
     # Analyzes the given node.
     #
-    # @param [Nox::Language::Node] node The node to analyze.
+    # @param [Lume::Language::Node] node The node to analyze.
     def analyze_node!(node)
       @passes.each { |pass| pass.accept(node) }
     end
 
     # Analyzes all the nodes in the given array.
     #
-    # @param [Array<Nox::Language::Node>] nodes The nodes to analyze.
+    # @param [Array<Lume::Language::Node>] nodes The nodes to analyze.
     def analyze_nodes!(nodes)
       nodes.each { |node| analyze_node!(node) }
     end

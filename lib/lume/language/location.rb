@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   module Language
     class Location # :nodoc:
       attr_accessor :line, :column, :file

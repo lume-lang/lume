@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Analyzer
     class Pass
       # Resolves all undefined types in the AST.
@@ -15,7 +15,7 @@ module Nox
       class ResolveAutoTypes < Pass
         # Renames the given scalar node, if it refers to an alias of a built-in type.
         #
-        # @param node [Nox::Language::Scalar] The scalar node to rename.
+        # @param node [Lume::Language::Scalar] The scalar node to rename.
         def accept_scalar(node)
           existing_type = node.name
 

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |s|
-  s.name          = 'nox'
+  s.name          = 'lume'
   s.version       = '1.0.0'
   s.required_ruby_version = '>= 3.4'
 
@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.email         = ['me@maxtrier.dk']
   s.summary       = 'Comfortable and succinct programming language'
   s.description   = 'Type-safe, expressive and to the point.'
-  s.homepage      = 'https://github.com/nox-lang/nox'
+  s.homepage      = 'https://github.com/lume-lang/lume'
   s.license       = 'MIT'
   s.files         = ['Rakefile', *Dir.glob('lib/**/*.rb')]
   s.require_paths = ['lib']

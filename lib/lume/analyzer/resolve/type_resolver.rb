@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Analyzer
     class Pass
       # Resolves the resulting types of all expressions.
@@ -17,7 +17,7 @@ module Nox
       class TypeResolver < Pass
         # Resolves resulting type of the given variable declaration node.
         #
-        # @param node [Nox::Language::VariableDeclaration] The variable declaration node to resolve.
+        # @param node [Lume::Language::VariableDeclaration] The variable declaration node to resolve.
         def accept_variable_reference(node)
           return unless node.expression_type.nil?
 
@@ -29,14 +29,14 @@ module Nox
 
         # Resolves resulting type of the given variable declaration node.
         #
-        # @param node [Nox::Language::VariableDeclaration] The variable declaration node to resolve.
+        # @param node [Lume::Language::VariableDeclaration] The variable declaration node to resolve.
         def accept_variable_declaration(node)
           define_var(node.name, node)
         end
 
         # Resolves resulting type of the given parameter node.
         #
-        # @param node [Nox::Language::Parameter] The parameter node to resolve.
+        # @param node [Lume::Language::Parameter] The parameter node to resolve.
         def accept_parameter(node)
           define_var(node.name, node)
         end

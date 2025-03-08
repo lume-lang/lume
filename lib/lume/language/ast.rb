@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   module Language
     # Represents the abstract syntax tree.
     class AST

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Integer # :nodoc:
-  include Nox::Language
+  include Lume::Language
 
   def int8
     ByteLiteral.new(self)
@@ -37,7 +37,7 @@ class Integer # :nodoc:
 end
 
 class Float # :nodoc:
-  include Nox::Language
+  include Lume::Language
 
   def float32
     FloatLiteral.new(self)
@@ -49,7 +49,7 @@ class Float # :nodoc:
 end
 
 class String # :nodoc:
-  include Nox::Language
+  include Lume::Language
 
   def var
     VariableReference.new(self)

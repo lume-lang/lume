@@ -6,7 +6,7 @@ module Minitest
   class Test
     def self.it_parses(source, *expected)
       it "parses #{source}" do
-        parser = Nox::Language::Parser.with_source(source)
+        parser = Lume::Language::Parser.with_source(source)
         actual = parser.parse.nodes
 
         assert_equal(expected, actual)

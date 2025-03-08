@@ -4,19 +4,19 @@ require 'llvm/core'
 require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
 
-module Nox
+module Lume
   module Codegen # :nodoc:
-    include Nox::Language
+    include Lume::Language
 
     MAIN_NAME = 'main'
 
-    # initializes the backend components for Nox (such as LLVM, JIT, etc.)
+    # initializes the backend components for Lume (such as LLVM, JIT, etc.)
     #
     # @return [void]
     def initialize_codegen!
       LLVM.init_jit
 
-      @module = LLVM::Module.new('nox')
+      @module = LLVM::Module.new('lume')
       @engine = LLVM::JITCompiler.new(@module)
       @pass_manager = LLVM::PassManager.new
       @builder = LLVM::Builder.new

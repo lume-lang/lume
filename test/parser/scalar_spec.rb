@@ -2,7 +2,7 @@
 
 require_relative 'test_helper'
 
-include Nox::Language
+include Lume::Language
 
 describe Parser do
   it_parses 'nil', NilLiteral.new

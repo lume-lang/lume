@@ -3,7 +3,7 @@
 require_relative 'token'
 require_relative 'location'
 
-module Nox
+module Lume
   module Language
     class Lexer # :nodoc:
       attr_reader :source

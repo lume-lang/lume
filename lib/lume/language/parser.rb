@@ -8,16 +8,16 @@ require_relative 'errors'
 require_relative 'location'
 require_relative 'token'
 
-module Nox
+module Lume
   module Language
     class Parser # :nodoc:
-      include Nox::Language
+      include Lume::Language
 
       attr_reader :source, :tokens
       attr_accessor :start, :end
 
       # @param source [String]                      The source code to parse.
-      # @param tokens [Array<Nox::Language::Token>] The tokens to use for parsing.
+      # @param tokens [Array<Lume::Language::Token>] The tokens to use for parsing.
       # @param filename [String]                    The filename of the source code.
       def initialize(source, tokens, filename: '<memory>')
         @source = source
@@ -33,10 +33,10 @@ module Nox
       # Creates a new parser instance with the given source code and pre-lexed tokens.
       #
       # @param source   [String]                      The source code to parse.
-      # @param tokens   [Array<Nox::Language::Token>] The tokens to use for parsing.
+      # @param tokens   [Array<Lume::Language::Token>] The tokens to use for parsing.
       # @param filename [String]                      The filename of the source code.
       #
-      # @return [Nox::Language::Parser]             The new parser instance.
+      # @return [Lume::Language::Parser]             The new parser instance.
       def self.with_tokens(source, tokens, filename: '<memory>')
         new(source, tokens, filename: filename)
       end
@@ -46,14 +46,14 @@ module Nox
       # @param source   [String]                    The source code to parse.
       # @param filename [String]                    The filename of the source code.
       #
-      # @return [Nox::Language::Parser]             The new parser instance.
+      # @return [Lume::Language::Parser]             The new parser instance.
       def self.with_source(source, filename: '<memory>')
         new(source, Lexer.new(source).all!, filename: filename)
       end
 
       # Parse the entire source code, given in the constructor.
       #
-      # @return [Nox::Language::AST] The parsed expression tree in the source code.
+      # @return [Lume::Language::AST] The parsed expression tree in the source code.
       def parse
         nodes = parse_statements
 

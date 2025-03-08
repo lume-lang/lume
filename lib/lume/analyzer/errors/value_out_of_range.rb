@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Analyzer
     module Errors
       # Defines that a value is out of range for a given type.
@@ -11,7 +11,7 @@ module Nox
       #   a: UInt8 = 1000
       #
       # In the example above, the value 1000 is out of range for `UInt8`, which only allows values between 0 and 255.
-      class ValueOutOfRange < Nox::Analyzer::Error
+      class ValueOutOfRange < Lume::Analyzer::Error
         CODE = 308
 
         def initialize(type, value)
@@ -19,7 +19,7 @@ module Nox
 
           super(CODE, message)
 
-          if type.is_a?(Nox::Language::IntegerLiteral)
+          if type.is_a?(Lume::Language::IntegerLiteral)
             add_help!('Numeric types can only hold values within a specific range, depending on the type.')
           end
 

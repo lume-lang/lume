@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Nox
+module Lume
   class Analyzer
     class Pass # :nodoc:
       def initialize
@@ -10,7 +10,7 @@ module Nox
 
       # Accepts an AST node and runs it through the pass.
       #
-      # @param node [Nox::Language::Node] The AST node to be analyzed.
+      # @param node [Lume::Language::Node] The AST node to be analyzed.
       def accept(node)
         node_class = node.class.name.underscore
         method_name = "accept_#{node_class}"

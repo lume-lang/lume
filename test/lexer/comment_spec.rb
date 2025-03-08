@@ -4,21 +4,21 @@ require_relative 'test_helper'
 
 describe 'lexer comments' do
   it 'lexes empty comments' do
-    lexer = Nox::Language::Lexer.new('# ')
+    lexer = Lume::Language::Lexer.new('# ')
     tokens = lexer.all!(include_comments: true)
 
     assert_tokens_equal([[:comment, ''], [:eof, nil]], tokens)
   end
 
   it 'lexes simple comments' do
-    lexer = Nox::Language::Lexer.new('# some comment content')
+    lexer = Lume::Language::Lexer.new('# some comment content')
     tokens = lexer.all!(include_comments: true)
 
     assert_tokens_equal([[:comment, 'some comment content'], [:eof, nil]], tokens)
   end
 
   it 'lexes comments until newline' do
-    lexer = Nox::Language::Lexer.new(%(# content
+    lexer = Lume::Language::Lexer.new(%(# content
  a))
 
     tokens = lexer.all!(include_comments: true)
@@ -27,7 +27,7 @@ describe 'lexer comments' do
   end
 
   it 'lexes multiple comments' do
-    lexer = Nox::Language::Lexer.new(%(# content 1
+    lexer = Lume::Language::Lexer.new(%(# content 1
 # content 2))
 
     tokens = lexer.all!(include_comments: true)
@@ -36,7 +36,7 @@ describe 'lexer comments' do
   end
 
   it 'lexes multiline comments' do
-    lexer = Nox::Language::Lexer.new(%(/* content */))
+    lexer = Lume::Language::Lexer.new(%(/* content */))
 
     tokens = lexer.all!(include_comments: true)
 
@@ -44,7 +44,7 @@ describe 'lexer comments' do
   end
 
   it 'lexes comments between statements' do
-    lexer = Nox::Language::Lexer.new(%(a /* content */ = 1))
+    lexer = Lume::Language::Lexer.new(%(a /* content */ = 1))
 
     tokens = lexer.all!(include_comments: true)
 
