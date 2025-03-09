@@ -387,7 +387,11 @@ module Lume
       def parse_prefix_expression
         return nil if peek(:eof)
 
+        # If the next expression is nested within parentheses, descend into it parse it again.
         return parse_nested_expression if nested_expression?
+
+        # If the expression is a new-token, parse it as an object initialization.
+        return parse_object_initialization if peek(:new)
 
         # If the expression is a name-token, parse it as a named expression
         return parse_named_expression if peek(:name)
@@ -478,6 +482,19 @@ module Lume
       # @return [Expression] The parsed sub-expression.
       def parse_nested_expression
         consume_wrapped!(left: :'(', right: :')') { parse_expression }
+      end
+
+      # Parses an expression that creates a new instance of a class.
+      #
+      # @return [New] The parsed sub-expression.
+      def parse_object_initialization
+        # Consume the `new` token
+        consume!(type: :new)
+
+        name = consume!(type: :name).value
+        arguments = parse_arguments
+
+        New.new(name, *arguments)
       end
 
       # Parses an expression that references a named method, function or variable.
@@ -636,13 +653,16 @@ module Lume
       def parse_variable_declaration
         is_const = consume!(type: %i[let const]).value == 'const'
         name = consume!(type: :name).value
+        type = nil
 
-        # Skip the colon before the type
-        consume!(type: :':')
-
-        type = parse_type
+        # If the next token is a colon, a type is explicitly specified
+        type = parse_type if consume(type: :':')
 
         expression = VariableDeclaration.new(name, type, const: is_const)
+
+        # If no type was specified, we require there to be a value specified.
+        unexpected_token('=', message: 'Expected variable assignment since no type was specified') if type.nil? && !peek(:'=')
+
         expression.value = parse_expression if consume(type: :'=')
 
         expression

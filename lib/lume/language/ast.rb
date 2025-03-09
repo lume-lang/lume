@@ -131,6 +131,28 @@ module Lume
       end
     end
 
+    # Represents an object initialization expression.
+    #
+    #   'new' class '(' arguments [ ',' arguments ]* ')'
+    class New < Expression
+      attr_accessor :class_name, :arguments
+
+      def initialize(class_name, *arguments)
+        super()
+
+        @class_name = class_name
+        @arguments = *arguments
+      end
+
+      def accept_children(visitor)
+        @arguments.each { |arg| visitor.accept(arg) }
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @class_name == other.class_name && @arguments == other.arguments
+      end
+    end
+
     # Represents a struct definition.
     #
     #   'struct' name
