@@ -7,13 +7,15 @@ module Lume
       #
       # For each expression, it infers the resulting type based on the context, such as:
       #
-      #   def some_value(): int
+      #   fn some_value(): int
       #     return 42
       #   end
       #
       #   let a = some_value()
       #
-      # We can then infer, since `some_value` returns an `int`, that `a` is also an `int`.
+      # We can then infer, since `some_value` returns an `int`, that `a` is also an `int`:
+      #
+      #   let a: int = some_value()
       class TypeResolver < Pass
         include Lume::Language
 
