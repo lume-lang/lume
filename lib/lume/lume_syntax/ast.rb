@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require 'lume/location'
+
 module Lume
-  module Language
+  module Syntax
     # Represents the abstract syntax tree.
     class AST
       attr_accessor :nodes

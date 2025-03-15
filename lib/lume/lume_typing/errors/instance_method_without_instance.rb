@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Lume
-  class Analyzer
+  module Typing
     module Errors
       # Defines that an instance method was called without an instance:
       #

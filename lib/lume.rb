@@ -1,17 +1,12 @@
 # frozen_string_literal: true
 
-require_relative 'lume/core_ext/string'
+require 'lume/core_ext/string'
 
-require_relative 'lume/errors'
-require_relative 'lume/location'
-require_relative 'lume/source'
-require_relative 'lume/language/ast'
-require_relative 'lume/language/ast_helpers'
-require_relative 'lume/language/lexer'
-require_relative 'lume/language/parser'
-require_relative 'lume/analyzer/analyzer'
-require_relative 'lume/analyzer/main_visitor'
-require_relative 'lume/compiler/compiler'
+require 'lume/errors'
+require 'lume/lume_lexer/lexer'
+require 'lume/lume_parser/parser'
+require 'lume/lume_analyzer/analyzer'
+require 'lume/lume_compiler/compiler'
 
 module Lume
   LEX = :lex
@@ -141,7 +136,7 @@ module Lume
     #
     # @return [CompilationContext] An array of tokens representing the lexed source code.
     def lex(context)
-      lexer = Lume::Language::Lexer.new(context.source)
+      lexer = Lume::Lexer.new(context.source)
       context.tokens = lexer.all!
 
       context
@@ -153,7 +148,7 @@ module Lume
     #
     # @return [CompilationContext] A parsed AST representing the source code.
     def parse(context)
-      parser = Lume::Language::Parser.with_tokens(context.source, context.tokens)
+      parser = Lume::Parser.with_tokens(context.source, context.tokens)
       context.ast = parser.parse
 
       context

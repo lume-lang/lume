@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Lume
-  class Analyzer
+  module IR
     # Defines an abstract visitor for AST nodes.
     #
     # Classes implementing this module should define methods for each type of AST node, such as:
-    #   - `accept_method_definition` for `Lume::Analyzer::IR::MethodDefinition`
-    #   - `accept_scalar` for `Lume::Analyzer::IR::Scalar`
+    #   - `accept_method_definition` for `Lume::IR::MethodDefinition`
+    #   - `accept_scalar` for `Lume::IR::Scalar`
     #   - and so on.
     #
     # Child nodes are walked recursively, if the node defines a method named `accept_children`.
@@ -15,14 +15,14 @@ module Lume
     module Visitor
       # Accepts an AST and runs all the root nodes through the visitor.
       #
-      # @param ast [Lume::Analyzer::IR::AST] The AST to be analyzed.
+      # @param ast [Lume::IR::AST] The AST to be analyzed.
       def accept_ast(ast)
         ast.nodes.each { |node| accept(node) }
       end
 
       # Accepts an AST node and runs it through the visitor.
       #
-      # @param node [Lume::Analyzer::IR::Node] The AST node to be analyzed.
+      # @param node [Lume::IR::Node] The AST node to be analyzed.
       def accept(node)
         # If the node has already been visited, skip it.
         return if visited?(node)
@@ -53,7 +53,7 @@ module Lume
 
       # Determines whether the given node has already been visited.
       #
-      # @param node [Lume::Analyzer::IR::Node] The AST node to be checked.
+      # @param node [Lume::IR::Node] The AST node to be checked.
       #
       # @return [Boolean] Whether the node has been visited.
       def visited?(node)

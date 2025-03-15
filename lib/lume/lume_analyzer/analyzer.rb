@@ -1,20 +1,16 @@
 # frozen_string_literal: true
 
-require_relative 'ir'
-require_relative 'ir_gen'
-require_relative 'visitor'
-require_relative 'flat_visitor'
-require_relative 'typing'
-
-require_relative 'errors/instance_method_without_instance'
-require_relative 'errors/static_method_with_instance'
+require 'lume/lume_ir/ir_gen'
+require 'lume/lume_ir_visitor/visitor'
+require 'lume/lume_analyzer/main_visitor'
+require 'lume/lume_typing/typing'
 
 module Lume
   class Analyzer # :nodoc:
     # Creates a new analyzer with the given AST.
     #
-    # @param ast    [Lume::Analyzer::IR::AST] The AST to analyze.
-    # @param logger [Lume::ErrorPrinter]      The error printer to use.
+    # @param ast    [Lume::IR::AST]      The AST to analyze.
+    # @param logger [Lume::ErrorPrinter] The error printer to use.
     #
     # @return [Analyzer]
     def initialize(ast, logger: nil)
@@ -24,7 +20,7 @@ module Lume
 
     # Creates a new analyzer with the given AST.
     #
-    # @param tree [Lume::Analyzer::IR::AST] The AST to analyze.
+    # @param tree [Lume::IR::AST] The AST to analyze.
     #
     # @return [Analyzer]
     def self.with_tree(tree)
@@ -33,7 +29,7 @@ module Lume
 
     # Performs the analysis on all the nodes added to the analyzer.
     #
-    # @return [Lume::Analyzer::IR::AST]
+    # @return [Lume::IR::AST]
     def analyze!
       raise ArgumentError, 'No nodes to analyze' if @ast.nodes.empty?
 
@@ -46,7 +42,7 @@ module Lume
       # during the analysis process. If there are duplicate nodes within the tree which refer to the same
       # node, but is actually a different object, the analyzer would only analyze and update one of them, which
       # could lead to incorrect analysis results.
-      irgen = IRGen.new
+      irgen = Lume::IR::IRGen.new
       ast = irgen.generate(@ast)
 
       # Pass the AST through the main visitor.
@@ -56,7 +52,7 @@ module Lume
       visit_main(ast)
 
       # Run the AST through to the type checker to verify that all type constraints are satisfied.
-      type_checker = TypeChecker.new
+      type_checker = Lume::Typing::TypeChecker.new
       errors = type_checker.check(ast)
 
       # If any errors arose during type checking, report them to the user.

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require 'lume/location'
+
 module Lume
-  module Language
+  module Syntax
     # The humble token. The smallest unit of the Lume language and essential building block for everything past it.
     #
     # Tokens are produced by the lexer, which breaks down the input source code into individual tokens. They represent

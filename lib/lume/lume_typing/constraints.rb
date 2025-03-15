@@ -74,7 +74,7 @@ module Lume
     # @see Constraint#solve
     # @see Constraint#report
     class Constraint
-      include Lume::Analyzer::IR
+      include Lume::IR
 
       attr_reader :expected
 

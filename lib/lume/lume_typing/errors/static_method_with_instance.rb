@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Lume
-  class Analyzer
+  module Typing
     module Errors
       # Defines that a static method was called on an instance:
       #

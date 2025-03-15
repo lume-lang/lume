@@ -1,17 +1,18 @@
 # frozen_string_literal: true
 
-require_relative 'errors'
-require_relative 'typing/constraints'
+require 'lume/errors'
+require 'lume/lume_ir_visitor/visitor'
+require 'lume/lume_typing/errors'
+require 'lume/lume_typing/constraints'
 
 module Lume
-  class Analyzer
+  module Typing
     # The type checker is responsible for visiting all the expressions within an abstract syntax tree (AST)
     # and verifying that every expression is valid, in the context of it's resulting type.
     class TypeChecker
-      include Lume::Analyzer::Errors
-      include Lume::Analyzer::IR
-      include Lume::Analyzer::Visitor
-      include Lume::Typing
+      include Lume::IR
+      include Lume::IR::Visitor
+      include Lume::Typing::Errors
 
       def initialize
         @errors = []

@@ -4,10 +4,12 @@ require 'llvm/core'
 require 'llvm/execution_engine'
 require 'llvm/transforms/scalar'
 
-require_relative 'ir_visitor'
+require 'lume/lume_compiler/ir_visitor'
 
 module Lume
   class Compiler # :nodoc:
+    MAIN_NAME = 'main'
+
     # Compiles the CompilerIR from the given compiler context into LLVM IR, which
     # can be executed or dumped to an object file.
     #
@@ -102,8 +104,6 @@ module Lume
     end
 
     private
-
-    MAIN_NAME = 'main'
 
     # initializes the backend components for Lume (such as LLVM, JIT, etc.)
     #
