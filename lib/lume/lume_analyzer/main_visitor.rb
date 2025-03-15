@@ -143,6 +143,10 @@ module Lume
       #
       # @param expression [MethodCall] The method invocation expression to be visited.
       def accept_method_call(expression)
+        # If the expression instance refers to a class definition, it's a static method call,
+        # and we should resolve the instance to be the class definition itself.
+        expression.instance = expression.instance.reference if expression.instance.reference.is_a?(ClassDefinition)
+
         class_name = expression.class_instance_name
         class_def = @symbols.retrieve(class_name, type: ClassDefinition)
 
