@@ -108,6 +108,20 @@ module Lume
         expression.expression_type = expression.reference.return
       end
 
+      # Visits a function definition and registers its arguments within the symbol table.
+      #
+      # @param _ [FunctionDefinition] The function definition to be visited.
+      def before_function_definition(_)
+        @symbols.push_boundary
+      end
+
+      # Visits a function definition and pops its arguments off the symbol table.
+      #
+      # @param _ [FunctionDefinition] The function definition to be visited.
+      def accept_function_definition(_)
+        @symbols.pop_boundary
+      end
+
       # Visits a heap allocation expression.
       #
       # @param expression [HeapAllocation] The expression to be visited.
@@ -131,6 +145,20 @@ module Lume
 
         expression.reference = class_def.method(expression.action)
         expression.expression_type = expression.reference.return
+      end
+
+      # Visits a method definition and pushes its arguments onto the symbol table.
+      #
+      # @param _ [MethodDefinition] The method definition to be visited.
+      def before_method_definition(_)
+        @symbols.push_boundary
+      end
+
+      # Visits a method definition and pops its arguments off the symbol table.
+      #
+      # @param _ [MethodDefinition] The method definition to be visited.
+      def accept_method_definition(_)
+        @symbols.pop_boundary
       end
 
       # Visits an object initialization expression.

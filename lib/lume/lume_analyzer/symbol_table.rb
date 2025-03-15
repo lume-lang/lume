@@ -19,6 +19,12 @@ module Lume
       end
     end
 
+    # Represents a boundary between scopes, which cannot be crossed.
+    #
+    # Boundaries are only meant to be implemented when all symbols in the local scope should be hidden. This is most
+    # often the case when calling a function or method, where the local scope is hidden.
+    class Boundary; end
+
     # The symbol table keeps track of all symbols which are available within any given scope.
     #
     # This table binds variable references to their declarations, so code such as this:
@@ -47,9 +53,12 @@ module Lume
     #
     # Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
     # which was called before `a` was declared.
-    class SymbolTable # :nodoc:
+    class SymbolTable
       def initialize
         @symbols = []
+
+        # The first frame functions as a global scope, so it should always be present.
+        push_frame
       end
 
       # Pushes a new symbol scope with the given symbols into the symbol table.
@@ -65,6 +74,9 @@ module Lume
       #
       # This is usually called when a function or block scope ends.
       def pop_frame
+        # The last frame is the global scope and cannot be popped.
+        return if @symbols.length == 1
+
         @symbols.pop
       end
 
@@ -78,9 +90,6 @@ module Lume
       #
       # @param declaration [Lume::IR::Node] The IR node to be added as a symbol.
       def define(declaration, name: nil, type: nil)
-        # If the symbol table is empty, push a new frame before adding the symbol.
-        push_frame if @symbols.empty?
-
         # If no name was given directory, assume it resides as a `name` attribute.
         name ||= declaration.name if declaration.respond_to?(:name)
 
@@ -91,22 +100,83 @@ module Lume
         type ||= declaration
 
         # Push the declaration into the last symbol frame, keyed by its name.
-        @symbols[-1][name] = SymbolEntry.new(name, declaration, type)
+        @symbols[-1][name] = SymbolEntry.new(name, type, declaration)
       end
 
-      # Retrieves a variable declaration from the current symbol scope, with the given name.
+      # Retrieves a declared symbol from the current symbol scope, with the given name.
       #
-      # @param name [String] The name of the variable to retrieve.
+      # @param name [String] The name of the symbol to retrieve.
       #
       # @return [Lume::IR::Node]
       def retrieve(name, type: nil)
-        frame = @symbols.reverse.first { |f| f.key?(name) }
-        symbol = frame[name]
+        symbol = retrieve_symbol(name)
+
+        # If no symbol was found, return nil.
+        return nil if symbol.nil?
 
         # If the type was given, ensure that the symbol type matches. If not, return nil.
-        return nil if !type.nil? && !symbol.type.is_a?(type)
+        return nil if !type.nil? && !symbol.node.is_a?(type)
 
         symbol.node
+      end
+
+      # Pushes a new symbol boundary onto the symbol stack.
+      #
+      # @return [void]
+      def push_boundary
+        @symbols.push(Boundary.new)
+
+        # Push a new frame onto the stack, so new symbols can be registered.
+        push_frame
+      end
+
+      # Pops the last symbol boundary from the symbol stack.
+      #
+      # If the last symbol is not a boundary, raise an error.
+      #
+      # @return [void]
+      def pop_boundary
+        # Pops the boundary frame off the frame stack.
+        pop_frame
+
+        last = @symbols.last
+        raise StandardError, "Attempted to pop a non-boundary symbol: #{last}" unless last.is_a?(Boundary)
+
+        @symbols.pop
+      end
+
+      private
+
+      # Attempts to retrieve a symbol from the current symbol scope, with the given name. If not found before a
+      # boundary, attempts to retrieve it from the global scope.
+      #
+      # This method will **not** cross scope boundaries.
+      #
+      # @param name [String] The name of the symbol to retrieve.
+      #
+      # @return [Lume::IR::Node]
+      def retrieve_symbol(name)
+        frame = @symbols.reverse.find do |f|
+          # If we hit a boundary, continue no further and return nil.
+          return nil if f.is_a?(Boundary)
+
+          f.key?(name)
+        end
+
+        # If no parent frame was found, return nil.
+        return nil if frame.nil?
+
+        # If no symbol was found within the frame, attempt to retrieve it from the global scope.
+        frame[name] || retrieve_global(name)
+      end
+
+      # Attempts to retrieve a declaration from the global scope, with the given name.
+      #
+      # @param name [String] The name of the declaration to retrieve.
+      #
+      # @return [Lume::IR::Node]
+      def retrieve_global(name)
+        @symbols.first[name]
       end
     end
   end
