@@ -21,3 +21,6 @@ Metrics/MethodLength:
 
 Lint/BooleanSymbol:
   Enabled: false
+
+Style/RaiseArgs:
+  Enabled: false

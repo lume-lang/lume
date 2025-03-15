@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'lume/lume_analyzer/errors'
+require 'lume/lume_analyzer/symbol_table'
+
 module Lume
   class Analyzer # :nodoc:
     private
@@ -28,6 +31,7 @@ module Lume
     # This is important for the type checker, as it requires all expressions to have a known type. Otherwise, it cannot
     # perform type checking and may produce incorrect results.
     class MainVisitor
+      include Lume::Analyzer::Errors
       include Lume::IR
       include Lume::IR::Visitor
 
@@ -63,9 +67,7 @@ module Lume
       }.freeze
 
       def initialize
-        @functions = {}
-        @symbols = []
-        @expression_types = {}
+        @symbols = SymbolTable.new
       end
 
       # Accepts an AST and runs it through the visitor.
@@ -85,12 +87,19 @@ module Lume
         expression.expression_type = scalar_of(expression.value.expression_type)
       end
 
+      # Visits a class definition and registers it in the symbol table.
+      #
+      # @param expression [ClassDefinition] The class definition to be visited.
+      def accept_class_definition(expression)
+        @symbols.define(expression)
+      end
+
       # Visits a function invocation expression and resolves it's type from the symbol table.
       #
       # @param expression [FunctionCall] The function invocation expression to be visited.
       def accept_function_call(expression)
         # Find the function definition in the global symbol table
-        expression.reference = @functions[expression.action]
+        expression.reference = @symbols.retrieve(expression.action, type: FunctionDefinition)
 
         # Label all the arguments with their parameter names
         map_argument_names(expression.arguments, expression.reference.parameters)
@@ -118,7 +127,7 @@ module Lume
       # @param expression [MethodCall] The method invocation expression to be visited.
       def accept_method_call(expression)
         class_name = expression.class_instance_name
-        class_def = retrieve_symbol(class_name)
+        class_def = @symbols.retrieve(class_name, type: ClassDefinition)
 
         expression.reference = class_def.method(expression.action)
         expression.expression_type = expression.reference.return
@@ -144,7 +153,7 @@ module Lume
       #
       # @param expression [Parameter] The function parameter expression to be visited.
       def accept_parameter(expression)
-        add_symbol(expression.name, expression)
+        @symbols.define(expression)
       end
 
       # Visits a return expression and resolves it's type from the symbol table.
@@ -174,7 +183,11 @@ module Lume
       #
       # @param expression [Variable] The variable reference expression to be visited.
       def accept_variable(expression)
-        expression.reference = retrieve_symbol(expression.name)
+        expression.reference = @symbols.retrieve(expression.name)
+
+        # If no variable with the given name was found, raise an error.
+        raise UndefinedSymbol.new(expression) if expression.reference.nil?
+
         expression.expression_type = expression_type(expression.reference)
       end
 
@@ -185,7 +198,7 @@ module Lume
         expression.type ||= expression.value.expression_type
         expression.expression_type = expression.type
 
-        add_symbol(expression.name, expression)
+        @symbols.define(expression)
       end
 
       # Prediscovers all class- and function-definitions within the AST and adds them to the symbol table.
@@ -203,7 +216,7 @@ module Lume
         class_definitions = ast.nodes.select { |node| node.is_a?(ClassDefinition) }
 
         class_definitions.each do |class_definition|
-          add_symbol(class_definition.name, class_definition)
+          @symbols.define(class_definition)
         end
       end
 
@@ -214,9 +227,7 @@ module Lume
         function_definitions = ast.nodes.select { |node| node.is_a?(FunctionDefinition) }
 
         function_definitions.each do |definition|
-          add_symbol(definition.name, definition.return)
-
-          @functions[definition.name] = definition
+          @symbols.define(definition, type: definition.return)
         end
       end
 
@@ -227,58 +238,15 @@ module Lume
       # @return [Scalar] The scalar type.
       def scalar_of(name)
         if name.is_a?(String)
-          scalar = @expression_types[name] ||= Scalar.new(name)
+          scalar = Scalar.new(name)
         elsif name.is_a?(Scalar) || name.is_a?(NamedType)
-          scalar = @expression_types[name] ||= name
+          scalar = name
         else
           raise TypeError, "Expected String, Scalar, or NamedType, got #{name.class}"
         end
 
         scalar.expression_type = scalar
         scalar
-      end
-
-      # Pushes a new symbol scope with the given symbols into the symbol table.
-      #
-      # This is usually called when a function is invoked or block scope starts.
-      #
-      # @param symbols [Hash] The symbols to be defined in the new scope. Defaults to an empty hash.
-      def push_frame(symbols = {})
-        @symbols.push(symbols)
-      end
-
-      # Pops the current symbol scope from the symbol table.
-      #
-      # This is usually called when a function or block scope ends.
-      def pop_frame
-        @symbols.pop
-      end
-
-      # Appends a new symbol to the current symbol scope.
-      #
-      # This is usually called when a new variable is introduced within an existing block scope.
-      #
-      # @param name         [String]  The name of the symbol to be added.
-      # @param type         [Type]    The type of the symbol to be added.
-      def add_symbol(name, type)
-        # If the symbol table is empty, push a new frame before adding the symbol.
-        push_frame if @symbols.empty?
-
-        # Push the declaration into the last symbol frame, keyed by its name.
-        @symbols[-1][name] = type
-      end
-
-      # Retrieves a symbol from the current symbol scope, with the given name.
-      #
-      # @param name   [String]  The name of the symbol to retrieve.
-      #
-      # @return [Type]
-      def retrieve_symbol(name)
-        @symbols.reverse_each do |frame|
-          return frame[name] if frame.key?(name)
-        end
-
-        nil
       end
 
       # Maps the names of all the arguments to their corresponding parameter names.
