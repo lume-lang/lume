@@ -2,9 +2,9 @@
 
 require_relative 'test_helper'
 
-include Lume::Language
+include Lume::Syntax
 
-describe Parser do
+describe Lume::Parser do
   it_parses 'nil', NilLiteral.new
 
   it_parses 'true', BooleanLiteral.new(true)

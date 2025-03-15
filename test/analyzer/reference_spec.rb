@@ -12,8 +12,8 @@ describe 'object referencing' do
       let a = new String()
     ))
 
-    class_def = tree.find_first(Lume::Analyzer::IR::ClassDefinition)
-    variable_decl = tree.find_first(Lume::Analyzer::IR::VariableDeclaration)
+    class_def = tree.find_first(Lume::IR::ClassDefinition)
+    variable_decl = tree.find_first(Lume::IR::VariableDeclaration)
 
     assert_same(class_def, variable_decl.value.class_def)
   end
