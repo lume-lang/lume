@@ -9,8 +9,9 @@ module Lume
       class UndefinedSymbol < Lume::LumeDiagnostic
         attr_reader :location
 
-        def initialize(node)
-          message = "Symbol '#{node.name}' does not exist in the current scope."
+        def initialize(node, name: nil)
+          name ||= node.name
+          message = "Symbol '#{name}' does not exist in the current scope."
 
           super(message, type: Lume::ERROR)
 

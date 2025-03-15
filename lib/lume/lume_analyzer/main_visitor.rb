@@ -101,6 +101,9 @@ module Lume
         # Find the function definition in the global symbol table
         expression.reference = @symbols.retrieve(expression.action, type: FunctionDefinition)
 
+        # If no function with the given name was found, raise an error.
+        raise UndefinedSymbol.new(expression, name: expression.action) if expression.reference.nil?
+
         # Label all the arguments with their parameter names
         map_argument_names(expression.arguments, expression.reference.parameters)
 
