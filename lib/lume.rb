@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'lume/core_ext/class'
 require 'lume/core_ext/string'
 
 require 'lume/errors'

@@ -115,7 +115,7 @@ module Lume
       error_code = error_code(error)
       error_type = with_severity_color(error.type, error.type)
 
-      puts "#{error_type}#{error_code}: #{error.message}"
+      puts "#{error_type}#{error_code}: #{error.message} [#{error.class.short_name}]"
 
       # If the error has a location attached, report it as well.
       report_error_location(error) if error.location?
