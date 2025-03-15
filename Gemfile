@@ -6,6 +6,7 @@ ruby '3.4.2'
 gem 'colorize'
 gem 'rake'
 gem 'ruby-llvm'
+gem 'thor'
 
 group :test do
   gem 'minitest'

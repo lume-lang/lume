@@ -16,8 +16,71 @@ describe Parser do
   it_parses 'a = b.c', Assignment.new('a'.var, MemberAccess.new('b', 'c'))
   it_parses 'a = b.c.d', Assignment.new('a'.var, MemberAccess.new(MemberAccess.new('b', 'c'), 'd'))
   it_parses 'a = b.c.d()', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd'))
-  it_parses 'a = b.c.d(1)', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd', 1.int8))
+  it_parses 'a = b.c.d(1)', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd', 1.int8.arg))
 
   it_parses 'fn foo(): void end', MethodDefinition.new('foo', [], Void.new, [])
   it_parses 'fn foo(a: int): void end', MethodDefinition.new('foo', [Parameter.new('a', Scalar.new('int'))], Void.new, [])
+
+  it_parses %(
+    class Foo
+      fn foo(a: int, b: int): void end
+    end
+    ), ClassDefinition.new(
+      'Foo', [
+        MethodDefinition.new(
+          'foo', [
+            Parameter.new('a', Scalar.new('int')),
+            Parameter.new('b', Scalar.new('int'))
+          ],
+          Void.new,
+          []
+        )
+      ]
+    )
+
+  it_parses %(
+    class Foo
+      fn Foo(a: int) end
+    end
+    ), ClassDefinition.new(
+      'Foo', [
+        MethodDefinition.new(
+          'Foo', [
+            Parameter.new('a', Scalar.new('int'))
+          ],
+          Void.new,
+          []
+        )
+      ]
+    )
+
+  it_parses %(
+    class Foo
+      name: String
+    end
+    ), ClassDefinition.new(
+      'Foo', [
+        Property.new('name', type: Scalar.new('String'), default: nil)
+      ]
+    )
+
+  it_parses %(
+    class Foo
+      name: String = 'John'
+    end
+    ), ClassDefinition.new(
+      'Foo', [
+        Property.new('name', type: Scalar.new('String'), default: 'John'.string)
+      ]
+    )
+
+  it_parses %(
+    class Foo
+      name = 'John'
+    end
+    ), ClassDefinition.new(
+      'Foo', [
+        Property.new('name', type: nil, default: 'John'.string)
+      ]
+    )
 end

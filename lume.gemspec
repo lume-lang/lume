@@ -17,4 +17,5 @@ Gem::Specification.new do |s|
   s.license       = 'MIT'
   s.files         = ['Rakefile', *Dir.glob('lib/**/*.rb')]
   s.require_paths = ['lib']
+  s.executables   = ['lume']
 end

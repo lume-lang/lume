@@ -2,39 +2,36 @@
 
 module Lume
   module Language
-    class Error < StandardError # :nodoc:
-      attr_accessor :message
+    # Unexpected token errors are raised when the parser encounters a token that is not expected. These errors
+    # contain information about the expected token, the actual token, and the location of the error.
+    #
+    # These errors are meant to be reported to the user and cause the parser to stop parsing the current file.
+    class UnexpectedTokenError < Lume::LumeDiagnostic
+      attr_reader :expected, :token, :location
 
-      def initialize(message)
-        super
+      def initialize(message, expected, token, location)
+        super(message, type: Lume::ERROR)
 
-        @message = message
+        @expected = expected
+        @token = token
+        @location = location
       end
     end
 
-    class UnexpectedTokenError < Error # :nodoc:
+    # Unknown token errors are raised when the parser encounters a token that is not recognized. These errors
+    # contain information about the actual token, and the location of the error.
+    #
+    # These errors are meant to be reported to the user and cause the parser to stop parsing the current file.
+    class UnknownTokenError < Lume::LumeDiagnostic
       attr_reader :token, :location
 
-      def initialize(expected, token, location, message = nil)
+      def initialize(message, token, location)
+        message ||= "Could not recognize token, unknown token: #{token.value}"
+
+        super(message, type: Lume::ERROR)
+
         @token = token
         @location = location
-
-        message ||= "unexpected token: expected #{format_expected(expected)}, found '#{token.value}' (#{token.type})"
-        message += " at line #{@location.line}, column #{@location.column}."
-        message += ' Found EOF.' if token.type == :eof
-        message += " Found '#{token.type}'" unless token.type == :eof
-
-        super(message)
-      end
-
-      private
-
-      def format_expected(expected)
-        return "'#{expected.first}'" if expected.is_a?(Array) && expected.size == 1
-
-        joined = expected.map(&:to_s).join(', ')
-
-        "one of [#{joined}]"
       end
     end
   end

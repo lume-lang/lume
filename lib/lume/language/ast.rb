@@ -17,6 +17,10 @@ module Lume
       def call(name, ...)
         Call.new(self, name, ...)
       end
+
+      def arg(name: nil)
+        Argument.new(name, self)
+      end
     end
 
     # Represents an abstract expression.
@@ -41,9 +45,16 @@ module Lume
 
     # Represents a single argument.
     #
-    #   [name ':'] value
+    #   [ name ':' ] value
     class Argument < Node
       attr_accessor :name, :value
+
+      def initialize(name, value)
+        super()
+
+        @name = name
+        @value = value
+      end
 
       def accept_children(visitor)
         visitor.accept(@value)
@@ -131,6 +142,23 @@ module Lume
       end
     end
 
+    # Represents a single visibility modifier for a class, method or property.
+    #
+    #   'public' | 'private' | 'static'
+    class Visibility < Expression
+      attr_accessor :name
+
+      def initialize(name)
+        super()
+
+        @name = name
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @name == other.name
+      end
+    end
+
     # Represents an object initialization expression.
     #
     #   'new' class '(' arguments [ ',' arguments ]* ')'
@@ -153,17 +181,9 @@ module Lume
       end
     end
 
-    # Represents a struct definition.
-    #
-    #   'struct' name
-    #     expressions
-    #   'end'
-    class StructDefinition < Expression
-      attr_accessor :name, :expressions
-
-      def accept_children(visitor)
-        @expressions.each { |ex| visitor.accept(ex) }
-      end
+    # Represents an abstract member definition.
+    class Member < Expression
+      attr_accessor :visibility
     end
 
     # Represents a class definition.
@@ -174,21 +194,28 @@ module Lume
     class ClassDefinition < Expression
       attr_accessor :name, :expressions
 
-      def accept_children(visitor)
-        @expressions.each { |ex| visitor.accept(ex) }
+      def initialize(name, expressions)
+        super()
+
+        @name = name
+        @expressions = expressions
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @name == other.name && @expressions == other.expressions
       end
     end
 
     # Represents a method definition.
     #
-    #   'fn' [ target '.' ] name '(' ')' ':' return
+    #   visibility* 'fn' name '(' ')' ':' return
     #     expressions
     #   'end'
     # |
-    #   'fn' [ target '.' ] name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
     #     expressions
     #   'end'
-    class MethodDefinition < Expression
+    class MethodDefinition < Member
       attr_accessor :name, :parameters, :return, :expressions
 
       def initialize(name, parameters, return_value, expressions)
@@ -210,7 +237,54 @@ module Lume
       def ==(other)
         return false unless other.is_a?(self.class)
 
-        @name == other.name && @parameters == other.parameters && @return == other.return && @expressions == other.expressions
+        @name == other.name &&
+          @parameters == other.parameters &&
+          @return == other.return &&
+          @expressions == other.expressions
+      end
+    end
+
+    # Represents a type definition.
+    #
+    #   'type' name '=' type
+    class TypeDefinition < Expression
+      attr_accessor :name, :type
+
+      def initialize(name, type)
+        super()
+
+        @name = name
+        @type = type
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @name == other.name && @type == other.type
+      end
+    end
+
+    # Represents a property declaration.
+    #
+    #   name [ ':' type | '=' default ]
+    class Property < Member
+      attr_accessor :name, :type, :default
+
+      def initialize(name, type: nil, default: nil)
+        super()
+
+        @name = name
+        @type = type
+        @default = default || NilLiteral.new
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@type) unless @type.nil?
+        visitor.accept(@default) unless @default.nil?
+      end
+
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        @name == other.name && @type == other.type && @default == other.default
       end
     end
 
@@ -218,7 +292,7 @@ module Lume
     #
     #   [ 'let' | 'const' ] name ':' type [ '=' value ]
     class VariableDeclaration < Expression
-      attr_accessor :name, :type, :value, :const
+      attr_accessor :name, :type, :value
 
       def initialize(name, type, value = nil, const: false)
         super()
@@ -235,7 +309,11 @@ module Lume
       end
 
       def ==(other)
-        other.is_a?(self.class) && @name == other.name && @type == other.type && @value == other.value && @const == other.const
+        other.is_a?(self.class) && @name == other.name && @type == other.type && @value == other.value && @const == other.const?
+      end
+
+      def const?
+        @const
       end
     end
 
@@ -283,6 +361,12 @@ module Lume
     #   'return' value
     class Return < Expression
       attr_accessor :value
+
+      def initialize(value)
+        super()
+
+        @value = value
+      end
 
       def accept_children(visitor)
         visitor.accept(@value)
@@ -559,11 +643,21 @@ module Lume
     end
 
     # Represents a void type.
+    #
+    #   'void'
     class Void < Type
     end
 
-    # Represents an abstract scalar type.
-    class Scalar < Type
+    # Represents a null type.
+    #
+    #   'null'
+    class Null < Type
+    end
+
+    # Represents an abstract named type.
+    #
+    #   name
+    class NamedType < Type
       attr_accessor :name
 
       def initialize(name)
@@ -572,21 +666,28 @@ module Lume
         @name = name
       end
 
-      # Determines whether the scalar is an integer type.
+      # Determines whether the type is an integer type.
       #
       # @return [Boolean]
       def integer?
         name.start_with?('Int') || name.start_with?('UInt')
       end
 
-      # Determines whether the scalar is a floating-point type.
+      # Determines whether the type is a floating-point type.
       #
       # @return [Boolean]
       def floating?
         name.start_with?('Float') || name.start_with?('Double')
       end
 
-      # Determines whether the scalar is a boolean type.
+      # Determines whether the type is a string type.
+      #
+      # @return [Boolean]
+      def string?
+        name == 'String'
+      end
+
+      # Determines whether the type is a boolean type.
       #
       # @return [Boolean]
       def boolean?
@@ -595,6 +696,69 @@ module Lume
 
       def ==(other)
         other.is_a?(self.class) && other.name == name
+      end
+    end
+
+    # Represents a pointer type.
+    #
+    #   '*' of
+    class Pointer < Type
+      attr_accessor :of
+
+      def initialize(of)
+        super()
+
+        @of = of
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && other.of == of
+      end
+    end
+
+    # Represents a union type, where the type is one of the defined subtypes.
+    #
+    #   types '|' [ types* ]
+    class Union < Type
+      attr_accessor :types
+
+      def initialize(types = [])
+        super()
+
+        @types = types
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && other.types == types
+      end
+
+      # Merges the nested unions within the union type into itself.
+      def merge_nested_unions
+        # Find all the unions nested within the current union
+        unions = types.select { |type| type.is_a?(Union) }
+
+        # Append all the nested union types into the current union
+        unions.each { |union| types.concat(union.types) }
+
+        # Remove all the nested unions from the current union
+        types.delete_if { |type| type.is_a?(Union) }
+      end
+    end
+
+    # Represents an array type, where the type is a list of zero-or-more elements.
+    #
+    #   inner '[' ']'
+    class ArrayType < Type
+      attr_accessor :inner
+
+      def initialize(inner)
+        super()
+
+        @inner = inner
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && other.inner == inner
       end
     end
   end

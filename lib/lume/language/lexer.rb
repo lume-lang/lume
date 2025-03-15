@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'token'
-require_relative 'location'
 
 module Lume
   module Language
@@ -9,6 +8,8 @@ module Lume
       attr_reader :source
 
       def initialize(source)
+        source = source.to_s if source.is_a?(Symbol)
+
         @source = source
         @index = 0
       end
@@ -21,6 +22,9 @@ module Lume
       def next_token!
         token = read_token!
         @index = token.end
+
+        # If the lexer encounters an unknown token, raise an error.
+        raise UnknownTokenError.new(nil, token, token.location(file: @source.path)) if token.unknown?
 
         token
       end
@@ -60,12 +64,14 @@ module Lume
         end
         fn
         class
-        struct
         return
         true
         false
         nil
         new
+        public
+        private
+        static
       ].freeze
 
       SYMBOLS_PATTERN = %r(!=|!|==|=|\+=|-=|/=|\*=|,|\.|\+|-|/|\*|\(|\)|\{|\}|\[|\]|\||&|:|\+\+|--)
@@ -212,15 +218,12 @@ module Lume
       # @return [Token] The parsed token from the source.
       def parse_number_token
         slice, kind = parse_number_value
+        return token(:unknown) if slice.nil?
 
         number = parse_integer_number_token(slice) || parse_float_number_token(slice)
         return token(:unknown) if number.nil?
 
-        token = token(:number, value: number, start: @index, last: @index + slice.length)
-        token.kind = kind if kind
-        token.end = @index + slice.length + kind.length + 1 if kind
-
-        token
+        create_number_token(number, slice, kind)
       end
 
       # Parses the value at the current cursor position as a numeric literal.
@@ -230,7 +233,24 @@ module Lume
         pattern = /[-+]?(?<value>(?:[\d_.]+(?:e-?\d+)?)|(?:0[dxob]\w+))(?:_(?<kind>\w+))?\b/
         match = @source.match(pattern, @index)
 
+        return [nil, nil] if match.nil?
+
         [match[:value], match[:kind]]
+      end
+
+      # Creates a number token with the given value, source slice and optional number kind.
+      #
+      # @param value [String] The value of the number token.
+      # @param slice [String] The source slice of the number token.
+      # @param kind [String] The kind of the number token, if any.
+      #
+      # @return [Token] The created number token.
+      def create_number_token(value, slice, kind)
+        token = token(:number, value: value, start: @index, last: @index + slice.length)
+        token.kind = kind if kind
+        token.end = @index + slice.length + kind.length + 1 if kind
+
+        token
       end
 
       # Parses the current token at the internal cursor as an integer literal.

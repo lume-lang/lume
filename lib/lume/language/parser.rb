@@ -3,9 +3,7 @@
 require 'colorize'
 
 require_relative 'ast'
-require_relative 'document'
 require_relative 'errors'
-require_relative 'location'
 require_relative 'token'
 
 module Lume
@@ -14,14 +12,12 @@ module Lume
       include Lume::Language
 
       attr_reader :source, :tokens
-      attr_accessor :start, :end
 
-      # @param source [String]                      The source code to parse.
+      # @param source [Lume::SourceFile]             The source code to parse.
       # @param tokens [Array<Lume::Language::Token>] The tokens to use for parsing.
-      # @param filename [String]                    The filename of the source code.
-      def initialize(source, tokens, filename: '<memory>')
+      def initialize(source, tokens)
         @source = source
-        @filename = filename
+        @filename = source.path
         @lines = @source.split("\n")
 
         @tokens = tokens
@@ -32,23 +28,23 @@ module Lume
 
       # Creates a new parser instance with the given source code and pre-lexed tokens.
       #
-      # @param source   [String]                      The source code to parse.
+      # @param source   [Lume::SourceFile]             The source code to parse.
       # @param tokens   [Array<Lume::Language::Token>] The tokens to use for parsing.
-      # @param filename [String]                      The filename of the source code.
       #
       # @return [Lume::Language::Parser]             The new parser instance.
-      def self.with_tokens(source, tokens, filename: '<memory>')
-        new(source, tokens, filename: filename)
+      def self.with_tokens(source, tokens)
+        new(source, tokens)
       end
 
       # Creates a new parser instance with the given source code and pre-lexed tokens.
       #
-      # @param source   [String]                    The source code to parse.
-      # @param filename [String]                    The filename of the source code.
+      # @param source   [Lume::SourceFile]  The source code to parse.
       #
-      # @return [Lume::Language::Parser]             The new parser instance.
-      def self.with_source(source, filename: '<memory>')
-        new(source, Lexer.new(source).all!, filename: filename)
+      # @return [Lume::Language::Parser]    The new parser instance.
+      def self.with_source(source)
+        source = SourceFile.new(nil, source) if source.is_a?(String)
+
+        new(source, Lexer.new(source.content).all!)
       end
 
       # Parse the entire source code, given in the constructor.
@@ -68,11 +64,17 @@ module Lume
 
       STATEMENT_TYPES = [
         *CONTROL_TYPES,
-        :struct,
         :class,
         :fn,
+        :type,
         :let,
         :const
+      ].freeze
+
+      VISIBILITY_MODIFIERS = %i[
+        public
+        private
+        static
       ].freeze
 
       OPERATORS = %i[
@@ -135,30 +137,18 @@ module Lume
 
       private
 
-      # Peeks the current token's type.
+      # Peeks the current token's type or value.
       #
-      # @param type [String|Symbol|Array<String|Symbol>] The type to peek for.
+      # @param value [String|Symbol|Array<String|Symbol>] The type or value to peek for.
       #
-      # @return [Boolean] `true` if the current token's type matches the given type, `false` otherwise.
-      def peek(type, offset: 0)
-        type = [type] if type.is_a?(Symbol) || type.is_a?(String)
-        type = type.map(&:to_s)
-
-        token = @tokens[@index + offset]
-        type.include?(token.type.to_s)
-      end
-
-      # Peeks the current token's value.
-      #
-      # @param value [String|Symbol|Array<String|Symbol>] The value to peek for.
-      #
-      # @return [Boolean] `true` if the current token's value matches the given value, `false` otherwise.
-      def peek_value(value, offset: 0)
+      # @return [Boolean] `true` if the current token's type or value matches the given value, `false` otherwise.
+      def peek(value, offset: 0)
         value = [value] if value.is_a?(Symbol) || value.is_a?(String)
         value = value.map(&:to_s)
 
         token = @tokens[@index + offset]
-        value.include?(token.value.to_s)
+
+        value.include?(token.type.to_s) || value.include?(token.value.to_s)
       end
 
       # Peeks the next token's type.
@@ -280,21 +270,25 @@ module Lume
       #
       # @param token [Token] The token to get the location of.
       #
-      # @return [Location] The location of the token.
+      # @return [Lume::Location] The location of the token.
       def location_of(token)
-        line = 1
-        column = 1
+        Lume::Location.new(token.start..token.end, file: @filename)
+      end
 
-        (0...token.start).each do |idx|
-          column += 1
+      # Calls the given block and applies the location span to it's result.
+      #
+      # @return [Node] The node returned from the block.
+      def with_location
+        raise 'Block required' unless block_given?
 
-          if @source[idx] == "\n"
-            line += 1
-            column = 1
-          end
-        end
+        start = @token.start
+        result = yield
+        stop = @token.end
 
-        Location.new(line: line, column: column, file: @filename)
+        # Set the location of the result, only if it's a node
+        result.location = Lume::Location.new(start..stop, file: @filename) if result.is_a?(Node)
+
+        result
       end
 
       # Raises an unexpected token error.
@@ -302,7 +296,12 @@ module Lume
       # @param expected   [String] The expected token type.
       # @param message    [String] An optional error message to pass.
       def unexpected_token(expected, message: nil)
-        raise UnexpectedTokenError.new(expected, @token, location_of(@token), message)
+        token = @token
+        location = location_of(token)
+
+        message ||= "Expected token '#{expected}', but found '#{token}'"
+
+        raise UnexpectedTokenError.new(message, expected, token, location)
       end
 
       # Gets the precedence of the given token.
@@ -324,26 +323,25 @@ module Lume
         return nil if peek(:eof)
 
         # If the token is a statement token, parse it as such.
-        return parse_statement_expression if peek(STATEMENT_TYPES)
+        return with_location { parse_statement_expression } if peek(STATEMENT_TYPES)
 
         # If the current token isn't a statement token, parse it as an expression.
-        parse_expression
+        with_location { parse_expression }
       end
 
       # Parses a list of statements within the top-level namespace, function or method.
       #
       # @return [Array<Node>] The parsed statements.
       def parse_statements
-        iterate_all! { parse_statement }
+        iterate_all! do
+          with_location { parse_statement }
+        end
       end
 
       # Parses the statement expression at the current cursor position.
       #
       # @return [Node] The parsed expression.
       def parse_statement_expression
-        # If the statement is a struct definition, parse it as a struct definition
-        return parse_struct_definition if peek(:struct)
-
         # If the statement is a class definition, parse it as a class definition
         return parse_class_definition if peek(:class)
 
@@ -352,6 +350,9 @@ module Lume
 
         # If the statement starts with `let` or `const`, parse it as a variable declaration
         return parse_variable_declaration if peek(%i[let const])
+
+        # If the next token is `type`, it might be a type definition
+        return parse_type_definition if peek(:type) && peek(:name, offset: 1)
 
         # If the consumed token is a control token, parse it as a control statement
         return parse_control_expression if peek(CONTROL_TYPES)
@@ -365,10 +366,12 @@ module Lume
       def parse_expression(precedence: 0)
         return nil if peek(:eof)
 
-        left = parse_prefix_expression
-        left = parse_infix_expression(left) while precedence < precedence_of(@token)
+        with_location do
+          left = parse_prefix_expression
+          left = parse_infix_expression(left) while precedence < precedence_of(@token)
 
-        left
+          left
+        end
       end
 
       # Parses a list of expressions within the top-level namespace, function or method.
@@ -426,7 +429,7 @@ module Lume
           parameters = []
 
           loop do
-            definition = parse_parameter
+            definition = with_location { parse_parameter }
             parameters << definition unless definition.nil?
 
             break unless peek(:',')
@@ -452,16 +455,15 @@ module Lume
 
       # Parses a list of argument values. These are used in function- and method-invocations.
       #
-      # @return [Array<Expression>] The parsed argument values.
+      # @return [Array<Argument>] The parsed argument values.
       def parse_arguments
         consume_wrapped!(left: :'(', right: :')') do
           arguments = []
 
-          return arguments if peek(:')')
+          break arguments if consume(type: :')')
 
           loop do
-            definition = parse_argument
-            arguments << definition unless definition.nil?
+            arguments << parse_argument
 
             break unless consume(type: :',')
           end
@@ -472,9 +474,17 @@ module Lume
 
       # Parses a single argument value. This is used in function- and method-invocations.
       #
-      # @return [Expression] The parsed argument value.
+      # @return [Argument] The parsed argument value.
       def parse_argument
-        parse_value
+        name = nil
+        value = parse_expression
+
+        if consume(type: :':')
+          name = value.name
+          value = parse_expression
+        end
+
+        Argument.new(name, value)
       end
 
       # Parses a nested expression. A nested expression is an expression that is wrapped in parentheses.
@@ -536,10 +546,9 @@ module Lume
         # Consume the return token
         consume!(type: :return)
 
-        expression = Return.new
-        expression.value = parse_expression
+        expression = with_location { parse_expression }
 
-        expression
+        Return.new(expression)
       end
 
       # Parses a conditional expression.
@@ -656,14 +665,16 @@ module Lume
         type = nil
 
         # If the next token is a colon, a type is explicitly specified
-        type = parse_type if consume(type: :':')
+        type = with_location { parse_type } if consume(type: :':')
 
         expression = VariableDeclaration.new(name, type, const: is_const)
 
         # If no type was specified, we require there to be a value specified.
-        unexpected_token('=', message: 'Expected variable assignment since no type was specified') if type.nil? && !peek(:'=')
+        if type.nil? && !peek(:'=')
+          unexpected_token('=', message: 'Expected variable assignment since no type was specified')
+        end
 
-        expression.value = parse_expression if consume(type: :'=')
+        expression.value = with_location { parse_expression } if consume(type: :'=')
 
         expression
       end
@@ -728,24 +739,6 @@ module Lume
         Assignment.new(target, parse_expression)
       end
 
-      # Parses a single struct definition.
-      #
-      # @return [StructDefinition] The parsed struct definition.
-      #
-      # @see StructDefinition
-      def parse_struct_definition
-        consume!(value: :struct)
-        name = consume!(type: :name, error: 'Expected struct name in struct definition').value
-
-        expression = StructDefinition.new
-        expression.name = name
-        expression.expressions = parse_statements
-
-        consume!(type: :end, error: 'Expected \'end\' after struct definition')
-
-        expression
-      end
-
       # Parses a single class definition.
       #
       # @return [MethodDefinition] The parsed method definition.
@@ -753,15 +746,63 @@ module Lume
       # @see MethodDefinition
       def parse_class_definition
         consume!(value: :class)
-        name = consume!(type: :name, error: 'Expected class name in class definition').value
 
-        expression = ClassDefinition.new
-        expression.name = name
-        expression.expressions = parse_statements
+        name = consume!(type: :name, error: 'Expected class name in class definition').value
+        definitions = parse_member_definitions
+        expression = ClassDefinition.new(name, definitions)
 
         consume!(type: :end, error: 'Expected \'end\' after class definition')
 
         expression
+      end
+
+      # Parses a list of member definitions.
+      #
+      # @return [Array<Expression>] The parsed member definitions.
+      def parse_member_definitions
+        iterate_all! do
+          with_location { parse_member_definition }
+        end
+      end
+
+      # Parses a single member definition.
+      #
+      # @return [Expression] The parsed member definition.
+      def parse_member_definition
+        # If a visibility modifier is present, parse it and set it on the following member definition.
+        if peek(VISIBILITY_MODIFIERS)
+          visibility = parse_visibility_modifiers
+
+          member = parse_member_definition
+          member.visibility = visibility
+
+          return member
+        end
+
+        # If the current token is a `fn` keyword, it's a method declaration.
+        return parse_method_definition if peek(:fn)
+
+        # If the current token is a `name` keyword, it's likely a property definition.
+        return parse_property_definition if peek(:name)
+
+        nil
+      end
+
+      # Parses a single class property definition.
+      #
+      # @return [Property] The parsed property definition.
+      def parse_property_definition
+        name = consume!(type: :name, error: 'Expected property name').value
+        type = nil
+        default = nil
+
+        # If the next token is a colon, an explicit type is specified.
+        type = parse_type if consume(type: :':')
+
+        # If the next token is an equal sign, a default value is specified.
+        default = parse_expression if consume(type: :'=')
+
+        Property.new(name, type: type, default: default)
       end
 
       # Parses a single method definition.
@@ -774,7 +815,7 @@ module Lume
         name = consume!(type: :name, error: 'Expected method name in signature').value
 
         parameters = parse_parameters
-        return_type = parse_return_type
+        return_type = with_location { parse_return_type }
         expressions = parse_statements
 
         expression = MethodDefinition.new(name, parameters, return_type, expressions)
@@ -784,23 +825,137 @@ module Lume
         expression
       end
 
+      # Parses zero-or-more visibility modifiers.
+      #
+      # @return [Array<Visibility>] The parsed visibility modifiers.
+      def parse_visibility_modifiers
+        iterate_all! do
+          next nil unless peek(VISIBILITY_MODIFIERS)
+
+          with_location do
+            modifier = consume!(type: VISIBILITY_MODIFIERS).value
+
+            Visibility.new(modifier)
+          end
+        end
+      end
+
       # Parses a method return type.
       #
       # @return [Type] The parsed type.
       def parse_return_type
+        # If no return type is specified, return `void` by default
         return Void.new unless consume(type: :':')
 
         parse_type
       end
 
-      # Parses a single type definition expression.
+      # Parses a single type definition.
       #
       # @return [TypeDefinition] The parsed type definition.
-      def parse_type
-        type = consume!(type: :name).value
-        return Void.new if type == 'void'
+      #
+      # @see TypeDefinition
+      def parse_type_definition
+        consume!(value: :type)
 
-        Scalar.new(type)
+        name = consume!(type: name)
+
+        # Skip equal sign between name and type
+        consume!(type: :'=')
+
+        type = with_location { parse_type }
+
+        TypeDefinition.new(name.value, type)
+      end
+
+      # Parses a single type definition expression.
+      #
+      # @return [Type] The parsed type definition.
+      def parse_type
+        type = parse_type_prefix_expression
+
+        # If the next token is a pipe, parse it as a union type.
+        type = parse_union_type(type) if peek(:|)
+
+        if type.is_a?(Union)
+          # Merge all the nested unions within a single union
+          type.merge_nested_unions
+
+          # If there is only a single type in the union, return it directly
+          return type.types.first if type.types.size == 1
+        end
+
+        type
+      end
+
+      # Parses a type prefix expression at the current cursor position.
+      #
+      # Prefix expressions are expressions which appear at the start of a type definition.
+      #
+      # @return [Type] The parsed type expression.
+      def parse_type_prefix_expression
+        return nil if peek(:eof)
+
+        # If the next token is an opening parentheses, parse it as a nested type.
+        return parse_union_type if peek(:'(')
+
+        # If the next token is a opening bracket, parse it as an array type.
+        return parse_array_type if peek(:'[')
+
+        # If the next token is a name, parse it as a named type.
+        return parse_named_type if peek(:name)
+
+        # If the next token is an asterisk, parse it as a pointer type.
+        return parse_pointer_type if peek(:*)
+
+        nil
+      end
+
+      # Parses a nested type definition expression.
+      #
+      # @return [Type] The parsed type definition.
+      def parse_nested_type
+        consume_wrapped!(left: :'(', right: :')') { parse_type }
+      end
+
+      # Parses a named type definition expression.
+      #
+      # @return [Type] The parsed type definition.
+      def parse_named_type
+        name = consume!(type: :name).value
+
+        return Void.new if name.casecmp?('void')
+
+        return Null.new if name.casecmp?('null')
+
+        NamedType.new(name)
+      end
+
+      # Parses a union type definition expression.
+      #
+      # @return [Type] The parsed type definition.
+      def parse_union_type(lhs)
+        consume(type: :|)
+
+        Union.new([lhs, parse_type])
+      end
+
+      # Parses an array type definition expression.
+      #
+      # @return [ArrayType] The parsed type definition.
+      def parse_array_type
+        inner = consume_wrapped!(left: :'[', right: :']') { parse_type }
+
+        ArrayType.new(inner)
+      end
+
+      # Parses a pointer type definition expression.
+      #
+      # @return [Type] The parsed type definition.
+      def parse_pointer_type
+        consume!(type: :*)
+
+        Pointer.new(parse_type)
       end
 
       # Parses zero-or-more values from an expression, separated by commas.

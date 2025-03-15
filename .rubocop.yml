@@ -7,14 +7,17 @@ AllCops:
   Exclude:
     - "test/**/*"
 
+Layout/CaseIndentation:
+  EnforcedStyle: end
+
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
+
 Metrics/ClassLength:
   Enabled: false
 
 Metrics/MethodLength:
   Max: 20
-
-Layout/LineLength:
-  Max: 140
 
 Lint/BooleanSymbol:
   Enabled: false

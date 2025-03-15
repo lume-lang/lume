@@ -1,7 +1,7 @@
-fn hello_world(name: string): int
+fn hello_world(): int
     print('Hello, World!')
 
     return 0
 end
 
-hello_world
+hello_world()

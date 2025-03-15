@@ -54,4 +54,8 @@ class String # :nodoc:
   def var
     VariableReference.new(self)
   end
+
+  def string
+    StringLiteral.new(self)
+  end
 end

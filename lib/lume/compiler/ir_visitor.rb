@@ -1,94 +1,17 @@
 # frozen_string_literal: true
 
-require 'llvm/core'
-require 'llvm/execution_engine'
-require 'llvm/transforms/scalar'
-
 module Lume
-  module Codegen # :nodoc:
-    include Lume::Language
-
-    MAIN_NAME = 'main'
-
-    # initializes the backend components for Lume (such as LLVM, JIT, etc.)
-    #
-    # @return [void]
-    def initialize_codegen!
-      LLVM.init_jit
-
-      @module = LLVM::Module.new('lume')
-      @engine = LLVM::JITCompiler.new(@module)
-      @pass_manager = LLVM::PassManager.new
-      @builder = LLVM::Builder.new
-      @target_machine = @engine.target_machine
-
-      @visitor = NodeVisitor.new(@module, @engine, @builder)
-    end
-
-    # Finishes the compilation process.
-    #
-    # @return [void]
-    def finish
-      @builder.dispose
-      @module.dispose
-    end
-
-    # Optimizes the module using LLVM's optimization passes.
-    #
-    # @return [void]
-    def optimize!
-      @pass_manager.run(@module)
-    end
-
-    # Compiles the given node expressions into LLVM IR.
-    #
-    # @param node [Node] The node to compile.
-    #
-    # @return [void]
-    def codegen_node!(node)
-      @visitor.visit(node)
-    end
-
-    # Dumps the LLVM module to `stdout`.
-    #
-    # @return [void]
-    def dump!
-      @module.dump
-
-      @module.verify!
-    end
-
-    # Emits the LLVM module as an object file to the given file.
-    #
-    # @param filename [String] The name of the file to emit the module to.
-    #
-    # @return [void]
-    def emit(filename)
-      @target_machine.emit(@module, filename, :object)
-    end
-
-    # Finishes the compilation process.
-    #
-    # @return [void]
-    def finalize!
-      @visitor.finalize!
-    end
-
-    # Evaluates / executes the compiled module, as if it were a compiled executable.
-    #
-    # @param args [Array] The arguments to pass to the module's `main` function.
-    #
-    # @return [Integer]
-    def evaluate(*args)
-      argc = args.length
-      argv = nil if args.empty?
-
-      @engine.run_function(@engine.functions[MAIN_NAME], argc, argv)
-    end
-  end
-
-  # Visitor for nodes in the AST, used to generate LLVM IR from the AST.
+  # Visitor for nodes in the AST, used to generate LLVM IR from the CompilerIR.
   class NodeVisitor
+    include Lume::Analyzer::IR
+
+    LIBC_FUNCTIONS = %w[
+      malloc
+      realloc
+      free
+      printf
+    ].freeze
+
     def initialize(mod, engine, builder)
       @module = mod
       @engine = engine
@@ -97,6 +20,9 @@ module Lume
       @functions = {}
       @block_stack = []
       @variables = {}
+
+      # Register all the required LibC library functions
+      register_libc
 
       push_main_func
     end
@@ -126,8 +52,8 @@ module Lume
       case node
       when Expression then visit_expression(node)
       when Literal then visit_literal(node)
+      when Argument then visit(node.value)
       when Type then visit_type(node)
-      when Token then retrieve_var(node.value)
       when String then retrieve_var(node)
       else
         raise "Unsupported node type: #{node.class}"
@@ -144,12 +70,17 @@ module Lume
     def visit_expression(expression)
       case expression
       when Assignment then visit_assignment_expression(expression)
-      when OperatorExpression then visit_operator_expression(expression)
       when VariableDeclaration then visit_variable_declaration(expression)
-      when VariableReference then visit_variable_reference(expression)
+      when Variable then visit_variable_reference(expression)
+      when ClassDefinition then visit_class_definition(expression)
       when MethodDefinition then visit_method_definition(expression)
-      when FunctionInvocation then visit_function_invocation(expression)
+      when FunctionDefinition then visit_function_definition(expression)
+      when FunctionCall then visit_function_call_expression(expression)
+      when MethodCall then visit_method_call_expression(expression)
       when Return then visit_return_expression(expression)
+      when New then visit_new_expression(expression)
+      when Cast then visit_cast_expression(expression)
+      when Allocation then visit_allocation_expression(expression)
       else
         raise "Unsupported expression type: #{expression.class}"
       end
@@ -221,28 +152,64 @@ module Lume
       retrieve_var(variable_name)
     end
 
-    # Visits a method definition expression node in the AST and generates LLVM IR.
+    # Visits a class definition expression node in the AST and generates LLVM IR.
     #
-    # @param expression [MethodDefinition] The expression to visit.
+    # @param expression [ClassDefinition] The expression to visit.
     #
-    # @return [LLVM::Value]
-    def visit_method_definition(expression)
+    # @return [LLVM::Instruction]
+    def visit_class_definition(expression)
+      expression.name
+      methods = expression.expressions.select { |exp| exp.is_a?(MethodDefinition) }
+
+      methods.each { |method| visit_method_definition(method) }
+    end
+
+    # Visits a function definition expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [FunctionDefinition] The expression to visit.
+    #
+    # @return [LLVM::Function]
+    def visit_function_definition(expression)
       method_name = expression.name
-      argument_types = expression.arguments.map(&:type).map { |type| visit(type) }
+      parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
 
-      define_function(method_name, argument_types, return_type) do
+      define_function(method_name, parameter_types, return_type) do
         expression.expressions.each { |expr| visit(expr) }
       end
     end
 
-    # Visits a function invocation expression node in the AST and generates LLVM IR.
+    # Visits a method definition expression node in the AST and generates LLVM IR.
     #
-    # @param expression [FunctionInvocation] The expression to visit.
+    # @param expression [MethodDefinition] The expression to visit.
+    #
+    # @return [LLVM::Function]
+    def visit_method_definition(expression)
+      method_name = expression.full_name
+      parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
+      return_type = visit(expression.return)
+
+      define_function(method_name, parameter_types, return_type) do
+        expression.expressions.each { |expr| visit(expr) }
+      end
+    end
+
+    # Visits a function call expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [FunctionCall] The expression to visit.
     #
     # @return [LLVM::Value]
-    def visit_function_invocation(expression)
+    def visit_function_call_expression(expression)
       in_builder_block { invoke(expression.action, expression.arguments) }
+    end
+
+    # Visits a method call expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [MethodCall] The expression to visit.
+    #
+    # @return [LLVM::Value]
+    def visit_method_call_expression(expression)
+      in_builder_block { invoke(expression.full_name, expression.arguments) }
     end
 
     # Visits a return expression node in the AST and generates LLVM IR.
@@ -254,6 +221,61 @@ module Lume
       in_builder_block { ret(expression.value) }
     end
 
+    # Visits a `new` expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [New] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_new_expression(expression)
+      in_builder_block { invoke(expression.full_name, expression.arguments) }
+    end
+
+    # Visits a cast expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [Cast] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_cast_expression(expression)
+      raise NotImplementedError, 'Cannot cast non-literal values' unless expression.value.is_a?(Literal)
+      raise NotImplementedError, 'Cannot cast to non-scalar types' unless expression.type.is_a?(Scalar)
+
+      # If the target type is an integer type, handle it separately
+      return visit_integer_cast_expression(expression) if expression.type.integer?
+
+      raise NotImplementedError, "Cannot cast to #{expression.type}"
+    end
+
+    # Visits an integer cast expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [Cast] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_integer_cast_expression(expression)
+      in_builder_block { cast(expression.value, expression.type) }
+    end
+
+    # Visits an allocation expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [Allocation] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_allocation_expression(expression)
+      case expression
+      when HeapAllocation then visit_heap_allocation_expression(expression)
+      else
+        raise "Unsupported allocation expression type: #{expression.class}"
+      end
+    end
+
+    # Visits a heap allocation expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [HeapAllocation] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_heap_allocation_expression(expression)
+      heap_allocate(expression.size)
+    end
+
     # Visits a literal node in the AST and generates LLVM IR.
     #
     # @param literal [Literal] The literal to visit.
@@ -263,6 +285,7 @@ module Lume
       case literal
       when NumberLiteral then visit_number_literal(literal)
       when BooleanLiteral then visit_boolean_literal(literal)
+      when StringLiteral then visit_string_literal(literal)
       else
         raise "Unsupported literal type: #{literal.class}"
       end
@@ -274,7 +297,7 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_number_literal(literal)
-      literal.to_ir
+      LLVM.i(literal.bytesize * 8, literal.value)
     end
 
     # Visits a boolean literal node in the AST and generates LLVM IR.
@@ -286,6 +309,21 @@ module Lume
       LLVM::Int1.from_i(literal.value == true ? 1 : 0)
     end
 
+    # Visits a string literal node in the AST and generates LLVM IR.
+    #
+    # @param literal [StringLiteral] The literal to visit.
+    #
+    # @return [LLVM::Value]
+    def visit_string_literal(literal)
+      constant = LLVM::ConstantArray.string(literal.value)
+
+      global_string = @module.globals.add(constant.type, literal.value)
+      global_string.initializer = constant
+      global_string.linkage = :private
+
+      global_string
+    end
+
     # Visits a type node in the AST and generates LLVM IR.
     #
     # @param type [Type] The type to visit.
@@ -294,6 +332,8 @@ module Lume
     def visit_type(type)
       case type
       when Void then LLVM.Void
+      when Pointer then LLVM.Pointer(visit(type.of))
+      when NamedType then visit_named_type(type)
       when Scalar then visit_scalar_type(type)
       else
         raise "Unsupported type: #{type.class}"
@@ -304,15 +344,26 @@ module Lume
     #
     # @param type [Scalar] The type to visit.
     #
-    # @return [void]
+    # @return [LLVM::Type]
     def visit_scalar_type(type)
       return visit_integer_scalar_type(type) if type.integer?
 
       return visit_integer_float_type(type) if type.floating?
 
+      return LLVM.Pointer(LLVM::Int8) if type.string?
+
       return LLVM::Int1 if type.boolean?
 
       raise "Unsupported scalar type: #{type.name}"
+    end
+
+    # Visits a named type node in the AST and generates LLVM IR.
+    #
+    # @param type [NamedType] The type to visit.
+    #
+    # @return [LLVM::Type]
+    def visit_named_type(_type)
+      LLVM::Pointer(LLVM.Void)
     end
 
     # Visits an integer scalar type node in the AST and generates LLVM IR.
@@ -338,8 +389,8 @@ module Lume
     # @return [void]
     def visit_float_scalar_type(type)
       case type.name
-      when 'Float32' then LLVM::Float32
-      when 'Float64' then LLVM::Float64
+      when 'Float' then LLVM::Float32
+      when 'Double' then LLVM::Float64
       else
         raise "Unsupported float scalar type: #{type.name}"
       end
@@ -354,7 +405,7 @@ module Lume
       argument_types = [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))]
       return_type = LLVM::Int
 
-      @main_func = define_function(Codegen::MAIN_NAME, argument_types, return_type)
+      @main_func = define_function(Compiler::MAIN_NAME, argument_types, return_type)
     end
 
     # Declares a new variable and initializes it with a value.
@@ -371,7 +422,7 @@ module Lume
       variable
     end
 
-    # Allocates a new variable.
+    # Allocates a new variable on the stack.
     #
     # @param type   [LLVM::Type]  The type of the variable.
     # @param name   [String]      The name of the variable.
@@ -379,6 +430,53 @@ module Lume
     # @return       [LLVM::Instruction] The allocated variable.
     def allocate(type, name = '')
       in_builder_block { @builder.alloca(type, name) }
+    end
+
+    # Allocates a block of memory on the heap.
+    #
+    # @param count  [Integer]  Amount of bytes to allocate.
+    #
+    # @return       [LLVM::Value] Pointer to the allocated memory block.
+    def heap_allocate(count)
+      malloc = @functions['malloc']
+      size_arg = LLVM.i(64, count)
+
+      in_builder_block { @builder.call(malloc, size_arg) }
+    end
+
+    # Casts a literal integer value to a different type.
+    #
+    # @param value  [Literal] The value to cast.
+    # @param type   [LLVM::Type]  The type to cast to.
+    #
+    # @return       [LLVM::Instruction] The allocated variable.
+    def cast(value, type)
+      signed = type.signed?
+
+      value = visit(value)
+      type = visit(type)
+
+      signed ? cast_sext(value, type) : cast_zext(value, type)
+    end
+
+    # Sign-extend casts an integer value to a different type.
+    #
+    # @param value  [LLVM::Value] The value to cast.
+    # @param type   [LLVM::Type]  The type to cast to.
+    #
+    # @return       [LLVM::Instruction] The allocated variable.
+    def cast_sext(value, type)
+      in_builder_block { @builder.sext(value, type) }
+    end
+
+    # Zero-extend casts an integer value to a different type.
+    #
+    # @param value  [LLVM::Value] The value to cast.
+    # @param type   [LLVM::Type]  The type to cast to.
+    #
+    # @return       [LLVM::Instruction] The cast value.
+    def cast_zext(value, type)
+      in_builder_block { @builder.zext(value, type) }
     end
 
     # Assigns the value of an existing variable.
@@ -403,6 +501,17 @@ module Lume
       @builder.load(variable)
     end
 
+    # Defines a new external function with the given name, argument types, and return type.
+    #
+    # @param name           [String]            The name of the function.
+    # @param argument_types [Array<LLVM::Type>] The types of the function's arguments.
+    # @param return_type    [LLVM::Type]        The type of the function's return value.
+    #
+    # @return [LLVM::Function] The defined function.
+    def define_external_function(name, argument_types, return_type, *)
+      @functions[name] = @module.functions.add(name, argument_types, return_type, *)
+    end
+
     # Defines a new function with the given name, argument types, and return type.
     #
     # @param name           [String]            The name of the function.
@@ -410,8 +519,8 @@ module Lume
     # @param return_type    [LLVM::Type]        The type of the function's return value.
     #
     # @return [LLVM::Function] The defined function.
-    def define_function(name, argument_types, return_type)
-      @functions[name] = @module.functions.add(name, argument_types, return_type) do |function, *arguments|
+    def define_function(name, argument_types, return_type, *)
+      @functions[name] = @module.functions.add(name, argument_types, return_type, *) do |function, *arguments|
         entry = function.basic_blocks.append('entry')
 
         @builder.position_at_end(entry)
@@ -425,7 +534,7 @@ module Lume
 
     # Creates a new instruction to invoke a function.
     #
-    # @param target     [String|LLVM::Function]       The function to invoke.
+    # @param target     [String, LLVM::Function]       The function to invoke.
     # @param arguments  [Array<Node>]  The arguments to pass to the function.
     #
     # @return [LLVM::Instruction] The invoke instruction.
@@ -488,6 +597,57 @@ module Lume
     # @return [Boolean] `true` if the value is an integral type, `false` otherwise.
     def integral?(value)
       value.is_a?(LLVM::IntType)
+    end
+
+    # Registers aliases for C library functions, such as `malloc`, `free`, etc.
+    #
+    # These functions are essential for low-level operations, which cannot be replicated in Lume.
+    #
+    # @return [void]
+    def register_libc
+      LIBC_FUNCTIONS.each do |func|
+        method("register_#{func}").call
+      end
+    end
+
+    def register_malloc
+      define_external_function('malloc', [LLVM::Int64], LLVM.Pointer)
+
+      define_function('lume_malloc', [LLVM::Int64], LLVM.Pointer) do |_, size|
+        in_builder_block do
+          ptr = @builder.call('malloc', size)
+
+          ret(ptr)
+        end
+      end
+    end
+
+    def register_realloc
+      define_external_function('realloc', [LLVM.Pointer, LLVM::Int64], LLVM.Pointer)
+
+      define_function('lume_realloc', [LLVM.Pointer, LLVM::Int64], LLVM.Pointer) do |_, ptr, size|
+        in_builder_block do
+          ptr = @builder.call('realloc', ptr, size)
+
+          ret(ptr)
+        end
+      end
+    end
+
+    def register_free
+      define_external_function('free', [LLVM.Pointer], LLVM.Void)
+
+      define_function('lume_free', [LLVM.Pointer], LLVM.Void) do |_, ptr|
+        in_builder_block do
+          @builder.call('free', ptr)
+
+          @builder.ret_void
+        end
+      end
+    end
+
+    def register_printf
+      define_external_function('printf', [LLVM::Int8.pointer], LLVM::Int32, varargs: true)
     end
   end
 end
