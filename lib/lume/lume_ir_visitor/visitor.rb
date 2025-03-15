@@ -12,6 +12,11 @@ module Lume
     # Child nodes are walked recursively, if the node defines a method named `accept_children`.
     # When child nodes can be walked, they are visited before the node itself it visited - functioning
     # as a depth-first traversal.
+    #
+    # To visit a node before any of it's children are visited, implement `before_<node_type>` methods:
+    #   - `before_method_definition` for `Lume::IR::MethodDefinition`
+    #   - `before_scalar` for `Lume::IR::Scalar`
+    #   - and so on.
     module Visitor
       # Accepts an AST and runs all the root nodes through the visitor.
       #
@@ -33,20 +38,12 @@ module Lume
         # sufficient to track visitation.
         @visited[node] = true
 
+        iterate_visitor_methods(node, prefix: 'before_')
+
         # Resurse into all the child nodes
         node.accept_children(self) if node.respond_to?(:accept_children, true)
 
-        current = node.class
-
-        until current.nil?
-          node_class = current.name.underscore
-          method_name = "accept_#{node_class}"
-
-          # Visit the node itself
-          method(method_name).call(node) if respond_to?(method_name, true)
-
-          current = current.superclass
-        end
+        iterate_visitor_methods(node, prefix: 'accept_')
       end
 
       private
@@ -64,6 +61,26 @@ module Lume
         @visited.compare_by_identity unless @visited.compare_by_identity?
 
         @visited.key?(node)
+      end
+
+      # Iterates over all the visitor methods for the given node.
+      #
+      # @param node [Lume::IR::Node] The AST node to be visited.
+      # @param prefix [String] The prefix to use for the visitor methods.
+      #
+      # @return [void]
+      def iterate_visitor_methods(node, prefix: 'accept_')
+        current = node.class
+
+        until current.nil?
+          node_class = current.name.underscore
+          method_name = "#{prefix}#{node_class}"
+
+          # Visit the node itself
+          method(method_name).call(node) if respond_to?(method_name, true)
+
+          current = current.superclass
+        end
       end
     end
   end
