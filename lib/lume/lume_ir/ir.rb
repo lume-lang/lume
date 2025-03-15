@@ -240,14 +240,17 @@ module Lume
       #
       # @return [Boolean]
       def static?
-        @instance.nil? || @instance.reference.is_a?(ClassDefinition)
+        return true if @instance.nil?
+
+        # If the instance has a ClassDefinition reference, it's static.
+        instance.respond_to?(:reference) && @instance.reference.is_a?(ClassDefinition)
       end
 
       # Gets a reference to the class instance being accessed.
       #
       # @return [ClassDefinition]
       def class_instance_name
-        return instance.reference.name if instance.reference.is_a?(ClassDefinition)
+        return instance.reference.name if instance.respond_to?(:reference) && instance.reference.is_a?(ClassDefinition)
 
         instance.expression_type.name
       end

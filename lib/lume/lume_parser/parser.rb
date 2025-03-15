@@ -102,7 +102,8 @@ module Lume
       '*': 5,
       '/': 5,
       '++': 6,
-      '--': 6
+      '--': 6,
+      '.': 8
     }.freeze
 
     NUMERIC_TYPE_MAP = {
@@ -295,7 +296,7 @@ module Lume
       token = @token
       location = location_of(token)
 
-      message ||= "Expected token '#{expected}', but found '#{token}'"
+      message ||= "Expected token '#{expected}', but found '#{token.value}'"
 
       raise UnexpectedTokenError.new(message, expected, token, location)
     end
@@ -411,6 +412,15 @@ module Lume
     #
     # @return [Expression] The parsed expression.
     def parse_infix_expression(left)
+      # If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
+      #
+      # In essence, this statement is handling cases where:
+      #
+      #   let c = new Foo().bar()
+      #
+      # would be parsed as an operator expression, such as `c = Call(New('Foo'), '.', [FunctionCall('bar')])`
+      return parse_member_access(target: left) if peek(:'.')
+
       token = consume!(type: OPERATORS)
       right = parse_expression(precedence: precedence_of(token))
 
