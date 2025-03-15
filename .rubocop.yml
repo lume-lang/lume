@@ -24,3 +24,6 @@ Lint/BooleanSymbol:
 
 Style/RaiseArgs:
   Enabled: false
+
+Style/EmptyClass:
+  Enabled: false
