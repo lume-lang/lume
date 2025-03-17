@@ -44,7 +44,7 @@ module Lume
 
         stage = options[:stage].downcase.to_sym
 
-        driver = Lume::Driver.new(stage)
+        driver = Lume::Driver.new(stage, verbose: options[:verbose])
         result = driver.run_file(path)
 
         pp result if options[:verbose]

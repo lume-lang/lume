@@ -55,9 +55,10 @@ module Lume
   class Driver
     attr_reader :stage, :dest_stage
 
-    def initialize(stage = Lume::CODEGEN)
+    def initialize(stage = Lume::CODEGEN, verbose: false)
       @stage = Lume::LEX
       @dest_stage = stage
+      @verbose = verbose
 
       unless Lume::STAGES.include?(stage)
         raise InvalidStageError, "Invalid stage: #{stage}. See Lume::Driver::STAGES for valid stages."
@@ -89,6 +90,8 @@ module Lume
       context
     rescue StandardError => e
       @logger.report(e)
+
+      puts e.backtrace if @verbose && e.backtrace
 
       nil
     end
