@@ -75,6 +75,7 @@ module Lume
       public
       private
       static
+      import
     ].freeze
 
     SYMBOLS_PATTERN = %r(!=|!|==|=|\+=|-=|/=|\*=|,|\.|\+|-|/|\*|\(|\)|\{|\}|\[|\]|\||&|:|\+\+|--|>|<|>=|<=)

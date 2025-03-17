@@ -65,7 +65,8 @@ module Lume
       :fn,
       :type,
       :let,
-      :const
+      :const,
+      :import
     ].freeze
 
     VISIBILITY_MODIFIERS = %i[
@@ -348,6 +349,9 @@ module Lume
     #
     # @return [Node] The parsed expression.
     def parse_statement_expression
+      # If the statement is 'import', parse it as an import expression
+      return parse_import_expression if peek(:import)
+
       # If the statement is a class definition, parse it as a class definition
       return parse_class_definition if peek(:class)
 
@@ -437,6 +441,18 @@ module Lume
       right = parse_expression(precedence: precedence_of(token))
 
       left.call(token.value, right)
+    end
+
+    # Parses a single import expression.
+    #
+    # @return [Import] The parsed import expression.
+    def parse_import_expression
+      # Consume the 'import' token
+      consume!(type: :import)
+
+      library = consume!(type: :string, error: 'Expected library name after import statement').value
+
+      Import.new(library)
     end
 
     # Parses a list of parameter definitions. These are used in function- and method-definitions.

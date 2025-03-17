@@ -11,6 +11,13 @@ module Lume
       def initialize(nodes = [])
         @nodes = nodes
       end
+
+      # Gets all the import statements within the AST.
+      #
+      # @return [Array<Import>] The import statements within the AST.
+      def imports
+        @nodes.select { |node| node.is_a?(Import) }
+      end
     end
 
     class Node # :nodoc:
@@ -109,6 +116,23 @@ module Lume
 
       def ==(other)
         other.is_a?(Assignment) && @target == other.target && @value == other.value
+      end
+    end
+
+    # Represents an import expression.
+    #
+    #   'import' library
+    class Import < Expression
+      attr_accessor :library
+
+      def initialize(library)
+        super()
+
+        @library = library
+      end
+
+      def ==(other)
+        other.is_a?(Import) && @library == other.library
       end
     end
 

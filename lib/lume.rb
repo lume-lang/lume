@@ -6,18 +6,27 @@ require 'lume/core_ext/string'
 require 'lume/errors'
 require 'lume/lume_lexer/lexer'
 require 'lume/lume_parser/parser'
+require 'lume/lume_import/importer'
 require 'lume/lume_analyzer/analyzer'
 require 'lume/lume_compiler/compiler'
 
 module Lume
+  # Defines the root of the Lume gem project.
+  LIB_DIR = File.expand_path('..', __dir__)
+
+  # Defines the root of the Lume standard library.
+  STD_DIR = File.join(LIB_DIR, 'std')
+
   LEX = :lex
   PARSE = :parse
+  IMPORT = :import
   ANALYZE = :analyze
   CODEGEN = :codegen
 
   STAGES = [
     Lume::LEX,
     Lume::PARSE,
+    Lume::IMPORT,
     Lume::ANALYZE,
     Lume::CODEGEN
   ].freeze
@@ -36,10 +45,10 @@ module Lume
   #   - Lexing: The source code being tokenized
   #   - Parsing: The tokens which have been lexed in the previous stage.
   #   - Analysis: The parsed AST which has not yet been analyzed.
-  #   - Code Generation: The analyzed AST, which is ready to be transpiled into LLVM IR.
+  #   - Code Generation: The analyzed AST, which is ready to be transpiled into LLVM IR and the global symbol table.
   #   - Finish: The LLVM IR code, which is ready to be executed.
   class CompilationContext
-    attr_accessor :stage, :source, :tokens, :ast, :ir, :module
+    attr_accessor :stage, :source, :tokens, :ast, :ir, :imports, :module
 
     def initialize(source)
       @stage = Lume::LEX
@@ -162,6 +171,17 @@ module Lume
     def parse(context)
       parser = Lume::Parser.with_tokens(context.source, context.tokens)
       context.ast = parser.parse
+
+      context
+    end
+
+    # Parses the import statements within the AST.
+    #
+    # @param context [CompilationContext] The compiler context to import.
+    #
+    # @return [CompilationContext] A parsed AST representing the source code.
+    def import(context)
+      context.imports = Lume::Importer.import!(context.ast)
 
       context
     end
