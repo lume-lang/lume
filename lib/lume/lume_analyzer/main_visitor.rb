@@ -139,6 +139,14 @@ module Lume
         expression.expression_type = scalar_of(LITERAL_TYPE_MAP[expression.class])
       end
 
+      # Visits a method call and pushes a `self` argument onto it, if it is an instance method.
+      #
+      # @param expression [MethodCall] The method definition to be visited.
+      def before_method_call(expression)
+        # Handle the method if it is an instance method. If not, the method will return early.
+        handle_instance_method_call(expression)
+      end
+
       # Visits a method invocation expression and resolves it's type from the symbol table.
       #
       # @param expression [MethodCall] The method invocation expression to be visited.
@@ -152,12 +160,18 @@ module Lume
 
         expression.reference = class_def.method(expression.action)
         expression.expression_type = expression.reference.return
+
+        # Label all the arguments with their parameter names
+        map_argument_names(expression.arguments, expression.reference.parameters)
       end
 
       # Visits a method definition and pushes its arguments onto the symbol table.
       #
-      # @param _ [MethodDefinition] The method definition to be visited.
-      def before_method_definition(_)
+      # @param expression [MethodDefinition] The method definition to be visited.
+      def before_method_definition(expression)
+        # Handle the method if it is an instance method. If not, the method will return early.
+        handle_instance_method_definition(expression)
+
         @symbols.push_boundary
       end
 
@@ -266,6 +280,41 @@ module Lume
         end
       end
 
+      # Appends the `self` argument to instance method calls.
+      #
+      # @param expression [MethodCall] The method call to handle.
+      #
+      # @return [void]
+      def handle_instance_method_call(expression)
+        # If the method is static, it's not an instance method.
+        return if expression.static?
+
+        # Create a new argument for the `self` parameter.
+        self_argument = Argument.new('self', expression.instance)
+
+        # Prepend the `self` parameter to the method call as the first argument.
+        expression.arguments.prepend(self_argument)
+      end
+
+      # Appends the `self` parameter to instance method definitions.
+      #
+      # @param expression [MethodDefinition] The method definition to handle.
+      #
+      # @return [void]
+      def handle_instance_method_definition(expression)
+        # If the method is static, it's not an instance method.
+        return if expression.static?
+
+        # While not syntactically static, constructors are always static and cannot be called on instances.
+        return if expression.constructor?
+
+        class_name = expression.class_def.name
+        self_parameter = Parameter.new('self', NamedType.new(class_name))
+
+        # Prepend the `self` parameter to the method definition as the first parameter.
+        expression.parameters.prepend(self_parameter)
+      end
+
       # Gets or creates a scalar type with the given name.
       #
       # @param name [String] The name of the scalar type.
@@ -304,6 +353,9 @@ module Lume
       def expression_type(expression)
         # Types are their own expression types.
         return expression if expression.is_a?(Type)
+
+        # Classes are their own expression types.
+        return NamedType.new(expression.name) if expression.is_a?(ClassDefinition)
 
         # Variable declarations resolve to their own type.
         return expression_type(expression.type) if expression.is_a?(VariableDeclaration)

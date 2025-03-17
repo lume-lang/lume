@@ -246,7 +246,7 @@ module Lume
       # @return [Boolean]
       def static?
         # If the instance has a ClassDefinition reference, it's static.
-        @instance.nil? || @instance.reference.is_a?(ClassDefinition)
+        @instance.nil? || @instance.is_a?(ClassDefinition) || @instance.reference.is_a?(ClassDefinition)
       end
 
       # Gets the name of the class instance being accessed.
