@@ -144,6 +144,18 @@ module Lume
         end
       end
 
+      # Visits an assignment expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::Assignment] The expression to visit.
+      #
+      # @return [Lume::IR::Assignment]
+      def generate_ir_assignment(expression)
+        Lume::IR::Assignment.new(
+          generate_ir_node(expression.target),
+          generate_ir_node(expression.value)
+        )
+      end
+
       # Visits a variable declaration expression node in the AST and generates LLVM IR.
       #
       # @param expression [Lume::Syntax::VariableDeclaration] The expression to visit.
