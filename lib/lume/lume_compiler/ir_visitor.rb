@@ -492,6 +492,9 @@ module Lume
 
     # Defines a new external function with the given name, argument types, and return type.
     #
+    # Declared functions are just like normal functions, but they exist without a body. They are used to
+    # declare functions that are defined elsewhere, such as the C standard library functions or forward declarations.
+    #
     # @param name           [String]            The name of the function.
     # @param argument_types [Array<LLVM::Type>] The types of the function's arguments.
     # @param return_type    [LLVM::Type]        The type of the function's return value.
