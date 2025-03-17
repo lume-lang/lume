@@ -22,6 +22,14 @@ module Lume
     Lume::CODEGEN
   ].freeze
 
+  # This exception is raised when the user provides an invalid stage argument
+  # to the Lume driver.
+  class InvalidStageError < StandardError
+    def initialize(stage)
+      super("Invalid stage '#{stage}' given. Available options are [#{Lume::STAGES.join(', ')}]")
+    end
+  end
+
   # Defines a common context for compilation runs.
   #
   # Depending on the stage of the compilation process, this class will provide the following:
@@ -52,7 +60,7 @@ module Lume
       @dest_stage = stage
 
       unless Lume::STAGES.include?(stage)
-        raise ArgumentError, "Invalid stage: #{stage}. See Lume::Driver::STAGES for valid stages."
+        raise InvalidStageError, "Invalid stage: #{stage}. See Lume::Driver::STAGES for valid stages."
       end
 
       @logger = Lume::ErrorPrinter.new

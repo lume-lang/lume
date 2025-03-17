@@ -48,7 +48,7 @@ module Lume
         result = driver.run_file(path)
 
         pp result if options[:verbose]
-      rescue ArgumentError
+      rescue Lume::InvalidStageError
         say "Invalid stage given. Available options are [#{Lume::STAGES.join(', ')}]"
       end
 
