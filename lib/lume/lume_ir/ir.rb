@@ -36,6 +36,11 @@ module Lume
     class Node
       attr_accessor :expression_type, :location
 
+      # Defines the LLVM IR representation of the node.
+      #
+      # The value of `ir` is defined in the `CODEGEN` stage and will remain `nil` until then.
+      attr_accessor :ir
+
       # Finds all the nodes of the given type within the current node.
       #
       # @param type [Class] The type of node to find.
@@ -549,6 +554,13 @@ module Lume
         min = max - @parameters.count(&:default?)
 
         min..max
+      end
+
+      # Determines the full name of the function.
+      #
+      # @return [String] Full name of the function.
+      def full_name
+        @name
       end
     end
 

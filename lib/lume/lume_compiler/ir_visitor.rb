@@ -21,7 +21,6 @@ module Lume
 
       @functions = {}
       @block_stack = []
-      @variables = {}
 
       # Register all the required LibC library functions
       register_libc
@@ -56,7 +55,6 @@ module Lume
       when Literal then visit_literal(node)
       when Argument then visit(node.value)
       when Type then visit_type(node)
-      when String then retrieve_var(node)
       else
         raise "Unsupported node type: #{node.class}"
       end
@@ -97,7 +95,7 @@ module Lume
       target = expression.target
       value = visit(expression.value)
 
-      declare_var(target, value)
+      expression.ir = declare_var(target, value)
     end
 
     # Visits an operator expression node in the AST and generates LLVM IR.
@@ -140,7 +138,7 @@ module Lume
       value = visit(expression.value)
       type = visit(expression.type)
 
-      declare_var(name, value, type: type)
+      expression.ir = declare_var(name, value, type: type)
     end
 
     # Visits a variable reference expression node in the AST and generates LLVM IR.
@@ -149,9 +147,11 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_variable_reference(expression)
-      variable_name = expression.name
+      variable = expression.reference.ir
 
-      retrieve_var(variable_name)
+      raise "Undefined variable: '#{expression.name}'" if variable.nil?
+
+      variable
     end
 
     # Visits a class definition expression node in the AST and generates LLVM IR.
@@ -160,7 +160,6 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_class_definition(expression)
-      expression.name
       methods = expression.expressions.select { |exp| exp.is_a?(MethodDefinition) }
 
       methods.each { |method| visit_method_definition(method) }
@@ -191,7 +190,9 @@ module Lume
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
 
-      define_function(method_name, parameter_types, return_type) do
+      define_function(method_name, parameter_types, return_type) do |_, *args|
+        wrap_parameters(expression.parameters, args)
+
         expression.expressions.each { |expr| visit(expr) }
       end
     end
@@ -202,7 +203,7 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_function_call_expression(expression)
-      in_builder_block { invoke(expression.action, expression.arguments) }
+      in_builder_block { invoke(expression.full_name, expression.arguments) }
     end
 
     # Visits a method call expression node in the AST and generates LLVM IR.
@@ -418,7 +419,7 @@ module Lume
     def declare_var(name, value, type: nil)
       type ||= typeof(value)
 
-      @variables[name] = variable = allocate(type, name)
+      variable = allocate(type, name)
       assign_var(variable, value)
 
       variable
@@ -487,20 +488,6 @@ module Lume
     # @param value    [LLVM::Value] The value to assign.
     def assign_var(variable, value)
       @builder.store(value, variable)
-    end
-
-    # Retrieves the value of an existing variable.
-    #
-    # @param name [LLVM::Value] The variable to retrieve.
-    #
-    # @return [LLVM::Value] The value of the variable.
-    def retrieve_var(name)
-      variable = name
-      variable = @variables[name] if name.is_a?(String)
-
-      raise "Undefined variable: '#{name}'" if variable.nil?
-
-      @builder.load(variable)
     end
 
     # Defines a new external function with the given name, argument types, and return type.
@@ -590,6 +577,18 @@ module Lume
     # @return [LLVM::Type] The LLVM type of the value.
     def typeof(value)
       LLVM::Type(value)
+    end
+
+    # Wraps the given arguments into the invoked function parameters.
+    #
+    # @param parameters [Array<Parameter>] The parameters of the function.
+    # @param args       [Array<LLVM::Value>] The arguments given to the function.
+    #
+    # @return [LLVM::Type] The LLVM type of the value.
+    def wrap_parameters(parameters, args)
+      parameters.each_index do |index|
+        parameters[index].ir = args[index]
+      end
     end
 
     # Determines if a value is an integral type.
