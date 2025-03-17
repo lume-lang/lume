@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/source'
+require 'lume/lume_syntax/ast_helpers'
 require 'lume/lume_parser/errors'
 
 module Lume
@@ -87,6 +88,10 @@ module Lume
       !=
       ==
       =
+      <
+      >
+      <=
+      >=
     ].freeze
 
     OPERATOR_PRECEDENCE = {
@@ -97,13 +102,17 @@ module Lume
       '/=': 1,
       '==': 3,
       '!=': 3,
-      '+': 4,
-      '-': 4,
-      '*': 5,
-      '/': 5,
-      '++': 6,
-      '--': 6,
-      '.': 8
+      '<': 4,
+      '>': 4,
+      '<=': 4,
+      '>=': 4,
+      '+': 5,
+      '-': 5,
+      '*': 6,
+      '/': 6,
+      '++': 7,
+      '--': 7,
+      '.': 9
     }.freeze
 
     NUMERIC_TYPE_MAP = {
@@ -350,6 +359,9 @@ module Lume
 
       # If the next token is `type`, it might be a type definition
       return parse_type_definition if peek(:type) && peek(:name, offset: 1)
+
+      # If the statement starts with 'if' or 'until', parse it as a condition
+      return parse_conditional_expression if peek(%i[if until])
 
       # If the consumed token is a control token, parse it as a control statement
       return parse_control_expression if peek(CONTROL_TYPES)
@@ -962,6 +974,84 @@ module Lume
       consume!(type: :*)
 
       Pointer.new(parse_type)
+    end
+
+    # Parses a conditional expression.
+    #
+    # @return [Conditional] The parsed conditional expression.
+    def parse_conditional_expression
+      type = consume!(type: %i[if unless]).type
+
+      case type
+      when :if then parse_if_conditional_expression
+      when :unless then parse_unless_conditional_expression
+      end
+    end
+
+    # Parses a `if`-conditional expression.
+    #
+    # @return [IfConditional] The parsed conditional expression.
+    def parse_if_conditional_expression
+      conditional = IfConditional.new
+      conditional.condition = parse_expression
+      conditional.then = parse_conditional_block
+      conditional.else_if = parse_else_if_conditional_expression
+      conditional.else = parse_else_conditional_expression
+
+      conditional
+    end
+
+    # Parses a `unless`-conditional expression.
+    #
+    # @return [UnlessConditional] The parsed conditional expression.
+    def parse_unless_conditional_expression
+      conditional = UnlessConditional.new
+      conditional.condition = parse_expression
+      conditional.then = parse_conditional_block
+      conditional.else = parse_else_conditional_expression
+
+      conditional
+    end
+
+    # Parses the block within a conditional expression.
+    #
+    # @return [Array<Node>] The statements within the block.
+    def parse_conditional_block
+      iterate_all! do
+        # If we see `end` or `else`, we let the parent function handle the next block.
+        next nil if peek(%i[end else])
+
+        next parse_expression
+      end
+    end
+
+    # Parses the block within an `else if` block of a conditional expression.
+    #
+    # @return [Array<ElseIfConditional>] The statements within the block.
+    def parse_else_if_conditional_expression
+      iterate_all! do
+        # Unless we see `else` `if`, we let the parent function handle the next block.
+        next nil unless peek(:else) && peek(:if, offset: 1)
+
+        consume!(type: :else)
+        consume!(type: :if)
+
+        conditional = ElseIfConditional.new
+        conditional.condition = parse_expression
+        conditional.then = parse_conditional_block
+
+        conditional
+      end
+    end
+
+    # Parses the block within an `else` block of a conditional expression.
+    #
+    # @return [Array<Expression>] The statements within the block.
+    def parse_else_conditional_expression
+      # Unless we see `else`, we let the parent function handle the next block.
+      return [] unless consume(type: :else)
+
+      parse_conditional_block
     end
 
     # Parses zero-or-more values from an expression, separated by commas.
