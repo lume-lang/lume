@@ -615,19 +615,6 @@ module Lume
       Return.new(expression)
     end
 
-    # Parses a conditional expression.
-    #
-    # @return [Conditional] The parsed conditional expression.
-    def parse_conditional_expression
-      # Consume the conditional token
-      type = consume!(type: %i[if unless]).type
-
-      return parse_if_condition_expression if type == :if
-      return parse_unless_condition_expression if type == :unless
-
-      unexpected_token(%i[if unless])
-    end
-
     # Parses an `if`-conditional expression.
     #
     # @return [IfConditional] The parsed conditional expression.
