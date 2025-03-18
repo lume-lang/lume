@@ -99,7 +99,7 @@ module Lume
       # @param expression [FunctionCall] The function invocation expression to be visited.
       def accept_function_call(expression)
         # Find the function definition in the global symbol table
-        expression.reference = @symbols.retrieve(expression.action, type: FunctionDefinition)
+        expression.reference = @symbols.retrieve(expression.action, type: FunctionDeclaration)
 
         # If no function with the given name was found, raise an error.
         raise UndefinedSymbol.new(expression, name: expression.action) if expression.reference.nil?
@@ -273,7 +273,7 @@ module Lume
       #
       # @param ast [AST] The AST to be analyzed.
       def discover_function_definitions(ast)
-        function_definitions = ast.nodes.select { |node| node.is_a?(FunctionDefinition) }
+        function_definitions = ast.nodes.select { |node| node.is_a?(FunctionDeclaration) }
 
         function_definitions.each do |definition|
           @symbols.define(definition, type: definition.return)
@@ -364,7 +364,7 @@ module Lume
         return expression_type(expression.type) if expression.is_a?(Parameter)
 
         # Function definitions resolve to their return type.
-        return expression_type(expression.return) if expression.is_a?(FunctionDefinition)
+        return expression_type(expression.return) if expression.is_a?(FunctionDeclaration)
 
         nil
       end

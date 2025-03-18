@@ -6,6 +6,7 @@ module Lume
   module IR
     class IRGen # :nodoc:
       def initialize
+        @functions = {}
         @classes = {}
         @class_stack = []
       end
@@ -16,12 +17,18 @@ module Lume
       #
       # @return [Lume::Analyzer::IR] The generated compiler IR.
       def generate(ast)
+        ir = Lume::IR::AST.new
+
         # Pre-register all the class definitions within the AST, so we
         # can reference them later without having to re-traverse the tree.
         iterate_class_nodes(ast)
 
-        ir = Lume::IR::AST.new
-        ir.nodes = generate_ir_nodes(ast.nodes)
+        # Pre-declare all the functions definitions within the AST, so we
+        # can call them without them being defined yet.
+        ir.nodes.concat(iterate_function_nodes(ast))
+
+        # Generate the rest of the IR nodes.
+        ir.nodes.concat(generate_ir_nodes(ast.nodes))
 
         ir
       end
@@ -84,6 +91,25 @@ module Lume
 
         class_definitions.each do |class_def|
           @classes[class_def.name] = generate_ir_node(class_def)
+        end
+      end
+
+      # Iterates over all the function definition nodes in the given AST and registers them in the generator.
+      #
+      # @param ast [Lume::Syntax::AST] The abstract syntax tree to iterate over.
+      #
+      # @return [Array<Lume::IR::FunctionDeclaration>] An array of generated function declarations.
+      def iterate_function_nodes(ast)
+        # Select all the function definitions within the AST.
+        function_definitions = ast.nodes.select { |node| node.is_a?(Lume::Syntax::MethodDefinition) }
+
+        # Delete all external function definitions, as they're being converted into
+        # function declarations instead.
+        ast.nodes.delete_if { |node| node.is_a?(Lume::Syntax::MethodDefinition) && node.external? }
+
+        # Convert all function definitions, including external ones, into function declarations.
+        function_definitions.map do |function_def|
+          generate_ir_function_declaration(function_def)
         end
       end
 
@@ -214,6 +240,19 @@ module Lume
         return_type = generate_ir_node(expression.return)
 
         Lume::IR::FunctionDefinition.new(name, parameters, return_type, expressions)
+      end
+
+      # Visits a function declaration expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::MethodDefinition] The expression to visit.
+      #
+      # @return [Lume::IR::FunctionDeclaration]
+      def generate_ir_function_declaration(expression)
+        name = expression.name
+        parameters = generate_ir_nodes(expression.parameters)
+        return_type = generate_ir_node(expression.return)
+
+        Lume::IR::FunctionDeclaration.new(name, parameters, return_type)
       end
 
       # Visits a method definition expression node in the AST and generates LLVM IR.

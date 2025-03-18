@@ -242,7 +242,7 @@ module Lume
     #     expressions
     #   'end'
     class MethodDefinition < Member
-      attr_accessor :name, :parameters, :return, :expressions
+      attr_accessor :name, :parameters, :return, :expressions, :external
 
       def initialize(name, parameters, return_value, expressions)
         super()
@@ -267,6 +267,10 @@ module Lume
           @parameters == other.parameters &&
           @return == other.return &&
           @expressions == other.expressions
+      end
+
+      def external?
+        @external
       end
     end
 

@@ -8,9 +8,6 @@ module Lume
     include Lume::IR
 
     LIBC_FUNCTIONS = %w[
-      malloc
-      realloc
-      free
       printf
     ].freeze
 
@@ -75,6 +72,7 @@ module Lume
       when ClassDefinition then visit_class_definition(expression)
       when MethodDefinition then visit_method_definition(expression)
       when FunctionDefinition then visit_function_definition(expression)
+      when FunctionDeclaration then visit_function_declaration(expression)
       when FunctionCall then visit_function_call_expression(expression)
       when MethodCall then visit_method_call_expression(expression)
       when Return then visit_return_expression(expression)
@@ -92,10 +90,10 @@ module Lume
     #
     # @return [void]
     def visit_assignment_expression(expression)
-      target = expression.target
+      target = visit(expression.target)
       value = visit(expression.value)
 
-      expression.ir = declare_var(target, value)
+      assign_var(target, value)
     end
 
     # Visits an operator expression node in the AST and generates LLVM IR.
@@ -175,7 +173,9 @@ module Lume
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
 
-      define_function(method_name, parameter_types, return_type) do
+      define_function(method_name, parameter_types, return_type) do |_, *args|
+        wrap_parameters(expression.parameters, args)
+
         expression.expressions.each { |expr| visit(expr) }
       end
     end
@@ -204,6 +204,19 @@ module Lume
     # @return [LLVM::Value]
     def visit_function_call_expression(expression)
       in_builder_block { invoke(expression.full_name, expression.arguments) }
+    end
+
+    # Visits a function declaration expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [FunctionDeclaration] The expression to visit.
+    #
+    # @return [LLVM::Value]
+    def visit_function_declaration(expression)
+      function_name = expression.full_name
+      parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
+      return_type = visit(expression.return)
+
+      declare_function(function_name, parameter_types, return_type)
     end
 
     # Visits a method call expression node in the AST and generates LLVM IR.
@@ -490,7 +503,7 @@ module Lume
       @builder.store(value, variable)
     end
 
-    # Defines a new external function with the given name, argument types, and return type.
+    # Declares a new function with the given name, argument types, and return type.
     #
     # Declared functions are just like normal functions, but they exist without a body. They are used to
     # declare functions that are defined elsewhere, such as the C standard library functions or forward declarations.
@@ -500,7 +513,9 @@ module Lume
     # @param return_type    [LLVM::Type]        The type of the function's return value.
     #
     # @return [LLVM::Function] The defined function.
-    def define_external_function(name, argument_types, return_type, *)
+    def declare_function(name, argument_types, return_type, *)
+      raise "Function '#{name}' already declared." if func_registered?(name)
+
       @functions[name] = @module.functions.add(name, argument_types, return_type, *)
     end
 
@@ -512,16 +527,23 @@ module Lume
     #
     # @return [LLVM::Function] The defined function.
     def define_function(name, argument_types, return_type, *)
-      @functions[name] = @module.functions.add(name, argument_types, return_type, *) do |function, *arguments|
-        entry = function.basic_blocks.append('entry')
+      # If the function hasn't been forward declared yet, do so now.
+      declare_function(name, argument_types, return_type, *) if @functions[name].nil?
 
-        @builder.position_at_end(entry)
-        @block_stack.push(entry)
+      function = @functions[name]
 
-        yield(function, *arguments) if block_given?
+      # Append a new block to the function, where we can push expressions to.
+      entry = function.basic_blocks.append('entry')
 
-        @builder.position_at_end(@block_stack.pop)
-      end
+      @builder.position_at_end(entry)
+      @block_stack.push(entry)
+
+      yield(function, function.params) if block_given?
+
+      @builder.position_at_end(@block_stack.pop)
+
+      # Return the defined function.
+      function
     end
 
     # Creates a new instruction to invoke a function.
@@ -603,6 +625,15 @@ module Lume
       value.is_a?(LLVM::IntType)
     end
 
+    # Determines whether the given function name has been registered.
+    #
+    # @param name [String] The name of the function.
+    #
+    # @return [Boolean] `true` if the function has been registered, `false` otherwise.
+    def func_registered?(name)
+      @functions.include?(name)
+    end
+
     # Registers aliases for C library functions, such as `malloc`, `free`, etc.
     #
     # These functions are essential for low-level operations, which cannot be replicated in Lume.
@@ -614,44 +645,8 @@ module Lume
       end
     end
 
-    def register_malloc
-      define_external_function('malloc', [LLVM::Int64], LLVM.Pointer)
-
-      define_function('lume_malloc', [LLVM::Int64], LLVM.Pointer) do |_, size|
-        in_builder_block do
-          ptr = @builder.call('malloc', size)
-
-          ret(ptr)
-        end
-      end
-    end
-
-    def register_realloc
-      define_external_function('realloc', [LLVM.Pointer, LLVM::Int64], LLVM.Pointer)
-
-      define_function('lume_realloc', [LLVM.Pointer, LLVM::Int64], LLVM.Pointer) do |_, ptr, size|
-        in_builder_block do
-          ptr = @builder.call('realloc', ptr, size)
-
-          ret(ptr)
-        end
-      end
-    end
-
-    def register_free
-      define_external_function('free', [LLVM.Pointer], LLVM.Void)
-
-      define_function('lume_free', [LLVM.Pointer], LLVM.Void) do |_, ptr|
-        in_builder_block do
-          @builder.call('free', ptr)
-
-          @builder.ret_void
-        end
-      end
-    end
-
     def register_printf
-      define_external_function('printf', [LLVM::Int8.pointer], LLVM::Int32, varargs: true)
+      declare_function('printf', [LLVM::Int8.pointer], LLVM::Int32, varargs: true)
     end
   end
 end

@@ -95,6 +95,11 @@ module Lume
       >=
     ].freeze
 
+    FUNCTIONS_NAME_TYPES = [
+      :name,
+      *OPERATORS
+    ].freeze
+
     OPERATOR_PRECEDENCE = {
       '=': 1,
       '+=': 1,
@@ -846,15 +851,23 @@ module Lume
     # @see MethodDefinition
     def parse_method_definition
       consume!(value: :fn)
-      name = consume!(type: :name, error: 'Expected method name in signature').value
+
+      is_external = !consume(type: :external).nil?
+
+      name = consume!(type: FUNCTIONS_NAME_TYPES, error: 'Expected method name in signature').value
 
       parameters = parse_parameters
       return_type = with_location { parse_return_type }
-      expressions = parse_statements
 
-      expression = MethodDefinition.new(name, parameters, return_type, expressions)
+      # If the method is external, it doesn't have a body nor an end token.
+      unless is_external
+        expressions = parse_statements
 
-      consume!(type: :end, error: 'Expected \'end\' after method definition')
+        consume!(type: :end, error: 'Expected \'end\' after method definition')
+      end
+
+      expression = MethodDefinition.new(name, parameters, return_type, expressions || [])
+      expression.external = is_external
 
       expression
     end

@@ -495,26 +495,24 @@ module Lume
     class MemberAccess < Access
     end
 
-    # Represents a function definition.
+    # Represents a function declaration.
     #
     #   'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
-    #     expressions
-    #   'end'
-    class FunctionDefinition < Expression
-      attr_accessor :name, :parameters, :return, :expressions
+    # |
+    #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
+    class FunctionDeclaration < Expression
+      attr_accessor :name, :parameters, :return
 
-      def initialize(name, parameters, return_value, expressions)
+      def initialize(name, parameters, return_value)
         super()
 
         @name = name
         @parameters = parameters
         @return = return_value
-        @expressions = expressions
       end
 
       def accept_children(visitor)
         @parameters.each { |ex| visitor.accept(ex) }
-        @expressions.each { |ex| visitor.accept(ex) }
 
         visitor.accept(@return)
       end
@@ -524,8 +522,7 @@ module Lume
 
         @name == other.name &&
           @parameters == other.parameters &&
-          @return == other.return &&
-          @expressions == other.expressions
+          @return == other.return
       end
 
       # Gets the range of required parameter counts, going from the least amount of parameters
@@ -564,11 +561,40 @@ module Lume
       end
     end
 
+    # Represents a function definition.
+    #
+    #   'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #     expressions
+    #   'end'
+    # |
+    #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
+    class FunctionDefinition < FunctionDeclaration
+      attr_accessor :expressions
+
+      def initialize(name, parameters, return_value, expressions)
+        super(name, parameters, return_value)
+
+        @expressions = expressions
+      end
+
+      def accept_children(visitor)
+        super
+
+        @expressions.each { |ex| visitor.accept(ex) }
+      end
+
+      def ==(other)
+        super && @expressions == other.expressions
+      end
+    end
+
     # Represents a method definition.
     #
     #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
     #     expressions
     #   'end'
+    # |
+    #   visibility* 'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
     class MethodDefinition < FunctionDefinition
       attr_accessor :class_def, :visibility
 
