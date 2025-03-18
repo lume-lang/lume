@@ -166,9 +166,10 @@ module Lume
     # Visits a function definition expression node in the AST and generates LLVM IR.
     #
     # @param expression [FunctionDefinition] The expression to visit.
-    #
-    # @return [LLVM::Function]
     def visit_function_definition(expression)
+      # External methods should already have been defined in the LLVM module.
+      return if expression.external?
+
       method_name = expression.name
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
@@ -183,9 +184,10 @@ module Lume
     # Visits a method definition expression node in the AST and generates LLVM IR.
     #
     # @param expression [MethodDefinition] The expression to visit.
-    #
-    # @return [LLVM::Function]
     def visit_method_definition(expression)
+      # External methods should already have been defined in the LLVM module.
+      return if expression.external?
+
       method_name = expression.full_name
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)

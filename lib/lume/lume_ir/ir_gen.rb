@@ -6,7 +6,6 @@ module Lume
   module IR
     class IRGen # :nodoc:
       def initialize
-        @functions = {}
         @classes = {}
         @class_stack = []
       end
@@ -23,12 +22,12 @@ module Lume
         # can reference them later without having to re-traverse the tree.
         iterate_class_nodes(ast)
 
-        # Pre-declare all the functions definitions within the AST, so we
-        # can call them without them being defined yet.
-        ir.nodes.concat(iterate_function_nodes(ast))
-
         # Generate the rest of the IR nodes.
         ir.nodes.concat(generate_ir_nodes(ast.nodes))
+
+        # Pre-declare all the functions definitions within the IR, so we
+        # can call them without them being defined yet.
+        declare_function_definitions(ir)
 
         ir
       end
@@ -94,22 +93,38 @@ module Lume
         end
       end
 
-      # Iterates over all the function definition nodes in the given AST and registers them in the generator.
+      # Iterates over all the function definition nodes in the given IR and forward-declares them.
       #
-      # @param ast [Lume::Syntax::AST] The abstract syntax tree to iterate over.
+      # @param ir [Lume::IR::AST] The abstract syntax tree to iterate over.
       #
-      # @return [Array<Lume::IR::FunctionDeclaration>] An array of generated function declarations.
-      def iterate_function_nodes(ast)
-        # Select all the function definitions within the AST.
-        function_definitions = ast.nodes.select { |node| node.is_a?(Lume::Syntax::MethodDefinition) }
+      # @return [void]
+      def declare_function_definitions(ir)
+        # Select all the function definitions within the IR.
+        definitions = ir.find_all_recursively(Lume::IR::FunctionDefinition)
 
-        # Delete all external function definitions, as they're being converted into
-        # function declarations instead.
-        ast.nodes.delete_if { |node| node.is_a?(Lume::Syntax::MethodDefinition) && node.external? }
+        declarations = definitions.map do |definition|
+          Lume::IR::FunctionDeclaration.new(definition.full_name, definition.parameters, definition.return)
+        end
 
-        # Convert all function definitions, including external ones, into function declarations.
-        function_definitions.map do |function_def|
-          generate_ir_function_declaration(function_def)
+        ir.nodes.insert(0, *declarations)
+      end
+
+      # Deletes all external symbols from the given IR.
+      #
+      # @param ir [Lume::IR::AST] The abstract syntax tree to iterate over.
+      #
+      # @return [void]
+      def delete_external_symbols(ir)
+        # Delete external function definitions
+        ir.nodes.delete_if do |node|
+          node.is_a?(Lume::IR::FunctionDefinition) && node.external?
+        end
+
+        # Delete external method definitions
+        ir.find_all(Lume::IR::ClassDefinition).each do |class_def|
+          class_def.expressions.delete_if do |node|
+            node.is_a?(Lume::IR::MethodDefinition) && node.external?
+          end
         end
       end
 
@@ -239,7 +254,10 @@ module Lume
         expressions = generate_ir_nodes(expression.expressions)
         return_type = generate_ir_node(expression.return)
 
-        Lume::IR::FunctionDefinition.new(name, parameters, return_type, expressions)
+        function = Lume::IR::FunctionDefinition.new(name, parameters, return_type, expressions)
+        function.external = expression.external
+
+        function
       end
 
       # Visits a function declaration expression node in the AST and generates LLVM IR.
@@ -276,6 +294,7 @@ module Lume
 
         method = Lume::IR::MethodDefinition.new(class_def, name, parameters, return_type, expressions)
         method.visibility = visibility
+        method.external = expression.external
 
         method
       end

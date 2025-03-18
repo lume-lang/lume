@@ -30,6 +30,15 @@ module Lume
       def find_all(type)
         @nodes.select { |node| node.is_a?(type) }
       end
+
+      # Finds all nodes of the given type, recursively.
+      #
+      # @param type [Class] The type of node to find
+      #
+      # @return [Array<Node>] The root nodes of the given type.
+      def find_all_recursively(type)
+        @nodes.flat_map { |node| node.find_all(type) }
+      end
     end
 
     # Represents a node within an abstract syntax tree.
@@ -569,7 +578,7 @@ module Lume
     # |
     #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
     class FunctionDefinition < FunctionDeclaration
-      attr_accessor :expressions
+      attr_accessor :expressions, :external
 
       def initialize(name, parameters, return_value, expressions)
         super(name, parameters, return_value)
@@ -585,6 +594,13 @@ module Lume
 
       def ==(other)
         super && @expressions == other.expressions
+      end
+
+      # Determines whether the function is external.
+      #
+      # @return [Boolean]
+      def external?
+        @external
       end
     end
 
