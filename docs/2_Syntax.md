@@ -213,14 +213,14 @@ Conditional ::
 - UnlessConditional
 
 IfConditional ::
-- `if` Expression Expression ElseIfConditional* ElseConditional? `end`
+- `if` Expression `{` Expression ElseIfConditional* ElseConditional? `}`
 
 UnlessConditional ::
-- `unless` Expression Expression ElseConditional? `end`
+- `unless` Expression `{` Expression ElseConditional? `}`
 
-ElseIfConditional :: `else if` Expression Expression
+ElseIfConditional :: `} else if` Expression `{` Expression
 
-ElseConditional :: `else` Expression
+ElseConditional :: `} else {` Expression
 
 #### Inline Conditionals
 

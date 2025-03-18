@@ -923,7 +923,7 @@ module Lume
     # @return [Type] The parsed type.
     def parse_return_type
       # If no return type is specified, return `void` by default
-      return Void.new unless consume(type: :':')
+      return Void.new unless consume(type: :'->')
 
       parse_type
     end
