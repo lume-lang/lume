@@ -467,9 +467,10 @@ module Lume
       content = comments.join("\n")
       comment = Comment.new(content)
 
-      parse_statement.tap do |statement|
-        statement.comment = comment
-      end
+      statement = parse_statement
+      statement.comment = comment if statement.is_a?(Expression)
+
+      statement
     end
 
     # Parses a single import expression.

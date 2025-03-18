@@ -167,7 +167,7 @@ module Lume
       #
       # @return [Lume::IR::Expression]
       def generate_ir_expression(expression)
-        case expression
+        ir = case expression
         when Lume::Syntax::Assignment then generate_ir_assignment(expression)
         when Lume::Syntax::VariableDeclaration then generate_ir_variable_declaration(expression)
         when Lume::Syntax::VariableReference then generate_ir_variable_reference(expression)
