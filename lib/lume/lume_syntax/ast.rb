@@ -34,7 +34,7 @@ module Lume
 
     # Represents an abstract expression.
     class Expression < Node
-      attr_accessor :expression_type
+      attr_accessor :expression_type, :comment
     end
 
     # Represents an abstract literal.
@@ -49,6 +49,17 @@ module Lume
 
       def ==(other)
         other.is_a?(self.class) && @value == other.value
+      end
+    end
+
+    # Represents a comment block.
+    class Comment < Node
+      attr_accessor :content
+
+      def initialize(content)
+        super()
+
+        @content = content
       end
     end
 

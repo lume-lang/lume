@@ -183,6 +183,11 @@ module Lume
         else
           raise "Unsupported expression type: #{expression.class}"
         end
+
+        # Copy the comment, if it exists.
+        ir.comment = expression.comment&.content
+
+        ir
       end
 
       # Visits an assignment expression node in the AST and generates LLVM IR.

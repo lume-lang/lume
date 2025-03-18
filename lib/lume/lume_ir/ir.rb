@@ -63,7 +63,7 @@ module Lume
 
     # Represents an abstract expression.
     class Expression < Node
-      attr_accessor :expression_type
+      attr_accessor :expression_type, :comment
     end
 
     # Represents an abstract literal.
@@ -399,6 +399,13 @@ module Lume
         size += properties.reduce(0) { |acc, prop| acc + prop.type.bytesize }
 
         size
+      end
+
+      # Determines whether the class definition is a built-in type.
+      #
+      # @return [Boolean] `true` if the class definition is a built-in type, `false` otherwise.
+      def builtin?
+        @builtin
       end
     end
 

@@ -37,7 +37,7 @@ module Lume
     # @param include_comments [Boolean] Whether to include comments in the tokens.
     #
     # @return [Array<Token>] The tokens parsed from the source.
-    def all!(include_comments: false)
+    def all!(include_comments: true)
       tokens = []
 
       loop do

@@ -33,15 +33,16 @@ module Lume
       new(source, tokens)
     end
 
-    # Creates a new parser instance with the given source code and pre-lexed tokens.
+    # Creates a new parser instance with the given source code.
     #
     # @param source   [Lume::SourceFile]  The source code to parse.
     #
     # @return [Lume::Language::Parser]    The new parser instance.
     def self.with_source(source)
       source = SourceFile.new(nil, source) if source.is_a?(String)
+      tokens = Lexer.new(source.content).all!(include_comments: true)
 
-      new(source, Lexer.new(source.content).all!)
+      new(source, tokens)
     end
 
     # Parse the entire source code, given in the constructor.
@@ -305,13 +306,17 @@ module Lume
 
     # Raises an unexpected token error.
     #
-    # @param expected   [String] The expected token type.
-    # @param message    [String] An optional error message to pass.
-    def unexpected_token(expected, message: nil)
+    # @param expected   [String, nil] The expected token type.
+    # @param message    [String, nil] An optional error message to pass.
+    def unexpected_token(expected = nil, message: nil)
       token = @token
       location = location_of(token)
 
-      message ||= "Expected token '#{expected}', but found '#{token.value}'"
+      message ||= if expected.nil?
+        "Unexpected token '#{token.value}'"
+      else
+        "Expected token '#{expected}', but found '#{token.value}'"
+      end
 
       raise UnexpectedTokenError.new(message, expected, token, location)
     end
@@ -338,16 +343,14 @@ module Lume
       return with_location { parse_statement_expression } if peek(STATEMENT_TYPES)
 
       # If the current token isn't a statement token, parse it as an expression.
-      with_location { parse_expression }
+      parse_expression
     end
 
     # Parses a list of statements within the top-level namespace, function or method.
     #
     # @return [Array<Node>] The parsed statements.
     def parse_statements
-      iterate_all! do
-        with_location { parse_statement }
-      end
+      iterate_all! { parse_statement }
     end
 
     # Parses the statement expression at the current cursor position.
@@ -408,6 +411,9 @@ module Lume
     def parse_prefix_expression
       return nil if peek(:eof)
 
+      # If the next token is a comment, parse the comment block.
+      return parse_comment if peek(:comment)
+
       # If the next expression is nested within parentheses, descend into it parse it again.
       return parse_nested_expression if nested_expression?
 
@@ -417,11 +423,13 @@ module Lume
       # If the expression is a name-token, parse it as a named expression
       return parse_named_expression if peek(:name)
 
+      # If the expression is a literal-token, parse it as a literal expression
       return parse_literal_expression if literal?
 
+      # If the next token is a unary operator, parse it as a unary expression
       return parse_unary_expression if unary?
 
-      nil
+      unexpected_token
     end
 
     # Parses a infix expression at the current cursor position.
@@ -446,6 +454,22 @@ module Lume
       right = parse_expression(precedence: precedence_of(token))
 
       left.call(token.value, right)
+    end
+
+    # Parses the comment block at the current cursor position.
+    #
+    # @return [Comment] The parsed comment block.
+    def parse_comment
+      comments = iterate_all! do |_token|
+        next consume(type: :comment)&.value
+      end
+
+      content = comments.join("\n")
+      comment = Comment.new(content)
+
+      parse_statement.tap do |statement|
+        statement.comment = comment
+      end
     end
 
     # Parses a single import expression.
@@ -861,7 +885,11 @@ module Lume
 
       # If the method is external, it doesn't have a body nor an end token.
       unless is_external
-        expressions = parse_statements
+        expressions = iterate_all! do
+          next nil if peek(:end)
+
+          parse_statement
+        end
 
         consume!(type: :end, error: 'Expected \'end\' after method definition')
       end
