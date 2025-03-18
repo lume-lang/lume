@@ -109,25 +109,6 @@ module Lume
         ir.nodes.insert(0, *declarations)
       end
 
-      # Deletes all external symbols from the given IR.
-      #
-      # @param ir [Lume::IR::AST] The abstract syntax tree to iterate over.
-      #
-      # @return [void]
-      def delete_external_symbols(ir)
-        # Delete external function definitions
-        ir.nodes.delete_if do |node|
-          node.is_a?(Lume::IR::FunctionDefinition) && node.external?
-        end
-
-        # Delete external method definitions
-        ir.find_all(Lume::IR::ClassDefinition).each do |class_def|
-          class_def.expressions.delete_if do |node|
-            node.is_a?(Lume::IR::MethodDefinition) && node.external?
-          end
-        end
-      end
-
       def generate_ir_nodes(nodes)
         nodes.map { |node| generate_ir_node(node) }
       end
