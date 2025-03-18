@@ -325,9 +325,9 @@ module Lume
 
     # Represents a class definition.
     #
-    #   'class' name
+    #   'class' name '{'
     #     expressions
-    #   'end'
+    #   '}'
     class ClassDefinition < Expression
       attr_accessor :name, :expressions
 
@@ -579,11 +579,11 @@ module Lume
 
     # Represents a function definition.
     #
-    #   'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   'fn' name '(' parameters [ ',' parameters ]* ')' '->' return '{'
     #     expressions
-    #   'end'
+    #   '}'
     # |
-    #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' '->' return
     class FunctionDefinition < FunctionDeclaration
       attr_accessor :expressions, :external
 
@@ -613,11 +613,11 @@ module Lume
 
     # Represents a method definition.
     #
-    #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' '->' return '{'
     #     expressions
-    #   'end'
+    #   '}'
     # |
-    #   visibility* 'fn' 'external' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   visibility* 'fn' 'external' name '(' parameters [ ',' parameters ]* ')' '->' return
     class MethodDefinition < FunctionDefinition
       attr_accessor :class_def, :visibility
 

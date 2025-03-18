@@ -225,9 +225,9 @@ module Lume
 
     # Represents a class definition.
     #
-    #   'class' name
+    #   'class' name '{'
     #     expressions
-    #   'end'
+    #   '}'
     class ClassDefinition < Expression
       attr_accessor :name, :expressions
 
@@ -245,13 +245,13 @@ module Lume
 
     # Represents a method definition.
     #
-    #   visibility* 'fn' name '(' ')' ':' return
+    #   visibility* 'fn' name '(' ')' '->' return '{'
     #     expressions
-    #   'end'
+    #   '}'
     # |
-    #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' ':' return
+    #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' '->' return '{'
     #     expressions
-    #   'end'
+    #   '}'
     class MethodDefinition < Member
       attr_accessor :name, :parameters, :return, :expressions, :external
 
@@ -432,23 +432,23 @@ module Lume
 
     # Represents an `if` conditional expression.
     #
-    #   'if' condition
+    #   'if' condition '{'
     #     expressions
-    #   'end'
+    #   '}'
     # |
-    #   'if' condition
+    #   'if' condition '{'
     #     then
-    #   'else'
+    #   '}' 'else' '{'
     #     else
-    #   'end'
+    #   '}'
     # |
-    #   'if' condition
+    #   'if' condition '{'
     #     then
-    #   'else if' else_if.key
+    #   '}' 'else if' else_if '{'
     #     else_if.value
-    #   'else'
+    #   '}' 'else' '{'
     #     else
-    #   'end'
+    #   '}'
     class IfConditional < Conditional
       attr_accessor :else, :else_if
 
@@ -469,23 +469,23 @@ module Lume
 
     # Represents an `else if` conditional expression.
     #
-    #   'else if' condition
+    #   'else if' condition '{'
     #     expression
-    #   'end'
+    #   '}'
     class ElseIfConditional < Conditional
     end
 
     # Represents an `unless` conditional expression.
     #
-    #   'unless' condition
+    #   'unless' condition '{'
     #     expressions
-    #   'end'
+    #   '}'
     # |
-    #   'unless' condition
+    #   'unless' condition '{'
     #     then
-    #   'else'
+    #   '}' 'else' '{'
     #     else
-    #   'end'
+    #   '}'
     class UnlessConditional < Conditional
       attr_accessor :else
 
@@ -788,7 +788,7 @@ module Lume
 
     # Represents an array type, where the type is a list of zero-or-more elements.
     #
-    #   inner '[' ']'
+    #   '[' inner ']'
     class ArrayType < Type
       attr_accessor :inner
 
