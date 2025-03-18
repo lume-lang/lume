@@ -634,11 +634,9 @@ module Lume
     def parse_if_condition_expression
       expression = IfConditional.new
       expression.condition = parse_expression
-      expression.then = parse_expressions
+      expression.then = consume_wrapped! { parse_expressions }
       expression.else_if << parse_else_if_condition_expression while peek_next(%i[else if])
-      expression.else = parse_expressions if consume(:else)
-
-      consume!(type: :end, error: 'Expected end of conditional statement')
+      expression.else = consume_wrapped! { parse_expressions } if consume(:else)
 
       expression
     end
@@ -650,11 +648,13 @@ module Lume
       consume!(type: :else)
       consume!(type: :if)
 
-      expression = ElseIfConditional.new
-      expression.condition = parse_expression
-      expression.then = parse_expressions
+      consume_wrapped! do
+        expression = ElseIfConditional.new
+        expression.condition = parse_expression
+        expression.then = parse_expressions
 
-      expression
+        expression
+      end
     end
 
     # Parses an `unless`-conditional expression.
@@ -663,10 +663,8 @@ module Lume
     def parse_unless_condition_expression
       expression = UnlessConditional.new
       expression.condition = parse_expression
-      expression.then = parse_expressions
-      expression.else = parse_expressions if consume(:else)
-
-      consume!(type: :end, error: 'Expected end of conditional statement')
+      expression.then = consume_wrapped! { parse_expressions }
+      expression.else = consume_wrapped! { parse_expressions } if consume(:else)
 
       expression
     end
@@ -813,19 +811,18 @@ module Lume
 
       name = consume!(type: :name, error: 'Expected class name in class definition').value
       definitions = parse_member_definitions
-      expression = ClassDefinition.new(name, definitions)
 
-      consume!(type: :end, error: 'Expected \'end\' after class definition')
-
-      expression
+      ClassDefinition.new(name, definitions)
     end
 
     # Parses a list of member definitions.
     #
     # @return [Array<Expression>] The parsed member definitions.
     def parse_member_definitions
-      iterate_all! do
-        with_location { parse_member_definition }
+      consume_wrapped! do
+        iterate_all! do
+          with_location { parse_member_definition }
+        end
       end
     end
 
@@ -885,20 +882,25 @@ module Lume
       return_type = with_location { parse_return_type }
 
       # If the method is external, it doesn't have a body nor an end token.
-      unless is_external
-        expressions = iterate_all! do
-          next nil if peek(:end)
-
-          parse_statement
-        end
-
-        consume!(type: :end, error: 'Expected \'end\' after method definition')
-      end
+      expressions = parse_function_content unless is_external
 
       expression = MethodDefinition.new(name, parameters, return_type, expressions || [])
       expression.external = is_external
 
       expression
+    end
+
+    # Parses the content within a function- or method-definition.
+    #
+    # @return [Array<Expression>] The parsed function- or method-definition content.
+    def parse_function_content
+      consume_wrapped! do
+        iterate_all! do
+          next nil if peek(:'}')
+
+          parse_statement
+        end
+      end
     end
 
     # Parses zero-or-more visibility modifiers.
