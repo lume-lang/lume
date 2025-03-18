@@ -92,6 +92,42 @@ module Lume
       end
     end
 
+    # Represents an abstract access operator.
+    class Access < Expression
+      attr_accessor :target, :property
+
+      def initialize(target, property)
+        super()
+
+        @target = target
+        @property = property
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@target) unless @target.nil?
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @target == other.target && @property == other.property
+      end
+    end
+
+    # Represents an abstract allocation expression.
+    class Allocation < Expression
+      attr_accessor :type, :size
+
+      def initialize(type, size)
+        super()
+
+        @type = type
+        @size = size
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @type == other.type && @size == other.size
+      end
+    end
+
     # Represents a single argument.
     #
     #   name ':' value
@@ -118,34 +154,6 @@ module Lume
       # @param to [Type] Type to cast to
       def cast_to(to)
         @value = Cast.new(@value, to)
-      end
-    end
-
-    # Represents a single parameter.
-    #
-    #   name ':' type
-    class Parameter < Node
-      attr_writer :default
-      attr_accessor :name, :type
-
-      def initialize(name, type, default: nil)
-        super()
-
-        @name = name
-        @type = type
-        @default = default
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@type)
-      end
-
-      def ==(other)
-        other.is_a?(Parameter) && @name == other.name && @type == other.type
-      end
-
-      def default?
-        !@default.nil?
       end
     end
 
@@ -218,108 +226,24 @@ module Lume
       end
     end
 
-    # Represents a function invocation.
-    #
-    #   action '(' arguments [ ',' arguments ]* ')'
-    class FunctionCall < Call; end
+    # Represents a cast expression, which casts a value to a different type.
+    class Cast < Expression
+      attr_accessor :value, :type
 
-    # Represents a method invocation.
-    #
-    #   instance '.' action '(' arguments [ ',' arguments ]* ')'
-    class MethodCall < Call
-      attr_accessor :instance
-
-      def initialize(instance, action, *)
-        super(action, *)
-
-        @instance = instance
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@instance) if @instance.is_a?(Node)
-
-        super
-      end
-
-      def ==(other)
-        super && @instance == other.instance
-      end
-
-      # Determines whether the method call is a static call.
-      #
-      # This method determines whether the method call is static by checking the `instance` attribute:
-      #   - If the `instance` is `nil`, the method call is static.
-      #   - If the `instance` is a `ClassDefinition`, the method call is static.
-      #   - If the `instance` refers to some other type, it's not static.
-      #
-      # @return [Boolean]
-      def static?
-        # If the instance has a ClassDefinition reference, it's static.
-        @instance.nil? || @instance.is_a?(ClassDefinition) || @instance.reference.is_a?(ClassDefinition)
-      end
-
-      # Gets the name of the class instance being accessed.
-      #
-      # @return [String]
-      def class_instance_name
-        # If the instance refers to a class definition, return the name of the class.
-        return instance.name if instance.is_a?(ClassDefinition)
-
-        # Otherwise, return the name of the expression type.
-        instance.expression_type.name
-      end
-    end
-
-    # Represents an object initialization expression.
-    #
-    #   'new' class '(' arguments [ ',' arguments ]* ')'
-    class New < Expression
-      attr_accessor :class_def, :arguments
-
-      def initialize(class_def, *arguments)
-        super()
-
-        @class_def = class_def
-        @arguments = *arguments
-      end
-
-      def accept_children(visitor)
-        @arguments.each { |arg| visitor.accept(arg) }
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @class_def == other.class_def && @arguments == other.arguments
-      end
-
-      # Determines the full name of the method.
-      #
-      # @return [String] Full name of the method.
-      def full_name
-        "#{@class_def.name}::#{@class_def.name}"
-      end
-    end
-
-    # Represents an return expression.
-    #
-    #   'return' value
-    class Return < Expression
-      attr_accessor :value
-
-      def initialize(value)
+      def initialize(value, type)
         super()
 
         @value = value
+        @type = type
       end
 
       def accept_children(visitor)
         visitor.accept(@value)
+        visitor.accept(@type)
       end
 
-      # Casts the returned value to the given type.
-      #
-      # @param to [Type] Type to cast to
-      def cast_to(to)
-        @value = Cast.new(@value, to)
+      def ==(other)
+        other.is_a?(self.class) && @value == other.value && @type == other.type
       end
     end
 
@@ -409,107 +333,10 @@ module Lume
       end
     end
 
-    # Represents a single visibility modifier for a class, method or property.
+    # Represents a function invocation.
     #
-    #   'public' | 'private' | 'static'
-    class Visibility < Expression
-      attr_accessor :name
-
-      def initialize(name)
-        super()
-
-        @name = name
-      end
-
-      def ==(other)
-        return true if other.is_a?(String) && @name.casecmp?(other)
-
-        other.is_a?(self.class) && @name == other.name
-      end
-    end
-
-    # Represents a type definition.
-    #
-    #   'type' name '=' type
-    class TypeDefinition < Expression
-      attr_accessor :name, :type
-
-      def initialize(name, type)
-        super()
-
-        @name = name
-        @type = type
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@type)
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @name == other.name && @type == other.type
-      end
-    end
-
-    # Represents a property definition in a class.
-    #
-    #   visibility* name ( ':' type [ '=' default ] | [':' type] '=' default )
-    class Property < Expression
-      attr_accessor :name, :type, :default, :visibility
-
-      def initialize(name, type, default, visibility)
-        super()
-
-        @name = name
-        @type = type
-        @default = default || NilLiteral.new
-        @visibility = visibility
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@visibility) unless @visibility.nil?
-        visitor.accept(@type) unless @type.nil?
-        visitor.accept(@default) unless @default.nil?
-      end
-
-      def ==(other)
-        return false unless other.is_a?(self.class)
-
-        @name == other.name && @type == other.type && @default == other.default && @visibility == other.visibility
-      end
-
-      # Casts the default value to the given type.
-      #
-      # @param to [Type] Type to cast to
-      def cast_to(to)
-        @default = Cast.new(@default, to) unless @default.nil?
-      end
-    end
-
-    # Represents an abstract access operator.
-    class Access < Expression
-      attr_accessor :target, :property
-
-      def initialize(target, property)
-        super()
-
-        @target = target
-        @property = property
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@target) unless @target.nil?
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @target == other.target && @property == other.property
-      end
-    end
-
-    # Represents a member access expression on a target object.
-    #
-    #   target '.' property
-    class MemberAccess < Access
-    end
+    #   action '(' arguments [ ',' arguments ]* ')'
+    class FunctionCall < Call; end
 
     # Represents a function declaration.
     #
@@ -611,6 +438,63 @@ module Lume
       end
     end
 
+    # Represents a allocation expression, which allocates memory on the heap.
+    class HeapAllocation < Allocation
+    end
+
+    # Represents a member access expression on a target object.
+    #
+    #   target '.' property
+    class MemberAccess < Access
+    end
+
+    # Represents a method invocation.
+    #
+    #   instance '.' action '(' arguments [ ',' arguments ]* ')'
+    class MethodCall < Call
+      attr_accessor :instance
+
+      def initialize(instance, action, *)
+        super(action, *)
+
+        @instance = instance
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@instance) if @instance.is_a?(Node)
+
+        super
+      end
+
+      def ==(other)
+        super && @instance == other.instance
+      end
+
+      # Determines whether the method call is a static call.
+      #
+      # This method determines whether the method call is static by checking the `instance` attribute:
+      #   - If the `instance` is `nil`, the method call is static.
+      #   - If the `instance` is a `ClassDefinition`, the method call is static.
+      #   - If the `instance` refers to some other type, it's not static.
+      #
+      # @return [Boolean]
+      def static?
+        # If the instance has a ClassDefinition reference, it's static.
+        @instance.nil? || @instance.is_a?(ClassDefinition) || @instance.reference.is_a?(ClassDefinition)
+      end
+
+      # Gets the name of the class instance being accessed.
+      #
+      # @return [String]
+      def class_instance_name
+        # If the instance refers to a class definition, return the name of the class.
+        return instance.name if instance.is_a?(ClassDefinition)
+
+        # Otherwise, return the name of the expression type.
+        instance.expression_type.name
+      end
+    end
+
     # Represents a method definition.
     #
     #   visibility* 'fn' name '(' parameters [ ',' parameters ]* ')' '->' return '{'
@@ -660,48 +544,167 @@ module Lume
       end
     end
 
-    # Represents an abstract allocation expression.
-    class Allocation < Expression
-      attr_accessor :type, :size
+    # Represents an object initialization expression.
+    #
+    #   'new' class '(' arguments [ ',' arguments ]* ')'
+    class New < Expression
+      attr_accessor :class_def, :arguments
 
-      def initialize(type, size)
+      def initialize(class_def, *arguments)
         super()
 
-        @type = type
-        @size = size
+        @class_def = class_def
+        @arguments = *arguments
+      end
+
+      def accept_children(visitor)
+        @arguments.each { |arg| visitor.accept(arg) }
       end
 
       def ==(other)
-        other.is_a?(self.class) && @type == other.type && @size == other.size
+        other.is_a?(self.class) && @class_def == other.class_def && @arguments == other.arguments
+      end
+
+      # Determines the full name of the method.
+      #
+      # @return [String] Full name of the method.
+      def full_name
+        "#{@class_def.name}::#{@class_def.name}"
       end
     end
 
-    # Represents a allocation expression, which allocates memory on the heap.
-    class HeapAllocation < Allocation
+    # Represents a single parameter.
+    #
+    #   name ':' type
+    class Parameter < Node
+      attr_writer :default
+      attr_accessor :name, :type
+
+      def initialize(name, type, default: nil)
+        super()
+
+        @name = name
+        @type = type
+        @default = default
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@type)
+      end
+
+      def ==(other)
+        other.is_a?(Parameter) && @name == other.name && @type == other.type
+      end
+
+      def default?
+        !@default.nil?
+      end
+    end
+
+    # Represents a property definition in a class.
+    #
+    #   visibility* name ( ':' type [ '=' default ] | [':' type] '=' default )
+    class Property < Expression
+      attr_accessor :name, :type, :default, :visibility
+
+      def initialize(name, type, default, visibility)
+        super()
+
+        @name = name
+        @type = type
+        @default = default || NilLiteral.new
+        @visibility = visibility
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@visibility) unless @visibility.nil?
+        visitor.accept(@type) unless @type.nil?
+        visitor.accept(@default) unless @default.nil?
+      end
+
+      def ==(other)
+        return false unless other.is_a?(self.class)
+
+        @name == other.name && @type == other.type && @default == other.default && @visibility == other.visibility
+      end
+
+      # Casts the default value to the given type.
+      #
+      # @param to [Type] Type to cast to
+      def cast_to(to)
+        @default = Cast.new(@default, to) unless @default.nil?
+      end
+    end
+
+    # Represents an return expression.
+    #
+    #   'return' value
+    class Return < Expression
+      attr_accessor :value
+
+      def initialize(value)
+        super()
+
+        @value = value
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@value)
+      end
+
+      # Casts the returned value to the given type.
+      #
+      # @param to [Type] Type to cast to
+      def cast_to(to)
+        @value = Cast.new(@value, to)
+      end
     end
 
     # Represents a allocation expression, which allocates memory on the stack.
     class StackAllocation < Allocation
     end
 
-    # Represents a cast expression, which casts a value to a different type.
-    class Cast < Expression
-      attr_accessor :value, :type
+    # Represents a type definition.
+    #
+    #   'type' name '=' type
+    class TypeDefinition < Expression
+      attr_accessor :name, :type
 
-      def initialize(value, type)
+      def initialize(name, type)
         super()
 
-        @value = value
+        @name = name
         @type = type
       end
 
       def accept_children(visitor)
-        visitor.accept(@value)
         visitor.accept(@type)
       end
 
       def ==(other)
-        other.is_a?(self.class) && @value == other.value && @type == other.type
+        other.is_a?(self.class) && @name == other.name && @type == other.type
+      end
+    end
+
+    # Represents a variable reference.
+    #
+    #   name
+    class Variable < Expression
+      attr_accessor :name, :reference
+
+      def initialize(name)
+        super()
+
+        @name = name
+        @reference = nil
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@reference) unless @reference.nil?
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @name == other.name && @reference == other.reference
       end
     end
 
@@ -745,317 +748,10 @@ module Lume
       end
     end
 
-    # Represents a variable reference.
+    # Represents a single visibility modifier for a class, method or property.
     #
-    #   name
-    class Variable < Expression
-      attr_accessor :name, :reference
-
-      def initialize(name)
-        super()
-
-        @name = name
-        @reference = nil
-      end
-
-      def accept_children(visitor)
-        visitor.accept(@reference) unless @reference.nil?
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @name == other.name && @reference == other.reference
-      end
-    end
-
-    # Represents an abstract number literal.
-    class NumberLiteral < Literal
-      # Determines whether the node can be cast to the given type.
-      #
-      # @param to [Class] Type to check
-      #
-      # @return [bool]
-      def castable_to?(to)
-        to.is_a?(NumberLiteral) && to.bytesize >= bytesize
-      end
-
-      # Determines whether the node can contain the given value.
-      #
-      # @param value [Object] Value to check
-      #
-      # @return [bool]
-      def self.can_contain?(_value)
-        raise 'NumberLiteral::can_contain? must be implemented by subclasses.'
-      end
-    end
-
-    # Represents an abstract integer literal.
-    class IntegerLiteral < NumberLiteral
-    end
-
-    # Represents a signed, 1-byte integer literal.
-    class ByteLiteral < NumberLiteral
-      def bytesize
-        1
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(UnsignedByteLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= -128 && value <= 127
-      end
-
-      def self.signed?
-        true
-      end
-    end
-
-    # Represents an unsigned, 1-byte integer literal.
-    class UnsignedByteLiteral < NumberLiteral
-      def bytesize
-        1
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(ByteLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= 0 && value <= 255
-      end
-
-      def self.signed?
-        false
-      end
-    end
-
-    # Represents a signed, 2-byte integer literal.
-    class ShortLiteral < NumberLiteral
-      def bytesize
-        2
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(UnsignedShortLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= -32_768 && value <= 32_767
-      end
-
-      def self.signed?
-        true
-      end
-    end
-
-    # Represents an unsigned, 2-byte integer literal.
-    class UnsignedShortLiteral < NumberLiteral
-      def bytesize
-        2
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(ShortLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= 0 && value <= 65_535
-      end
-
-      def self.signed?
-        false
-      end
-    end
-
-    # Represents a signed, 4-byte integer literal.
-    class WordLiteral < NumberLiteral
-      def bytesize
-        4
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(UnsignedWordLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= -2_147_483_648 && value <= 2_147_483_647
-      end
-
-      def self.signed?
-        true
-      end
-    end
-
-    # Represents an unsigned, 4-byte integer literal.
-    class UnsignedWordLiteral < NumberLiteral
-      def bytesize
-        4
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(WordLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= 0 && value <= 4_294_967_295
-      end
-
-      def self.signed?
-        false
-      end
-    end
-
-    # Represents a signed, 8-byte integer literal.
-    class LongLiteral < NumberLiteral
-      def bytesize
-        8
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(UnsignedLongLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= -9_223_372_036_854_775_808 && value <= 9_223_372_036_854_775_807
-      end
-
-      def self.signed?
-        true
-      end
-    end
-
-    # Represents an unsigned, 8-byte integer literal.
-    class UnsignedLongLiteral < NumberLiteral
-      def bytesize
-        8
-      end
-
-      def castable_to?(to)
-        super && !to.is_a?(LongLiteral)
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(Integer) && value >= 0 && value <= 18_446_744_073_709_551_615
-      end
-
-      def self.signed?
-        false
-      end
-    end
-
-    # Represents an abstract floating-point literal.
-    class RealLiteral < NumberLiteral
-      def self.precision_digits
-        raise NotImplementedError, 'RealLiteral#precision_digits must be implemented in subclasses.'
-      end
-
-      def self.can_contain?(value)
-        value = value.to_f if value.is_a?(Integer)
-
-        return false unless value.is_a?(Float)
-
-        value.round(precision_digits - 1) == value
-      end
-    end
-
-    # Represents a single-precision floating-point literal.
-    class FloatLiteral < RealLiteral
-      PRECISION_DIGITS = 7
-
-      def bytesize
-        4
-      end
-
-      def self.precision_digits
-        PRECISION_DIGITS
-      end
-    end
-
-    # Represents a double-precision floating-point literal.
-    class DoubleLiteral < RealLiteral
-      PRECISION_DIGITS = 15
-
-      def bytesize
-        8
-      end
-
-      def self.precision_digits
-        PRECISION_DIGITS
-      end
-    end
-
-    # Represents a string literal.
-    class StringLiteral < Literal
-      def bytesize
-        1.size
-      end
-
-      def self.can_contain?(value)
-        value.is_a?(String)
-      end
-    end
-
-    # Represents a boolean literal.
-    class BooleanLiteral < Literal
-      def bytesize
-        1
-      end
-
-      def self.can_contain?(value)
-        ['true', 'false', true, false].include?(value)
-      end
-    end
-
-    # Represents a nil literal.
-    class NilLiteral < Literal
-      def initialize(value = nil)
-        super
-      end
-
-      def bytesize
-        1.size
-      end
-
-      def self.can_contain?(value)
-        value.nil?
-      end
-    end
-
-    # Represents an abstract type node.
-    class Type < Node
-      def ==(other)
-        other.is_a?(self.class)
-      end
-
-      # Determines the size of the type in bytes.
-      #
-      # @return [Integer] Size of the type in bytes
-      def bytesize
-        raise "Type::bytesize must be implemented by subclasses. Implementation in #{self.class.name} is missing."
-      end
-
-      # Returns a string representation of the type.
-      #
-      # @return [String] String representation of the type
-      def to_s
-        raise "Type::to_s must be implemented by subclasses. Implementation in #{self.class.name} is missing."
-      end
-    end
-
-    # Represents a void type.
-    class Void < Type
-      def bytesize
-        0
-      end
-
-      def to_s
-        'void'
-      end
-    end
-
-    # Represents an abstract scalar type.
-    class Scalar < Type
+    #   'public' | 'private' | 'static'
+    class Visibility < Expression
       attr_accessor :name
 
       def initialize(name)
@@ -1064,119 +760,10 @@ module Lume
         @name = name
       end
 
-      # Determines whether the scalar is an integer type.
-      #
-      # @return [Boolean]
-      def integer?
-        name.start_with?('Int') || name.start_with?('UInt')
-      end
-
-      # Determines whether the scalar is a floating-point type.
-      #
-      # @return [Boolean]
-      def floating?
-        name.start_with?('Float') || name.start_with?('Double')
-      end
-
-      # Determines whether the scalar is a string type.
-      #
-      # @return [Boolean]
-      def string?
-        name == 'String'
-      end
-
-      # Determines whether the scalar is a boolean type.
-      #
-      # @return [Boolean]
-      def boolean?
-        name == 'Boolean'
-      end
-
-      # On numeric scalar types, returns the width in bits.
-      #
-      # @return [Integer, nil]
-      def width
-        return nil unless integer? || floating?
-
-        case name
-        when 'Int8', 'UInt8' then 8
-        when 'Int16', 'UInt16' then 16
-        when 'Int32', 'UInt32', 'Float' then 32
-        when 'Int64', 'UInt64', 'Double' then 64
-        end
-      end
-
-      # On numeric scalar types, returns whether the scalar is signed.
-      #
-      # @return [Boolean]
-      def signed?
-        return false unless integer?
-
-        case name
-        when 'Int8', 'Int16', 'Int32', 'Int64' then true
-        when 'UInt8', 'UInt16', 'UInt32', 'UInt64' then false
-        end
-      end
-
       def ==(other)
-        other.is_a?(self.class) && other.name == name
-      end
+        return true if other.is_a?(String) && @name.casecmp?(other)
 
-      def to_s
-        name
-      end
-    end
-
-    # Represents a named type.
-    class NamedType < Scalar
-    end
-
-    # Represents a pointer type.
-    class Pointer < Type
-      attr_accessor :of
-
-      def initialize(of)
-        super()
-
-        @of = of
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && other.of == of
-      end
-
-      def bytesize
-        # `Integer#size` returns the size of the integer in bytes.
-        # Since the size of the pointer depends on the integer size to determine it.
-        # All integers are 64-bits on x64 and 32-bits on x86.
-        1.size
-      end
-
-      def to_s
-        "*#{of}"
-      end
-    end
-
-    # Represents a union type.
-    class Union < Type
-      attr_accessor :types
-
-      def initialize(types)
-        super()
-
-        @types = types
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && other.types == types
-      end
-
-      def bytesize
-        types.max { |a, b| a.bytesize <=> b.bytesize }
-      end
-
-      def to_s
-        "[#{types.join(', ')}]"
+        other.is_a?(self.class) && @name == other.name
       end
     end
   end

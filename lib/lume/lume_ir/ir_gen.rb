@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'lume/lume_ir/ir'
+require 'lume/lume_ir/types'
+require 'lume/lume_ir/values'
 
 module Lume
   module IR
