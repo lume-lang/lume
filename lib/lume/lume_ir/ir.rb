@@ -602,6 +602,7 @@ module Lume
         super(name, parameters, return_value, expressions)
 
         @class_def = class_def
+        @visibility = []
       end
 
       def ==(other)
