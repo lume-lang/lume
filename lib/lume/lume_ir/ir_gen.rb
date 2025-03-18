@@ -79,7 +79,7 @@ module Lume
         Lume::Syntax::DoubleLiteral => Lume::IR::DoubleLiteral,
         Lume::Syntax::StringLiteral => Lume::IR::StringLiteral,
         Lume::Syntax::BooleanLiteral => Lume::IR::BooleanLiteral,
-        Lume::Syntax::NilLiteral => Lume::IR::NilLiteral
+        Lume::Syntax::NullLiteral => Lume::IR::NullLiteral
       }.freeze
 
       private

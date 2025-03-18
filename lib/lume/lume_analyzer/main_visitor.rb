@@ -63,7 +63,7 @@ module Lume
         FloatLiteral => 'Float',
         DoubleLiteral => 'Double',
         BooleanLiteral => 'Boolean',
-        NilLiteral => 'Nil'
+        NullLiteral => 'Null'
       }.freeze
 
       def initialize

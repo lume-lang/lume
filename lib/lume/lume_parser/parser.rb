@@ -5,6 +5,8 @@ require 'lume/lume_syntax/types'
 require 'lume/lume_syntax/values'
 require 'lume/lume_syntax/ast_helpers'
 require 'lume/lume_parser/errors'
+require 'lume/lume_parser/types'
+require 'lume/lume_parser/values'
 
 module Lume
   class Parser # :nodoc:
@@ -917,114 +919,6 @@ module Lume
       parse_type
     end
 
-    # Parses a single type definition.
-    #
-    # @return [TypeDefinition] The parsed type definition.
-    #
-    # @see TypeDefinition
-    def parse_type_definition
-      consume!(value: :type)
-
-      name = consume!(type: name)
-
-      # Skip equal sign between name and type
-      consume!(type: :'=')
-
-      type = with_location { parse_type }
-
-      TypeDefinition.new(name.value, type)
-    end
-
-    # Parses a single type definition expression.
-    #
-    # @return [Type] The parsed type definition.
-    def parse_type
-      type = parse_type_prefix_expression
-
-      # If the next token is a pipe, parse it as a union type.
-      type = parse_union_type(type) if peek(:|)
-
-      if type.is_a?(Union)
-        # Merge all the nested unions within a single union
-        type.merge_nested_unions
-
-        # If there is only a single type in the union, return it directly
-        return type.types.first if type.types.size == 1
-      end
-
-      type
-    end
-
-    # Parses a type prefix expression at the current cursor position.
-    #
-    # Prefix expressions are expressions which appear at the start of a type definition.
-    #
-    # @return [Type] The parsed type expression.
-    def parse_type_prefix_expression
-      return nil if peek(:eof)
-
-      # If the next token is an opening parentheses, parse it as a nested type.
-      return parse_union_type if peek(:'(')
-
-      # If the next token is a opening bracket, parse it as an array type.
-      return parse_array_type if peek(:'[')
-
-      # If the next token is a name, parse it as a named type.
-      return parse_named_type if peek(:name)
-
-      # If the next token is an asterisk, parse it as a pointer type.
-      return parse_pointer_type if peek(:*)
-
-      nil
-    end
-
-    # Parses a nested type definition expression.
-    #
-    # @return [Type] The parsed type definition.
-    def parse_nested_type
-      consume_wrapped!(left: :'(', right: :')') { parse_type }
-    end
-
-    # Parses a named type definition expression.
-    #
-    # @return [Type] The parsed type definition.
-    def parse_named_type
-      name = consume!(type: :name).value
-
-      return Void.new if name.casecmp?('void')
-
-      return Null.new if name.casecmp?('null')
-
-      NamedType.new(name)
-    end
-
-    # Parses a union type definition expression.
-    #
-    # @return [Type] The parsed type definition.
-    def parse_union_type(lhs)
-      consume(type: :|)
-
-      Union.new([lhs, parse_type])
-    end
-
-    # Parses an array type definition expression.
-    #
-    # @return [ArrayType] The parsed type definition.
-    def parse_array_type
-      inner = consume_wrapped!(left: :'[', right: :']') { parse_type }
-
-      ArrayType.new(inner)
-    end
-
-    # Parses a pointer type definition expression.
-    #
-    # @return [Type] The parsed type definition.
-    def parse_pointer_type
-      consume!(type: :*)
-
-      Pointer.new(parse_type)
-    end
-
     # Parses a conditional expression.
     #
     # @return [Conditional] The parsed conditional expression.
@@ -1101,82 +995,6 @@ module Lume
       return [] unless consume(type: :else)
 
       parse_conditional_block
-    end
-
-    # Parses zero-or-more values from an expression, separated by commas.
-    #
-    # @return [Array<Expression>] The parsed values.
-    def parse_values
-      iterate_all! do |index|
-        next nil if peek(:'(')
-
-        # We shouldn't break on the first iteration, as we haven't read any values yet.
-        next nil if !peek(:',') && index.positive?
-
-        # If the next token is a comma, consume it.
-        consume(type: :',') if index.positive?
-
-        parse_expression
-      end
-    end
-
-    # Parses a single value from an expression.
-    #
-    # @return [Literal] The parsed value.
-    def parse_value
-      return parse_string_value if peek(:string)
-      return parse_number_value if peek(:number)
-      return parse_boolean_value if peek(%i[true false])
-      return parse_nil_value if peek(:nil)
-
-      unexpected_token(%i[string number true false nil])
-    end
-
-    # Parses a single string value from an expression.
-    #
-    # @return [StringLiteral] The parsed string value.
-    def parse_string_value
-      value = consume!(type: :string).value
-
-      StringLiteral.new(value)
-    end
-
-    # Parses a single number value from an expression.
-    #
-    # @return [NumberLiteral] The parsed number value.
-    def parse_number_value
-      token = consume!(type: :number)
-
-      # If an explicit type was given in the literal, use that to create the value.
-      return NUMERIC_TYPE_MAP[token.kind].new(token.value) if NUMERIC_TYPE_MAP.key?(token.kind)
-
-      # If no explicit type was given, try to infer the type from the value.
-      # We're looping through all numeric values to see if the value can be contained.
-      # If it can be contained within a given type, create a new instance of that type and return it.
-      NUMERIC_LITERAL_TYPES.each do |type|
-        return type.new(token.value) if type.can_contain?(token.value)
-      end
-
-      raise "Number out of range (#{token.value})"
-    end
-
-    # Parses a single boolean value from an expression.
-    #
-    # @return [BooleanLiteral] The parsed boolean value.
-    def parse_boolean_value
-      value = consume!(type: %i[true false]).value
-      value = value.is_a?(String) && value.casecmp?('true')
-
-      BooleanLiteral.new(value)
-    end
-
-    # Parses a single `nil` value from an expression.
-    #
-    # @return [NilLiteral] The parsed `nil` value.
-    def parse_nil_value
-      consume!(type: :nil).value
-
-      NilLiteral.new
     end
 
     # Determines whether the current token is a nested expression (contained within parentheses).

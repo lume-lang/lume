@@ -156,8 +156,8 @@ module Lume
       end
     end
 
-    # Represents a nil literal.
-    class NilLiteral < Literal
+    # Represents a null literal.
+    class NullLiteral < Literal
       def initialize
         super(nil)
       end

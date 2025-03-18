@@ -131,5 +131,45 @@ module Lume
         other.is_a?(self.class) && other.inner == inner
       end
     end
+
+    # Represents an enum type, where one of one-or-more cases can be defined.
+    #
+    #   'enum' name '{'
+    #     cases+
+    #   '}'
+    class Enum < Type
+      attr_accessor :name, :cases
+
+      def initialize(name, cases = [])
+        super()
+
+        @name = name
+        @cases = cases
+      end
+
+      def ==(other)
+        other.is_a?(Enum) && other.name == name && other.cases == cases
+      end
+    end
+
+    # Represents a single case within an enum.
+    #
+    #   name
+    # |
+    #   name '(' properties* ')'
+    class EnumCase < Type
+      attr_accessor :name, :properties
+
+      def initialize(name, properties = [])
+        super()
+
+        @name = name
+        @properties = properties
+      end
+
+      def ==(other)
+        other.is_a?(EnumCase) && other.name == name && other.properties == properties
+      end
+    end
   end
 end
