@@ -7,7 +7,7 @@ describe 'object referencing' do
 
   it 'should keep same reference to class definitions' do
     tree = analyze(%(
-      class String end
+      class String { }
 
       let a = new String()
     ))

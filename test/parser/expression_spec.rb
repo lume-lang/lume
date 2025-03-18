@@ -18,14 +18,14 @@ describe Lume::Parser do
   it_parses 'a = b.c.d()', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd'))
   it_parses 'a = b.c.d(1)', Assignment.new('a'.var, Call.new(MemberAccess.new('b', 'c'), 'd', 1.int8.arg))
 
-  it_parses 'fn foo(): void end', MethodDefinition.new('foo', [], Void.new, [])
-  it_parses 'fn foo(a: int): void end',
+  it_parses 'fn foo(): void { }', MethodDefinition.new('foo', [], Void.new, [])
+  it_parses 'fn foo(a: int): void { }',
             MethodDefinition.new('foo', [Parameter.new('a', NamedType.new('int'))], Void.new, [])
 
   it_parses %(
-    class Foo
-      fn foo(a: int, b: int): void end
-    end
+    class Foo {
+      fn foo(a: int, b: int): void { }
+    }
     ), ClassDefinition.new(
       'Foo', [
         MethodDefinition.new(
@@ -40,9 +40,9 @@ describe Lume::Parser do
     )
 
   it_parses %(
-    class Foo
-      fn Foo(a: int) end
-    end
+    class Foo {
+      fn Foo(a: int) {}
+    }
     ), ClassDefinition.new(
       'Foo', [
         MethodDefinition.new(
@@ -56,9 +56,9 @@ describe Lume::Parser do
     )
 
   it_parses %(
-    class Foo
+    class Foo {
       name: String
-    end
+    }
     ), ClassDefinition.new(
       'Foo', [
         Property.new('name', type: NamedType.new('String'), default: nil)
@@ -66,9 +66,9 @@ describe Lume::Parser do
     )
 
   it_parses %(
-    class Foo
+    class Foo {
       name: String = 'John'
-    end
+    }
     ), ClassDefinition.new(
       'Foo', [
         Property.new('name', type: NamedType.new('String'), default: 'John'.string)
@@ -76,9 +76,9 @@ describe Lume::Parser do
     )
 
   it_parses %(
-    class Foo
+    class Foo {
       name = 'John'
-    end
+    }
     ), ClassDefinition.new(
       'Foo', [
         Property.new('name', type: nil, default: 'John'.string)
