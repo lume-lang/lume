@@ -34,20 +34,4 @@ describe 'lexer comments' do
 
     assert_tokens_equal([[:comment, 'content 1'], [:comment, 'content 2'], [:eof, nil]], tokens)
   end
-
-  it 'lexes multiline comments' do
-    lexer = Lume::Lexer.new(%(/* content */))
-
-    tokens = lexer.all!(include_comments: true)
-
-    assert_tokens_equal([[:comment, 'content'], [:eof, nil]], tokens)
-  end
-
-  it 'lexes comments between statements' do
-    lexer = Lume::Lexer.new(%(a /* content */ = 1))
-
-    tokens = lexer.all!(include_comments: true)
-
-    assert_tokens_equal([[:name, 'a'], [:comment, 'content'], [:'=', '='], [:number, 1], [:eof, nil]], tokens)
-  end
 end

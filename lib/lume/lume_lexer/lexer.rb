@@ -198,7 +198,6 @@ module Lume
       return parse_name_token if first_character.match?(/[a-zA-Z_]/)
       return parse_number_token if first_character.match?(/[0-9]/)
       return parse_comment_token if first_character == '#'
-      return parse_comment_token if @source[@index, 2] == '/*'
       return parse_string_token if ["'", '"'].include?(first_character)
 
       token(:unknown)
@@ -280,13 +279,10 @@ module Lume
       nil
     end
 
-    # Parses the current token at the internal cursor as a single- or multi-line comment. If the comment line
-    # starts with a '#' it is a single-line comment. If it starts with '/*' it is a multi-line comment.
+    # Parses the current token at the internal cursor as a single-line comment.
     #
     # @return [Token] The parsed token from the source.
     def parse_comment_token
-      return parse_comment_block if @source[@index, 2] == '/*'
-
       end_of_line_index = @source.index("\n", @index) || @source.length
       comment_content = @source[@index + 1..end_of_line_index]
 
