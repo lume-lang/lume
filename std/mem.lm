@@ -1,0 +1,25 @@
+# Allocates a block of memory of the specified size, in bytes.
+#
+# This function is NOT meant to be used by user-code and is only declared so the compiler can make use of it.
+#
+# @param size   The size of the memory block to allocate, in bytes.
+#
+# @return       A pointer to the allocated memory block, or `null` if the allocation failed.
+fn external malloc(size: UInt64) -> Pointer
+
+# Re-allocates an existing memory block to a new size.
+#
+# This function is NOT meant to be used by user-code and is only declared so the compiler can make use of it.
+#
+# @param ptr    The pointer to the memory block to re-allocate.
+# @param size   The new size of the memory block, in bytes.
+#
+# @return       A pointer to the re-allocated memory block, or `null` if the re-allocation failed.
+fn external realloc(ptr: Pointer, size: UInt64) -> Pointer
+
+# Frees the memory block pointed to by the specified pointer.
+#
+# This function is NOT meant to be used by user-code and is only declared so the compiler can make use of it.
+#
+# @param ptr    The pointer to the memory block to free.
+fn external free(ptr: Pointer) -> void

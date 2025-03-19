@@ -1,0 +1,9 @@
+class Int8 { }
+class Int16 { }
+class Int32 { }
+class Int64 { }
+
+class UInt8 { }
+class UInt16 { }
+class UInt32 { }
+class UInt64 { }
