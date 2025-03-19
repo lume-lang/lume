@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir/ir'
+require 'lume/lume_mir/mir'
 
 module Lume
-  module IR
+  module MIR
     # Represents an abstract type node.
     class Type < Node
       def ==(other)

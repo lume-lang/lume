@@ -84,11 +84,11 @@ module Lume
       #
       # This is usually called when a new variable is introduced within an existing block scope.
       #
-      # @param declaration  [Lume::IR::Node]  The corresponding IR node of the symbol.
+      # @param declaration  [Lume::MIR::Node]  The corresponding IR node of the symbol.
       # @param name         [String]          Optional. The name of the symbol to be defined. Inferred if not given.
-      # @param type         [Lume::IR::Type]  Optional. The type of the symbol to be defined.
+      # @param type         [Lume::MIR::Type]  Optional. The type of the symbol to be defined.
       #
-      # @param declaration [Lume::IR::Node] The IR node to be added as a symbol.
+      # @param declaration [Lume::MIR::Node] The IR node to be added as a symbol.
       def define(declaration, name: nil, type: nil)
         # If no name was given directory, assume it resides as a `name` attribute.
         name ||= declaration.name if declaration.respond_to?(:name)
@@ -107,7 +107,7 @@ module Lume
       #
       # @param name [String] The name of the symbol to retrieve.
       #
-      # @return [Lume::IR::Node]
+      # @return [Lume::MIR::Node]
       def retrieve(name, type: nil)
         symbol = retrieve_symbol(name)
 
@@ -154,7 +154,7 @@ module Lume
       #
       # @param name [String] The name of the symbol to retrieve.
       #
-      # @return [Lume::IR::Node]
+      # @return [Lume::MIR::Node]
       def retrieve_symbol(name)
         frame = @symbols.reverse.find do |f|
           # If we hit a boundary, continue no further and return nil.
@@ -174,7 +174,7 @@ module Lume
       #
       # @param name [String] The name of the declaration to retrieve.
       #
-      # @return [Lume::IR::Node]
+      # @return [Lume::MIR::Node]
       def retrieve_global(name)
         @symbols.first[name]
       end

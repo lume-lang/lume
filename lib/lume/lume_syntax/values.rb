@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/location'
-require 'lume/lume_syntax/ast'
+require 'lume/lume_syntax/hir'
 
 module Lume
   module Syntax

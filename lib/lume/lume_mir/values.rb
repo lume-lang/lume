@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir/ir'
+require 'lume/lume_mir/mir'
 
 module Lume
-  module IR
+  module MIR
     # Represents an abstract number literal.
     class NumberLiteral < Literal
       # Determines whether the node can be cast to the given type.

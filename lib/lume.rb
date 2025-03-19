@@ -222,5 +222,3 @@ module Lume
     end
   end
 end
-
-require_relative 'lume/lume_cli/program'

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir/ir'
+require 'lume/lume_mir/mir'
 
 module Lume
   # Visitor for nodes in the AST, used to generate LLVM IR from the CompilerIR.
   class NodeVisitor
-    include Lume::IR
+    include Lume::MIR
 
     LIBC_FUNCTIONS = %w[
       printf

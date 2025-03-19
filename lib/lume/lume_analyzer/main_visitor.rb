@@ -10,7 +10,7 @@ module Lume
     # Passes the AST through the main visitor, which handles the expansion of result
     # types of expressions within it.
     #
-    # @param ast [Lume::IR::AST]  The AST to be analyzed.
+    # @param ast [Lume::MIR::AST]  The AST to be analyzed.
     #
     # @see MainVisitor
     def visit_main(ast)
@@ -32,8 +32,8 @@ module Lume
     # perform type checking and may produce incorrect results.
     class MainVisitor
       include Lume::Analyzer::Errors
-      include Lume::IR
-      include Lume::IR::Visitor
+      include Lume::MIR
+      include Lume::MIR::Visitor
 
       SCALAR_TYPES = %w[
         String
@@ -72,7 +72,7 @@ module Lume
 
       # Accepts an AST and runs it through the visitor.
       #
-      # @param ast [Lume::IR::AST] The AST to be analyzed.
+      # @param ast [Lume::MIR::AST] The AST to be analyzed.
       def visit(ast)
         prediscover(ast)
         accept_ast(ast)
@@ -252,7 +252,7 @@ module Lume
 
       # Prediscovers all class- and function-definitions within the AST and adds them to the symbol table.
       #
-      # @param ast [Lume::IR::AST] The AST to be analyzed.
+      # @param ast [Lume::MIR::AST] The AST to be analyzed.
       def prediscover(ast)
         discover_class_definitions(ast)
         discover_function_definitions(ast)
@@ -260,7 +260,7 @@ module Lume
 
       # Discovers all class definitions within the AST and adds them to the symbol table.
       #
-      # @param ast [Lume::IR::AST] The AST to be analyzed.
+      # @param ast [Lume::MIR::AST] The AST to be analyzed.
       def discover_class_definitions(ast)
         class_definitions = ast.nodes.select { |node| node.is_a?(ClassDefinition) }
 

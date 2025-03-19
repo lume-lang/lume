@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir/ir'
-require 'lume/lume_ir_visitor/visitor'
+require 'lume/lume_mir/mir'
+require 'lume/lume_mir_visitor/visitor'
 
 module Lume
-  module IR
+  module MIR
     # The flat visitor is used to visit the AST and flatten it into a single array,
     # without disrupting the original AST or its referential integrity.
     #
     # The search of the visitor is depth-first.
     class FlatVisitor
-      include Lume::IR::Visitor
+      include Lume::MIR::Visitor
 
       def initialize
         @nodes = []
@@ -18,9 +18,9 @@ module Lume
 
       # Flattens the given AST into a single array, without altering it.
       #
-      # @param ast [Lume::IR::AST]    The AST to flatten.
+      # @param ast [Lume::MIR::AST]    The AST to flatten.
       #
-      # @return [Array<Lume::IR::Node>]    The flattened AST.
+      # @return [Array<Lume::MIR::Node>]    The flattened AST.
       def self.flatten(ast)
         instance = FlatVisitor.new
         instance.flatten(ast)
@@ -28,12 +28,12 @@ module Lume
 
       # Flattens the AST into a single array.
       #
-      # @param ast [Lume::IR::AST, Lume::IR::Node]    The AST to flatten.
+      # @param ast [Lume::MIR::AST, Lume::MIR::Node]    The AST to flatten.
       #
-      # @return [Array<Lume::IR::Node>]    The flattened AST.
+      # @return [Array<Lume::MIR::Node>]    The flattened AST.
       def flatten(ast)
-        accept_ast(ast) if ast.is_a?(Lume::IR::AST)
-        accept(ast) if ast.is_a?(Lume::IR::Node)
+        accept_ast(ast) if ast.is_a?(Lume::MIR::AST)
+        accept(ast) if ast.is_a?(Lume::MIR::Node)
 
         @nodes
       end
@@ -42,7 +42,7 @@ module Lume
 
       # Accepts any type of node and adds it to the nodes array.
       #
-      # @param node [Lume::IR::Node]    The node to accept.
+      # @param node [Lume::MIR::Node]    The node to accept.
       def accept_node(node)
         @nodes << node
       end

@@ -5,6 +5,14 @@ require 'lume/location'
 module Lume
   module Syntax
     # Represents the abstract syntax tree.
+    #
+    # This AST is part of the HIR (High-Level Intermediate Representation). The HIR is the first "pass" around
+    # parsing the source code of source file(s). It is used to represent the source file, where each token
+    # matches a specific part of the source file, and vice-versa.
+    #
+    # None of the nodes within the AST are responsible for any semantic analysis or type checking - they are only
+    # responsible for representing the source code. For this, it's the perfect format to handle formatting, importing
+    # and input validation.
     class AST
       attr_accessor :nodes
 

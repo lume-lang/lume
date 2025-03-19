@@ -1,10 +1,19 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir_visitor/flat_visitor'
+require 'lume/lume_mir_visitor/flat_visitor'
 
 module Lume
-  module IR
+  module MIR
     # Represents the abstract syntax tree.
+    #
+    # This AST is part of the MIR (Middle-Level Intermediate Representation). The MIR is the second pass around
+    # analyzing the source code of source file(s). It is produced after "lowering" the High-Level Intermediate
+    # Representation (HIR) into a representation that is easier to analyze and manipulate. This representation is
+    # meant to be closer to what LLVM will see before linking the final binary.
+    #
+    # None of the nodes within the AST are responsible for any semantic analysis or type checking - they are only
+    # responsible for representing the source code. For this, it's the perfect format to handle name resolution,
+    # "de-sugaring" (converting special syntax into a more standard form) and type checking.
     class AST
       attr_accessor :nodes, :sources
 

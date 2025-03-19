@@ -2,7 +2,7 @@
 
 require 'lume/lume_syntax/types'
 require 'lume/lume_syntax/values'
-require 'lume/lume_syntax/ast_helpers'
+require 'lume/lume_syntax/hir_helpers'
 require 'lume/lume_parser/errors'
 
 module Lume

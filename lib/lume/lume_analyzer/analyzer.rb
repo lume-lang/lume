@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'lume/lume_ir/ir_gen'
-require 'lume/lume_ir_visitor/visitor'
+require 'lume/lume_mir_visitor/visitor'
+require 'lume/lume_lowering/generator'
 require 'lume/lume_analyzer/main_visitor'
 require 'lume/lume_typing/typing'
 
@@ -9,7 +9,7 @@ module Lume
   class Analyzer # :nodoc:
     # Creates a new analyzer with the given AST.
     #
-    # @param ast    [Lume::IR::AST]      The AST to analyze.
+    # @param ast    [Lume::MIR::AST]      The AST to analyze.
     # @param logger [Lume::ErrorPrinter] The error printer to use.
     #
     # @return [Analyzer]
@@ -20,7 +20,7 @@ module Lume
 
     # Creates a new analyzer with the given AST.
     #
-    # @param tree [Lume::IR::AST] The AST to analyze.
+    # @param tree [Lume::MIR::AST] The AST to analyze.
     #
     # @return [Analyzer]
     def self.with_tree(tree)
@@ -29,7 +29,7 @@ module Lume
 
     # Performs the analysis on all the nodes added to the analyzer.
     #
-    # @return [Lume::IR::AST]
+    # @return [Lume::MIR::AST]
     def analyze!
       raise ArgumentError, 'No nodes to analyze' if @ast.nodes.empty?
 
@@ -42,7 +42,7 @@ module Lume
       # during the analysis process. If there are duplicate nodes within the tree which refer to the same
       # node, but is actually a different object, the analyzer would only analyze and update one of them, which
       # could lead to incorrect analysis results.
-      irgen = Lume::IR::IRGen.new
+      irgen = Lume::Lowering::Generator.new
       ast = irgen.generate(@ast)
 
       # Pass the AST through the main visitor.

@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
 require 'lume'
+require 'lume/lume_cli/program'
 
 Lume::CLI::Program.start(ARGV)

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module Lume
-  module IR
+  module MIR
     # Defines an abstract visitor for AST nodes.
     #
     # Classes implementing this module should define methods for each type of AST node, such as:
-    #   - `accept_method_definition` for `Lume::IR::MethodDefinition`
-    #   - `accept_scalar` for `Lume::IR::Scalar`
+    #   - `accept_method_definition` for `Lume::MIR::MethodDefinition`
+    #   - `accept_scalar` for `Lume::MIR::Scalar`
     #   - and so on.
     #
     # Child nodes are walked recursively, if the node defines a method named `accept_children`.
@@ -14,20 +14,20 @@ module Lume
     # as a depth-first traversal.
     #
     # To visit a node before any of it's children are visited, implement `before_<node_type>` methods:
-    #   - `before_method_definition` for `Lume::IR::MethodDefinition`
-    #   - `before_scalar` for `Lume::IR::Scalar`
+    #   - `before_method_definition` for `Lume::MIR::MethodDefinition`
+    #   - `before_scalar` for `Lume::MIR::Scalar`
     #   - and so on.
     module Visitor
       # Accepts an AST and runs all the root nodes through the visitor.
       #
-      # @param ast [Lume::IR::AST] The AST to be analyzed.
+      # @param ast [Lume::MIR::AST] The AST to be analyzed.
       def accept_ast(ast)
         ast.nodes.each { |node| accept(node) }
       end
 
       # Accepts an AST node and runs it through the visitor.
       #
-      # @param node [Lume::IR::Node] The AST node to be analyzed.
+      # @param node [Lume::MIR::Node] The AST node to be analyzed.
       def accept(node)
         # If the node has already been visited, skip it.
         return if visited?(node)
@@ -50,7 +50,7 @@ module Lume
 
       # Determines whether the given node has already been visited.
       #
-      # @param node [Lume::IR::Node] The AST node to be checked.
+      # @param node [Lume::MIR::Node] The AST node to be checked.
       #
       # @return [Boolean] Whether the node has been visited.
       def visited?(node)
@@ -65,7 +65,7 @@ module Lume
 
       # Iterates over all the visitor methods for the given node.
       #
-      # @param node [Lume::IR::Node] The AST node to be visited.
+      # @param node [Lume::MIR::Node] The AST node to be visited.
       # @param prefix [String] The prefix to use for the visitor methods.
       #
       # @return [void]

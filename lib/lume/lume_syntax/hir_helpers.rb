@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'lume/lume_syntax/ast'
+require 'lume/lume_syntax/hir'
 
 class Integer # :nodoc:
   def int8
