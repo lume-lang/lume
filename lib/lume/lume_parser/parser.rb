@@ -263,7 +263,7 @@ module Lume
     # @example Parsing an argument list
     #   iterate_all! do |index|
     #     # If the next token is a comma, there's still more arguments
-    #     return nil unless index.positive? && peek(:comma)
+    #     next nil if index.positive? && !peek(:',')
     #
     #     parse_argument
     #   end
@@ -1008,7 +1008,7 @@ module Lume
     #
     # @return [Boolean]
     def literal?
-      peek(%i[string number true false nil])
+      peek(%i[string number true false null])
     end
 
     # Determines whether the current token is a unary expression.

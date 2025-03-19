@@ -612,7 +612,7 @@ module Lume
 
         @name = name
         @type = type
-        @default = default || NilLiteral.new
+        @default = default || NullLiteral.new
         @visibility = visibility
       end
 
@@ -719,7 +719,7 @@ module Lume
 
         @name = name
         @type = type
-        @value = value || NilLiteral.new
+        @value = value || NullLiteral.new
         @const = const
       end
 

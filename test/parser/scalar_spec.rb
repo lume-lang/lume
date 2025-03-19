@@ -5,7 +5,7 @@ require_relative 'test_helper'
 include Lume::Syntax
 
 describe Lume::Parser do
-  it_parses 'nil', NilLiteral.new
+  it_parses 'null', NullLiteral.new
 
   it_parses 'true', BooleanLiteral.new(true)
   it_parses 'false', BooleanLiteral.new(false)

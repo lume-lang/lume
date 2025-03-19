@@ -69,7 +69,7 @@ module Lume
       return
       true
       false
-      nil
+      null
       new
       public
       private

@@ -389,7 +389,7 @@ module Lume
 
         @name = name
         @type = type
-        @default = default || NilLiteral.new
+        @default = default || NullLiteral.new
       end
 
       def accept_children(visitor)
@@ -462,7 +462,7 @@ module Lume
 
         @name = name
         @type = type
-        @value = value || NilLiteral.new
+        @value = value || NullLiteral.new
         @const = const
       end
 
