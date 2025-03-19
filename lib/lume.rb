@@ -6,7 +6,6 @@ require 'lume/core_ext/string'
 require 'lume/errors'
 require 'lume/lume_lexer/lexer'
 require 'lume/lume_parser/parser'
-require 'lume/lume_import/importer'
 require 'lume/lume_analyzer/analyzer'
 require 'lume/lume_compiler/compiler'
 
@@ -19,14 +18,12 @@ module Lume
 
   LEX = :lex
   PARSE = :parse
-  IMPORT = :import
   ANALYZE = :analyze
   CODEGEN = :codegen
 
   STAGES = [
     Lume::LEX,
     Lume::PARSE,
-    Lume::IMPORT,
     Lume::ANALYZE,
     Lume::CODEGEN
   ].freeze
@@ -48,7 +45,7 @@ module Lume
   #   - Code Generation: The analyzed AST, which is ready to be transpiled into LLVM IR and the global symbol table.
   #   - Finish: The LLVM IR code, which is ready to be executed.
   class CompilationContext
-    attr_accessor :stage, :source, :tokens, :ast, :ir, :imports, :module
+    attr_accessor :stage, :source, :tokens, :modules, :llvm_module
 
     def initialize(source)
       @stage = Lume::LEX
@@ -155,7 +152,7 @@ module Lume
     #
     # @param source [String] The source code to lex.
     #
-    # @return [CompilationContext] An array of tokens representing the lexed source code.
+    # @return [CompilationContext]
     def lex(context)
       lexer = Lume::Lexer.new(context.source)
       context.tokens = lexer.all!
@@ -170,29 +167,18 @@ module Lume
     # @return [CompilationContext] A parsed AST representing the source code.
     def parse(context)
       parser = Lume::Parser.with_tokens(context.source, context.tokens)
-      context.ast = parser.parse
+      context.modules = parser.parse
 
       context
     end
 
-    # Parses the import statements within the AST.
-    #
-    # @param context [CompilationContext] The compiler context to import.
-    #
-    # @return [CompilationContext] A parsed AST representing the source code.
-    def import(context)
-      context.imports = Lume::Importer.import!(context.ast)
-
-      context
-    end
-
-    # Analyzes the given abstract syntax tree (AST) and creates CompilerIR from it.
+    # Analyzes the given ASTs and lowers it into MIR (Middle-level Intermediate Representation).
     #
     # @param context [CompilationContext] The compiler context to analyze.
     #
-    # @return [CompilationContext] A parsed AST representing the source code.
+    # @return [CompilationContext]
     def analyze(context)
-      analyzer = Lume::Analyzer.new(context.ast, logger: @logger)
+      analyzer = Lume::Analyzer.new(context.modules, logger: @logger)
       context.ir = analyzer.analyze!
 
       context
@@ -202,7 +188,7 @@ module Lume
     #
     # @param context [CompilationContext] The compiler context to compile.
     #
-    # @return [CompilationContext] The compiled LLVM module.
+    # @return [CompilationContext]
     def codegen(context)
       compiler = Lume::Compiler.new
 
@@ -210,7 +196,7 @@ module Lume
       compiler.optimize!
       compiler.finalize!
 
-      compiler.dump!
+      context.llvm_module = compiler.module
 
       compiler.finish
 

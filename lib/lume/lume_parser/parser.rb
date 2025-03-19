@@ -4,7 +4,9 @@ require 'lume/source'
 require 'lume/lume_syntax/types'
 require 'lume/lume_syntax/values'
 require 'lume/lume_syntax/hir_helpers'
+require 'lume/lume_import/importer'
 require 'lume/lume_parser/errors'
+require 'lume/lume_parser/module'
 require 'lume/lume_parser/types'
 require 'lume/lume_parser/values'
 
@@ -49,10 +51,33 @@ module Lume
       new(source, tokens)
     end
 
-    # Parse the entire source code, given in the constructor.
+    # Parse the entire source code, given in the constructor, as a set of modules.
     #
-    # @return [Lume::Language::AST] The parsed expression tree in the source code.
-    def parse
+    # @param name     [String, nil] The name of the entry module, if any. Defaults to `nil`.
+    #
+    # @return [Array<Lume::Parser::Module>] The parsed modules from the source code.
+    def parse(name: nil)
+      entry_hir = parse_module
+      importer = Importer.import!(name, entry_hir)
+
+      # Create a new module for each of the imported files
+      modules = importer.imported_files.map do |mod_name, hir|
+        Module.with_hir(mod_name, hir)
+      end
+
+      # Add the entry module into the tree as well.
+      modules << Module.with_hir(name, entry_hir)
+
+      # Map all the dependencies between modules.
+      map_module_dependencies(modules, importer.dependencies)
+
+      modules
+    end
+
+    # Parse the entire source code, given in the constructor, as a single module.
+    #
+    # @return [Lume::Syntax::AST] The parsed HIR AST from the source code.
+    def parse_module
       nodes = parse_statements
 
       AST.new(nodes)
@@ -154,6 +179,17 @@ module Lume
     ].freeze
 
     private
+
+    # Maps all the dependencies of the given modules.
+    #
+    # @param modules      [Array<Module>]               The modules to map dependencies for.
+    # @param dependencies [Hash<String, Array<String>>] The dependencies to map.
+    def map_module_dependencies(modules, dependencies)
+      dependencies.each_pair do |name, subdeps|
+        mod = modules.find { |m| m.name == name }
+        mod.dependencies = subdeps.map { |dep| modules.find { |m| m.name == dep } }
+      end
+    end
 
     # Peeks the current token's type or value.
     #
