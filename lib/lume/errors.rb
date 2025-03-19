@@ -152,7 +152,7 @@ module Lume
       return unless error.location?
       return if error.location.nil? || !error.location.is_a?(Lume::Location)
 
-      emit_source_snippet(error, error.location, @context.source)
+      emit_source_snippet(error, error.location, error.location.file)
     end
 
     # Emits a snippet from the given source code.

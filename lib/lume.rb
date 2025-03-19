@@ -45,11 +45,21 @@ module Lume
   #   - Code Generation: The analyzed AST, which is ready to be transpiled into LLVM IR and the global symbol table.
   #   - Finish: The LLVM IR code, which is ready to be executed.
   class CompilationContext
-    attr_accessor :stage, :source, :tokens, :modules, :llvm_module
+    attr_accessor :stage, :entry, :tokens, :modules, :llvm_module
 
-    def initialize(source)
+    def initialize(entry)
       @stage = Lume::LEX
-      @source = source
+      @entry = entry
+    end
+
+    # Gets all the source files, which are being compiled.
+    #
+    # @return [Hash<String, SourceFile>] A hash mapping file names to their source code.
+    def files
+      # If the modules haven't been populated yet, fallback to the entry source.
+      return { @entry.path => @entry } if @modules.nil?
+
+      @modules.to_h { |mod| [mod.name, mod.source] }
     end
   end
 
@@ -154,7 +164,7 @@ module Lume
     #
     # @return [CompilationContext]
     def lex(context)
-      lexer = Lume::Lexer.new(context.source)
+      lexer = Lume::Lexer.new(context.entry)
       context.tokens = lexer.all!
 
       context
@@ -166,7 +176,7 @@ module Lume
     #
     # @return [CompilationContext] A parsed AST representing the source code.
     def parse(context)
-      parser = Lume::Parser.with_tokens(context.source, context.tokens)
+      parser = Lume::Parser.with_tokens(context.entry, context.tokens)
       context.modules = parser.parse
 
       context

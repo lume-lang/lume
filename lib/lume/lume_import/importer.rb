@@ -11,9 +11,10 @@ module Lume
   class Importer
     include Lume::Importer::Errors
 
-    attr_reader :imported_files, :dependencies
+    attr_reader :sources, :imported_files, :dependencies
 
     def initialize
+      @sources = {}
       @imported_files = {}
       @dependencies = {}
     end
@@ -36,12 +37,12 @@ module Lume
     # Handles the imports within the given AST.
     #
     # @param name [String] The name of the file or module being imported.
-    # @param ast [Lume::AST] The AST to import.
+    # @param ast [Lume::Syntax::AST] The AST to import.
     #
-    # @return [Lume::AST] The AST with all imports resolved.
+    # @return [Lume::Syntax::AST] The AST with all imports resolved.
     def import!(name, ast)
       # Import all the files recursively.
-      ast.imports.each { |import| import_file!(ast, import.library) }
+      ast.imports.each { |import| import_file!(import) }
 
       # Map the dependencies of the module.
       @dependencies[name] = ast.imports.map(&:library)
@@ -54,11 +55,12 @@ module Lume
 
     # Handles a single import of the given file.
     #
-    # @param ast [Lume::AST] The AST to import symbols into.
-    # @param path [String] The path to the file to import.
+    # @param statement [Lume::Syntax::Import] The import statement.
     #
-    # @return [Lume::AST] The AST with all imports resolved.
-    def import_file!(ast, path)
+    # @return [void]
+    def import_file!(statement)
+      path = statement.library
+
       # If the file is already imported, return early.
       return if imported?(path)
 
@@ -66,12 +68,10 @@ module Lume
       @imported_files[path] = true
 
       # If the file is not already imported, read the contents to a source file.
-      source_file = read_imported_file(path)
+      source_file = @sources[path] = read_imported_file(statement)
 
       # Parse the contents of the library file.
       @imported_files[path] = parse_library(path, source_file)
-
-      ast
     end
 
     # Determines if the given file has already been imported.
@@ -87,11 +87,11 @@ module Lume
 
     # Reads the library from the given path.
     #
-    # @param path [String] The relative path to the library to import.
+    # @param statement [Lume::Syntax::Import] The import statement.
     #
     # @return [Lume::SourceFile] The source file of the library.
-    def read_imported_file(path)
-      path = resolve_import_path(path)
+    def read_imported_file(statement)
+      path = resolve_import_path(statement)
       content = File.read(path)
 
       SourceFile.new(path, content)
@@ -99,20 +99,20 @@ module Lume
 
     # Resolves the absolute path of the given import path.
     #
-    # @param path [String] The path to resolve.
+    # @param statement [Lume::Syntax::Import] The import statement.
     #
     # @return [String] The absolute path of the given import path.
-    def resolve_import_path(path)
-      path = path.delete_suffix('.lm')
+    def resolve_import_path(statement)
+      path = statement.library.delete_suffix('.lm')
 
       # If the library is not a standard library, raise an error.
-      raise UndefinedImport.new(expression) unless path == 'std' || path.start_with?('std/')
+      raise UndefinedImport.new(statement) unless path == 'std' || path.start_with?('std/')
 
       # Resolve the absolute path to the library.
       library_path = File.expand_path(File.join(Lume::STD_DIR, '..', "#{path}.lm"))
 
       # If the library could not be found, raise an error.
-      raise UndefinedImport.new(expression) unless File.exist?(library_path)
+      raise UndefinedImport.new(statement) unless File.exist?(library_path)
 
       library_path
     end

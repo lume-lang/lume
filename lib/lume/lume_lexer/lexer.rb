@@ -11,8 +11,6 @@ module Lume
     attr_reader :source
 
     def initialize(source)
-      source = source.to_s if source.is_a?(Symbol)
-
       @source = source
       @index = 0
     end

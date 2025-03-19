@@ -46,7 +46,7 @@ module Lume
     # @return [Lume::Language::Parser]    The new parser instance.
     def self.with_source(source)
       source = SourceFile.new(nil, source) if source.is_a?(String)
-      tokens = Lexer.new(source.content).all!(include_comments: true)
+      tokens = Lexer.new(source).all!(include_comments: true)
 
       new(source, tokens)
     end
@@ -62,11 +62,13 @@ module Lume
 
       # Create a new module for each of the imported files
       modules = importer.imported_files.map do |mod_name, hir|
-        Module.with_hir(mod_name, hir)
+        source = SourceFile.new(mod_name, importer.sources[mod_name])
+
+        Module.new(mod_name, hir, source: source)
       end
 
       # Add the entry module into the tree as well.
-      modules << Module.with_hir(name, entry_hir)
+      modules << Module.new(name, entry_hir, source: @source.content)
 
       # Map all the dependencies between modules.
       map_module_dependencies(modules, importer.dependencies)
@@ -326,7 +328,7 @@ module Lume
     #
     # @return [Lume::Location] The location of the token.
     def location_of(token)
-      Lume::Location.new(token.start..token.end, file: @filename)
+      Lume::Location.new(token.start..token.end, file: @source)
     end
 
     # Calls the given block and applies the location span to it's result.
@@ -340,7 +342,7 @@ module Lume
       stop = @token.end
 
       # Set the location of the result, only if it's a node
-      result.location = Lume::Location.new(start..stop, file: @filename) if result.is_a?(Node)
+      result.location = Lume::Location.new(start..stop, file: @source) if result.is_a?(Node)
 
       result
     end

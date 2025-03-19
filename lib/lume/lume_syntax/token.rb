@@ -38,7 +38,7 @@ module Lume
 
       # Gets a location object representing the token's position in the source code.
       #
-      # @param file [String] The path to the source file (optional).
+      # @param file [SourceFile, nil] The source file (optional).
       #
       # @return [Lume::Location] A location object representing the token's position.
       def location(file: nil)
