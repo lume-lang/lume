@@ -16,6 +16,9 @@ module Lume
     def visit_main(modules)
       visitor = MainVisitor.new
 
+      # Pre-discovery class- and function-definition in all modules before attempting to analyze them.
+      modules.each { |mod| visitor.prediscover(mod.mir) }
+
       # All modules need to share the same visitor, as they need to refer to the same symbol table.
       modules.each { |mod| visitor.visit(mod.mir) }
     end
@@ -70,14 +73,27 @@ module Lume
 
       def initialize
         @symbols = SymbolTable.new
+        @prediscovered = false
       end
 
       # Accepts an AST and runs it through the visitor.
       #
       # @param ast [Lume::MIR::AST] The AST to be analyzed.
       def visit(ast)
-        prediscover(ast)
+        # If the AST has not been prediscovered, do so.
+        prediscover(ast) unless @prediscovered
+
         accept_ast(ast)
+      end
+
+      # Prediscovers all class- and function-definitions within the AST and adds them to the symbol table.
+      #
+      # @param ast [Lume::MIR::AST] The AST to be analyzed.
+      def prediscover(ast)
+        discover_class_definitions(ast)
+        discover_function_definitions(ast)
+
+        @prediscovered = true
       end
 
       private
@@ -259,14 +275,6 @@ module Lume
         expression.expression_type = expression.type
 
         @symbols.define(expression)
-      end
-
-      # Prediscovers all class- and function-definitions within the AST and adds them to the symbol table.
-      #
-      # @param ast [Lume::MIR::AST] The AST to be analyzed.
-      def prediscover(ast)
-        discover_class_definitions(ast)
-        discover_function_definitions(ast)
       end
 
       # Discovers all class definitions within the AST and adds them to the symbol table.
