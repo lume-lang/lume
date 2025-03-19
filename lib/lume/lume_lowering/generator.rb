@@ -412,9 +412,21 @@ module Lume
 
         # If the class is builtin, we don't need to allocate anything - we can just assign the value
         # directly to the variable.
-        return arguments.first.value if class_def.builtin? && arguments.size == 1
+        return generate_new_scalar(class_def, expression) if class_def.builtin? && arguments.size == 1
 
         Lume::MIR::New.new(class_def, *arguments)
+      end
+
+      # Visits an object initialization expression node for a builtin scalar type in the AST and generates LLVM IR.
+      #
+      # @param class_def [Lume::Syntax::ClassDefinition] The definition of the scalar class.
+      # @param expression [Lume::Syntax::New] The expression to visit.
+      #
+      # @return [Lume::MIR::Expression]
+      def generate_new_scalar(class_def, expression)
+        value = generate_nodes(expression.arguments).first
+
+        Lume::MIR::Cast.new(value, class_def.type)
       end
 
       # Visits a property definition expression node in the AST and generates LLVM IR.

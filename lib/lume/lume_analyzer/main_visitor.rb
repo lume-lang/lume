@@ -105,6 +105,13 @@ module Lume
         expression.expression_type = scalar_of(expression.value.expression_type)
       end
 
+      # Visits a cast expression and resolves it's expression type.
+      #
+      # @param expression [Cast] The cast expression to be visited.
+      def accept_cast(expression)
+        expression.expression_type = expression_type(expression.type)
+      end
+
       # Visits a class definition and registers it in the symbol table.
       #
       # @param expression [ClassDefinition] The class definition to be visited.

@@ -341,6 +341,13 @@ module Lume
         size
       end
 
+      # Gets a new named type, which references this class definition.
+      def type
+        NamedType.new(name).tap do |type|
+          type.reference = self
+        end
+      end
+
       # Determines whether the class definition is a built-in type.
       #
       # @return [Boolean] `true` if the class definition is a built-in type, `false` otherwise.
