@@ -19,22 +19,19 @@ module Lume
         @type_definitions = {}
       end
 
-      # Checks the given abstract syntax tree (AST) for type errors.
+      # Checks the given list of modules for type errors.
       #
       # If any correctable errors are found, they are corrected. Otherwise, they are reported as errors and returned.
       #
-      # @param ast [AST] The abstract syntax tree to type check.
+      # @param modules [Array<Lume::Parser::Module>] The list of modules to type check.
       #
       # @return [Array<TypeError>] An array of errors found during type checking, if any.
-      def check(ast)
+      def check(modules)
         # Ensure that no errors are present from last type check.
         @errors = []
 
-        # Pre-discover all the type definitions from the AST for later use.
-        discover_type_definitions(ast)
-
-        # Run the AST through the type checker.
-        accept_ast(ast)
+        # Iterate over all modules and perform type-checking on them.
+        modules.each { |mod| check_module(mod) }
 
         @errors
       end
@@ -62,6 +59,19 @@ module Lume
       end
 
       private
+
+      # Runs the type checker on the given module.
+      #
+      # @param mod [Lume::Parser::Module] The module to type-check.
+      #
+      # @return [void]
+      def check_module(mod)
+        # Pre-discover all the type definitions from the AST for later use.
+        discover_type_definitions(mod.mir)
+
+        # Run the AST through the type checker.
+        accept_ast(mod.mir)
+      end
 
       # Discovers all the declared type definitions in the given AST.
       #

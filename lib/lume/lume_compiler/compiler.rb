@@ -8,6 +8,8 @@ require 'lume/lume_compiler/ir_visitor'
 
 module Lume
   class Compiler # :nodoc:
+    attr_reader :module
+
     MAIN_NAME = 'main'
 
     # Compiles the CompilerIR from the given compiler context into LLVM IR, which
@@ -84,7 +86,6 @@ module Lume
     # @return [void]
     def finish
       @builder.dispose
-      @module.dispose
 
       @initialized = false
     end

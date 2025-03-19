@@ -179,7 +179,7 @@ module Lume
     # @return [CompilationContext]
     def analyze(context)
       analyzer = Lume::Analyzer.new(context.modules, logger: @logger)
-      context.ir = analyzer.analyze!
+      analyzer.analyze!
 
       context
     end

@@ -7,15 +7,17 @@ module Lume
   class Analyzer # :nodoc:
     private
 
-    # Passes the AST through the main visitor, which handles the expansion of result
+    # Passes the modules through the main visitor, which handles the expansion of result
     # types of expressions within it.
     #
-    # @param ast [Lume::MIR::AST]  The AST to be analyzed.
+    # @param modules [Array<Lume::Parser::Module>]  The modules to be analyzed.
     #
     # @see MainVisitor
-    def visit_main(ast)
+    def visit_main(modules)
       visitor = MainVisitor.new
-      visitor.visit(ast)
+
+      # All modules need to share the same visitor, as they need to refer to the same symbol table.
+      modules.each { |mod| visitor.visit(mod.mir) }
     end
 
     # The main visitor class, which is responsible for descending the AST and

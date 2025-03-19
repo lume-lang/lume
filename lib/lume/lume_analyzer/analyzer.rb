@@ -10,14 +10,14 @@ module Lume
   class Analyzer # :nodoc:
     attr_reader :pass
 
-    # Creates a new analyzer with the given AST.
+    # Creates a new analyzer with the given modules.
     #
-    # @param ast    [Lume::MIR::AST]     The AST to analyze.
-    # @param logger [Lume::ErrorPrinter] The error printer to use.
+    # @param modules  [Array<Lume::Parser::Module>] The modules to analyze.
+    # @param logger   [Lume::ErrorPrinter]          The error printer to use.
     #
     # @return [Analyzer]
-    def initialize(ast, logger: nil)
-      @ast = ast
+    def initialize(modules, logger: nil)
+      @modules = modules
       @logger = logger
 
       # Defines the default passes to be executed during analysis.
@@ -26,28 +26,26 @@ module Lume
       @pass.use(:type_checking)
     end
 
-    # Creates a new analyzer with the given AST.
+    # Creates a new analyzer with the given parser modules.
     #
-    # @param tree [Lume::MIR::AST] The AST to analyze.
+    # @param modules [Array<Lume::Parser::Module>] The modules to analyze.
     #
     # @return [Analyzer]
-    def self.with_tree(tree)
-      Analyzer.new(tree)
+    def self.with_modules(modules)
+      Analyzer.new(modules)
     end
 
-    # Performs the analysis on all the nodes added to the analyzer.
+    # Performs the analysis on all the modules added to the analyzer.
     #
-    # @return [Lume::MIR::AST]
+    # @return [void]
     def analyze!
-      raise ArgumentError, 'No nodes to analyze' if @ast.nodes.empty?
+      raise ArgumentError, 'No modules to analyze' if @modules.empty?
 
-      # Lower the HIR AST into MIR.
-      mir = lower_to_mir(@ast)
+      # For all modules, lower the HIR AST into MIR.
+      @modules.each { |mod| mod.mir = lower_to_mir(mod.hir) }
 
       # Invoke all the passes registered.
-      @pass.passes.each { |pass_name| invoke_pass(pass_name, mir) }
-
-      mir
+      @pass.passes.each { |pass_name| invoke_pass(pass_name) }
     end
 
     private
@@ -63,21 +61,21 @@ module Lume
       generator.generate(hir)
     end
 
-    # Performs expression analysis on the given MIR AST.
+    # Performs expression analysis on the given modules.
     #
-    # @param mir [Lume::MIR::AST] The MIR AST to analyze.
-    def expression_analysis(mir)
+    # @param modules [Array<Lume::Parser::Module>] The modules to analyze.
+    def expression_analysis(modules)
       # The main visitor is responsible for expanding expression result types, so that the type checker
       # can verify that all type constraints are satisfied.
-      visit_main(mir)
+      visit_main(modules)
     end
 
     # Performs type-checking analysis on the given MIR AST.
     #
-    # @param mir [Lume::MIR::AST] The MIR AST to analyze.
-    def type_checking(mir)
+    # @param modules [Array<Lume::Parser::Module>] The modules to type-check.
+    def type_checking(modules)
       type_checker = Lume::Typing::TypeChecker.new
-      errors = type_checker.check(mir)
+      errors = type_checker.check(modules)
 
       # If any errors arose during type checking, report them to the user.
       report_errors(errors) if errors.any?
@@ -86,13 +84,12 @@ module Lume
     # Invokes the pass with the given name.
     #
     # @param name [Symbol] The name of the pass to invoke.
-    # @param mir [Lume::MIR::AST] The MIR AST to analyze.
-    def invoke_pass(name, mir)
+    def invoke_pass(name)
       # If the method doesn't exist, emit a warning.
       return invalid_pass(name) unless respond_to?(name, true)
 
-      # Otherwise, invoke the pass with the current MIR AST.
-      method(name).call(mir)
+      # Otherwise, invoke the pass with the current modules.
+      method(name).call(@modules)
     end
 
     # Reports a warning about an invalid pass.
