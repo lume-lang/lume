@@ -38,7 +38,7 @@ module Lume
 
     # Represents an abstract scalar type.
     class Scalar < Type
-      attr_accessor :name
+      attr_accessor :name, :reference
 
       def initialize(name)
         super()

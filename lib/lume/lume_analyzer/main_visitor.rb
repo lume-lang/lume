@@ -222,6 +222,11 @@ module Lume
       #
       # @param expression [Scalar] The scalar literal to be visited.
       def accept_scalar(expression)
+        expression.reference = @symbols.retrieve(expression.name, type: [ClassDefinition, TypeDefinition])
+
+        # If no type definition with the given name was found, raise an error.
+        raise UndefinedSymbol.new(expression) if expression.reference.nil?
+
         expression.expression_type = expression
       end
 
