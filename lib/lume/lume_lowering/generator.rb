@@ -27,7 +27,7 @@ module Lume
         iterate_class_nodes(ast)
 
         # Generate the rest of the IR nodes.
-        ir.nodes.concat(generate_ir_nodes(ast.nodes))
+        ir.nodes.concat(generate_nodes(ast.nodes))
 
         # Pre-declare all the functions definitions within the IR, so we
         # can call them without them being defined yet.
@@ -93,7 +93,7 @@ module Lume
         class_definitions = ast.nodes.select { |node| node.is_a?(Lume::Syntax::ClassDefinition) }
 
         class_definitions.each do |class_def|
-          @classes[class_def.name] = generate_ir_node(class_def)
+          @classes[class_def.name] = generate_node(class_def)
         end
       end
 
@@ -113,12 +113,12 @@ module Lume
         ir.nodes.insert(0, *declarations)
       end
 
-      def generate_ir_nodes(nodes)
-        nodes.map { |node| generate_ir_node(node) }
+      def generate_nodes(nodes)
+        nodes.map { |node| generate_node(node) }
       end
 
-      def generate_ir_node(node)
-        ir = generate_ir_statement(node)
+      def generate_node(node)
+        ir = generate_statement(node)
 
         # Copy the location information from the node into the new IR node.
         ir.location = node.location if node.is_a?(Lume::Syntax::Node) && !node.nil?
@@ -131,15 +131,15 @@ module Lume
       # @param node [Lume::Syntax::Node] The node to visit.
       #
       # @return [Lume::MIR::Node]
-      def generate_ir_statement(node)
+      def generate_statement(node)
         case node
-        when Lume::Syntax::Expression then generate_ir_expression(node)
-        when Lume::Syntax::Literal then generate_ir_literal(node)
-        when Lume::Syntax::Parameter then generate_ir_parameter(node)
-        when Lume::Syntax::Argument then generate_ir_node(node.value)
-        when Lume::Syntax::Type then generate_ir_type(node)
-        when Lume::Syntax::Token then generate_ir_variable(node.value)
-        when String then generate_ir_variable(node)
+        when Lume::Syntax::Expression then generate_expression(node)
+        when Lume::Syntax::Literal then generate_literal(node)
+        when Lume::Syntax::Parameter then generate_parameter(node)
+        when Lume::Syntax::Argument then generate_node(node.value)
+        when Lume::Syntax::Type then generate_type(node)
+        when Lume::Syntax::Token then generate_variable(node.value)
+        when String then generate_variable(node)
         when nil then nil
         else
           raise "Unsupported node type: #{node.class}"
@@ -151,20 +151,20 @@ module Lume
       # @param expression [Lume::Syntax::Expression] The expression to visit.
       #
       # @return [Lume::MIR::Expression]
-      def generate_ir_expression(expression)
+      def generate_expression(expression)
         ir = case expression
-        when Lume::Syntax::Assignment then generate_ir_assignment(expression)
-        when Lume::Syntax::VariableDeclaration then generate_ir_variable_declaration(expression)
-        when Lume::Syntax::VariableReference then generate_ir_variable_reference(expression)
-        when Lume::Syntax::ClassDefinition then generate_ir_class_definition(expression)
-        when Lume::Syntax::MethodDefinition then generate_ir_method_definition(expression)
-        when Lume::Syntax::TypeDefinition then generate_ir_type_definition(expression)
-        when Lume::Syntax::Call then generate_ir_call(expression)
-        when Lume::Syntax::Return then generate_ir_return(expression)
-        when Lume::Syntax::New then generate_ir_new(expression)
-        when Lume::Syntax::Property then generate_ir_property(expression)
-        when Lume::Syntax::MemberAccess then generate_ir_member_access(expression)
-        when Lume::Syntax::Visibility then generate_ir_visibility(expression)
+        when Lume::Syntax::Assignment then generate_assignment(expression)
+        when Lume::Syntax::VariableDeclaration then generate_variable_declaration(expression)
+        when Lume::Syntax::VariableReference then generate_variable_reference(expression)
+        when Lume::Syntax::ClassDefinition then generate_class_definition(expression)
+        when Lume::Syntax::MethodDefinition then generate_method_definition(expression)
+        when Lume::Syntax::TypeDefinition then generate_type_definition(expression)
+        when Lume::Syntax::Call then generate_call(expression)
+        when Lume::Syntax::Return then generate_return(expression)
+        when Lume::Syntax::New then generate_new(expression)
+        when Lume::Syntax::Property then generate_property(expression)
+        when Lume::Syntax::MemberAccess then generate_member_access(expression)
+        when Lume::Syntax::Visibility then generate_visibility(expression)
         else
           raise "Unsupported expression type: #{expression.class}"
         end
@@ -180,10 +180,10 @@ module Lume
       # @param expression [Lume::Syntax::Assignment] The expression to visit.
       #
       # @return [Lume::MIR::Assignment]
-      def generate_ir_assignment(expression)
+      def generate_assignment(expression)
         Lume::MIR::Assignment.new(
-          generate_ir_node(expression.target),
-          generate_ir_node(expression.value)
+          generate_node(expression.target),
+          generate_node(expression.value)
         )
       end
 
@@ -192,11 +192,11 @@ module Lume
       # @param expression [Lume::Syntax::VariableDeclaration] The expression to visit.
       #
       # @return [Lume::MIR::VariableDeclaration]
-      def generate_ir_variable_declaration(expression)
+      def generate_variable_declaration(expression)
         Lume::MIR::VariableDeclaration.new(
           expression.name,
-          generate_ir_node(expression.type),
-          generate_ir_node(expression.value),
+          generate_node(expression.type),
+          generate_node(expression.value),
           const: expression.const?
         )
       end
@@ -206,7 +206,7 @@ module Lume
       # @param expression [Lume::Syntax::VariableReference] The expression to visit.
       #
       # @return [Lume::MIR::Variable]
-      def generate_ir_variable_reference(expression)
+      def generate_variable_reference(expression)
         Lume::MIR::Variable.new(expression.name)
       end
 
@@ -215,14 +215,14 @@ module Lume
       # @param expression [Lume::Syntax::ClassDefinition] The expression to visit.
       #
       # @return [Lume::MIR::ClassDefinition]
-      def generate_ir_class_definition(expression)
+      def generate_class_definition(expression)
         # If the class is already defined, return it as-is, since we need referential integrity.
         return @classes[expression.name] if @classes[expression.name]
 
         class_def = Lume::MIR::ClassDefinition.new(expression.name, [])
 
         with_class(class_def) do
-          class_def.expressions = generate_ir_nodes(expression.expressions)
+          class_def.expressions = generate_nodes(expression.expressions)
         end
 
         # If the class has a constructor, wrap it in the required prologue and epilogue.
@@ -238,11 +238,11 @@ module Lume
       # @param expression [Lume::Syntax::MethodDefinition] The expression to visit.
       #
       # @return [Lume::MIR::FunctionDefinition]
-      def generate_ir_function_definition(expression)
+      def generate_function_definition(expression)
         name = expression.name
-        parameters = generate_ir_nodes(expression.parameters)
-        expressions = generate_ir_nodes(expression.expressions)
-        return_type = generate_ir_node(expression.return)
+        parameters = generate_nodes(expression.parameters)
+        expressions = generate_nodes(expression.expressions)
+        return_type = generate_node(expression.return)
 
         function = Lume::MIR::FunctionDefinition.new(name, parameters, return_type, expressions)
         function.external = expression.external
@@ -255,10 +255,10 @@ module Lume
       # @param expression [Lume::Syntax::MethodDefinition] The expression to visit.
       #
       # @return [Lume::MIR::FunctionDeclaration]
-      def generate_ir_function_declaration(expression)
+      def generate_function_declaration(expression)
         name = expression.name
-        parameters = generate_ir_nodes(expression.parameters)
-        return_type = generate_ir_node(expression.return)
+        parameters = generate_nodes(expression.parameters)
+        return_type = generate_node(expression.return)
 
         Lume::MIR::FunctionDeclaration.new(name, parameters, return_type)
       end
@@ -268,19 +268,19 @@ module Lume
       # @param expression [Lume::Syntax::MethodDefinition] The expression to visit.
       #
       # @return [Lume::MIR::MethodDefinition]
-      def generate_ir_method_definition(expression)
+      def generate_method_definition(expression)
         # If the class stack is empty, we're not within a class scope.
         # By that definition, the following expression is a function definition, not a method definition.
-        return generate_ir_function_definition(expression) if @class_stack.empty?
+        return generate_function_definition(expression) if @class_stack.empty?
 
         class_def = @class_stack[-1]
         raise "Invalid class node: #{expression.name}" if class_def.nil?
 
         name = expression.name
-        visibility = generate_ir_nodes(expression.visibility)
-        parameters = generate_ir_nodes(expression.parameters)
-        expressions = generate_ir_nodes(expression.expressions)
-        return_type = generate_ir_node(expression.return)
+        visibility = generate_nodes(expression.visibility)
+        parameters = generate_nodes(expression.parameters)
+        expressions = generate_nodes(expression.expressions)
+        return_type = generate_node(expression.return)
 
         method = Lume::MIR::MethodDefinition.new(class_def, name, parameters, return_type, expressions)
         method.visibility = visibility
@@ -358,9 +358,9 @@ module Lume
       # @param expression [Lume::Syntax::TypeDefinition] The expression to visit.
       #
       # @return [Lume::MIR::TypeDefinition]
-      def generate_ir_type_definition(expression)
+      def generate_type_definition(expression)
         name = expression.name
-        type = generate_ir_node(expression.type)
+        type = generate_node(expression.type)
 
         Lume::MIR::TypeDefinition.new(name, type)
       end
@@ -370,11 +370,11 @@ module Lume
       # @param expression [Lume::Syntax::Call] The expression to visit.
       #
       # @return [Lume::MIR::Call]
-      def generate_ir_call(expression)
+      def generate_call(expression)
         name = expression.action
 
         # Map all the arguments to their IR representations.
-        arguments = generate_ir_nodes(expression.arguments).map do |arg|
+        arguments = generate_nodes(expression.arguments).map do |arg|
           Lume::MIR::Argument.new(nil, arg)
         end
 
@@ -382,7 +382,7 @@ module Lume
         return Lume::MIR::FunctionCall.new(name, *arguments) if expression.target.nil?
 
         # Otherwise, handle it as a method call
-        Lume::MIR::MethodCall.new(generate_ir_node(expression.target), name, *arguments)
+        Lume::MIR::MethodCall.new(generate_node(expression.target), name, *arguments)
       end
 
       # Visits a return expression node in the AST and generates LLVM IR.
@@ -390,8 +390,8 @@ module Lume
       # @param expression [Lume::Syntax::Return] The expression to visit.
       #
       # @return [Lume::MIR::Return]
-      def generate_ir_return(expression)
-        value = generate_ir_node(expression.value)
+      def generate_return(expression)
+        value = generate_node(expression.value)
 
         Lume::MIR::Return.new(value)
       end
@@ -401,12 +401,12 @@ module Lume
       # @param expression [Lume::Syntax::New] The expression to visit.
       #
       # @return [Lume::MIR::MethodCall]
-      def generate_ir_new(expression)
+      def generate_new(expression)
         class_def = @classes[expression.class_name]
         raise "Invalid class: #{expression.class_name}" if class_def.nil?
 
         # Map all the arguments to their IR representations.
-        arguments = generate_ir_nodes(expression.arguments).map do |arg|
+        arguments = generate_nodes(expression.arguments).map do |arg|
           Lume::MIR::Argument.new(nil, arg)
         end
 
@@ -418,11 +418,11 @@ module Lume
       # @param expression [Lume::Syntax::Property] The expression to visit.
       #
       # @return [Lume::MIR::Property]
-      def generate_ir_property(expression)
+      def generate_property(expression)
         name = expression.name
-        type = generate_ir_node(expression.type)
-        default = generate_ir_node(expression.default)
-        visibility = generate_ir_nodes(expression.visibility)
+        type = generate_node(expression.type)
+        default = generate_node(expression.default)
+        visibility = generate_nodes(expression.visibility)
 
         Lume::MIR::Property.new(name, type, default, visibility)
       end
@@ -432,8 +432,8 @@ module Lume
       # @param expression [Lume::Syntax::MemberAccess] The expression to visit.
       #
       # @return [Lume::MIR::MemberAccess]
-      def generate_ir_member_access(expression)
-        target = generate_ir_node(expression.target)
+      def generate_member_access(expression)
+        target = generate_node(expression.target)
         property = expression.property
 
         Lume::MIR::MemberAccess.new(target, property)
@@ -444,7 +444,7 @@ module Lume
       # @param expression [Lume::Syntax::Visibility] The expression to visit.
       #
       # @return [Lume::MIR::Visibility]
-      def generate_ir_visibility(expression)
+      def generate_visibility(expression)
         Lume::MIR::Visibility.new(expression.name)
       end
 
@@ -453,7 +453,7 @@ module Lume
       # @param literal [Lume::Syntax::Literal] The expression to visit.
       #
       # @return [Lume::MIR::Literal]
-      def generate_ir_literal(literal)
+      def generate_literal(literal)
         raise 'Invalid literal type' unless LITERALS_MAP.key?(literal.class)
 
         LITERALS_MAP[literal.class].new(literal.value)
@@ -464,8 +464,8 @@ module Lume
       # @param parameter [Lume::Syntax::Parameter] The expression to visit.
       #
       # @return [Lume::MIR::Parameter]
-      def generate_ir_parameter(parameter)
-        type = generate_ir_node(parameter.type)
+      def generate_parameter(parameter)
+        type = generate_node(parameter.type)
 
         Lume::MIR::Parameter.new(parameter.name, type)
       end
@@ -475,12 +475,12 @@ module Lume
       # @param type [Lume::Syntax::Type] The type to visit.
       #
       # @return [Lume::MIR::Type]
-      def generate_ir_type(type)
+      def generate_type(type)
         case type
-        when Lume::Syntax::Void then generate_ir_void_type
-        when Lume::Syntax::NamedType then generate_ir_named_type(type)
-        when Lume::Syntax::Pointer then generate_ir_pointer_type(type)
-        when Lume::Syntax::Union then generate_ir_union_type(type)
+        when Lume::Syntax::Void then generate_void_type
+        when Lume::Syntax::NamedType then generate_named_type(type)
+        when Lume::Syntax::Pointer then generate_pointer_type(type)
+        when Lume::Syntax::Union then generate_union_type(type)
         else
           raise "Unsupported type: #{type.class}"
         end
@@ -489,7 +489,7 @@ module Lume
       # Visits a void type node in the AST and generates LLVM IR.
       #
       # @return [Lume::MIR::Void]
-      def generate_ir_void_type
+      def generate_void_type
         Lume::MIR::Void.new
       end
 
@@ -498,7 +498,7 @@ module Lume
       # @param type [Lume::Syntax::NamedType] The type to visit.
       #
       # @return [Lume::MIR::Scalar]
-      def generate_ir_named_type(node)
+      def generate_named_type(node)
         # The named type is a built-in alias, resolve it first.
         node.name = TYPE_ALIAS_MAP[node.name] || node.name
 
@@ -514,8 +514,8 @@ module Lume
       # @param type [Lume::Syntax::Pointer] The type to visit.
       #
       # @return [Lume::MIR::Pointer]
-      def generate_ir_pointer_type(node)
-        of = generate_ir_node(node.of)
+      def generate_pointer_type(node)
+        of = generate_node(node.of)
 
         Lume::MIR::Pointer.new(of)
       end
@@ -525,8 +525,8 @@ module Lume
       # @param type [Lume::Syntax::Union] The type to visit.
       #
       # @return [Lume::MIR::Union]
-      def generate_ir_union_type(type)
-        ir_types = generate_ir_nodes(type.types)
+      def generate_union_type(type)
+        ir_types = generate_nodes(type.types)
 
         Lume::MIR::Union.new(ir_types)
       end
@@ -536,7 +536,7 @@ module Lume
       # @param variable [String] The variable reference to visit.
       #
       # @return [Lume::MIR::Variable]
-      def generate_ir_variable(variable)
+      def generate_variable(variable)
         Lume::MIR::Variable.new(variable)
       end
 
