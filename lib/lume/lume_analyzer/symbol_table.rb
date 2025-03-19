@@ -106,16 +106,20 @@ module Lume
       # Retrieves a declared symbol from the current symbol scope, with the given name.
       #
       # @param name [String] The name of the symbol to retrieve.
+      # @param type [Array<String>, String, nil] The type(s) of the symbol to retrieve, if any.
       #
       # @return [Lume::MIR::Node]
       def retrieve(name, type: nil)
         symbol = retrieve_symbol(name)
 
+        # Wrap the type in an array, if given
+        type = [type] if type.is_a?(String)
+
         # If no symbol was found, return nil.
         return nil if symbol.nil?
 
         # If the type was given, ensure that the symbol type matches. If not, return nil.
-        return nil if !type.nil? && !symbol.node.is_a?(type)
+        return nil if !type.nil? && !type.any? { |t| symbol.node.is_a?(t) }
 
         symbol.node
       end
