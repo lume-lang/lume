@@ -515,7 +515,9 @@ module Lume
       #
       # @return [Lume::MIR::Pointer]
       def generate_ir_pointer_type(node)
-        Lume::MIR::Pointer.new(node.of)
+        of = generate_ir_node(node.of)
+
+        Lume::MIR::Pointer.new(of)
       end
 
       # Visits a union type node in the AST and generates LLVM IR.

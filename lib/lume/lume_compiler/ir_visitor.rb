@@ -7,38 +7,41 @@ module Lume
   class NodeVisitor
     include Lume::MIR
 
+    attr_reader :module
+
     LIBC_FUNCTIONS = %w[
       printf
     ].freeze
 
-    def initialize(mod, engine, builder)
-      @module = mod
-      @engine = engine
-      @builder = builder
+    def initialize(name)
+      @module = LLVM::Module.new(name)
+      @builder = LLVM::Builder.new
 
       @functions = {}
       @block_stack = []
 
       # Register all the required LibC library functions
       register_libc
+    end
 
-      push_main_func
+    # Visits a module node and generates LLVM IR.
+    #
+    # @param mod          [Lume::Parser::Module]  The module node to visit.
+    #
+    # @return [void]
+    def self.visit_module(mod)
+      visitor = NodeVisitor.new(mod.name)
+
+      # Generate LLVM IR from each of the root nodes within the MIR
+      mod.mir.nodes.each { |node| visitor.visit(node) }
+
+      visitor.finalize!
+      visitor.module
     end
 
     # Finishes the compilation process.
     def finalize!
-      # Ensure that the main function returns an integer value.
-      # If needed, it can be overwritten by the generated code.
-      in_builder_block do
-        ret(LLVM.Int(0))
-      end
-    end
-
-    # Retrieves the main function definition.
-    #
-    # @return [LLVM::Function] The main function definition.
-    def main
-      @main_func
+      @builder.dispose
     end
 
     # Visits a node in the AST and generates LLVM IR.
@@ -414,18 +417,6 @@ module Lume
       end
     end
 
-    # Pushes a main entrypoint function onto the function stack.
-    #
-    # This method ensures that a main function exists, as LLVM requires a main function to be present.
-    #
-    # @return [LLVM::Function]
-    def push_main_func
-      argument_types = [LLVM::Int, LLVM::Pointer(LLVM::Pointer(LLVM::Int8))]
-      return_type = LLVM::Int
-
-      @main_func = define_function(Compiler::MAIN_NAME, argument_types, return_type)
-    end
-
     # Declares a new variable and initializes it with a value.
     #
     # @param name   [String]            The name of the variable.
@@ -587,10 +578,8 @@ module Lume
     def in_builder_block
       raise ArgumentError, 'Block required' unless block_given?
 
-      # Gets the last block in the stack or the main block if the stack is empty.
-      # If the stack is empty, it means we are outside of any function or scope,
-      # which will default to the main function block.
-      block = @block_stack[-1] || main.basic_blocks.first
+      # Gets the last block in the stack.
+      block = @block_stack[-1]
 
       @builder.position_at_end block
 

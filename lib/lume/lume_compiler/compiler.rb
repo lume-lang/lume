@@ -2,37 +2,47 @@
 
 require 'llvm/core'
 require 'llvm/execution_engine'
+require 'llvm/linker'
 require 'llvm/transforms/scalar'
 
 require 'lume/lume_compiler/ir_visitor'
 
 module Lume
   class Compiler # :nodoc:
-    attr_reader :module
-
     MAIN_NAME = 'main'
 
-    # Compiles the CompilerIR from the given compiler context into LLVM IR, which
-    # can be executed or dumped to an object file.
-    #
-    # @param context [CompilerContext] The compiler context containing the CompilerIR.
-    #
-    # @return [void]
-    def compile!(context)
+    attr_reader :module
+
+    def initialize
       # Initialize the LLVM backend
       initialize_codegen!
 
-      # Generate LLVM IR from each of the root nodes within the CompilerIR
-      context.ir.nodes.each { |node| @visitor.visit(node) }
+      @module = LLVM::Module.new('lume')
     end
 
-    # Finishes the compilation process.
+    # Compiles all the modules from the given compiler context into LLVM IR, which
+    # can be executed or dumped to an object file.
+    #
+    # @param context [CompilerContext] The compiler context containing the MIR.
     #
     # @return [void]
-    def finalize!
-      ensure_initialized!
+    def compile!(context)
+      # Generate LLVM IR from each of the modules within the context
+      context.modules.each { |mod| compile_module!(mod) }
+    end
 
-      @visitor.finalize!
+    # Compiles a single module from the given compiler context into LLVM IR, which
+    # can be executed or dumped to an object file.
+    #
+    # @param module [Lume::Parser::Module] The module to compile.
+    #
+    # @return [void]
+    def compile_module!(mod)
+      # Generate the LLVM IR and add it to the LLVM module
+      llvm_module = NodeVisitor.visit_module(mod)
+
+      # Link the current LLVM module into the main module
+      llvm_module.link_into(@module)
     end
 
     # Optimizes the module using LLVM's optimization passes.
@@ -41,7 +51,8 @@ module Lume
     def optimize!
       ensure_initialized!
 
-      @pass_manager.run(@module)
+      pass_manager = LLVM::PassManager.new
+      pass_manager.run(@module)
 
       @optimized = true
     end
@@ -64,7 +75,10 @@ module Lume
     def emit(filename)
       ensure_initialized!
 
-      @target_machine.emit(@module, filename, :object)
+      engine = LLVM::JITCompiler.new(@module)
+      target_machine = engine.target_machine
+
+      target_machine.emit(@module, filename, :object)
     end
 
     # Evaluates / executes the compiled module, as if it were a compiled executable.
@@ -75,19 +89,12 @@ module Lume
     def evaluate(*args)
       ensure_initialized!
 
+      engine = LLVM::JITCompiler.new(@module)
+
       argc = args.length
       argv = nil if args.empty?
 
-      @engine.run_function(@engine.functions[MAIN_NAME], argc, argv)
-    end
-
-    # Finishes the compilation process.
-    #
-    # @return [void]
-    def finish
-      @builder.dispose
-
-      @initialized = false
+      engine.run_function(engine.functions[MAIN_NAME], argc, argv)
     end
 
     # Returns whether the compiler has been initialized.
@@ -113,14 +120,6 @@ module Lume
       ensure_uninitialized!
 
       LLVM.init_jit
-
-      @module = LLVM::Module.new('lume')
-      @engine = LLVM::JITCompiler.new(@module)
-      @pass_manager = LLVM::PassManager.new
-      @builder = LLVM::Builder.new
-      @target_machine = @engine.target_machine
-
-      @visitor = NodeVisitor.new(@module, @engine, @builder)
 
       @initialized = true
       @optimized = false

@@ -147,7 +147,7 @@ module Lume
     # @return [Boolean] Returns `true` if the stage was executed successfully. Otherwise, returns `false`.
     def execute_stage(stage, context)
       # Update the current stage of the driver
-      @stage = stage
+      @stage = context.stage = stage
 
       # Execute the stage method on the context.
       method(stage).call(context)
@@ -204,17 +204,11 @@ module Lume
 
       compiler.compile!(context)
       compiler.optimize!
-      compiler.finalize!
 
       context.llvm_module = compiler.module
-
-      compiler.finish
+      compiler.evaluate
 
       context
-    rescue StandardError => e
-      compiler&.finish
-
-      raise e
     end
   end
 end
