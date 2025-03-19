@@ -3,7 +3,7 @@
 require 'lume/lume_mir/mir'
 
 module Lume
-  # Visitor for nodes in the AST, used to generate LLVM IR from the CompilerIR.
+  # Visitor for nodes in the AST, used to generate LLVM IR from MIR.
   class NodeVisitor
     include Lume::MIR
 
