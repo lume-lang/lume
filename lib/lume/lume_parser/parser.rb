@@ -342,7 +342,7 @@ module Lume
       stop = @token.end
 
       # Set the location of the result, only if it's a node
-      result.location = Lume::Location.new(start..stop, file: @source) if result.is_a?(Node)
+      result.location ||= Lume::Location.new(start..stop, file: @source) if result.is_a?(Node)
 
       result
     end
