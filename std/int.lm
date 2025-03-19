@@ -1,9 +1,9 @@
-class Int8 { }
-class Int16 { }
-class Int32 { }
-class Int64 { }
+class builtin Int8 { }
+class builtin Int16 { }
+class builtin Int32 { }
+class builtin Int64 { }
 
-class UInt8 { }
-class UInt16 { }
-class UInt32 { }
-class UInt64 { }
+class builtin UInt8 { }
+class builtin UInt16 { }
+class builtin UInt32 { }
+class builtin UInt64 { }

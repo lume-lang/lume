@@ -170,7 +170,7 @@ module Lume
         end
 
         # Copy the comment, if it exists.
-        ir.comment = expression.comment&.content
+        ir.comment = expression.comment&.content if expression.is_a?(Lume::MIR::Expression)
 
         ir
       end
@@ -219,7 +219,7 @@ module Lume
         # If the class is already defined, return it as-is, since we need referential integrity.
         return @classes[expression.name] if @classes[expression.name]
 
-        class_def = Lume::MIR::ClassDefinition.new(expression.name, [])
+        class_def = Lume::MIR::ClassDefinition.new(expression.name, [], builtin: expression.builtin)
 
         with_class(class_def) do
           class_def.expressions = generate_nodes(expression.expressions)
@@ -409,6 +409,10 @@ module Lume
         arguments = generate_nodes(expression.arguments).map do |arg|
           Lume::MIR::Argument.new(nil, arg)
         end
+
+        # If the class is builtin, we don't need to allocate anything - we can just assign the value
+        # directly to the variable.
+        return arguments.first.value if class_def.builtin? && arguments.size == 1
 
         Lume::MIR::New.new(class_def, *arguments)
       end

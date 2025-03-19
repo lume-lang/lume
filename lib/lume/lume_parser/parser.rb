@@ -839,10 +839,13 @@ module Lume
     def parse_class_definition
       consume!(value: :class)
 
+      # Determines whether the class is declared as builtin.
+      builtin = !consume(value: :builtin).nil?
+
       name = consume!(type: :name, error: 'Expected class name in class definition').value
       definitions = parse_member_definitions
 
-      ClassDefinition.new(name, definitions)
+      ClassDefinition.new(name, definitions, builtin: builtin)
     end
 
     # Parses a list of member definitions.

@@ -268,13 +268,14 @@ module Lume
     #     expressions
     #   '}'
     class ClassDefinition < Expression
-      attr_accessor :name, :expressions
+      attr_accessor :name, :expressions, :builtin
 
-      def initialize(name, expressions)
+      def initialize(name, expressions, builtin: false)
         super()
 
         @name = name
         @expressions = expressions
+        @builtin = builtin
       end
 
       def accept_children(visitor)

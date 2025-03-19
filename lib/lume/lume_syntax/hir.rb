@@ -155,21 +155,22 @@ module Lume
 
     # Represents a class definition.
     #
-    #   'class' name '{'
+    #   'class' 'builtin'? name '{'
     #     expressions
     #   '}'
     class ClassDefinition < Expression
-      attr_accessor :name, :expressions
+      attr_accessor :name, :expressions, :builtin
 
-      def initialize(name, expressions)
+      def initialize(name, expressions, builtin: false)
         super()
 
         @name = name
         @expressions = expressions
+        @builtin = builtin
       end
 
       def ==(other)
-        other.is_a?(self.class) && @name == other.name && @expressions == other.expressions
+        other.is_a?(self.class) && @name == other.name && @expressions == other.expressions && @builtin == other.builtin
       end
     end
 
