@@ -181,6 +181,10 @@ module Lume
         class_def = @symbols.retrieve(class_name, type: ClassDefinition)
 
         expression.reference = class_def.method(expression.action)
+
+        # If no method with the defined name was found on the type, raise an error.
+        raise UndefinedMethod.new(expression, name: class_name) unless expression.reference
+
         expression.expression_type = expression.reference.return
 
         # Label all the arguments with their parameter names
