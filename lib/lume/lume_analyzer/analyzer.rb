@@ -42,7 +42,7 @@ module Lume
       raise ArgumentError, 'No modules to analyze' if @modules.empty?
 
       # For all modules, lower the HIR AST into MIR.
-      @modules.each { |mod| mod.mir = lower_to_mir(mod.hir) }
+      lower_to_mir(@modules)
 
       # Invoke all the passes registered.
       @pass.passes.each { |pass_name| invoke_pass(pass_name) }
@@ -53,12 +53,15 @@ module Lume
     # Lowers in the HIR (High-Level Intermediate Representation) into MIR (Middle-Level Intermediate Representation),
     # which can be consumed by the analyzer, compiler and type checker.
     #
-    # @param hir [Lume::Syntax::AST] The HIR AST to lower into MIR.
+    # @param modules [Array<Lume::Parser::Module>] The modules to lower.
     #
-    # @return [Lume::MIR::AST] The MIR AST.
-    def lower_to_mir(hir)
+    # @return [void]
+    def lower_to_mir(modules)
       generator = Lume::Lowering::Generator.new
-      generator.generate(hir)
+
+      modules.each do |mod|
+        mod.mir = generator.generate(mod.hir)
+      end
     end
 
     # Performs expression analysis on the given modules.
