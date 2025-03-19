@@ -13,10 +13,16 @@ module Lume
 
     attr_reader :sources, :imported_files, :dependencies
 
+    attr_accessor :default_imports
+
     def initialize
       @sources = {}
       @imported_files = {}
       @dependencies = {}
+
+      # Defines a list of default imports which are automatically imported when a file is imported.
+      # These imports are added to the AST before any other imports are processed.
+      @default_imports = ['std/std']
     end
 
     # Performs the import of the given AST.
@@ -29,6 +35,14 @@ module Lume
     # @return [Importer] The importer instance.
     def self.import!(name, ast)
       importer = new
+
+      # Import all the default imports.
+      importer.default_imports.each do |library|
+        import = Lume::Syntax::Import.new(library)
+        importer.import_file!(import)
+      end
+
+      # Handle the imports within the AST.
       importer.import!(name, ast)
 
       importer
