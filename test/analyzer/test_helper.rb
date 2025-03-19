@@ -5,9 +5,11 @@ require_relative '../test_helper'
 module AnalyzerHelper
   def analyze(source)
     parser = Lume::Parser.with_source(source)
-    tree = parser.parse_module
+    modules = parser.parse
 
-    analyzer = Lume::Analyzer.with_tree(tree)
+    analyzer = Lume::Analyzer.with_modules(modules)
     analyzer.analyze!
+
+    modules
   end
 end

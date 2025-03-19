@@ -6,14 +6,14 @@ describe 'object referencing' do
   include AnalyzerHelper
 
   it 'should keep same reference to class definitions' do
-    tree = analyze(%(
+    mod, * = analyze(%(
       class String { }
 
       let a = new String()
     ))
 
-    class_def = tree.find_first(Lume::MIR::ClassDefinition)
-    variable_decl = tree.find_first(Lume::MIR::VariableDeclaration)
+    class_def = mod.mir.find_first(Lume::MIR::ClassDefinition)
+    variable_decl = mod.mir.find_first(Lume::MIR::VariableDeclaration)
 
     assert_same(class_def, variable_decl.value.class_def)
   end
