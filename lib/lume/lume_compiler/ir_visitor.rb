@@ -10,6 +10,9 @@ module Lume
     attr_reader :module
 
     LIBC_FUNCTIONS = %w[
+      malloc
+      realloc
+      free
       printf
     ].freeze
 
@@ -634,6 +637,18 @@ module Lume
       LIBC_FUNCTIONS.each do |func|
         method("register_#{func}").call
       end
+    end
+
+    def register_malloc
+      declare_function('malloc', [LLVM::Int64], LLVM::Int8.pointer)
+    end
+
+    def register_realloc
+      declare_function('realloc', [LLVM::Int8.pointer, LLVM::Int64], LLVM::Int8.pointer)
+    end
+
+    def register_free
+      declare_function('free', [LLVM::Int8.pointer], LLVM.Void)
     end
 
     def register_printf
