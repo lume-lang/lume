@@ -157,17 +157,17 @@ module Lume
       # @return [Lume::MIR::Node]
       def retrieve_symbol(name)
         frame = @symbols.reverse.find do |f|
-          # If we hit a boundary, continue no further and return nil.
-          return nil if f.is_a?(Boundary)
+          # If we hit a boundary, continue no further and return from the loop.
+          break nil if f.is_a?(Boundary)
 
           f.key?(name)
         end
 
-        # If no parent frame was found, return nil.
-        return nil if frame.nil?
+        # If a parent frame was found, try to retrieve the symbol from it.
+        return frame[name] if !frame.nil? && frame.key?(name)
 
         # If no symbol was found within the frame, attempt to retrieve it from the global scope.
-        frame[name] || retrieve_global(name)
+        retrieve_global(name)
       end
 
       # Attempts to retrieve a declaration from the global scope, with the given name.
