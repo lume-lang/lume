@@ -113,7 +113,7 @@ module Lume
         symbol = retrieve_symbol(name)
 
         # Wrap the type in an array, if given
-        type = [type] if type.is_a?(String)
+        type = [type] unless type.is_a?(Array) || type.nil?
 
         # If no symbol was found, return nil.
         return nil if symbol.nil?
