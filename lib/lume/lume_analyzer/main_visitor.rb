@@ -113,15 +113,19 @@ module Lume
 
       # Visits a function definition and registers its arguments within the symbol table.
       #
-      # @param _ [FunctionDefinition] The function definition to be visited.
-      def before_function_definition(_)
+      # @param expression [FunctionDefinition] The function definition to be visited.
+      def before_function_definition(expression)
+        return unless expression.is_a?(FunctionDefinition)
+
         @symbols.push_boundary
       end
 
       # Visits a function definition and pops its arguments off the symbol table.
       #
-      # @param _ [FunctionDefinition] The function definition to be visited.
-      def accept_function_definition(_)
+      # @param expression [FunctionDefinition] The function definition to be visited.
+      def accept_function_definition(expression)
+        return unless expression.is_a?(FunctionDefinition)
+
         @symbols.pop_boundary
       end
 

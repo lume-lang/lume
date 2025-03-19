@@ -369,12 +369,6 @@ module Lume
         @return = return_value
       end
 
-      def accept_children(visitor)
-        @parameters.each { |ex| visitor.accept(ex) }
-
-        visitor.accept(@return)
-      end
-
       def ==(other)
         return false unless other.is_a?(self.class)
 
@@ -436,9 +430,10 @@ module Lume
       end
 
       def accept_children(visitor)
-        super
-
+        @parameters.each { |ex| visitor.accept(ex) }
         @expressions.each { |ex| visitor.accept(ex) }
+
+        visitor.accept(@return)
       end
 
       def ==(other)
