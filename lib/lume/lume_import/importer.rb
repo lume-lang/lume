@@ -71,9 +71,6 @@ module Lume
       # Parse the contents of the library file.
       @imported_files[path] = parse_library(path, source_file)
 
-      # Merge the AST nodes from the imported library into the current AST.
-      # ast.nodes.concat(library_ast.nodes)
-
       ast
     end
 
