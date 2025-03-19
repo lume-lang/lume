@@ -14,6 +14,12 @@ module Lume
     # None of the nodes within the AST are responsible for any semantic analysis or type checking - they are only
     # responsible for representing the source code. For this, it's the perfect format to handle name resolution,
     # "de-sugaring" (converting special syntax into a more standard form) and type checking.
+    #
+    # MIR is also more referential than HIR. For example, instead of variable nodes referencing a variable by name,
+    # they reference the variable declaration node itself. This is important for the analysis stage, since all
+    # nodes are expected to be altered during the analysis process. If there are duplicate nodes within the tree
+    # which refer to the same node, but is actually a different object, the analyzer would only analyze and
+    # update one of them, which could lead to incorrect analysis results.
     class AST
       attr_accessor :nodes, :sources
 

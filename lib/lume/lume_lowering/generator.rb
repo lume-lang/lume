@@ -14,11 +14,11 @@ module Lume
         @class_stack = []
       end
 
-      # Generates CompilerIR from the given abstract syntax tree (AST).
+      # Generates MIR from the given HIR abstract syntax tree (AST).
       #
-      # @param ast [Lume::Syntax::AST] The abstract syntax tree to generate IR from.
+      # @param ast [Lume::Syntax::AST] The abstract syntax tree to generate MIR from.
       #
-      # @return [Lume::MIR::AST] The generated compiler IR.
+      # @return [Lume::MIR::AST] The generated MIR.
       def generate(ast)
         ir = Lume::MIR::AST.new
 
