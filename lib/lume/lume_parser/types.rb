@@ -13,6 +13,16 @@ module Lume
     #
     # @see TypeDefinition
     def parse_type_definition
+      case @token.type
+      when :type then parse_type_alias_definition
+      when :enum then parse_type_enum_definition
+      end
+    end
+
+    # Parses a single type alias definition.
+    #
+    # @return [TypeDefinition] The parsed type definition.
+    def parse_type_alias_definition
       consume!(value: :type)
 
       name = consume!(type: name)
@@ -23,6 +33,39 @@ module Lume
       type = with_location { parse_type }
 
       TypeDefinition.new(name.value, type)
+    end
+
+    # Parses a single enum definition.
+    #
+    # @return [Enum] The parsed enum definition.
+    def parse_type_enum_definition
+      consume!(value: :enum)
+
+      name = consume!(type: name).value
+
+      consume_wrapped! do
+        cases = iterate_all! do |index|
+          # If the next token is a closing token, theres no cases defined
+          next nil if peek(:'}')
+
+          # If the next token is a comma, there's still more cases
+          next nil if index.positive? && !consume(type: :',')
+
+          parse_type_enum_case
+        end
+
+        Enum.new(name, cases)
+      end
+    end
+
+    # Parses a single enum case.
+    #
+    # @return [EnumCase] The parsed enum case.
+    def parse_type_enum_case
+      name = consume!(type: name).value
+      parameters = parse_parameters if peek(:'(')
+
+      EnumCase.new(name, parameters || [])
     end
 
     # Parses a single type definition expression.

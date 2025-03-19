@@ -421,24 +421,6 @@ module Lume
       end
     end
 
-    # Represents a type definition.
-    #
-    #   'type' name '=' type
-    class TypeDefinition < Expression
-      attr_accessor :name, :type
-
-      def initialize(name, type)
-        super()
-
-        @name = name
-        @type = type
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @name == other.name && @type == other.type
-      end
-    end
-
     # Represents a unary expression.
     class Unary < Expression
       attr_accessor :operator, :right

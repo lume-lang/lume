@@ -69,6 +69,7 @@ module Lume
       :class,
       :fn,
       :type,
+      :enum,
       :let,
       :const,
       :import
@@ -373,8 +374,8 @@ module Lume
       # If the statement starts with `let` or `const`, parse it as a variable declaration
       return parse_variable_declaration if peek(%i[let const])
 
-      # If the next token is `type`, it might be a type definition
-      return parse_type_definition if peek(:type) && peek(:name, offset: 1)
+      # If the next token is `type` or `enum`, it might be a type definition
+      return parse_type_definition if peek(%i[enum type])
 
       # If the statement starts with 'if' or 'until', parse it as a condition
       return parse_conditional_expression if peek(%i[if until])

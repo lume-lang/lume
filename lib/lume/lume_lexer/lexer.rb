@@ -75,6 +75,7 @@ module Lume
       private
       static
       external
+      enum
       import
     ].freeze
 

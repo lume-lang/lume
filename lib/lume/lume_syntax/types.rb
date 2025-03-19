@@ -5,6 +5,24 @@ require 'lume/lume_syntax/ast'
 
 module Lume
   module Syntax
+    # Represents a type definition.
+    #
+    #   'type' name '=' type
+    class TypeDefinition < Expression
+      attr_accessor :name, :type
+
+      def initialize(name, type)
+        super()
+
+        @name = name
+        @type = type
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @name == other.name && @type == other.type
+      end
+    end
+
     # Represents an abstract type node.
     class Type < Node
       def ==(other)
