@@ -54,34 +54,6 @@ module Lume
         @name = name
       end
 
-      # Determines whether the type is an integer type.
-      #
-      # @return [Boolean]
-      def integer?
-        name.start_with?('Int') || name.start_with?('UInt')
-      end
-
-      # Determines whether the type is a floating-point type.
-      #
-      # @return [Boolean]
-      def floating?
-        name.start_with?('Float') || name.start_with?('Double')
-      end
-
-      # Determines whether the type is a string type.
-      #
-      # @return [Boolean]
-      def string?
-        name == 'String'
-      end
-
-      # Determines whether the type is a boolean type.
-      #
-      # @return [Boolean]
-      def boolean?
-        name == 'Boolean'
-      end
-
       def ==(other)
         other.is_a?(self.class) && other.name == name
       end
