@@ -4,6 +4,10 @@ require 'thor'
 
 module Lume
   module CLI
+    # Defines the Thor application for the Lume CLI.
+    #
+    # The Lume CLI is the main entry point for interacting with Lume projects and files.
+    # It provides commands for building, executing, and managing Lume projects.
     class Program < Thor
       class_option :verbose, aliases: '-v', desc: 'Prints verbose output'
 
