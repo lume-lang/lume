@@ -261,7 +261,7 @@ module Lume
     # @return [LLVM::Instruction]
     def visit_cast_expression(expression)
       raise NotImplementedError, 'Cannot cast non-literal values' unless expression.value.is_a?(Literal)
-      raise NotImplementedError, 'Cannot cast to non-scalar types' unless expression.type.is_a?(Scalar)
+      raise NotImplementedError, 'Cannot cast to non-named types' unless expression.type.is_a?(NamedType)
 
       # If the target type is an integer type, handle it separately
       return visit_integer_cast_expression(expression) if expression.type.integer?
@@ -366,7 +366,7 @@ module Lume
 
     # Visits a scalar type node in the AST and generates LLVM IR.
     #
-    # @param type [Scalar] The type to visit.
+    # @param type [NamedType] The type to visit.
     #
     # @return [LLVM::Type]
     def visit_scalar_type(type)

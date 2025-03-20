@@ -513,13 +513,10 @@ module Lume
       #
       # @param type [Lume::Syntax::NamedType] The type to visit.
       #
-      # @return [Lume::MIR::Scalar]
+      # @return [Lume::MIR::NamedType]
       def generate_named_type(node)
         # The named type is a built-in alias, resolve it first.
         node.name = TYPE_ALIAS_MAP[node.name] || node.name
-
-        # If the type name is a scalar type, return a Scalar
-        return Lume::MIR::Scalar.new(node.name) if SCALAR_TYPES.include?(node.name)
 
         # Otherwise, return a named type
         Lume::MIR::NamedType.new(node.name)

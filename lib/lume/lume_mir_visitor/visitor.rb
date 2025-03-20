@@ -6,7 +6,7 @@ module Lume
     #
     # Classes implementing this module should define methods for each type of AST node, such as:
     #   - `accept_method_definition` for `Lume::MIR::MethodDefinition`
-    #   - `accept_scalar` for `Lume::MIR::Scalar`
+    #   - `accept_named_type` for `Lume::MIR::NamedType`
     #   - and so on.
     #
     # Child nodes are walked recursively, if the node defines a method named `accept_children`.
@@ -15,7 +15,7 @@ module Lume
     #
     # To visit a node before any of it's children are visited, implement `before_<node_type>` methods:
     #   - `before_method_definition` for `Lume::MIR::MethodDefinition`
-    #   - `before_scalar` for `Lume::MIR::Scalar`
+    #   - `before_named_type` for `Lume::MIR::NamedType`
     #   - and so on.
     module Visitor
       # Accepts an AST and runs all the root nodes through the visitor.

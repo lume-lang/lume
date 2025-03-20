@@ -120,7 +120,7 @@ module Lume
       # @return [Constraint] A constraint which is compatible with the given type.
       def self.construct_for(checker, type)
         case type
-        when Scalar then TypeIs.new(checker, type)
+        when NamedType then TypeIs.new(checker, type)
         when Union then OneOf.new(checker, type)
         end
       end
@@ -182,7 +182,7 @@ module Lume
       #
       # @return [Boolean]
       def castable?(type)
-        type.is_a?(Scalar) && type.integer?
+        type.is_a?(NamedType) && type.integer?
       end
     end
 

@@ -42,7 +42,7 @@ module Lume
       #
       # @return [Boolean] `true` if the type is an alias, `false` otherwise.
       def alias?(type)
-        return false unless type.is_a?(Scalar)
+        return false unless type.is_a?(NamedType)
 
         !@type_definitions[type.name].nil?
       end
@@ -53,7 +53,7 @@ module Lume
       #
       # @return [TypeDefinition, nil] The concrete type definition if it is an alias, `nil` otherwise.
       def find_alias(type)
-        return false unless type.is_a?(Scalar)
+        return false unless type.is_a?(NamedType)
 
         @type_definitions[type.name]
       end

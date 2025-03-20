@@ -36,14 +36,15 @@ module Lume
       end
     end
 
-    # Represents an abstract scalar type.
-    class Scalar < Type
+    # Represents a named type.
+    class NamedType < Type
       attr_accessor :name, :reference
 
       def initialize(name)
         super()
 
         @name = name
+        @expression_type = self
       end
 
       # Determines whether the scalar is an integer type.
@@ -107,10 +108,6 @@ module Lume
       def to_s
         name
       end
-    end
-
-    # Represents a named type.
-    class NamedType < Scalar
     end
 
     # Represents a pointer type.

@@ -102,7 +102,7 @@ module Lume
       #
       # @param expression [Argument] The argument expression to be visited.
       def accept_argument(expression)
-        expression.expression_type = scalar_of(expression.value.expression_type)
+        expression.expression_type = expression.value.expression_type
       end
 
       # Visits a cast expression and resolves it's expression type.
@@ -158,14 +158,14 @@ module Lume
       #
       # @param expression [HeapAllocation] The expression to be visited.
       def accept_heap_allocation(expression)
-        expression.expression_type = scalar_of(expression.type)
+        expression.expression_type = expression.type
       end
 
       # Visits an literal expression and resolves it's expression type.
       #
       # @param expression [Literal] The literal expression to be visited.
       def accept_literal(expression)
-        expression.expression_type = scalar_of(LITERAL_TYPE_MAP[expression.class])
+        expression.expression_type = NamedType.new(LITERAL_TYPE_MAP[expression.class])
       end
 
       # Visits a method call and pushes a `self` argument onto it, if it is an instance method.
@@ -215,12 +215,24 @@ module Lume
         @symbols.pop_boundary
       end
 
+      # Visits a named type and resolves it's type from the symbol table.
+      #
+      # @param expression [NamedType] The named type to be visited.
+      def accept_named_type(expression)
+        expression.reference = @symbols.retrieve(expression.name, type: [ClassDefinition, TypeDefinition])
+
+        # If no type definition with the given name was found, raise an error.
+        raise UndefinedSymbol.new(expression) if expression.reference.nil?
+
+        expression.expression_type = expression
+      end
+
       # Visits an object initialization expression.
       #
       # @param expression [New] The expression to be visited.
       def accept_new(expression)
-        class_name = NamedType.new(expression.class_def.name)
-        expression.expression_type = scalar_of(class_name)
+        class_type = NamedType.new(expression.class_def.name)
+        expression.expression_type = class_type
 
         constructor = expression.class_def.constructor
 
@@ -243,18 +255,6 @@ module Lume
       # @param expression [Return] The return expression to be visited.
       def accept_return(expression)
         expression.expression_type = expression.value.expression_type
-      end
-
-      # Visits a scalar literal and resolves it's type from the symbol table.
-      #
-      # @param expression [Scalar] The scalar literal to be visited.
-      def accept_scalar(expression)
-        expression.reference = @symbols.retrieve(expression.name, type: [ClassDefinition, TypeDefinition])
-
-        # If no type definition with the given name was found, raise an error.
-        raise UndefinedSymbol.new(expression) if expression.reference.nil?
-
-        expression.expression_type = expression
       end
 
       # Visits a union literal and resolves it's type from the symbol table.
@@ -343,24 +343,6 @@ module Lume
 
         # Prepend the `self` parameter to the method definition as the first parameter.
         expression.parameters.prepend(self_parameter)
-      end
-
-      # Gets or creates a scalar type with the given name.
-      #
-      # @param name [String] The name of the scalar type.
-      #
-      # @return [Scalar] The scalar type.
-      def scalar_of(name)
-        if name.is_a?(String)
-          scalar = Scalar.new(name)
-        elsif name.is_a?(Scalar) || name.is_a?(NamedType)
-          scalar = name
-        else
-          raise TypeError, "Expected String, Scalar, or NamedType, got #{name.class}"
-        end
-
-        scalar.expression_type = scalar
-        scalar
       end
 
       # Maps the names of all the arguments to their corresponding parameter names.
