@@ -4,6 +4,41 @@ require 'lume/lume_mir/mir'
 
 module Lume
   module MIR
+    # Defines the name of all floating-point types.
+    FLOATING_TYPES = %w[Float Double]
+
+    # Defines the name of the string type.
+    STRING_TYPE = 'String'
+
+    # Defines the name of the pointer type.
+    POINTER_TYPE = 'Pointer'
+
+    # Defines the name of the boolean type.
+    BOOLEAN_TYPE = 'Boolean'
+
+    # Defines the name of all signed integer types.
+    SIGNED_INTEGER_TYPES = %w[Int8 Int16 Int32 Int64]
+
+    # Defines the name of all unsigned integer types.
+    UNSIGNED_INTEGER_TYPES = %w[UInt8 UInt16 UInt32 UInt64]
+
+    # Defines the name of all integer types, both signed and unsigned.
+    INTEGER_TYPES = SIGNED_INTEGER_TYPES + UNSIGNED_INTEGER_TYPES
+
+    # Defines a mapping of number types to their bit widths.
+    NUMBER_WIDTHS = {
+      Int8: 8,
+      Int16: 16,
+      Int32: 32,
+      Int64: 64,
+      UInt8: 8,
+      UInt16: 16,
+      UInt32: 32,
+      UInt64: 64,
+      Float: 32,
+      Double: 64
+    }.freeze
+
     # Represents an abstract type node.
     class Type < Node
       def ==(other)
@@ -51,54 +86,56 @@ module Lume
       #
       # @return [Boolean]
       def integer?
-        name.start_with?('Int') || name.start_with?('UInt')
+        INTEGER_TYPES.include?(name)
       end
 
       # Determines whether the scalar is a floating-point type.
       #
       # @return [Boolean]
       def floating?
-        name.start_with?('Float') || name.start_with?('Double')
+        FLOATING_TYPES.include?(name)
       end
 
       # Determines whether the scalar is a string type.
       #
       # @return [Boolean]
       def string?
-        name == 'String'
+        name == STRING_TYPE
+      end
+
+      # Determines whether the scalar is a pointer type.
+      #
+      # @return [Boolean]
+      def pointer?
+        name == POINTER_TYPE
       end
 
       # Determines whether the scalar is a boolean type.
       #
       # @return [Boolean]
       def boolean?
-        name == 'Boolean'
+        name == BOOLEAN_TYPE
       end
 
       # On numeric scalar types, returns the width in bits.
       #
       # @return [Integer, nil]
       def width
-        return nil unless integer? || floating?
-
-        case name
-        when 'Int8', 'UInt8' then 8
-        when 'Int16', 'UInt16' then 16
-        when 'Int32', 'UInt32', 'Float' then 32
-        when 'Int64', 'UInt64', 'Double' then 64
-        end
+        NUMBER_WIDTHS[name]
       end
 
       # On numeric scalar types, returns whether the scalar is signed.
       #
       # @return [Boolean]
       def signed?
-        return false unless integer?
+        SIGNED_INTEGER_TYPES.include?(name)
+      end
 
-        case name
-        when 'Int8', 'Int16', 'Int32', 'Int64' then true
-        when 'UInt8', 'UInt16', 'UInt32', 'UInt64' then false
-        end
+      # Determines whether the scalar is a builtin type.
+      #
+      # @return [Boolean]
+      def builtin?
+        @reference.builtin?
       end
 
       def ==(other)
