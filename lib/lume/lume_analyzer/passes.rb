@@ -21,7 +21,9 @@ module Lume
       #
       # @return [void]
       def use(pass)
-        @passes << pass.to_sym
+        pass = pass.to_sym if pass.is_a?(String)
+
+        @passes << pass
       end
 
       # Adds a new pass before the specified existing pass in the collection.
@@ -31,10 +33,13 @@ module Lume
       #
       # @return [void]
       def insert_before(existing, new)
-        index = @passes.index(existing.to_sym)
+        existing = existing.to_sym if existing.is_a?(String)
+
+        index = @passes.index(existing)
         return if index.nil?
 
-        @passes.insert(index, new.to_sym)
+        new = new.to_sym if new.is_a?(String)
+        @passes.insert(index, new)
       end
 
       # Adds a new pass after the specified existing pass in the collection.
@@ -44,10 +49,13 @@ module Lume
       #
       # @return [void]
       def insert_after(existing, new)
-        index = @passes.index(existing.to_sym)
+        existing = existing.to_sym if existing.is_a?(String)
+
+        index = @passes.index(existing)
         return if index.nil?
 
-        @passes.insert(index + 1, new.to_sym)
+        new = new.to_sym if new.is_a?(String)
+        @passes.insert(index + 1, new)
       end
     end
   end

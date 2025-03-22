@@ -86,8 +86,11 @@ module Lume
 
     # Invokes the pass with the given name.
     #
-    # @param name [Symbol] The name of the pass to invoke.
+    # @param name [Symbol, Class] The name or class of the pass to invoke.
     def invoke_pass(name)
+      # If the name is a class, instantiate it and call its `call` method.
+      return name.new(@logger).call(@modules) if name.is_a?(Class)
+
       # If the method doesn't exist, emit a warning.
       return invalid_pass(name) unless respond_to?(name, true)
 
