@@ -6,6 +6,7 @@ require 'llvm/linker'
 require 'llvm/transforms/scalar'
 
 require 'lume/lume_compiler/ir_visitor'
+require 'lume/lume_compiler/builder'
 
 module Lume
   class Compiler # :nodoc:
