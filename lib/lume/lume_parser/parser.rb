@@ -1002,9 +1002,15 @@ module Lume
     #
     # @return [Array<Node>] The statements within the block.
     def parse_conditional_block
+      # Consume the start of the block
+      consume!(type: :'{')
+
       iterate_all! do
-        # If we see `end` or `else`, we let the parent function handle the next block.
-        next nil if peek(%i[end else])
+        # If we see `}`, the block is complete
+        next nil if consume(type: :'}')
+
+        # If we see `else`, we let the parent function handle the next block.
+        next nil if peek(:else)
 
         next parse_expression
       end
@@ -1020,6 +1026,7 @@ module Lume
 
         consume!(type: :else)
         consume!(type: :if)
+        consume!(type: :'{')
 
         conditional = ElseIfConditional.new
         conditional.condition = parse_expression
