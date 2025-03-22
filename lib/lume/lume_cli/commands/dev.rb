@@ -51,6 +51,20 @@ module Lume
             printer.print(context)
           end
         end
+
+        desc 'dump-ir <path>', 'Prints the LLVM IR of a Lume project or file'
+        long_desc <<-LONGDESC
+            `lume dev dump-ir` compiles the contents of a Lume project or file in-memory and
+            prints the LLVM IR of the compiled code to the console.
+
+            > $ lume dev dump-ir main.lm
+        LONGDESC
+
+        def dump_ir(path = nil)
+          context = compile_target(path)
+
+          context.llvm_module.dump
+        end
       end
     end
   end
