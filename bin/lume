@@ -3,4 +3,4 @@
 require 'lume'
 require 'lume/lume_cli/program'
 
-Lume::CLI::Program.start(ARGV)
+exit(Lume::CLI::Program.start(ARGV))
