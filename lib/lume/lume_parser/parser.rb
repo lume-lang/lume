@@ -68,7 +68,7 @@ module Lume
       end
 
       # Add the entry module into the tree as well.
-      modules << Module.new(name, entry_hir, source: @source.content)
+      modules.insert(0, Module.new(name, entry_hir, source: @source.content))
 
       # Map all the dependencies between modules.
       map_module_dependencies(modules, importer.dependencies)
