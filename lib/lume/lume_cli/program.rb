@@ -48,7 +48,7 @@ module Lume
       DESC
 
       def exec(path = nil)
-        find_target_path(path)
+        path = find_target_path(path)
 
         stage = options[:stage].downcase.to_sym
 
