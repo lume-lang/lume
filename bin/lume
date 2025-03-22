@@ -3,4 +3,6 @@
 require 'lume'
 require 'lume/lume_cli/program'
 
-exit(Lume::CLI::Program.start(ARGV))
+result = Lume::CLI::Program.start(ARGV)
+
+exit(result) if result.is_a?(Integer)

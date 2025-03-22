@@ -112,6 +112,19 @@ module Lume
       nil
     end
 
+    # Runs the Lume compiler on the given file and builds it.
+    #
+    # @param filename [String] The filename of the source code.
+    #
+    # @return [CompilationContext] The compiled code object(s).
+    def build_file(filename)
+      # Read the entire file into memory.
+      # This might be an issue later on, but for now it's fine.
+      source = File.read(filename)
+
+      build(source, filename: filename)
+    end
+
     # Runs the Lume compiler on the given source code.
     #
     # @param source [String] The source code to compile.
