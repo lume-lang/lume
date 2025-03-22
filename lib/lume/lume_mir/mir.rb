@@ -501,6 +501,15 @@ module Lume
         @instance.nil? || @instance.is_a?(ClassDefinition) || @instance.reference.is_a?(ClassDefinition)
       end
 
+      # Determines whether the referenced method is intrinsic.
+      #
+      # @return [Boolean] `true` if the method is intrinsic, `false` otherwise.
+      def intrinsic?
+        return false if @reference.nil?
+
+        @reference.intrinsic?
+      end
+
       # Gets the name of the class instance being accessed.
       #
       # @return [String]
@@ -552,6 +561,17 @@ module Lume
       # @return [Boolean] `true` if the method is static, `false` otherwise.
       def static?
         @visibility.any? { |v| v == 'static' }
+      end
+
+      # Determines whether the method is intrinsic.
+      #
+      # Intrinsic methods are implemented by the compiler.
+      #
+      # @return [Boolean] `true` if the method is intrinsic, `false` otherwise.
+      def intrinsic?
+        return false if @class_def.nil?
+
+        @class_def.builtin? && external?
       end
 
       # Determines the full name of the method.

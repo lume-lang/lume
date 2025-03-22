@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/lume_mir/mir'
+require 'lume/lume_compiler/ops'
 
 module Lume
   # Visitor for nodes in the AST, used to generate LLVM IR from MIR.
@@ -233,7 +234,13 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_method_call_expression(expression)
-      in_builder_block { invoke(expression.full_name, expression.arguments) }
+      # If the method is an intrinsic, handle it accordingly.
+      return builtin_op(expression) if expression.intrinsic?
+
+      # Convert all method arguments into LLVM expressions
+      arguments = expression.arguments.map { |value| visit(value) }
+
+      @builder.invoke(expression.full_name, arguments)
     end
 
     # Visits a return expression node in the AST and generates LLVM IR.
