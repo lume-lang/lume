@@ -38,6 +38,8 @@ module Lume
         def print_ast(path = nil)
           context = compile_target(path)
 
+          return if context.nil?
+
           printer = Lume::MIR::Printer.new
 
           if options[:entry_module] == true
@@ -62,6 +64,8 @@ module Lume
 
         def dump_ir(path = nil)
           context = compile_target(path)
+
+          return if context.nil?
 
           context.llvm_module.dump
         end
