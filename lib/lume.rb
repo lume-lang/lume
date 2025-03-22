@@ -83,13 +83,13 @@ module Lume
       @logger = Lume::ErrorPrinter.new
     end
 
-    # Runs the Lume compiler on the given source code.
+    # Runs the Lume compiler on the given source code and builds it.
     #
     # @param source [String] The source code to compile.
     # @param filename [String] The filename of the source code.
     #
-    # @return [CompilationContext] The compiled code represented as CompilerIR.
-    def run(source, filename: nil)
+    # @return [CompilationContext] The compiled code object(s).
+    def build(source, filename: nil)
       source_file = SourceFile.new(filename, source)
       context = CompilationContext.new(source_file)
 
@@ -112,11 +112,29 @@ module Lume
       nil
     end
 
+    # Runs the Lume compiler on the given source code.
+    #
+    # @param source [String] The source code to compile.
+    # @param filename [String] The filename of the source code.
+    # @param args [Array<Object>] The arguments to pass to the module's `main` function.
+    #
+    # @return [Integer] The exit code of the program.
+    def run(source, *, filename: nil)
+      context = build(source, filename: filename)
+
+      return nil unless context
+
+      runner = Runner.new(context)
+      result = runner.run(*)
+
+      result.to_i
+    end
+
     # Runs the Lume compiler on the given source file.
     #
     # @param filename [String] The filename of the source code.
     #
-    # @return [CompilationContext] The compiled code represented as CompilerIR.
+    # @return [Integer] The exit code of the program.
     def run_file(filename)
       # Read the entire file into memory.
       # This might be an issue later on, but for now it's fine.
@@ -206,9 +224,30 @@ module Lume
       compiler.optimize!
 
       context.llvm_module = compiler.module
-      compiler.evaluate
 
       context
+    end
+  end
+
+  # Runner for executing and evaluating compiled Lume modules.
+  class Runner
+    def initialize(context)
+      @context = context
+      @module = context.llvm_module
+    end
+
+    # Evaluates / executes the compiled module, as if it were a compiled executable.
+    #
+    # @param args [Array] The arguments to pass to the module's `main` function.
+    #
+    # @return [Integer]
+    def run(*args)
+      engine = LLVM::JITCompiler.new(@module)
+
+      argc = args.length
+      argv = nil if args.empty?
+
+      engine.run_function(engine.functions[Lume::Compiler::MAIN_NAME], argc, argv)
     end
   end
 end
