@@ -8,6 +8,8 @@ require 'lume/lume_typing/typing'
 
 module Lume
   class Analyzer # :nodoc:
+    include Pass
+
     attr_reader :pass
 
     # Creates a new analyzer with the given modules.
@@ -24,7 +26,7 @@ module Lume
       @pass = Passes.new
       @pass.use(:expression_analysis)
       @pass.use(:type_checking)
-      @pass.use(Lume::Analyzer::Pass::ReportUnusedSymbol)
+      @pass.use(ReportUnusedSymbol)
     end
 
     # Creates a new analyzer with the given parser modules.
