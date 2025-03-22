@@ -1,0 +1,2 @@
+# Represents an 1-bit boolean value, which can store either `true` or `false`.
+class builtin Boolean { }
