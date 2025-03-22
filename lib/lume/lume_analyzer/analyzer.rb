@@ -20,7 +20,7 @@ module Lume
     # @return [Analyzer]
     def initialize(modules, logger: nil)
       @modules = modules
-      @logger = logger
+      @logger = logger || NullReporter.new
 
       # Defines the default passes to be executed during analysis.
       @pass = Passes.new

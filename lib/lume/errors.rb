@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'colorize'
+require 'lume/reporter'
 
 module Lume
   ERROR = :error
@@ -54,7 +55,7 @@ module Lume
   end
 
   # The error printer handles reporting compilation errors to the user in a clean, readable format.
-  class ErrorPrinter
+  class ErrorPrinter < Lume::Reporter
     # Initializes the error printer.
     #
     # @param context [Lume::CompilationContext, nil] The compilation context to attach, if any.
@@ -307,5 +308,10 @@ module Lume
       when Lume::INFO then message.colorize(:light_blue)
       end
     end
+  end
+
+  # Reporter that sends diagnostics to the void.
+  class NullReporter < Lume::Reporter
+    def report(_diagnostic); end
   end
 end
