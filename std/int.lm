@@ -1,9 +1,63 @@
-class builtin Int8 { }
-class builtin Int16 { }
-class builtin Int32 { }
-class builtin Int64 { }
+# Represents an 8-bit signed integer, which can store values from `-128` to `127`.
+class builtin Int8 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
 
-class builtin UInt8 { }
-class builtin UInt16 { }
-class builtin UInt32 { }
-class builtin UInt64 { }
+# Represents an 16-bit signed integer, which can store values from `-32768` to `32767`.
+class builtin Int16 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 32-bit signed integer, which can store values from `-2147483648` to `2147483647`.
+class builtin Int32 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 64-bit signed integer, which can store values from `-9223372036854775808` to `9223372036854775807`.
+class builtin Int64 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 8-bit unsigned integer, which can store values from `0` to `255`.
+class builtin UInt8 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 16-bit unsigned integer, which can store values from `0` to `65535`.
+class builtin UInt16 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 32-bit unsigned integer, which can store values from `0` to `4294967295`.
+class builtin UInt32 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
+
+# Represents an 64-bit unsigned integer, which can store values from `0` to `18446744073709551615`.
+class builtin UInt64 {
+    public fn external +(other: Int32) -> Int32
+    public fn external -(other: Int32) -> Int32
+    public fn external *(other: Int32) -> Int32
+    public fn external /(other: Int32) -> Int32
+}
