@@ -12,6 +12,9 @@ module Lume
     class Program < Thor
       class_option :verbose, aliases: '-v', desc: 'Prints verbose output'
 
+      desc 'dev SUBCOMMAND ...ARGS', 'suite of dev commands'
+      subcommand 'dev', Commands::Dev
+
       desc 'build <path>', 'Builds a Lume project or file'
       long_desc <<-LONGDESC
         `lume build` builds a Lume project or Lume source file

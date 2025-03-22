@@ -53,6 +53,15 @@ module Lume
       @entry = entry
     end
 
+    # Gets the module with the given name.
+    #
+    # @param name [String] The name of the module to retrieve.
+    #
+    # @return [Lume::Parser::Module, nil] The module with the given name, or `nil` if it doesn't exist.
+    def mod(name)
+      @modules.find { |mod| mod.name == name }
+    end
+
     # Gets all the source files, which are being compiled.
     #
     # @return [Hash<String, SourceFile>] A hash mapping file names to their source code.
@@ -61,6 +70,13 @@ module Lume
       return { @entry.path => @entry } if @modules.nil?
 
       @modules.to_h { |mod| [mod.name, mod.source] }
+    end
+
+    # Gets the entry module of the compilation context.
+    #
+    # @return [Lume::Parser::Module] The entry module of the compilation context.
+    def entry_module
+      mod(nil)
     end
   end
 

@@ -62,7 +62,7 @@ module Lume
     class Node
       attr_accessor :expression_type, :location
 
-      printer_ignore :expression_type, :location
+      printer_ignore :expression_type, :location, :ir
 
       # Defines the LLVM IR representation of the node.
       #
