@@ -299,7 +299,10 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_number_literal(literal)
-      LLVM.i(literal.bytesize * 8, literal.value)
+      signed = literal.class.signed?
+
+      type = LLVM::Type.i(literal.bytesize * 8)
+      type.from_i(literal.value, { signed: signed })
     end
 
     # Visits a boolean literal node in the AST and generates LLVM IR.
