@@ -53,7 +53,9 @@ module Lume
         stage = options[:stage].downcase.to_sym
 
         driver = Lume::Driver.new(stage, verbose: options[:verbose])
-        driver.run_file(path)
+        result = driver.run_file(path)
+
+        puts "Result code: #{result}" if result != 0
       rescue Lume::InvalidStageError
         say "Invalid stage given. Available options are [#{Lume::STAGES.join(', ')}]"
       end
