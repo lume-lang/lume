@@ -154,11 +154,11 @@ module Lume
 
       # Creates a new 1-bit integer literal.
       #
-      # @param value [Integer] The value of the literal. Defaults to `0`.
+      # @param value [Boolean] The value of the literal. Defaults to `false`.
       #
       # @return [LLVM::Value] The result of the comparison.
-      def bool(value = 0)
-        LLVM.i(1, value)
+      def bool(value = false)
+        value ? LLVM::TRUE : LLVM::FALSE
       end
 
       # Creates a new integer literal.
