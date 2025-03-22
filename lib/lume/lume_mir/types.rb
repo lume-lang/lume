@@ -27,16 +27,16 @@ module Lume
 
     # Defines a mapping of number types to their bit widths.
     NUMBER_WIDTHS = {
-      Int8: 8,
-      Int16: 16,
-      Int32: 32,
-      Int64: 64,
-      UInt8: 8,
-      UInt16: 16,
-      UInt32: 32,
-      UInt64: 64,
-      Float: 32,
-      Double: 64
+      'Int8' => 8,
+      'Int16' => 16,
+      'Int32' => 32,
+      'Int64' => 64,
+      'UInt8' => 8,
+      'UInt16' => 16,
+      'UInt32' => 32,
+      'UInt64' => 64,
+      'Float' => 32,
+      'Double' => 64
     }.freeze
 
     # Represents an abstract type node.
