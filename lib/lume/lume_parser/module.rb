@@ -13,6 +13,8 @@ module Lume
       attr_reader :source
       attr_accessor :name, :hir, :mir, :dependencies
 
+      printer_ignore :source, :dependencies
+
       def initialize(name, hir, source: nil)
         @name = name
         @source = source

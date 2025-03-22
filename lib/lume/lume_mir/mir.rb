@@ -23,6 +23,8 @@ module Lume
     class AST
       attr_accessor :nodes, :sources
 
+      printer_ignore :sources
+
       def initialize
         @nodes = []
         @sources = {}
@@ -59,6 +61,8 @@ module Lume
     # Represents a node within an abstract syntax tree.
     class Node
       attr_accessor :expression_type, :location
+
+      printer_ignore :expression_type, :location
 
       # Defines the LLVM IR representation of the node.
       #

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'thor'
+require 'lume/lume_cli/thor'
+require 'lume/lume_cli/commands/dev'
 
 module Lume
   module CLI

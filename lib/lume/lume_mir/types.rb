@@ -75,6 +75,8 @@ module Lume
     class NamedType < Type
       attr_accessor :name, :reference
 
+      printer_ignore :reference
+
       def initialize(name)
         super()
 

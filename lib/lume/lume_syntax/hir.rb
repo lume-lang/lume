@@ -43,6 +43,8 @@ module Lume
     # Represents an abstract expression.
     class Expression < Node
       attr_accessor :expression_type, :comment
+
+      printer_ignore :comment
     end
 
     # Represents an abstract literal.

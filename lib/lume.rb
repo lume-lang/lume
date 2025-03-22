@@ -2,6 +2,7 @@
 
 require 'lume/core_ext/class'
 require 'lume/core_ext/string'
+require 'lume/core_ext/object'
 
 require 'lume/errors'
 require 'lume/lume_lexer/lexer'
