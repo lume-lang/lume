@@ -750,7 +750,7 @@ module Lume
     #
     #   [ 'let' | 'const' ] name ':' type [ '=' value ]
     class VariableDeclaration < Expression
-      attr_accessor :name, :type, :value
+      attr_accessor :name, :type, :value, :const
 
       def initialize(name, type, value = nil, const: false)
         super()

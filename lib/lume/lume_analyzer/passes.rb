@@ -5,6 +5,8 @@ require 'lume/lume_lowering/generator'
 require 'lume/lume_analyzer/main_visitor'
 require 'lume/lume_typing/typing'
 
+Dir.glob("#{__dir__}/pass/*.rb").each { |file| require file }
+
 module Lume
   class Analyzer # :nodoc:
     # Defines a collection of analyzer passes, which will be executed in order.

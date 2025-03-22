@@ -24,6 +24,7 @@ module Lume
       @pass = Passes.new
       @pass.use(:expression_analysis)
       @pass.use(:type_checking)
+      @pass.use(Lume::Analyzer::Pass::ReportUnusedSymbol)
     end
 
     # Creates a new analyzer with the given parser modules.
