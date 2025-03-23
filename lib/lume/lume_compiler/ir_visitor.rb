@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/lume_mir/mir'
+require 'lume/lume_compiler/conditionals'
 require 'lume/lume_compiler/ops'
 
 module Lume
@@ -155,37 +156,7 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_conditional(expression)
-      then_block = @builder.block('then_block')
-      else_block = @builder.block('else_block')
-      merge_block = @builder.block('merge_block')
-
-      # Create the conditional block (if-statement)
-      condition = visit(expression.condition)
-      @builder.conditional_block(condition, then_block, else_block)
-
-      visit_conditional_block(expression.then, then_block, merge_block)
-      visit_conditional_block(expression.else, else_block, merge_block)
-
-      # At the very end, branch to the merge block, so statements can follow after the conditional.
-      @builder.branch_exit(merge_block)
-    end
-
-    # Visits a conditional block expression node in the AST and generates LLVM IR.
-    #
-    # @param block       [Block]            The block to visit.
-    # @param merge_block [LLVM::BasicBlock] The LLVM basic block to merge into.
-    # @param llvm_block  [LLVM::BasicBlock] The LLVM basic block to place expressions into.
-    #
-    # @return [void]
-    def visit_conditional_block(block, llvm_block, merge_block)
-      # Within the block, compile all expressions.
-      @builder.in_block(llvm_block) do
-        visit(block)
-
-        # If the block returns a value, don't insert a branch statement.
-        # If the branch statement is present, the return statement might be overwritten by the merge block.
-        @builder.branch(merge_block) unless block.return?
-      end
+      handle_conditional(expression)
     end
 
     # Visits a function definition expression node in the AST and generates LLVM IR.

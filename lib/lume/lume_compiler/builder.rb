@@ -697,6 +697,9 @@ module Lume
       #
       # @return [LLVM::Value] The result of the block execution, if any.
       def in_block(block)
+        # Just return the yield result if no LLVM block is given.
+        return yield if block.nil?
+
         raise ArgumentError, 'Block required' unless block_given?
 
         # Position the builder at the function's entry block.
