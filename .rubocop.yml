@@ -22,6 +22,9 @@ Metrics/MethodLength:
 Lint/BooleanSymbol:
   Enabled: false
 
+Lint/UselessAssignment:
+  AutoCorrect: disabled
+
 Style/RaiseArgs:
   Enabled: false
 
