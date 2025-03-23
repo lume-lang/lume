@@ -85,6 +85,14 @@ module Lume
       AST.new(nodes)
     end
 
+    TOP_LEVEL_TYPES = %i[
+      class
+      fn
+      type
+      enum
+      import
+    ].freeze
+
     CONTROL_TYPES = %i[
       return
       if
@@ -93,13 +101,8 @@ module Lume
 
     STATEMENT_TYPES = [
       *CONTROL_TYPES,
-      :class,
-      :fn,
-      :type,
-      :enum,
       :let,
-      :const,
-      :import
+      :const
     ].freeze
 
     VISIBILITY_MODIFIERS = %i[
@@ -382,6 +385,9 @@ module Lume
       # If we've reached the last token, return `nil` so `iterate_all!` can return.
       return nil if peek(:eof)
 
+      # If the token is a top-level statement token, parse it as such.
+      return with_location { parse_top_level_statement } if peek(TOP_LEVEL_TYPES)
+
       # If the token is a statement token, parse it as such.
       return with_location { parse_statement_expression } if peek(STATEMENT_TYPES)
 
@@ -396,10 +402,10 @@ module Lume
       iterate_all! { parse_statement }
     end
 
-    # Parses the statement expression at the current cursor position.
+    # Parses the top-level statement at the current cursor position.
     #
-    # @return [Node] The parsed expression.
-    def parse_statement_expression
+    # @return [Node] The parsed statement.
+    def parse_top_level_statement
       # If the statement is 'import', parse it as an import expression
       return parse_import_expression if peek(:import)
 
@@ -409,11 +415,18 @@ module Lume
       # If the statement is a method definition, parse it as a method definition
       return parse_method_definition if peek(:fn)
 
-      # If the statement starts with `let` or `const`, parse it as a variable declaration
-      return parse_variable_declaration if peek(%i[let const])
-
       # If the next token is `type` or `enum`, it might be a type definition
       return parse_type_definition if peek(%i[enum type])
+
+      unexpected_token(TOP_LEVEL_TYPES)
+    end
+
+    # Parses the statement expression at the current cursor position.
+    #
+    # @return [Node] The parsed expression.
+    def parse_statement_expression
+      # If the statement starts with `let` or `const`, parse it as a variable declaration
+      return parse_variable_declaration if peek(%i[let const])
 
       # If the statement starts with 'if' or 'until', parse it as a condition
       return parse_conditional_expression if peek(%i[if until])
@@ -421,7 +434,8 @@ module Lume
       # If the consumed token is a control token, parse it as a control statement
       return parse_control_expression if peek(CONTROL_TYPES)
 
-      unexpected_token(STATEMENT_TYPES)
+      # If no statement was parsed, parse an expression
+      parse_expression
     end
 
     # Parses the expression at the current cursor position.
@@ -971,7 +985,7 @@ module Lume
         # If we see `else`, we let the parent function handle the next block.
         next nil if peek(:else)
 
-        next parse_expression
+        next parse_statement_expression
       end
     end
 
