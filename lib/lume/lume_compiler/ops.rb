@@ -33,6 +33,10 @@ module Lume
       when :/ then builtin_op_div(type, lhs, rhs)
       when :== then builtin_op_eq(type, lhs, rhs)
       when :!= then builtin_op_neq(type, lhs, rhs)
+      when :> then builtin_op_gt(type, lhs, rhs)
+      when :< then builtin_op_lt(type, lhs, rhs)
+      when :>= then builtin_op_ge(type, lhs, rhs)
+      when :<= then builtin_op_le(type, lhs, rhs)
       else raise "Unsupported intrinsic operation: #{call.action}"
       end
     end
@@ -119,6 +123,62 @@ module Lume
       return @builder.float_neq(lhs, rhs) if type == LLVM::RealType
 
       raise "Unsupported type for inequality comparison: #{type}"
+    end
+
+    # Performs an intrinsic greater-than comparison operation on two expressions.
+    #
+    # @param type [Class] The type of the operands.
+    # @param lhs [LLVM::Instruction] The left-hand side expression.
+    # @param rhs [LLVM::Instruction] The right-hand side expression.
+    #
+    # @return [LLVM::Instruction] The LLVM IR representation of the operation.
+    def builtin_op_gt(type, lhs, rhs)
+      return @builder.int_gt(lhs, rhs) if type == LLVM::IntType
+      return @builder.float_gt(lhs, rhs) if type == LLVM::RealType
+
+      raise "Unsupported type for greater-than comparison: #{type}"
+    end
+
+    # Performs an intrinsic greater-than-or-equal comparison operation on two expressions.
+    #
+    # @param type [Class] The type of the operands.
+    # @param lhs [LLVM::Instruction] The left-hand side expression.
+    # @param rhs [LLVM::Instruction] The right-hand side expression.
+    #
+    # @return [LLVM::Instruction] The LLVM IR representation of the operation.
+    def builtin_op_ge(type, lhs, rhs)
+      return @builder.int_ge(lhs, rhs) if type == LLVM::IntType
+      return @builder.float_ge(lhs, rhs) if type == LLVM::RealType
+
+      raise "Unsupported type for greater-than-or-equal comparison: #{type}"
+    end
+
+    # Performs an intrinsic less-than comparison operation on two expressions.
+    #
+    # @param type [Class] The type of the operands.
+    # @param lhs [LLVM::Instruction] The left-hand side expression.
+    # @param rhs [LLVM::Instruction] The right-hand side expression.
+    #
+    # @return [LLVM::Instruction] The LLVM IR representation of the operation.
+    def builtin_op_lt(type, lhs, rhs)
+      return @builder.int_lt(lhs, rhs) if type == LLVM::IntType
+      return @builder.float_lt(lhs, rhs) if type == LLVM::RealType
+
+      raise "Unsupported type for less-than comparison: #{type}"
+    end
+
+    # Performs an intrinsic less-than-or-equal comparison operation on two expressions.
+    #
+    # @param type [Class] The type of the operands.
+    # @param lhs [LLVM::Instruction] The left-hand side expression.
+    # @param rhs [LLVM::Instruction] The right-hand side expression.
+    #
+    # @return [LLVM::Instruction] The LLVM IR representation of the operation.
+    def builtin_op_le(type, lhs, rhs)
+      return @builder.int_le(lhs, rhs) if type == LLVM::IntType
+      return @builder.float_le(lhs, rhs) if type == LLVM::RealType
+
+      raise "Unsupported type for less-than-or-equal comparison: #{type}"
     end
   end
 end
