@@ -392,7 +392,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_eq(lhs, rhs)
-        in_current_block { @inner.icmp(:eq, lhs, rhs) }
+        in_current_block { @inner.icmp(:eq, lhs, rhs, 'cond') }
       end
 
       # Compares the unequality of two integer values.
@@ -402,7 +402,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_neq(lhs, rhs)
-        in_current_block { @inner.icmp(:ne, lhs, rhs) }
+        in_current_block { @inner.icmp(:ne, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is greater than the right-hand side operand.
@@ -412,7 +412,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_gt(lhs, rhs)
-        in_current_block { @inner.icmp(:gt, lhs, rhs) }
+        in_current_block { @inner.icmp(:sgt, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is greater than or equal to the right-hand side operand.
@@ -422,7 +422,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_ge(lhs, rhs)
-        in_current_block { @inner.icmp(:ge, lhs, rhs) }
+        in_current_block { @inner.icmp(:sge, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is less than the right-hand side operand.
@@ -432,7 +432,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_lt(lhs, rhs)
-        in_current_block { @inner.icmp(:lt, lhs, rhs) }
+        in_current_block { @inner.icmp(:slt, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is less than or equal to the right-hand side operand.
@@ -442,7 +442,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def int_le(lhs, rhs)
-        in_current_block { @inner.icmp(:le, lhs, rhs) }
+        in_current_block { @inner.icmp(:sle, lhs, rhs, 'cond') }
       end
 
       # Adds two integer values.
@@ -492,7 +492,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_eq(lhs, rhs)
-        in_current_block { @inner.fcmp(:oeq, lhs, rhs) }
+        in_current_block { @inner.fcmp(:oeq, lhs, rhs, 'cond') }
       end
 
       # Compares the unequality of two float values.
@@ -502,7 +502,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_neq(lhs, rhs)
-        in_current_block { @inner.fcmp(:one, lhs, rhs) }
+        in_current_block { @inner.fcmp(:one, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is greater than the right-hand side operand.
@@ -512,7 +512,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_gt(lhs, rhs)
-        in_current_block { @inner.fcmp(:ogt, lhs, rhs) }
+        in_current_block { @inner.fcmp(:ogt, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is greater than or equal to the right-hand side operand.
@@ -522,7 +522,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_ge(lhs, rhs)
-        in_current_block { @inner.fcmp(:oge, lhs, rhs) }
+        in_current_block { @inner.fcmp(:oge, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is less than the right-hand side operand.
@@ -532,7 +532,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_lt(lhs, rhs)
-        in_current_block { @inner.fcmp(:olt, lhs, rhs) }
+        in_current_block { @inner.fcmp(:olt, lhs, rhs, 'cond') }
       end
 
       # Compares whether the left-hand side operand is less than or equal to the right-hand side operand.
@@ -542,7 +542,7 @@ module Lume
       #
       # @return [LLVM::Value] The result of the comparison.
       def float_le(lhs, rhs)
-        in_current_block { @inner.fcmp(:ole, lhs, rhs) }
+        in_current_block { @inner.fcmp(:ole, lhs, rhs, 'cond') }
       end
 
       # Adds two floating-point values.
