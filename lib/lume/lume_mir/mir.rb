@@ -399,7 +399,7 @@ module Lume
 
         @condition = condition
         @then = Block.new(then_block)
-        @else_if = Block.new(else_if)
+        @else_if = else_if
         @else = Block.new(else_block)
       end
 
@@ -407,7 +407,7 @@ module Lume
         visitor.accept(@condition)
 
         @then.expressions.each { |block| visitor.accept(block) }
-        @else_if.expressions.each { |block| visitor.accept(block) }
+        @else_if.each { |block| visitor.accept(block) }
         @else.expressions.each { |block| visitor.accept(block) }
       end
 

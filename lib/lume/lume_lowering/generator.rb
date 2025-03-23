@@ -392,7 +392,7 @@ module Lume
       def generate_if_conditional(expression)
         condition = generate_node(expression.condition)
         then_block = generate_block(expression.then)
-        else_if_block = generate_block(expression.else_if)
+        else_if_block = generate_nodes(expression.else_if)
         else_block = generate_block(expression.else)
 
         Lume::MIR::Conditional.new(
