@@ -360,6 +360,42 @@ module Lume
       end
     end
 
+    # Represents a conditional expression.
+    #
+    #   'if' condition '{'
+    #     then
+    #   '}'
+    #   [ 'else if' else_if '{' else_if '}' ]*
+    #   [ 'else' else '{' else '}' ]
+    class Conditional < Expression
+      attr_accessor :condition, :then, :else_if, :else
+
+      def initialize(condition: nil, then_block: [], else_if: [], else_block: [])
+        super()
+
+        @condition = condition
+        @then = then_block
+        @else_if = else_if
+        @else = else_block
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@condition)
+
+        @then.each { |block| visitor.accept(block) }
+        @else_if.each { |block| visitor.accept(block) }
+        @else.each { |block| visitor.accept(block) }
+      end
+
+      def ==(other)
+        other.is_a?(self.class) &&
+          @condition == other.condition &&
+          @then == other.then &&
+          @else_if == other.else_if &&
+          @else == other.else
+      end
+    end
+
     # Represents a function invocation.
     #
     #   action '(' arguments [ ',' arguments ]* ')'
@@ -583,6 +619,27 @@ module Lume
       # @return [String] Full name of the method.
       def full_name
         "#{@class_def.name}::#{@name}"
+      end
+    end
+
+    # Represents a negation for a sub-expression.
+    #
+    #   '!' expression
+    class Negation < Expression
+      attr_accessor :expression
+
+      def initialize(expression)
+        super()
+
+        @expression = expression
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@expression)
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @expression == other.expression
       end
     end
 

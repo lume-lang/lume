@@ -357,6 +357,23 @@ module Lume
       end
     end
 
+    # Represents a negation for a sub-expression.
+    #
+    #   '!' expression
+    class Negation < Expression
+      attr_accessor :expression
+
+      def initialize(expression)
+        super()
+
+        @expression = expression
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @expression == other.expression
+      end
+    end
+
     # Represents an object initialization expression.
     #
     #   'new' class '(' arguments [ ',' arguments ]* ')'
