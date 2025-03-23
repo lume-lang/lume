@@ -658,47 +658,6 @@ module Lume
       Return.new(expression)
     end
 
-    # Parses an `if`-conditional expression.
-    #
-    # @return [IfConditional] The parsed conditional expression.
-    def parse_if_condition_expression
-      expression = IfConditional.new
-      expression.condition = parse_expression
-      expression.then = consume_wrapped! { parse_expressions }
-      expression.else_if << parse_else_if_condition_expression while peek_next(%i[else if])
-      expression.else = consume_wrapped! { parse_expressions } if consume(:else)
-
-      expression
-    end
-
-    # Parses an `else if`-conditional expression.
-    #
-    # @return [ElseIfConditional] The parsed conditional expression.
-    def parse_else_if_condition_expression
-      consume!(type: :else)
-      consume!(type: :if)
-
-      consume_wrapped! do
-        expression = ElseIfConditional.new
-        expression.condition = parse_expression
-        expression.then = parse_expressions
-
-        expression
-      end
-    end
-
-    # Parses an `unless`-conditional expression.
-    #
-    # @return [UnlessConditional] The parsed conditional expression.
-    def parse_unless_condition_expression
-      expression = UnlessConditional.new
-      expression.condition = parse_expression
-      expression.then = consume_wrapped! { parse_expressions }
-      expression.else = consume_wrapped! { parse_expressions } if consume(:else)
-
-      expression
-    end
-
     # Parses a single function invocation expression.
     #
     # @param action [Expression|Token] The action to be invoked.
@@ -1026,7 +985,6 @@ module Lume
 
         consume!(type: :else)
         consume!(type: :if)
-        consume!(type: :'{')
 
         conditional = ElseIfConditional.new
         conditional.condition = parse_expression

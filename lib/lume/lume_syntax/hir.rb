@@ -191,15 +191,19 @@ module Lume
     class Conditional < Expression
       attr_accessor :condition, :then
 
-      def initialize
-        super
+      def initialize(condition: nil, then_block: nil)
+        super()
 
-        @condition = nil
-        @then = []
+        @condition = condition
+        @then = then_block || []
       end
 
       def accept_children(visitor)
         @then.each { |ex| visitor.accept(ex) }
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @condition == other.condition && @then == other.then
       end
     end
 
@@ -225,11 +229,11 @@ module Lume
     class IfConditional < Conditional
       attr_accessor :else, :else_if
 
-      def initialize
-        super
+      def initialize(condition: nil, then_block: nil, else_block: nil, else_if: nil)
+        super(condition: condition, then_block: then_block)
 
-        @else = []
-        @else_if = []
+        @else = else_block || []
+        @else_if = else_if || []
       end
 
       def accept_children(visitor)
@@ -237,6 +241,10 @@ module Lume
 
         @else.each { |ex| visitor.accept(ex) }
         @else_if.each { |ex| visitor.accept(ex) }
+      end
+
+      def ==(other)
+        super && @else == other.else && @else_if == other.else_if
       end
     end
 
@@ -262,16 +270,20 @@ module Lume
     class UnlessConditional < Conditional
       attr_accessor :else
 
-      def initialize
-        super
+      def initialize(condition: nil, then_block: nil, else_block: nil)
+        super(condition: condition, then_block: then_block)
 
-        @else = []
+        @else = else_block || []
       end
 
       def accept_children(visitor)
         super
 
         @else.each { |ex| visitor.accept(ex) }
+      end
+
+      def ==(other)
+        super && @else == other.else
       end
     end
 
