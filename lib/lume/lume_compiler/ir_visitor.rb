@@ -84,6 +84,7 @@ module Lume
       when VariableDeclaration then visit_variable_declaration(expression)
       when Variable then visit_variable_reference(expression)
       when ClassDefinition then visit_class_definition(expression)
+      when Conditional then visit_conditional(expression)
       when MethodDefinition then visit_method_definition(expression)
       when FunctionDefinition then visit_function_definition(expression)
       when FunctionDeclaration then visit_function_declaration(expression)
@@ -92,6 +93,7 @@ module Lume
       when Return then visit_return_expression(expression)
       when New then visit_new_expression(expression)
       when Cast then visit_cast_expression(expression)
+      when Negation then visit_negation_expression(expression)
       when Allocation then visit_allocation_expression(expression)
       else
         raise "Unsupported expression type: #{expression.class}"
@@ -107,7 +109,7 @@ module Lume
       target = visit(expression.target)
       value = visit(expression.value)
 
-      assign_var(target, value)
+      @builder.store(target, value)
     end
 
     # Visits a variable declaration expression node in the AST and generates LLVM IR.
@@ -145,6 +147,39 @@ module Lume
       methods = expression.block.expressions.select { |exp| exp.is_a?(MethodDefinition) }
 
       methods.each { |method| visit_method_definition(method) }
+    end
+
+    # Visits a conditional expression node in the AST and generates LLVM IR.
+    #
+    # @param expression [Conditional] The expression to visit.
+    #
+    # @return [LLVM::Instruction]
+    def visit_conditional(expression)
+      then_block = @builder.block('then_block')
+      else_block = @builder.block('else_block')
+      merge_block = @builder.block('merge_block')
+
+      # Create the conditional block (if-statement)
+      condition = visit(expression.condition)
+      @builder.conditional_block(condition, then_block, else_block)
+
+      # Within the `then` block, compile all expressions.
+      @builder.in_block(then_block) do
+        visit(expression.then)
+
+        # If the block returns a value, don't insert a branch statement.
+        # If the branch statement is present, the return statement might be overwritten by the merge block.
+        @builder.branch(merge_block) unless expression.then.return?
+      end
+
+      # Within the `else` block, compile all expressions.
+      @builder.in_block(else_block) do
+        visit(expression.else)
+        @builder.branch(merge_block) unless expression.else.return?
+      end
+
+      # At the very end, branch to the merge block, so statements can follow after the conditional.
+      @builder.branch_exit(merge_block)
     end
 
     # Visits a function definition expression node in the AST and generates LLVM IR.
@@ -254,16 +289,15 @@ module Lume
       cast(expression.value, expression.type)
     end
 
-    # Visits an integer cast expression node in the AST and generates LLVM IR.
+    # Visits a negation expression node in the AST and generates LLVM IR.
     #
-    # @param expression [Cast] The expression to visit.
+    # @param expression [Negation] The expression to visit.
     #
     # @return [LLVM::Instruction]
-    def visit_integer_cast_expression(expression)
-      value = visit(expression.value)
-      type = visit(expression.type)
+    def visit_negation_expression(expression)
+      subexpression = visit(expression.expression)
 
-      @builder.cast(value, type)
+      @builder.not(subexpression)
     end
 
     # Visits an allocation expression node in the AST and generates LLVM IR.

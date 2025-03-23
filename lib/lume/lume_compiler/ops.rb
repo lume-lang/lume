@@ -24,6 +24,7 @@ module Lume
       when :- then builtin_op_sub(lhs, rhs)
       when :* then builtin_op_mul(lhs, rhs)
       when :/ then builtin_op_div(lhs, rhs)
+      when :== then builtin_op_eq(lhs, rhs)
       else raise "Unsupported intrinsic operation: #{call.action}"
       end
     end
@@ -66,6 +67,16 @@ module Lume
     # @return [LLVM::Instruction] The LLVM IR representation of the operation.
     def builtin_op_div(lhs, rhs)
       @builder.int_div(lhs, rhs)
+    end
+
+    # Performs an intrinsic equality comparison operation on two expressions.
+    #
+    # @param lhs [LLVM::Instruction] The left-hand side expression.
+    # @param rhs [LLVM::Instruction] The right-hand side expression.
+    #
+    # @return [LLVM::Instruction] The LLVM IR representation of the operation.
+    def builtin_op_eq(lhs, rhs)
+      @builder.int_eq(lhs, rhs)
     end
   end
 end

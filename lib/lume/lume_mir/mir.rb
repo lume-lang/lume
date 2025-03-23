@@ -92,11 +92,20 @@ module Lume
       def initialize(expressions = [])
         super()
 
+        expressions = expressions.expressions if expressions.is_a?(Block)
+
         @expressions = expressions
       end
 
       def ==(other)
         other.is_a?(self.class) && @expressions == other.expressions
+      end
+
+      # Determines whether the block contains a return statement.
+      #
+      # @return [Boolean] `true` if the block contains a return statement, `false` otherwise.
+      def return?
+        @expressions.any? { |expr| expr.is_a?(Return) }
       end
     end
 
@@ -389,9 +398,9 @@ module Lume
         super()
 
         @condition = condition
-        @then = then_block
-        @else_if = else_if
-        @else = else_block
+        @then = Block.new(then_block)
+        @else_if = Block.new(else_if)
+        @else = Block.new(else_block)
       end
 
       def accept_children(visitor)
@@ -489,9 +498,7 @@ module Lume
       def initialize(name, parameters, return_value, block)
         super(name, parameters, return_value)
 
-        block = Block.new(block) if block.is_a?(Array)
-
-        @block = block
+        @block = Block.new(block)
       end
 
       def accept_children(visitor)

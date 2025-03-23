@@ -18,7 +18,10 @@ module Lume
         @inner = LLVM::Builder.new
 
         @functions = {}
+        @func_stack = []
         @block_stack = []
+
+        @branch_exit = nil
       end
 
       # Disposes of the builder and its associated resources.
@@ -106,6 +109,33 @@ module Lume
 
         # Execute the block within the function context
         in_func_block(@functions[name], &)
+      end
+
+      # Negates the given boolean operation.
+      #
+      # @param expression [LLVM::Value] The boolean expression to negate.
+      #
+      # @return [LLVM::Instruction] The negated boolean expression.
+      def not(expression)
+        @inner.not(expression)
+      end
+
+      # Branches to a block within the current function.
+      #
+      # @param block [LLVM::BasicBlock] The block to branch to.
+      #
+      # @return [void]
+      def branch(block)
+        @inner.br(block)
+      end
+
+      # Defines the exit block for the current branch.
+      #
+      # @param block [LLVM::BasicBlock] The block to branch to.
+      #
+      # @return [void]
+      def branch_exit(block)
+        @branch_exit = block
       end
 
       # Invokes a function with the given name and arguments.
@@ -550,18 +580,88 @@ module Lume
         in_current_block { @inner.zext(value, type) }
       end
 
-      # Executes the given block within the builder block of the current function and/or scope.
+      # Creates a conditional block based on the given condition.
       #
-      # @param block [Proc] The block to execute within the function's builder block.
+      # @param condition    [LLVM::Instruction] Condition to be met.
+      # @param true_block   [LLVM::BasicBlock] The block to execute if the condition is `true`.
+      # @param false_block  [LLVM::BasicBlock] The block to execute if the condition is `false`.
+      #
+      # @return [LLVM::Instruction] The result of the conditional block execution, if any.
+      def conditional_block(condition, true_block, false_block)
+        @inner.cond(condition, true_block, false_block)
+      end
+
+      # Creates a new block at the current builder position, optionally named.
+      #
+      # @param name [String, nil] The name of the block, if provided.
+      #
+      # @return [LLVM::BasicBlock] The resulting block.
+      def block(name = nil)
+        # Get the current function from the stack.
+        func = @func_stack.last
+
+        # If no function is given, return a new unnamed block.
+        return @builder.insert_block if func.nil?
+
+        # Otherwise, create a new block with the given name.
+        block = func.basic_blocks.append(name)
+
+        in_block(block) { yield(block) } if block_given?
+
+        block
+      end
+
+      # Creates multiple blocks at the current builder position.
+      #
+      # @param names [Array<String>] The names of the blocks.
+      #
+      # @return [Array<LLVM::BasicBlock>] The resulting blocks.
+      def blocks(*names)
+        names.map { |name| block(name) }
+      end
+
+      # Move the position of the builder to the end of the given block.
+      #
+      # @param block [LLVM::BasicBlock] The block to move the builder to.
+      #
+      # @return [LLVM::BasicBlock] The block that the builder was moved to.
+      def move_to(block)
+        @inner.position_at_end(block)
+
+        block
+      end
+
+      # Executes the given block within the builder block of the given block.
+      #
+      # @param block [LLVM::BasicBlock] The block to execute the block within.
       #
       # @return [LLVM::Value] The result of the block execution, if any.
-      def in_current_block(&block)
-        raise ArgumentError, 'Block required' if block.nil?
+      def in_block(block)
+        raise ArgumentError, 'Block required' unless block_given?
 
-        block = @block_stack.last
+        # Position the builder at the function's entry block.
+        move_to(block)
+
+        @block_stack.push(block)
+
+        result = yield
+
+        @block_stack.pop
+
+        result
+      end
+
+      # Executes the given block within the builder block of the current function and/or scope.
+      #
+      # @return [LLVM::Value] The result of the block execution, if any.
+      def in_current_block
+        raise ArgumentError, 'Block required' unless block_given?
+
+        # Prioritize branch exit block if available. Otherwise, use the current block.
+        block = @branch_exit || @block_stack.last
 
         # Position the builder at the current block.
-        @inner.position_at_end(block)
+        move_to(block)
 
         yield
       end
@@ -579,13 +679,15 @@ module Lume
         entry = function.basic_blocks.append('entry')
 
         # Position the builder at the function's entry block.
-        @inner.position_at_end(entry)
+        move_to(entry)
 
+        @func_stack.push(function)
         @block_stack.push(entry)
 
         result = yield(function, function.params)
 
         @block_stack.pop
+        @func_stack.pop
 
         result
       end
