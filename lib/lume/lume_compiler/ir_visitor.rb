@@ -170,11 +170,11 @@ module Lume
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
 
-      @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
-        wrap_parameters(expression.parameters, args)
-
-        expression.block.expressions.each { |expr| visit(expr) }
+      func = @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
+        generate_function_content(expression, *args)
       end
+
+      define_parameter_names(func, expression.parameters)
     end
 
     # Visits a method definition expression node in the AST and generates LLVM IR.
@@ -188,11 +188,11 @@ module Lume
       parameter_types = expression.parameters.map(&:type).map { |type| visit(type) }
       return_type = visit(expression.return)
 
-      @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
-        wrap_parameters(expression.parameters, args)
-
-        expression.block.expressions.each { |expr| visit(expr) }
+      func = @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
+        generate_function_content(expression, *args)
       end
+
+      define_parameter_names(func, expression.parameters)
     end
 
     # Visits a function call expression node in the AST and generates LLVM IR.
@@ -411,6 +411,32 @@ module Lume
       return @builder.int_to_float(visit(value), visit(to)) if from.integer? && to.float?
 
       raise "Unsupported type for cast: attempted to cast #{from.name} to #{to.name}"
+    end
+
+    # Generates the LLVM IR for a function's content.
+    #
+    # @param expression [Expression] The function whose content is being generated.
+    # @param *args      [Array<LLVM::Value>] The arguments passed to the function.
+    #
+    # @return [void]
+    def generate_function_content(expression, *args)
+      wrap_parameters(expression.parameters, args)
+
+      expression.block.expressions.each { |expr| visit(expr) }
+    end
+
+    # Sets the parameter names for the given function.
+    #
+    # @param func         [LLVM::Function]    The function whose parameters are being defined.
+    # @param parameters   [Array<Parameter>]  The parameters of the function.
+    #
+    # @return [LLVM::Function] The function with its parameters defined.
+    def define_parameter_names(func, parameters)
+      parameters.each_index do |index|
+        func.params[index].name = parameters[index].name
+      end
+
+      func
     end
 
     # Wraps the given arguments into the invoked function parameters.

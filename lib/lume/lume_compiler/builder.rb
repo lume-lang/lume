@@ -107,8 +107,12 @@ module Lume
         # If the function hasn't been forward declared yet, do so now.
         declare_function(name, argument_types, return_type, *) unless func_registered?(name)
 
+        function = @functions[name]
+
         # Execute the block within the function context
-        in_func_block(@functions[name], &)
+        in_func_block(function, &)
+
+        function
       end
 
       # Negates the given boolean operation.
