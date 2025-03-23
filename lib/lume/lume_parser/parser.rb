@@ -966,6 +966,11 @@ module Lume
       conditional = UnlessConditional.new
       conditional.condition = parse_expression
       conditional.then = parse_conditional_block
+
+      if peek(:else) && peek(:if, offset: 1)
+        unexpected_token(:else, message: '`unless` conditions cannot have an `else if` clause')
+      end
+
       conditional.else = parse_else_conditional_expression
 
       conditional
