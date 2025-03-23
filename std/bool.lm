@@ -1,2 +1,5 @@
 # Represents an 1-bit boolean value, which can store either `true` or `false`.
-class builtin Boolean { }
+class builtin Boolean {
+    public fn external ==(other: Boolean) -> Boolean
+    public fn external !=(other: Boolean) -> Boolean
+}
