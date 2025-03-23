@@ -975,6 +975,9 @@ module Lume
     #
     # @return [Array<Node>] The statements within the block.
     def parse_conditional_block
+      # If the next token is not an opening brace, parse it as an inline condition.
+      return [parse_statement_expression] unless peek(:'{')
+
       # Consume the start of the block
       consume!(type: :'{')
 

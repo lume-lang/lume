@@ -164,4 +164,66 @@ describe Lume::Parser do
 
   it_cannot_parse 'unless true { } else if false { }'
   it_cannot_parse 'unless true { a = 1 } else if false { b = 2 }'
+
+  it_parses 'if true a = 1', IfConditional.new(
+    condition: BooleanLiteral.new(true),
+    then_block: [
+      Assignment.new('a'.var, ByteLiteral.new(1))
+    ]
+  )
+
+  it_parses 'if true a = 1 b = 2', IfConditional.new(
+    condition: BooleanLiteral.new(true),
+    then_block: [
+      Assignment.new('a'.var, ByteLiteral.new(1))
+    ]
+  ),
+            Assignment.new('b'.var, ByteLiteral.new(2))
+
+  it_parses 'unless true a = 1', UnlessConditional.new(
+    condition: BooleanLiteral.new(true),
+    then_block: [
+      Assignment.new('a'.var, ByteLiteral.new(1))
+    ]
+  )
+
+  it_parses 'unless true a = 1 b = 2', UnlessConditional.new(
+    condition: BooleanLiteral.new(true),
+    then_block: [
+      Assignment.new('a'.var, ByteLiteral.new(1))
+    ]
+  ),
+            Assignment.new('b'.var, ByteLiteral.new(2))
+
+  it_parses 'if a == true b = 1', IfConditional.new(
+    condition: Call.new('a'.var, '==', BooleanLiteral.new(true)),
+    then_block: [
+      Assignment.new('b'.var, ByteLiteral.new(1))
+    ]
+  )
+
+  it_parses 'if a == true b = 1 else c = 2', IfConditional.new(
+    condition: Call.new('a'.var, '==', BooleanLiteral.new(true)),
+    then_block: [
+      Assignment.new('b'.var, ByteLiteral.new(1))
+    ],
+    else_block: [
+      Assignment.new('c'.var, ByteLiteral.new(2))
+    ]
+  )
+
+  it_parses 'if a == true b = 1 else if false c = 2', IfConditional.new(
+    condition: Call.new('a'.var, '==', BooleanLiteral.new(true)),
+    then_block: [
+      Assignment.new('b'.var, ByteLiteral.new(1))
+    ],
+    else_if: [
+      ElseIfConditional.new(
+        condition: BooleanLiteral.new(false),
+        then_block: [
+          Assignment.new('c'.var, ByteLiteral.new(2))
+        ]
+      )
+    ]
+  )
 end
