@@ -485,6 +485,66 @@ module Lume
         in_current_block { @inner.div(lhs, rhs) }
       end
 
+      # Compares the equality of two float values.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_eq(lhs, rhs)
+        in_current_block { @inner.fcmp(:oeq, lhs, rhs) }
+      end
+
+      # Compares the unequality of two float values.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_neq(lhs, rhs)
+        in_current_block { @inner.fcmp(:one, lhs, rhs) }
+      end
+
+      # Compares whether the left-hand side operand is greater than the right-hand side operand.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_gt(lhs, rhs)
+        in_current_block { @inner.fcmp(:ogt, lhs, rhs) }
+      end
+
+      # Compares whether the left-hand side operand is greater than or equal to the right-hand side operand.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_ge(lhs, rhs)
+        in_current_block { @inner.fcmp(:oge, lhs, rhs) }
+      end
+
+      # Compares whether the left-hand side operand is less than the right-hand side operand.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_lt(lhs, rhs)
+        in_current_block { @inner.fcmp(:olt, lhs, rhs) }
+      end
+
+      # Compares whether the left-hand side operand is less than or equal to the right-hand side operand.
+      #
+      # @param lhs [LLVM::Value] The left-hand side operand.
+      # @param rhs [LLVM::Value] The right-hand side operand.
+      #
+      # @return [LLVM::Value] The result of the comparison.
+      def float_le(lhs, rhs)
+        in_current_block { @inner.fcmp(:ole, lhs, rhs) }
+      end
+
       # Adds two floating-point values.
       #
       # @param lhs [LLVM::Value] The left-hand side operand.
