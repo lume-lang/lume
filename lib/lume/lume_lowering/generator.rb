@@ -117,6 +117,10 @@ module Lume
         nodes.map { |node| generate_node(node) }
       end
 
+      def generate_block(nodes)
+        Lume::MIR::Block.new(generate_nodes(nodes))
+      end
+
       def generate_node(node)
         ir = generate_statement(node)
 
@@ -223,7 +227,7 @@ module Lume
         class_def = Lume::MIR::ClassDefinition.new(expression.name, [], builtin: expression.builtin)
 
         with_class(class_def) do
-          class_def.expressions = generate_nodes(expression.expressions)
+          class_def.block = generate_block(expression.expressions)
         end
 
         # If the class has a constructor, wrap it in the required prologue and epilogue.
@@ -242,7 +246,7 @@ module Lume
       def generate_function_definition(expression)
         name = expression.name
         parameters = generate_nodes(expression.parameters)
-        expressions = generate_nodes(expression.expressions)
+        expressions = generate_block(expression.expressions)
         return_type = generate_node(expression.return)
 
         function = Lume::MIR::FunctionDefinition.new(name, parameters, return_type, expressions)
@@ -280,7 +284,7 @@ module Lume
         name = expression.name
         visibility = generate_nodes(expression.visibility)
         parameters = generate_nodes(expression.parameters)
-        expressions = generate_nodes(expression.expressions)
+        expressions = generate_block(expression.expressions)
         return_type = generate_node(expression.return)
 
         method = Lume::MIR::MethodDefinition.new(class_def, name, parameters, return_type, expressions)
@@ -334,7 +338,7 @@ module Lume
         # Invoke the allocator to allocate memory for the instance.
         instance.value = Lume::MIR::HeapAllocation.new(instance_type, expression.class_def.bytesize)
 
-        expression.expressions.unshift(instance)
+        expression.block.expressions.unshift(instance)
       end
 
       # Inserts the epilogue for a constructor method definition expression node.
@@ -351,7 +355,7 @@ module Lume
         instance_variable = Lume::MIR::Variable.new('self')
         return_expression = Lume::MIR::Return.new(instance_variable)
 
-        expression.expressions.push(return_expression)
+        expression.block.expressions.push(return_expression)
       end
 
       # Visits a type definition expression node in the AST and generates LLVM IR.
@@ -386,9 +390,9 @@ module Lume
       # @return [Lume::MIR::Conditional]
       def generate_if_conditional(expression)
         condition = generate_node(expression.condition)
-        then_block = generate_nodes(expression.then)
-        else_if_block = generate_nodes(expression.else_if)
-        else_block = generate_nodes(expression.else)
+        then_block = generate_block(expression.then)
+        else_if_block = generate_block(expression.else_if)
+        else_block = generate_block(expression.else)
 
         Lume::MIR::Conditional.new(
           condition: condition,
@@ -405,8 +409,8 @@ module Lume
       # @return [Lume::MIR::Conditional]
       def generate_unless_conditional(expression)
         condition = generate_node(expression.condition)
-        then_block = generate_nodes(expression.then)
-        else_block = generate_nodes(expression.else)
+        then_block = generate_block(expression.then)
+        else_block = generate_block(expression.else)
 
         Lume::MIR::Conditional.new(
           condition: Lume::MIR::Negation.new(condition),

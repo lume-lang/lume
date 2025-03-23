@@ -49,16 +49,26 @@ module Lume
     #
     # @param node [Node] The node to visit.
     #
-    # @return [void]
+    # @return [LLVM::Instruction]
     def visit(node)
       case node
       when Expression then visit_expression(node)
+      when Block then visit_many(node.expressions)
       when Literal then visit_literal(node)
       when Argument then visit(node.value)
       when Type then visit_type(node)
       else
         raise "Unsupported node type: #{node.class}"
       end
+    end
+
+    # Visits multiple nodes in the AST and generates LLVM IR.
+    #
+    # @param nodes [Array<Node>] The nodes to visit.
+    #
+    # @return [Array<LLVM::Instruction>]
+    def visit_many(nodes)
+      nodes.map { |node| visit(node) }
     end
 
     private
@@ -132,7 +142,7 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_class_definition(expression)
-      methods = expression.expressions.select { |exp| exp.is_a?(MethodDefinition) }
+      methods = expression.block.expressions.select { |exp| exp.is_a?(MethodDefinition) }
 
       methods.each { |method| visit_method_definition(method) }
     end
@@ -151,7 +161,7 @@ module Lume
       @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
         wrap_parameters(expression.parameters, args)
 
-        expression.expressions.each { |expr| visit(expr) }
+        expression.block.expressions.each { |expr| visit(expr) }
       end
     end
 
@@ -169,7 +179,7 @@ module Lume
       @builder.define_function(method_name, parameter_types, return_type) do |_, *args|
         wrap_parameters(expression.parameters, args)
 
-        expression.expressions.each { |expr| visit(expr) }
+        expression.block.expressions.each { |expr| visit(expr) }
       end
     end
 

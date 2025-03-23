@@ -85,6 +85,21 @@ module Lume
       attr_accessor :expression_type, :comment
     end
 
+    # Represents a block of zero-or-more expressions.
+    class Block < Node
+      attr_accessor :expressions
+
+      def initialize(expressions = [])
+        super()
+
+        @expressions = expressions
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @expressions == other.expressions
+      end
+    end
+
     # Represents an abstract literal.
     class Literal < Node
       attr_accessor :value
@@ -272,18 +287,18 @@ module Lume
     #     expressions
     #   '}'
     class ClassDefinition < Expression
-      attr_accessor :name, :expressions, :builtin
+      attr_accessor :name, :block, :builtin
 
-      def initialize(name, expressions, builtin: false)
+      def initialize(name, block, builtin: false)
         super()
 
         @name = name
-        @expressions = expressions
+        @block = block
         @builtin = builtin
       end
 
       def accept_children(visitor)
-        @expressions.each { |ex| visitor.accept(ex) }
+        @block.expressions.each { |ex| visitor.accept(ex) }
       end
 
       # Merges the current class definition with another one.
@@ -292,14 +307,14 @@ module Lume
       #
       # @return [void]
       def merge_with(other)
-        @expressions.concat(other.expressions)
+        @block.expressions.concat(other.block.expressions)
       end
 
       # Gets the methods defined on the class definition.
       #
       # @return [Array<MethodDefinition>] The methods defined on the class definition.
       def methods
-        @expressions.select { |ex| ex.is_a?(MethodDefinition) }
+        @block.expressions.select { |ex| ex.is_a?(MethodDefinition) }
       end
 
       # Gets the method defined on the class definition with the given name.
@@ -328,7 +343,7 @@ module Lume
         constructor = MethodDefinition.new(self, @name, [], Void.new, [])
 
         # Put the constructor at the beginning of the class definition
-        expressions.prepend(constructor)
+        @block.expressions.prepend(constructor)
 
         constructor
       end
@@ -339,7 +354,7 @@ module Lume
       def bytesize
         size = 0
 
-        properties = @expressions.select { |ex| ex.is_a?(Property) }
+        properties = @block.expressions.select { |ex| ex.is_a?(Property) }
         size += properties.reduce(0) { |acc, prop| acc + prop.type.bytesize }
 
         size
@@ -382,9 +397,9 @@ module Lume
       def accept_children(visitor)
         visitor.accept(@condition)
 
-        @then.each { |block| visitor.accept(block) }
-        @else_if.each { |block| visitor.accept(block) }
-        @else.each { |block| visitor.accept(block) }
+        @then.expressions.each { |block| visitor.accept(block) }
+        @else_if.expressions.each { |block| visitor.accept(block) }
+        @else.expressions.each { |block| visitor.accept(block) }
       end
 
       def ==(other)
@@ -469,23 +484,25 @@ module Lume
     # |
     #   'fn' 'external' name '(' parameters [ ',' parameters ]* ')' '->' return
     class FunctionDefinition < FunctionDeclaration
-      attr_accessor :expressions, :external
+      attr_accessor :block, :external
 
-      def initialize(name, parameters, return_value, expressions)
+      def initialize(name, parameters, return_value, block)
         super(name, parameters, return_value)
 
-        @expressions = expressions
+        block = Block.new(block) if block.is_a?(Array)
+
+        @block = block
       end
 
       def accept_children(visitor)
         @parameters.each { |ex| visitor.accept(ex) }
-        @expressions.each { |ex| visitor.accept(ex) }
+        @block.expressions.each { |ex| visitor.accept(ex) }
 
         visitor.accept(@return)
       end
 
       def ==(other)
-        super && @expressions == other.expressions
+        super && @block == other.block
       end
 
       # Determines whether the function is external.
@@ -572,8 +589,8 @@ module Lume
     class MethodDefinition < FunctionDefinition
       attr_accessor :class_def, :visibility
 
-      def initialize(class_def, name, parameters, return_value, expressions)
-        super(name, parameters, return_value, expressions)
+      def initialize(class_def, name, parameters, return_value, block)
+        super(name, parameters, return_value, block)
 
         @class_def = class_def
         @visibility = []
