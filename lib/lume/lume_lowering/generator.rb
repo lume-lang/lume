@@ -379,6 +379,7 @@ module Lume
         case expression
         when Lume::Syntax::IfConditional then generate_if_conditional(expression)
         when Lume::Syntax::UnlessConditional then generate_unless_conditional(expression)
+        when Lume::Syntax::ElseIfConditional then generate_else_if_conditional(expression)
         else raise "Unsupported conditional type: #{expression.class}"
         end
       end
@@ -416,6 +417,21 @@ module Lume
           condition: Lume::MIR::Negation.new(condition),
           then_block: then_block,
           else_block: else_block
+        )
+      end
+
+      # Visits an `else if` conditional expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::ElseIfConditional] The expression to visit.
+      #
+      # @return [Lume::MIR::Conditional]
+      def generate_else_if_conditional(expression)
+        condition = generate_node(expression.condition)
+        then_block = generate_block(expression.then)
+
+        Lume::MIR::Conditional.new(
+          condition: condition,
+          then_block: then_block
         )
       end
 
