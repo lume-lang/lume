@@ -11,7 +11,7 @@ module Lume
 
         # Performs the analysis pass on the given modules.
         #
-        # @param modules [Array<Lume::Parser::Module>] The modules to analyze.
+        # @param modules [Array<Lume::Module>] The modules to analyze.
         def call(modules)
           modules.each { |mod| visit_module(mod) }
         end
@@ -20,7 +20,7 @@ module Lume
 
         # Visits a module and reports any unused symbols.
         #
-        # @param mod [Lume::Parser::Module] The module to visit.
+        # @param mod [Lume::Module] The module to visit.
         def visit_module(mod)
           flat_ast = Lume::MIR::FlatVisitor.flatten(mod.mir)
 

@@ -14,7 +14,7 @@ module Lume
 
     # Creates a new analyzer with the given modules.
     #
-    # @param modules  [Array<Lume::Parser::Module>] The modules to analyze.
+    # @param modules  [Array<Lume::Module>] The modules to analyze.
     # @param logger   [Lume::ErrorPrinter]          The error printer to use.
     #
     # @return [Analyzer]
@@ -31,7 +31,7 @@ module Lume
 
     # Creates a new analyzer with the given parser modules.
     #
-    # @param modules [Array<Lume::Parser::Module>] The modules to analyze.
+    # @param modules [Array<Lume::Module>] The modules to analyze.
     #
     # @return [Analyzer]
     def self.with_modules(modules)
@@ -56,7 +56,7 @@ module Lume
     # Lowers in the HIR (High-Level Intermediate Representation) into MIR (Middle-Level Intermediate Representation),
     # which can be consumed by the analyzer, compiler and type checker.
     #
-    # @param modules [Array<Lume::Parser::Module>] The modules to lower.
+    # @param modules [Array<Lume::Module>] The modules to lower.
     #
     # @return [void]
     def lower_to_mir(modules)
@@ -69,7 +69,7 @@ module Lume
 
     # Performs expression analysis on the given modules.
     #
-    # @param modules [Array<Lume::Parser::Module>] The modules to analyze.
+    # @param modules [Array<Lume::Module>] The modules to analyze.
     def expression_analysis(modules)
       # The main visitor is responsible for expanding expression result types, so that the type checker
       # can verify that all type constraints are satisfied.
@@ -78,7 +78,7 @@ module Lume
 
     # Performs type-checking analysis on the given MIR AST.
     #
-    # @param modules [Array<Lume::Parser::Module>] The modules to type-check.
+    # @param modules [Array<Lume::Module>] The modules to type-check.
     def type_checking(modules)
       type_checker = Lume::Typing::TypeChecker.new
       errors = type_checker.check(modules)

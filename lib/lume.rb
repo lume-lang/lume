@@ -4,6 +4,7 @@ require 'lume/core_ext/class'
 require 'lume/core_ext/string'
 require 'lume/core_ext/object'
 
+require 'lume/module'
 require 'lume/errors'
 require 'lume/lume_lexer/lexer'
 require 'lume/lume_parser/parser'
@@ -57,7 +58,7 @@ module Lume
     #
     # @param name [String] The name of the module to retrieve.
     #
-    # @return [Lume::Parser::Module, nil] The module with the given name, or `nil` if it doesn't exist.
+    # @return [Lume::Module, nil] The module with the given name, or `nil` if it doesn't exist.
     def mod(name)
       @modules.find { |mod| mod.name == name }
     end
@@ -74,7 +75,7 @@ module Lume
 
     # Gets the entry module of the compilation context.
     #
-    # @return [Lume::Parser::Module] The entry module of the compilation context.
+    # @return [Lume::Module] The entry module of the compilation context.
     def entry_module
       mod(nil)
     end

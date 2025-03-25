@@ -35,7 +35,7 @@ module Lume
     # Compiles a single module from the given compiler context into LLVM IR, which
     # can be executed or dumped to an object file.
     #
-    # @param module [Lume::Parser::Module] The module to compile.
+    # @param module [Lume::Module] The module to compile.
     #
     # @return [void]
     def compile_module!(mod)

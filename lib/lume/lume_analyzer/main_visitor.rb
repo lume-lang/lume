@@ -10,7 +10,7 @@ module Lume
     # Passes the modules through the main visitor, which handles the expansion of result
     # types of expressions within it.
     #
-    # @param modules [Array<Lume::Parser::Module>]  The modules to be analyzed.
+    # @param modules [Array<Lume::Module>]  The modules to be analyzed.
     #
     # @see MainVisitor
     def visit_main(modules)

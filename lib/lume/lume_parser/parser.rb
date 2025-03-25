@@ -6,7 +6,6 @@ require 'lume/lume_syntax/values'
 require 'lume/lume_syntax/hir_helpers'
 require 'lume/lume_import/importer'
 require 'lume/lume_parser/errors'
-require 'lume/lume_parser/module'
 require 'lume/lume_parser/types'
 require 'lume/lume_parser/values'
 
@@ -55,7 +54,7 @@ module Lume
     #
     # @param name     [String, nil] The name of the entry module, if any. Defaults to `nil`.
     #
-    # @return [Array<Lume::Parser::Module>] The parsed modules from the source code.
+    # @return [Array<Lume::Module>] The parsed modules from the source code.
     def parse(name: nil)
       entry_hir = parse_module
       importer = Importer.import!(name, entry_hir)

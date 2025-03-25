@@ -23,7 +23,7 @@ module Lume
       #
       # If any correctable errors are found, they are corrected. Otherwise, they are reported as errors and returned.
       #
-      # @param modules [Array<Lume::Parser::Module>] The list of modules to type check.
+      # @param modules [Array<Lume::Module>] The list of modules to type check.
       #
       # @return [Array<TypeError>] An array of errors found during type checking, if any.
       def check(modules)
@@ -62,7 +62,7 @@ module Lume
 
       # Runs the type checker on the given module.
       #
-      # @param mod [Lume::Parser::Module] The module to type-check.
+      # @param mod [Lume::Module] The module to type-check.
       #
       # @return [void]
       def check_module(mod)

@@ -28,7 +28,7 @@ module Lume
 
     # Visits a module node and generates LLVM IR.
     #
-    # @param mod          [Lume::Parser::Module]  The module node to visit.
+    # @param mod          [Lume::Module]  The module node to visit.
     #
     # @return [void]
     def self.visit_module(mod)
