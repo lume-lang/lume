@@ -16,24 +16,24 @@ module Lume
 
       # Generates MIR from the given HIR abstract syntax tree (AST).
       #
-      # @param ast [Lume::Syntax::AST] The abstract syntax tree to generate MIR from.
+      # @param ast [Lume::Module] The module to generate MIR from.
       #
       # @return [Lume::MIR::AST] The generated MIR.
-      def generate(ast)
-        ir = Lume::MIR::AST.new
+      def generate(mod)
+        mir = Lume::MIR::AST.new
 
         # Pre-register all the class definitions within the AST, so we
         # can reference them later without having to re-traverse the tree.
-        iterate_class_nodes(ast)
+        register_class_nodes(mod)
 
         # Generate the rest of the IR nodes.
-        ir.nodes.concat(generate_nodes(ast.nodes))
+        mir.nodes.concat(generate_nodes(mod.hir.nodes))
 
         # Pre-declare all the functions definitions within the IR, so we
         # can call them without them being defined yet.
-        declare_function_definitions(ir)
+        declare_function_definitions(mir)
 
-        ir
+        mir
       end
 
       SCALAR_TYPES = %w[
@@ -86,31 +86,53 @@ module Lume
 
       private
 
-      # Iterates over all the class definition nodes in the given AST and registers them in the generator.
+      # Iterates over all the class definition nodes in the given module and registers them in the generator.
       #
-      # @param ast [Lume::Syntax::AST] The abstract syntax tree to iterate over.
-      def iterate_class_nodes(ast)
-        class_definitions = ast.nodes.select { |node| node.is_a?(Lume::Syntax::ClassDefinition) }
+      # @param mod [Lume::Module] The module to iterate over.
+      def register_class_nodes(mod)
+        class_definitions = find_class_nodes(mod)
 
         class_definitions.each do |class_def|
           @classes[class_def.name] = generate_node(class_def)
         end
       end
 
+      # Finds all the class definition nodes in the given module and imported sub-modules.
+      #
+      # @param mod      [Lume::Module] The entry point module to iterate over.
+      # @param visited  [Hash]         A hash of visited modules to avoid infinite recursion.
+      #
+      # @return [Array<Lume::Syntax::ClassDefinition>] The array of class definition nodes.
+      def find_class_nodes(mod, visited = {})
+        visited.compare_by_identity
+
+        return [] if visited.include?(mod)
+
+        visited[mod] = true
+
+        # Find all the class definition nodes within the current module.
+        defs = mod.hir.select(Lume::Syntax::ClassDefinition)
+
+        # Find all the class definition nodes within all imported sub-modules.
+        imported_defs = mod.dependencies.flat_map { |submod| find_class_nodes(submod, visited) }
+
+        defs.concat(imported_defs)
+      end
+
       # Iterates over all the function definition nodes in the given IR and forward-declares them.
       #
-      # @param ir [Lume::MIR::AST] The abstract syntax tree to iterate over.
+      # @param mir [Lume::MIR::AST] The abstract syntax tree to iterate over.
       #
       # @return [void]
-      def declare_function_definitions(ir)
+      def declare_function_definitions(mir)
         # Select all the function definitions within the IR.
-        definitions = ir.find_all_recursively(Lume::MIR::FunctionDefinition)
+        definitions = mir.find_all_recursively(Lume::MIR::FunctionDefinition)
 
         declarations = definitions.map do |definition|
           Lume::MIR::FunctionDeclaration.new(definition.full_name, definition.parameters, definition.return)
         end
 
-        ir.nodes.insert(0, *declarations)
+        mir.nodes.insert(0, *declarations)
       end
 
       def generate_nodes(nodes)

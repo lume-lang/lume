@@ -63,7 +63,7 @@ module Lume
       generator = Lume::Lowering::Generator.new
 
       modules.each do |mod|
-        mod.mir = generator.generate(mod.hir)
+        mod.mir = generator.generate(mod)
       end
     end
 

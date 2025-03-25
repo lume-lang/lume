@@ -26,6 +26,15 @@ module Lume
       def imports
         @nodes.select { |node| node.is_a?(Import) }
       end
+
+      # Selects all nodes of a specific type within the AST.
+      #
+      # @param type [Class] The type of node to select.
+      #
+      # @return [Array<Node>] The nodes of the specified type within the AST.
+      def select(type)
+        @nodes.select { |node| node.is_a?(type) }
+      end
     end
 
     class Node # :nodoc:

@@ -61,6 +61,9 @@ module Lume
       # Map the dependencies of the module.
       @dependencies[name] = ast.imports.map(&:library)
 
+      # Also append the default imports as dependencies.
+      @dependencies[name].concat(@default_imports)
+
       # Remove all the import statements within the AST.
       ast.nodes.delete_if { |node| node.is_a?(Lume::Syntax::Import) }
 
