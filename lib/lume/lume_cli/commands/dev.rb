@@ -62,12 +62,22 @@ module Lume
             > $ lume dev dump-ir main.lm
         LONGDESC
 
+        option :module, type: :string, default: nil, desc: <<~DESC
+          Defines the name of the module to dump. Defaults to the entry module.
+        DESC
+
         def dump_ir(path = nil)
           context = compile_target(path)
 
           return if context.nil?
 
-          context.llvm_module.dump
+          if options[:module].nil? || options[:module].empty?
+            context.llvm_module.dump
+            return
+          end
+
+          mod = context.mod(options[:module])
+          mod.llvm_module.dump
         end
       end
     end
