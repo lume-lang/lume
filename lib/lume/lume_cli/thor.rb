@@ -2,7 +2,7 @@
 
 require 'thor'
 
-class Thor
+class Thor # :nodoc:
   no_commands do
     # Compiles the target file using the Lume compiler.
     #
@@ -14,7 +14,7 @@ class Thor
       path ||= find_target_path(path)
 
       # Compile the target file using the Lume compiler.
-      driver = Lume::Driver.new(Lume::CODEGEN, verbose: options[:verbose])
+      driver = Lume::Driver.new(Lume::LINK, verbose: options[:verbose])
       driver.build_file(path)
     end
 
