@@ -6,15 +6,16 @@ class Thor # :nodoc:
   no_commands do
     # Compiles the target file using the Lume compiler.
     #
-    # @param path [String, nil] The path to the target file.
+    # @param path   [String, nil] The path to the target file.
+    # @param stage  [String, nil] The stage to compile the target file to.
     #
     # @return [Lume::CompilationContext] The output of the compiler.
-    def compile_target(path = nil)
+    def compile_target(path = nil, stage: Lume::LINK)
       # Get the absolute path to the target file.
       path ||= find_target_path(path)
 
       # Compile the target file using the Lume compiler.
-      driver = Lume::Driver.new(Lume::LINK, verbose: options[:verbose])
+      driver = Lume::Driver.new(stage, verbose: options[:verbose])
       driver.build_file(path)
     end
 

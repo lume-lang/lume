@@ -36,7 +36,7 @@ module Lume
         end
 
         def print_ast(path = nil)
-          context = compile_target(path)
+          context = compile_target(path, stage: Lume::ANALYZE)
 
           return if context.nil?
 
