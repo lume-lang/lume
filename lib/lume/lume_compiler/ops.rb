@@ -20,10 +20,10 @@ module Lume
       rhs = visit(args.last)
 
       # Determine whether to use integer or floating-point operations
-      type = if call.instance.expression_type.integer?
-        LLVM::IntType
-      else
+      type = if call.instance.expression_type.floating?
         LLVM::RealType
+      else
+        LLVM::IntType
       end
 
       case call.action.to_sym
