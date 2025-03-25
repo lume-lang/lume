@@ -43,7 +43,7 @@ module Lume
         > $ lume exec main.lm
       LONGDESC
 
-      option :stage, type: :string, default: 'codegen', desc: <<~DESC
+      option :stage, type: :string, default: 'link', desc: <<~DESC
         Defines which compilation stage to stop at. Options: [#{Lume::STAGES.join(', ')}]
       DESC
 

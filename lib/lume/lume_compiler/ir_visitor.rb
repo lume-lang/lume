@@ -3,6 +3,7 @@
 require 'lume/lume_mir/mir'
 require 'lume/lume_compiler/conditionals'
 require 'lume/lume_compiler/ops'
+require 'lume/lume_llvm/module'
 
 module Lume
   # Visitor for nodes in the AST, used to generate LLVM IR from MIR.
@@ -19,8 +20,8 @@ module Lume
     ].freeze
 
     def initialize(name)
-      @module = LLVM::Module.new(name)
-      @builder = Lume::Compiler::Builder.new(@module)
+      @module = Lume::LLVMModule.new(name)
+      @builder = Lume::Compiler::Builder.new(@module.inner)
 
       # Register all the required LibC library functions
       register_libc
@@ -38,6 +39,7 @@ module Lume
       mod.mir.nodes.each { |node| visitor.visit(node) }
 
       visitor.finalize!
+
       visitor.module
     end
 

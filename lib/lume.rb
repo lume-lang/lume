@@ -10,6 +10,7 @@ require 'lume/lume_lexer/lexer'
 require 'lume/lume_parser/parser'
 require 'lume/lume_analyzer/analyzer'
 require 'lume/lume_compiler/compiler'
+require 'lume/lume_linker/linker'
 
 module Lume
   # Defines the root of the Lume gem project.
@@ -22,12 +23,14 @@ module Lume
   PARSE = :parse
   ANALYZE = :analyze
   CODEGEN = :codegen
+  LINK = :link
 
   STAGES = [
     Lume::LEX,
     Lume::PARSE,
     Lume::ANALYZE,
-    Lume::CODEGEN
+    Lume::CODEGEN,
+    Lume::LINK
   ].freeze
 
   # This exception is raised when the user provides an invalid stage argument
@@ -45,6 +48,7 @@ module Lume
   #   - Parsing: The tokens which have been lexed in the previous stage.
   #   - Analysis: The parsed AST which has not yet been analyzed.
   #   - Code Generation: The analyzed AST, which is ready to be transpiled into LLVM IR and the global symbol table.
+  #   - Linking: The compiled LLVM IR code, which is ready to be linked with other modules.
   #   - Finish: The LLVM IR code, which is ready to be executed.
   class CompilationContext
     attr_accessor :stage, :entry, :tokens, :modules, :llvm_module
@@ -89,7 +93,7 @@ module Lume
   class Driver
     attr_reader :stage, :dest_stage
 
-    def initialize(stage = Lume::CODEGEN, verbose: false)
+    def initialize(stage = Lume::LINK, verbose: false)
       @stage = Lume::LEX
       @dest_stage = stage
       @verbose = verbose
@@ -252,9 +256,20 @@ module Lume
       compiler = Lume::Compiler.new
 
       compiler.compile!(context)
-      compiler.optimize!
+      compiler.optimize!(context)
 
-      context.llvm_module = compiler.module
+      context
+    end
+
+    # Compiles the given compiled modules into a single LLVM module, which can be executed by the LLVM runtime.
+    #
+    # @param context [CompilationContext] The compiler context to compile.
+    #
+    # @return [CompilationContext]
+    def link(context)
+      linker = Lume::Linker.new
+
+      context.llvm_module = linker.link!(context.modules)
 
       context
     end
@@ -273,7 +288,7 @@ module Lume
     #
     # @return [Integer]
     def run(*args)
-      engine = LLVM::JITCompiler.new(@module)
+      engine = LLVM::JITCompiler.new(@module.inner)
 
       argc = args.length
       argv = nil if args.empty?

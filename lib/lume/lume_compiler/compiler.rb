@@ -12,13 +12,9 @@ module Lume
   class Compiler # :nodoc:
     MAIN_NAME = 'main'
 
-    attr_reader :module
-
     def initialize
       # Initialize the LLVM backend
-      initialize_codegen!
-
-      @module = LLVM::Module.new('lume')
+      LLVM.init_jit
     end
 
     # Compiles all the modules from the given compiler context into LLVM IR, which
@@ -40,30 +36,26 @@ module Lume
     # @return [void]
     def compile_module!(mod)
       # Generate the LLVM IR and add it to the LLVM module
-      llvm_module = NodeVisitor.visit_module(mod)
-
-      # Link the current LLVM module into the main module
-      llvm_module.link_into(@module)
+      mod.llvm_module = NodeVisitor.visit_module(mod)
     end
 
     # Optimizes the module using LLVM's optimization passes.
     #
+    # @param context [CompilerContext] The compiler context containing the MIR.
+    #
     # @return [void]
-    def optimize!
-      ensure_initialized!
-
+    def optimize!(context)
       pass_manager = LLVM::PassManager.new
-      pass_manager.run(@module)
 
-      @optimized = true
+      context.modules.each do |mod|
+        mod.llvm_module.optimize_with!(pass_manager)
+      end
     end
 
     # Dumps the LLVM module to `stdout`.
     #
     # @return [void]
     def dump!
-      ensure_initialized!
-
       @module.dump
       @module.verify!
     end
@@ -74,8 +66,6 @@ module Lume
     #
     # @return [void]
     def emit(filename)
-      ensure_initialized!
-
       engine = LLVM::JITCompiler.new(@module)
       target_machine = engine.target_machine
 
@@ -88,50 +78,12 @@ module Lume
     #
     # @return [Integer]
     def evaluate(*args)
-      ensure_initialized!
-
       engine = LLVM::JITCompiler.new(@module)
 
       argc = args.length
       argv = nil if args.empty?
 
       engine.run_function(engine.functions[MAIN_NAME], argc, argv)
-    end
-
-    # Returns whether the compiler has been initialized.
-    #
-    # @return [Boolean]
-    def initialized?
-      @initialized
-    end
-
-    # Returns whether the compiled LLVM IR has been optimized.
-    #
-    # @return [Boolean]
-    def optimized?
-      @optimized
-    end
-
-    private
-
-    # initializes the backend components for Lume (such as LLVM, JIT, etc.)
-    #
-    # @return [void]
-    def initialize_codegen!
-      ensure_uninitialized!
-
-      LLVM.init_jit
-
-      @initialized = true
-      @optimized = false
-    end
-
-    def ensure_initialized!
-      raise StandardError, 'Compiler has not been initialized, yet' unless initialized?
-    end
-
-    def ensure_uninitialized!
-      raise StandardError, 'Compiler has already been initialized' if initialized?
     end
   end
 end
