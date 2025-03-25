@@ -25,6 +25,8 @@ module Lume
         mod.llvm_module.link_into!(main_module)
       end
 
+      main_module.verify!
+
       main_module
     end
   end

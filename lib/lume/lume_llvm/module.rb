@@ -37,6 +37,13 @@ module Lume
       @inner.link_into(mod)
     end
 
+    # Verifies the LLVM module.
+    #
+    # @return [void]
+    def verify!
+      @inner.verify!
+    end
+
     # Dumps the LLVM module to `stdout`.
     #
     # @return [void]
