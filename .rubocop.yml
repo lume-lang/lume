@@ -6,6 +6,7 @@ AllCops:
   NewCops: enable
   Exclude:
     - "test/**/*"
+    - "bin/lume"
 
 Layout/CaseIndentation:
   EnforcedStyle: end
@@ -18,6 +19,15 @@ Metrics/ClassLength:
 
 Metrics/MethodLength:
   Max: 20
+
+Metrics/AbcSize:
+  Enabled: false
+
+Metrics/BlockLength:
+  CountAsOne: ["array", "hash", "heredoc", "method_call"]
+
+Metrics/CyclomaticComplexity:
+  Enabled: false
 
 Lint/BooleanSymbol:
   Enabled: false
