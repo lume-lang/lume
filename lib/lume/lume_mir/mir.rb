@@ -234,6 +234,8 @@ module Lume
     #
     #   'break'
     class Break < Expression
+      attr_accessor :loop
+
       def ==(other)
         other.is_a?(Break)
       end
@@ -433,6 +435,8 @@ module Lume
     #
     #   'continue'
     class Continue < Expression
+      attr_accessor :loop
+
       def ==(other)
         other.is_a?(Continue)
       end

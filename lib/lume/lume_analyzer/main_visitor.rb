@@ -75,6 +75,8 @@ module Lume
         NullLiteral => 'Null'
       }.freeze
 
+      LOOP_IDENT = :loop
+
       def initialize
         @symbols = SymbolTable.new
         @prediscovered = false
@@ -109,6 +111,17 @@ module Lume
         expression.expression_type = expression.value.expression_type
       end
 
+      # Visits a loop break expression and sets its parent loop.
+      #
+      # @param expression [Break] The loop break expression to be visited.
+      def accept_break(expression)
+        parent = @symbols.retrieve(LOOP_IDENT, type: Loop)
+
+        raise BreakOutsideLoop.new(expression) if parent.nil?
+
+        expression.loop = parent
+      end
+
       # Visits a cast expression and resolves it's expression type.
       #
       # @param expression [Cast] The cast expression to be visited.
@@ -121,6 +134,17 @@ module Lume
       # @param expression [ClassDefinition] The class definition to be visited.
       def accept_class_definition(expression)
         @symbols.define(expression)
+      end
+
+      # Visits a loop continue expression and sets its parent loop.
+      #
+      # @param expression [Continue] The loop continue expression to be visited.
+      def accept_continue(expression)
+        parent = @symbols.retrieve(LOOP_IDENT, type: Loop)
+
+        raise ContinueOutsideLoop.new(expression) if parent.nil?
+
+        expression.loop = parent
       end
 
       # Visits a function invocation expression and resolves it's type from the symbol table.
@@ -170,6 +194,21 @@ module Lume
       # @param expression [Literal] The literal expression to be visited.
       def accept_literal(expression)
         expression.expression_type = NamedType.new(LITERAL_TYPE_MAP[expression.class])
+      end
+
+      # Visits a loop expression and registers it in the symbol table.
+      #
+      # @param expression [Loop] The loop expression to be visited.
+      def before_loop(expression)
+        @symbols.push_frame
+        @symbols.define(expression, name: LOOP_IDENT)
+      end
+
+      # Visits a loop expression and registers it in the symbol table.
+      #
+      # @param expression [Loop] The loop expression to be visited.
+      def accept_loop(_expression)
+        @symbols.pop_frame
       end
 
       # Visits a method call and pushes a `self` argument onto it, if it is an instance method.
