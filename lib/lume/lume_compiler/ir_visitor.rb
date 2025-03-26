@@ -109,7 +109,15 @@ module Lume
     #
     # @return [void]
     def visit_assignment_expression(expression)
-      target = visit(expression.target)
+      # If the target is a variable, get it's IR reference instead of visiting it.
+      # When we visit a variable, it's mostly as a reference where we'd load it into memory.
+      # But for assignments, we don't need to load them, as all assignments are without load, by default.
+      target = if expression.target.is_a?(Variable)
+        expression.target.reference.ir
+      else
+        visit(expression.target)
+      end
+
       value = visit(expression.value)
 
       @builder.store(target, value)
