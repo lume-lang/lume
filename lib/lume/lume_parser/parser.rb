@@ -1036,13 +1036,13 @@ module Lume
 
     # Parses an infinite loop expression.
     #
-    # @return [Loop] The parsed loop expression.
+    # @return [InfiniteLoop] The parsed loop expression.
     def parse_infinite_loop
       consume!(type: :loop)
 
       body = parse_block
 
-      Loop.new(body)
+      InfiniteLoop.new(body)
     end
 
     # Parses a iterator loop expression.
