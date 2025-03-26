@@ -194,6 +194,8 @@ module Lume
         when Lume::Syntax::MemberAccess then generate_member_access(expression)
         when Lume::Syntax::Visibility then generate_visibility(expression)
         when Lume::Syntax::Loop then generate_loop(expression)
+        when Lume::Syntax::Break then generate_break(expression)
+        when Lume::Syntax::Continue then generate_continue(expression)
         else
           raise "Unsupported expression type: #{expression.class}"
         end
@@ -606,6 +608,24 @@ module Lume
         block = generate_block(expression.block)
 
         Lume::MIR::PredicateLoop.new(predicate, block)
+      end
+
+      # Visits a loop break expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::Break] The expression to visit.
+      #
+      # @return [Lume::MIR::Break]
+      def generate_break(_expression)
+        Lume::MIR::Break.new
+      end
+
+      # Visits a loop continue expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::Continue] The expression to visit.
+      #
+      # @return [Lume::MIR::Continue]
+      def generate_continue(_expression)
+        Lume::MIR::Continue.new
       end
 
       # Visits a literal expression node in the AST and generates LLVM IR.
