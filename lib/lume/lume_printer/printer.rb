@@ -105,6 +105,7 @@ module Lume
       when TrueClass, FalseClass then line value.to_s, indentation: false, color: :green
       when Array then array(value)
       when String then string(value)
+      when Symbol then symbol(value)
       when Object then obj(value)
       end
     end
@@ -161,6 +162,16 @@ module Lume
     # @return [void]
     def string(value)
       text "\"#{value}\"", indentation: false, color: :green
+      newline
+    end
+
+    # Emits a symbol to the output device.
+    #
+    # @param value [Symbol] The symbol to print.
+    #
+    # @return [void]
+    def symbol(value)
+      text ":#{value}", indentation: false, color: :magenta
       newline
     end
 
