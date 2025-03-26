@@ -100,6 +100,8 @@ module Lume
       while
       for
       loop
+      continue
+      break
     ].freeze
 
     STATEMENT_TYPES = [
@@ -676,6 +678,12 @@ module Lume
       # If the consumed token is a `for` token, parse it as an iterator loop
       return parse_iterator_loop if peek(:for)
 
+      # If the consumed token is a `break` token, parse it as a loop break
+      return parse_loop_break if peek(:break)
+
+      # If the consumed token is a `continue` token, parse it as a loop continue
+      return parse_loop_continue if peek(:continue)
+
       unexpected_token(CONTROL_TYPES)
     end
 
@@ -1071,6 +1079,24 @@ module Lume
       body = parse_block
 
       WhileLoop.new(predicate, body)
+    end
+
+    # Parses a loop break expression.
+    #
+    # @return [Break] The parsed expression.
+    def parse_loop_break
+      consume!(type: :break)
+
+      Break.new
+    end
+
+    # Parses a loop continue expression.
+    #
+    # @return [Continue] The parsed expression.
+    def parse_loop_continue
+      consume!(type: :continue)
+
+      Continue.new
     end
 
     # Parses a block expression.

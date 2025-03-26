@@ -132,6 +132,15 @@ module Lume
       end
     end
 
+    # Represents a break statement.
+    #
+    #   'break'
+    class Break < Expression
+      def ==(other)
+        other.is_a?(Break)
+      end
+    end
+
     # Represents a function- or method-invocation.
     #
     #   [ target '.' ] action '(' arguments [ ',' arguments ]* ')'
@@ -293,6 +302,15 @@ module Lume
 
       def ==(other)
         super && @else == other.else
+      end
+    end
+
+    # Represents a continue statement.
+    #
+    #   'continue'
+    class Continue < Expression
+      def ==(other)
+        other.is_a?(Continue)
       end
     end
 

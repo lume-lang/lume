@@ -78,6 +78,8 @@ module Lume
       external
       enum
       import
+      continue
+      break
     ].freeze
 
     SYMBOLS_PATTERN = %r(!=|!|==|=|->|\+\+|--|>=|<=|\+=|-=|/=|\*=|,|\.|\+|-|/|\*|\(|\)|\{|\}|\[|\]|\||&|:|>|<)
