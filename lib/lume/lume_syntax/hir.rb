@@ -313,46 +313,6 @@ module Lume
       end
     end
 
-    # Represents an iterator loop.
-    #
-    #   'for' pattern 'in' collection '{'
-    #     block
-    #   '}'
-    class IteratorLoop < Expression
-      attr_accessor :pattern, :collection, :block
-
-      def initialize(pattern, collection, block)
-        super()
-
-        @pattern = pattern
-        @collection = collection
-        @block = block
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @pattern == other.pattern && @collection == other.collection && @block == other.block
-      end
-    end
-
-    # Represents an infinite loop.
-    #
-    #   'loop' '{'
-    #     block
-    #   '}'
-    class Loop < Expression
-      attr_accessor :block
-
-      def initialize(block)
-        super()
-
-        @block = block
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @block == other.block
-      end
-    end
-
     # Represents an abstract member definition.
     class Member < Expression
       attr_accessor :visibility
@@ -582,26 +542,6 @@ module Lume
 
       def ==(other)
         other.is_a?(self.class) && @name == other.name
-      end
-    end
-
-    # Represents a predicate loop.
-    #
-    #   'while' predicate '{'
-    #     block
-    #   '}'
-    class WhileLoop < Expression
-      attr_accessor :predicate, :block
-
-      def initialize(predicate, block)
-        super()
-
-        @predicate = predicate
-        @block = block
-      end
-
-      def ==(other)
-        other.is_a?(self.class) && @predicate == other.predicate && @block == other.block
       end
     end
   end

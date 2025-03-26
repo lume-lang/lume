@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/source'
+require 'lume/lume_syntax/loops'
 require 'lume/lume_syntax/types'
 require 'lume/lume_syntax/values'
 require 'lume/lume_syntax/hir_helpers'
