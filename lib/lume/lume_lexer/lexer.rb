@@ -65,6 +65,9 @@ module Lume
       fn
       class
       return
+      while
+      for
+      loop
       true
       false
       null

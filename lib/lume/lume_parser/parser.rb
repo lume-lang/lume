@@ -96,6 +96,9 @@ module Lume
       return
       if
       unless
+      while
+      for
+      loop
     ].freeze
 
     STATEMENT_TYPES = [
@@ -420,6 +423,13 @@ module Lume
       unexpected_token(TOP_LEVEL_TYPES)
     end
 
+    # Parses a list of statement expressions within a function or method.
+    #
+    # @return [Array<Node>] The parsed statements.
+    def parse_statement_expressions
+      iterate_all! { parse_statement_expression }
+    end
+
     # Parses the statement expression at the current cursor position.
     #
     # @return [Node] The parsed expression.
@@ -655,6 +665,15 @@ module Lume
 
       # If the consumed token is a conditional token, parse it as a conditional expression
       return parse_conditional_expression if peek(%i[if unless])
+
+      # If the consumed token is a `loop` token, parse it as an infinite loop
+      return parse_infinite_loop if peek(:loop)
+
+      # If the consumed token is a `while` token, parse it as a predicate loop
+      return parse_predicate_loop if peek(:while)
+
+      # If the consumed token is a `for` token, parse it as an iterator loop
+      return parse_iterator_loop if peek(:for)
 
       unexpected_token(CONTROL_TYPES)
     end
@@ -982,18 +1001,7 @@ module Lume
       # If the next token is not an opening brace, parse it as an inline condition.
       return [parse_statement_expression] unless peek(:'{')
 
-      # Consume the start of the block
-      consume!(type: :'{')
-
-      iterate_all! do
-        # If we see `}`, the block is complete
-        next nil if consume(type: :'}')
-
-        # If we see `else`, we let the parent function handle the next block.
-        next nil if peek(:else)
-
-        next parse_statement_expression
-      end
+      parse_block
     end
 
     # Parses the block within an `else if` block of a conditional expression.
@@ -1023,6 +1031,58 @@ module Lume
       return [] unless consume(type: :else)
 
       parse_conditional_block
+    end
+
+    # Parses an infinite loop expression.
+    #
+    # @return [Loop] The parsed loop expression.
+    def parse_infinite_loop
+      consume!(type: :loop)
+
+      body = parse_block
+
+      Loop.new(body)
+    end
+
+    # Parses a iterator loop expression.
+    #
+    # @return [IteratorLoop] The parsed loop expression.
+    def parse_iterator_loop
+      consume!(type: :for)
+
+      pattern = consume!(type: :name).value
+
+      consume!(value: :in)
+
+      collection = parse_expression
+      body = parse_block
+
+      IteratorLoop.new(pattern, collection, body)
+    end
+
+    # Parses a predicate loop expression.
+    #
+    # @return [WhileLoop] The parsed loop expression.
+    def parse_predicate_loop
+      consume!(type: :while)
+
+      predicate = parse_expression
+      body = parse_block
+
+      WhileLoop.new(predicate, body)
+    end
+
+    # Parses a block expression.
+    #
+    # @return [Array<Expression>] The parsed expressions within the block.
+    def parse_block
+      consume_wrapped! do
+        iterate_all! do
+          next nil if peek(:'}')
+
+          next parse_statement_expression
+        end
+      end
     end
 
     # Determines whether the current token is a nested expression (contained within parentheses).
