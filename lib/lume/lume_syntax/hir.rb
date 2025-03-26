@@ -503,7 +503,11 @@ module Lume
       end
 
       def ==(other)
-        other.is_a?(self.class) && @name == other.name && @type == other.type && @value == other.value && @const == other.const?
+        other.is_a?(self.class) &&
+          @name == other.name &&
+          @type == other.type &&
+          @value == other.value &&
+          @const == other.const?
       end
 
       def const?

@@ -191,7 +191,7 @@ module Lume
       # @param value [Boolean] The value of the literal. Defaults to `false`.
       #
       # @return [LLVM::Value] The result of the comparison.
-      def bool(value = false)
+      def bool(value: false)
         value ? LLVM::TRUE : LLVM::FALSE
       end
 

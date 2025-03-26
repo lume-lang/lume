@@ -62,6 +62,8 @@ module Lume
     #
     # @return [void]
     def initialize(context = nil)
+      super()
+
       @has_errors = false
       @context = context
     end

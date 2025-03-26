@@ -4,6 +4,7 @@ require 'lume/lume_printer/printer'
 
 module Lume
   module MIR
+    # Printer which specializes in printing MIR (Middle-Level Intermediate Representation) structures.
     class Printer < Lume::Printer
       # Emits the given context or module to the output device.
       #

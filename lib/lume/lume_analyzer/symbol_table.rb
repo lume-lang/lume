@@ -119,7 +119,7 @@ module Lume
         return nil if symbol.nil?
 
         # If the type was given, ensure that the symbol type matches. If not, return nil.
-        return nil if !type.nil? && !type.any? { |t| symbol.node.is_a?(t) }
+        return nil if !type.nil? && type.none? { |t| symbol.node.is_a?(t) }
 
         symbol.node
       end

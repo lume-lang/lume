@@ -3,10 +3,13 @@
 require 'colorize'
 
 module Lume
+  # Provides a way to pretty-print objects in a human-readable format.
+  #
+  # While very similar to Ruby's `pp` function, it allows for more customization and control over the output.
   class Printer
     attr_accessor :indentation
 
-    def initialize(output = $stdout, color: true)
+    def initialize(output = $stdout)
       @output = output
 
       @indentation = 2
@@ -86,7 +89,7 @@ module Lume
     def group(header, &)
       line header, indentation: false, color: :blue
 
-      wrapped(&)
+      wrapped(&) if block_given?
     end
 
     # Emits a value to the output device.
@@ -116,8 +119,8 @@ module Lume
 
       # If we've already visited the object, add an ellipsis
       if visited?(obj)
-        header = "#{header}" + '...'.colorize(:gray)
-        return group(header) {}
+        header += '...'.colorize(:gray)
+        return group(header)
       end
 
       group(header) do

@@ -20,11 +20,7 @@ module Lume
       rhs = visit(args.last)
 
       # Determine whether to use integer or floating-point operations
-      type = if call.instance.expression_type.floating?
-        LLVM::RealType
-      else
-        LLVM::IntType
-      end
+      type = determine_op_type(call.instance)
 
       case call.action.to_sym
       when :+ then builtin_op_add(type, lhs, rhs)
@@ -38,6 +34,19 @@ module Lume
       when :>= then builtin_op_ge(type, lhs, rhs)
       when :<= then builtin_op_le(type, lhs, rhs)
       else raise "Unsupported intrinsic operation: #{call.action}"
+      end
+    end
+
+    # Determines the type of the operation based on the left-hand side expression type.
+    #
+    # @param lhs [Expression] The left-hand side expression.
+    #
+    # @return [LLVM::Type] The type of the operation.
+    def determine_op_type(lhs)
+      if lhs.expression_type.floating?
+        LLVM::RealType
+      else
+        LLVM::IntType
       end
     end
 

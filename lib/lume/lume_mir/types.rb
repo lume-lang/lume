@@ -5,7 +5,7 @@ require 'lume/lume_mir/mir'
 module Lume
   module MIR
     # Defines the name of all floating-point types.
-    FLOATING_TYPES = %w[Float Double]
+    FLOATING_TYPES = %w[Float Double].freeze
 
     # Defines the name of the string type.
     STRING_TYPE = 'String'
@@ -17,10 +17,10 @@ module Lume
     BOOLEAN_TYPE = 'Boolean'
 
     # Defines the name of all signed integer types.
-    SIGNED_INTEGER_TYPES = %w[Int8 Int16 Int32 Int64]
+    SIGNED_INTEGER_TYPES = %w[Int8 Int16 Int32 Int64].freeze
 
     # Defines the name of all unsigned integer types.
-    UNSIGNED_INTEGER_TYPES = %w[UInt8 UInt16 UInt32 UInt64]
+    UNSIGNED_INTEGER_TYPES = %w[UInt8 UInt16 UInt32 UInt64].freeze
 
     # Defines the name of all integer types, both signed and unsigned.
     INTEGER_TYPES = SIGNED_INTEGER_TYPES + UNSIGNED_INTEGER_TYPES

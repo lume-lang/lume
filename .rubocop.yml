@@ -38,5 +38,5 @@ Lint/UselessAssignment:
 Style/RaiseArgs:
   Enabled: false
 
-Style/EmptyClass:
+Lint/EmptyClass:
   Enabled: false

@@ -334,7 +334,7 @@ module Lume
     #
     # @return [LLVM::Value]
     def visit_boolean_literal(literal)
-      @builder.bool(literal.value)
+      @builder.bool(value: literal.value)
     end
 
     # Visits a string literal node in the AST and generates LLVM IR.
