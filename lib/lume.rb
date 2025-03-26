@@ -51,6 +51,8 @@ module Lume
   #   - Linking: The compiled LLVM IR code, which is ready to be linked with other modules.
   #   - Finish: The LLVM IR code, which is ready to be executed.
   class CompilationContext
+    ENTRY_NAME = '_entry'
+
     attr_accessor :stage, :entry, :tokens, :modules, :llvm_module
 
     def initialize(entry)
@@ -81,7 +83,7 @@ module Lume
     #
     # @return [Lume::Module] The entry module of the compilation context.
     def entry_module
-      mod(nil)
+      mod(ENTRY_NAME)
     end
   end
 
@@ -230,7 +232,7 @@ module Lume
     # @return [CompilationContext] A parsed AST representing the source code.
     def parse(context)
       parser = Lume::Parser.with_tokens(context.entry, context.tokens)
-      context.modules = parser.parse
+      context.modules = parser.parse(name: CompilationContext::ENTRY_NAME)
 
       context
     end
