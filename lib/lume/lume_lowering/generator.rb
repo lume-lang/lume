@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'lume/lume_mir/mir'
+require 'lume/lume_mir/loops'
 require 'lume/lume_mir/types'
 require 'lume/lume_mir/values'
 
@@ -192,6 +193,7 @@ module Lume
         when Lume::Syntax::Property then generate_property(expression)
         when Lume::Syntax::MemberAccess then generate_member_access(expression)
         when Lume::Syntax::Visibility then generate_visibility(expression)
+        when Lume::Syntax::Loop then generate_loop(expression)
         else
           raise "Unsupported expression type: #{expression.class}"
         end
@@ -554,6 +556,56 @@ module Lume
       # @return [Lume::MIR::Visibility]
       def generate_visibility(expression)
         Lume::MIR::Visibility.new(expression.name)
+      end
+
+      # Visits a loop expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::Loop] The expression to visit.
+      #
+      # @return [Lume::MIR::Loop]
+      def generate_loop(expression)
+        case expression
+        when Lume::Syntax::InfiniteLoop then generate_infinite_loop(expression)
+        when Lume::Syntax::IteratorLoop then generate_iterator_loop(expression)
+        when Lume::Syntax::WhileLoop then generate_predicate_loop(expression)
+        else raise "Unsupported loop type: #{expression.class}"
+        end
+      end
+
+      # Visits an infinite loop expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::InfiniteLoop] The expression to visit.
+      #
+      # @return [Lume::MIR::InfiniteLoop]
+      def generate_infinite_loop(expression)
+        block = generate_block(expression.block)
+
+        Lume::MIR::InfiniteLoop.new(block)
+      end
+
+      # Visits an iterator loop expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::IteratorLoop] The expression to visit.
+      #
+      # @return [Lume::MIR::IteratorLoop]
+      def generate_iterator_loop(expression)
+        pattern = Lume::MIR::VariableDeclaration.new(expression.pattern)
+        collection = Lume::MIR::Variable.new(expression.collection)
+        block = generate_block(expression.block)
+
+        Lume::MIR::IteratorLoop.new(pattern, collection, block)
+      end
+
+      # Visits a predicate loop expression node in the AST and generates LLVM IR.
+      #
+      # @param expression [Lume::Syntax::WhileLoop] The expression to visit.
+      #
+      # @return [Lume::MIR::PredicateLoop]
+      def generate_predicate_loop(expression)
+        predicate = generate_expression(expression.predicate)
+        block = generate_block(expression.block)
+
+        Lume::MIR::PredicateLoop.new(predicate, block)
       end
 
       # Visits a literal expression node in the AST and generates LLVM IR.
