@@ -37,6 +37,9 @@ module Lume
     def compile_module!(mod)
       # Generate the LLVM IR and add it to the LLVM module
       mod.llvm_module = NodeVisitor.visit_module(mod)
+
+      # Verify the LLVM module after generation
+      mod.llvm_module.verify!
     end
 
     # Optimizes the module using LLVM's optimization passes.

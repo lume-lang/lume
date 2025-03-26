@@ -22,7 +22,9 @@ module Lume
 
       # Link each of the modules into the main LLVM module.
       modules.each do |mod|
-        mod.llvm_module.link_into!(main_module)
+        result = mod.llvm_module.link_into!(main_module)
+
+        raise "Failed to link module #{mod.name}: #{result.message}" unless result.nil?
       end
 
       main_module.verify!
