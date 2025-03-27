@@ -101,11 +101,20 @@ module Lume
         other.is_a?(self.class) && @expressions == other.expressions
       end
 
+      # Determines whether the block contains any node of the given type(s).
+      #
+      # @param type [Class] The type(s) of node to find.
+      #
+      # @return [Boolean] `true` if the block contains a node of the given type, `false` otherwise.
+      def any?(*type)
+        type.any? { |t| @expressions.any? { |expr| expr.is_a?(t) } }
+      end
+
       # Determines whether the block contains a return statement.
       #
       # @return [Boolean] `true` if the block contains a return statement, `false` otherwise.
       def return?
-        @expressions.any? { |expr| expr.is_a?(Return) }
+        any?(Return)
       end
     end
 

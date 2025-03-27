@@ -2,6 +2,7 @@
 
 require 'lume/lume_mir/mir'
 require 'lume/lume_compiler/conditionals'
+require 'lume/lume_compiler/loops'
 require 'lume/lume_compiler/ops'
 require 'lume/lume_llvm/module'
 
@@ -60,6 +61,8 @@ module Lume
       when Literal then visit_literal(node)
       when Argument then visit(node.value)
       when Type then visit_type(node)
+      when Label then visit_label(node)
+      when Goto then visit_goto(node)
       else
         raise "Unsupported node type: #{node.class}"
       end
@@ -277,42 +280,6 @@ module Lume
       cast(expression.value, expression.type)
     end
 
-    # Visits a loop expression node in the AST and generates LLVM IR.
-    #
-    # @param expression [Loop] The expression to visit.
-    #
-    # @return [LLVM::Instruction]
-    def visit_loop_expression(expression)
-      case expression
-      when InfiniteLoop then visit_infinite_loop_expression(expression)
-      when IteratorLoop then visit_iterator_loop_expression(expression)
-      when PredicateLoop then visit_predicate_loop_expression(expression)
-      else raise NotImplementedError, "Unsupported loop type: #{expression.class}"
-      end
-    end
-
-    # Visits an infinite loop expression node in the AST and generates LLVM IR.
-    #
-    # @param expression [InfiniteLoop] The expression to visit.
-    #
-    # @return [LLVM::Instruction]
-    def visit_infinite_loop_expression(expression)
-      entry, exit = @builder.blocks('loop_body', 'loop_exit')
-
-      # Enter the loop from the current block
-      @builder.branch(entry)
-
-      @builder.in_block(entry) do
-        # Lower all the MIR expressions into the LLVM block
-        visit(expression.block)
-
-        @builder.branch(entry)
-      end
-
-      # At the very end, branch to the exit block, so statements can follow after the loop.
-      @builder.branch_exit(exit)
-    end
-
     # Visits a negation expression node in the AST and generates LLVM IR.
     #
     # @param expression [Negation] The expression to visit.
@@ -437,6 +404,24 @@ module Lume
       return @builder.void_ptr unless type.reference.builtin?
 
       raise "Unsupported scalar type: #{type.name}"
+    end
+
+    # Visits a label node in the AST and generates LLVM IR.
+    #
+    # @param label [Label] The label to visit.
+    #
+    # @return [void]
+    def visit_label(label)
+      label.ir = @builder.block(label.name&.to_s)
+    end
+
+    # Visits a goto node in the AST and generates LLVM IR.
+    #
+    # @param goto [Goto] The goto to visit.
+    #
+    # @return [void]
+    def visit_goto(goto)
+      @builder.branch(goto.target.ir)
     end
 
     # Casts a literal value to a different type.
