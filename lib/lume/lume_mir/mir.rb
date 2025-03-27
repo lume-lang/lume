@@ -429,6 +429,9 @@ module Lume
     class Conditional < Expression
       attr_accessor :condition, :then, :else_if, :else
 
+      # Defines the labels for each of the blocks within the conditional.
+      attr_accessor :then_label, :else_label, :merge_label
+
       def initialize(condition: nil, then_block: [], else_if: [], else_block: [])
         super()
 
@@ -436,14 +439,22 @@ module Lume
         @then = Block.new(then_block)
         @else_if = else_if
         @else = Block.new(else_block)
+
+        @then_label = nil
+        @else_label = nil
+        @merge_label = nil
       end
 
       def accept_children(visitor)
         visitor.accept(@condition)
 
-        @then.expressions.each { |block| visitor.accept(block) }
-        @else_if.each { |block| visitor.accept(block) }
-        @else.expressions.each { |block| visitor.accept(block) }
+        visitor.accept(@then_label)
+        visitor.accept(@else_label)
+        visitor.accept(@merge_label)
+
+        visitor.accept(@then.expressions)
+        visitor.accept(@else_if)
+        visitor.accept(@else.expressions)
       end
 
       def ==(other)
