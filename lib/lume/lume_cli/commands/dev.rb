@@ -66,8 +66,18 @@ module Lume
           Defines the name of the module to dump. Defaults to the entry module.
         DESC
 
+        option :after_link, type: :boolean, default: false, desc: <<~DESC
+          Dumps the IR after all the module(s) have been linked.
+        DESC
+
         def dump_ir(path = nil)
-          context = compile_target(path)
+          stage = if options[:after_link]
+            Lume::LINK
+          else
+            Lume::CODEGEN
+          end
+
+          context = compile_target(path, stage: stage)
 
           return if context.nil?
 
