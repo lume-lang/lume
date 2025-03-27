@@ -37,7 +37,7 @@ module Lume
       end
 
       # At the very end, branch to the exit block, so statements can follow after the loop.
-      @builder.branch(expression.exit.ir)
+      @builder.branch_exit(expression.exit.ir)
     end
   end
 end
