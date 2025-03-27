@@ -29,6 +29,12 @@ module Lume
       #
       # @param node [Lume::MIR::Node] The AST node to be analyzed.
       def accept(node)
+        # Skip nil nodes
+        return if node.nil?
+
+        # If the mode is an Array, map over it and accept each item
+        return node.map { |child| accept(child) } if node.is_a?(Array)
+
         # If the node has already been visited, skip it.
         return if visited?(node)
 
