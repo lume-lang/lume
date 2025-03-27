@@ -12,7 +12,7 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_loop_expression(expression)
-      visit_many(expression.block.label, expression.exit)
+      visit_many(expression.entry, expression.exit)
 
       case expression
       when InfiniteLoop then visit_infinite_loop_expression(expression)

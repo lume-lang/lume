@@ -18,6 +18,13 @@ module Lume
         visitor.accept(block)
       end
 
+      # Gets the label of the loop' entry block.
+      #
+      # @return [Label]
+      def entry
+        @block.label
+      end
+
       def ==(other)
         other.is_a?(self.class) && @block == other.block
       end
