@@ -391,10 +391,10 @@ module Lume
       return nil if peek(:eof)
 
       # If the token is a top-level statement token, parse it as such.
-      return with_location { parse_top_level_statement } if peek(TOP_LEVEL_TYPES)
+      return parse_top_level_statement if peek(TOP_LEVEL_TYPES)
 
       # If the token is a statement token, parse it as such.
-      return with_location { parse_statement_expression } if peek(STATEMENT_TYPES)
+      return parse_statement_expression if peek(STATEMENT_TYPES)
 
       # If the current token isn't a statement token, parse it as an expression.
       parse_expression
@@ -412,16 +412,16 @@ module Lume
     # @return [Node] The parsed statement.
     def parse_top_level_statement
       # If the statement is 'import', parse it as an import expression
-      return parse_import_expression if peek(:import)
+      return with_location { parse_import_expression } if peek(:import)
 
       # If the statement is a class definition, parse it as a class definition
-      return parse_class_definition if peek(:class)
+      return with_location { parse_class_definition } if peek(:class)
 
       # If the statement is a method definition, parse it as a method definition
-      return parse_method_definition if peek(:fn)
+      return with_location { parse_method_definition } if peek(:fn)
 
       # If the next token is `type` or `enum`, it might be a type definition
-      return parse_type_definition if peek(%i[enum type])
+      return with_location { parse_type_definition } if peek(%i[enum type])
 
       unexpected_token(TOP_LEVEL_TYPES)
     end
@@ -438,16 +438,16 @@ module Lume
     # @return [Node] The parsed expression.
     def parse_statement_expression
       # If the statement starts with `let` or `const`, parse it as a variable declaration
-      return parse_variable_declaration if peek(%i[let const])
+      return with_location { parse_variable_declaration } if peek(%i[let const])
 
       # If the statement starts with 'if' or 'until', parse it as a condition
-      return parse_conditional_expression if peek(%i[if until])
+      return with_location { parse_conditional_expression } if peek(%i[if until])
 
       # If the consumed token is a control token, parse it as a control statement
-      return parse_control_expression if peek(CONTROL_TYPES)
+      return with_location { parse_control_expression } if peek(CONTROL_TYPES)
 
       # If no statement was parsed, parse an expression
-      parse_expression
+      with_location { parse_expression }
     end
 
     # Parses the expression at the current cursor position.
