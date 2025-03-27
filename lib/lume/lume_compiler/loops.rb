@@ -17,7 +17,6 @@ module Lume
       case expression
       when InfiniteLoop then visit_infinite_loop_expression(expression)
       when IteratorLoop then visit_iterator_loop_expression(expression)
-      when PredicateLoop then visit_predicate_loop_expression(expression)
       else raise NotImplementedError, "Unsupported loop type: #{expression.class}"
       end
     end

@@ -65,10 +65,37 @@ module Lume
       #
       # @return [Lume::MIR::PredicateLoop]
       def generate_predicate_loop(expression)
-        predicate = generate_expression(expression.predicate)
+        # Insert a conditional to break out of the loop, if the predicate is not satisfied.
+        break_statement = Lume::Syntax::Break.new
+
+        # This effectively replaces the original block with the new conditional block. For example, a loop like:
+        #
+        #   while x {
+        #     y
+        #   }
+        #
+        # is transformed into:
+        #
+        #   while x {
+        #     if x {
+        #       y
+        #     } else {
+        #       break
+        #     }
+        #   }
+        predicate_conditional = Lume::Syntax::IfConditional.new(
+          condition: expression.predicate,
+          then_block: expression.block,
+          else_block: [break_statement]
+        )
+
+        # Replace the original block with the new conditional block.
+        expression.block = [predicate_conditional]
+
+        # Lower the new block and create an "infinite" loop from it.
         block = generate_block(expression.block)
 
-        Lume::MIR::PredicateLoop.new(predicate, block)
+        Lume::MIR::InfiniteLoop.new(block)
       end
 
       # Visits a loop break expression node in the AST and generates LLVM IR.
