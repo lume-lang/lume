@@ -24,6 +24,9 @@ module Lume
       @module = Lume::LLVMModule.new(name)
       @builder = Lume::Compiler::Builder.new(@module.inner)
 
+      @visited = {}
+      @visited.compare_by_identity
+
       # Register all the required LibC library functions
       register_libc
     end
@@ -55,7 +58,11 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit(node)
-      case node
+      # If the node has already been visited, return the cached result
+      return @visited[node] if @visited[node]
+
+      # Otherwise, visit the node and save the result
+      @visited[node] = case node
       when Expression then visit_expression(node)
       when Block then visit_many(node.expressions)
       when Literal then visit_literal(node)
@@ -73,8 +80,8 @@ module Lume
     # @param nodes [Array<Node>] The nodes to visit.
     #
     # @return [Array<LLVM::Instruction>]
-    def visit_many(nodes)
-      nodes.map { |node| visit(node) }
+    def visit_many(*nodes)
+      nodes.flatten.map { |node| visit(node) }
     end
 
     private
