@@ -22,7 +22,7 @@ module Lume
       create_conditional_branches(expression)
 
       # At the very end, branch to the merge block, so statements can follow after the conditional.
-      @builder.branch_exit(expression.merge_label.ir)
+      @builder.branch_exit = expression.merge_label.ir
     end
 
     private

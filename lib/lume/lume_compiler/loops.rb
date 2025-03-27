@@ -30,13 +30,13 @@ module Lume
       # Enter the loop from the current block
       @builder.branch(expression.block.label.ir)
 
+      # Lower all the MIR expressions into the LLVM block
       @builder.in_block(expression.block.label.ir) do
-        # Lower all the MIR expressions into the LLVM block
         visit(expression.block)
       end
 
       # At the very end, branch to the exit block, so statements can follow after the loop.
-      @builder.branch_exit(expression.exit.ir)
+      @builder.branch_exit = expression.exit.ir
     end
   end
 end
