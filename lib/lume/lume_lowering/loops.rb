@@ -22,12 +22,17 @@ module Lume
       #
       # @return [Lume::MIR::Loop]
       def generate_loop(expression)
-        case expression
+        loop = case expression
         when Lume::Syntax::InfiniteLoop then generate_infinite_loop(expression)
         when Lume::Syntax::IteratorLoop then generate_iterator_loop(expression)
         when Lume::Syntax::WhileLoop then generate_predicate_loop(expression)
         else raise "Unsupported loop type: #{expression.class}"
         end
+
+        # Create labels for the entry and exit of the loop.
+        create_loop_labels(loop)
+
+        loop
       end
 
       # Visits an infinite loop expression node in the AST and generates LLVM IR.
@@ -38,10 +43,7 @@ module Lume
       def generate_infinite_loop(expression)
         block = generate_block(expression.block)
 
-        loop = Lume::MIR::InfiniteLoop.new(block)
-        generate_loop_block(loop)
-
-        loop
+        Lume::MIR::InfiniteLoop.new(block)
       end
 
       # Visits an iterator loop expression node in the AST and generates LLVM IR.
@@ -54,10 +56,7 @@ module Lume
         collection = Lume::MIR::Variable.new(expression.collection)
         block = generate_block(expression.block)
 
-        loop = Lume::MIR::IteratorLoop.new(pattern, collection, block)
-        generate_loop_block(loop)
-
-        loop
+        Lume::MIR::IteratorLoop.new(pattern, collection, block)
       end
 
       # Visits a predicate loop expression node in the AST and generates LLVM IR.
@@ -69,10 +68,7 @@ module Lume
         predicate = generate_expression(expression.predicate)
         block = generate_block(expression.block)
 
-        loop = Lume::MIR::PredicateLoop.new(predicate, block)
-        generate_loop_block(loop)
-
-        loop
+        Lume::MIR::PredicateLoop.new(predicate, block)
       end
 
       # Visits a loop break expression node in the AST and generates LLVM IR.
@@ -98,9 +94,9 @@ module Lume
       # @param loop [Lume::MIR::Loop] The loop to generate the block from.
       #
       # @return [void]
-      def generate_loop_block(loop)
+      def create_loop_labels(loop)
         # Set a body label to the very start of the loop body.
-        loop.entry = Lume::MIR::Label.new(LOOP_BODY_LABEL)
+        loop.block.label = Lume::MIR::Label.new(LOOP_BODY_LABEL)
 
         # Set an exit label to the very end of the loop body.
         loop.exit = Lume::MIR::Label.new(LOOP_EXIT_LABEL)

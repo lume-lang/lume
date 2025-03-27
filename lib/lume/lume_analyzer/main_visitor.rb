@@ -205,7 +205,7 @@ module Lume
         @symbols.push_frame
         @symbols.define(expression, name: LOOP_IDENT)
 
-        @symbols.define(expression.entry)
+        @symbols.define(expression.block.label)
         @symbols.define(expression.exit)
       end
 

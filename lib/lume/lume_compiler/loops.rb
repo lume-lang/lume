@@ -12,8 +12,7 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_loop_expression(expression)
-      visit(expression.entry)
-      visit(expression.exit)
+      visit_many(expression.block.label, expression.exit)
 
       case expression
       when InfiniteLoop then visit_infinite_loop_expression(expression)
@@ -30,9 +29,9 @@ module Lume
     # @return [LLVM::Instruction]
     def visit_infinite_loop_expression(expression)
       # Enter the loop from the current block
-      @builder.branch(expression.entry.ir)
+      @builder.branch(expression.block.label.ir)
 
-      @builder.in_block(expression.entry.ir) do
+      @builder.in_block(expression.block.label.ir) do
         # Lower all the MIR expressions into the LLVM block
         visit(expression.block)
       end
