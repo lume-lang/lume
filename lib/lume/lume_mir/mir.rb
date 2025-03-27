@@ -87,7 +87,7 @@ module Lume
 
     # Represents a block of zero-or-more expressions.
     class Block < Node
-      attr_accessor :expressions
+      attr_accessor :expressions, :label
 
       def initialize(expressions = [])
         super()
@@ -95,10 +95,11 @@ module Lume
         expressions = expressions.expressions if expressions.is_a?(Block)
 
         @expressions = expressions
+        @label = nil
       end
 
       def ==(other)
-        other.is_a?(self.class) && @expressions == other.expressions
+        other.is_a?(self.class) && @expressions == other.expressions && @label == other.label
       end
 
       # Determines whether the block contains any node of the given type(s).
@@ -110,11 +111,18 @@ module Lume
         type.any? { |t| @expressions.any? { |expr| expr.is_a?(t) } }
       end
 
-      # Determines whether the block contains a return statement.
+      # Determines whether the block contains a branching statement.
       #
-      # @return [Boolean] `true` if the block contains a return statement, `false` otherwise.
-      def return?
-        any?(Return)
+      # @return [Boolean] `true` if the block contains a branching statement, `false` otherwise.
+      def branch?
+        any?(Return, Goto, Conditional)
+      end
+
+      # Determines whether the block is empty.
+      #
+      # @return [Boolean] `true` if the block is empty, `false` otherwise.
+      def empty?
+        @expressions.empty?
       end
     end
 
@@ -420,49 +428,64 @@ module Lume
     end
 
     # Represents a conditional expression.
-    #
-    #   'if' condition '{'
-    #     then
-    #   '}'
-    #   [ 'else if' else_if '{' else_if '}' ]*
-    #   [ 'else' else '{' else '}' ]
     class Conditional < Expression
-      attr_accessor :condition, :then, :else_if, :else
+      attr_accessor :cases
 
-      # Defines the labels for each of the blocks within the conditional.
-      attr_accessor :then_label, :else_label, :merge_label
+      # Defines the label where the conditional expression should merge to.
+      attr_accessor :merge_label
 
-      def initialize(condition: nil, then_block: [], else_if: [], else_block: [])
+      def initialize(cases = [])
+        super()
+
+        @cases = cases
+      end
+
+      def accept_children(visitor)
+        visitor.accept(@cases)
+      end
+
+      def ==(other)
+        other.is_a?(self.class) && @cases == other.cases
+      end
+    end
+
+    # Represents a single case within a conditional expression.
+    class ConditionalCase < Expression
+      attr_accessor :condition, :block, :next, :label
+
+      def initialize(condition, block)
         super()
 
         @condition = condition
-        @then = Block.new(then_block)
-        @else_if = else_if
-        @else = Block.new(else_block)
-
-        @then_label = nil
-        @else_label = nil
-        @merge_label = nil
+        @block = block
       end
 
       def accept_children(visitor)
         visitor.accept(@condition)
-
-        visitor.accept(@then_label)
-        visitor.accept(@else_label)
-        visitor.accept(@merge_label)
-
-        visitor.accept(@then.expressions)
-        visitor.accept(@else_if)
-        visitor.accept(@else.expressions)
+        visitor.accept(@block.expressions)
       end
 
       def ==(other)
-        other.is_a?(self.class) &&
-          @condition == other.condition &&
-          @then == other.then &&
-          @else_if == other.else_if &&
-          @else == other.else
+        other.is_a?(self.class) && @condition == other.condition && @block == other.block
+      end
+
+      # Determines the label to branch to within the case.
+      #
+      # @return [Label] The label to branch to.
+      def branch_label
+        # If the current case is an `else` block, return the label of the branch block.
+        # `else` blocks don't have condtional blocks, so we cannot branch to it.
+        return @block.label if @condition.nil?
+
+        # Otherwise, return the label of the conditional case itself.
+        @label
+      end
+
+      # Determines whether the conditional case has a branching instruction within its block.
+      #
+      # @return [Boolean] `true` if the block contains a branching instruction. Otherwise, `false`.
+      def branch?
+        @block.branch?
       end
     end
 

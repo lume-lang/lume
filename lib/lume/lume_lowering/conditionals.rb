@@ -10,11 +10,11 @@ module Lume
     class Generator # :nodoc:
       protected
 
-      CONDITIONAL_THEN_LABEL = :'#conditional_then'
+      CONDITIONAL_MERGE_LABEL = :'#if_merge'
 
-      CONDITIONAL_ELSE_LABEL = :'#conditional_else'
+      CONDITIONAL_STATEMENT_LABEL = :'#if_condition'
 
-      CONDITIONAL_EXIT_LABEL = :'#conditional_exit'
+      CONDITIONAL_BRANCH_LABEL = :'#if_branch'
 
       # Visits a conditional expression node in the AST and generates LLVM IR.
       #
@@ -22,12 +22,22 @@ module Lume
       #
       # @return [Lume::MIR::Conditional]
       def generate_conditional(expression)
-        case expression
+        conditional = case expression
         when Lume::Syntax::IfConditional then generate_if_conditional(expression)
         when Lume::Syntax::UnlessConditional then generate_unless_conditional(expression)
-        when Lume::Syntax::ElseIfConditional then generate_else_if_conditional(expression)
         else raise "Unsupported conditional type: #{expression.class}"
         end
+
+        # Add labels to the conditional blocks, so LLVM can create proper blocks for them.
+        add_conditional_labels(conditional)
+
+        # Set the `next` pointers for the conditional cases.
+        link_conditional_cases(conditional)
+
+        # Insert branches into unbranching cases, so they can branch to the merge block.
+        insert_merging_branches(conditional)
+
+        conditional
       end
 
       # Visits an `if` conditional expression node in the AST and generates LLVM IR.
@@ -36,19 +46,18 @@ module Lume
       #
       # @return [Lume::MIR::Conditional]
       def generate_if_conditional(expression)
-        condition = generate_node(expression.condition)
-        then_block = generate_block(expression.then)
-        else_if_block = generate_nodes(expression.else_if)
-        else_block = generate_block(expression.else)
+        conditional = Lume::MIR::Conditional.new
 
-        conditional = Lume::MIR::Conditional.new(
-          condition: condition,
-          then_block: then_block,
-          else_if: else_if_block,
-          else_block: else_block
-        )
+        # Add the root condition
+        conditional.cases << generate_conditional_case(expression.condition, expression.then)
 
-        generate_root_conditional_block(conditional)
+        # Add the `else if` blocks, if any.
+        expression.else_if.each do |else_if|
+          conditional.cases << generate_conditional_case(else_if.condition, else_if.then)
+        end
+
+        # Add the `else` block, if it exists.
+        conditional.cases << generate_conditional_case(nil, expression.else) unless expression.else.empty?
 
         conditional
       end
@@ -59,76 +68,83 @@ module Lume
       #
       # @return [Lume::MIR::Conditional]
       def generate_unless_conditional(expression)
-        condition = generate_node(expression.condition)
-        then_block = generate_block(expression.then)
-        else_block = generate_block(expression.else)
+        conditional = Lume::MIR::Conditional.new
 
-        conditional = Lume::MIR::Conditional.new(
-          condition: Lume::MIR::Negation.new(condition),
-          then_block: then_block,
-          else_block: else_block
-        )
+        conditional.cases << generate_conditional_case(expression.condition, expression.then)
+        conditional.cases << generate_conditional_case(nil, expression.else) unless expression.else.empty?
 
-        generate_root_conditional_block(conditional)
+        first_condition = conditional.cases.first
+        first_condition.condition = Lume::MIR::Negation.new(first_condition.condition)
 
         conditional
       end
 
-      # Visits an `else if` conditional expression node in the AST and generates LLVM IR.
-      #
-      # @param expression [Lume::Syntax::ElseIfConditional] The expression to visit.
-      #
-      # @return [Lume::MIR::Conditional]
-      def generate_else_if_conditional(expression)
-        condition = generate_node(expression.condition)
-        then_block = generate_block(expression.then)
-
-        Lume::MIR::Conditional.new(
-          condition: condition,
-          then_block: then_block
-        )
-      end
-
       private
 
-      # Applies conditional-specific logic to the given conditional block.
+      # Creates a conditional case from the given condition and block.
       #
-      # @param conditional [Lume::MIR::Conditional] The conditional to generate the block from.
+      # @param condition  [Lume::Syntax::Expression] The condition to visit.
+      # @param block      [Lume::Syntax::Block] The block to visit.
+      #
+      # @return [Lume::MIR::Conditional]
+      def generate_conditional_case(condition, block)
+        condition = generate_node(condition)
+        block = generate_block(block)
+
+        Lume::MIR::ConditionalCase.new(condition, block)
+      end
+
+      # Adds labels to the given conditional and child cases.
+      #
+      # @param conditional [Lume::MIR::Conditional] The conditional to add labels to.
       #
       # @return [void]
-      def generate_root_conditional_block(conditional)
-        merge_label = Lume::MIR::Label.new(CONDITIONAL_EXIT_LABEL)
+      def add_conditional_labels(conditional)
+        conditional.merge_label = Lume::MIR::Label.new(CONDITIONAL_MERGE_LABEL)
 
-        # Handle the labels on the root blocks (`then` and `else`)
-        generate_child_conditional_block(conditional, merge_label)
+        # Handle the labels on the child cases
+        conditional.cases.each_with_index do |cond_case, index|
+          # Add a label to the statement itself, so it can be called by other conditions.
+          # The first case - i.e. the `then` block - doesn't need a label, since it should never be branched to.
+          # The `else` block also doesn't need a label, since it doesn't contain a condition statement.
+          if index.positive? && !cond_case.condition.nil?
+            cond_case.label = Lume::MIR::Label.new("#{CONDITIONAL_STATEMENT_LABEL}_#{index}")
+          end
 
-        # Handle the labels on the auxiliary blocks (`else if`)
-        conditional.else_if.each do |else_if|
-          generate_child_conditional_block(else_if, merge_label)
+          # Add a label to the block itself, so it can be branched to if the condition succeeds.
+          cond_case.block.label = Lume::MIR::Label.new("#{CONDITIONAL_BRANCH_LABEL}_#{index}")
         end
       end
 
-      # Applies conditional-specific logic to the given conditional block.
+      # Links the cases of the given conditional together with the `next` properties.
+      #
+      # @param conditional [Lume::MIR::Conditional] The conditional to link.
+      #
+      # @return [void]
+      def link_conditional_cases(conditional)
+        conditional.cases.each_with_index do |cond_case, index|
+          next_case = conditional.cases[index + 1]
+
+          # If there are no more cases, link to the merge label.
+          if next_case.nil?
+            cond_case.next = conditional.merge_label
+            next
+          end
+
+          cond_case.next = next_case.branch_label
+        end
+      end
+
+      # Inserts branches to the merge label in blocks which don't already branch away.
       #
       # @param conditional [Lume::MIR::Conditional] The conditional to generate the block from.
       #
       # @return [void]
-      def generate_child_conditional_block(conditional, merge_label)
-        # Add a new label after the conditional statement, so statements can follow after it.
-        conditional.merge_label = merge_label
+      def insert_merging_branches(conditional)
+        conditional.cases.each do |cond_case|
+          next if cond_case.branch?
 
-        # Add a new label for the `then` block of a conditional statement.
-        # This block contains the statements to execute if the condition succeeds.
-        conditional.then_label = Lume::MIR::Label.new(CONDITIONAL_THEN_LABEL)
-
-        # Add a new label for the `else` block of a conditional statement.
-        # This block contains the statements to execute if the condition fails.
-        #
-        # If the 'else' block is empty, we can skip it and jump directly to the merge label.
-        conditional.else_label = if conditional.else.empty?
-          conditional.merge_label
-        else
-          Lume::MIR::Label.new(CONDITIONAL_ELSE_LABEL)
+          cond_case.block.expressions << Lume::MIR::Goto.new(conditional.merge_label)
         end
       end
     end

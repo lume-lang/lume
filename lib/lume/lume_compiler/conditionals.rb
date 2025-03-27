@@ -12,88 +12,43 @@ module Lume
     #
     # @return [LLVM::Instruction] The generated LLVM IR instruction.
     def handle_conditional(expression)
-      statements = create_statement_blocks(expression)
-      blocks = create_conditional_blocks(expression)
+      # Create LLVM blocks for all the labels within the conditional.
+      visit_many(expression.cases.flat_map { |c| [c.label, c.block.label] }, expression.merge_label)
 
       # Create the statements which perform the comparison logic.
-      create_conditional_statements(expression, statements, blocks)
+      create_conditional_statements(expression)
 
       # Afterwards, create the branches which the conditional statements can branch to
-      create_conditional_branches(expression, blocks)
+      create_conditional_branches(expression)
 
       # At the very end, branch to the merge block, so statements can follow after the conditional.
-      @builder.branch_exit(blocks.last)
+      @builder.branch_exit(expression.merge_label.ir)
     end
 
     private
 
-    # Creates the LLVM IR blocks for a conditional expression. The returned array will contain:
-    #  - A single block for the `then` branch,
-    #  - an array of zero-or-more blocks for the `else-if` branches,
-    #  - a single block for the `else` branch,
-    #  - a single block for the merge point.
-    #
-    # @param expression [Conditional] The conditional expression to create blocks for.
-    #
-    # @return [Array<LLVM::BasicBlock>] The generated LLVM IR blocks.
-    def create_conditional_blocks(expression)
-      # Create a block for the `then` branch
-      then_block = @builder.block('branch_then')
-
-      # Create a list of blocks for the `else if` branches
-      else_if_blocks = expression.else_if.map { |_| @builder.block('branch_else_if') }
-
-      # Create a block for the `else` branch
-      else_block = @builder.block('branch_else')
-
-      # Create a block for the merge point
-      merge_block = @builder.block('branch_merge')
-
-      [then_block, else_if_blocks, else_block, merge_block]
-    end
-
-    # Creates the LLVM IR blocks for conditional statement instructions.
-    #
-    # @param expression [Conditional] The conditional expression to create blocks for.
-    #
-    # @return [Array<LLVM::BasicBlock>] The generated LLVM IR blocks.
-    def create_statement_blocks(expression)
-      expression.else_if.map { |_| @builder.block('next') }
-    end
-
     # Creates LLVM IR statements for a conditional expression.
     #
     # @param expression   [Conditional]             The conditional expression to create branches for.
-    # @param blocks       [Array<LLVM::BasicBlock>] The blocks for the conditional expression.
     #
     # @return [void]
-    def create_conditional_statements(expression, statements, blocks)
-      then_block, else_if_blocks, else_block, = blocks
+    def create_conditional_statements(expression)
+      expression.cases.each do |cond_case|
+        # If the condition is unset, it's the `else` block, which shouldn't have a conditional statement.
+        next if cond_case.condition.nil?
 
-      # Create the first statement, which handles the `then` branch.
-      # If the condition is true, jump to the `then` block. Otherwise, attempt to jump to the next `else if` block
-      # if it exists. If not, jump to the `else` block.
-      create_conditional_statement(expression.condition, nil, then_block, statements.first || else_block)
+        block = cond_case.label&.ir
+        true_block = cond_case.block.label.ir
+        false_block = cond_case.next.ir
 
-      # Creates the `else if` statements.
-      # If the condition is true, jump to the `then` block of the current `else if` statement.
-      # Otherwise, attempt to jump to the next `else if` block if it exists. If not, jump to the `else` block.
-      expression.else_if.each_with_index do |else_if, index|
-        true_block = else_if_blocks[index]
-
-        false_block = if index >= expression.else_if.length - 1
-          else_block
-        else
-          statements[index + 1]
-        end
-
-        create_conditional_statement(else_if.condition, statements[index], true_block, false_block)
+        create_conditional_statement(cond_case.condition, block, true_block, false_block)
       end
     end
 
     # Creates an LLVM IR statement for a conditional expression.
     #
     # @param condition    [Lume::MIR::Expression] The condition to evaluate.
+    # @param block        [LLVM::BasicBlock, nil] The block to contain the statement in.
     # @param true_block   [LLVM::BasicBlock]      The block to jump to if the condition is true.
     # @param false_block  [LLVM::BasicBlock]      The block to jump to if the condition is false.
     #
@@ -110,40 +65,12 @@ module Lume
     # Creates branches in LLVM to store the given expression blocks.
     #
     # @param expression   [Conditional]             The conditional expression to create branches for.
-    # @param blocks       [Array<LLVM::BasicBlock>] The blocks for the conditional expression.
     #
     # @return [void]
-    def create_conditional_branches(expression, blocks)
-      then_block, else_if_blocks, else_block, merge_block = blocks
-
-      # Create branch for the `then` block
-      create_conditional_branch(expression.then, then_block, merge_block)
-
-      # Create branch for the `else if` block
-      else_if_blocks.each_with_index do |else_if_block, index|
-        create_conditional_branch(expression.else_if[index].then, else_if_block, merge_block)
-      end
-
-      # Create branch for the `else` block
-      create_conditional_branch(expression.else, else_block, merge_block)
-    end
-
-    # Creates a branch in LLVM to store the given expression block.
-    #
-    # @param expressions  [Lume::MIR::Block]  The expression block to lower into the LLVM block.
-    # @param block        [LLVM::BasicBlock]  The block to jump to if the condition is false.
-    # @param merge_block  [LLVM::BasicBlock]  The block to jump to after the conditional branch.
-    #
-    # @return [void]
-    def create_conditional_branch(expressions, block, merge_block)
-      # Within the block, compile all expressions.
-      @builder.in_block(block) do
-        # Lower all the MIR expressions into the LLVM block
-        visit(expressions)
-
-        # If the block returns a value, don't insert a branch statement.
-        # If the branch statement is present, the return statement might be overwritten by the merge block.
-        @builder.branch(merge_block) unless expressions.return?
+    def create_conditional_branches(expression)
+      expression.cases.each do |cond_case|
+        # Within the block, compile all expressions and place them in the LLVM block
+        @builder.in_block(cond_case.block.label.ir) { visit(cond_case.block) }
       end
     end
   end

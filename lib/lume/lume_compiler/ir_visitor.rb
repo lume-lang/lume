@@ -70,6 +70,7 @@ module Lume
       when Type then visit_type(node)
       when Label then visit_label(node)
       when Goto then visit_goto(node)
+      when nil then nil
       else
         raise "Unsupported node type: #{node.class}"
       end
