@@ -27,6 +27,9 @@ module Lume
     #
     # @return [LLVM::Instruction]
     def visit_infinite_loop_expression(expression)
+      # At the very end, branch to the exit block, so statements can follow after the loop.
+      @builder.enter_branch(expression.exit.ir)
+
       # Enter the loop from the current block
       @builder.branch(expression.block.label.ir)
 
@@ -35,8 +38,11 @@ module Lume
         visit(expression.block)
       end
 
-      # At the very end, branch to the exit block, so statements can follow after the loop.
-      @builder.branch_exit = expression.exit.ir
+      @builder.in_block(expression.exit.ir) do
+        @builder.branch(@builder.exit_block)
+      end
+
+      @builder.exit_branch
     end
   end
 end

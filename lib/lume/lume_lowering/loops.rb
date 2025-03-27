@@ -32,6 +32,9 @@ module Lume
         # Create labels for the entry and exit of the loop.
         create_loop_labels(loop)
 
+        # Append a `continue` instruction, so the loop will actually.. loop.
+        append_continue_instruction(loop)
+
         loop
       end
 
@@ -127,6 +130,18 @@ module Lume
 
         # Set an exit label to the very end of the loop body.
         loop.exit = Lume::MIR::Label.new(LOOP_EXIT_LABEL)
+      end
+
+      # Appends a `continue` instruction to the loop block.
+      #
+      # @param loop [Lume::MIR::Loop] The loop to generate the block from.
+      #
+      # @return [void]
+      def append_continue_instruction(loop)
+        # If the block already has a branch, we don't need to append a continue instruction.
+        return if loop.block.branch?
+
+        loop.block.expressions << Lume::MIR::Continue.new(loop)
       end
     end
   end

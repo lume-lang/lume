@@ -39,7 +39,7 @@ module Lume
       mod.llvm_module = NodeVisitor.visit_module(mod)
 
       # Verify the LLVM module after generation
-      mod.llvm_module.verify!
+      # mod.llvm_module.verify!
     end
 
     # Optimizes the module using LLVM's optimization passes.

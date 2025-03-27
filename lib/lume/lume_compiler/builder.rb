@@ -21,7 +21,7 @@ module Lume
         @func_stack = []
         @block_stack = []
 
-        @branch_exit = []
+        @branch_exit = nil
       end
 
       # Disposes of the builder and its associated resources.
@@ -133,20 +133,27 @@ module Lume
         @inner.br(block)
       end
 
-      # Gets the exit block for the current branch.
+      # Gets the current branch exit block.
       #
-      # @return [LLVM::BasicBlock]
-      def branch_exit
-        @branch_exit.last
+      # @return [LLVM::BasicBlock] The current branch exit block.
+      def exit_block
+        @branch_exit
       end
 
-      # Defines the exit block for the current branch.
+      # Enters a new branch with the given block.
       #
-      # @param block [LLVM::BasicBlock] The block to branch to.
+      # @param block [LLVM::BasicBlock] The block to enter.
       #
       # @return [void]
-      def branch_exit=(block)
-        @branch_exit.push(block)
+      def enter_branch(block)
+        @branch_exit = block
+      end
+
+      # Exits the current branch.
+      #
+      # @return [void]
+      def exit_branch
+        move_to(@branch_exit)
       end
 
       # Invokes a function with the given name and arguments.
@@ -732,10 +739,12 @@ module Lume
         raise ArgumentError, 'Block required' unless block_given?
 
         # Prioritize branch exit block if available. Otherwise, use the current block.
-        block = @branch_exit.pop || @block_stack.last
+        if @branch_exit.nil?
+          block = @block_stack.last
 
-        # Position the builder at the current block.
-        move_to(block)
+          # Position the builder at the current block.
+          move_to(block)
+        end
 
         yield
       end

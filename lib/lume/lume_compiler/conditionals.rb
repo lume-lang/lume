@@ -15,14 +15,16 @@ module Lume
       # Create LLVM blocks for all the labels within the conditional.
       visit_many(expression.cases.flat_map { |c| [c.label, c.block.label] }, expression.merge_label)
 
+      # At the very end, branch to the merge block, so statements can follow after the conditional.
+      @builder.enter_branch(expression.merge_label.ir)
+
       # Create the statements which perform the comparison logic.
       create_conditional_statements(expression)
 
       # Afterwards, create the branches which the conditional statements can branch to
       create_conditional_branches(expression)
 
-      # At the very end, branch to the merge block, so statements can follow after the conditional.
-      @builder.branch_exit = expression.merge_label.ir
+      @builder.exit_branch
     end
 
     private
