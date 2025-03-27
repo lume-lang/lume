@@ -102,6 +102,10 @@ module Lume
         other.is_a?(self.class) && @expressions == other.expressions && @label == other.label
       end
 
+      def accept_children(visitor)
+        visitor.accept(@expressions)
+      end
+
       # Determines whether the block contains any node of the given type(s).
       #
       # @param type [Class] The type(s) of node to find.
