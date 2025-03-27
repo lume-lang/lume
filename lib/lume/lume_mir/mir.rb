@@ -262,17 +262,6 @@ module Lume
       end
     end
 
-    # Represents a loop break expression.
-    #
-    #   'break'
-    class Break < Goto
-      attr_accessor :loop
-
-      def ==(other)
-        other.is_a?(Break)
-      end
-    end
-
     # Represents a function- or method-invocation.
     #
     #   [ target '.' ] action '(' arguments [ ',' arguments ]* ')'
@@ -486,17 +475,6 @@ module Lume
       # @return [Boolean] `true` if the block contains a branching instruction. Otherwise, `false`.
       def branch?
         @block.branch?
-      end
-    end
-
-    # Represents a loop continue expression.
-    #
-    #   'continue'
-    class Continue < Goto
-      attr_accessor :loop
-
-      def ==(other)
-        other.is_a?(Continue)
       end
     end
 

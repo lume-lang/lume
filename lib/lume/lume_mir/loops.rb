@@ -82,5 +82,27 @@ module Lume
         super && @predicate == other.predicate
       end
     end
+
+    # Represents a loop break expression.
+    #
+    #   'break'
+    class Break < Goto
+      attr_accessor :loop
+
+      def ==(other)
+        other.is_a?(Break)
+      end
+    end
+
+    # Represents a loop continue expression.
+    #
+    #   'continue'
+    class Continue < Goto
+      attr_accessor :loop
+
+      def ==(other)
+        other.is_a?(Continue)
+      end
+    end
   end
 end
