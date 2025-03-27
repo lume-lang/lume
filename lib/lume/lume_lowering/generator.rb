@@ -85,6 +85,12 @@ module Lume
         Lume::Syntax::NullLiteral => Lume::MIR::NullLiteral
       }.freeze
 
+      LOOP_ENTRY_LABEL = :'#loop_entry'
+
+      LOOP_BODY_LABEL = :'#loop_body'
+
+      LOOP_EXIT_LABEL = :'#loop_exit'
+
       private
 
       # Iterates over all the class definition nodes in the given module and registers them in the generator.
@@ -582,7 +588,10 @@ module Lume
       def generate_infinite_loop(expression)
         block = generate_block(expression.block)
 
-        Lume::MIR::InfiniteLoop.new(block)
+        loop = Lume::MIR::InfiniteLoop.new(block)
+        generate_loop_block(loop)
+
+        loop
       end
 
       # Visits an iterator loop expression node in the AST and generates LLVM IR.
@@ -595,7 +604,10 @@ module Lume
         collection = Lume::MIR::Variable.new(expression.collection)
         block = generate_block(expression.block)
 
-        Lume::MIR::IteratorLoop.new(pattern, collection, block)
+        loop = Lume::MIR::IteratorLoop.new(pattern, collection, block)
+        generate_loop_block(loop)
+
+        loop
       end
 
       # Visits a predicate loop expression node in the AST and generates LLVM IR.
@@ -607,7 +619,10 @@ module Lume
         predicate = generate_expression(expression.predicate)
         block = generate_block(expression.block)
 
-        Lume::MIR::PredicateLoop.new(predicate, block)
+        loop = Lume::MIR::PredicateLoop.new(predicate, block)
+        generate_loop_block(loop)
+
+        loop
       end
 
       # Visits a loop break expression node in the AST and generates LLVM IR.
@@ -727,6 +742,19 @@ module Lume
         yield
       ensure
         @class_stack.pop
+      end
+
+      # Applies loop-specific logic to the given loop block.
+      #
+      # @param loop [Lume::MIR::Loop] The loop to generate the block from.
+      #
+      # @return [void]
+      def generate_loop_block(loop)
+        # Set a body label to the very start of the loop body.
+        loop.entry = Lume::MIR::Label.new(LOOP_BODY_LABEL)
+
+        # Set an exit label to the very end of the loop body.
+        loop.exit = Lume::MIR::Label.new(LOOP_EXIT_LABEL)
       end
     end
   end

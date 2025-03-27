@@ -75,7 +75,7 @@ module Lume
         NullLiteral => 'Null'
       }.freeze
 
-      LOOP_IDENT = :loop
+      LOOP_IDENT = :'#loop'
 
       def initialize
         @symbols = SymbolTable.new
@@ -120,6 +120,7 @@ module Lume
         raise BreakOutsideLoop.new(expression) if parent.nil?
 
         expression.loop = parent
+        expression.target = expression.loop.exit
       end
 
       # Visits a cast expression and resolves it's expression type.
@@ -145,6 +146,7 @@ module Lume
         raise ContinueOutsideLoop.new(expression) if parent.nil?
 
         expression.loop = parent
+        expression.target = expression.loop.entry
       end
 
       # Visits a function invocation expression and resolves it's type from the symbol table.
@@ -202,6 +204,9 @@ module Lume
       def before_loop(expression)
         @symbols.push_frame
         @symbols.define(expression, name: LOOP_IDENT)
+
+        @symbols.define(expression.entry)
+        @symbols.define(expression.exit)
       end
 
       # Visits a loop expression and registers it in the symbol table.
