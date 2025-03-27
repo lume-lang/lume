@@ -135,6 +135,21 @@ module Lume
       end
     end
 
+    # Represents an abstract control flow expression.
+    class Goto < Node
+      attr_accessor :target
+
+      def initialize(target = nil)
+        super()
+
+        @target = target
+      end
+
+      def ==(other)
+        other.is_a?(Goto) && @target == other.target
+      end
+    end
+
     # Represents an abstract access operator.
     class Access < Expression
       attr_accessor :target, :property
@@ -233,7 +248,7 @@ module Lume
     # Represents a loop break expression.
     #
     #   'break'
-    class Break < Expression
+    class Break < Goto
       attr_accessor :loop
 
       def ==(other)
@@ -434,7 +449,7 @@ module Lume
     # Represents a loop continue expression.
     #
     #   'continue'
-    class Continue < Expression
+    class Continue < Goto
       attr_accessor :loop
 
       def ==(other)
@@ -550,6 +565,21 @@ module Lume
     #
     #   target '.' property
     class MemberAccess < Access
+    end
+
+    # Represents a labelled block.
+    class Label < Node
+      attr_accessor :name
+
+      def initialize(name)
+        super()
+
+        @name = name
+      end
+
+      def ==(other)
+        other.is_a?(Label) && @name == other.name
+      end
     end
 
     # Represents a method invocation.

@@ -6,7 +6,7 @@ module Lume
   module MIR
     # Represents an abstract loop expression.
     class Loop < Expression
-      attr_accessor :block
+      attr_accessor :block, :entry, :exit
 
       def initialize(block)
         super()
