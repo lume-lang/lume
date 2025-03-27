@@ -27,6 +27,7 @@ module Lume
       @pass.use(:expression_analysis)
       @pass.use(:type_checking)
       @pass.use(ReportUnusedSymbol)
+      @pass.use(RemoveUnreachableCode)
     end
 
     # Creates a new analyzer with the given parser modules.

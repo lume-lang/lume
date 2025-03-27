@@ -15,7 +15,7 @@ module Lume
       end
 
       def accept_children(visitor)
-        @block.expressions.each { |block| visitor.accept(block) }
+        visitor.accept(block)
       end
 
       def ==(other)

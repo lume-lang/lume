@@ -108,7 +108,7 @@ module Lume
       #
       # @return [Boolean] `true` if the block contains a node of the given type, `false` otherwise.
       def any?(*type)
-        type.any? { |t| @expressions.any? { |expr| expr.is_a?(t) } }
+        type.flatten.any? { |t| @expressions.any? { |expr| expr.is_a?(t) } }
       end
 
       # Determines whether the block contains a branching statement.
