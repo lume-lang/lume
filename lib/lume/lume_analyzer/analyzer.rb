@@ -28,6 +28,7 @@ module Lume
       @pass.use(:type_checking)
       @pass.use(ReportUnusedSymbol)
       @pass.use(RemoveUnreachableCode)
+      @pass.use(DefineBlockJumps)
     end
 
     # Creates a new analyzer with the given parser modules.

@@ -34,9 +34,6 @@ module Lume
         # Set the `next` pointers for the conditional cases.
         link_conditional_cases(conditional)
 
-        # Insert branches into unbranching cases, so they can branch to the merge block.
-        insert_merging_branches(conditional)
-
         conditional
       end
 
@@ -132,19 +129,6 @@ module Lume
           end
 
           cond_case.next = next_case.branch_label
-        end
-      end
-
-      # Inserts branches to the merge label in blocks which don't already branch away.
-      #
-      # @param conditional [Lume::MIR::Conditional] The conditional to generate the block from.
-      #
-      # @return [void]
-      def insert_merging_branches(conditional)
-        conditional.cases.each do |cond_case|
-          next if cond_case.branch?
-
-          cond_case.block.expressions << Lume::MIR::Goto.new(conditional.merge_label)
         end
       end
     end
