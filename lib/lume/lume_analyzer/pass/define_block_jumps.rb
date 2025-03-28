@@ -37,6 +37,19 @@ module Lume
             cond_case.block.expressions << Lume::MIR::Goto.new(conditional.merge_label)
           end
         end
+
+        # Appends a `continue` instruction to the loop block.
+        #
+        # @param loop [Loop] The loop block to analyze.
+        def accept_loop(loop)
+          # If the block already has a branch, we don't need to append a continue instruction.
+          return if loop.block.branch?
+
+          continue = Lume::MIR::Continue.new(loop.entry)
+          continue.loop = loop
+
+          loop.block.expressions << continue
+        end
       end
     end
   end

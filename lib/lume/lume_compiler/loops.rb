@@ -38,10 +38,6 @@ module Lume
         visit(expression.block)
       end
 
-      @builder.in_block(expression.exit.ir) do
-        @builder.branch(@builder.exit_block)
-      end
-
       @builder.exit_branch
     end
   end
