@@ -5,28 +5,6 @@ require 'lume/lume_analyzer/symbol_table'
 
 module Lume
   class Analyzer # :nodoc:
-    private
-
-    # Passes the modules through the main visitor, which handles the expansion of result
-    # types of expressions within it.
-    #
-    # @param modules [Array<Lume::Module>]  The modules to be analyzed.
-    #
-    # @see MainVisitor
-    def visit_main(modules)
-      visitor = MainVisitor.new
-
-      # rubocop:disable Style/CombinableLoops -- We must prediscover *all* modules before attempting to visit them.
-
-      # Pre-discovery class- and function-definition in all modules before attempting to analyze them.
-      modules.each { |mod| visitor.prediscover(mod.mir) }
-
-      # All modules need to share the same visitor, as they need to refer to the same symbol table.
-      modules.each { |mod| visitor.visit(mod.mir) }
-
-      # rubocop:enable Style/CombinableLoops
-    end
-
     # The main visitor class, which is responsible for descending the AST and
     # expanding the result types of expressions within it.
     #

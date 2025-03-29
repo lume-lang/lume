@@ -26,11 +26,10 @@ module Lume
 
       # Defines the default passes to be executed during analysis.
       @pass = Passes.new
-      @pass.use(:expression_analysis)
-      @pass.use(:type_checking)
+      @pass.use(PerformExpressionAnalysis)
+      @pass.use(TypeCheck)
       @pass.use(ReportUnusedSymbol)
-      @pass.use(RemoveUnreachableCode)
-      @pass.use(DefineBlockJumps)
+      @pass.use(WarnUnreachableCode)
     end
 
     # Creates a new analyzer with the given parser modules.
@@ -71,38 +70,17 @@ module Lume
       end
     end
 
-    # Performs expression analysis on the given modules.
-    #
-    # @param modules [Array<Lume::Module>] The modules to analyze.
-    def expression_analysis(modules)
-      # The main visitor is responsible for expanding expression result types, so that the type checker
-      # can verify that all type constraints are satisfied.
-      visit_main(modules)
-    end
-
-    # Performs type-checking analysis on the given MIR AST.
-    #
-    # @param modules [Array<Lume::Module>] The modules to type-check.
-    def type_checking(modules)
-      type_checker = Lume::Typing::TypeChecker.new
-      errors = type_checker.check(modules)
-
-      # If any errors arose during type checking, report them to the user.
-      report_errors(errors) if errors.any?
-    end
-
     # Invokes the pass with the given name.
     #
-    # @param name [Symbol, Class] The name or class of the pass to invoke.
+    # @param name [Class] The class of the pass to invoke.
     def invoke_pass(name)
-      # If the name is a class, instantiate it and call its `call` method.
-      return name.new(@logger).call(@modules) if name.is_a?(Class)
+      pass_instance = name.new(@logger)
 
-      # If the method doesn't exist, emit a warning.
-      return invalid_pass(name) unless respond_to?(name, true)
+      # If the `call` method doesn't exist, emit a warning.
+      return invalid_pass(name) unless pass_instance.respond_to?(:call, true)
 
       # Otherwise, invoke the pass with the current modules.
-      method(name).call(@modules)
+      pass_instance.call(@modules)
     end
 
     # Reports a warning about an invalid pass.
@@ -112,13 +90,6 @@ module Lume
       diagnostic = Lume::LumeDiagnostic.new("Invalid pass defined in analyzer: #{pass_name}", type: Lume::WARNING)
 
       @logger.report(diagnostic)
-    end
-
-    # Reports all the compilation errors within the given array.
-    #
-    # @param errors [Array<Lume::LumeDiagnostic>] The errors to report.
-    def report_errors(errors)
-      errors.each { |error| @logger.report(error) }
     end
   end
 end

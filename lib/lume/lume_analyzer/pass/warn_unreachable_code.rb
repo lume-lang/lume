@@ -3,12 +3,8 @@
 module Lume
   class Analyzer
     module Pass
-      # Remove code which is unreachable within a block.
-      #
-      # LLVM does not accept instructions after terminators - i.e. after a return, branch, or similar instruction. We
-      # therefore need to remove any instructions that follow a terminator instruction. This pass also raises a warning
-      # about unreachable code.
-      class RemoveUnreachableCode < FlatVisitorPass
+      # Warn about code which is unreachable within a block.
+      class WarnUnreachableCode < FlatVisitorPass
         BRANCHING_INSTRUCTIONS = [Return, Goto].freeze
 
         private
@@ -21,7 +17,7 @@ module Lume
           unreachable_blocks = find_blocks_with_unreachable_code(nodes)
 
           unreachable_blocks.each do |block|
-            purge_unreachable_statements(block)
+            @logger.report(Lume::Analyzer::Errors::UnreachableCode.new(block))
           end
         end
 
@@ -48,20 +44,6 @@ module Lume
           end
 
           unreachable_blocks
-        end
-
-        # Purges unreachable statements from the given block and raises warnings about them.
-        #
-        # @param block [Lume::MIR::Block] The block to purge from.
-        def purge_unreachable_statements(block)
-          first_branch_idx = block.expressions.find_index { |expr| BRANCHING_INSTRUCTIONS.include?(expr.class) }
-
-          first_unreachable_node = block.expressions[first_branch_idx + 1]
-          unreachable_code_error = Lume::Analyzer::Errors::UnreachableCode.new(first_unreachable_node)
-          @logger.report(unreachable_code_error)
-
-          # Remove all the statements after the first branching instruction.
-          block.expressions.slice!(first_branch_idx + 1..)
         end
       end
     end
