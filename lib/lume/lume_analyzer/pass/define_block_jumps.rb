@@ -7,21 +7,13 @@ module Lume
       #
       # This pass loops over all conditional-, loop- and switch-blocks to ensure that each child block branches
       # to their corresponding merge block.
-      class DefineBlockJumps
-        include Lume::MIR
-        include Lume::MIR::Visitor
-
+      class DefineBlockJumps < VisitorPass
         BRANCHING_BLOCK_TYPES = [Conditional, Loop].freeze
 
         def initialize(logger)
-          @logger = logger
-        end
+          super
 
-        # Performs the analysis pass on the given modules.
-        #
-        # @param modules [Array<Lume::Module>] The modules to analyze.
-        def call(modules)
-          modules.each { |mod| accept_ast(mod.mir) }
+          @branch_exits = []
         end
 
         private

@@ -8,31 +8,17 @@ module Lume
       # LLVM does not accept instructions after terminators - i.e. after a return, branch, or similar instruction. We
       # therefore need to remove any instructions that follow a terminator instruction. This pass also raises a warning
       # about unreachable code.
-      class RemoveUnreachableCode
-        include Lume::MIR
-
+      class RemoveUnreachableCode < FlatVisitorPass
         BRANCHING_INSTRUCTIONS = [Return, Goto].freeze
-
-        def initialize(logger)
-          @logger = logger
-        end
-
-        # Performs the analysis pass on the given modules.
-        #
-        # @param modules [Array<Lume::Module>] The modules to analyze.
-        def call(modules)
-          modules.each { |mod| visit_module(mod) }
-        end
 
         private
 
         # Visits a module and reports any unused symbols.
         #
         # @param mod [Lume::Module] The module to visit.
-        def visit_module(mod)
-          flat_ast = FlatVisitor.flatten(mod.mir)
-
-          unreachable_blocks = find_blocks_with_unreachable_code(flat_ast)
+        # @param nodes [Array<Lume::Node>] The flattened array of MIR nodes.
+        def visit(_mod, nodes)
+          unreachable_blocks = find_blocks_with_unreachable_code(nodes)
 
           unreachable_blocks.each do |block|
             purge_unreachable_statements(block)

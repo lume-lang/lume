@@ -6,6 +6,8 @@ require 'lume/lume_analyzer/main_visitor'
 require 'lume/lume_analyzer/passes'
 require 'lume/lume_typing/typing'
 
+Dir.glob("#{__dir__}/pass/*.rb").each { |file| require file }
+
 module Lume
   class Analyzer # :nodoc:
     include Pass

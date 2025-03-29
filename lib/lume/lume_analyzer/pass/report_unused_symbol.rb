@@ -4,28 +4,16 @@ module Lume
   class Analyzer
     module Pass
       # Reports warnings about unused symbols.
-      class ReportUnusedSymbol
-        def initialize(logger)
-          @logger = logger
-        end
-
-        # Performs the analysis pass on the given modules.
-        #
-        # @param modules [Array<Lume::Module>] The modules to analyze.
-        def call(modules)
-          modules.each { |mod| visit_module(mod) }
-        end
-
+      class ReportUnusedSymbol < FlatVisitorPass
         private
 
         # Visits a module and reports any unused symbols.
         #
-        # @param mod [Lume::Module] The module to visit.
-        def visit_module(mod)
-          flat_ast = Lume::MIR::FlatVisitor.flatten(mod.mir)
-
-          report_unused_variables(flat_ast)
-          report_unused_functions(flat_ast)
+        # @param _mod    [Lume::Module] The module to visit.
+        # @param nodes  [Array<Lume::Node>] The flattened array of MIR nodes.
+        def visit(_mod, nodes)
+          report_unused_variables(nodes)
+          report_unused_functions(nodes)
         end
 
         # Reports unused variables in the given AST.
