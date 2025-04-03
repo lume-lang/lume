@@ -7,7 +7,7 @@ describe 'return values' do
 
   it 'return the value of the expression' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         return 4
       }
     ))
@@ -17,7 +17,7 @@ describe 'return values' do
 
   it 'return values from expressions' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         let a = 4
         return a
       }
@@ -28,7 +28,7 @@ describe 'return values' do
 
   it 'return inside conditionals (truthy)' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if true {
           return 1
         }
@@ -42,7 +42,7 @@ describe 'return values' do
 
   it 'return inside conditionals (falsy)' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if false {
           return 1
         }

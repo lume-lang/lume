@@ -30,6 +30,7 @@ module Lume
       @pass.use(TypeCheck)
       @pass.use(ReportUnusedSymbol)
       @pass.use(WarnUnreachableCode)
+      @pass.use(LowerLIR)
     end
 
     # Creates a new analyzer with the given parser modules.

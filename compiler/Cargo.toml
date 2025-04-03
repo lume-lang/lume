@@ -1,0 +1,13 @@
+[package]
+name = "compiler"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+arc = { path = "../arc" }
+thiserror = "2"
+miette = { version = "^7.5" }
+serde = { version = "^1.0", features = ["derive"] }
+ron = "^0"
+llvm-sys = { version = "191" }

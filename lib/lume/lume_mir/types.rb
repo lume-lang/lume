@@ -10,9 +10,6 @@ module Lume
     # Defines the name of the string type.
     STRING_TYPE = 'String'
 
-    # Defines the name of the pointer type.
-    POINTER_TYPE = 'Pointer'
-
     # Defines the name of the boolean type.
     BOOLEAN_TYPE = 'Boolean'
 
@@ -103,13 +100,6 @@ module Lume
       # @return [Boolean]
       def string?
         name == STRING_TYPE
-      end
-
-      # Determines whether the scalar is a pointer type.
-      #
-      # @return [Boolean]
-      def pointer?
-        name == POINTER_TYPE
       end
 
       # Determines whether the scalar is a boolean type.

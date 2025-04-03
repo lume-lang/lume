@@ -102,10 +102,11 @@ module Lume
 
       case value
       when NilClass then line 'nil', indentation: false, color: :gray
-      when TrueClass, FalseClass then line value.to_s, indentation: false, color: :green
+      when TrueClass, FalseClass, Integer, Float then line value.to_s, indentation: false, color: :green
       when Array then array(value)
       when String then string(value)
       when Symbol then symbol(value)
+      when Hash then hash(value)
       when Object then obj(value)
       end
     end
@@ -173,6 +174,26 @@ module Lume
     def symbol(value)
       text ":#{value}", indentation: false, color: :magenta
       newline
+    end
+
+    # Emits a hash to the output device.
+    #
+    # @param value [Hash] The hash to print.
+    #
+    # @return [void]
+    def hash(hash)
+      return line '{}', indentation: false if hash.empty?
+
+      line '{', indentation: false
+
+      wrapped do
+        hash.each do |key, value|
+          text "[#{key}] = ", color: :cyan
+          item(value)
+        end
+      end
+
+      line '}'
     end
 
     # Emits the given block within an indented block.

@@ -10,29 +10,18 @@ module Lume
     class Generator # :nodoc:
       protected
 
-      LOOP_ENTRY_LABEL = :'#loop_entry'
-
-      LOOP_BODY_LABEL = :'#loop_body'
-
-      LOOP_EXIT_LABEL = :'#loop_exit'
-
       # Visits a loop expression node in the AST and generates LLVM IR.
       #
       # @param expression [Lume::Syntax::Loop] The expression to visit.
       #
       # @return [Lume::MIR::Loop]
       def generate_loop(expression)
-        loop = case expression
+        case expression
         when Lume::Syntax::InfiniteLoop then generate_infinite_loop(expression)
         when Lume::Syntax::IteratorLoop then generate_iterator_loop(expression)
         when Lume::Syntax::WhileLoop then generate_predicate_loop(expression)
         else raise "Unsupported loop type: #{expression.class}"
         end
-
-        # Create labels for the entry and exit of the loop.
-        create_loop_labels(loop)
-
-        loop
       end
 
       # Visits an infinite loop expression node in the AST and generates LLVM IR.
@@ -114,19 +103,6 @@ module Lume
       # @return [Lume::MIR::Continue]
       def generate_continue(_expression)
         Lume::MIR::Continue.new
-      end
-
-      # Applies loop-specific logic to the given loop block.
-      #
-      # @param loop [Lume::MIR::Loop] The loop to generate the block from.
-      #
-      # @return [void]
-      def create_loop_labels(loop)
-        # Set a body label to the very start of the loop body.
-        loop.block.label = Lume::MIR::Label.new(LOOP_BODY_LABEL)
-
-        # Set an exit label to the very end of the loop body.
-        loop.exit = Lume::MIR::Label.new(LOOP_EXIT_LABEL)
       end
     end
   end

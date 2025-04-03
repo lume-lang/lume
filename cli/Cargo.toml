@@ -1,0 +1,12 @@
+[package]
+name = "cli"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+arc = { path = "../arc" }
+thiserror = "2"
+getopts = "^0.2"
+miette = { version = "^7.5", features = ["fancy"] }
+compiler = { path = "../compiler" }

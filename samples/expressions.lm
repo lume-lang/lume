@@ -1,8 +1,5 @@
-a = 1
-b = 2
-c = a + b
-d = c * 2
-e = (d + 3) * 2
-
-hello()
-main.hello()
+let a = 1
+let b = 2
+let c = a + b
+let d = c * 2
+let e = (d + 3) * 2

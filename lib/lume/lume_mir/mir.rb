@@ -87,7 +87,7 @@ module Lume
 
     # Represents a block of zero-or-more expressions.
     class Block < Node
-      attr_accessor :expressions, :label
+      attr_accessor :expressions
 
       def initialize(expressions = [])
         super()
@@ -95,11 +95,10 @@ module Lume
         expressions = expressions.expressions if expressions.is_a?(Block)
 
         @expressions = expressions
-        @label = nil
       end
 
       def ==(other)
-        other.is_a?(self.class) && @expressions == other.expressions && @label == other.label
+        other.is_a?(self.class) && @expressions == other.expressions
       end
 
       def accept_children(visitor)
@@ -157,17 +156,9 @@ module Lume
     end
 
     # Represents an abstract control flow expression.
-    class Goto < Node
-      attr_accessor :target
-
-      def initialize(target = nil)
-        super()
-
-        @target = target
-      end
-
+    class Goto < Expression
       def ==(other)
-        other.is_a?(Goto) && @target == other.target
+        other.is_a?(Goto)
       end
     end
 
@@ -424,9 +415,6 @@ module Lume
     class Conditional < Expression
       attr_accessor :cases
 
-      # Defines the label where the conditional expression should merge to.
-      attr_accessor :merge_label
-
       def initialize(cases = [])
         super()
 
@@ -444,7 +432,7 @@ module Lume
 
     # Represents a single case within a conditional expression.
     class ConditionalCase < Expression
-      attr_accessor :condition, :block, :next, :label
+      attr_accessor :condition, :block, :next
 
       def initialize(condition, block)
         super()
@@ -460,18 +448,6 @@ module Lume
 
       def ==(other)
         other.is_a?(self.class) && @condition == other.condition && @block == other.block
-      end
-
-      # Determines the label to branch to within the case.
-      #
-      # @return [Label] The label to branch to.
-      def branch_label
-        # If the current case is an `else` block, return the label of the branch block.
-        # `else` blocks don't have condtional blocks, so we cannot branch to it.
-        return @block.label if @condition.nil?
-
-        # Otherwise, return the label of the conditional case itself.
-        @label
       end
 
       # Determines whether the conditional case has a branching instruction within its block.

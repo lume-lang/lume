@@ -1,0 +1,8 @@
+class Scat {
+    pub let name: String = "lmfao"
+
+    pub fn external Scat() -> Self { }
+}
+
+fn main() -> int {
+}

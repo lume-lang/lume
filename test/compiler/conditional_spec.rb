@@ -7,7 +7,7 @@ describe 'conditions' do
 
   it 'branches to then-block given truthy condition' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if true {
           return 1
         }
@@ -21,7 +21,7 @@ describe 'conditions' do
 
   it 'branches to merge-block given falsy condition' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if false {
           return 1
         }
@@ -35,7 +35,7 @@ describe 'conditions' do
 
   it 'branches to else-block given falsy condition' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if false {
           return 1
         } else {
@@ -51,7 +51,7 @@ describe 'conditions' do
 
   it 'branches to elif-block' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if false {
           return 1
         } else if true {
@@ -67,7 +67,7 @@ describe 'conditions' do
 
   it 'branches to else-block' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         if false {
           return 1
         } else if false {
@@ -85,7 +85,7 @@ describe 'conditions' do
 
   it 'handles equality tests' do
     ret = compile(%(
-      fn main(argc: int, argv: Pointer) -> int {
+      fn main(argc: int, argv: *byte) -> int {
         let a = true
 
         if a == true {

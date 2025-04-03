@@ -10,17 +10,18 @@ module Lume
   # the analyzed MIR AST and some optional dependencies.
   class Module
     attr_reader :source
-    attr_accessor :name, :hir, :mir, :dependencies, :llvm_module
+    attr_accessor :name, :hir, :mir, :lir, :dependencies, :llvm_module
 
     printer_ignore :source, :dependencies, :llvm_module
 
     def initialize(name, hir, source: nil)
       @name = name
       @source = source
+      @dependencies = []
 
       @hir = hir
       @mir = nil
-      @dependencies = []
+      @lir = nil
       @llvm_module = nil
     end
   end
