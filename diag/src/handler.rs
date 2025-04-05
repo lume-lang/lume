@@ -31,24 +31,33 @@ pub trait Handler<'a> {
 ///
 /// ```
 /// use diag::LumeDiagnostic;
+/// use diag::handler::Handler;
 /// use diag::handler::DiagnosticHandler;
 ///
-/// let diagnostic = LumeDiagnostic::new("An error occurred");
+/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
 ///
 /// let mut handler = DiagnosticHandler::new();
-/// handler.report(Box::new(diagnostic));
+/// handler.report(diagnostic);
 /// ```
 ///
 /// If not, you can drain the diagnostics immediately after reporting it:
 ///
 /// ```
-/// // ...
-/// handler.report_and_drain(Box::new(diagnostic));
+/// use diag::LumeDiagnostic;
+/// use diag::handler::Handler;
+/// use diag::handler::DiagnosticHandler;
+///
+/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
+///
+/// let mut handler = DiagnosticHandler::new();
+/// handler.report_and_drain(diagnostic);
 /// ```
 ///
 /// To abort upon draining an error diagnostic, use the [`exit_on_error`] method:
 ///
 /// ```
+/// use diag::handler::DiagnosticHandler;
+///
 /// let mut handler = DiagnosticHandler::new();
 /// handler.exit_on_error();
 ///

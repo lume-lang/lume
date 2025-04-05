@@ -284,7 +284,7 @@ impl From<std::io::Error> for Box<dyn Diagnostic + Send + Sync> {
 /// ```
 /// use diag::LumeDiagnostic;
 ///
-/// let diagnostic = LumeDiagnostic::new("An error occurred");
+/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
 ///
 /// diagnostic.render();
 /// ```
@@ -320,12 +320,16 @@ impl<'a> LumeDiagnostic<'a> {
     ///
     /// Using this method is effectively the same as:
     ///
-    /// ```
+    /// ```ignore
+    /// use diag::LumeDiagnostic;
+    /// use diag::Severity;
+    ///
     /// LumeDiagnostic {
     ///     message,
     ///     severity: Severity::Error,
     ///     code: None,
     ///     labels: None,
+    ///     source: None,
     ///     help: None,
     /// }
     /// ```

@@ -34,6 +34,7 @@ pub enum TokenKind {
     Greater,
     GreaterEqual,
     Identifier,
+    If,
     Integer,
     Import,
     Increment,
@@ -57,6 +58,7 @@ pub enum TokenKind {
     SubAssign,
     True,
     Type,
+    Unless,
     Whitespace,
 }
 
@@ -83,6 +85,7 @@ impl TokenKind {
                 | TokenKind::Fn
                 | TokenKind::Greater
                 | TokenKind::GreaterEqual
+                | TokenKind::If
                 | TokenKind::Import
                 | TokenKind::Increment
                 | TokenKind::LeftBracket
@@ -103,6 +106,7 @@ impl TokenKind {
                 | TokenKind::SubAssign
                 | TokenKind::True
                 | TokenKind::Type
+                | TokenKind::Unless
                 | TokenKind::Whitespace
         )
     }
@@ -168,6 +172,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Float => "float",
             TokenKind::Greater => ">",
             TokenKind::GreaterEqual => ">=",
+            TokenKind::If => "if",
             TokenKind::Identifier => "identifier",
             TokenKind::Import => "import",
             TokenKind::Increment => "++",
@@ -192,6 +197,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::SubAssign => "-=",
             TokenKind::True => "true",
             TokenKind::Type => "type",
+            TokenKind::Unless => "unless",
             TokenKind::Whitespace => "whitespace",
         }
     }
@@ -410,6 +416,7 @@ impl Lexer {
             "class" => Token::empty(TokenKind::Class),
             "external" => Token::empty(TokenKind::External),
             "fn" => Token::empty(TokenKind::Fn),
+            "if" => Token::empty(TokenKind::If),
             "import" => Token::empty(TokenKind::Import),
             "let" => Token::empty(TokenKind::Let),
             "type" => Token::empty(TokenKind::Type),
@@ -417,6 +424,7 @@ impl Lexer {
             "return" => Token::empty(TokenKind::Return),
             "true" => Token::empty(TokenKind::True),
             "false" => Token::empty(TokenKind::False),
+            "unless" => Token::empty(TokenKind::Unless),
             _ => Token::new(TokenKind::Identifier, content),
         }
     }
@@ -698,12 +706,14 @@ mod tests {
     #[test]
     fn test_keywords_map() {
         assert_token!("external", TokenKind::External, None::<String>, 0, 8);
+        assert_token!("if", TokenKind::If, None::<String>, 0, 2);
         assert_token!("fn", TokenKind::Fn, None::<String>, 0, 2);
         assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
+        assert_token!("unless", TokenKind::Unless, None::<String>, 0, 6);
     }
 
     #[test]
