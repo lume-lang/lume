@@ -27,6 +27,7 @@ pub enum TokenKind {
     Div,
     DivAssign,
     Dot,
+    Else,
     Enum,
     Eof,
     Equal,
@@ -89,6 +90,7 @@ impl TokenKind {
                 | TokenKind::Div
                 | TokenKind::DivAssign
                 | TokenKind::Dot
+                | TokenKind::Else
                 | TokenKind::Equal
                 | TokenKind::Exclamation
                 | TokenKind::External
@@ -181,6 +183,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Div => "/",
             TokenKind::DivAssign => "/=",
             TokenKind::Dot => ".",
+            TokenKind::Else => "else",
             TokenKind::Enum => "enum",
             TokenKind::Eof => "EOF",
             TokenKind::Equal => "==",
@@ -440,6 +443,7 @@ impl Lexer {
             "class" => Token::empty(TokenKind::Class),
             "const" => Token::empty(TokenKind::Const),
             "continue" => Token::empty(TokenKind::Continue),
+            "else" => Token::empty(TokenKind::Else),
             "enum" => Token::empty(TokenKind::Enum),
             "external" => Token::empty(TokenKind::External),
             "fn" => Token::empty(TokenKind::Fn),

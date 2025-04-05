@@ -1,0 +1,26 @@
+---
+source: compiler/src/parser.rs
+expression: "parse(\"fn external main() -> void\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private,
+            ),
+            external: true,
+            name: Identifier {
+                name: "main",
+            },
+            parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                },
+            ),
+            block: Block {
+                statements: [],
+            },
+        },
+    ),
+]

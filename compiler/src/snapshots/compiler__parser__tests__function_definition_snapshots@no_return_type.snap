@@ -1,0 +1,13 @@
+---
+source: compiler/src/parser.rs
+expression: "parse_err(\"fn main() {}\")"
+---
+UnexpectedToken {
+    source: NamedSource {
+        name: "<test>",
+        content: "fn main() {}",
+    },
+    range: 10..11,
+    expected: ->,
+    actual: {,
+}

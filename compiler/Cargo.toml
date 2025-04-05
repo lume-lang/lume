@@ -8,4 +8,9 @@ rust-version.workspace = true
 arc = { path = "../arc" }
 diag = { path = "../diag" }
 diag_macros = { path = "../diag_macros" }
+serde = { version = "1.0.219", features = ["serde_derive"] }
+ron = "0.9"
 llvm-sys = { version = "191" }
+
+[dev-dependencies]
+insta = { version = "1.42.2", features = ["yaml"] }

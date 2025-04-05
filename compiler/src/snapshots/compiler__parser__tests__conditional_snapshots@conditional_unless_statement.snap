@@ -1,0 +1,64 @@
+---
+source: compiler/src/parser.rs
+expression: "parse_expr(\"unless true { let a = 0 }\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private,
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+            },
+            parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                },
+            ),
+            block: Block {
+                statements: [
+                    Unless(
+                        UnlessCondition {
+                            cases: [
+                                Condition {
+                                    condition: Some(
+                                        Literal(
+                                            Boolean(
+                                                BooleanLiteral {
+                                                    value: true,
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                    block: Block {
+                                        statements: [
+                                            VariableDeclaration(
+                                                VariableDeclaration {
+                                                    name: Identifier {
+                                                        name: "a",
+                                                    },
+                                                    variable_type: None,
+                                                    value: Literal(
+                                                        Int(
+                                                            IntLiteral {
+                                                                value: 0,
+                                                            },
+                                                        ),
+                                                    ),
+                                                    is_const: false,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                },
+                            ],
+                        },
+                    ),
+                ],
+            },
+        },
+    ),
+]

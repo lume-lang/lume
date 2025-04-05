@@ -56,13 +56,14 @@ pub struct Parser<'a> {
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
 
+    /// Defines the index of the current token being processed, given in a zero-based index.
+    index: usize,
+
     /// Defines the current position within the module source code, given in a zero-based index.
     position: usize,
 
-    /// Defines the next token within the module source code.
-    ///
-    /// This token is saved, to prevent multiple calls to `peek` from consuming irrelevant tokens.
-    peeked: Option<Token>,
+    /// Defines all the tokens from the parsed source.
+    tokens: Vec<Token>,
 }
 
 macro_rules! err {
@@ -76,7 +77,10 @@ macro_rules! err {
     ) => {
         $kind {
             source: $self.module.source.clone(),
-            range: $self.token()?.index,
+            range: match $self.tokens.get($self.index) {
+                Some(token) => token.index.clone(),
+                None => (0..$self.index)
+            },
             $( $field: $value ),*
         }
         .into()
@@ -90,8 +94,9 @@ impl<'a> Parser<'a> {
         Parser {
             module,
             lexer,
+            index: 0,
             position: 0,
-            peeked: None,
+            tokens: Vec::new(),
         }
     }
 
@@ -110,51 +115,61 @@ impl<'a> Parser<'a> {
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
     fn parse_module(&mut self) -> Result<()> {
+        // Pre-tokenize the input source text.
         loop {
-            if self.lexer.is_eof() || self.token()?.kind == TokenKind::Eof {
+            let token = self.lexer.next_token()?;
+
+            match token.kind {
+                TokenKind::Whitespace => continue,
+                TokenKind::Eof => break,
+                _ => {}
+            };
+
+            self.tokens.push(token);
+        }
+
+        loop {
+            if self.eof() {
                 break;
             }
 
             let expression = self.top_level_expression()?;
-
             self.module.expressions.push(expression);
         }
 
         Ok(())
     }
 
+    /// Determines whether the parser has reached the end-of-file.
+    fn eof(&self) -> bool {
+        self.index + 1 > self.tokens.len()
+    }
+
+    /// Parses a single token from the lexer at the given index.
+    ///
+    /// Returns the parsed token or a parsing error.
+    fn token_at(&self, index: usize) -> Result<Token> {
+        match self.tokens.get(index) {
+            Some(token) => Ok(token.clone()),
+            None => return Err(err!(self, UnexpectedEndOfFile)),
+        }
+    }
+
     /// Parses a single token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
-    fn token(&mut self) -> Result<Token> {
-        // If a token is buffered, return it instead.
-        if let Some(token) = self.peeked.clone() {
-            return Ok(token);
-        }
-
-        let token = loop {
-            let token = self.lexer.next_token()?;
-
-            match token.kind {
-                TokenKind::Whitespace => {
-                    self.position += token.len();
-                    continue;
-                }
-                _ => break token,
-            }
-        };
-
-        self.position += token.len();
-        self.peeked = Some(token.clone());
-
-        Ok(token)
+    fn token(&self) -> Result<Token> {
+        self.token_at(self.index)
     }
 
-    /// Peeks the next token from the lexer and returns it if it matches the expected kind.
+    /// Peeks the next token from the lexer at some offset and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
-    fn peek(&mut self, kind: TokenKind) -> Result<bool> {
-        let token = self.token()?;
+    fn peek_next(&self, kind: TokenKind, offset: usize) -> Result<bool> {
+        let token = match self.token_at(self.index + offset) {
+            Ok(token) => token,
+            Err(_) => return Ok(false),
+        };
 
         if token.kind == kind {
             return Ok(true);
@@ -163,10 +178,17 @@ impl<'a> Parser<'a> {
         Ok(false)
     }
 
+    /// Peeks the next token from the lexer and returns it if it matches the expected kind.
+    ///
+    /// Returns a boolean indicating whether the token matches the expected kind.
+    fn peek(&self, kind: TokenKind) -> Result<bool> {
+        self.peek_next(kind, 0)
+    }
+
     /// Advances the cursor position by a single token.
     fn skip(&mut self) -> Result<()> {
-        self.peeked = None;
-        self.token()?;
+        self.position += self.token()?.len();
+        self.index += 1;
 
         Ok(())
     }
@@ -177,7 +199,7 @@ impl<'a> Parser<'a> {
     fn expect(&mut self, kind: TokenKind) -> Result<Token> {
         let current = self.token()?;
 
-        match self.peek(kind)? {
+        match current.kind == kind {
             true => Ok(current),
             false => Err(err!(self, UnexpectedToken, expected, kind, actual, current.kind)),
         }
@@ -212,9 +234,13 @@ impl<'a> Parser<'a> {
     ///
     /// If the token does not match the expected kind, `None` is returned.
     fn consume_if(&mut self, kind: TokenKind) -> Result<Option<Token>> {
+        if self.eof() {
+            return Ok(None);
+        }
+
         let current = self.token()?;
 
-        match self.peek(kind)? {
+        match current.kind == kind {
             true => {
                 self.skip()?;
 
@@ -672,7 +698,8 @@ impl<'a> Parser<'a> {
     /// Parses some abstract statement at the current cursor position.
     fn statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
-            TokenKind::Let => self.variable_declaration(),
+            TokenKind::Let | TokenKind::Const => self.variable_declaration(),
+            TokenKind::If | TokenKind::Unless => self.conditional(),
             TokenKind::Return => self.return_statement(),
             kind => Err(err!(self, InvalidStatement, actual, kind)),
         }
@@ -680,7 +707,10 @@ impl<'a> Parser<'a> {
 
     /// Parses a variable declaration statement at the current cursor position.
     fn variable_declaration(&mut self) -> Result<Statement> {
-        self.consume(TokenKind::Let)?;
+        let is_const = self.peek(TokenKind::Const)?;
+
+        // Whatever the token is, consume it.
+        self.consume_any()?;
 
         let name = self.identifier()?;
         let variable_type = if self.consume_if(TokenKind::Colon)?.is_some() {
@@ -697,9 +727,102 @@ impl<'a> Parser<'a> {
             name,
             variable_type,
             value,
+            is_const,
         };
 
         Ok(Statement::VariableDeclaration(Box::new(variable)))
+    }
+
+    /// Parses a conditional statement at the current cursor position.
+    fn conditional(&mut self) -> Result<Statement> {
+        match self.token()?.kind {
+            TokenKind::If => self.if_conditional(),
+            TokenKind::Unless => self.unless_conditional(),
+            _ => return Err(err!(self, ExpectedIdentifier)),
+        }
+    }
+
+    /// Parses an "if" conditional statement at the current cursor position.
+    fn if_conditional(&mut self) -> Result<Statement> {
+        self.consume(TokenKind::If)?;
+
+        let mut conditional = IfCondition { cases: Vec::new() };
+
+        // Append the primary case
+        self.conditional_case(&mut conditional.cases)?;
+
+        // Append the `else if` case
+        self.else_if_conditional_cases(&mut conditional.cases)?;
+
+        // Append the `else` case
+        self.else_conditional_case(&mut conditional.cases)?;
+
+        Ok(Statement::If(Box::new(conditional)))
+    }
+
+    /// Parses an "unless" conditional statement at the current cursor position.
+    fn unless_conditional(&mut self) -> Result<Statement> {
+        self.consume(TokenKind::Unless)?;
+
+        let mut conditional = UnlessCondition { cases: Vec::new() };
+
+        // Append the primary case
+        self.conditional_case(&mut conditional.cases)?;
+
+        // Moan if any `else if` blocks are found
+        if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If, 1)? {
+            return Err(err!(self, UnlessElseIfClause));
+        }
+
+        // Append the `else` case
+        self.else_conditional_case(&mut conditional.cases)?;
+
+        Ok(Statement::Unless(Box::new(conditional)))
+    }
+
+    /// Parses a case within a conditional statement at the current cursor position.
+    fn conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        let condition = self.expression()?;
+        let block = self.block()?;
+
+        let case = Condition {
+            condition: Some(condition),
+            block,
+        };
+
+        cases.push(case);
+
+        Ok(())
+    }
+
+    /// Parses zero-or-more `else-if` cases within a conditional statement at the current cursor position.
+    fn else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        loop {
+            if !self.peek(TokenKind::Else)? || !self.peek_next(TokenKind::If, 1)? {
+                break;
+            }
+
+            self.consume(TokenKind::Else)?;
+            self.consume(TokenKind::If)?;
+
+            self.conditional_case(cases)?;
+        }
+
+        Ok(())
+    }
+
+    /// Parses zero-or-one `else` cases within a conditional statement at the current cursor position.
+    fn else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        if self.consume_if(TokenKind::Else)?.is_none() {
+            return Ok(());
+        }
+
+        let block = self.block()?;
+        let case = Condition { condition: None, block };
+
+        cases.push(case);
+
+        Ok(())
     }
 
     /// Parses a return statement at the current cursor position.
@@ -958,7 +1081,7 @@ mod tests {
         NamedSource::new("<test>".into(), input.into())
     }
 
-    fn module(input: &str) -> Module {
+    fn module_from(input: &str) -> Module {
         let source = source(input);
         let module = Module::new(source);
 
@@ -966,7 +1089,7 @@ mod tests {
     }
 
     fn parse(input: &str) -> Vec<TopLevelExpression> {
-        let mut module = module(input);
+        let mut module = module_from(input);
         let mut parser = Parser::new(&mut module);
 
         parser.parse_module().unwrap();
@@ -975,10 +1098,22 @@ mod tests {
     }
 
     fn parse_err(input: &str) -> Error {
-        let mut module = module(input);
+        let mut module = module_from(input);
         let mut parser = Parser::new(&mut module);
 
         parser.parse_module().unwrap_err()
+    }
+
+    fn parse_expr(input: &str) -> Vec<TopLevelExpression> {
+        let source = format!("fn main() -> void {{ {0} }}", input);
+
+        parse(&source)
+    }
+
+    fn parse_expr_err(input: &str) -> Error {
+        let source = format!("fn main() -> void {{ {0} }}", input);
+
+        parse_err(&source)
     }
 
     macro_rules! assert_module_eq {
@@ -1000,6 +1135,93 @@ mod tests {
             let error = parse_err($input);
 
             assert_eq!(error.message(), $message)
+        };
+    }
+
+    macro_rules! assert_expr_eq {
+        (
+            $input: expr,
+            $expression: expr
+        ) => {
+            let parsed = parse_expr($input);
+
+            let expected = TopLevelExpression::FunctionDefinition(Box::new(FunctionDefinition {
+                visibility: Visibility::Private(Box::new(Private {})),
+                external: false,
+                name: Identifier::from("main".to_string()),
+                parameters: vec![],
+                return_type: Box::new(Type::Scalar(Box::new(ScalarType {
+                    name: "void".to_owned(),
+                }))),
+                block: Block {
+                    statements: vec![$expression],
+                },
+            }));
+
+            assert_eq!(parsed, vec![expected])
+        };
+    }
+
+    macro_rules! assert_expr_err_eq {
+        (
+            $input: expr,
+            $message: expr
+        ) => {
+            let error = parse_expr_err($input);
+
+            assert_eq!(error.message(), $message)
+        };
+    }
+
+    macro_rules! set_snapshot_suffix {
+        ($($expr:expr),*) => {
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_suffix(format!($($expr,)*));
+            let _guard = settings.bind_to_scope();
+        }
+    }
+
+    macro_rules! assert_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(parse($input));
+        };
+    }
+
+    macro_rules! assert_err_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(parse_err($input));
+        };
+    }
+
+    macro_rules! assert_expr_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(parse_expr($input));
+        };
+    }
+
+    macro_rules! assert_expr_err_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(parse_expr_err($input));
         };
     }
 
@@ -1049,5 +1271,160 @@ mod tests {
 
         assert_err_eq!("import std.io.", "Expected identifier");
         assert_err_eq!("import .std.io", "Expected identifier");
+    }
+
+    #[test]
+    fn test_function_definition_snapshots() {
+        assert_snap_eq!("fn main() -> void {}", "empty");
+        assert_snap_eq!("fn main() -> void { let a = 0 }", "statement");
+        assert_snap_eq!("fn main() -> void { let a = 0 let b = 1 }", "statements");
+        assert_err_snap_eq!("fn main() {}", "no_return_type");
+        assert_snap_eq!("fn main(argc: u8) -> void { }", "parameter");
+        assert_snap_eq!("fn main(argc: u8, arcv: [String]) -> void { }", "parameters");
+        assert_snap_eq!("fn external main() -> void", "external");
+        assert_err_snap_eq!("fn external main() -> void {}", "external_body");
+        assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
+    }
+
+    #[test]
+    fn test_conditional_if() {
+        assert_expr_eq!(
+            "if true { }",
+            Statement::If(Box::new(IfCondition {
+                cases: vec![Condition {
+                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                        BooleanLiteral { value: true }
+                    ))))),
+                    block: Block { statements: vec![] }
+                }]
+            }))
+        );
+
+        assert_expr_eq!(
+            "if true { let a = 1 }",
+            Statement::If(Box::new(IfCondition {
+                cases: vec![Condition {
+                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                        BooleanLiteral { value: true }
+                    ))))),
+                    block: Block {
+                        statements: vec![Statement::VariableDeclaration(Box::new(VariableDeclaration {
+                            name: Identifier::from("a".to_string()),
+                            variable_type: None,
+                            value: Expression::Literal(Box::new(Literal::Int(Box::new(IntLiteral { value: 1 })))),
+                            is_const: false
+                        }))]
+                    }
+                }]
+            }))
+        );
+
+        assert_expr_eq!(
+            "if true { } else if false { }",
+            Statement::If(Box::new(IfCondition {
+                cases: vec![
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: true }
+                        ))))),
+                        block: Block::empty()
+                    },
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: false }
+                        ))))),
+                        block: Block::empty()
+                    }
+                ]
+            }))
+        );
+
+        assert_expr_eq!(
+            "if true { } else { }",
+            Statement::If(Box::new(IfCondition {
+                cases: vec![
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: true }
+                        ))))),
+                        block: Block::empty()
+                    },
+                    Condition {
+                        condition: None,
+                        block: Block::empty()
+                    }
+                ]
+            }))
+        );
+
+        assert_expr_eq!(
+            "if true { } else if false { } else { }",
+            Statement::If(Box::new(IfCondition {
+                cases: vec![
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: true }
+                        ))))),
+                        block: Block::empty()
+                    },
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: false }
+                        ))))),
+                        block: Block::empty()
+                    },
+                    Condition {
+                        condition: None,
+                        block: Block::empty()
+                    }
+                ]
+            }))
+        );
+
+        assert_expr_eq!(
+            "unless true { }",
+            Statement::Unless(Box::new(UnlessCondition {
+                cases: vec![Condition {
+                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                        BooleanLiteral { value: true }
+                    ))))),
+                    block: Block { statements: vec![] }
+                }]
+            }))
+        );
+
+        assert_expr_eq!(
+            "unless true { } else { }",
+            Statement::Unless(Box::new(UnlessCondition {
+                cases: vec![
+                    Condition {
+                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
+                            BooleanLiteral { value: true }
+                        ))))),
+                        block: Block { statements: vec![] }
+                    },
+                    Condition {
+                        condition: None,
+                        block: Block { statements: vec![] }
+                    }
+                ]
+            }))
+        );
+
+        assert_expr_err_eq!("unless true { } else if false { }", "Unexpected `else if` clause");
+    }
+
+    #[test]
+    fn test_conditional_snapshots() {
+        assert_expr_snap_eq!("if a == 1 { }", "conditional_equality_empty");
+        assert_expr_snap_eq!("if a != 1 { }", "conditional_inequality_empty");
+        assert_expr_snap_eq!("if true { let a = 0 }", "conditional_if_statement");
+        assert_expr_snap_eq!("if true { let a = 0 let b = 0 }", "conditional_if_statements");
+        assert_expr_snap_eq!(
+            "if true { let a = 0 } else if false { let a = 0 }",
+            "conditional_else_if_statements"
+        );
+        assert_expr_snap_eq!("unless true { let a = 0 }", "conditional_unless_statement");
+        assert_expr_err_snap_eq!("unless true { } else if false {}", "unless_else_if");
     }
 }

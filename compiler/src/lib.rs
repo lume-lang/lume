@@ -10,7 +10,7 @@ use diag::{Result, source::NamedSource};
 
 use crate::parser::Parser;
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Module {
     /// Defines the source file for the module.
     source: NamedSource,
@@ -29,7 +29,7 @@ impl Module {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct State {
     /// Defines the source files to compile.
     modules: Vec<Module>,
@@ -57,6 +57,21 @@ impl State {
         };
 
         Ok(state)
+    }
+
+    /// Print a human-readable representation of the state to the console.
+    pub fn inspect(&self) {
+        let config = ron::ser::PrettyConfig::default();
+
+        let repr = match ron::ser::to_string_pretty(self, config) {
+            Ok(r) => r,
+            Err(err) => {
+                eprintln!("Failed to serialize state object: {:?}", err);
+                return;
+            }
+        };
+
+        println!("{}", repr);
     }
 }
 

@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
 }
@@ -9,25 +9,25 @@ impl Block {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum Visibility {
     Public(Box<Public>),
     Private(Box<Private>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Public {}
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Private {}
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum TopLevelExpression {
     Import(Box<Import>),
     Class(Box<ClassDefinition>),
@@ -35,25 +35,25 @@ pub enum TopLevelExpression {
     TypeDefinition(Box<TypeDefinition>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Import {
     pub path: IdentifierPath,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct ClassDefinition {
     pub name: Identifier,
     pub builtin: bool,
     pub members: Vec<ClassMember>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum ClassMember {
     Property(Box<Property>),
     MethodDefinition(Box<MethodDefinition>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Property {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -61,7 +61,7 @@ pub struct Property {
     pub default_value: Option<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -71,7 +71,7 @@ pub struct MethodDefinition {
     pub block: Block,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -81,50 +81,69 @@ pub struct FunctionDefinition {
     pub block: Block,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub name: Identifier,
 
     pub parameters: Vec<Box<Type>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct AliasDefinition {
     pub name: Identifier,
     pub definition: Box<Type>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
+    If(Box<IfCondition>),
+    Unless(Box<UnlessCondition>),
     Return(Box<Return>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
     pub value: Expression,
+    pub is_const: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct IfCondition {
+    pub cases: Vec<Condition>,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct UnlessCondition {
+    pub cases: Vec<Condition>,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct Condition {
+    pub condition: Option<Expression>,
+    pub block: Block,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Return {
     pub value: Expression,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum Expression {
     Assignment(Box<Assignment>),
     Call(Box<Call>),
@@ -134,13 +153,13 @@ pub enum Expression {
     Variable(Box<Variable>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub target: Expression,
     pub value: Expression,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Call {
     pub callee: Option<Expression>,
     pub name: Identifier,
@@ -159,7 +178,7 @@ impl Call {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Identifier {
     pub name: String,
 }
@@ -176,7 +195,7 @@ impl std::fmt::Display for Identifier {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct IdentifierPath {
     pub path: Vec<Identifier>,
 }
@@ -194,7 +213,7 @@ impl std::fmt::Display for IdentifierPath {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum Literal {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -202,55 +221,65 @@ pub enum Literal {
     Boolean(Box<BooleanLiteral>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub value: i64,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
     pub value: f64,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
     pub value: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub value: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Member {
     pub callee: Expression,
     pub name: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub name: Identifier,
 }
 
-#[derive(Debug, PartialEq)]
+impl From<&str> for Variable {
+    fn from(value: &str) -> Variable {
+        let ident = Identifier {
+            name: value.to_string(),
+        };
+
+        Variable { name: ident }
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
     Generic(Box<GenericType>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct ScalarType {
     pub name: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct GenericType {
     pub element_types: Vec<Box<Type>>,
 }
