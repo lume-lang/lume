@@ -274,6 +274,14 @@ impl From<std::io::Error> for Box<dyn Diagnostic + Send + Sync> {
     }
 }
 
+impl std::cmp::PartialEq for Box<dyn Diagnostic + Send + Sync> {
+    fn eq(&self, other: &Self) -> bool {
+        self.message() == other.message()
+    }
+}
+
+impl std::cmp::Eq for Box<dyn Diagnostic + Send + Sync> {}
+
 /// Adds metadata to some error or diagnostic, which should be reported to the user.
 ///
 /// This struct is used to provide additional information about an error or diagnostic,

@@ -28,6 +28,13 @@ const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Dot, 9),
 ];
 
+/// Defines the precedence for unary operators, such as `-` or `!`.
+///
+/// They cannot be defined within [`OPERATOR_PRECEDENCE`], as unary operators
+/// share the same operators as other operators, but have different meanings.
+///
+/// For example, `-` can mean both "minus some amount", but when it's within it's own
+/// expression before a number expression, it'd mean "the negative of the following expression".
 const UNARY_PRECEDENCE: u8 = 3;
 
 impl Token {
@@ -104,7 +111,7 @@ impl<'a> Parser<'a> {
     /// parsing each top-level expression and collecting them into a vector.
     fn parse_module(&mut self) -> Result<()> {
         loop {
-            if self.lexer.is_eof() {
+            if self.lexer.is_eof() || self.token()?.kind == TokenKind::Eof {
                 break;
             }
 
@@ -219,10 +226,34 @@ impl<'a> Parser<'a> {
 
     /// Parses the next token as an identifier.
     fn identifier(&mut self) -> Result<Identifier> {
-        let name = self.consume(TokenKind::Identifier)?.value.unwrap();
+        let name = match self.consume(TokenKind::Identifier) {
+            Ok(identifier) => identifier.value.unwrap(),
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
         let identifier = Identifier { name };
 
         Ok(identifier)
+    }
+
+    /// Parses the next token(s) as an identifier path.
+    ///
+    /// Identifier paths are much like regular identifiers, but can be joined together
+    /// with periods, to form longer chains of them. They can be as short as a single
+    /// link, such as `std`, but they can also be longer, such as `std.fmt.error`.
+    fn identifier_path(&mut self) -> Result<IdentifierPath> {
+        let mut path = IdentifierPath { path: Vec::new() };
+
+        loop {
+            let segment = self.identifier()?;
+            path.path.push(segment);
+
+            if self.consume_if(TokenKind::Dot)?.is_none() {
+                break;
+            }
+        }
+
+        Ok(path)
     }
 
     fn block(&mut self) -> Result<Block> {
@@ -268,12 +299,12 @@ impl<'a> Parser<'a> {
     fn import(&mut self) -> Result<TopLevelExpression> {
         self.consume(TokenKind::Import)?;
 
-        let name = match self.identifier() {
+        let path = match self.identifier_path() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedIdentifier)),
         };
 
-        let import_def = Import { name };
+        let import_def = Import { path };
 
         Ok(TopLevelExpression::Import(Box::new(import_def)))
     }
@@ -915,5 +946,108 @@ impl<'a> Parser<'a> {
         }
 
         Ok(right)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use diag::{Error, source::NamedSource};
+
+    fn source(input: &str) -> NamedSource {
+        NamedSource::new("<test>".into(), input.into())
+    }
+
+    fn module(input: &str) -> Module {
+        let source = source(input);
+        let module = Module::new(source);
+
+        module
+    }
+
+    fn parse(input: &str) -> Vec<TopLevelExpression> {
+        let mut module = module(input);
+        let mut parser = Parser::new(&mut module);
+
+        parser.parse_module().unwrap();
+
+        module.expressions
+    }
+
+    fn parse_err(input: &str) -> Error {
+        let mut module = module(input);
+        let mut parser = Parser::new(&mut module);
+
+        parser.parse_module().unwrap_err()
+    }
+
+    macro_rules! assert_module_eq {
+        (
+            $input: expr,
+            $expression: expr
+        ) => {
+            let parsed = parse($input);
+
+            assert_eq!(parsed, $expression)
+        };
+    }
+
+    macro_rules! assert_err_eq {
+        (
+            $input: expr,
+            $message: expr
+        ) => {
+            let error = parse_err($input);
+
+            assert_eq!(error.message(), $message)
+        };
+    }
+
+    #[test]
+    fn test_empty_module() {
+        assert_module_eq!("", vec![]);
+    }
+
+    #[test]
+    fn test_whitespace_module() {
+        assert_module_eq!("    ", vec![]);
+    }
+
+    #[test]
+    fn test_newline_module() {
+        assert_module_eq!("\n\n    \n", vec![]);
+    }
+
+    #[test]
+    fn test_imports() {
+        assert_module_eq!(
+            "import std",
+            vec![TopLevelExpression::Import(Box::new(Import {
+                path: IdentifierPath {
+                    path: vec![Identifier { name: "std".into() }]
+                }
+            }))]
+        );
+
+        assert_module_eq!(
+            "import std.io",
+            vec![TopLevelExpression::Import(Box::new(Import {
+                path: IdentifierPath {
+                    path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
+                }
+            }))]
+        );
+
+        assert_module_eq!(
+            "import std.io",
+            vec![TopLevelExpression::Import(Box::new(Import {
+                path: IdentifierPath {
+                    path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
+                }
+            }))]
+        );
+
+        assert_err_eq!("import std.io.", "Expected identifier");
+        assert_err_eq!("import .std.io", "Expected identifier");
     }
 }

@@ -57,6 +57,7 @@ pub enum TokenKind {
     String,
     Sub,
     SubAssign,
+    Trait,
     True,
     Type,
     Unless,
@@ -105,6 +106,7 @@ impl TokenKind {
                 | TokenKind::RightParen
                 | TokenKind::Sub
                 | TokenKind::SubAssign
+                | TokenKind::Trait
                 | TokenKind::True
                 | TokenKind::Type
                 | TokenKind::Unless
@@ -197,6 +199,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::String => "string",
             TokenKind::Sub => "-",
             TokenKind::SubAssign => "-=",
+            TokenKind::Trait => "trait",
             TokenKind::True => "true",
             TokenKind::Type => "type",
             TokenKind::Unless => "unless",
@@ -425,6 +428,7 @@ impl Lexer {
             "type" => Token::empty(TokenKind::Type),
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
+            "trait" => Token::empty(TokenKind::Trait),
             "true" => Token::empty(TokenKind::True),
             "false" => Token::empty(TokenKind::False),
             "unless" => Token::empty(TokenKind::Unless),

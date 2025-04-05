@@ -37,7 +37,7 @@ pub enum TopLevelExpression {
 
 #[derive(Debug, PartialEq)]
 pub struct Import {
-    pub name: Identifier,
+    pub path: IdentifierPath,
 }
 
 #[derive(Debug, PartialEq)]
@@ -167,6 +167,30 @@ pub struct Identifier {
 impl From<String> for Identifier {
     fn from(name: String) -> Self {
         Identifier { name }
+    }
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct IdentifierPath {
+    pub path: Vec<Identifier>,
+}
+
+impl std::fmt::Display for IdentifierPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let joined = self
+            .path
+            .iter()
+            .map(|i| i.name.as_str())
+            .collect::<Vec<&str>>()
+            .join(".");
+
+        f.write_str(&joined)
     }
 }
 
