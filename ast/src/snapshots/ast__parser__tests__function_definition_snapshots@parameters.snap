@@ -1,5 +1,5 @@
 ---
-source: compiler/src/parser.rs
+source: ast/src/parser.rs
 expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
 ---
 [

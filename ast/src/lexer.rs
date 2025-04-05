@@ -1,8 +1,8 @@
 use std::ops::Range;
 
-use crate::NamedSource;
 use crate::parser::errors::*;
 use diag::Result;
+use diag::source::NamedSource;
 
 const SYMBOLS: &[char] = &[
     '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':',

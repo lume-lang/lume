@@ -37,6 +37,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ast"
+version = "0.1.0"
+dependencies = [
+ "diag",
+ "diag_macros",
+ "insta",
+ "serde",
+]
+
+[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -76,6 +86,7 @@ name = "compiler"
 version = "0.1.0"
 dependencies = [
  "arc",
+ "ast",
  "diag",
  "diag_macros",
  "insta",

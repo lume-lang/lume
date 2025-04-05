@@ -1,5 +1,5 @@
 ---
-source: compiler/src/parser.rs
+source: ast/src/parser.rs
 expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
 ---
 [

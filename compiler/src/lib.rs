@@ -1,14 +1,9 @@
-mod ast;
-pub mod lexer;
-mod parser;
-
 use std::path::{Path, PathBuf};
 
 use arc::Project;
-use ast::TopLevelExpression;
+use ast::ast::TopLevelExpression;
+use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
-
-use crate::parser::Parser;
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Module {
@@ -153,7 +148,12 @@ impl Driver {
 
     /// Parses all the modules within the given state object.
     fn parse(&mut self, state: &mut State) -> Result<()> {
-        Parser::parse(state)
+        for module in state.modules.iter_mut() {
+            let source = module.source.clone();
+            module.expressions = Parser::new(source).parse()?;
+        }
+
+        Ok(())
     }
 
     /// Analyzes all the modules within the given state object.

@@ -1,6 +1,6 @@
 ---
-source: compiler/src/parser.rs
-expression: "parse_expr(\"unless true { let a = 0 }\")"
+source: ast/src/parser.rs
+expression: "parse_expr(\"if true { let a = 0 }\")"
 ---
 [
     FunctionDefinition(
@@ -20,8 +20,8 @@ expression: "parse_expr(\"unless true { let a = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    Unless(
-                        UnlessCondition {
+                    If(
+                        IfCondition {
                             cases: [
                                 Condition {
                                     condition: Some(

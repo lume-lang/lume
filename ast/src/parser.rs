@@ -1,9 +1,9 @@
 use diag::Result;
+use diag::source::NamedSource;
 
 use crate::ast::*;
 use crate::lexer::*;
 use crate::parser::errors::*;
-use crate::{Module, State};
 
 pub mod errors;
 
@@ -49,9 +49,9 @@ impl Token {
     }
 }
 
-pub struct Parser<'a> {
-    /// Defines the module which is being parsed.
-    module: &'a mut Module,
+pub struct Parser {
+    /// Defines the source code which is being parsed.
+    source: NamedSource,
 
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
@@ -76,7 +76,7 @@ macro_rules! err {
         ),*
     ) => {
         $kind {
-            source: $self.module.source.clone(),
+            source: $self.source.clone(),
             range: match $self.tokens.get($self.index) {
                 Some(token) => token.index.clone(),
                 None => (0..$self.index)
@@ -87,12 +87,12 @@ macro_rules! err {
     };
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(module: &'a mut Module) -> Self {
-        let lexer = Lexer::new(module.source.clone());
+impl Parser {
+    pub fn new(source: NamedSource) -> Self {
+        let lexer = Lexer::new(source.clone());
 
         Parser {
-            module,
+            source,
             lexer,
             index: 0,
             position: 0,
@@ -100,21 +100,25 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// Parses all the modules within the given state.
-    pub fn parse(state: &mut State) -> Result<()> {
-        for module in &mut state.modules {
-            let mut parser = Parser::new(module);
-            parser.parse_module()?;
-        }
+    /// Creates a new [`Parser`] from a string.
+    pub fn from_str(source: &'static str) -> Self {
+        let source = NamedSource::new("<empty>".into(), source.into());
 
-        Ok(())
+        Parser::new(source)
+    }
+
+    /// Creates a new [`Parser`] from a string.
+    pub fn from_string(source: String) -> Self {
+        let source = NamedSource::new("<empty>".into(), source);
+
+        Parser::new(source)
     }
 
     /// Parses the module within the parser state.
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    fn parse_module(&mut self) -> Result<()> {
+    pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
         // Pre-tokenize the input source text.
         loop {
             let token = self.lexer.next_token()?;
@@ -128,16 +132,17 @@ impl<'a> Parser<'a> {
             self.tokens.push(token);
         }
 
+        let mut expressions = Vec::new();
+
         loop {
             if self.eof() {
                 break;
             }
 
-            let expression = self.top_level_expression()?;
-            self.module.expressions.push(expression);
+            expressions.push(self.top_level_expression()?);
         }
 
-        Ok(())
+        Ok(expressions)
     }
 
     /// Determines whether the parser has reached the end-of-file.
@@ -1081,27 +1086,16 @@ mod tests {
         NamedSource::new("<test>".into(), input.into())
     }
 
-    fn module_from(input: &str) -> Module {
-        let source = source(input);
-        let module = Module::new(source);
-
-        module
-    }
-
     fn parse(input: &str) -> Vec<TopLevelExpression> {
-        let mut module = module_from(input);
-        let mut parser = Parser::new(&mut module);
+        let mut parser = Parser::new(source(input));
 
-        parser.parse_module().unwrap();
-
-        module.expressions
+        parser.parse().unwrap()
     }
 
     fn parse_err(input: &str) -> Error {
-        let mut module = module_from(input);
-        let mut parser = Parser::new(&mut module);
+        let mut parser = Parser::new(source(input));
 
-        parser.parse_module().unwrap_err()
+        parser.parse().unwrap_err()
     }
 
     fn parse_expr(input: &str) -> Vec<TopLevelExpression> {
@@ -1242,8 +1236,8 @@ mod tests {
 
     #[test]
     fn test_imports() {
-        assert_module_eq!(
-            "import std",
+        assert_eq!(
+            Parser::from_str("import std").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![Identifier { name: "std".into() }]
@@ -1251,8 +1245,8 @@ mod tests {
             }))]
         );
 
-        assert_module_eq!(
-            "import std.io",
+        assert_eq!(
+            Parser::from_str("import std.io").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
@@ -1260,8 +1254,8 @@ mod tests {
             }))]
         );
 
-        assert_module_eq!(
-            "import std.io",
+        assert_eq!(
+            Parser::from_str("import std.io").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
@@ -1416,15 +1410,15 @@ mod tests {
 
     #[test]
     fn test_conditional_snapshots() {
-        assert_expr_snap_eq!("if a == 1 { }", "conditional_equality_empty");
-        assert_expr_snap_eq!("if a != 1 { }", "conditional_inequality_empty");
-        assert_expr_snap_eq!("if true { let a = 0 }", "conditional_if_statement");
-        assert_expr_snap_eq!("if true { let a = 0 let b = 0 }", "conditional_if_statements");
+        assert_expr_snap_eq!("if a == 1 { }", "equality_empty");
+        assert_expr_snap_eq!("if a != 1 { }", "inequality_empty");
+        assert_expr_snap_eq!("if true { let a = 0 }", "if_statement");
+        assert_expr_snap_eq!("if true { let a = 0 let b = 0 }", "if_statements");
         assert_expr_snap_eq!(
             "if true { let a = 0 } else if false { let a = 0 }",
-            "conditional_else_if_statements"
+            "else_if_statements"
         );
-        assert_expr_snap_eq!("unless true { let a = 0 }", "conditional_unless_statement");
+        assert_expr_snap_eq!("unless true { let a = 0 }", "unless_statement");
         assert_expr_err_snap_eq!("unless true { } else if false {}", "unless_else_if");
     }
 }

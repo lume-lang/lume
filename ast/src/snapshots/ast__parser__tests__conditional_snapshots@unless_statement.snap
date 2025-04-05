@@ -1,6 +1,6 @@
 ---
-source: compiler/src/parser.rs
-expression: "parse_expr(\"if true { let a = 0 let b = 0 }\")"
+source: ast/src/parser.rs
+expression: "parse_expr(\"unless true { let a = 0 }\")"
 ---
 [
     FunctionDefinition(
@@ -20,8 +20,8 @@ expression: "parse_expr(\"if true { let a = 0 let b = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    If(
-                        IfCondition {
+                    Unless(
+                        UnlessCondition {
                             cases: [
                                 Condition {
                                     condition: Some(
@@ -39,22 +39,6 @@ expression: "parse_expr(\"if true { let a = 0 let b = 0 }\")"
                                                 VariableDeclaration {
                                                     name: Identifier {
                                                         name: "a",
-                                                    },
-                                                    variable_type: None,
-                                                    value: Literal(
-                                                        Int(
-                                                            IntLiteral {
-                                                                value: 0,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    is_const: false,
-                                                },
-                                            ),
-                                            VariableDeclaration(
-                                                VariableDeclaration {
-                                                    name: Identifier {
-                                                        name: "b",
                                                     },
                                                     variable_type: None,
                                                     value: Literal(
