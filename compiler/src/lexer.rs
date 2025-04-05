@@ -15,11 +15,14 @@ pub enum TokenKind {
     And,
     Arrow,
     Assign,
+    Break,
     Builtin,
     Class,
     Colon,
     Comma,
     Comment,
+    Const,
+    Continue,
     Decrement,
     Div,
     DivAssign,
@@ -32,6 +35,7 @@ pub enum TokenKind {
     False,
     Fn,
     Float,
+    For,
     Greater,
     GreaterEqual,
     Identifier,
@@ -45,6 +49,7 @@ pub enum TokenKind {
     Less,
     LessEqual,
     Let,
+    Loop,
     Mul,
     MulAssign,
     NotEqual,
@@ -61,6 +66,7 @@ pub enum TokenKind {
     True,
     Type,
     Unless,
+    While,
     Whitespace,
 }
 
@@ -73,9 +79,12 @@ impl TokenKind {
                 | TokenKind::And
                 | TokenKind::Arrow
                 | TokenKind::Assign
+                | TokenKind::Break
                 | TokenKind::Class
                 | TokenKind::Colon
                 | TokenKind::Comma
+                | TokenKind::Const
+                | TokenKind::Continue
                 | TokenKind::Decrement
                 | TokenKind::Div
                 | TokenKind::DivAssign
@@ -85,6 +94,7 @@ impl TokenKind {
                 | TokenKind::External
                 | TokenKind::False
                 | TokenKind::Fn
+                | TokenKind::For
                 | TokenKind::Greater
                 | TokenKind::GreaterEqual
                 | TokenKind::If
@@ -95,6 +105,7 @@ impl TokenKind {
                 | TokenKind::LeftParen
                 | TokenKind::Less
                 | TokenKind::LessEqual
+                | TokenKind::Loop
                 | TokenKind::Mul
                 | TokenKind::MulAssign
                 | TokenKind::NotEqual
@@ -110,6 +121,7 @@ impl TokenKind {
                 | TokenKind::True
                 | TokenKind::Type
                 | TokenKind::Unless
+                | TokenKind::While
                 | TokenKind::Whitespace
         )
     }
@@ -157,11 +169,14 @@ impl Into<&'static str> for TokenKind {
             TokenKind::And => "&",
             TokenKind::Arrow => "->",
             TokenKind::Assign => "=",
+            TokenKind::Break => "break",
             TokenKind::Builtin => "builtin",
             TokenKind::Class => "class",
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
             TokenKind::Comment => "comment",
+            TokenKind::Const => "const",
+            TokenKind::Continue => "continue",
             TokenKind::Decrement => "--",
             TokenKind::Div => "/",
             TokenKind::DivAssign => "/=",
@@ -174,6 +189,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::False => "false",
             TokenKind::Fn => "fn",
             TokenKind::Float => "float",
+            TokenKind::For => "for",
             TokenKind::Greater => ">",
             TokenKind::GreaterEqual => ">=",
             TokenKind::If => "if",
@@ -186,6 +202,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Less => "<",
             TokenKind::LessEqual => "<=",
             TokenKind::Let => "let",
+            TokenKind::Loop => "loop",
             TokenKind::Mul => "*",
             TokenKind::MulAssign => "*=",
             TokenKind::NotEqual => "!=",
@@ -203,6 +220,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::True => "true",
             TokenKind::Type => "type",
             TokenKind::Unless => "unless",
+            TokenKind::While => "while",
             TokenKind::Whitespace => "whitespace",
         }
     }
@@ -417,14 +435,19 @@ impl Lexer {
         let content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
 
         match content.as_str() {
+            "break" => Token::empty(TokenKind::Break),
             "builtin" => Token::empty(TokenKind::Builtin),
             "class" => Token::empty(TokenKind::Class),
+            "const" => Token::empty(TokenKind::Const),
+            "continue" => Token::empty(TokenKind::Continue),
             "enum" => Token::empty(TokenKind::Enum),
             "external" => Token::empty(TokenKind::External),
             "fn" => Token::empty(TokenKind::Fn),
+            "for" => Token::empty(TokenKind::For),
             "if" => Token::empty(TokenKind::If),
             "import" => Token::empty(TokenKind::Import),
             "let" => Token::empty(TokenKind::Let),
+            "loop" => Token::empty(TokenKind::Loop),
             "type" => Token::empty(TokenKind::Type),
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
@@ -432,6 +455,7 @@ impl Lexer {
             "true" => Token::empty(TokenKind::True),
             "false" => Token::empty(TokenKind::False),
             "unless" => Token::empty(TokenKind::Unless),
+            "while" => Token::empty(TokenKind::While),
             _ => Token::new(TokenKind::Identifier, content),
         }
     }
@@ -712,15 +736,21 @@ mod tests {
 
     #[test]
     fn test_keywords_map() {
+        assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
+        assert_token!("const", TokenKind::Const, None::<String>, 0, 5);
+        assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);
         assert_token!("external", TokenKind::External, None::<String>, 0, 8);
+        assert_token!("for", TokenKind::For, None::<String>, 0, 3);
         assert_token!("if", TokenKind::If, None::<String>, 0, 2);
         assert_token!("fn", TokenKind::Fn, None::<String>, 0, 2);
         assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
+        assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
         assert_token!("unless", TokenKind::Unless, None::<String>, 0, 6);
+        assert_token!("while", TokenKind::While, None::<String>, 0, 5);
     }
 
     #[test]
