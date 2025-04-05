@@ -257,10 +257,25 @@ impl<'a> Parser<'a> {
         let current = self.token()?;
 
         match current.kind {
+            TokenKind::Import => self.import(),
             TokenKind::Class => self.class(),
             TokenKind::Fn | TokenKind::Pub => self.function(),
+            TokenKind::Enum | TokenKind::Type => self.type_definition(),
             _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
         }
+    }
+
+    fn import(&mut self) -> Result<TopLevelExpression> {
+        self.consume(TokenKind::Import)?;
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        let import_def = Import { name };
+
+        Ok(TopLevelExpression::Import(Box::new(import_def)))
     }
 
     fn class(&mut self) -> Result<TopLevelExpression> {
@@ -448,6 +463,104 @@ impl<'a> Parser<'a> {
         Ok(Parameter { name, param_type })
     }
 
+    fn type_definition(&mut self) -> Result<TopLevelExpression> {
+        let def = match self.token()?.kind {
+            TokenKind::Enum => self.enum_definition()?,
+            TokenKind::Type => self.type_alias_definition()?,
+            _ => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        Ok(TopLevelExpression::TypeDefinition(Box::new(def)))
+    }
+
+    /// Parses a single enum type definition, such as:
+    ///
+    /// ```ignore
+    /// enum IpAddrKind {
+    ///   V4,
+    ///   V6,
+    /// }
+    /// ```
+    fn enum_definition(&mut self) -> Result<TypeDefinition> {
+        self.consume(TokenKind::Enum)?;
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        self.consume(TokenKind::LeftCurly)?;
+
+        let mut cases = Vec::new();
+        while !self.peek(TokenKind::RightCurly)? {
+            cases.push(self.enum_case_definition()?);
+
+            // If there's no comma on the last line, the enum case is done.
+            if self.consume_if(TokenKind::Comma)?.is_none() {
+                break;
+            }
+        }
+
+        self.consume(TokenKind::RightCurly)?;
+
+        Ok(TypeDefinition::Enum(Box::new(EnumDefinition { name, cases })))
+    }
+
+    /// Parses a single enum type case, such as `V4` or `V4(String)`.
+    fn enum_case_definition(&mut self) -> Result<EnumDefinitionCase> {
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        let parameters = if self.consume_if(TokenKind::LeftParen)?.is_some() {
+            let mut params = Vec::new();
+
+            while !self.peek(TokenKind::RightParen)? {
+                params.push(Box::new(self.parse_type()?));
+
+                // If there's no comma on the last line, the enum case parameters are done.
+                if self.consume_if(TokenKind::Comma)?.is_none() {
+                    break;
+                }
+            }
+
+            self.consume(TokenKind::RightParen)?;
+
+            params
+        } else {
+            Vec::new()
+        };
+
+        Ok(EnumDefinitionCase { name, parameters })
+    }
+
+    /// Parses a single type alias definition, such as:
+    ///
+    /// ```ignore
+    /// type Alias = String | Int
+    /// ```
+    fn type_alias_definition(&mut self) -> Result<TypeDefinition> {
+        self.consume(TokenKind::Type)?;
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        // Skip equal sign between name and type
+        self.consume(TokenKind::Assign)?;
+
+        let definition = self.parse_type()?;
+
+        let alias = AliasDefinition {
+            name,
+            definition: Box::new(definition),
+        };
+
+        Ok(TypeDefinition::Alias(Box::new(alias)))
+    }
+
     fn arguments(&mut self) -> Result<Vec<Expression>> {
         // If no opening parenthesis, no arguments are defined.
         if !self.peek(TokenKind::LeftParen)? {
@@ -476,7 +589,6 @@ impl<'a> Parser<'a> {
         match token.kind {
             TokenKind::Identifier => self.scalar_or_generic_type(),
             TokenKind::LeftBracket => self.array_type(),
-            TokenKind::Mul => self.pointer_type(),
             _ => Err(err!(self, UnexpectedType, actual, token.kind.clone())),
         }
     }
@@ -503,17 +615,6 @@ impl<'a> Parser<'a> {
         self.consume(TokenKind::RightBracket)?;
 
         Ok(Type::Array(Box::new(element_type)))
-    }
-
-    /// Parses a pointer type at the current cursor position.
-    fn pointer_type(&mut self) -> Result<Type> {
-        self.consume(TokenKind::Mul)?;
-
-        let element_type = PointerType {
-            element_type: Box::new(self.parse_type()?),
-        };
-
-        Ok(Type::Pointer(Box::new(element_type)))
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.

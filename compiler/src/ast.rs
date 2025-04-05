@@ -29,8 +29,15 @@ pub struct Private {}
 
 #[derive(Debug, PartialEq)]
 pub enum TopLevelExpression {
+    Import(Box<Import>),
     Class(Box<ClassDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
+    TypeDefinition(Box<TypeDefinition>),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct Import {
+    pub name: Identifier,
 }
 
 #[derive(Debug, PartialEq)]
@@ -72,6 +79,31 @@ pub struct FunctionDefinition {
     pub parameters: Vec<Parameter>,
     pub return_type: Box<Type>,
     pub block: Block,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TypeDefinition {
+    Enum(Box<EnumDefinition>),
+    Alias(Box<AliasDefinition>),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct EnumDefinition {
+    pub name: Identifier,
+    pub cases: Vec<EnumDefinitionCase>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct EnumDefinitionCase {
+    pub name: Identifier,
+
+    pub parameters: Vec<Box<Type>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AliasDefinition {
+    pub name: Identifier,
+    pub definition: Box<Type>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -181,7 +213,6 @@ pub struct Variable {
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
-    Pointer(Box<PointerType>),
     Generic(Box<GenericType>),
 }
 
@@ -192,11 +223,6 @@ pub struct ScalarType {
 
 #[derive(Debug, PartialEq)]
 pub struct ArrayType {
-    pub element_type: Box<Type>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct PointerType {
     pub element_type: Box<Type>,
 }
 

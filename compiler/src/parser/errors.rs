@@ -65,6 +65,16 @@ pub struct InvalidTopLevelStatement {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Expected identifier", code = "LM1056")]
+pub struct ExpectedIdentifier {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Expected identifier")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "Unexpected function name",
     code = "LM1057",

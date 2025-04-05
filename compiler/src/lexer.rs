@@ -24,6 +24,7 @@ pub enum TokenKind {
     Div,
     DivAssign,
     Dot,
+    Enum,
     Eof,
     Equal,
     Exclamation,
@@ -163,6 +164,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Div => "/",
             TokenKind::DivAssign => "/=",
             TokenKind::Dot => ".",
+            TokenKind::Enum => "enum",
             TokenKind::Eof => "EOF",
             TokenKind::Equal => "==",
             TokenKind::Exclamation => "!",
@@ -414,6 +416,7 @@ impl Lexer {
         match content.as_str() {
             "builtin" => Token::empty(TokenKind::Builtin),
             "class" => Token::empty(TokenKind::Class),
+            "enum" => Token::empty(TokenKind::Enum),
             "external" => Token::empty(TokenKind::External),
             "fn" => Token::empty(TokenKind::Fn),
             "if" => Token::empty(TokenKind::If),
