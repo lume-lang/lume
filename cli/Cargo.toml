@@ -6,7 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 arc = { path = "../arc" }
-thiserror = "2"
-getopts = "^0.2"
-miette = { version = "^7.5", features = ["fancy"] }
+diag = { path = "../diag" }
+diag_macros = { path = "../diag_macros" }
 compiler = { path = "../compiler" }
+getopts = "^0.2"

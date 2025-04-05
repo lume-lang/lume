@@ -1,16 +1,16 @@
-use crate::Error;
 use crate::commands::project_or_cwd;
-use crate::error::CliError;
+use crate::error::InvalidCliError;
 
 use compiler::Driver;
+use diag::Result;
 use getopts::Options;
 
-pub(crate) fn run(args: &[String]) -> Result<i32, Error> {
+pub(crate) fn run(args: &[String]) -> Result<i32> {
     let options = Options::new();
 
     let matches = match options.parse(args) {
         Ok(matches) => matches,
-        Err(err) => return Err(Error::CliError(CliError::ParsingError(err))),
+        Err(err) => return Err(InvalidCliError { inner: err }.into()),
     };
 
     let input: String = if let Some(v) = matches.free.first() {
@@ -20,13 +20,7 @@ pub(crate) fn run(args: &[String]) -> Result<i32, Error> {
     };
 
     let mut driver = Driver::new();
-
-    let state = match driver.build_project(std::path::Path::new(&input)) {
-        Ok(state) => state,
-        Err(err) => return Err(Error::CompilerError(err)),
-    };
-
-    state.inspect();
+    let _state = driver.build_project(std::path::Path::new(&input))?;
 
     Ok(0)
 }

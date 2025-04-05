@@ -1,52 +1,108 @@
-use miette::Diagnostic;
+use std::ops::Range;
 
-#[derive(thiserror::Error, Diagnostic, Debug)]
-pub enum ArcError {
-    #[error(transparent)]
-    #[diagnostic(code(lume::arc::io_error))]
-    IoError(#[from] std::io::Error),
+use diag::source::NamedSource;
+use diag_macros::Diagnostic;
 
-    #[error(transparent)]
-    #[diagnostic(code(lume::arc::glob_error))]
-    GlobError(#[from] glob::GlobError),
-
-    #[error(transparent)]
-    #[diagnostic(code(lume::arc::parsing_error))]
-    TomlError(#[from] toml::de::Error),
-
-    #[error(transparent)]
-    #[diagnostic(code(lume::arc::arcfile_error))]
-    ArcfileError(#[from] ArcfileErrorKind),
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Error occured while reading Arcfile", code = "ARC0102")]
+pub struct ArcfileIoError {
+    #[source]
+    pub inner: std::io::Error,
 }
 
-#[derive(thiserror::Error, miette::Diagnostic, Debug, Clone, PartialEq, Eq)]
-#[error("Error occured while reading Arcfile")]
-pub enum ArcfileErrorKind {
-    #[error("No `{0}` section was found in the Arcfile")]
-    #[diagnostic(code(ARC0001))]
-    MissingSection(String),
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Error occured while reading Arcfile", code = "ARC0103")]
+pub struct ArcfileGlobError {
+    #[source]
+    pub inner: glob::GlobError,
+}
 
-    #[error("Property `{0}` must be a `{1}`, but found `{2}`")]
-    #[diagnostic(code(ARC0002))]
-    InvalidPropertyType(String, String, String),
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Error occured while parsing Arcfile", code = "ARC0104")]
+pub struct ArcfileTomlError {
+    #[source]
+    pub inner: toml::de::Error,
+}
 
-    #[error("No package name was found in the Arcfile")]
-    #[diagnostic(code(ARC0003))]
-    MissingName,
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "No `{name}` section was found in the Arcfile", code = "ARC0203")]
+pub struct ArcfileMissingSection {
+    pub name: String,
+}
 
-    #[error("No package version was found in the Arcfile")]
-    #[diagnostic(code(ARC0004))]
-    MissingVersion,
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "Property `{name}` must be a `{expected}`, but found `{actual}`",
+    code = "ARC0204"
+)]
+pub struct ArcfileInvalidPropertyType {
+    pub name: String,
 
-    #[error("No minimum required Lume version was found in the Arcfile")]
-    #[diagnostic(code(ARC0005))]
-    MissingLumeVersion,
+    pub expected: String,
 
-    #[error("Invalid version `{0}` for field `{1}`")]
-    #[diagnostic(code(ARC0006))]
-    InvalidVersion(String, String),
+    pub actual: String,
+}
 
-    #[error("Lume version `{0}` is incompatible with the required version `{1}`")]
-    #[diagnostic(code(ARC0007), help("Please update Lume to the required version"))]
-    IncompatibleLumeVersion(String, String),
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "No package name was found in the Arcfile", code = "ARC0210")]
+pub struct ArcfileMissingName {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Package table is missing a `name` field.")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "No package version was found in the Arcfile", code = "ARC0211")]
+pub struct ArcfileMissingVersion {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Package table is missing a `version` field.")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "No minimum required Lume version was found in the Arcfile",
+    code = "ARC0212"
+)]
+pub struct ArcfileMissingLumeVersion {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Package table is missing a `lume_version` field.")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Invalid version `{version}` for field `{field}`", code = "ARC0213")]
+pub struct ArcfileInvalidVersion {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("This field should be SemVer-compatible")]
+    pub range: Range<usize>,
+
+    pub version: String,
+
+    pub field: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "Lume version `{current}` is incompatible with the required version `{required}`",
+    code = "ARC0214"
+)]
+pub struct ArcfileIncompatibleLumeVersion {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("This field should be SemVer-compatible")]
+    pub range: Range<usize>,
+
+    pub current: String,
+
+    pub required: String,
 }

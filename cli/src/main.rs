@@ -1,11 +1,11 @@
 pub(crate) mod commands;
 pub(crate) mod error;
 
-use crate::error::Error;
 use std::env;
 
 use commands::run;
-use error::CliError;
+use diag::{Result, handler::Handler};
+use error::{InvalidCliError, UnknownCommandError};
 use getopts::{Options, ParsingStyle};
 
 const USAGE: &str = "Usage: lume [OPTIONS] [COMMAND | FILE]
@@ -24,7 +24,7 @@ fn print_usage() {
     std::process::exit(0)
 }
 
-fn run() -> Result<i32, Error> {
+fn run() -> Result<i32> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
 
@@ -34,7 +34,7 @@ fn run() -> Result<i32, Error> {
 
     let matches = match opts.parse(&args[1..]) {
         Ok(matches) => matches,
-        Err(err) => return Err(Error::CliError(CliError::ParsingError(err))),
+        Err(err) => return Err(InvalidCliError { inner: err }.into()),
     };
 
     if matches.opt_present("h") {
@@ -48,7 +48,7 @@ fn run() -> Result<i32, Error> {
 
     match matches.free.first().map(|s| s.as_str()) {
         Some("build") => run::run(&matches.free[1..]),
-        Some(cmd) => Err(Error::CliError(CliError::UnknownCommand(cmd.into()))),
+        Some(cmd) => Err(UnknownCommandError { command: cmd.into() }.into()),
         None => {
             print_usage();
             Ok(0)
@@ -59,6 +59,10 @@ fn run() -> Result<i32, Error> {
 fn main() {
     match run() {
         Ok(status) => std::process::exit(status),
-        Err(err) => err.report(),
+        Err(err) => {
+            let mut handler = diag::handler::DiagnosticHandler::new();
+            handler.exit_on_error();
+            handler.report_and_drain(err.into_diag());
+        }
     }
 }

@@ -5,9 +5,9 @@ edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
+diag = { path = "../diag" }
+diag_macros = { path = "../diag_macros" }
 glob = "^0"
-thiserror = "2"
-miette = { version = "^7.5" }
 semver = { version = "^1", features = ["serde"] }
 serde = { version = "^1.0", features = ["derive"] }
 toml = "^0"

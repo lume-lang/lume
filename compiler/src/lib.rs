@@ -1,19 +1,16 @@
 mod ast;
-pub mod error;
 pub mod lexer;
 mod parser;
-pub mod sources;
 
 use std::path::{Path, PathBuf};
 
 use arc::Project;
 use ast::TopLevelExpression;
+use diag::{Result, source::NamedSource};
 
-use crate::error::CompilerError;
 use crate::parser::Parser;
-use crate::sources::NamedSource;
 
-#[derive(serde::Serialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Module {
     /// Defines the source file for the module.
     source: NamedSource,
@@ -32,7 +29,7 @@ impl Module {
     }
 }
 
-#[derive(serde::Serialize, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct State {
     /// Defines the source files to compile.
     modules: Vec<Module>,
@@ -44,11 +41,14 @@ impl State {
     }
 
     /// Creates a new state from a list of source files.
-    pub fn from_files(files: Vec<PathBuf>) -> Result<Self, CompilerError> {
+    pub fn from_files(files: Vec<PathBuf>) -> Result<Self> {
         let mut sources = Vec::new();
 
         for file in files {
-            let source = NamedSource::from_file(&file)?;
+            let source = match NamedSource::from_file(file) {
+                Ok(source) => source,
+                Err(err) => return Err(err.into()),
+            };
             sources.push(source);
         }
 
@@ -57,14 +57,6 @@ impl State {
         };
 
         Ok(state)
-    }
-
-    /// Prints a pretty-printed representation of the state to the console.
-    pub fn inspect(&self) {
-        let config = ron::ser::PrettyConfig::default();
-        let pretty_print = ron::ser::to_string_pretty(self, config).unwrap();
-
-        println!("{}", pretty_print);
     }
 }
 
@@ -92,26 +84,22 @@ impl Driver {
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
-    pub fn build_project(&mut self, root: &Path) -> Result<State, CompilerError> {
-        let project = match Project::locate(root) {
-            Ok(project) => project,
-            Err(err) => return Err(CompilerError::ArcError(err)),
-        };
-
+    pub fn build_project(&mut self, root: &Path) -> Result<State> {
+        let project = Project::locate(root)?;
         let state = State::from_files(project.files()?)?;
 
         self.build(state)
     }
 
     /// Builds the given file into an executable or library.
-    pub fn build_file(&mut self, mut state: State, entry: NamedSource) -> Result<State, CompilerError> {
+    pub fn build_file(&mut self, mut state: State, entry: NamedSource) -> Result<State> {
         state.modules.push(Module::new(entry));
 
         self.build(state)
     }
 
     /// Builds the given compiler state into an executable or library.
-    pub fn build(&mut self, mut state: State) -> Result<State, CompilerError> {
+    pub fn build(&mut self, mut state: State) -> Result<State> {
         self.run_stage(&mut state, self.current_stage)?;
 
         loop {
@@ -137,7 +125,7 @@ impl Driver {
     }
 
     /// Executes the given stage of the compilation process.
-    fn run_stage(&mut self, state: &mut State, stage: Stage) -> Result<(), CompilerError> {
+    fn run_stage(&mut self, state: &mut State, stage: Stage) -> Result<()> {
         self.current_stage = stage;
 
         match stage {
@@ -149,22 +137,22 @@ impl Driver {
     }
 
     /// Parses all the modules within the given state object.
-    fn parse(&mut self, state: &mut State) -> Result<(), CompilerError> {
+    fn parse(&mut self, state: &mut State) -> Result<()> {
         Parser::parse(state)
     }
 
     /// Analyzes all the modules within the given state object.
-    fn analyze(&mut self, _state: &mut State) -> Result<(), CompilerError> {
+    fn analyze(&mut self, _state: &mut State) -> Result<()> {
         Ok(())
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
-    fn codegen(&mut self, _state: &mut State) -> Result<(), CompilerError> {
+    fn codegen(&mut self, _state: &mut State) -> Result<()> {
         Ok(())
     }
 
     /// Links all the modules within the given state object into a single executable or library.
-    fn link(&mut self, _state: &mut State) -> Result<(), CompilerError> {
+    fn link(&mut self, _state: &mut State) -> Result<()> {
         Ok(())
     }
 }

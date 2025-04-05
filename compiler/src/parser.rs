@@ -1,9 +1,11 @@
-use miette::{Diagnostic, SourceSpan};
-use std::ops::Range;
+use diag::Result;
 
 use crate::ast::*;
 use crate::lexer::*;
-use crate::{CompilerError, Module, State};
+use crate::parser::errors::*;
+use crate::{Module, State};
+
+pub mod errors;
 
 const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Assign, 1),
@@ -40,91 +42,6 @@ impl Token {
     }
 }
 
-#[derive(thiserror::Error, miette::Diagnostic, Debug, Clone, PartialEq, Eq)]
-pub enum ParsingErrorKind {
-    #[error("Unexpected character '{0}'")]
-    #[diagnostic(code(LM0001), help("Check your input syntax"))]
-    UnexpectedCharacter(char),
-
-    #[error("Unexpected character in number literal")]
-    #[diagnostic(code(LM0002), help("Check your input syntax"))]
-    UnexpectedNumberCharacter,
-
-    #[error("Unexpected end-of-file")]
-    #[diagnostic(code(LM0003), help("Has the file been fully written?"))]
-    UnexpectedEndOfFile,
-
-    #[error("Expected {0:?}, got {1:?} instead")]
-    #[diagnostic(code(LM0004))]
-    UnexpectedToken(TokenKind, TokenKind),
-
-    #[error("Expected type, got {0:?} instead")]
-    #[diagnostic(code(LM0005))]
-    UnexpectedType(TokenKind),
-
-    #[error("Expected a top-level statement, got {0:?} instead")]
-    #[diagnostic(code(LM0006), help("Did you mean to write a function or class?"))]
-    InvalidTopLevelStatement(TokenKind),
-
-    #[error("Expected a function name")]
-    #[diagnostic(
-        code(LM0007),
-        help("Function names only allow alphanumeric characters and underscores")
-    )]
-    ExpectedFunctionName,
-
-    #[error("Expected a class name")]
-    #[diagnostic(code(LM0008), help("Class names only allow alphanumeric characters and underscores"))]
-    ExpectedClassName,
-
-    #[error("Expected a class member definition, found {0:?} instead")]
-    #[diagnostic(
-        code(LM0009),
-        help("Class members can be defined using `let` for properties or `fn` for methods.")
-    )]
-    ExpectedClassMember(TokenKind),
-
-    #[error("Expected statement, got {0:?} instead")]
-    #[diagnostic(code(LM0010))]
-    InvalidStatement(TokenKind),
-
-    #[error("Expected expression, got {0:?} instead")]
-    #[diagnostic(code(LM0011))]
-    InvalidExpression(TokenKind),
-
-    #[error("Failed to parse literal value `{0}` as {1:?}")]
-    #[diagnostic(code(LM0012))]
-    InvalidLiteral(String, TokenKind),
-
-    #[error("External functions cannot declare a body")]
-    #[diagnostic(
-        code(LM0013),
-        help("Either remove the body or change the function to not be external")
-    )]
-    ExternalFunctionBody,
-
-    #[error("Unimplemented functionality: {0}")]
-    #[diagnostic(code(LM9999))]
-    #[allow(dead_code)]
-    Unimplemented(String),
-}
-
-#[derive(thiserror::Error, Debug, Diagnostic)]
-#[error("Error occured while parsing")]
-pub struct ParsingError {
-    /// Declares the source which raised the error.
-    #[source_code]
-    pub src: miette::NamedSource<String>,
-
-    /// Defines the start and end position of the error.
-    #[label("Error occured here")]
-    pub range: SourceSpan,
-
-    /// Defines the kind of the error.
-    #[source]
-    pub kind: ParsingErrorKind,
-}
-
 pub struct Parser<'a> {
     /// Defines the module which is being parsed.
     module: &'a mut Module,
@@ -141,6 +58,24 @@ pub struct Parser<'a> {
     peeked: Option<Token>,
 }
 
+macro_rules! err {
+    (
+        $self:expr,
+        $kind:ident $(,)?
+        $(
+            $field: ident,
+            $value: expr
+        ),*
+    ) => {
+        $kind {
+            source: $self.module.source.clone(),
+            range: $self.token()?.index,
+            $( $field: $value ),*
+        }
+        .into()
+    };
+}
+
 impl<'a> Parser<'a> {
     pub fn new(module: &'a mut Module) -> Self {
         let lexer = Lexer::new(module.source.clone());
@@ -154,7 +89,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses all the modules within the given state.
-    pub fn parse(state: &mut State) -> Result<(), CompilerError> {
+    pub fn parse(state: &mut State) -> Result<()> {
         for module in &mut state.modules {
             let mut parser = Parser::new(module);
             parser.parse_module()?;
@@ -167,7 +102,7 @@ impl<'a> Parser<'a> {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    fn parse_module(&mut self) -> Result<(), CompilerError> {
+    fn parse_module(&mut self) -> Result<()> {
         loop {
             if self.lexer.is_eof() {
                 break;
@@ -184,7 +119,7 @@ impl<'a> Parser<'a> {
     /// Parses a single token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
-    fn token(&mut self) -> Result<Token, ParsingError> {
+    fn token(&mut self) -> Result<Token> {
         // If a token is buffered, return it instead.
         if let Some(token) = self.peeked.clone() {
             return Ok(token);
@@ -210,8 +145,8 @@ impl<'a> Parser<'a> {
 
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
-    /// Returns a `PeekResult` indicating whether the token matches the expected kind.
-    fn peek(&mut self, kind: TokenKind) -> Result<bool, ParsingError> {
+    /// Returns a boolean indicating whether the token matches the expected kind.
+    fn peek(&mut self, kind: TokenKind) -> Result<bool> {
         let token = self.token()?;
 
         if token.kind == kind {
@@ -222,7 +157,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Advances the cursor position by a single token.
-    fn skip(&mut self) -> Result<(), ParsingError> {
+    fn skip(&mut self) -> Result<()> {
         self.peeked = None;
         self.token()?;
 
@@ -232,12 +167,12 @@ impl<'a> Parser<'a> {
     /// Consumes the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// If the token does not match the expected kind, an error is returned.
-    fn expect(&mut self, kind: TokenKind) -> Result<Token, ParsingError> {
+    fn expect(&mut self, kind: TokenKind) -> Result<Token> {
         let current = self.token()?;
 
         match self.peek(kind)? {
             true => Ok(current),
-            false => Err(self.err(ParsingErrorKind::UnexpectedToken(kind, current.kind))),
+            false => Err(err!(self, UnexpectedToken, expected, kind, actual, current.kind)),
         }
     }
 
@@ -245,7 +180,7 @@ impl<'a> Parser<'a> {
     /// it advances the cursor position by a single token.
     ///
     /// If the token does not match the expected kind, an error is returned.
-    fn consume(&mut self, kind: TokenKind) -> Result<Token, ParsingError> {
+    fn consume(&mut self, kind: TokenKind) -> Result<Token> {
         match self.expect(kind) {
             Ok(token) => {
                 self.skip()?;
@@ -257,7 +192,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Consumes the next token from the lexer and returns it, not matter what token it is.
-    fn consume_any(&mut self) -> Result<Token, ParsingError> {
+    fn consume_any(&mut self) -> Result<Token> {
         let token = self.token()?;
 
         self.skip()?;
@@ -269,7 +204,7 @@ impl<'a> Parser<'a> {
     /// it advances the cursor position by a single token.
     ///
     /// If the token does not match the expected kind, `None` is returned.
-    fn consume_if(&mut self, kind: TokenKind) -> Result<Option<Token>, ParsingError> {
+    fn consume_if(&mut self, kind: TokenKind) -> Result<Option<Token>> {
         let current = self.token()?;
 
         match self.peek(kind)? {
@@ -283,26 +218,14 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses the next token as an identifier.
-    fn identifier(&mut self) -> Result<Identifier, ParsingError> {
+    fn identifier(&mut self) -> Result<Identifier> {
         let name = self.consume(TokenKind::Identifier)?.value.unwrap();
         let identifier = Identifier { name };
 
         Ok(identifier)
     }
 
-    /// Parses the next token as an identifier.
-    fn identifier_or(&mut self, kind: ParsingErrorKind) -> Result<Identifier, ParsingError> {
-        let name = match self.consume(TokenKind::Identifier) {
-            Ok(token) => token.value.unwrap(),
-            Err(_) => return Err(self.err(kind)),
-        };
-
-        let identifier = Identifier { name };
-
-        Ok(identifier)
-    }
-
-    fn block(&mut self) -> Result<Block, ParsingError> {
+    fn block(&mut self) -> Result<Block> {
         let mut block = Block { statements: Vec::new() };
 
         self.consume(TokenKind::LeftCurly)?;
@@ -322,29 +245,33 @@ impl<'a> Parser<'a> {
     /// Returns an empty block for external functions.
     ///
     /// Also functions as an extra layer to report errors, if a function body is declared.
-    fn external_block(&mut self) -> Result<Block, ParsingError> {
+    fn external_block(&mut self) -> Result<Block> {
         if self.peek(TokenKind::LeftCurly)? {
-            return Err(self.err(ParsingErrorKind::ExternalFunctionBody));
+            return Err(err!(self, ExternalFunctionBody));
         }
 
         Ok(Block::empty())
     }
 
-    fn top_level_expression(&mut self) -> Result<TopLevelExpression, ParsingError> {
+    fn top_level_expression(&mut self) -> Result<TopLevelExpression> {
         let current = self.token()?;
 
         match current.kind {
             TokenKind::Class => self.class(),
             TokenKind::Fn | TokenKind::Pub => self.function(),
-            _ => Err(self.err(ParsingErrorKind::InvalidTopLevelStatement(current.kind.clone()))),
+            _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
         }
     }
 
-    fn class(&mut self) -> Result<TopLevelExpression, ParsingError> {
+    fn class(&mut self) -> Result<TopLevelExpression> {
         self.consume(TokenKind::Class)?;
 
         let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
-        let name = self.identifier_or(ParsingErrorKind::ExpectedClassName)?;
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedClassName)),
+        };
 
         self.consume(TokenKind::LeftCurly)?;
         let members = self.class_members()?;
@@ -355,7 +282,7 @@ impl<'a> Parser<'a> {
         Ok(TopLevelExpression::Class(Box::new(class_def)))
     }
 
-    fn class_members(&mut self) -> Result<Vec<ClassMember>, ParsingError> {
+    fn class_members(&mut self) -> Result<Vec<ClassMember>> {
         let mut members = Vec::new();
 
         loop {
@@ -369,17 +296,17 @@ impl<'a> Parser<'a> {
         Ok(members)
     }
 
-    fn class_member(&mut self) -> Result<ClassMember, ParsingError> {
+    fn class_member(&mut self) -> Result<ClassMember> {
         let visibility = self.visibility()?;
 
         match self.token()?.kind {
             TokenKind::Let => self.property(visibility),
             TokenKind::Fn => self.method(visibility),
-            kind => return Err(self.err(ParsingErrorKind::ExpectedClassMember(kind))),
+            kind => return Err(err!(self, ExpectedClassMember, actual, kind)),
         }
     }
 
-    fn visibility(&mut self) -> Result<Visibility, ParsingError> {
+    fn visibility(&mut self) -> Result<Visibility> {
         match self.token()?.kind {
             // If the member is marked as public, make it so.
             TokenKind::Pub => {
@@ -393,11 +320,14 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn property(&mut self, visibility: Visibility) -> Result<ClassMember, ParsingError> {
+    fn property(&mut self, visibility: Visibility) -> Result<ClassMember> {
         self.consume(TokenKind::Let)?;
 
         let kind = self.token()?.kind;
-        let name = self.identifier_or(ParsingErrorKind::ExpectedClassMember(kind))?;
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedClassMember, actual, kind)),
+        };
 
         let property_type = if self.consume_if(TokenKind::Colon)?.is_some() {
             Some(Box::new(self.parse_type()?))
@@ -421,12 +351,16 @@ impl<'a> Parser<'a> {
         Ok(ClassMember::Property(Box::new(property_def)))
     }
 
-    fn method(&mut self, visibility: Visibility) -> Result<ClassMember, ParsingError> {
+    fn method(&mut self, visibility: Visibility) -> Result<ClassMember> {
         self.consume(TokenKind::Fn)?;
 
         let external = self.consume_if(TokenKind::External)?.is_some();
 
-        let name = self.identifier_or(ParsingErrorKind::ExpectedFunctionName)?;
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        };
+
         let parameters = self.parameters()?;
 
         self.consume(TokenKind::Arrow)?;
@@ -449,14 +383,18 @@ impl<'a> Parser<'a> {
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
     }
 
-    fn function(&mut self) -> Result<TopLevelExpression, ParsingError> {
+    fn function(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.visibility()?;
 
         self.consume(TokenKind::Fn)?;
 
         let external = self.consume_if(TokenKind::External)?.is_some();
 
-        let name = self.identifier_or(ParsingErrorKind::ExpectedFunctionName)?;
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        };
+
         let parameters = self.parameters()?;
 
         self.consume(TokenKind::Arrow)?;
@@ -479,7 +417,7 @@ impl<'a> Parser<'a> {
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
     }
 
-    fn parameters(&mut self) -> Result<Vec<Parameter>, ParsingError> {
+    fn parameters(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
         if !self.peek(TokenKind::LeftParen)? {
             return Ok(Vec::new());
@@ -500,7 +438,7 @@ impl<'a> Parser<'a> {
         Ok(parameters)
     }
 
-    fn parameter(&mut self) -> Result<Parameter, ParsingError> {
+    fn parameter(&mut self) -> Result<Parameter> {
         let name = self.identifier()?;
 
         self.consume(TokenKind::Colon)?;
@@ -510,7 +448,7 @@ impl<'a> Parser<'a> {
         Ok(Parameter { name, param_type })
     }
 
-    fn arguments(&mut self) -> Result<Vec<Expression>, ParsingError> {
+    fn arguments(&mut self) -> Result<Vec<Expression>> {
         // If no opening parenthesis, no arguments are defined.
         if !self.peek(TokenKind::LeftParen)? {
             return Ok(Vec::new());
@@ -532,19 +470,19 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses some abstract type at the current cursor position.
-    fn parse_type(&mut self) -> Result<Type, ParsingError> {
+    fn parse_type(&mut self) -> Result<Type> {
         let token = self.token()?;
 
         match token.kind {
             TokenKind::Identifier => self.scalar_or_generic_type(),
             TokenKind::LeftBracket => self.array_type(),
             TokenKind::Mul => self.pointer_type(),
-            _ => Err(self.err(ParsingErrorKind::UnexpectedType(token.kind.clone()))),
+            _ => Err(err!(self, UnexpectedType, actual, token.kind.clone())),
         }
     }
 
     /// Parses either a scalar- or generic-type at the current cursor position.
-    fn scalar_or_generic_type(&mut self) -> Result<Type, ParsingError> {
+    fn scalar_or_generic_type(&mut self) -> Result<Type> {
         let name = self.consume(TokenKind::Identifier)?.value.unwrap();
 
         if self.peek(TokenKind::Less)? {
@@ -555,7 +493,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses an array type at the current cursor position.
-    fn array_type(&mut self) -> Result<Type, ParsingError> {
+    fn array_type(&mut self) -> Result<Type> {
         self.consume(TokenKind::LeftBracket)?;
 
         let element_type = ArrayType {
@@ -568,7 +506,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a pointer type at the current cursor position.
-    fn pointer_type(&mut self) -> Result<Type, ParsingError> {
+    fn pointer_type(&mut self) -> Result<Type> {
         self.consume(TokenKind::Mul)?;
 
         let element_type = PointerType {
@@ -579,7 +517,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
-    fn generic_type_arguments(&mut self) -> Result<Type, ParsingError> {
+    fn generic_type_arguments(&mut self) -> Result<Type> {
         self.consume(TokenKind::Less)?;
 
         let mut type_params = Vec::new();
@@ -600,16 +538,16 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses some abstract statement at the current cursor position.
-    fn statement(&mut self) -> Result<Statement, ParsingError> {
+    fn statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
             TokenKind::Let => self.variable_declaration(),
             TokenKind::Return => self.return_statement(),
-            kind => Err(self.err(ParsingErrorKind::InvalidStatement(kind))),
+            kind => Err(err!(self, InvalidStatement, actual, kind)),
         }
     }
 
     /// Parses a variable declaration statement at the current cursor position.
-    fn variable_declaration(&mut self) -> Result<Statement, ParsingError> {
+    fn variable_declaration(&mut self) -> Result<Statement> {
         self.consume(TokenKind::Let)?;
 
         let name = self.identifier()?;
@@ -633,7 +571,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a return statement at the current cursor position.
-    fn return_statement(&mut self) -> Result<Statement, ParsingError> {
+    fn return_statement(&mut self) -> Result<Statement> {
         self.consume(TokenKind::Return)?;
 
         let value = self.expression()?;
@@ -643,12 +581,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses an expression on the current cursor position.
-    fn expression(&mut self) -> Result<Expression, ParsingError> {
+    fn expression(&mut self) -> Result<Expression> {
         self.expression_with_precedence(0)
     }
 
     /// Parses an expression on the current cursor position, with a minimum precedence.
-    fn expression_with_precedence(&mut self, precedence: u8) -> Result<Expression, ParsingError> {
+    fn expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
         let mut left = self.prefix_expression()?;
 
         while precedence < self.token()?.precedence() {
@@ -662,7 +600,7 @@ impl<'a> Parser<'a> {
     ///
     /// Prefix expressions are expressions which appear at the start of an expression,
     /// such as literals of prefix operators. In Pratt Parsing, this is also called "Nud" or "Null Denotation".
-    fn prefix_expression(&mut self) -> Result<Expression, ParsingError> {
+    fn prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token()?.kind;
 
         if kind == TokenKind::LeftParen {
@@ -683,14 +621,14 @@ impl<'a> Parser<'a> {
             return Ok(self.unary()?);
         }
 
-        Err(self.err(ParsingErrorKind::InvalidExpression(kind)))
+        Err(err!(self, InvalidExpression, actual, kind))
     }
 
     /// Parses a infix expression at the current cursor position.
     ///
     /// Infix expressions are expressions which appear in the middle of an expression,
     /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
-    fn infix_expression(&mut self, left: Expression) -> Result<Expression, ParsingError> {
+    fn infix_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
         //
         // In essence, this statement is handling cases where:
@@ -705,7 +643,7 @@ impl<'a> Parser<'a> {
 
         let operator = match self.consume_any()? {
             t if t.kind.is_operator() => t,
-            t => return Err(self.err(ParsingErrorKind::InvalidExpression(t.kind))),
+            t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
         let right = self.expression_with_precedence(operator.precedence())?;
@@ -715,7 +653,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses an expression on the current cursor position, which is nested within parentheses.
-    fn nested_expression(&mut self) -> Result<Expression, ParsingError> {
+    fn nested_expression(&mut self) -> Result<Expression> {
         self.consume(TokenKind::LeftParen)?;
 
         let expression = self.expression_with_precedence(0);
@@ -726,7 +664,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
-    fn named_expression(&mut self) -> Result<Expression, ParsingError> {
+    fn named_expression(&mut self) -> Result<Expression> {
         let identifier = self.identifier()?;
         let expression = Expression::Identifier(Box::new(identifier.clone()));
 
@@ -746,7 +684,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a call expression on the current cursor position.
-    fn call(&mut self, target: Identifier) -> Result<Expression, ParsingError> {
+    fn call(&mut self, target: Identifier) -> Result<Expression> {
         let arguments = self.arguments()?;
         let call = Call::new(None, target, arguments);
 
@@ -754,7 +692,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
-    fn member(&mut self, target: Expression) -> Result<Expression, ParsingError> {
+    fn member(&mut self, target: Expression) -> Result<Expression> {
         // Consume the dot token
         self.consume(TokenKind::Dot)?;
 
@@ -780,7 +718,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses an assignment expression on the current cursor position.
-    fn assignment(&mut self, target: Expression) -> Result<Expression, ParsingError> {
+    fn assignment(&mut self, target: Expression) -> Result<Expression> {
         // Consume the equal sign
         self.consume(TokenKind::Assign)?;
 
@@ -790,14 +728,14 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a variable reference expression on the current cursor position.
-    fn variable(&mut self, target: Identifier) -> Result<Expression, ParsingError> {
+    fn variable(&mut self, target: Identifier) -> Result<Expression> {
         let variable = Variable { name: target };
 
         Ok(Expression::Variable(Box::new(variable)))
     }
 
     /// Parses a literal value expression on the current cursor position.
-    fn literal(&mut self) -> Result<Expression, ParsingError> {
+    fn literal(&mut self) -> Result<Expression> {
         let token = self.token()?;
 
         let literal = match token.kind {
@@ -805,7 +743,7 @@ impl<'a> Parser<'a> {
                 let value = token.value.unwrap();
                 let int_value = match value.parse::<i64>() {
                     Ok(v) => v,
-                    Err(_) => return Err(self.err(ParsingErrorKind::InvalidLiteral(value, token.kind))),
+                    Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
                 Literal::Int(Box::new(IntLiteral { value: int_value }))
@@ -814,7 +752,7 @@ impl<'a> Parser<'a> {
                 let value = token.value.unwrap();
                 let float_value = match value.parse::<f64>() {
                     Ok(v) => v,
-                    Err(_) => return Err(self.err(ParsingErrorKind::InvalidLiteral(value, token.kind))),
+                    Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
                 Literal::Float(Box::new(FloatLiteral { value: float_value }))
@@ -826,7 +764,7 @@ impl<'a> Parser<'a> {
             }
             TokenKind::True => Literal::Boolean(Box::new(BooleanLiteral { value: true })),
             TokenKind::False => Literal::Boolean(Box::new(BooleanLiteral { value: false })),
-            k => return Err(self.err(ParsingErrorKind::Unimplemented(format!("{:?} literals", k)))),
+            k => return Err(err!(self, Unimplemented, desc, format!("{:?} literals", k))),
         };
 
         self.skip()?;
@@ -835,10 +773,10 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a unary expression on the current cursor position.
-    fn unary(&mut self) -> Result<Expression, ParsingError> {
+    fn unary(&mut self) -> Result<Expression> {
         let operator = match self.consume_any()? {
             t if t.kind.is_unary() => t,
-            t => return Err(self.err(ParsingErrorKind::InvalidExpression(t.kind))),
+            t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
         let right = self.expression_with_precedence(UNARY_PRECEDENCE)?;
@@ -876,27 +814,5 @@ impl<'a> Parser<'a> {
         }
 
         Ok(right)
-    }
-
-    /// Create a new parsing error of the given kind.
-    fn err(&mut self, kind: ParsingErrorKind) -> ParsingError {
-        let token = match self.token() {
-            Ok(token) => token,
-            Err(err) => return err,
-        };
-
-        self.err_with_range(kind, token.index)
-    }
-
-    /// Create a new parsing error of the given kind.
-    fn err_with_range(&self, kind: ParsingErrorKind, range: Range<usize>) -> ParsingError {
-        let name: String = self.module.source.name.clone().unwrap_or("".to_owned());
-        let source = miette::NamedSource::new(name, self.module.source.content.clone());
-
-        ParsingError {
-            src: source,
-            range: range.into(),
-            kind,
-        }
     }
 }

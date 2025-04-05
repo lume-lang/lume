@@ -1,9 +1,8 @@
 use std::ops::Range;
 
-use crate::{
-    NamedSource,
-    parser::{ParsingError, ParsingErrorKind},
-};
+use crate::NamedSource;
+use crate::parser::errors::*;
+use diag::Result;
 
 const SYMBOLS: &[char] = &[
     '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':',
@@ -354,7 +353,7 @@ impl Lexer {
     }
 
     /// Gets the token at the current cursor position. The cursor is advanced to the start of the next token.
-    pub fn next_token(&mut self) -> Result<Token, ParsingError> {
+    pub fn next_token(&mut self) -> Result<Token> {
         let start_idx = self.position;
         let first_char = match self.current_char_or_eof() {
             '\0' => return Ok(Token::empty(TokenKind::Eof)),
@@ -379,7 +378,14 @@ impl Lexer {
 
             // Whitespace
             ' ' | '\t' | '\n' | '\r' => self.whitespace(),
-            _ => return Err(self.err(ParsingErrorKind::UnexpectedCharacter(first_char))),
+            _ => {
+                return Err(UnexpectedCharacter {
+                    source: self.source.clone(),
+                    range: self.position..self.position + 1,
+                    char: first_char,
+                }
+                .into());
+            }
         };
 
         let end_idx = self.position;
@@ -416,7 +422,7 @@ impl Lexer {
     }
 
     /// Parses a symbol token at the current cursor position.
-    fn symbol(&mut self) -> Result<Token, ParsingError> {
+    fn symbol(&mut self) -> Result<Token> {
         let slice = self
             .source
             .content
@@ -440,7 +446,7 @@ impl Lexer {
         Ok(Token::new(kind, symbol))
     }
 
-    fn symbol_value(&mut self, chars: &Vec<char>) -> Result<(TokenKind, usize), ParsingError> {
+    fn symbol_value(&mut self, chars: &Vec<char>) -> Result<(TokenKind, usize)> {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
@@ -481,7 +487,12 @@ impl Lexer {
             }
         }
 
-        Err(self.err(ParsingErrorKind::UnexpectedCharacter(chars[0])))
+        Err(UnexpectedCharacter {
+            source: self.source.clone(),
+            range: self.position..self.position + 1,
+            char: chars[0],
+        }
+        .into())
     }
 
     /// Parses a number token at the current cursor position.
@@ -615,23 +626,6 @@ impl Lexer {
 
         Token::new(TokenKind::Whitespace, whitespace)
     }
-
-    /// Create a new lexical error of the given kind.
-    fn err(&self, kind: ParsingErrorKind) -> ParsingError {
-        self.err_with_range(kind, self.position..self.position + 1)
-    }
-
-    /// Create a new lexical error of the given kind.
-    fn err_with_range(&self, kind: ParsingErrorKind, range: Range<usize>) -> ParsingError {
-        let name: String = self.source.name.clone().unwrap_or("".to_owned());
-        let source = miette::NamedSource::new(name, self.source.content.clone());
-
-        ParsingError {
-            src: source,
-            range: range.into(),
-            kind,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -640,7 +634,7 @@ mod tests {
 
     fn lexer(source: &str) -> Lexer {
         let source = NamedSource {
-            name: None,
+            name: "<empty>".into(),
             content: source.to_owned(),
         };
 
