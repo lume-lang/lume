@@ -791,6 +791,11 @@ impl Parser {
         match self.token()?.kind {
             TokenKind::Let | TokenKind::Const => self.variable_declaration(),
             TokenKind::If | TokenKind::Unless => self.conditional(),
+            TokenKind::Loop => self.infinite_loop(),
+            TokenKind::For => self.iterator_loop(),
+            TokenKind::While => self.predicate_loop(),
+            TokenKind::Break => self.loop_break(),
+            TokenKind::Continue => self.loop_continue(),
             TokenKind::Return => self.return_statement(),
             kind => Err(err!(self, InvalidStatement, actual, kind)),
         }
@@ -939,6 +944,70 @@ impl Parser {
         cases.push(case);
 
         Ok(())
+    }
+
+    /// Parses an infinite loop statement at the current cursor position.
+    fn infinite_loop(&mut self) -> Result<Statement> {
+        let start = self.consume(TokenKind::Loop)?.start();
+        let block = self.block()?;
+
+        let location = start..block.location.end();
+
+        Ok(Statement::InfiniteLoop(Box::new(InfiniteLoop {
+            block,
+            location: location.into(),
+        })))
+    }
+
+    /// Parses an iterator loop statement at the current cursor position.
+    fn iterator_loop(&mut self) -> Result<Statement> {
+        let start = self.consume(TokenKind::For)?.start();
+
+        let pattern = self.identifier()?;
+
+        self.consume(TokenKind::In)?;
+
+        let collection = self.expression()?;
+        let block = self.block()?;
+
+        let location = start..block.location.end();
+
+        Ok(Statement::IteratorLoop(Box::new(IteratorLoop {
+            pattern,
+            collection,
+            block,
+            location: location.into(),
+        })))
+    }
+
+    /// Parses a predicate loop statement at the current cursor position.
+    fn predicate_loop(&mut self) -> Result<Statement> {
+        let start = self.consume(TokenKind::While)?.start();
+
+        let condition = self.expression()?;
+        let block = self.block()?;
+
+        let location = start..block.location.end();
+
+        Ok(Statement::PredicateLoop(Box::new(PredicateLoop {
+            condition,
+            block,
+            location: location.into(),
+        })))
+    }
+
+    /// Parses a `break` statement at the current cursor position.
+    fn loop_break(&mut self) -> Result<Statement> {
+        let location: Location = self.consume(TokenKind::Break)?.index.into();
+
+        Ok(Statement::Break(Box::new(Break { location })))
+    }
+
+    /// Parses a `continue` statement at the current cursor position.
+    fn loop_continue(&mut self) -> Result<Statement> {
+        let location: Location = self.consume(TokenKind::Continue)?.index.into();
+
+        Ok(Statement::Continue(Box::new(Continue { location })))
     }
 
     /// Parses a return statement at the current cursor position.
@@ -1447,5 +1516,23 @@ mod tests {
         assert_expr_snap_eq!("unless true { let a = 0 }", "unless_statement");
         assert_expr_err_snap_eq!("unless true { } else if false {}", "unless_else_if");
         assert_expr_err_eq!("unless true { } else if false { }", "Unexpected `else if` clause");
+    }
+
+    #[test]
+    fn test_loop_snapshots() {
+        assert_expr_snap_eq!("loop { }", "inf_loop_empty");
+        assert_expr_snap_eq!("loop { let a = 0 }", "inf_loop_statement");
+        assert_expr_snap_eq!("loop { break }", "inf_loop_break");
+        assert_expr_snap_eq!("loop { continue }", "inf_loop_continue");
+
+        assert_expr_snap_eq!("while true { }", "pred_loop_empty");
+        assert_expr_snap_eq!("while true { let a = 0 }", "pred_loop_statement");
+        assert_expr_snap_eq!("while true { break }", "pred_loop_break");
+        assert_expr_snap_eq!("while true { continue }", "pred_loop_continue");
+
+        assert_expr_snap_eq!("for pattern in collection { }", "iter_loop_empty");
+        assert_expr_snap_eq!("for pattern in collection { let a = 0 }", "iter_loop_statement");
+        assert_expr_snap_eq!("for pattern in collection { break }", "iter_loop_break");
+        assert_expr_snap_eq!("for pattern in collection { continue }", "iter_loop_continue");
     }
 }

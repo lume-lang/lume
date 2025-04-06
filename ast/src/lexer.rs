@@ -41,9 +41,10 @@ pub enum TokenKind {
     GreaterEqual,
     Identifier,
     If,
-    Integer,
     Import,
+    In,
     Increment,
+    Integer,
     LeftBracket,
     LeftCurly,
     LeftParen,
@@ -101,6 +102,7 @@ impl TokenKind {
                 | TokenKind::GreaterEqual
                 | TokenKind::If
                 | TokenKind::Import
+                | TokenKind::In
                 | TokenKind::Increment
                 | TokenKind::LeftBracket
                 | TokenKind::LeftCurly
@@ -198,6 +200,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::If => "if",
             TokenKind::Identifier => "identifier",
             TokenKind::Import => "import",
+            TokenKind::In => "in",
             TokenKind::Increment => "++",
             TokenKind::LeftBracket => "[",
             TokenKind::LeftCurly => "{",
@@ -458,6 +461,7 @@ impl Lexer {
             "for" => Token::empty(TokenKind::For),
             "if" => Token::empty(TokenKind::If),
             "import" => Token::empty(TokenKind::Import),
+            "in" => Token::empty(TokenKind::In),
             "let" => Token::empty(TokenKind::Let),
             "loop" => Token::empty(TokenKind::Loop),
             "type" => Token::empty(TokenKind::Type),
@@ -796,9 +800,10 @@ mod tests {
         assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);
         assert_token!("external", TokenKind::External, None::<String>, 0, 8);
         assert_token!("for", TokenKind::For, None::<String>, 0, 3);
-        assert_token!("if", TokenKind::If, None::<String>, 0, 2);
         assert_token!("fn", TokenKind::Fn, None::<String>, 0, 2);
+        assert_token!("if", TokenKind::If, None::<String>, 0, 2);
         assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
+        assert_token!("in", TokenKind::In, None::<String>, 0, 2);
         assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);

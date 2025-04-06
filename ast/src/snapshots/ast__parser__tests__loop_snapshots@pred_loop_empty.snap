@@ -1,0 +1,66 @@
+---
+source: ast/src/parser.rs
+expression: "parse_expr(\"while true { }\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        13..17,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [
+                    PredicateLoop(
+                        PredicateLoop {
+                            condition: Literal(
+                                Boolean(
+                                    BooleanLiteral {
+                                        value: true,
+                                        location: Location(
+                                            26..30,
+                                        ),
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    31..34,
+                                ),
+                            },
+                            location: Location(
+                                20..34,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    18..36,
+                ),
+            },
+            location: Location(
+                0..36,
+            ),
+        },
+    ),
+]

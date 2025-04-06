@@ -154,6 +154,11 @@ pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
     If(Box<IfCondition>),
     Unless(Box<UnlessCondition>),
+    InfiniteLoop(Box<InfiniteLoop>),
+    IteratorLoop(Box<IteratorLoop>),
+    PredicateLoop(Box<PredicateLoop>),
+    Break(Box<Break>),
+    Continue(Box<Continue>),
     Return(Box<Return>),
 }
 
@@ -182,6 +187,37 @@ pub struct UnlessCondition {
 pub struct Condition {
     pub condition: Option<Expression>,
     pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct InfiniteLoop {
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct IteratorLoop {
+    pub pattern: Identifier,
+    pub collection: Expression,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct PredicateLoop {
+    pub condition: Expression,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Break {
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Continue {
     pub location: Location,
 }
 
