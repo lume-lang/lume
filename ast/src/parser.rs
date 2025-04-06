@@ -429,8 +429,15 @@ impl Parser {
     }
 
     fn class_member(&mut self) -> Result<ClassMember> {
+        // Types of types which support visibility modifers...
+        match self.token()?.kind {
+            TokenKind::Use => return self.use_trait(),
+            _ => {}
+        }
+
         let visibility = self.visibility()?;
 
+        // ...and the types of types which don't.
         match self.token()?.kind {
             TokenKind::Let => self.property(visibility),
             TokenKind::Fn => self.method(visibility),
@@ -492,6 +499,33 @@ impl Parser {
         };
 
         Ok(ClassMember::Property(Box::new(property_def)))
+    }
+
+    fn use_trait(&mut self) -> Result<ClassMember> {
+        let start = self.consume(TokenKind::Use)?.start();
+
+        let trait_type = match self.parse_type()? {
+            Type::Scalar(t) => Type::Scalar(t),
+            Type::Generic(t) => Type::Generic(t),
+            t => {
+                let range = t.location().0.clone();
+
+                return Err(InvalidTraitType {
+                    source: self.source.clone(),
+                    range,
+                    found: t,
+                }
+                .into());
+            }
+        };
+
+        let end = self.token_at(self.index - 1)?.end();
+        let location: Location = (start..end).into();
+
+        Ok(ClassMember::Use(Box::new(UseTrait {
+            trait_type: Box::new(trait_type),
+            location,
+        })))
     }
 
     fn method(&mut self, visibility: Visibility) -> Result<ClassMember> {
@@ -753,7 +787,12 @@ impl Parser {
         let name = self.consume(TokenKind::Identifier)?;
 
         if self.peek(TokenKind::Less)? {
-            self.generic_type_arguments()
+            let identifier = Identifier {
+                name: name.value.unwrap(),
+                location: name.index.into(),
+            };
+
+            self.generic_type_arguments(identifier)
         } else {
             let location = name.index;
             let name = name.value.unwrap();
@@ -771,7 +810,7 @@ impl Parser {
 
         let element_type = Box::new(self.parse_type()?);
 
-        let end = self.consume(TokenKind::RightBracket)?.start();
+        let end = self.consume(TokenKind::RightBracket)?.end();
 
         let array_type = ArrayType {
             element_type,
@@ -782,7 +821,7 @@ impl Parser {
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
-    fn generic_type_arguments(&mut self) -> Result<Type> {
+    fn generic_type_arguments(&mut self, identifier: Identifier) -> Result<Type> {
         let start = self.consume(TokenKind::Less)?.start();
 
         let mut type_params = Vec::new();
@@ -798,7 +837,8 @@ impl Parser {
         let end = self.token_at(self.index - 1)?.end();
 
         let generic_type = GenericType {
-            element_types: type_params,
+            name: identifier,
+            type_params,
             location: (start..end).into(),
         };
 
@@ -1532,6 +1572,15 @@ mod tests {
 
         assert_err_eq!("import std.io.", "Expected identifier");
         assert_err_eq!("import .std.io", "Expected identifier");
+    }
+
+    #[test]
+    fn test_use_snapshots() {
+        assert_snap_eq!("class Foo { }", "use_empty");
+        assert_snap_eq!("class Foo { use Bar }", "use_single");
+        assert_snap_eq!("class Foo { use Bar use Baz }", "use_multiple");
+        assert_snap_eq!("class Foo { use Bar<Baz> }", "use_generic");
+        assert_err_eq!("class Foo { use [Bar] }", "Invalid trait type");
     }
 
     #[test]

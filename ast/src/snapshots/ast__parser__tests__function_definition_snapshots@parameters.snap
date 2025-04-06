@@ -57,12 +57,12 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                                 },
                             ),
                             location: Location(
-                                24..31,
+                                24..32,
                             ),
                         },
                     ),
                     location: Location(
-                        18..31,
+                        18..32,
                     ),
                 },
             ],

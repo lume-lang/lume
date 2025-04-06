@@ -3,7 +3,7 @@ use std::ops::Range;
 use diag::source::NamedSource;
 use diag_macros::Diagnostic;
 
-use crate::lexer::TokenKind;
+use crate::{ast::Type, lexer::TokenKind};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Unexpected character", code = "LM1020", help = "Check your syntax")]
@@ -191,6 +191,18 @@ pub struct UnlessElseIfClause {
 
     #[label("`unless` conditionals cannot have `else if` clauses")]
     pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Invalid trait type", code = "LM1099")]
+pub struct InvalidTraitType {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Trait types must be either scalar or generic, found `{found}`.")]
+    pub range: Range<usize>,
+
+    pub found: Type,
 }
 
 #[derive(Diagnostic, Debug)]

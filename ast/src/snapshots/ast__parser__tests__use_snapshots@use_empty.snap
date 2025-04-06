@@ -1,0 +1,22 @@
+---
+source: ast/src/parser.rs
+assertion_line: 1564
+expression: "parse(\"class Foo { }\")"
+---
+[
+    Class(
+        ClassDefinition {
+            name: Identifier {
+                name: "Foo",
+                location: Location(
+                    6..9,
+                ),
+            },
+            builtin: false,
+            members: [],
+            location: Location(
+                0..13,
+            ),
+        },
+    ),
+]

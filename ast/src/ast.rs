@@ -93,6 +93,7 @@ pub struct ClassDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum ClassMember {
     Property(Box<Property>),
+    Use(Box<UseTrait>),
     MethodDefinition(Box<MethodDefinition>),
 }
 
@@ -102,6 +103,12 @@ pub struct Property {
     pub name: Identifier,
     pub property_type: Option<Box<Type>>,
     pub default_value: Option<Expression>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct UseTrait {
+    pub trait_type: Box<Type>,
     pub location: Location,
 }
 
@@ -133,11 +140,23 @@ pub enum TypeDefinition {
     Alias(Box<AliasDefinition>),
 }
 
+impl std::fmt::Display for TypeDefinition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", self))
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
+}
+
+impl std::fmt::Display for EnumDefinition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name.to_string())
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -147,11 +166,23 @@ pub struct EnumDefinitionCase {
     pub location: Location,
 }
 
+impl std::fmt::Display for EnumDefinitionCase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name.to_string())
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct AliasDefinition {
     pub name: Identifier,
     pub definition: Box<Type>,
     pub location: Location,
+}
+
+impl std::fmt::Display for AliasDefinition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name.to_string())
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -372,10 +403,26 @@ pub enum Type {
     Generic(Box<GenericType>),
 }
 
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::Scalar(t) => f.write_fmt(format_args!("{}", t)),
+            Type::Array(t) => f.write_fmt(format_args!("{}", t)),
+            Type::Generic(t) => f.write_fmt(format_args!("{}", t)),
+        }
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ScalarType {
     pub name: String,
     pub location: Location,
+}
+
+impl std::fmt::Display for ScalarType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name.to_string())
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -384,8 +431,33 @@ pub struct ArrayType {
     pub location: Location,
 }
 
+impl std::fmt::Display for ArrayType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("[{}]", self.element_type))
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct GenericType {
-    pub element_types: Vec<Box<Type>>,
+    pub name: Identifier,
+    pub type_params: Vec<Box<Type>>,
     pub location: Location,
+}
+
+impl std::fmt::Display for GenericType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", self.name))?;
+
+        if !self.type_params.is_empty() {
+            f.write_str("<")?;
+
+            for type_param in &self.type_params {
+                f.write_fmt(format_args!("{}", type_param))?;
+            }
+
+            f.write_str(">")?;
+        }
+
+        Ok(())
+    }
 }
