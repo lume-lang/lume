@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"if a != 1 { }\")"
+expression: "parse_expr(\"unless true { } else { }\")"
 ---
 [
     FunctionDefinition(
@@ -30,21 +30,21 @@ expression: "parse_expr(\"if a != 1 { }\")"
             ),
             block: Block {
                 statements: [
-                    If(
-                        IfCondition {
+                    Unless(
+                        UnlessCondition {
                             cases: [],
                             location: Location(
-                                20..33,
+                                20..44,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..35,
+                    18..46,
                 ),
             },
             location: Location(
-                0..35,
+                0..46,
             ),
         },
     ),

@@ -167,6 +167,13 @@ impl Parser {
         self.token_at(self.index)
     }
 
+    /// Parses the last token from the lexer.
+    ///
+    /// Returns the parsed token or a parsing error.
+    fn last_token(&self) -> Result<Token> {
+        self.token_at(self.tokens.len() - 1)
+    }
+
     /// Peeks the next token from the lexer at some offset and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
@@ -257,12 +264,15 @@ impl Parser {
 
     /// Parses the next token as an identifier.
     fn identifier(&mut self) -> Result<Identifier> {
-        let name = match self.consume(TokenKind::Identifier) {
-            Ok(identifier) => identifier.value.unwrap(),
+        let identifier = match self.consume(TokenKind::Identifier) {
+            Ok(identifier) => identifier,
             Err(_) => return Err(err!(self, ExpectedIdentifier)),
         };
 
-        let identifier = Identifier { name };
+        let identifier = Identifier {
+            name: identifier.value.unwrap(),
+            location: identifier.index.into(),
+        };
 
         Ok(identifier)
     }
@@ -273,35 +283,45 @@ impl Parser {
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std.fmt.error`.
     fn identifier_path(&mut self) -> Result<IdentifierPath> {
-        let mut path = IdentifierPath { path: Vec::new() };
+        let mut segments = Vec::new();
 
         loop {
-            let segment = self.identifier()?;
-            path.path.push(segment);
+            segments.push(self.identifier()?);
 
             if self.consume_if(TokenKind::Dot)?.is_none() {
                 break;
             }
         }
 
+        let start = segments.first().unwrap().location.0.start;
+        let end = segments.last().unwrap().location.0.end;
+
+        let path = IdentifierPath {
+            path: segments,
+            location: (start..end).into(),
+        };
+
         Ok(path)
     }
 
     fn block(&mut self) -> Result<Block> {
-        let mut block = Block { statements: Vec::new() };
+        let mut statements = Vec::new();
 
-        self.consume(TokenKind::LeftCurly)?;
+        let start = self.consume(TokenKind::LeftCurly)?.start();
 
         loop {
             if self.peek(TokenKind::RightCurly)? {
                 break;
             }
-            block.statements.push(self.statement()?);
+            statements.push(self.statement()?);
         }
 
-        self.consume(TokenKind::RightCurly)?;
+        let end = self.consume(TokenKind::RightCurly)?.end();
 
-        Ok(block)
+        Ok(Block {
+            statements,
+            location: (start..end).into(),
+        })
     }
 
     /// Returns an empty block for external functions.
@@ -312,7 +332,13 @@ impl Parser {
             return Err(err!(self, ExternalFunctionBody));
         }
 
-        Ok(Block::empty())
+        if self.eof() {
+            let last_token_end = self.last_token()?.end();
+
+            return Ok(Block::from_location(last_token_end..last_token_end));
+        }
+
+        Ok(Block::from_location(self.token()?.index))
     }
 
     fn top_level_expression(&mut self) -> Result<TopLevelExpression> {
@@ -328,20 +354,25 @@ impl Parser {
     }
 
     fn import(&mut self) -> Result<TopLevelExpression> {
-        self.consume(TokenKind::Import)?;
+        let start = self.consume(TokenKind::Import)?.start();
 
         let path = match self.identifier_path() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedIdentifier)),
         };
 
-        let import_def = Import { path };
+        let end = path.location.0.end;
+
+        let import_def = Import {
+            path,
+            location: (start..end).into(),
+        };
 
         Ok(TopLevelExpression::Import(Box::new(import_def)))
     }
 
     fn class(&mut self) -> Result<TopLevelExpression> {
-        self.consume(TokenKind::Class)?;
+        let start = self.consume(TokenKind::Class)?.start();
 
         let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
 
@@ -352,9 +383,14 @@ impl Parser {
 
         self.consume(TokenKind::LeftCurly)?;
         let members = self.class_members()?;
-        self.consume(TokenKind::RightCurly)?;
+        let end = self.consume(TokenKind::RightCurly)?.end();
 
-        let class_def = ClassDefinition { name, builtin, members };
+        let class_def = ClassDefinition {
+            name,
+            builtin,
+            members,
+            location: (start..end).into(),
+        };
 
         Ok(TopLevelExpression::Class(Box::new(class_def)))
     }
@@ -387,18 +423,26 @@ impl Parser {
         match self.token()?.kind {
             // If the member is marked as public, make it so.
             TokenKind::Pub => {
-                self.skip()?;
+                let location = self.consume(TokenKind::Pub)?.index;
 
-                Ok(Visibility::Public(Box::new(Public {})))
+                Ok(Visibility::Public(Box::new(Public {
+                    location: location.into(),
+                })))
             }
 
             // By default, make it private.
-            _ => Ok(Visibility::Private(Box::new(Private {}))),
+            _ => {
+                let location = self.token()?.index;
+
+                Ok(Visibility::Private(Box::new(Private {
+                    location: location.into(),
+                })))
+            }
         }
     }
 
     fn property(&mut self, visibility: Visibility) -> Result<ClassMember> {
-        self.consume(TokenKind::Let)?;
+        let start = self.consume(TokenKind::Let)?.start();
 
         let kind = self.token()?.kind;
         let name = match self.identifier() {
@@ -418,18 +462,21 @@ impl Parser {
             None
         };
 
+        let end = self.token_at(self.index - 1)?.end();
+
         let property_def = Property {
             visibility,
             name,
             property_type,
             default_value,
+            location: (start..end).into(),
         };
 
         Ok(ClassMember::Property(Box::new(property_def)))
     }
 
     fn method(&mut self, visibility: Visibility) -> Result<ClassMember> {
-        self.consume(TokenKind::Fn)?;
+        let start = self.consume(TokenKind::Fn)?.start();
 
         let external = self.consume_if(TokenKind::External)?.is_some();
 
@@ -448,6 +495,8 @@ impl Parser {
             self.block()?
         };
 
+        let end = self.token_at(self.index - 1)?.end();
+
         let method_def = MethodDefinition {
             visibility,
             external,
@@ -455,12 +504,14 @@ impl Parser {
             parameters,
             return_type: Box::new(return_type),
             block,
+            location: (start..end).into(),
         };
 
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
     }
 
     fn function(&mut self) -> Result<TopLevelExpression> {
+        let start = self.token()?.start();
         let visibility = self.visibility()?;
 
         self.consume(TokenKind::Fn)?;
@@ -482,6 +533,8 @@ impl Parser {
             self.block()?
         };
 
+        let end = self.token_at(self.index - 1)?.end();
+
         let function_def = FunctionDefinition {
             visibility,
             external,
@@ -489,6 +542,7 @@ impl Parser {
             parameters,
             return_type: Box::new(return_type),
             block,
+            location: (start..end).into(),
         };
 
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
@@ -522,7 +576,14 @@ impl Parser {
 
         let param_type = self.parse_type()?;
 
-        Ok(Parameter { name, param_type })
+        let start = name.location().start();
+        let end = param_type.location().end();
+
+        Ok(Parameter {
+            name,
+            param_type,
+            location: (start..end).into(),
+        })
     }
 
     fn type_definition(&mut self) -> Result<TopLevelExpression> {
@@ -544,7 +605,7 @@ impl Parser {
     /// }
     /// ```
     fn enum_definition(&mut self) -> Result<TypeDefinition> {
-        self.consume(TokenKind::Enum)?;
+        let start = self.consume(TokenKind::Enum)?.start();
 
         let name = match self.identifier() {
             Ok(name) => name,
@@ -563,9 +624,13 @@ impl Parser {
             }
         }
 
-        self.consume(TokenKind::RightCurly)?;
+        let end = self.consume(TokenKind::RightCurly)?.end();
 
-        Ok(TypeDefinition::Enum(Box::new(EnumDefinition { name, cases })))
+        Ok(TypeDefinition::Enum(Box::new(EnumDefinition {
+            name,
+            cases,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
@@ -594,7 +659,14 @@ impl Parser {
             Vec::new()
         };
 
-        Ok(EnumDefinitionCase { name, parameters })
+        let start = name.location.start();
+        let end = self.token_at(self.index - 1)?.end();
+
+        Ok(EnumDefinitionCase {
+            name,
+            parameters,
+            location: (start..end).into(),
+        })
     }
 
     /// Parses a single type alias definition, such as:
@@ -603,7 +675,7 @@ impl Parser {
     /// type Alias = String | Int
     /// ```
     fn type_alias_definition(&mut self) -> Result<TypeDefinition> {
-        self.consume(TokenKind::Type)?;
+        let start = self.consume(TokenKind::Type)?.start();
 
         let name = match self.identifier() {
             Ok(name) => name,
@@ -614,10 +686,12 @@ impl Parser {
         self.consume(TokenKind::Assign)?;
 
         let definition = self.parse_type()?;
+        let end = definition.location().end();
 
         let alias = AliasDefinition {
             name,
             definition: Box::new(definition),
+            location: (start..end).into(),
         };
 
         Ok(TypeDefinition::Alias(Box::new(alias)))
@@ -657,31 +731,40 @@ impl Parser {
 
     /// Parses either a scalar- or generic-type at the current cursor position.
     fn scalar_or_generic_type(&mut self) -> Result<Type> {
-        let name = self.consume(TokenKind::Identifier)?.value.unwrap();
+        let name = self.consume(TokenKind::Identifier)?;
 
         if self.peek(TokenKind::Less)? {
             self.generic_type_arguments()
         } else {
-            Ok(Type::Scalar(Box::new(ScalarType { name })))
+            let location = name.index;
+            let name = name.value.unwrap();
+
+            Ok(Type::Scalar(Box::new(ScalarType {
+                name,
+                location: location.into(),
+            })))
         }
     }
 
     /// Parses an array type at the current cursor position.
     fn array_type(&mut self) -> Result<Type> {
-        self.consume(TokenKind::LeftBracket)?;
+        let start = self.consume(TokenKind::LeftBracket)?.start();
 
-        let element_type = ArrayType {
-            element_type: Box::new(self.parse_type()?),
+        let element_type = Box::new(self.parse_type()?);
+
+        let end = self.consume(TokenKind::RightBracket)?.start();
+
+        let array_type = ArrayType {
+            element_type,
+            location: (start..end).into(),
         };
 
-        self.consume(TokenKind::RightBracket)?;
-
-        Ok(Type::Array(Box::new(element_type)))
+        Ok(Type::Array(Box::new(array_type)))
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
     fn generic_type_arguments(&mut self) -> Result<Type> {
-        self.consume(TokenKind::Less)?;
+        let start = self.consume(TokenKind::Less)?.start();
 
         let mut type_params = Vec::new();
 
@@ -693,8 +776,11 @@ impl Parser {
             type_params.push(Box::new(self.parse_type()?));
         }
 
+        let end = self.token_at(self.index - 1)?.end();
+
         let generic_type = GenericType {
             element_types: type_params,
+            location: (start..end).into(),
         };
 
         Ok(Type::Generic(Box::new(generic_type)))
@@ -715,7 +801,7 @@ impl Parser {
         let is_const = self.peek(TokenKind::Const)?;
 
         // Whatever the token is, consume it.
-        self.consume_any()?;
+        let start = self.consume_any()?.start();
 
         let name = self.identifier()?;
         let variable_type = if self.consume_if(TokenKind::Colon)?.is_some() {
@@ -727,12 +813,14 @@ impl Parser {
         self.consume(TokenKind::Assign)?;
 
         let value = self.expression()?;
+        let end = value.location().end();
 
         let variable = VariableDeclaration {
             name,
             variable_type,
             value,
             is_const,
+            location: (start..end).into(),
         };
 
         Ok(Statement::VariableDeclaration(Box::new(variable)))
@@ -749,30 +837,35 @@ impl Parser {
 
     /// Parses an "if" conditional statement at the current cursor position.
     fn if_conditional(&mut self) -> Result<Statement> {
-        self.consume(TokenKind::If)?;
-
-        let mut conditional = IfCondition { cases: Vec::new() };
+        let start = self.consume(TokenKind::If)?.start();
+        let mut cases = Vec::new();
 
         // Append the primary case
-        self.conditional_case(&mut conditional.cases)?;
+        self.conditional_case(&mut cases)?;
 
         // Append the `else if` case
-        self.else_if_conditional_cases(&mut conditional.cases)?;
+        self.else_if_conditional_cases(&mut cases)?;
 
         // Append the `else` case
-        self.else_conditional_case(&mut conditional.cases)?;
+        self.else_conditional_case(&mut cases)?;
+
+        let end = cases.last().unwrap().location.end();
+
+        let conditional = IfCondition {
+            cases: Vec::new(),
+            location: (start..end).into(),
+        };
 
         Ok(Statement::If(Box::new(conditional)))
     }
 
     /// Parses an "unless" conditional statement at the current cursor position.
     fn unless_conditional(&mut self) -> Result<Statement> {
-        self.consume(TokenKind::Unless)?;
-
-        let mut conditional = UnlessCondition { cases: Vec::new() };
+        let start = self.consume(TokenKind::Unless)?.start();
+        let mut cases = Vec::new();
 
         // Append the primary case
-        self.conditional_case(&mut conditional.cases)?;
+        self.conditional_case(&mut cases)?;
 
         // Moan if any `else if` blocks are found
         if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If, 1)? {
@@ -780,7 +873,14 @@ impl Parser {
         }
 
         // Append the `else` case
-        self.else_conditional_case(&mut conditional.cases)?;
+        self.else_conditional_case(&mut cases)?;
+
+        let end = cases.last().unwrap().location.end();
+
+        let conditional = UnlessCondition {
+            cases: Vec::new(),
+            location: (start..end).into(),
+        };
 
         Ok(Statement::Unless(Box::new(conditional)))
     }
@@ -790,9 +890,13 @@ impl Parser {
         let condition = self.expression()?;
         let block = self.block()?;
 
+        let start = condition.location().start();
+        let end = block.location().end();
+
         let case = Condition {
             condition: Some(condition),
             block,
+            location: (start..end).into(),
         };
 
         cases.push(case);
@@ -818,12 +922,19 @@ impl Parser {
 
     /// Parses zero-or-one `else` cases within a conditional statement at the current cursor position.
     fn else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
-        if self.consume_if(TokenKind::Else)?.is_none() {
-            return Ok(());
-        }
+        let start = match self.consume_if(TokenKind::Else)? {
+            Some(t) => t.index.start,
+            None => return Ok(()),
+        };
 
         let block = self.block()?;
-        let case = Condition { condition: None, block };
+        let end = block.location.end();
+
+        let case = Condition {
+            condition: None,
+            block,
+            location: (start..end).into(),
+        };
 
         cases.push(case);
 
@@ -832,10 +943,15 @@ impl Parser {
 
     /// Parses a return statement at the current cursor position.
     fn return_statement(&mut self) -> Result<Statement> {
-        self.consume(TokenKind::Return)?;
+        let start = self.consume(TokenKind::Return)?.start();
 
         let value = self.expression()?;
-        let statement = Statement::Return(Box::new(Return { value }));
+        let end = value.location().end();
+
+        let statement = Statement::Return(Box::new(Return {
+            value,
+            location: (start..end).into(),
+        }));
 
         Ok(statement)
     }
@@ -906,10 +1022,23 @@ impl Parser {
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
+        let operator_loc = operator.index.clone();
+
         let right = self.expression_with_precedence(operator.precedence())?;
         let name: String = operator.into();
 
-        Ok(Call::new(Some(left), name.into(), vec![right]))
+        let start = left.location().start();
+        let end = right.location().start();
+
+        Ok(Expression::Call(Box::new(Call {
+            callee: Some(left),
+            name: Identifier {
+                name,
+                location: operator_loc.into(),
+            },
+            arguments: vec![right],
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses an expression on the current cursor position, which is nested within parentheses.
@@ -946,9 +1075,21 @@ impl Parser {
     /// Parses a call expression on the current cursor position.
     fn call(&mut self, target: Identifier) -> Result<Expression> {
         let arguments = self.arguments()?;
-        let call = Call::new(None, target, arguments);
 
-        return Ok(call);
+        let start = target.location.start();
+        let end = match arguments.last() {
+            Some(a) => a.location().end(),
+            None => target.location.end(),
+        };
+
+        let call = Call {
+            callee: None,
+            name: target,
+            arguments,
+            location: (start..end).into(),
+        };
+
+        Ok(Expression::Call(Box::new(call)))
     }
 
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
@@ -956,17 +1097,26 @@ impl Parser {
         // Consume the dot token
         self.consume(TokenKind::Dot)?;
 
-        let name = self.consume(TokenKind::Identifier)?.value.unwrap();
+        let name = self.consume(TokenKind::Identifier)?;
 
         // If the next token is an opening parenthesis, it's a method invocation
         if self.peek(TokenKind::LeftParen)? {
-            let arguments = self.arguments()?;
-            let call = Call::new(Some(target), name.into(), arguments);
+            let identifier = Identifier {
+                name: name.value.unwrap(),
+                location: name.index.into(),
+            };
 
-            return Ok(call);
+            return self.call(identifier);
         }
 
-        let expression = Expression::Member(Box::new(Member { callee: target, name }));
+        let start = target.location().start();
+        let end = name.index.end;
+
+        let expression = Expression::Member(Box::new(Member {
+            callee: target,
+            name: name.value.unwrap(),
+            location: (start..end).into(),
+        }));
 
         // If there is yet another dot, it's part of a longer expression.
         if self.peek(TokenKind::Dot)? {
@@ -984,7 +1134,14 @@ impl Parser {
 
         let value = self.expression()?;
 
-        Ok(Expression::Assignment(Box::new(Assignment { target, value })))
+        let start = target.location().start();
+        let end = value.location().end();
+
+        Ok(Expression::Assignment(Box::new(Assignment {
+            target,
+            value,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses a variable reference expression on the current cursor position.
@@ -997,6 +1154,7 @@ impl Parser {
     /// Parses a literal value expression on the current cursor position.
     fn literal(&mut self) -> Result<Expression> {
         let token = self.token()?;
+        let location: Location = token.index.into();
 
         let literal = match token.kind {
             TokenKind::Integer => {
@@ -1006,7 +1164,10 @@ impl Parser {
                     Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
-                Literal::Int(Box::new(IntLiteral { value: int_value }))
+                Literal::Int(Box::new(IntLiteral {
+                    value: int_value,
+                    location,
+                }))
             }
             TokenKind::Float => {
                 let value = token.value.unwrap();
@@ -1015,15 +1176,18 @@ impl Parser {
                     Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
-                Literal::Float(Box::new(FloatLiteral { value: float_value }))
+                Literal::Float(Box::new(FloatLiteral {
+                    value: float_value,
+                    location,
+                }))
             }
             TokenKind::String => {
                 let value = token.value.unwrap();
 
-                Literal::String(Box::new(StringLiteral { value }))
+                Literal::String(Box::new(StringLiteral { value, location }))
             }
-            TokenKind::True => Literal::Boolean(Box::new(BooleanLiteral { value: true })),
-            TokenKind::False => Literal::Boolean(Box::new(BooleanLiteral { value: false })),
+            TokenKind::True => Literal::Boolean(Box::new(BooleanLiteral { value: true, location })),
+            TokenKind::False => Literal::Boolean(Box::new(BooleanLiteral { value: false, location })),
             k => return Err(err!(self, Unimplemented, desc, format!("{:?} literals", k))),
         };
 
@@ -1132,30 +1296,6 @@ mod tests {
         };
     }
 
-    macro_rules! assert_expr_eq {
-        (
-            $input: expr,
-            $expression: expr
-        ) => {
-            let parsed = parse_expr($input);
-
-            let expected = TopLevelExpression::FunctionDefinition(Box::new(FunctionDefinition {
-                visibility: Visibility::Private(Box::new(Private {})),
-                external: false,
-                name: Identifier::from("main".to_string()),
-                parameters: vec![],
-                return_type: Box::new(Type::Scalar(Box::new(ScalarType {
-                    name: "void".to_owned(),
-                }))),
-                block: Block {
-                    statements: vec![$expression],
-                },
-            }));
-
-            assert_eq!(parsed, vec![expected])
-        };
-    }
-
     macro_rules! assert_expr_err_eq {
         (
             $input: expr,
@@ -1240,8 +1380,13 @@ mod tests {
             Parser::from_str("import std").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
-                    path: vec![Identifier { name: "std".into() }]
-                }
+                    path: vec![Identifier {
+                        name: "std".into(),
+                        location: Location(7..10)
+                    }],
+                    location: Location(7..10)
+                },
+                location: Location(0..10)
             }))]
         );
 
@@ -1249,17 +1394,19 @@ mod tests {
             Parser::from_str("import std.io").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
-                    path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
-                }
-            }))]
-        );
-
-        assert_eq!(
-            Parser::from_str("import std.io").parse().unwrap(),
-            vec![TopLevelExpression::Import(Box::new(Import {
-                path: IdentifierPath {
-                    path: vec![Identifier { name: "std".into() }, Identifier { name: "io".into() }]
-                }
+                    path: vec![
+                        Identifier {
+                            name: "std".into(),
+                            location: Location(7..10)
+                        },
+                        Identifier {
+                            name: "io".into(),
+                            location: Location(11..13)
+                        }
+                    ],
+                    location: Location(7..13)
+                },
+                location: Location(0..13)
             }))]
         );
 
@@ -1281,135 +1428,14 @@ mod tests {
     }
 
     #[test]
-    fn test_conditional_if() {
-        assert_expr_eq!(
-            "if true { }",
-            Statement::If(Box::new(IfCondition {
-                cases: vec![Condition {
-                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                        BooleanLiteral { value: true }
-                    ))))),
-                    block: Block { statements: vec![] }
-                }]
-            }))
-        );
-
-        assert_expr_eq!(
-            "if true { let a = 1 }",
-            Statement::If(Box::new(IfCondition {
-                cases: vec![Condition {
-                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                        BooleanLiteral { value: true }
-                    ))))),
-                    block: Block {
-                        statements: vec![Statement::VariableDeclaration(Box::new(VariableDeclaration {
-                            name: Identifier::from("a".to_string()),
-                            variable_type: None,
-                            value: Expression::Literal(Box::new(Literal::Int(Box::new(IntLiteral { value: 1 })))),
-                            is_const: false
-                        }))]
-                    }
-                }]
-            }))
-        );
-
-        assert_expr_eq!(
-            "if true { } else if false { }",
-            Statement::If(Box::new(IfCondition {
-                cases: vec![
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: true }
-                        ))))),
-                        block: Block::empty()
-                    },
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: false }
-                        ))))),
-                        block: Block::empty()
-                    }
-                ]
-            }))
-        );
-
-        assert_expr_eq!(
-            "if true { } else { }",
-            Statement::If(Box::new(IfCondition {
-                cases: vec![
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: true }
-                        ))))),
-                        block: Block::empty()
-                    },
-                    Condition {
-                        condition: None,
-                        block: Block::empty()
-                    }
-                ]
-            }))
-        );
-
-        assert_expr_eq!(
-            "if true { } else if false { } else { }",
-            Statement::If(Box::new(IfCondition {
-                cases: vec![
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: true }
-                        ))))),
-                        block: Block::empty()
-                    },
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: false }
-                        ))))),
-                        block: Block::empty()
-                    },
-                    Condition {
-                        condition: None,
-                        block: Block::empty()
-                    }
-                ]
-            }))
-        );
-
-        assert_expr_eq!(
-            "unless true { }",
-            Statement::Unless(Box::new(UnlessCondition {
-                cases: vec![Condition {
-                    condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                        BooleanLiteral { value: true }
-                    ))))),
-                    block: Block { statements: vec![] }
-                }]
-            }))
-        );
-
-        assert_expr_eq!(
-            "unless true { } else { }",
-            Statement::Unless(Box::new(UnlessCondition {
-                cases: vec![
-                    Condition {
-                        condition: Some(Expression::Literal(Box::new(Literal::Boolean(Box::new(
-                            BooleanLiteral { value: true }
-                        ))))),
-                        block: Block { statements: vec![] }
-                    },
-                    Condition {
-                        condition: None,
-                        block: Block { statements: vec![] }
-                    }
-                ]
-            }))
-        );
-
-        assert_expr_err_eq!("unless true { } else if false { }", "Unexpected `else if` clause");
-    }
-
-    #[test]
     fn test_conditional_snapshots() {
+        assert_expr_snap_eq!("if true { }", "if_empty");
+        assert_expr_snap_eq!("if true { let a = 1 }", "if_statement");
+        assert_expr_snap_eq!("if true { } else if false { }", "if_else_if_empty");
+        assert_expr_snap_eq!("if true { } else { }", "if_else_empty");
+        assert_expr_snap_eq!("if true { } else if false { } else { }", "if_else_if_else_empty");
+        assert_expr_snap_eq!("unless true { }", "unless_empty");
+        assert_expr_snap_eq!("unless true { } else { }", "unless_else_empty");
         assert_expr_snap_eq!("if a == 1 { }", "equality_empty");
         assert_expr_snap_eq!("if a != 1 { }", "inequality_empty");
         assert_expr_snap_eq!("if true { let a = 0 }", "if_statement");
@@ -1420,5 +1446,6 @@ mod tests {
         );
         assert_expr_snap_eq!("unless true { let a = 0 }", "unless_statement");
         assert_expr_err_snap_eq!("unless true { } else if false {}", "unless_else_if");
+        assert_expr_err_eq!("unless true { } else if false { }", "Unexpected `else if` clause");
     }
 }

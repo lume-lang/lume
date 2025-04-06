@@ -6,75 +6,46 @@ expression: "parse_expr(\"if true { let a = 0 let b = 0 }\")"
     FunctionDefinition(
         FunctionDefinition {
             visibility: Private(
-                Private,
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
             ),
             external: false,
             name: Identifier {
                 name: "main",
+                location: Location(
+                    3..7,
+                ),
             },
             parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
+                    location: Location(
+                        13..17,
+                    ),
                 },
             ),
             block: Block {
                 statements: [
                     If(
                         IfCondition {
-                            cases: [
-                                Condition {
-                                    condition: Some(
-                                        Literal(
-                                            Boolean(
-                                                BooleanLiteral {
-                                                    value: true,
-                                                },
-                                            ),
-                                        ),
-                                    ),
-                                    block: Block {
-                                        statements: [
-                                            VariableDeclaration(
-                                                VariableDeclaration {
-                                                    name: Identifier {
-                                                        name: "a",
-                                                    },
-                                                    variable_type: None,
-                                                    value: Literal(
-                                                        Int(
-                                                            IntLiteral {
-                                                                value: 0,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    is_const: false,
-                                                },
-                                            ),
-                                            VariableDeclaration(
-                                                VariableDeclaration {
-                                                    name: Identifier {
-                                                        name: "b",
-                                                    },
-                                                    variable_type: None,
-                                                    value: Literal(
-                                                        Int(
-                                                            IntLiteral {
-                                                                value: 0,
-                                                            },
-                                                        ),
-                                                    ),
-                                                    is_const: false,
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                },
-                            ],
+                            cases: [],
+                            location: Location(
+                                20..51,
+                            ),
                         },
                     ),
                 ],
+                location: Location(
+                    18..53,
+                ),
             },
+            location: Location(
+                0..53,
+            ),
         },
     ),
 ]

@@ -275,6 +275,14 @@ impl Token {
     pub fn len(&self) -> usize {
         self.index.end - self.index.start
     }
+
+    pub fn start(&self) -> usize {
+        self.index.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.index.end
+    }
 }
 
 impl Into<&'static str> for Token {

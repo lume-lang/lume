@@ -6,21 +6,37 @@ expression: "parse(\"pub fn main() -> void {}\")"
     FunctionDefinition(
         FunctionDefinition {
             visibility: Public(
-                Public,
+                Public {
+                    location: Location(
+                        0..3,
+                    ),
+                },
             ),
             external: false,
             name: Identifier {
                 name: "main",
+                location: Location(
+                    7..11,
+                ),
             },
             parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
+                    location: Location(
+                        17..21,
+                    ),
                 },
             ),
             block: Block {
                 statements: [],
+                location: Location(
+                    22..24,
+                ),
             },
+            location: Location(
+                0..24,
+            ),
         },
     ),
 ]

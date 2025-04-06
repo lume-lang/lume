@@ -1,1 +1,1 @@
-fn main() -> void { if true { } }
+fn external main() -> void
