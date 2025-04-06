@@ -346,6 +346,7 @@ impl Parser {
 
         match current.kind {
             TokenKind::Import => self.import(),
+            TokenKind::Namespace => self.namespace(),
             TokenKind::Class => self.class(),
             TokenKind::Fn | TokenKind::Pub => self.function(),
             TokenKind::Enum | TokenKind::Type => self.type_definition(),
@@ -369,6 +370,24 @@ impl Parser {
         };
 
         Ok(TopLevelExpression::Import(Box::new(import_def)))
+    }
+
+    fn namespace(&mut self) -> Result<TopLevelExpression> {
+        let start = self.consume(TokenKind::Namespace)?.start();
+
+        let path = match self.identifier_path() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        let end = path.location.0.end;
+
+        let namespace_def = Namespace {
+            path,
+            location: (start..end).into(),
+        };
+
+        Ok(TopLevelExpression::Namespace(Box::new(namespace_def)))
     }
 
     fn class(&mut self) -> Result<TopLevelExpression> {
@@ -1513,6 +1532,17 @@ mod tests {
 
         assert_err_eq!("import std.io.", "Expected identifier");
         assert_err_eq!("import .std.io", "Expected identifier");
+    }
+
+    #[test]
+    fn test_namespace_snapshots() {
+        assert_snap_eq!("namespace std", "path_1");
+        assert_snap_eq!("namespace std.io", "path_2");
+        assert_snap_eq!("namespace std.io.path", "path_3");
+        assert_snap_eq!("namespace System.IO", "path_casing");
+        assert_err_eq!("namespace", "Expected identifier");
+        assert_err_eq!("namespace .std", "Expected identifier");
+        assert_err_eq!("namespace std.io.", "Expected identifier");
     }
 
     #[test]

@@ -64,6 +64,7 @@ pub struct Private {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum TopLevelExpression {
     Import(Box<Import>),
+    Namespace(Box<Namespace>),
     Class(Box<ClassDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
@@ -71,6 +72,12 @@ pub enum TopLevelExpression {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Import {
+    pub path: IdentifierPath,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Namespace {
     pub path: IdentifierPath,
     pub location: Location,
 }
