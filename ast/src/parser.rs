@@ -1114,11 +1114,38 @@ impl Parser {
     fn nested_expression(&mut self) -> Result<Expression> {
         self.consume(TokenKind::LeftParen)?;
 
-        let expression = self.expression_with_precedence(0);
+        let expression = self.expression_with_precedence(0)?;
+
+        // If the expression is followed by two dots ('..'), it's a range expression.
+        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
+            return self.range_expression(expression);
+        }
 
         self.consume(TokenKind::RightParen)?;
 
-        expression
+        Ok(expression)
+    }
+
+    /// Parses a range expression on the current cursor position.
+    fn range_expression(&mut self, lower: Expression) -> Result<Expression> {
+        self.consume(TokenKind::Dot)?;
+        self.consume(TokenKind::Dot)?;
+
+        let inclusive = self.consume_if(TokenKind::Assign)?.is_some();
+        let upper = self.expression()?;
+
+        let start = lower.location().start();
+        let end = upper.location().end();
+        let location: Location = (start..end).into();
+
+        let range = Range {
+            lower,
+            upper,
+            inclusive,
+            location,
+        };
+
+        Ok(Expression::Range(Box::new(range)))
     }
 
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
@@ -1163,6 +1190,11 @@ impl Parser {
 
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
     fn member(&mut self, target: Expression) -> Result<Expression> {
+        // If the expression is followed by two dots ('..'), it's a range expression.
+        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
+            return self.range_expression(target);
+        }
+
         // Consume the dot token
         self.consume(TokenKind::Dot)?;
 
@@ -1534,5 +1566,15 @@ mod tests {
         assert_expr_snap_eq!("for pattern in collection { let a = 0 }", "iter_loop_statement");
         assert_expr_snap_eq!("for pattern in collection { break }", "iter_loop_break");
         assert_expr_snap_eq!("for pattern in collection { continue }", "iter_loop_continue");
+    }
+
+    #[test]
+    fn test_range_snapshots() {
+        assert_expr_snap_eq!("let _ = (0..1)", "literal_exclusive");
+        assert_expr_snap_eq!("let _ = (0..=1)", "literal_inclusive");
+        assert_expr_snap_eq!("let _ = (a..b)", "expr_exclusive");
+        assert_expr_snap_eq!("let _ = (a..=b)", "expr_inclusive");
+        assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1))", "expr_nested_exclusive");
+        assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1))", "expr_nested_inclusive");
     }
 }

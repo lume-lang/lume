@@ -1,0 +1,84 @@
+---
+source: ast/src/parser.rs
+expression: "parse_expr(\"let _ = (a..b)\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        13..17,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [
+                    VariableDeclaration(
+                        VariableDeclaration {
+                            name: Identifier {
+                                name: "_",
+                                location: Location(
+                                    24..25,
+                                ),
+                            },
+                            variable_type: None,
+                            value: Range(
+                                Range {
+                                    lower: Identifier(
+                                        Identifier {
+                                            name: "a",
+                                            location: Location(
+                                                29..30,
+                                            ),
+                                        },
+                                    ),
+                                    upper: Variable(
+                                        Variable {
+                                            name: Identifier {
+                                                name: "b",
+                                                location: Location(
+                                                    32..33,
+                                                ),
+                                            },
+                                        },
+                                    ),
+                                    inclusive: false,
+                                    location: Location(
+                                        29..33,
+                                    ),
+                                },
+                            ),
+                            is_const: false,
+                            location: Location(
+                                20..33,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    18..36,
+                ),
+            },
+            location: Location(
+                0..36,
+            ),
+        },
+    ),
+]

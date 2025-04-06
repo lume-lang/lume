@@ -1,9 +1,7 @@
-use std::ops::Range;
-
 use derive::Node;
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
-pub struct Location(pub Range<usize>);
+pub struct Location(pub std::ops::Range<usize>);
 
 impl Location {
     pub fn start(&self) -> usize {
@@ -15,8 +13,8 @@ impl Location {
     }
 }
 
-impl From<Range<usize>> for Location {
-    fn from(range: Range<usize>) -> Location {
+impl From<std::ops::Range<usize>> for Location {
+    fn from(range: std::ops::Range<usize>) -> Location {
         Location(range)
     }
 }
@@ -234,6 +232,7 @@ pub enum Expression {
     Identifier(Box<Identifier>),
     Literal(Box<Literal>),
     Member(Box<Member>),
+    Range(Box<Range>),
     Variable(Box<Variable>),
 }
 
@@ -337,6 +336,14 @@ pub struct BooleanLiteral {
 pub struct Member {
     pub callee: Expression,
     pub name: String,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Range {
+    pub lower: Expression,
+    pub upper: Expression,
+    pub inclusive: bool,
     pub location: Location,
 }
 
