@@ -1,5 +1,5 @@
 [workspace]
-members = ["arc", "ast", "cli", "compiler", "diag", "diag_macros"]
+members = ["arc", "ast", "cli", "compiler", "derive", "diag", "diag_macros"]
 resolver = "3"
 
 [workspace.package]
