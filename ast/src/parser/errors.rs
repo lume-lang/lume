@@ -18,6 +18,20 @@ pub struct UnexpectedCharacter {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "Expected ending quote",
+    code = "LM1021",
+    help = "Did you forget to end your string?"
+)]
+pub struct MissingEndingQuote {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("String literal was started, but has no matching end-quote")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "End of file", code = "LM1023", help = "Has the file been fully written?")]
 pub struct UnexpectedEndOfFile {
     #[span]

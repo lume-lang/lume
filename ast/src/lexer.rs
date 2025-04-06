@@ -414,7 +414,7 @@ impl Lexer {
             '0'..='9' => self.number(),
 
             // String literals
-            '"' => self.string(),
+            '"' => self.string()?,
 
             // Whitespace
             ' ' | '\t' | '\n' | '\r' => self.whitespace(),
@@ -653,7 +653,7 @@ impl Lexer {
     }
 
     /// Parses a string token at the current cursor position.
-    fn string(&mut self) -> Token {
+    fn string(&mut self) -> Result<Token> {
         let mut content = String::new();
 
         // Consume the opening quote
@@ -661,14 +661,22 @@ impl Lexer {
 
         loop {
             let c = self.consume();
-            if c == '"' {
-                break;
-            }
+            match c {
+                '"' => break,
+                '\0' => {
+                    return Err(MissingEndingQuote {
+                        source: self.source.clone(),
+                        range: self.position..self.position + 1,
+                    }
+                    .into());
+                }
+                _ => {}
+            };
 
             content.push(c);
         }
 
-        Token::new(TokenKind::String, content)
+        Ok(Token::new(TokenKind::String, content))
     }
 
     /// Parses a single whitespace token at the current cursor position.
@@ -690,6 +698,22 @@ mod tests {
         };
 
         Lexer::new(source.clone())
+    }
+
+    fn lex_all(source: &str) -> Result<Vec<Token>> {
+        let mut tokens = Vec::new();
+        let mut lexer = lexer(source);
+
+        loop {
+            let token = lexer.next_token()?;
+            if token.kind == TokenKind::Eof {
+                break;
+            }
+
+            tokens.push(token);
+        }
+
+        Ok(tokens)
     }
 
     fn token(kind: TokenKind, value: Option<String>, position: usize, end: usize) -> Token {
@@ -743,6 +767,25 @@ mod tests {
                     assert_eq!(token.value, Some(val.to_string()));
                 }
             }
+        };
+    }
+
+    macro_rules! set_snapshot_suffix {
+        ($($expr:expr),*) => {
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_suffix(format!($($expr,)*));
+            let _guard = settings.bind_to_scope();
+        }
+    }
+
+    macro_rules! assert_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(lex_all($input));
         };
     }
 
@@ -878,5 +921,15 @@ mod tests {
         assert_tokens!("10E5", token(TokenKind::Float, Some("10E5".into()), 0, 4));
         assert_tokens!("1.0e5", token(TokenKind::Float, Some("1.0e5".into()), 0, 5));
         assert_tokens!("1.0E5", token(TokenKind::Float, Some("1.0E5".into()), 0, 5));
+    }
+
+    #[test]
+    fn test_string() {
+        assert_token!("\"\"", TokenKind::String, Some(""), 0, 2);
+        assert_token!("\"    \"", TokenKind::String, Some("    "), 0, 6);
+        assert_token!("\"hello world\"", TokenKind::String, Some("hello world"), 0, 13);
+        assert_token!("\"hello\nworld\"", TokenKind::String, Some("hello\nworld"), 0, 13);
+
+        assert_snap_eq!("\"hello world", "unended_string");
     }
 }
