@@ -17,7 +17,7 @@ use toml::{Table, Value};
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
     /// Defines the path to the Arcfile.
     path: PathBuf,

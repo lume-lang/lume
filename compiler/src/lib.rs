@@ -5,8 +5,32 @@ use ast::ast::TopLevelExpression;
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
 
+/// Represents a single project or module with one-or-more Lume source files.
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Module {
+    /// Defines the module's project metadata (such as `Arcfile`s)
+    project: Project,
+
+    /// Defines the source files for the module.
+    files: Vec<ModuleFile>,
+}
+
+impl Module {
+    /// Creates a new module from a [`Project`] instance.
+    pub fn from_project(project: Project) -> Result<Self> {
+        let mut files = Vec::new();
+
+        for file in project.files()? {
+            files.push(ModuleFile::from_path(file)?);
+        }
+
+        Ok(Module { project, files })
+    }
+}
+
+/// Represents a single source file within a module.
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct ModuleFile {
     /// Defines the source file for the module.
     source: NamedSource,
 
@@ -14,19 +38,26 @@ pub struct Module {
     expressions: Vec<TopLevelExpression>,
 }
 
-impl Module {
-    /// Creates a new module with the given source file.
+impl ModuleFile {
+    /// Creates a new module file with the given source file.
     pub fn new(source: NamedSource) -> Self {
-        Module {
+        ModuleFile {
             source,
             expressions: Vec::new(),
         }
+    }
+
+    /// Creates a new module file from a single file path.
+    pub fn from_path(path: PathBuf) -> Result<Self> {
+        let source = NamedSource::from_file(path)?;
+
+        Ok(ModuleFile::new(source))
     }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct State {
-    /// Defines the source files to compile.
+    /// Defines the modules to compile.
     modules: Vec<Module>,
 }
 
@@ -35,23 +66,20 @@ impl State {
         State { modules: Vec::new() }
     }
 
-    /// Creates a new state from a list of source files.
-    pub fn from_files(files: Vec<PathBuf>) -> Result<Self> {
-        let mut sources = Vec::new();
+    /// Creates a new state from one-or-more projects.
+    pub fn from_projects(projects: Vec<Project>) -> Result<Self> {
+        let mut modules = Vec::new();
 
-        for file in files {
-            let source = match NamedSource::from_file(file) {
-                Ok(source) => source,
-                Err(err) => return Err(err.into()),
-            };
-            sources.push(source);
+        for project in projects {
+            modules.push(Module::from_project(project)?);
         }
 
-        let state = State {
-            modules: sources.into_iter().map(Module::new).collect(),
-        };
+        Ok(State { modules })
+    }
 
-        Ok(state)
+    /// Creates a new state from a single project.
+    pub fn from_project(project: Project) -> Result<Self> {
+        Self::from_projects(vec![project])
     }
 
     /// Print a human-readable representation of the state to the console.
@@ -96,14 +124,7 @@ impl Driver {
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
     pub fn build_project(&mut self, root: &Path) -> Result<State> {
         let project = Project::locate(root)?;
-        let state = State::from_files(project.files()?)?;
-
-        self.build(state)
-    }
-
-    /// Builds the given file into an executable or library.
-    pub fn build_file(&mut self, mut state: State, entry: NamedSource) -> Result<State> {
-        state.modules.push(Module::new(entry));
+        let state = State::from_project(project)?;
 
         self.build(state)
     }
@@ -149,8 +170,10 @@ impl Driver {
     /// Parses all the modules within the given state object.
     fn parse(&mut self, state: &mut State) -> Result<()> {
         for module in state.modules.iter_mut() {
-            let source = module.source.clone();
-            module.expressions = Parser::new(source).parse()?;
+            for module_file in module.files.iter_mut() {
+                let source = module_file.source.clone();
+                module_file.expressions = Parser::new(source).parse()?;
+            }
         }
 
         Ok(())
