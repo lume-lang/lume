@@ -206,6 +206,22 @@ pub struct InvalidTraitType {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "Invalid import path",
+    code = "LM1100",
+    help = "Imports can be defined as `import std.io (File, Buffer)`"
+)]
+pub struct InvalidImportPath {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Expected a one or more identifiers to import, found `{found}`.")]
+    pub range: Range<usize>,
+
+    pub found: TokenKind,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Unimplemented", code = "LM9999")]
 pub struct Unimplemented {
     #[span]

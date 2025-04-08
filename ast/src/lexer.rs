@@ -252,6 +252,14 @@ impl std::fmt::Debug for TokenKind {
     }
 }
 
+impl std::fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let desc: &'static str = (*self).into();
+
+        write!(f, "{}", desc)
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct Token {
     /// Defines the type of the token.

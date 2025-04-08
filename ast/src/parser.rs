@@ -7,6 +7,8 @@ use crate::parser::errors::*;
 
 pub mod errors;
 
+const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::Dot;
+
 const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Assign, 1),
     (TokenKind::AddAssign, 1),
@@ -288,7 +290,7 @@ impl Parser {
         loop {
             segments.push(self.identifier()?);
 
-            if self.consume_if(TokenKind::Dot)?.is_none() {
+            if self.consume_if(IDENTIFIER_SEPARATOR)?.is_none() {
                 break;
             }
         }
@@ -362,10 +364,32 @@ impl Parser {
             Err(_) => return Err(err!(self, ExpectedIdentifier)),
         };
 
-        let end = path.location.0.end;
+        let mut names = Vec::new();
+
+        if self.eof() {
+            return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
+        }
+
+        match self.token()?.kind {
+            TokenKind::LeftParen => {
+                self.skip()?;
+
+                while self.consume_if(TokenKind::RightParen)?.is_none() {
+                    if !names.is_empty() && !self.peek(TokenKind::RightParen)? {
+                        self.consume(TokenKind::Comma)?;
+                    }
+
+                    names.push(self.identifier()?);
+                }
+            }
+            kind => return Err(err!(self, InvalidImportPath, found, kind)),
+        }
+
+        let end = self.token_at(self.index - 1)?.end();
 
         let import_def = Import {
             path,
+            names,
             location: (start..end).into(),
         };
 
@@ -1537,7 +1561,7 @@ mod tests {
     #[test]
     fn test_imports() {
         assert_eq!(
-            Parser::from_str("import std").parse().unwrap(),
+            Parser::from_str("import std (Int)").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![Identifier {
@@ -1546,12 +1570,16 @@ mod tests {
                     }],
                     location: Location(7..10)
                 },
-                location: Location(0..10)
+                names: vec![Identifier {
+                    name: "Int".into(),
+                    location: Location(12..15)
+                }],
+                location: Location(0..16)
             }))]
         );
 
         assert_eq!(
-            Parser::from_str("import std.io").parse().unwrap(),
+            Parser::from_str("import std.io (File)").parse().unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![
@@ -1566,10 +1594,66 @@ mod tests {
                     ],
                     location: Location(7..13)
                 },
-                location: Location(0..13)
+                names: vec![Identifier {
+                    name: "File".into(),
+                    location: Location(15..19)
+                }],
+                location: Location(0..20)
             }))]
         );
 
+        assert_eq!(
+            Parser::from_str("import std.io (File, Buffer)").parse().unwrap(),
+            vec![TopLevelExpression::Import(Box::new(Import {
+                path: IdentifierPath {
+                    path: vec![
+                        Identifier {
+                            name: "std".into(),
+                            location: Location(7..10)
+                        },
+                        Identifier {
+                            name: "io".into(),
+                            location: Location(11..13)
+                        }
+                    ],
+                    location: Location(7..13)
+                },
+                names: vec![
+                    Identifier {
+                        name: "File".into(),
+                        location: Location(15..19)
+                    },
+                    Identifier {
+                        name: "Buffer".into(),
+                        location: Location(21..27)
+                    }
+                ],
+                location: Location(0..28)
+            }))]
+        );
+
+        assert_eq!(
+            Parser::from_str("import std.io ()").parse().unwrap(),
+            vec![TopLevelExpression::Import(Box::new(Import {
+                path: IdentifierPath {
+                    path: vec![
+                        Identifier {
+                            name: "std".into(),
+                            location: Location(7..10)
+                        },
+                        Identifier {
+                            name: "io".into(),
+                            location: Location(11..13)
+                        }
+                    ],
+                    location: Location(7..13)
+                },
+                names: vec![],
+                location: Location(0..16)
+            }))]
+        );
+
+        assert_err_eq!("import std.io", "Invalid import path");
         assert_err_eq!("import std.io.", "Expected identifier");
         assert_err_eq!("import .std.io", "Expected identifier");
     }

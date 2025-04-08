@@ -73,6 +73,7 @@ pub enum TopLevelExpression {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Import {
     pub path: IdentifierPath,
+    pub names: Vec<Identifier>,
     pub location: Location,
 }
 
