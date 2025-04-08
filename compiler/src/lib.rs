@@ -1,12 +1,14 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use crate::id::hash_id;
 use arc::{Project, ProjectId};
 use ast::ast::TopLevelExpression;
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
-use fxhash::hash64;
 
 pub mod hir;
+pub mod id;
 
 /// Uniquely identifies a module within a compilation job.
 #[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,7 +30,10 @@ pub struct Module {
     project: Project,
 
     /// Defines the source files for the module.
-    files: Vec<ModuleFile>,
+    pub files: Vec<ModuleFile>,
+
+    /// Defines the current state of the module.
+    pub state: ModuleState,
 }
 
 impl Module {
@@ -44,20 +49,19 @@ impl Module {
             mod_id: project.id.into(),
             project,
             files,
+            state: ModuleState::Read,
         })
     }
 }
 
 /// Uniquely identifies a source file within a module.
-#[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ModuleFileId(pub u64);
 
 impl From<String> for ModuleFileId {
     /// Creates a new [`ModuleFileId`] from a string, by taking it's hash value.
     fn from(value: String) -> ModuleFileId {
-        let hash = hash64(value.as_bytes());
-
-        ModuleFileId(hash)
+        ModuleFileId(hash_id(value.as_bytes()))
     }
 }
 
@@ -69,9 +73,6 @@ pub struct ModuleFile {
 
     /// Defines the source file for the module.
     source: NamedSource,
-
-    /// Defines the parsed top-level expressions in the module.
-    expressions: Vec<TopLevelExpression>,
 }
 
 impl ModuleFile {
@@ -79,11 +80,7 @@ impl ModuleFile {
     pub fn new(source: NamedSource) -> Self {
         let source_id: ModuleFileId = source.content.clone().into();
 
-        ModuleFile {
-            source_id,
-            source,
-            expressions: Vec::new(),
-        }
+        ModuleFile { source_id, source }
     }
 
     /// Creates a new module file from a single file path.
@@ -92,6 +89,21 @@ impl ModuleFile {
 
         Ok(ModuleFile::new(source))
     }
+}
+
+/// Represents the current state of a single module.
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub enum ModuleState {
+    /// The project Arcfile has been read, deserialized, and has located
+    /// all the files to include within the compilation.
+    Read,
+
+    /// All the files within the module has been read and parsed into
+    /// top-level expressions, which can then be further lowering
+    /// into HIR.
+    Parsed {
+        expressions: HashMap<ModuleFileId, Vec<TopLevelExpression>>,
+    },
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -209,9 +221,28 @@ impl Driver {
     /// Parses all the modules within the given state object.
     fn parse(&mut self, state: &mut State) -> Result<()> {
         for module in state.modules.iter_mut() {
+            // If parse modules in the `Read` state, as we might otherwise
+            // re-parse modules, which have already been fully compiled.
+            if !matches!(module.state, ModuleState::Read) {
+                continue;
+            }
+
+            let mut module_expressions = HashMap::new();
+
+            // Reserve at least the amount of files within module.
+            module_expressions.reserve(module.files.len());
+
             for module_file in module.files.iter_mut() {
+                let file_id = module_file.source_id;
                 let source = module_file.source.clone();
-                module_file.expressions = Parser::new(source).parse()?;
+
+                let expressions = Parser::new(source).parse()?;
+
+                module_expressions.insert(file_id, expressions);
+            }
+
+            module.state = ModuleState::Parsed {
+                expressions: module_expressions,
             }
         }
 
