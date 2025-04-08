@@ -9,6 +9,7 @@ arc = { path = "../arc" }
 ast = { path = "../ast" }
 diag = { path = "../diag" }
 diag_macros = { path = "../diag_macros" }
+fxhash = "^0.2"
 serde = { version = "1.0.219", features = ["serde_derive"] }
 ron = "0.9"
 llvm-sys = { version = "191" }

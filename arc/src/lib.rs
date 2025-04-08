@@ -6,6 +6,7 @@ use diag::{
     Result,
     source::{NamedSource, Source},
 };
+use fxhash::hash64;
 use glob::glob;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
@@ -17,8 +18,23 @@ use toml::{Table, Value};
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ProjectId(pub u64);
+
+impl From<String> for ProjectId {
+    /// Creates a new [`ProjectId`] from a string, by taking it's hash value.
+    fn from(value: String) -> ProjectId {
+        let hash = hash64(value.as_bytes());
+
+        ProjectId(hash)
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Project {
+    /// Uniquely identifies the project.
+    pub id: ProjectId,
+
     /// Defines the path to the Arcfile.
     path: PathBuf,
 
@@ -163,7 +179,10 @@ impl ProjectParser {
             .into());
         }
 
+        let id = ProjectId::from(name.clone());
+
         let project = Project {
+            id,
             path: self.path.to_path_buf(),
             name,
             lume_version,

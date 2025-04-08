@@ -1,13 +1,29 @@
 use std::path::{Path, PathBuf};
 
-use arc::Project;
+use arc::{Project, ProjectId};
 use ast::ast::TopLevelExpression;
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
+use fxhash::hash64;
+
+pub mod hir;
+
+/// Uniquely identifies a module within a compilation job.
+#[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ModuleId(pub u64);
+
+impl From<ProjectId> for ModuleId {
+    fn from(value: ProjectId) -> Self {
+        ModuleId(value.0)
+    }
+}
 
 /// Represents a single project or module with one-or-more Lume source files.
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Module {
+    /// Uniquely identifies the module within a [`State`] instance.
+    pub mod_id: ModuleId,
+
     /// Defines the module's project metadata (such as `Arcfile`s)
     project: Project,
 
@@ -24,13 +40,33 @@ impl Module {
             files.push(ModuleFile::from_path(file)?);
         }
 
-        Ok(Module { project, files })
+        Ok(Module {
+            mod_id: project.id.into(),
+            project,
+            files,
+        })
+    }
+}
+
+/// Uniquely identifies a source file within a module.
+#[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ModuleFileId(pub u64);
+
+impl From<String> for ModuleFileId {
+    /// Creates a new [`ModuleFileId`] from a string, by taking it's hash value.
+    fn from(value: String) -> ModuleFileId {
+        let hash = hash64(value.as_bytes());
+
+        ModuleFileId(hash)
     }
 }
 
 /// Represents a single source file within a module.
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct ModuleFile {
+    /// Uniquely identifies the source file within a module.
+    pub source_id: ModuleFileId,
+
     /// Defines the source file for the module.
     source: NamedSource,
 
@@ -41,7 +77,10 @@ pub struct ModuleFile {
 impl ModuleFile {
     /// Creates a new module file with the given source file.
     pub fn new(source: NamedSource) -> Self {
+        let source_id: ModuleFileId = source.content.clone().into();
+
         ModuleFile {
+            source_id,
             source,
             expressions: Vec::new(),
         }
