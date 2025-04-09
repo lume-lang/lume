@@ -30,42 +30,44 @@ expression: "parse_expr(\"for pattern in collection { continue }\")"
             ),
             block: Block {
                 statements: [
-                    IteratorLoop(
-                        IteratorLoop {
-                            pattern: Identifier {
-                                name: "pattern",
-                                location: Location(
-                                    24..31,
-                                ),
-                            },
-                            collection: Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "collection",
-                                        location: Location(
-                                            35..45,
-                                        ),
-                                    },
+                    Expression(
+                        IteratorLoop(
+                            IteratorLoop {
+                                pattern: Identifier {
+                                    name: "pattern",
+                                    location: Location(
+                                        24..31,
+                                    ),
                                 },
-                            ),
-                            block: Block {
-                                statements: [
-                                    Continue(
-                                        Continue {
+                                collection: Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "collection",
                                             location: Location(
-                                                48..56,
+                                                35..45,
                                             ),
                                         },
+                                    },
+                                ),
+                                block: Block {
+                                    statements: [
+                                        Continue(
+                                            Continue {
+                                                location: Location(
+                                                    48..56,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    location: Location(
+                                        46..58,
                                     ),
-                                ],
+                                },
                                 location: Location(
-                                    46..58,
+                                    20..58,
                                 ),
                             },
-                            location: Location(
-                                20..58,
-                            ),
-                        },
+                        ),
                     ),
                 ],
                 location: Location(

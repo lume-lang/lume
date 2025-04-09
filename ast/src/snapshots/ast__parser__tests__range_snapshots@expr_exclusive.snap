@@ -41,12 +41,14 @@ expression: "parse_expr(\"let _ = (a..b)\")"
                             variable_type: None,
                             value: Range(
                                 Range {
-                                    lower: Identifier(
-                                        Identifier {
-                                            name: "a",
-                                            location: Location(
-                                                29..30,
-                                            ),
+                                    lower: Variable(
+                                        Variable {
+                                            name: Identifier {
+                                                name: "a",
+                                                location: Location(
+                                                    29..30,
+                                                ),
+                                            },
                                         },
                                     ),
                                     upper: Variable(

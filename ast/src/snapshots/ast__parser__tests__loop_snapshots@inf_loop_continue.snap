@@ -30,26 +30,28 @@ expression: "parse_expr(\"loop { continue }\")"
             ),
             block: Block {
                 statements: [
-                    InfiniteLoop(
-                        InfiniteLoop {
-                            block: Block {
-                                statements: [
-                                    Continue(
-                                        Continue {
-                                            location: Location(
-                                                27..35,
-                                            ),
-                                        },
+                    Expression(
+                        InfiniteLoop(
+                            InfiniteLoop {
+                                block: Block {
+                                    statements: [
+                                        Continue(
+                                            Continue {
+                                                location: Location(
+                                                    27..35,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    location: Location(
+                                        25..37,
                                     ),
-                                ],
+                                },
                                 location: Location(
-                                    25..37,
+                                    20..37,
                                 ),
                             },
-                            location: Location(
-                                20..37,
-                            ),
-                        },
+                        ),
                     ),
                 ],
                 location: Location(

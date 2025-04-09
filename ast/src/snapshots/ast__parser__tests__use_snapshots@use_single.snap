@@ -3,35 +3,37 @@ source: ast/src/parser.rs
 expression: "parse(\"class Foo { use Bar }\")"
 ---
 [
-    Class(
-        ClassDefinition {
-            name: Identifier {
-                name: "Foo",
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    Use(
+                        UseTrait {
+                            trait_type: Scalar(
+                                ScalarType {
+                                    name: "Bar",
+                                    location: Location(
+                                        16..19,
+                                    ),
+                                },
+                            ),
+                            location: Location(
+                                12..19,
+                            ),
+                        },
+                    ),
+                ],
                 location: Location(
-                    6..9,
+                    0..21,
                 ),
             },
-            builtin: false,
-            members: [
-                Use(
-                    UseTrait {
-                        trait_type: Scalar(
-                            ScalarType {
-                                name: "Bar",
-                                location: Location(
-                                    16..19,
-                                ),
-                            },
-                        ),
-                        location: Location(
-                            12..19,
-                        ),
-                    },
-                ),
-            ],
-            location: Location(
-                0..21,
-            ),
-        },
+        ),
     ),
 ]

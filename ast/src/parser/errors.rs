@@ -133,18 +133,6 @@ pub struct ExpectedClassMember {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected statement", code = "LM1070")]
-pub struct InvalidStatement {
-    #[span]
-    pub source: NamedSource,
-
-    #[label("Expected statement, got {actual:?} instead")]
-    pub range: Range<usize>,
-
-    pub actual: TokenKind,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Unexpected expression", code = "LM1071")]
 pub struct InvalidExpression {
     #[span]

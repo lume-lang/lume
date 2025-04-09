@@ -30,60 +30,62 @@ expression: "parse_expr(\"for pattern in collection { let a = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    IteratorLoop(
-                        IteratorLoop {
-                            pattern: Identifier {
-                                name: "pattern",
-                                location: Location(
-                                    24..31,
-                                ),
-                            },
-                            collection: Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "collection",
-                                        location: Location(
-                                            35..45,
-                                        ),
-                                    },
+                    Expression(
+                        IteratorLoop(
+                            IteratorLoop {
+                                pattern: Identifier {
+                                    name: "pattern",
+                                    location: Location(
+                                        24..31,
+                                    ),
                                 },
-                            ),
-                            block: Block {
-                                statements: [
-                                    VariableDeclaration(
-                                        VariableDeclaration {
-                                            name: Identifier {
-                                                name: "a",
-                                                location: Location(
-                                                    52..53,
-                                                ),
-                                            },
-                                            variable_type: None,
-                                            value: Literal(
-                                                Int(
-                                                    IntLiteral {
-                                                        value: 0,
-                                                        location: Location(
-                                                            56..57,
-                                                        ),
-                                                    },
-                                                ),
-                                            ),
-                                            is_const: false,
+                                collection: Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "collection",
                                             location: Location(
-                                                48..57,
+                                                35..45,
                                             ),
                                         },
+                                    },
+                                ),
+                                block: Block {
+                                    statements: [
+                                        VariableDeclaration(
+                                            VariableDeclaration {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: Location(
+                                                        52..53,
+                                                    ),
+                                                },
+                                                variable_type: None,
+                                                value: Literal(
+                                                    Int(
+                                                        IntLiteral {
+                                                            value: 0,
+                                                            location: Location(
+                                                                56..57,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                                is_const: false,
+                                                location: Location(
+                                                    48..57,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    location: Location(
+                                        46..59,
                                     ),
-                                ],
+                                },
                                 location: Location(
-                                    46..59,
+                                    20..59,
                                 ),
                             },
-                            location: Location(
-                                20..59,
-                            ),
-                        },
+                        ),
                     ),
                 ],
                 location: Location(

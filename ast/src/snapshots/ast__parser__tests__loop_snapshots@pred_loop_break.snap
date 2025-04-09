@@ -30,36 +30,38 @@ expression: "parse_expr(\"while true { break }\")"
             ),
             block: Block {
                 statements: [
-                    PredicateLoop(
-                        PredicateLoop {
-                            condition: Literal(
-                                Boolean(
-                                    BooleanLiteral {
-                                        value: true,
-                                        location: Location(
-                                            26..30,
-                                        ),
-                                    },
-                                ),
-                            ),
-                            block: Block {
-                                statements: [
-                                    Break(
-                                        Break {
+                    Expression(
+                        PredicateLoop(
+                            PredicateLoop {
+                                condition: Literal(
+                                    Boolean(
+                                        BooleanLiteral {
+                                            value: true,
                                             location: Location(
-                                                33..38,
+                                                26..30,
                                             ),
                                         },
                                     ),
-                                ],
+                                ),
+                                block: Block {
+                                    statements: [
+                                        Break(
+                                            Break {
+                                                location: Location(
+                                                    33..38,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                    location: Location(
+                                        31..40,
+                                    ),
+                                },
                                 location: Location(
-                                    31..40,
+                                    20..40,
                                 ),
                             },
-                            location: Location(
-                                20..40,
-                            ),
-                        },
+                        ),
                     ),
                 ],
                 location: Location(

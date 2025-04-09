@@ -30,28 +30,30 @@ expression: "parse_expr(\"while true { }\")"
             ),
             block: Block {
                 statements: [
-                    PredicateLoop(
-                        PredicateLoop {
-                            condition: Literal(
-                                Boolean(
-                                    BooleanLiteral {
-                                        value: true,
-                                        location: Location(
-                                            26..30,
-                                        ),
-                                    },
+                    Expression(
+                        PredicateLoop(
+                            PredicateLoop {
+                                condition: Literal(
+                                    Boolean(
+                                        BooleanLiteral {
+                                            value: true,
+                                            location: Location(
+                                                26..30,
+                                            ),
+                                        },
+                                    ),
                                 ),
-                            ),
-                            block: Block {
-                                statements: [],
+                                block: Block {
+                                    statements: [],
+                                    location: Location(
+                                        31..34,
+                                    ),
+                                },
                                 location: Location(
-                                    31..34,
+                                    20..34,
                                 ),
                             },
-                            location: Location(
-                                20..34,
-                            ),
-                        },
+                        ),
                     ),
                 ],
                 location: Location(

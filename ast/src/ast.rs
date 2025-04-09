@@ -65,7 +65,6 @@ pub struct Private {
 pub enum TopLevelExpression {
     Import(Box<Import>),
     Namespace(Box<Namespace>),
-    Class(Box<ClassDefinition>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
 }
@@ -81,6 +80,30 @@ pub struct Import {
 pub struct Namespace {
     pub path: IdentifierPath,
     pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct FunctionDefinition {
+    pub visibility: Visibility,
+    pub external: bool,
+    pub name: Identifier,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Box<Type>,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub enum TypeDefinition {
+    Class(Box<ClassDefinition>),
+    Enum(Box<EnumDefinition>),
+    Alias(Box<AliasDefinition>),
+}
+
+impl std::fmt::Display for TypeDefinition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}", self))
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -125,29 +148,6 @@ pub struct MethodDefinition {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct FunctionDefinition {
-    pub visibility: Visibility,
-    pub external: bool,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub return_type: Box<Type>,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub enum TypeDefinition {
-    Enum(Box<EnumDefinition>),
-    Alias(Box<AliasDefinition>),
-}
-
-impl std::fmt::Display for TypeDefinition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self))
-    }
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
@@ -189,14 +189,10 @@ impl std::fmt::Display for AliasDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
-    If(Box<IfCondition>),
-    Unless(Box<UnlessCondition>),
-    InfiniteLoop(Box<InfiniteLoop>),
-    IteratorLoop(Box<IteratorLoop>),
-    PredicateLoop(Box<PredicateLoop>),
     Break(Box<Break>),
     Continue(Box<Continue>),
     Return(Box<Return>),
+    Expression(Box<Expression>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -268,11 +264,15 @@ pub struct Return {
 pub enum Expression {
     Assignment(Box<Assignment>),
     Call(Box<Call>),
-    Identifier(Box<Identifier>),
     Literal(Box<Literal>),
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
+    If(Box<IfCondition>),
+    Unless(Box<UnlessCondition>),
+    InfiniteLoop(Box<InfiniteLoop>),
+    IteratorLoop(Box<IteratorLoop>),
+    PredicateLoop(Box<PredicateLoop>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -320,6 +320,12 @@ impl std::fmt::Display for Identifier {
     }
 }
 
+impl std::hash::Hash for Identifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
 pub struct IdentifierPath {
     pub path: Vec<Identifier>,
@@ -336,6 +342,12 @@ impl std::fmt::Display for IdentifierPath {
             .join(".");
 
         f.write_str(&joined)
+    }
+}
+
+impl std::hash::Hash for IdentifierPath {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_string().hash(state);
     }
 }
 

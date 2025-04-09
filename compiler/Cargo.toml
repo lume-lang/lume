@@ -7,6 +7,7 @@ rust-version.workspace = true
 [dependencies]
 arc = { path = "../arc" }
 ast = { path = "../ast" }
+derive = { path = "../derive" }
 diag = { path = "../diag" }
 diag_macros = { path = "../diag_macros" }
 fxhash = "^0.2"

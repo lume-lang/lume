@@ -3,15 +3,16 @@ use std::path::{Path, PathBuf};
 
 use crate::id::hash_id;
 use arc::{Project, ProjectId};
-use ast::ast::TopLevelExpression;
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
+use lookup::LookupTable;
 
 pub mod hir;
 pub mod id;
+pub mod lookup;
 
 /// Uniquely identifies a module within a compilation job.
-#[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ModuleId(pub u64);
 
 impl From<ProjectId> for ModuleId {
@@ -99,22 +100,27 @@ pub enum ModuleState {
     Read,
 
     /// All the files within the module has been read and parsed into
-    /// top-level expressions, which can then be further lowering
-    /// into HIR.
-    Parsed {
-        expressions: HashMap<ModuleFileId, Vec<TopLevelExpression>>,
-    },
+    /// top-level expressions, which can then be analyzed more
+    /// thoroughly and perform other checks and optimizations.
+    Parsed { map: hir::Map },
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct State {
     /// Defines the modules to compile.
     modules: Vec<Module>,
+
+    /// Defines a lookup table for all symbols and other mappings.
+    lookup: LookupTable,
 }
 
 impl State {
-    pub fn new() -> Self {
-        State { modules: Vec::new() }
+    /// Creates a new [`State`] object, with the given modules.
+    fn from_modules(modules: Vec<Module>) -> Self {
+        State {
+            modules,
+            lookup: LookupTable::new(),
+        }
     }
 
     /// Creates a new state from one-or-more projects.
@@ -125,12 +131,32 @@ impl State {
             modules.push(Module::from_project(project)?);
         }
 
-        Ok(State { modules })
+        Ok(State::from_modules(modules))
     }
 
     /// Creates a new state from a single project.
     pub fn from_project(project: Project) -> Result<Self> {
         Self::from_projects(vec![project])
+    }
+
+    /// Gets all the modules within the state.
+    pub fn modules(&self) -> Vec<&Module> {
+        self.modules.iter().collect::<Vec<_>>()
+    }
+
+    /// Gets IDs of all the modules within the state.
+    pub fn module_ids(&self) -> Vec<ModuleId> {
+        self.modules.iter().map(|m| m.mod_id).collect::<Vec<_>>()
+    }
+
+    /// Gets the module with the given ID.
+    pub fn module(&self, module: ModuleId) -> Option<&Module> {
+        self.modules.iter().find(|&m| m.mod_id == module)
+    }
+
+    /// Gets the mutable module with the given ID.
+    pub fn module_mut(&mut self, module: ModuleId) -> Option<&mut Module> {
+        self.modules.iter_mut().find(|m| m.mod_id == module)
     }
 
     /// Print a human-readable representation of the state to the console.
@@ -160,29 +186,42 @@ pub enum Stage {
 pub struct Driver {
     /// Defines the current stage of the compilation process.
     current_stage: Stage,
+
+    /// Defines the current compilation state.
+    pub state: State,
 }
 
 impl Driver {
-    pub fn new() -> Self {
+    fn new(state: State) -> Self {
         Driver {
             current_stage: Stage::Parse,
+            state,
         }
     }
 
-    /// Builds the given project into an executable or library.
+    /// Creates a new compilation driver from the given project root.
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
-    pub fn build_project(&mut self, root: &Path) -> Result<State> {
+    pub fn from_root(root: &Path) -> Result<Self> {
         let project = Project::locate(root)?;
         let state = State::from_project(project)?;
 
-        self.build(state)
+        Ok(Driver::new(state))
+    }
+
+    /// Builds the given project into an executable or library.
+    pub fn build_project(root: &Path) -> Result<State> {
+        let mut driver = Driver::from_root(root)?;
+
+        driver.build()?;
+
+        Ok(driver.state)
     }
 
     /// Builds the given compiler state into an executable or library.
-    pub fn build(&mut self, mut state: State) -> Result<State> {
-        self.run_stage(&mut state, self.current_stage)?;
+    pub fn build(&mut self) -> Result<()> {
+        self.run_stage(self.current_stage)?;
 
         loop {
             let next_stage = match Driver::next_stage(self.current_stage) {
@@ -190,10 +229,10 @@ impl Driver {
                 None => break,
             };
 
-            self.run_stage(&mut state, next_stage)?;
+            self.run_stage(next_stage)?;
         }
 
-        Ok(state)
+        Ok(())
     }
 
     /// Gets the next stage of the compilation process.
@@ -207,60 +246,66 @@ impl Driver {
     }
 
     /// Executes the given stage of the compilation process.
-    fn run_stage(&mut self, state: &mut State, stage: Stage) -> Result<()> {
+    fn run_stage(&mut self, stage: Stage) -> Result<()> {
         self.current_stage = stage;
 
         match stage {
-            Stage::Parse => self.parse(state),
-            Stage::Analyze => self.analyze(state),
-            Stage::Codegen => self.codegen(state),
-            Stage::Link => self.link(state),
+            Stage::Parse => self.parse(),
+            Stage::Analyze => self.analyze(),
+            Stage::Codegen => self.codegen(),
+            Stage::Link => self.link(),
         }
     }
 
     /// Parses all the modules within the given state object.
-    fn parse(&mut self, state: &mut State) -> Result<()> {
-        for module in state.modules.iter_mut() {
+    fn parse(&mut self) -> Result<()> {
+        let module_ids = self.state.module_ids();
+
+        for module_id in module_ids {
+            let module = match self.state.module(module_id) {
+                Some(module) => module,
+                None => continue,
+            };
+
             // If parse modules in the `Read` state, as we might otherwise
             // re-parse modules, which have already been fully compiled.
             if !matches!(module.state, ModuleState::Read) {
                 continue;
             }
 
-            let mut module_expressions = HashMap::new();
+            let mut expressions = HashMap::new();
 
             // Reserve at least the amount of files within module.
-            module_expressions.reserve(module.files.len());
+            expressions.reserve(module.files.len());
 
-            for module_file in module.files.iter_mut() {
+            for module_file in module.files.iter() {
                 let file_id = module_file.source_id;
                 let source = module_file.source.clone();
 
-                let expressions = Parser::new(source).parse()?;
+                let file_expressions = Parser::new(source).parse()?;
 
-                module_expressions.insert(file_id, expressions);
+                expressions.insert(file_id, file_expressions);
             }
 
-            module.state = ModuleState::Parsed {
-                expressions: module_expressions,
-            }
+            // Lowers the parsed module expressions down to HIR.
+            hir::lower::HirLowering::lower(&mut self.state, module_id, expressions)?;
         }
 
         Ok(())
     }
 
     /// Analyzes all the modules within the given state object.
-    fn analyze(&mut self, _state: &mut State) -> Result<()> {
+    fn analyze(&mut self) -> Result<()> {
         Ok(())
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
-    fn codegen(&mut self, _state: &mut State) -> Result<()> {
+    fn codegen(&mut self) -> Result<()> {
         Ok(())
     }
 
     /// Links all the modules within the given state object into a single executable or library.
-    fn link(&mut self, _state: &mut State) -> Result<()> {
+    fn link(&mut self) -> Result<()> {
         Ok(())
     }
 }

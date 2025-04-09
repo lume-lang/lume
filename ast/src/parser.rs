@@ -349,9 +349,8 @@ impl Parser {
         match current.kind {
             TokenKind::Import => self.import(),
             TokenKind::Namespace => self.namespace(),
-            TokenKind::Class => self.class(),
             TokenKind::Fn | TokenKind::Pub => self.function(),
-            TokenKind::Enum | TokenKind::Type => self.type_definition(),
+            TokenKind::Enum | TokenKind::Type | TokenKind::Class => self.type_definition(),
             _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
         }
     }
@@ -414,7 +413,94 @@ impl Parser {
         Ok(TopLevelExpression::Namespace(Box::new(namespace_def)))
     }
 
-    fn class(&mut self) -> Result<TopLevelExpression> {
+    fn function(&mut self) -> Result<TopLevelExpression> {
+        let start = self.token()?.start();
+        let visibility = self.visibility()?;
+
+        self.consume(TokenKind::Fn)?;
+
+        let external = self.consume_if(TokenKind::External)?.is_some();
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        };
+
+        let parameters = self.parameters()?;
+
+        self.consume(TokenKind::Arrow)?;
+        let return_type = self.parse_type()?;
+        let block = if external {
+            self.external_block()?
+        } else {
+            self.block()?
+        };
+
+        let end = self.token_at(self.index - 1)?.end();
+
+        let function_def = FunctionDefinition {
+            visibility,
+            external,
+            name,
+            parameters,
+            return_type: Box::new(return_type),
+            block,
+            location: (start..end).into(),
+        };
+
+        Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
+    }
+
+    fn parameters(&mut self) -> Result<Vec<Parameter>> {
+        // If no opening parenthesis, no parameters are defined.
+        if !self.peek(TokenKind::LeftParen)? {
+            return Ok(Vec::new());
+        }
+
+        self.consume(TokenKind::LeftParen)?;
+
+        let mut parameters = Vec::new();
+
+        while self.consume_if(TokenKind::RightParen)?.is_none() {
+            if !parameters.is_empty() && !self.peek(TokenKind::RightParen)? {
+                self.consume(TokenKind::Comma)?;
+            }
+
+            parameters.push(self.parameter()?);
+        }
+
+        Ok(parameters)
+    }
+
+    fn parameter(&mut self) -> Result<Parameter> {
+        let name = self.identifier()?;
+
+        self.consume(TokenKind::Colon)?;
+
+        let param_type = self.parse_type()?;
+
+        let start = name.location().start();
+        let end = param_type.location().end();
+
+        Ok(Parameter {
+            name,
+            param_type,
+            location: (start..end).into(),
+        })
+    }
+
+    fn type_definition(&mut self) -> Result<TopLevelExpression> {
+        let def = match self.token()?.kind {
+            TokenKind::Class => self.class()?,
+            TokenKind::Enum => self.enum_definition()?,
+            TokenKind::Type => self.type_alias_definition()?,
+            _ => return Err(err!(self, ExpectedIdentifier)),
+        };
+
+        Ok(TopLevelExpression::TypeDefinition(Box::new(def)))
+    }
+
+    fn class(&mut self) -> Result<TypeDefinition> {
         let start = self.consume(TokenKind::Class)?.start();
 
         let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
@@ -435,7 +521,7 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(TopLevelExpression::Class(Box::new(class_def)))
+        Ok(TypeDefinition::Class(Box::new(class_def)))
     }
 
     fn class_members(&mut self) -> Result<Vec<ClassMember>> {
@@ -585,92 +671,6 @@ impl Parser {
         };
 
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
-    }
-
-    fn function(&mut self) -> Result<TopLevelExpression> {
-        let start = self.token()?.start();
-        let visibility = self.visibility()?;
-
-        self.consume(TokenKind::Fn)?;
-
-        let external = self.consume_if(TokenKind::External)?.is_some();
-
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedFunctionName)),
-        };
-
-        let parameters = self.parameters()?;
-
-        self.consume(TokenKind::Arrow)?;
-        let return_type = self.parse_type()?;
-        let block = if external {
-            self.external_block()?
-        } else {
-            self.block()?
-        };
-
-        let end = self.token_at(self.index - 1)?.end();
-
-        let function_def = FunctionDefinition {
-            visibility,
-            external,
-            name,
-            parameters,
-            return_type: Box::new(return_type),
-            block,
-            location: (start..end).into(),
-        };
-
-        Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
-    }
-
-    fn parameters(&mut self) -> Result<Vec<Parameter>> {
-        // If no opening parenthesis, no parameters are defined.
-        if !self.peek(TokenKind::LeftParen)? {
-            return Ok(Vec::new());
-        }
-
-        self.consume(TokenKind::LeftParen)?;
-
-        let mut parameters = Vec::new();
-
-        while self.consume_if(TokenKind::RightParen)?.is_none() {
-            if !parameters.is_empty() && !self.peek(TokenKind::RightParen)? {
-                self.consume(TokenKind::Comma)?;
-            }
-
-            parameters.push(self.parameter()?);
-        }
-
-        Ok(parameters)
-    }
-
-    fn parameter(&mut self) -> Result<Parameter> {
-        let name = self.identifier()?;
-
-        self.consume(TokenKind::Colon)?;
-
-        let param_type = self.parse_type()?;
-
-        let start = name.location().start();
-        let end = param_type.location().end();
-
-        Ok(Parameter {
-            name,
-            param_type,
-            location: (start..end).into(),
-        })
-    }
-
-    fn type_definition(&mut self) -> Result<TopLevelExpression> {
-        let def = match self.token()?.kind {
-            TokenKind::Enum => self.enum_definition()?,
-            TokenKind::Type => self.type_alias_definition()?,
-            _ => return Err(err!(self, ExpectedIdentifier)),
-        };
-
-        Ok(TopLevelExpression::TypeDefinition(Box::new(def)))
     }
 
     /// Parses a single enum type definition, such as:
@@ -873,14 +873,14 @@ impl Parser {
     fn statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
             TokenKind::Let | TokenKind::Const => self.variable_declaration(),
-            TokenKind::If | TokenKind::Unless => self.conditional(),
-            TokenKind::Loop => self.infinite_loop(),
-            TokenKind::For => self.iterator_loop(),
-            TokenKind::While => self.predicate_loop(),
             TokenKind::Break => self.loop_break(),
             TokenKind::Continue => self.loop_continue(),
             TokenKind::Return => self.return_statement(),
-            kind => Err(err!(self, InvalidStatement, actual, kind)),
+            _ => {
+                let expression = self.expression()?;
+
+                Ok(Statement::Expression(Box::new(expression)))
+            }
         }
     }
 
@@ -915,7 +915,7 @@ impl Parser {
     }
 
     /// Parses a conditional statement at the current cursor position.
-    fn conditional(&mut self) -> Result<Statement> {
+    fn conditional(&mut self) -> Result<Expression> {
         match self.token()?.kind {
             TokenKind::If => self.if_conditional(),
             TokenKind::Unless => self.unless_conditional(),
@@ -924,7 +924,7 @@ impl Parser {
     }
 
     /// Parses an "if" conditional statement at the current cursor position.
-    fn if_conditional(&mut self) -> Result<Statement> {
+    fn if_conditional(&mut self) -> Result<Expression> {
         let start = self.consume(TokenKind::If)?.start();
         let mut cases = Vec::new();
 
@@ -944,11 +944,11 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(Statement::If(Box::new(conditional)))
+        Ok(Expression::If(Box::new(conditional)))
     }
 
     /// Parses an "unless" conditional statement at the current cursor position.
-    fn unless_conditional(&mut self) -> Result<Statement> {
+    fn unless_conditional(&mut self) -> Result<Expression> {
         let start = self.consume(TokenKind::Unless)?.start();
         let mut cases = Vec::new();
 
@@ -970,7 +970,7 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(Statement::Unless(Box::new(conditional)))
+        Ok(Expression::Unless(Box::new(conditional)))
     }
 
     /// Parses a case within a conditional statement at the current cursor position.
@@ -1030,20 +1030,20 @@ impl Parser {
     }
 
     /// Parses an infinite loop statement at the current cursor position.
-    fn infinite_loop(&mut self) -> Result<Statement> {
+    fn infinite_loop(&mut self) -> Result<Expression> {
         let start = self.consume(TokenKind::Loop)?.start();
         let block = self.block()?;
 
         let location = start..block.location.end();
 
-        Ok(Statement::InfiniteLoop(Box::new(InfiniteLoop {
+        Ok(Expression::InfiniteLoop(Box::new(InfiniteLoop {
             block,
             location: location.into(),
         })))
     }
 
     /// Parses an iterator loop statement at the current cursor position.
-    fn iterator_loop(&mut self) -> Result<Statement> {
+    fn iterator_loop(&mut self) -> Result<Expression> {
         let start = self.consume(TokenKind::For)?.start();
 
         let pattern = self.identifier()?;
@@ -1055,7 +1055,7 @@ impl Parser {
 
         let location = start..block.location.end();
 
-        Ok(Statement::IteratorLoop(Box::new(IteratorLoop {
+        Ok(Expression::IteratorLoop(Box::new(IteratorLoop {
             pattern,
             collection,
             block,
@@ -1064,7 +1064,7 @@ impl Parser {
     }
 
     /// Parses a predicate loop statement at the current cursor position.
-    fn predicate_loop(&mut self) -> Result<Statement> {
+    fn predicate_loop(&mut self) -> Result<Expression> {
         let start = self.consume(TokenKind::While)?.start();
 
         let condition = self.expression()?;
@@ -1072,7 +1072,7 @@ impl Parser {
 
         let location = start..block.location.end();
 
-        Ok(Statement::PredicateLoop(Box::new(PredicateLoop {
+        Ok(Expression::PredicateLoop(Box::new(PredicateLoop {
             condition,
             block,
             location: location.into(),
@@ -1131,25 +1131,19 @@ impl Parser {
     fn prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token()?.kind;
 
-        if kind == TokenKind::LeftParen {
-            return Ok(self.nested_expression()?);
-        }
+        match kind {
+            TokenKind::LeftParen => Ok(self.nested_expression()?),
+            TokenKind::Identifier => Ok(self.named_expression()?),
+            TokenKind::If | TokenKind::Unless => Ok(self.conditional()?),
+            TokenKind::Loop => Ok(self.infinite_loop()?),
+            TokenKind::For => Ok(self.iterator_loop()?),
+            TokenKind::While => Ok(self.predicate_loop()?),
 
-        if kind == TokenKind::Identifier {
-            return Ok(self.named_expression()?);
-        }
+            k if k.is_literal() => Ok(self.literal()?),
+            k if k.is_unary() => Ok(self.unary()?),
 
-        // Handle literal values, such as strings, numbers and booleans
-        if kind.is_literal() {
-            return Ok(self.literal()?);
+            _ => Err(err!(self, InvalidExpression, actual, kind)),
         }
-
-        // Handle unary operators, such as `!` and `-`
-        if kind.is_unary() {
-            return Ok(self.unary()?);
-        }
-
-        Err(err!(self, InvalidExpression, actual, kind))
     }
 
     /// Parses a infix expression at the current cursor position.
@@ -1234,7 +1228,9 @@ impl Parser {
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
     fn named_expression(&mut self) -> Result<Expression> {
         let identifier = self.identifier()?;
-        let expression = Expression::Identifier(Box::new(identifier.clone()));
+        let expression = Expression::Variable(Box::new(Variable {
+            name: identifier.clone(),
+        }));
 
         match self.token()?.kind {
             // If the next token is an opening parenthesis, it's a method invocation

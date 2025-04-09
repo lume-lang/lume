@@ -19,8 +19,7 @@ pub(crate) fn run(args: &[String]) -> Result<i32> {
         project_or_cwd(None)?
     };
 
-    let mut driver = Driver::new();
-    let state = driver.build_project(std::path::Path::new(&input))?;
+    let state = Driver::build_project(std::path::Path::new(&input))?;
 
     state.inspect();
 

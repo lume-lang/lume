@@ -95,6 +95,7 @@ version = "0.1.0"
 dependencies = [
  "arc",
  "ast",
+ "derive",
  "diag",
  "diag_macros",
  "fxhash",

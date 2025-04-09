@@ -1,53 +1,54 @@
 ---
 source: ast/src/parser.rs
-assertion_line: 1582
 expression: "parse(\"class Foo { use Bar<Baz> }\")"
 ---
 [
-    Class(
-        ClassDefinition {
-            name: Identifier {
-                name: "Foo",
-                location: Location(
-                    6..9,
-                ),
-            },
-            builtin: false,
-            members: [
-                Use(
-                    UseTrait {
-                        trait_type: Generic(
-                            GenericType {
-                                name: Identifier {
-                                    name: "Bar",
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    Use(
+                        UseTrait {
+                            trait_type: Generic(
+                                GenericType {
+                                    name: Identifier {
+                                        name: "Bar",
+                                        location: Location(
+                                            16..19,
+                                        ),
+                                    },
+                                    type_params: [
+                                        Scalar(
+                                            ScalarType {
+                                                name: "Baz",
+                                                location: Location(
+                                                    20..23,
+                                                ),
+                                            },
+                                        ),
+                                    ],
                                     location: Location(
-                                        16..19,
+                                        19..24,
                                     ),
                                 },
-                                type_params: [
-                                    Scalar(
-                                        ScalarType {
-                                            name: "Baz",
-                                            location: Location(
-                                                20..23,
-                                            ),
-                                        },
-                                    ),
-                                ],
-                                location: Location(
-                                    19..24,
-                                ),
-                            },
-                        ),
-                        location: Location(
-                            12..24,
-                        ),
-                    },
+                            ),
+                            location: Location(
+                                12..24,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    0..26,
                 ),
-            ],
-            location: Location(
-                0..26,
-            ),
-        },
+            },
+        ),
     ),
 ]
