@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"if true { }\")"
+expression: "parse(\"fn test() -> void {}\")"
 ---
 [
     FunctionDefinition(
@@ -14,7 +14,7 @@ expression: "parse_expr(\"if true { }\")"
             ),
             external: false,
             name: Identifier {
-                name: "main",
+                name: "test",
                 location: Location(
                     3..7,
                 ),
@@ -30,24 +30,13 @@ expression: "parse_expr(\"if true { }\")"
                 },
             ),
             block: Block {
-                statements: [
-                    Expression(
-                        If(
-                            IfCondition {
-                                cases: [],
-                                location: Location(
-                                    20..31,
-                                ),
-                            },
-                        ),
-                    ),
-                ],
+                statements: [],
                 location: Location(
-                    18..33,
+                    18..20,
                 ),
             },
             location: Location(
-                0..33,
+                0..20,
             ),
         },
     ),

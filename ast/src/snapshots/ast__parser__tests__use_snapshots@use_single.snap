@@ -30,6 +30,7 @@ expression: "parse(\"class Foo { use Bar }\")"
                         },
                     ),
                 ],
+                type_parameters: [],
                 location: Location(
                     0..21,
                 ),

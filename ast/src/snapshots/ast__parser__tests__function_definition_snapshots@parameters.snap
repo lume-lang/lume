@@ -66,6 +66,7 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                     ),
                 },
             ],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",

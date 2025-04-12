@@ -45,6 +45,7 @@ expression: "parse(\"class Foo { use Bar use Baz }\")"
                         },
                     ),
                 ],
+                type_parameters: [],
                 location: Location(
                     0..29,
                 ),

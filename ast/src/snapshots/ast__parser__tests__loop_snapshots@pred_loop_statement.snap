@@ -20,6 +20,7 @@ expression: "parse_expr(\"while true { let a = 0 }\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
@@ -64,7 +65,6 @@ expression: "parse_expr(\"while true { let a = 0 }\")"
                                                         },
                                                     ),
                                                 ),
-                                                is_const: false,
                                                 location: Location(
                                                     33..42,
                                                 ),

@@ -20,6 +20,7 @@ expression: "parse_expr(\"while true { continue }\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",

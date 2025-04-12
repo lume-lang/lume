@@ -152,6 +152,7 @@ pub struct FunctionDefinition {
     pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
     pub location: Location,
@@ -185,6 +186,7 @@ pub struct ClassDefinition {
     pub name: Identifier,
     pub builtin: bool,
     pub members: Vec<ClassMember>,
+    pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
 }
 
@@ -216,6 +218,7 @@ pub struct MethodDefinition {
     pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
     pub location: Location,
@@ -360,25 +363,8 @@ pub struct Call {
     pub callee: Option<Expression>,
     pub name: Identifier,
     pub arguments: Vec<Expression>,
+    pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
-}
-
-impl Call {
-    pub fn new(
-        callee: Option<Expression>,
-        name: Identifier,
-        arguments: Vec<Expression>,
-        location: Location,
-    ) -> Expression {
-        let call = Call {
-            callee,
-            name,
-            arguments,
-            location,
-        };
-
-        Expression::Call(Box::new(call))
-    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -434,6 +420,17 @@ pub struct Variable {
 }
 
 impl Node for Variable {
+    fn location(&self) -> &Location {
+        &self.name.location
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct TypeParameter {
+    pub name: Identifier,
+}
+
+impl Node for TypeParameter {
     fn location(&self) -> &Location {
         &self.name.location
     }

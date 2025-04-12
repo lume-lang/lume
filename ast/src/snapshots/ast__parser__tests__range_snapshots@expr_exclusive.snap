@@ -20,6 +20,7 @@ expression: "parse_expr(\"let _ = (a..b)\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
@@ -67,7 +68,6 @@ expression: "parse_expr(\"let _ = (a..b)\")"
                                     ),
                                 },
                             ),
-                            is_const: false,
                             location: Location(
                                 20..33,
                             ),

@@ -20,6 +20,7 @@ expression: "parse(\"fn main() -> void {}\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",

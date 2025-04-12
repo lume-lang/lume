@@ -426,6 +426,7 @@ impl Parser {
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
+        let type_parameters = self.type_parameters()?;
         let parameters = self.parameters()?;
 
         self.consume(TokenKind::Arrow)?;
@@ -443,6 +444,7 @@ impl Parser {
             external,
             name,
             parameters,
+            type_parameters,
             return_type: Box::new(return_type),
             block,
             location: (start..end).into(),
@@ -510,6 +512,8 @@ impl Parser {
             Err(_) => return Err(err!(self, ExpectedClassName)),
         };
 
+        let type_parameters = self.type_parameters()?;
+
         self.consume(TokenKind::LeftCurly)?;
         let members = self.class_members()?;
         let end = self.consume(TokenKind::RightCurly)?.end();
@@ -518,6 +522,7 @@ impl Parser {
             name,
             builtin,
             members,
+            type_parameters,
             location: (start..end).into(),
         };
 
@@ -648,6 +653,7 @@ impl Parser {
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
+        let type_parameters = self.type_parameters()?;
         let parameters = self.parameters()?;
 
         self.consume(TokenKind::Arrow)?;
@@ -665,6 +671,7 @@ impl Parser {
             external,
             name,
             parameters,
+            type_parameters,
             return_type: Box::new(return_type),
             block,
             location: (start..end).into(),
@@ -793,6 +800,27 @@ impl Parser {
         }
 
         Ok(arguments)
+    }
+
+    /// Parses zero-or-more type parameters.
+    fn type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
+        if self.consume_if(TokenKind::Less)?.is_none() {
+            return Ok(Vec::new());
+        }
+
+        let mut parameters = Vec::new();
+
+        while self.consume_if(TokenKind::Greater)?.is_none() {
+            if !parameters.is_empty() && !self.peek(TokenKind::Greater)? {
+                self.consume(TokenKind::Comma)?;
+            }
+
+            parameters.push(TypeParameter {
+                name: self.identifier()?,
+            });
+        }
+
+        Ok(parameters)
     }
 
     /// Parses some abstract type at the current cursor position.
@@ -1180,6 +1208,7 @@ impl Parser {
                 location: operator_loc.into(),
             },
             arguments: vec![right],
+            type_parameters: vec![],
             location: (start..end).into(),
         })))
     }
@@ -1246,6 +1275,7 @@ impl Parser {
 
     /// Parses a call expression on the current cursor position.
     fn call(&mut self, target: Identifier) -> Result<Expression> {
+        let type_parameters = self.type_parameters()?;
         let arguments = self.arguments()?;
 
         let start = target.location.start();
@@ -1258,6 +1288,7 @@ impl Parser {
             callee: None,
             name: target,
             arguments,
+            type_parameters,
             location: (start..end).into(),
         };
 
@@ -1732,5 +1763,35 @@ mod tests {
         assert_expr_snap_eq!("let _ = (a..=b)", "expr_inclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1))", "expr_nested_exclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1))", "expr_nested_inclusive");
+    }
+
+    #[test]
+    fn test_generic_function_snapshots() {
+        assert_snap_eq!("fn test() -> void {}", "no_generics");
+        assert_snap_eq!("fn test<>() -> void {}", "empty_generics");
+        assert_snap_eq!("fn test<T>() -> void {}", "single_generic");
+        assert_snap_eq!("fn test<T1, T2>() -> void {}", "multiple_generics");
+        assert_err_snap_eq!("fn test<T1,>() -> void {}", "missing_generic");
+        assert_err_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
+    }
+
+    #[test]
+    fn test_generic_class_snapshots() {
+        assert_snap_eq!("class Test {}", "no_generics");
+        assert_snap_eq!("class Test<> {}", "empty_generics");
+        assert_snap_eq!("class Test<T> {}", "single_generic");
+        assert_snap_eq!("class Test<T1, T2> {}", "multiple_generics");
+        assert_err_snap_eq!("class Test<T1,> {}", "missing_generic");
+        assert_err_snap_eq!("class Test<T1 T2> {}", "missing_comma");
+    }
+
+    #[test]
+    fn test_generic_method_snapshots() {
+        assert_snap_eq!("class Test { fn test() -> void {} }", "no_generics");
+        assert_snap_eq!("class Test { fn test<>() -> void {} }", "empty_generics");
+        assert_snap_eq!("class Test { fn test<T>() -> void {} }", "single_generic");
+        assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
+        assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
+        assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
     }
 }

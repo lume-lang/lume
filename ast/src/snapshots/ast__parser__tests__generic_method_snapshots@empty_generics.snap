@@ -1,0 +1,62 @@
+---
+source: ast/src/parser.rs
+expression: "parse(\"class Test { fn test<>() -> void {} }\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        13..15,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "test",
+                                location: Location(
+                                    16..20,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Scalar(
+                                ScalarType {
+                                    name: "void",
+                                    location: Location(
+                                        28..32,
+                                    ),
+                                },
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    33..35,
+                                ),
+                            },
+                            location: Location(
+                                13..35,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    0..37,
+                ),
+            },
+        ),
+    ),
+]

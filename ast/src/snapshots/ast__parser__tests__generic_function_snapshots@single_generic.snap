@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"if true { }\")"
+expression: "parse(\"fn test<T>() -> void {}\")"
 ---
 [
     FunctionDefinition(
@@ -14,40 +14,38 @@ expression: "parse_expr(\"if true { }\")"
             ),
             external: false,
             name: Identifier {
-                name: "main",
+                name: "test",
                 location: Location(
                     3..7,
                 ),
             },
             parameters: [],
-            type_parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            8..9,
+                        ),
+                    },
+                },
+            ],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
                     location: Location(
-                        13..17,
+                        16..20,
                     ),
                 },
             ),
             block: Block {
-                statements: [
-                    Expression(
-                        If(
-                            IfCondition {
-                                cases: [],
-                                location: Location(
-                                    20..31,
-                                ),
-                            },
-                        ),
-                    ),
-                ],
+                statements: [],
                 location: Location(
-                    18..33,
+                    21..23,
                 ),
             },
             location: Location(
-                0..33,
+                0..23,
             ),
         },
     ),

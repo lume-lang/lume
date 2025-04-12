@@ -1,22 +1,22 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(\"class Foo { }\")"
+expression: "parse(\"class Test<> {}\")"
 ---
 [
     TypeDefinition(
         Class(
             ClassDefinition {
                 name: Identifier {
-                    name: "Foo",
+                    name: "Test",
                     location: Location(
-                        6..9,
+                        6..10,
                     ),
                 },
                 builtin: false,
                 members: [],
                 type_parameters: [],
                 location: Location(
-                    0..13,
+                    0..15,
                 ),
             },
         ),

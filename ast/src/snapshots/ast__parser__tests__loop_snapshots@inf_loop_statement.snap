@@ -20,6 +20,7 @@ expression: "parse_expr(\"loop { let a = 0 }\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
@@ -54,7 +55,6 @@ expression: "parse_expr(\"loop { let a = 0 }\")"
                                                         },
                                                     ),
                                                 ),
-                                                is_const: false,
                                                 location: Location(
                                                     27..36,
                                                 ),

@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"if true { }\")"
+expression: "parse(\"fn test<T1, T2>() -> void {}\")"
 ---
 [
     FunctionDefinition(
@@ -14,40 +14,46 @@ expression: "parse_expr(\"if true { }\")"
             ),
             external: false,
             name: Identifier {
-                name: "main",
+                name: "test",
                 location: Location(
                     3..7,
                 ),
             },
             parameters: [],
-            type_parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: Location(
+                            8..10,
+                        ),
+                    },
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: Location(
+                            12..14,
+                        ),
+                    },
+                },
+            ],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
                     location: Location(
-                        13..17,
+                        21..25,
                     ),
                 },
             ),
             block: Block {
-                statements: [
-                    Expression(
-                        If(
-                            IfCondition {
-                                cases: [],
-                                location: Location(
-                                    20..31,
-                                ),
-                            },
-                        ),
-                    ),
-                ],
+                statements: [],
                 location: Location(
-                    18..33,
+                    26..28,
                 ),
             },
             location: Location(
-                0..33,
+                0..28,
             ),
         },
     ),

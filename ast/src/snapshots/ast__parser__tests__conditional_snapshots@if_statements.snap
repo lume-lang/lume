@@ -20,6 +20,7 @@ expression: "parse_expr(\"if true { let a = 0 let b = 0 }\")"
                 ),
             },
             parameters: [],
+            type_parameters: [],
             return_type: Scalar(
                 ScalarType {
                     name: "void",
