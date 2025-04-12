@@ -499,24 +499,106 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         })
     }
 
-    fn expr_if(&self, _expr: ast::IfCondition) -> Result<hir::Expression> {
-        todo!("Not implemented")
+    fn expr_if(&mut self, expr: ast::IfCondition) -> Result<hir::Expression> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|c| self.expr_condition(c))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::If(Box::new(hir::If { id, cases, location })),
+        })
     }
 
-    fn expr_unless(&self, _expr: ast::UnlessCondition) -> Result<hir::Expression> {
-        todo!("Not implemented")
+    fn expr_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Expression> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|c| self.expr_condition(c))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::Unless(Box::new(hir::Unless { id, cases, location })),
+        })
     }
 
-    fn expr_infinite_loop(&self, _expr: ast::InfiniteLoop) -> Result<hir::Expression> {
-        todo!("Not implemented")
+    fn expr_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+
+        let condition = if let Some(cond) = expr.condition {
+            Some(self.expression(cond)?)
+        } else {
+            None
+        };
+
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Condition {
+            id,
+            location,
+            condition,
+            block,
+        })
     }
 
-    fn expr_iterator_loop(&self, _expr: ast::IteratorLoop) -> Result<hir::Expression> {
-        todo!("Not implemented")
+    fn expr_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> Result<hir::Expression> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
+        })
     }
 
-    fn expr_predicate_loop(&self, _expr: ast::PredicateLoop) -> Result<hir::Expression> {
-        todo!("Not implemented")
+    fn expr_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Expression> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+        let collection = self.expression(expr.collection)?;
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::IteratorLoop(Box::new(hir::IteratorLoop {
+                id,
+                collection,
+                block,
+                location,
+            })),
+        })
+    }
+
+    fn expr_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Expression> {
+        let id = self.next_local_id();
+        let location = self.location(expr.location);
+        let condition = self.expression(expr.condition)?;
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::PredicateLoop(Box::new(hir::PredicateLoop {
+                id,
+                condition,
+                block,
+                location,
+            })),
+        })
     }
 
     fn literal(&mut self, expr: ast::Literal) -> Result<hir::Literal> {

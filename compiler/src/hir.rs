@@ -435,6 +435,11 @@ pub enum ExpressionKind {
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
+    If(Box<If>),
+    Unless(Box<Unless>),
+    InfiniteLoop(Box<InfiniteLoop>),
+    IteratorLoop(Box<IteratorLoop>),
+    PredicateLoop(Box<PredicateLoop>),
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -527,6 +532,51 @@ impl Node for Variable {
     fn location(&self) -> &Location {
         &self.name.location
     }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct If {
+    pub id: LocalId,
+    pub cases: Vec<Condition>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Unless {
+    pub id: LocalId,
+    pub cases: Vec<Condition>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Condition {
+    pub id: LocalId,
+    pub condition: Option<Expression>,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct InfiniteLoop {
+    pub id: LocalId,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct IteratorLoop {
+    pub id: LocalId,
+    pub collection: Expression,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct PredicateLoop {
+    pub id: LocalId,
+    pub condition: Expression,
+    pub block: Block,
+    pub location: Location,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
