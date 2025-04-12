@@ -340,7 +340,7 @@ pub enum ClassMember {
 pub struct Property {
     pub visibility: Visibility,
     pub name: Identifier,
-    pub property_type: Box<Type>,
+    pub property_type: Type,
     pub default_value: Option<Expression>,
     pub location: Location,
 }

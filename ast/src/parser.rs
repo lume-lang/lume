@@ -591,11 +591,9 @@ impl Parser {
             Err(_) => return Err(err!(self, ExpectedClassMember, actual, kind)),
         };
 
-        let property_type = if self.consume_if(TokenKind::Colon)?.is_some() {
-            Some(Box::new(self.parse_type()?))
-        } else {
-            None
-        };
+        self.consume(TokenKind::Colon)?;
+
+        let property_type = self.parse_type()?;
 
         let default_value = if self.consume_if(TokenKind::Assign)?.is_some() {
             Some(self.expression()?)

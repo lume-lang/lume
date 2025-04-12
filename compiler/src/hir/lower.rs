@@ -666,7 +666,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         }
     }
 
-    fn def_class(&self, expr: ast::ClassDefinition) -> Result<hir::Symbol> {
+    fn def_class(&mut self, expr: ast::ClassDefinition) -> Result<hir::Symbol> {
         let name = self.symbol_name(expr.name);
         let builtin = expr.builtin;
         let location = self.location(expr.location);
@@ -689,8 +689,68 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         )))))
     }
 
-    fn def_class_member(&self, _expr: ast::ClassMember) -> Result<hir::ClassMember> {
-        panic!("Class member not implemented")
+    fn def_class_member(&mut self, expr: ast::ClassMember) -> Result<hir::ClassMember> {
+        match expr {
+            ast::ClassMember::Property(p) => self.def_class_property(*p),
+            ast::ClassMember::Use(u) => self.def_class_use(*u),
+            ast::ClassMember::MethodDefinition(m) => self.def_class_method(*m),
+        }
+    }
+
+    fn def_class_property(&mut self, expr: ast::Property) -> Result<hir::ClassMember> {
+        let visibility = self.visibility(expr.visibility)?;
+        let name = self.identifier(expr.name);
+        let property_type = self.type_ref(expr.property_type)?;
+        let location = self.location(expr.location);
+
+        let default_value = if let Some(def) = expr.default_value {
+            Some(self.expression(def)?)
+        } else {
+            None
+        };
+
+        Ok(hir::ClassMember::Property(Box::new(hir::Property {
+            name,
+            visibility,
+            property_type,
+            default_value,
+            location,
+        })))
+    }
+
+    fn def_class_use(&self, _expr: ast::UseTrait) -> Result<hir::ClassMember> {
+        panic!("trait usage not implemented")
+    }
+
+    fn def_class_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::ClassMember> {
+        let visibility = self.visibility(expr.visibility)?;
+        let name = self.symbol_name(expr.name);
+        let parameters = self.parameters(expr.parameters)?;
+        let return_type = self.type_ref(*expr.return_type)?;
+        let location = self.location(expr.location);
+
+        if expr.external {
+            return Ok(hir::ClassMember::ExternalMethod(Box::new(
+                hir::ExternalMethodDefinition {
+                    name,
+                    visibility,
+                    parameters,
+                    return_type: Box::new(return_type),
+                    location,
+                },
+            )));
+        }
+
+        let block = self.isolated_block(expr.block)?;
+
+        Ok(hir::ClassMember::Method(Box::new(hir::MethodDefinition {
+            name,
+            visibility,
+            parameters,
+            return_type: Box::new(return_type),
+            block,
+            location,
+        })))
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<hir::Symbol> {
