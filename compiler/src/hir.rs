@@ -23,12 +23,24 @@ impl Symbols {
 }
 
 /// Uniquely identifies a definition within a module, such as a type, function or class.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ItemId(pub ModuleId, pub u64);
 
+impl std::fmt::Debug for ItemId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "item(mod({}), {})", self.0.0, self.1)
+    }
+}
+
 /// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct LocalId(pub u64);
+
+impl std::fmt::Debug for LocalId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "local({})", self.0)
+    }
+}
 
 /// Defines a trait which can convert any Id type into a `u64` type.
 pub trait Indexable {
@@ -64,7 +76,7 @@ impl Indexable for Index {
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct Location {
     /// Defines the file which the location refers to.
     pub file: ModuleFileId,
@@ -101,6 +113,12 @@ impl Location {
 impl Into<std::ops::Range<usize>> for Location {
     fn into(self) -> std::ops::Range<usize> {
         self.start..self.end()
+    }
+}
+
+impl std::fmt::Debug for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}:{}:{}", self.file, self.start, self.end())
     }
 }
 
@@ -153,13 +171,25 @@ impl std::hash::Hash for IdentifierPath {
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, PartialEq, Eq)]
 pub struct SymbolName {
     /// Defines the namespace which the symbol was defined in.
     pub namespace: IdentifierPath,
 
     /// Defines the relative name of the symbol within it's namespace.
     pub name: Identifier,
+}
+
+impl std::fmt::Debug for SymbolName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'")?;
+
+        for m in &self.namespace.path {
+            write!(f, "{}.", m)?;
+        }
+
+        write!(f, "{}'", self.name.name)
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

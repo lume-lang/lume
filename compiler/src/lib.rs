@@ -8,14 +8,21 @@ use diag::{Result, source::NamedSource};
 
 pub mod hir;
 pub mod id;
+pub mod thir;
 
 /// Uniquely identifies a module within a compilation job.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ModuleId(pub u64);
 
 impl From<ProjectId> for ModuleId {
     fn from(value: ProjectId) -> Self {
         ModuleId(value.0)
+    }
+}
+
+impl std::fmt::Debug for ModuleId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "mod({})", self.0)
     }
 }
 
@@ -59,13 +66,19 @@ impl Module {
 }
 
 /// Uniquely identifies a source file within a module.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ModuleFileId(pub u64);
 
 impl From<String> for ModuleFileId {
     /// Creates a new [`ModuleFileId`] from a string, by taking it's hash value.
     fn from(value: String) -> ModuleFileId {
         ModuleFileId(hash_id(value.as_bytes()))
+    }
+}
+
+impl std::fmt::Debug for ModuleFileId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "mod_file({})", self.0)
     }
 }
 
