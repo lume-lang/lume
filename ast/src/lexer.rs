@@ -21,7 +21,6 @@ pub enum TokenKind {
     Colon,
     Comma,
     Comment,
-    Const,
     Continue,
     Decrement,
     Div,
@@ -87,7 +86,6 @@ impl TokenKind {
                 | TokenKind::Class
                 | TokenKind::Colon
                 | TokenKind::Comma
-                | TokenKind::Const
                 | TokenKind::Continue
                 | TokenKind::Decrement
                 | TokenKind::Div
@@ -183,7 +181,6 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
             TokenKind::Comment => "comment",
-            TokenKind::Const => "const",
             TokenKind::Continue => "continue",
             TokenKind::Decrement => "--",
             TokenKind::Div => "/",
@@ -466,7 +463,6 @@ impl Lexer {
             "break" => Token::empty(TokenKind::Break),
             "builtin" => Token::empty(TokenKind::Builtin),
             "class" => Token::empty(TokenKind::Class),
-            "const" => Token::empty(TokenKind::Const),
             "continue" => Token::empty(TokenKind::Continue),
             "else" => Token::empty(TokenKind::Else),
             "enum" => Token::empty(TokenKind::Enum),
@@ -812,7 +808,6 @@ mod tests {
     #[test]
     fn test_keywords_map() {
         assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
-        assert_token!("const", TokenKind::Const, None::<String>, 0, 5);
         assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);
         assert_token!("external", TokenKind::External, None::<String>, 0, 8);
         assert_token!("for", TokenKind::For, None::<String>, 0, 3);

@@ -872,7 +872,7 @@ impl Parser {
     /// Parses some abstract statement at the current cursor position.
     fn statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
-            TokenKind::Let | TokenKind::Const => self.variable_declaration(),
+            TokenKind::Let => self.variable_declaration(),
             TokenKind::Break => self.loop_break(),
             TokenKind::Continue => self.loop_continue(),
             TokenKind::Return => self.return_statement(),
@@ -886,8 +886,6 @@ impl Parser {
 
     /// Parses a variable declaration statement at the current cursor position.
     fn variable_declaration(&mut self) -> Result<Statement> {
-        let is_const = self.peek(TokenKind::Const)?;
-
         // Whatever the token is, consume it.
         let start = self.consume_any()?.start();
 
@@ -907,7 +905,6 @@ impl Parser {
             name,
             variable_type,
             value,
-            is_const,
             location: (start..end).into(),
         };
 

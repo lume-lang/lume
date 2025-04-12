@@ -11,6 +11,10 @@ impl Location {
     pub fn end(&self) -> usize {
         self.0.end
     }
+
+    pub fn len(&self) -> usize {
+        self.0.end - self.0.start
+    }
 }
 
 impl From<std::ops::Range<usize>> for Location {
@@ -21,6 +25,49 @@ impl From<std::ops::Range<usize>> for Location {
 
 pub trait Node {
     fn location(&self) -> &Location;
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+pub struct Identifier {
+    pub name: String,
+    pub location: Location,
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name)
+    }
+}
+
+impl std::hash::Hash for Identifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+pub struct IdentifierPath {
+    pub path: Vec<Identifier>,
+    pub location: Location,
+}
+
+impl std::fmt::Display for IdentifierPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let joined = self
+            .path
+            .iter()
+            .map(|i| i.name.as_str())
+            .collect::<Vec<&str>>()
+            .join(".");
+
+        f.write_str(&joined)
+    }
+}
+
+impl std::hash::Hash for IdentifierPath {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_string().hash(state);
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -76,6 +123,23 @@ pub struct Import {
     pub location: Location,
 }
 
+impl Import {
+    pub fn flatten(self) -> Vec<IdentifierPath> {
+        self.names
+            .iter()
+            .map(|n| {
+                let mut path = self.path.path.clone();
+                path.push(n.clone());
+
+                IdentifierPath {
+                    path,
+                    location: self.location.clone(),
+                }
+            })
+            .collect::<Vec<_>>()
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Namespace {
     pub path: IdentifierPath,
@@ -98,6 +162,16 @@ pub enum TypeDefinition {
     Class(Box<ClassDefinition>),
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
+}
+
+impl TypeDefinition {
+    pub fn name(&self) -> &Identifier {
+        match self {
+            TypeDefinition::Class(class) => &class.name,
+            TypeDefinition::Enum(enum_def) => &enum_def.name,
+            TypeDefinition::Alias(alias_def) => &alias_def.name,
+        }
+    }
 }
 
 impl std::fmt::Display for TypeDefinition {
@@ -200,7 +274,6 @@ pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
     pub value: Expression,
-    pub is_const: bool,
     pub location: Location,
 }
 
@@ -305,49 +378,6 @@ impl Call {
         };
 
         Expression::Call(Box::new(call))
-    }
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
-pub struct Identifier {
-    pub name: String,
-    pub location: Location,
-}
-
-impl std::fmt::Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)
-    }
-}
-
-impl std::hash::Hash for Identifier {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
-pub struct IdentifierPath {
-    pub path: Vec<Identifier>,
-    pub location: Location,
-}
-
-impl std::fmt::Display for IdentifierPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let joined = self
-            .path
-            .iter()
-            .map(|i| i.name.as_str())
-            .collect::<Vec<&str>>()
-            .join(".");
-
-        f.write_str(&joined)
-    }
-}
-
-impl std::hash::Hash for IdentifierPath {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.to_string().hash(state);
     }
 }
 

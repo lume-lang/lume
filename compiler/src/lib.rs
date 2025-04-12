@@ -5,11 +5,9 @@ use crate::id::hash_id;
 use arc::{Project, ProjectId};
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
-use lookup::LookupTable;
 
 pub mod hir;
 pub mod id;
-pub mod lookup;
 
 /// Uniquely identifies a module within a compilation job.
 #[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,6 +50,11 @@ impl Module {
             files,
             state: ModuleState::Read,
         })
+    }
+
+    /// Gets the module source file with the given ID.
+    pub fn file(&self, file: ModuleFileId) -> Option<&ModuleFile> {
+        self.files.iter().find(|&f| f.source_id == file)
     }
 }
 
@@ -109,18 +112,12 @@ pub enum ModuleState {
 pub struct State {
     /// Defines the modules to compile.
     modules: Vec<Module>,
-
-    /// Defines a lookup table for all symbols and other mappings.
-    lookup: LookupTable,
 }
 
 impl State {
     /// Creates a new [`State`] object, with the given modules.
     fn from_modules(modules: Vec<Module>) -> Self {
-        State {
-            modules,
-            lookup: LookupTable::new(),
-        }
+        State { modules }
     }
 
     /// Creates a new state from one-or-more projects.
@@ -161,17 +158,7 @@ impl State {
 
     /// Print a human-readable representation of the state to the console.
     pub fn inspect(&self) {
-        let config = ron::ser::PrettyConfig::default();
-
-        let repr = match ron::ser::to_string_pretty(self, config) {
-            Ok(r) => r,
-            Err(err) => {
-                eprintln!("Failed to serialize state object: {:?}", err);
-                return;
-            }
-        };
-
-        println!("{}", repr);
+        println!("{:#?}", self);
     }
 }
 
@@ -288,7 +275,11 @@ impl Driver {
             }
 
             // Lowers the parsed module expressions down to HIR.
-            hir::lower::HirLowering::lower(&mut self.state, module_id, expressions)?;
+            let map = hir::lower::HirLowering::lower(&self.state, module_id, expressions)?;
+
+            if let Some(module) = self.state.module_mut(module_id) {
+                module.state = ModuleState::Parsed { map };
+            }
         }
 
         Ok(())
