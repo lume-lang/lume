@@ -306,6 +306,7 @@ impl Parser {
         Ok(path)
     }
 
+    /// Returns a block for functions or methods.
     fn block(&mut self) -> Result<Block> {
         let mut statements = Vec::new();
 
@@ -343,6 +344,17 @@ impl Parser {
         Ok(Block::from_location(self.token()?.index))
     }
 
+    /// Returns a block, if the next token is a left curly bracket (`{`), as a `Some(block)`.
+    ///
+    /// Otherwise, returns `None`.
+    fn opt_block(&mut self) -> Result<Option<Block>> {
+        if self.peek(TokenKind::LeftCurly)? {
+            return Ok(Some(self.block()?));
+        }
+
+        Ok(None)
+    }
+
     fn top_level_expression(&mut self) -> Result<TopLevelExpression> {
         let current = self.token()?;
 
@@ -350,7 +362,8 @@ impl Parser {
             TokenKind::Import => self.import(),
             TokenKind::Namespace => self.namespace(),
             TokenKind::Fn | TokenKind::Pub => self.function(),
-            TokenKind::Enum | TokenKind::Type | TokenKind::Class => self.type_definition(),
+            TokenKind::Enum | TokenKind::Type | TokenKind::Class | TokenKind::Trait => self.type_definition(),
+            TokenKind::Use => self.use_trait(),
             _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
         }
     }
@@ -494,6 +507,7 @@ impl Parser {
     fn type_definition(&mut self) -> Result<TopLevelExpression> {
         let def = match self.token()?.kind {
             TokenKind::Class => self.class()?,
+            TokenKind::Trait => self.trait_definition()?,
             TokenKind::Enum => self.enum_definition()?,
             TokenKind::Type => self.type_alias_definition()?,
             _ => return Err(err!(self, ExpectedIdentifier)),
@@ -544,15 +558,8 @@ impl Parser {
     }
 
     fn class_member(&mut self) -> Result<ClassMember> {
-        // Types of types which support visibility modifers...
-        match self.token()?.kind {
-            TokenKind::Use => return self.use_trait(),
-            _ => {}
-        }
-
         let visibility = self.visibility()?;
 
-        // ...and the types of types which don't.
         match self.token()?.kind {
             TokenKind::Let => self.property(visibility),
             TokenKind::Fn => self.method(visibility),
@@ -614,33 +621,6 @@ impl Parser {
         Ok(ClassMember::Property(Box::new(property_def)))
     }
 
-    fn use_trait(&mut self) -> Result<ClassMember> {
-        let start = self.consume(TokenKind::Use)?.start();
-
-        let trait_type = match self.parse_type()? {
-            Type::Scalar(t) => Type::Scalar(t),
-            Type::Generic(t) => Type::Generic(t),
-            t => {
-                let range = t.location().0.clone();
-
-                return Err(InvalidTraitType {
-                    source: self.source.clone(),
-                    range,
-                    found: t,
-                }
-                .into());
-            }
-        };
-
-        let end = self.token_at(self.index - 1)?.end();
-        let location: Location = (start..end).into();
-
-        Ok(ClassMember::Use(Box::new(UseTrait {
-            trait_type: Box::new(trait_type),
-            location,
-        })))
-    }
-
     fn method(&mut self, visibility: Visibility) -> Result<ClassMember> {
         let start = self.consume(TokenKind::Fn)?.start();
 
@@ -676,6 +656,74 @@ impl Parser {
         };
 
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
+    }
+
+    fn trait_definition(&mut self) -> Result<TypeDefinition> {
+        let start = self.consume(TokenKind::Trait)?.start();
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedTraitName)),
+        };
+
+        let type_parameters = self.type_parameters()?;
+
+        self.consume(TokenKind::LeftCurly)?;
+        let methods = self.trait_methods()?;
+        let end = self.consume(TokenKind::RightCurly)?.end();
+
+        let trait_def = TraitDefinition {
+            name,
+            methods,
+            type_parameters,
+            location: (start..end).into(),
+        };
+
+        Ok(TypeDefinition::Trait(Box::new(trait_def)))
+    }
+
+    fn trait_methods(&mut self) -> Result<Vec<TraitMethodDefinition>> {
+        let mut methods = Vec::new();
+
+        loop {
+            if self.peek(TokenKind::RightCurly)? {
+                break;
+            }
+
+            methods.push(self.trait_method()?);
+        }
+
+        Ok(methods)
+    }
+
+    fn trait_method(&mut self) -> Result<TraitMethodDefinition> {
+        let visibility = self.visibility()?;
+
+        let start = self.consume(TokenKind::Fn)?.start();
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        };
+
+        let type_parameters = self.type_parameters()?;
+        let parameters = self.parameters()?;
+
+        self.consume(TokenKind::Arrow)?;
+        let return_type = self.parse_type()?;
+        let block = self.opt_block()?;
+
+        let end = self.token_at(self.index - 1)?.end();
+
+        Ok(TraitMethodDefinition {
+            visibility,
+            name,
+            parameters,
+            type_parameters,
+            return_type: Box::new(return_type),
+            block,
+            location: (start..end).into(),
+        })
     }
 
     /// Parses a single enum type definition, such as:
@@ -819,6 +867,81 @@ impl Parser {
         }
 
         Ok(parameters)
+    }
+
+    fn use_trait(&mut self) -> Result<TopLevelExpression> {
+        let start = self.consume(TokenKind::Use)?.start();
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedTraitName)),
+        };
+
+        let type_parameters = self.type_parameters()?;
+
+        self.consume(TokenKind::In)?;
+
+        let target = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedClassName)),
+        };
+
+        self.consume(TokenKind::LeftCurly)?;
+        let methods = self.trait_method_implementations()?;
+        let end = self.consume(TokenKind::RightCurly)?.end();
+
+        let use_trait = UseTrait {
+            name,
+            type_parameters,
+            target,
+            methods,
+            location: (start..end).into(),
+        };
+
+        Ok(TopLevelExpression::Use(Box::new(use_trait)))
+    }
+
+    fn trait_method_implementations(&mut self) -> Result<Vec<TraitMethodImplementation>> {
+        let mut methods = Vec::new();
+
+        loop {
+            if self.peek(TokenKind::RightCurly)? {
+                break;
+            }
+
+            methods.push(self.trait_method_implementation()?);
+        }
+
+        Ok(methods)
+    }
+
+    fn trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
+        let visibility = self.visibility()?;
+        let start = self.consume(TokenKind::Fn)?.start();
+
+        let name = match self.identifier() {
+            Ok(name) => name,
+            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        };
+
+        let type_parameters = self.type_parameters()?;
+        let parameters = self.parameters()?;
+
+        self.consume(TokenKind::Arrow)?;
+        let return_type = self.parse_type()?;
+        let block = self.block()?;
+
+        let end = self.token_at(self.index - 1)?.end();
+
+        Ok(TraitMethodImplementation {
+            visibility,
+            name,
+            parameters,
+            type_parameters,
+            return_type: Box::new(return_type),
+            block,
+            location: (start..end).into(),
+        })
     }
 
     /// Parses some abstract type at the current cursor position.
@@ -1681,15 +1804,6 @@ mod tests {
     }
 
     #[test]
-    fn test_use_snapshots() {
-        assert_snap_eq!("class Foo { }", "use_empty");
-        assert_snap_eq!("class Foo { use Bar }", "use_single");
-        assert_snap_eq!("class Foo { use Bar use Baz }", "use_multiple");
-        assert_snap_eq!("class Foo { use Bar<Baz> }", "use_generic");
-        assert_err_eq!("class Foo { use [Bar] }", "Invalid trait type");
-    }
-
-    #[test]
     fn test_namespace_snapshots() {
         assert_snap_eq!("namespace std", "path_1");
         assert_snap_eq!("namespace std.io", "path_2");
@@ -1791,5 +1905,77 @@ mod tests {
         assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
         assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
         assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
+    }
+
+    #[test]
+    fn test_trait_snapshots() {
+        assert_snap_eq!("trait Add { }", "empty");
+        assert_snap_eq!("trait Add { pub fn add(other: int) -> int }", "method");
+        assert_snap_eq!(
+            "trait Add { pub fn add(other: int) -> int { self + other } }",
+            "method_impl"
+        );
+        assert_snap_eq!("trait Add<T> { }", "generic");
+        assert_snap_eq!("trait Add<T1, T2> { }", "generics");
+        assert_snap_eq!("trait Add { fn add(other: int) -> int }", "private_method");
+    }
+
+    #[test]
+    fn test_use_trait_snapshots() {
+        assert_snap_eq!("use Add in Int32 {}", "empty");
+
+        assert_snap_eq!(
+            r#"
+            use Add in Int32 {
+                fn add(other: Int32) -> Int32 {
+                    self + other
+                }
+            }"#,
+            "priv_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Add in Int32 {
+                pub fn add(other: Int32) -> Int32 {
+                    self + other
+                }
+            }"#,
+            "pub_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Cast in Int32 {
+                pub fn to_string() -> String {
+                    self
+                }
+
+                pub fn to_int() -> Int32 {
+                    self
+                }
+            }"#,
+            "methods"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Add<Int32> in Int32 {
+                pub fn add(other: Int32) -> Int32 {
+                    self + other
+                }
+            }"#,
+            "generic"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Add<Int32, Int64> in Int32 {
+                pub fn add(other: Int32) -> Int64 {
+                    self + other
+                }
+            }"#,
+            "generics"
+        );
     }
 }

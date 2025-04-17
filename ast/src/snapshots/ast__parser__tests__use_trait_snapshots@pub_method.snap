@@ -1,0 +1,123 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            use Add in Int32 {\n                pub fn add(other: Int32) -> Int32 {\n                    self + other\n                }\n            }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    17..20,
+                ),
+            },
+            target: Identifier {
+                name: "Int32",
+                location: Location(
+                    24..29,
+                ),
+            },
+            type_parameters: [],
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                48..51,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            55..58,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: Location(
+                                    59..64,
+                                ),
+                            },
+                            param_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        66..71,
+                                    ),
+                                },
+                            ),
+                            location: Location(
+                                59..71,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Scalar(
+                        ScalarType {
+                            name: "Int32",
+                            location: Location(
+                                76..81,
+                            ),
+                        },
+                    ),
+                    block: Block {
+                        statements: [
+                            Expression(
+                                Call(
+                                    Call {
+                                        callee: Some(
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "self",
+                                                        location: Location(
+                                                            104..108,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                        ),
+                                        name: Identifier {
+                                            name: "+",
+                                            location: Location(
+                                                109..110,
+                                            ),
+                                        },
+                                        arguments: [
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "other",
+                                                        location: Location(
+                                                            111..116,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                        ],
+                                        type_parameters: [],
+                                        location: Location(
+                                            104..111,
+                                        ),
+                                    },
+                                ),
+                            ),
+                        ],
+                        location: Location(
+                            82..134,
+                        ),
+                    },
+                    location: Location(
+                        52..134,
+                    ),
+                },
+            ],
+            location: Location(
+                13..148,
+            ),
+        },
+    ),
+]

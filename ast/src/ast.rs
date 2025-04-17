@@ -114,6 +114,7 @@ pub enum TopLevelExpression {
     Namespace(Box<Namespace>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
+    Use(Box<UseTrait>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -161,6 +162,7 @@ pub struct FunctionDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Class(Box<ClassDefinition>),
+    Trait(Box<TraitDefinition>),
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
 }
@@ -169,6 +171,7 @@ impl TypeDefinition {
     pub fn name(&self) -> &Identifier {
         match self {
             TypeDefinition::Class(class) => &class.name,
+            TypeDefinition::Trait(trait_def) => &trait_def.name,
             TypeDefinition::Enum(enum_def) => &enum_def.name,
             TypeDefinition::Alias(alias_def) => &alias_def.name,
         }
@@ -193,7 +196,6 @@ pub struct ClassDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum ClassMember {
     Property(Box<Property>),
-    Use(Box<UseTrait>),
     MethodDefinition(Box<MethodDefinition>),
 }
 
@@ -207,12 +209,6 @@ pub struct Property {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct UseTrait {
-    pub trait_type: Box<Type>,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -221,6 +217,25 @@ pub struct MethodDefinition {
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitDefinition {
+    pub name: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
+    pub methods: Vec<TraitMethodDefinition>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitMethodDefinition {
+    pub visibility: Visibility,
+    pub name: Identifier,
+    pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
+    pub return_type: Box<Type>,
+    pub block: Option<Block>,
     pub location: Location,
 }
 
@@ -261,6 +276,26 @@ impl std::fmt::Display for AliasDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct UseTrait {
+    pub name: Identifier,
+    pub target: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
+    pub methods: Vec<TraitMethodImplementation>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitMethodImplementation {
+    pub visibility: Visibility,
+    pub name: Identifier,
+    pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
+    pub return_type: Box<Type>,
+    pub block: Block,
+    pub location: Location,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

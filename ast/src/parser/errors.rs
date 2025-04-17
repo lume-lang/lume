@@ -118,6 +118,20 @@ pub struct ExpectedClassName {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
+    message = "Unexpected trait name",
+    code = "LM1059",
+    help = "Trait names only allow alphanumeric characters and underscores"
+)]
+pub struct ExpectedTraitName {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Expected a trait name")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
     message = "Unexpected class member",
     code = "LM1062",
     help = "Class members can be defined using `let` for properties or `fn` for methods."

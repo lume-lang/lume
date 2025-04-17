@@ -1,0 +1,122 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn to_string() -> String {\n                    self\n                }\n\n                pub fn to_int() -> Int32 {\n                    self\n                }\n            }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Identifier {
+                name: "Cast",
+                location: Location(
+                    17..21,
+                ),
+            },
+            target: Identifier {
+                name: "Int32",
+                location: Location(
+                    25..30,
+                ),
+            },
+            type_parameters: [],
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                49..52,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "to_string",
+                        location: Location(
+                            56..65,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Scalar(
+                        ScalarType {
+                            name: "String",
+                            location: Location(
+                                71..77,
+                            ),
+                        },
+                    ),
+                    block: Block {
+                        statements: [
+                            Expression(
+                                Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "self",
+                                            location: Location(
+                                                100..104,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                        ],
+                        location: Location(
+                            78..122,
+                        ),
+                    },
+                    location: Location(
+                        53..122,
+                    ),
+                },
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                140..143,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "to_int",
+                        location: Location(
+                            147..153,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Scalar(
+                        ScalarType {
+                            name: "Int32",
+                            location: Location(
+                                159..164,
+                            ),
+                        },
+                    ),
+                    block: Block {
+                        statements: [
+                            Expression(
+                                Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "self",
+                                            location: Location(
+                                                187..191,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                        ],
+                        location: Location(
+                            165..209,
+                        ),
+                    },
+                    location: Location(
+                        144..209,
+                    ),
+                },
+            ],
+            location: Location(
+                13..223,
+            ),
+        },
+    ),
+]

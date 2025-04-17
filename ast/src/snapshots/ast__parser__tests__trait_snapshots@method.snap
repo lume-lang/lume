@@ -1,0 +1,73 @@
+---
+source: ast/src/parser.rs
+expression: "parse(\"trait Add { pub fn add(other: int) -> int }\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [],
+                methods: [
+                    TraitMethodDefinition {
+                        visibility: Public(
+                            Public {
+                                location: Location(
+                                    12..15,
+                                ),
+                            },
+                        ),
+                        name: Identifier {
+                            name: "add",
+                            location: Location(
+                                19..22,
+                            ),
+                        },
+                        parameters: [
+                            Parameter {
+                                name: Identifier {
+                                    name: "other",
+                                    location: Location(
+                                        23..28,
+                                    ),
+                                },
+                                param_type: Scalar(
+                                    ScalarType {
+                                        name: "Int32",
+                                        location: Location(
+                                            30..33,
+                                        ),
+                                    },
+                                ),
+                                location: Location(
+                                    23..33,
+                                ),
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    38..41,
+                                ),
+                            },
+                        ),
+                        block: None,
+                        location: Location(
+                            16..41,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..43,
+                ),
+            },
+        ),
+    ),
+]
