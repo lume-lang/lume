@@ -3,4 +3,4 @@
 **/.DS_Store
 
 /target
-snapshots/**/*.snap.new
+/**/snapshots/*.snap.new
