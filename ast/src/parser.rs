@@ -145,7 +145,7 @@ impl Parser {
             let token = self.lexer.next_token()?;
 
             match token.kind {
-                TokenKind::Whitespace => continue,
+                TokenKind::Whitespace | TokenKind::Comment => continue,
                 TokenKind::Eof => break,
                 _ => {}
             };
@@ -712,11 +712,7 @@ impl Parser {
         let start = self.expect_fn()?.start();
         let external = self.check_external();
 
-        let name = match self.parse_identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedFunctionName)),
-        };
-
+        let name = self.parse_method_name()?;
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
 
@@ -737,6 +733,18 @@ impl Parser {
         };
 
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
+    }
+
+    fn parse_method_name(&mut self) -> Result<Identifier> {
+        match self.consume_any()? {
+            // Allow actual identifiers.
+            t if t.kind == TokenKind::Identifier => Ok(t.into()),
+
+            // As well as operator tokens, so we can do operator overloading.
+            t if t.kind.is_operator() => Ok(t.into()),
+
+            _ => Err(err!(self, ExpectedFunctionName)),
+        }
     }
 
     fn parse_trait(&mut self) -> Result<TopLevelExpression> {
@@ -1497,8 +1505,6 @@ impl Parser {
                         "u32" => IntKind::U32,
                         "i64" => IntKind::I64,
                         "u64" => IntKind::U64,
-                        "iptr" => IntKind::IPtr,
-                        "uptr" => IntKind::UPtr,
                         t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
                     }
                 } else {

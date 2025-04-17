@@ -33,6 +33,15 @@ pub struct Identifier {
     pub location: Location,
 }
 
+impl From<crate::lexer::Token> for Identifier {
+    fn from(value: crate::lexer::Token) -> Identifier {
+        Identifier {
+            name: value.value.unwrap(),
+            location: value.index.into(),
+        }
+    }
+}
+
 impl std::fmt::Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name)
@@ -427,8 +436,6 @@ pub enum IntKind {
     U32,
     I64,
     U64,
-    IPtr,
-    UPtr,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

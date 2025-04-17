@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::{hir, id::hash_id, thir};
+use crate::{hir, id::hash_id, std::Assets, thir};
 use arc::{Project, ProjectId};
 use ast::parser::Parser;
 use diag::{Result, source::NamedSource};
@@ -131,21 +131,33 @@ impl Driver {
         Ok(())
     }
 
-    /// Parses all the modules within the given state object.
-    fn parse(&mut self) -> Result<Sources> {
-        let module_id = ModuleId::from(self.opts.project.id);
-        let source_files = self.opts.project.files()?;
+    /// Gets all the source files to include in the compilation.
+    fn source_files(&self) -> Result<Vec<NamedSource>> {
+        // Apppend all the files within the project itself
+        let project_file_names = self.opts.project.files()?;
 
-        // Read all the sources files before parsing, so if any of them
-        // are inaccessible, we don't waste effort parsing them.
-        let named_sources = source_files
+        let mut sources_files = project_file_names
             .into_iter()
             .map(|s| NamedSource::from_file(s))
             .collect::<Result<Vec<_>>>()?;
 
+        // As well as all the source files within the standard library
+        sources_files.extend(Assets::as_sources()?);
+
+        Ok(sources_files)
+    }
+
+    /// Parses all the modules within the given state object.
+    fn parse(&mut self) -> Result<Sources> {
+        let module_id = ModuleId::from(self.opts.project.id);
+
+        // Read all the sources files before parsing, so if any of them
+        // are inaccessible, we don't waste effort parsing them.
+        let source_files = self.source_files()?;
+
         let mut sources = Sources::new(module_id);
 
-        for named_source in named_sources {
+        for named_source in source_files {
             let source_id = ModuleFileId::from(module_id, named_source.name.clone());
 
             // Parse the contents of the source file.

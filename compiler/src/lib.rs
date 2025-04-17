@@ -8,5 +8,6 @@ macro_rules! bug {
 pub mod driver;
 pub mod hir;
 pub mod id;
+mod std;
 pub mod thir;
 pub mod typech;

@@ -13,6 +13,7 @@ diag_macros = { path = "../diag_macros" }
 fxhash = "^0.2"
 serde = { version = "1.0.219", features = ["serde_derive"] }
 llvm-sys = { version = "191" }
+rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }
 
 [dev-dependencies]
 insta = { version = "1.42.2", features = ["yaml"] }

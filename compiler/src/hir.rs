@@ -627,8 +627,6 @@ impl From<ast::ast::IntKind> for IntKind {
             ast::ast::IntKind::U32 => IntKind::U32,
             ast::ast::IntKind::I64 => IntKind::I64,
             ast::ast::IntKind::U64 => IntKind::U64,
-            ast::ast::IntKind::IPtr => IntKind::IPtr,
-            ast::ast::IntKind::UPtr => IntKind::UPtr,
         }
     }
 }

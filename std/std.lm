@@ -1,5 +1,15 @@
 # This file defines all the modules which *must* be imported by all other modules.
-import 'std/bool'
-import 'std/float'
-import 'std/int'
-import 'std/pointer'
+import std (
+    Boolean,
+    Float,
+    Double,
+    Int8,
+    UInt8,
+    Int16,
+    UInt16,
+    Int32,
+    UInt32,
+    Int64,
+    UInt64,
+    Pointer
+)
