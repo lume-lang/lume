@@ -33,13 +33,23 @@ impl IntoOwner for ItemId {
     }
 }
 
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+pub enum LocalKind {
+    Statement,
+    Expression,
+}
+
 /// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
 #[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct LocalId(pub u64);
+pub struct LocalId(pub u64, pub LocalKind);
 
 impl LocalId {
     pub fn empty() -> Self {
-        Self(0)
+        Self(0, LocalKind::Statement)
+    }
+
+    pub fn kind(&self) -> LocalKind {
+        self.1
     }
 }
 
@@ -56,6 +66,14 @@ pub struct NodeId(pub ModuleFileId, pub LocalId);
 impl NodeId {
     pub fn empty() -> Self {
         Self(ModuleFileId::empty(), LocalId::empty())
+    }
+
+    pub fn local(&self) -> LocalId {
+        self.1
+    }
+
+    pub fn kind(&self) -> LocalKind {
+        self.local().kind()
     }
 }
 

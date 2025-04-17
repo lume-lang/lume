@@ -95,7 +95,17 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::NodeId(self.file, hir::LocalId(id))
+        hir::NodeId(self.file, hir::LocalId(id, hir::LocalKind::Expression))
+    }
+
+    /// Generates the next [`hir::NodeId`] instance in the chain.
+    ///
+    /// Local IDs are simply incremented over the last used ID, starting from 0.
+    fn next_stmt_id(&mut self) -> hir::NodeId {
+        let id = self.local_id_counter;
+        self.local_id_counter += 1;
+
+        hir::NodeId(self.file, hir::LocalId(id, hir::LocalKind::Statement))
     }
 
     /// Gets the [`hir::ItemId`] for the item with the given name.
@@ -243,7 +253,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let name = self.identifier(statement.name);
         let value = self.expression(statement.value)?;
         let location = self.location(statement.location);
@@ -272,7 +282,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_break(&mut self, statement: ast::Break) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(statement.location);
 
         Ok(hir::Statement {
@@ -283,7 +293,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_continue(&mut self, statement: ast::Continue) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(statement.location);
 
         Ok(hir::Statement {
@@ -294,7 +304,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let value = self.expression(statement.value)?;
         let location = self.location(statement.location);
 
@@ -306,7 +316,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_if(&mut self, expr: ast::IfCondition) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
 
         let cases = expr
@@ -323,7 +333,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
 
         let cases = expr
@@ -340,7 +350,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
 
         let condition = if let Some(cond) = expr.condition {
@@ -360,7 +370,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
         let block = self.block(expr.block)?;
 
@@ -372,7 +382,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
         let collection = self.expression(expr.collection)?;
         let block = self.block(expr.block)?;
@@ -390,7 +400,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
-        let id = self.next_expr_id();
+        let id = self.next_stmt_id();
         let location = self.location(expr.location);
         let condition = self.expression(expr.condition)?;
         let block = self.block(expr.block)?;
