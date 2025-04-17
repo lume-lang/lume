@@ -1,7 +1,7 @@
 use crate::commands::project_or_cwd;
 use crate::error::InvalidCliError;
 
-use compiler::Driver;
+use compiler::driver::Driver;
 use diag::Result;
 use getopts::Options;
 
@@ -19,9 +19,7 @@ pub(crate) fn run(args: &[String]) -> Result<i32> {
         project_or_cwd(None)?
     };
 
-    let state = Driver::build_project(std::path::Path::new(&input))?;
-
-    state.inspect();
+    Driver::build_project(&std::path::PathBuf::from(input))?;
 
     Ok(0)
 }

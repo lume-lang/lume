@@ -16,15 +16,13 @@ pub struct MissingFunction {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Undeclared type", code = "LM3013")]
-pub struct MissingType {
+#[diagnostic(message = "Cannot use 'Self' outside of a class", code = "LM3013")]
+pub struct SelfOutsideClass {
     #[span]
     pub source: NamedSource,
 
-    #[label("Could not find a type named '{name}' in the current scope")]
+    #[label("Type 'Self' cannot be used outside of a class, since it has nothing to refer to")]
     pub range: Range<usize>,
-
-    pub name: String,
 }
 
 #[derive(Diagnostic, Debug)]

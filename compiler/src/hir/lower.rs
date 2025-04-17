@@ -2,41 +2,9 @@ use std::collections::HashMap;
 
 use diag::{Result, source::NamedSource};
 
-use crate::{ModuleFileId, ModuleId, State, hir, id::hash_id};
+use crate::{driver::ModuleFileId, hir, id::hash_id};
 use ast::{Node, ast};
 use hir::errors::*;
-
-pub(crate) struct HirLowering<'a> {
-    state: &'a State,
-
-    module: ModuleId,
-
-    map: hir::Map,
-}
-
-impl<'a> HirLowering<'a> {
-    pub(crate) fn new(state: &'a State, module: ModuleId) -> Self {
-        HirLowering {
-            state,
-            module,
-            map: hir::Map::empty(),
-        }
-    }
-
-    /// Lowers the single given module into HIR.
-    pub(crate) fn lower(state: &'a State, module: ModuleId, ast: hir::ParsedExpressions) -> Result<hir::map::Map> {
-        Self::new(state, module).run(ast)
-    }
-
-    /// Lowers the selected module expressions into HIR.
-    pub(crate) fn run(mut self, ast: hir::ParsedExpressions) -> Result<hir::Map> {
-        for (file_id, expressions) in ast {
-            LowerModuleFile::lower(&self.state, &mut self.map, self.module, file_id, expressions)?;
-        }
-
-        Ok(self.map)
-    }
-}
 
 macro_rules! err {
     (
@@ -49,7 +17,7 @@ macro_rules! err {
         ),*
     ) => {
         $kind {
-            source: $self.source().unwrap(),
+            source: $self.source.clone(),
             range: $location.into(),
             $( $field: $value ),*
         }
@@ -57,15 +25,12 @@ macro_rules! err {
     };
 }
 
-#[allow(dead_code)]
 pub(crate) struct LowerModuleFile<'ctx, 'map> {
-    state: &'ctx State,
-
-    /// Defines which parent module is being lowered.
-    module: ModuleId,
-
-    /// Defines the file within `module` being lowered.
+    /// Defines the ID of the file is being lowered.
     file: ModuleFileId,
+
+    /// Defines the source code of the file is being lowered.
+    source: &'ctx NamedSource,
 
     /// Defines the type map to register types to.
     map: &'map mut hir::map::Map,
@@ -79,84 +44,62 @@ pub(crate) struct LowerModuleFile<'ctx, 'map> {
     /// Defines the currently containing namespace expressions exist within, if any.
     namespace: hir::IdentifierPath,
 
+    /// Defines the currently containing class expressions exist within, if any.
+    class_stack: Vec<hir::ItemId>,
+
     /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
     local_id_counter: u64,
 }
 
 impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
-    pub(crate) fn new(state: &'ctx State, map: &'map mut hir::map::Map, module: ModuleId, file: ModuleFileId) -> Self {
-        LowerModuleFile {
-            state,
-            module,
+    /// Lowers the single given source file into HIR.
+    pub(crate) fn lower(
+        file: ModuleFileId,
+        source: &'ctx NamedSource,
+        expressions: Vec<ast::TopLevelExpression>,
+    ) -> Result<hir::map::Map> {
+        let mut map = hir::map::Map::empty(file);
+
+        let mut lower = LowerModuleFile {
             file,
-            map,
+            source,
+            map: &mut map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
             namespace: hir::IdentifierPath::empty(),
+            class_stack: Vec::new(),
             local_id_counter: 0,
-        }
-    }
+        };
 
-    /// Lowers the single given module file into HIR.
-    pub(crate) fn lower(
-        state: &'ctx State,
-        map: &'map mut hir::map::Map,
-        module: ModuleId,
-        file: ModuleFileId,
-        expressions: Vec<ast::TopLevelExpression>,
-    ) -> Result<()> {
-        Self::new(state, map, module, file).run(expressions)
-    }
-
-    /// Lowers the selected module expressions into HIR.
-    pub(crate) fn run(&mut self, expressions: Vec<ast::TopLevelExpression>) -> Result<()> {
         for expr in expressions {
             match expr {
-                ast::TopLevelExpression::Namespace(i) => self.top_namespace(*i)?,
-                expr => self.top_level_expression(expr)?,
+                ast::TopLevelExpression::Namespace(i) => lower.top_namespace(*i)?,
+                expr => lower.top_level_expression(expr)?,
             }
         }
 
-        Ok(())
-    }
-
-    /// Gets the named source structure of the current module being lowered.
-    fn source(&self) -> Option<NamedSource> {
-        let module = match self.state.module(self.module) {
-            Some(module) => module,
-            None => return None,
-        };
-
-        let module_file = match module.file(self.file) {
-            Some(file) => file,
-            None => return None,
-        };
-
-        Some(module_file.source.clone())
+        Ok(map)
     }
 
     /// Converts the given value into an [`hir::ItemId`].
     fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> hir::ItemId {
         let id = hash_id(&value);
 
-        hir::ItemId(self.module, id)
+        hir::ItemId(self.file, id)
     }
 
-    /// Generates the next [`hir::LocalId`] instance in the chain.
+    /// Generates the next [`hir::NodeId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
-    fn next_local_id(&mut self) -> hir::LocalId {
+    fn next_expr_id(&mut self) -> hir::NodeId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::LocalId(id)
+        hir::NodeId(self.file, hir::LocalId(id))
     }
 
     /// Gets the [`hir::ItemId`] for the item with the given name.
-    ///
-    /// This method takes no notice of which type of item the ID refers to - only whether
-    /// it exists within the current module and has the same name as given.
-    fn resolve_item(&self, name: &String) -> Option<hir::ItemId> {
+    fn resolve_item_id(&self, name: &String) -> hir::ItemId {
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
         let symbol_name = self.symbol_name(ast::Identifier {
@@ -164,19 +107,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             location: ast::Location(0..0),
         });
 
-        let guessed_item_id = hir::ItemId(self.module, hash_id(&symbol_name));
-        if self.map.items.contains_key(&guessed_item_id) {
-            return Some(guessed_item_id);
-        }
-
-        // If not declared in the current module, look for an imported symbol
-        // of the same name.
-        match self.imports.get(name) {
-            Some(def) => return Some(*def),
-            None => {}
-        };
-
-        None
+        self.item_id(symbol_name)
     }
 
     fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
@@ -230,6 +161,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         let hir_ast = match expr {
             ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
+            ast::TopLevelExpression::Use(f) => self.def_impl(*f)?,
             _ => todo!(),
         };
 
@@ -240,7 +172,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn top_import(&mut self, expr: ast::Import) -> Result<()> {
         for import in expr.flatten() {
-            let id = hir::ItemId(self.module, hash_id(&import));
+            let id = self.item_id(&import);
             let path = import.path.last().unwrap();
 
             self.imports.insert(path.name.clone(), id);
@@ -284,25 +216,34 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn statement(&mut self, expr: ast::Statement) -> Result<hir::Statement> {
-        match expr {
-            ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s),
-            ast::Statement::Break(s) => self.stmt_break(*s),
-            ast::Statement::Continue(s) => self.stmt_continue(*s),
-            ast::Statement::Return(s) => self.stmt_return(*s),
+        let stmt = match expr {
+            ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
+            ast::Statement::Break(s) => self.stmt_break(*s)?,
+            ast::Statement::Continue(s) => self.stmt_continue(*s)?,
+            ast::Statement::Return(s) => self.stmt_return(*s)?,
+            ast::Statement::If(e) => self.stmt_if(*e)?,
+            ast::Statement::Unless(e) => self.stmt_unless(*e)?,
+            ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e)?,
+            ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
+            ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
             ast::Statement::Expression(s) => {
                 let expr = self.expression(*s)?;
 
-                Ok(hir::Statement {
+                hir::Statement {
                     id: expr.id,
                     location: expr.location.clone(),
                     kind: hir::StatementKind::Expression(Box::new(expr)),
-                })
+                }
             }
-        }
+        };
+
+        self.map.statements.insert(stmt.id, stmt.clone());
+
+        Ok(stmt)
     }
 
     fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<hir::Statement> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let name = self.identifier(statement.name);
         let value = self.expression(statement.value)?;
         let location = self.location(statement.location);
@@ -331,7 +272,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_break(&mut self, statement: ast::Break) -> Result<hir::Statement> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let location = self.location(statement.location);
 
         Ok(hir::Statement {
@@ -342,7 +283,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_continue(&mut self, statement: ast::Continue) -> Result<hir::Statement> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let location = self.location(statement.location);
 
         Ok(hir::Statement {
@@ -353,7 +294,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let value = self.expression(statement.value)?;
         let location = self.location(statement.location);
 
@@ -361,6 +302,108 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             id,
             location,
             kind: hir::StatementKind::Return(Box::new(hir::Return { id, value })),
+        })
+    }
+
+    fn stmt_if(&mut self, expr: ast::IfCondition) -> Result<hir::Statement> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|c| self.stmt_condition(c))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Statement {
+            id,
+            location: location.clone(),
+            kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
+        })
+    }
+
+    fn stmt_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Statement> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|c| self.stmt_condition(c))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Statement {
+            id,
+            location: location.clone(),
+            kind: hir::StatementKind::Unless(Box::new(hir::Unless { id, cases, location })),
+        })
+    }
+
+    fn stmt_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+
+        let condition = if let Some(cond) = expr.condition {
+            Some(self.expression(cond)?)
+        } else {
+            None
+        };
+
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Condition {
+            id,
+            location,
+            condition,
+            block,
+        })
+    }
+
+    fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> Result<hir::Statement> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Statement {
+            id,
+            location: location.clone(),
+            kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
+        })
+    }
+
+    fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let collection = self.expression(expr.collection)?;
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Statement {
+            id,
+            location: location.clone(),
+            kind: hir::StatementKind::IteratorLoop(Box::new(hir::IteratorLoop {
+                id,
+                collection,
+                block,
+                location,
+            })),
+        })
+    }
+
+    fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let condition = self.expression(expr.condition)?;
+        let block = self.block(expr.block)?;
+
+        Ok(hir::Statement {
+            id,
+            location: location.clone(),
+            kind: hir::StatementKind::PredicateLoop(Box::new(hir::PredicateLoop {
+                id,
+                condition,
+                block,
+                location,
+            })),
         })
     }
 
@@ -376,11 +419,6 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
-            ast::Expression::If(e) => self.expr_if(*e)?,
-            ast::Expression::Unless(e) => self.expr_unless(*e)?,
-            ast::Expression::InfiniteLoop(e) => self.expr_infinite_loop(*e)?,
-            ast::Expression::IteratorLoop(e) => self.expr_iterator_loop(*e)?,
-            ast::Expression::PredicateLoop(e) => self.expr_predicate_loop(*e)?,
         };
 
         self.map.expressions.insert(expr.id, expr.clone());
@@ -389,7 +427,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let location = self.location(expr.location);
         let target = self.expression(expr.target)?;
         let value = self.expression(expr.value)?;
@@ -402,7 +440,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let name = self.identifier(expr.name);
         let arguments = self.expressions(expr.arguments)?;
         let location = self.location(expr.location);
@@ -417,10 +455,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
                 arguments,
             }))
         } else {
-            let reference = match self.resolve_item(&name.name) {
-                Some(id) => id,
-                None => return Err(err!(self, location, MissingFunction, name, name.name)),
-            };
+            let reference = self.resolve_item_id(&name.name);
 
             hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall {
                 id,
@@ -444,7 +479,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn expr_member(&mut self, expr: ast::Member) -> Result<hir::Expression> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let location = self.location(expr.location);
         let callee = self.expression(expr.callee)?;
 
@@ -461,7 +496,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn expr_range(&mut self, expr: ast::Range) -> Result<hir::Expression> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let location = self.location(expr.location);
         let lower = self.expression(expr.lower)?;
         let upper = self.expression(expr.upper)?;
@@ -480,7 +515,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn expr_variable(&mut self, expr: ast::Variable) -> Result<hir::Expression> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
 
         let location = self.location(expr.location().clone());
         let local_id = match self.locals.retrieve(&expr.name.name) {
@@ -499,108 +534,6 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         })
     }
 
-    fn expr_if(&mut self, expr: ast::IfCondition) -> Result<hir::Expression> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.expr_condition(c))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(hir::Expression {
-            id,
-            location: location.clone(),
-            kind: hir::ExpressionKind::If(Box::new(hir::If { id, cases, location })),
-        })
-    }
-
-    fn expr_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Expression> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.expr_condition(c))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(hir::Expression {
-            id,
-            location: location.clone(),
-            kind: hir::ExpressionKind::Unless(Box::new(hir::Unless { id, cases, location })),
-        })
-    }
-
-    fn expr_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-
-        let condition = if let Some(cond) = expr.condition {
-            Some(self.expression(cond)?)
-        } else {
-            None
-        };
-
-        let block = self.block(expr.block)?;
-
-        Ok(hir::Condition {
-            id,
-            location,
-            condition,
-            block,
-        })
-    }
-
-    fn expr_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> Result<hir::Expression> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-        let block = self.block(expr.block)?;
-
-        Ok(hir::Expression {
-            id,
-            location: location.clone(),
-            kind: hir::ExpressionKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
-        })
-    }
-
-    fn expr_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Expression> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-        let collection = self.expression(expr.collection)?;
-        let block = self.block(expr.block)?;
-
-        Ok(hir::Expression {
-            id,
-            location: location.clone(),
-            kind: hir::ExpressionKind::IteratorLoop(Box::new(hir::IteratorLoop {
-                id,
-                collection,
-                block,
-                location,
-            })),
-        })
-    }
-
-    fn expr_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Expression> {
-        let id = self.next_local_id();
-        let location = self.location(expr.location);
-        let condition = self.expression(expr.condition)?;
-        let block = self.block(expr.block)?;
-
-        Ok(hir::Expression {
-            id,
-            location: location.clone(),
-            kind: hir::ExpressionKind::PredicateLoop(Box::new(hir::PredicateLoop {
-                id,
-                condition,
-                block,
-                location,
-            })),
-        })
-    }
-
     fn literal(&mut self, expr: ast::Literal) -> Result<hir::Literal> {
         match expr {
             ast::Literal::Int(t) => self.lit_int(*t),
@@ -611,31 +544,33 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn lit_int(&mut self, expr: ast::IntLiteral) -> Result<hir::Literal> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let value = expr.value;
+        let kind = expr.kind.into();
         let location = self.location(expr.location);
 
         Ok(hir::Literal {
             id,
             location,
-            kind: hir::LiteralKind::Int(Box::new(hir::IntLiteral { id, value })),
+            kind: hir::LiteralKind::Int(Box::new(hir::IntLiteral { id, value, kind })),
         })
     }
 
     fn lit_float(&mut self, expr: ast::FloatLiteral) -> Result<hir::Literal> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let value = expr.value;
+        let kind = expr.kind.into();
         let location = self.location(expr.location);
 
         Ok(hir::Literal {
             id,
             location,
-            kind: hir::LiteralKind::Float(Box::new(hir::FloatLiteral { id, value })),
+            kind: hir::LiteralKind::Float(Box::new(hir::FloatLiteral { id, value, kind })),
         })
     }
 
     fn lit_string(&mut self, expr: ast::StringLiteral) -> Result<hir::Literal> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let value = expr.value.clone();
         let location = self.location(expr.location);
 
@@ -647,7 +582,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn lit_boolean(&mut self, expr: ast::BooleanLiteral) -> Result<hir::Literal> {
-        let id = self.next_local_id();
+        let id = self.next_expr_id();
         let value = expr.value;
         let location = self.location(expr.location);
 
@@ -661,6 +596,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<hir::Symbol> {
         match expr {
             ast::TypeDefinition::Class(t) => self.def_class(*t),
+            ast::TypeDefinition::Trait(t) => self.def_trait(*t),
             ast::TypeDefinition::Enum(t) => self.def_enum(*t),
             ast::TypeDefinition::Alias(t) => self.def_alias(*t),
         }
@@ -672,11 +608,15 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
+        self.class_stack.push(id);
+
         let members = expr
             .members
             .into_iter()
             .map(|m| self.def_class_member(m))
             .collect::<Result<Vec<hir::ClassMember>>>()?;
+
+        self.class_stack.pop();
 
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Class(Box::new(
             hir::ClassDefinition {
@@ -692,7 +632,6 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     fn def_class_member(&mut self, expr: ast::ClassMember) -> Result<hir::ClassMember> {
         match expr {
             ast::ClassMember::Property(p) => self.def_class_property(*p),
-            ast::ClassMember::Use(u) => self.def_class_use(*u),
             ast::ClassMember::MethodDefinition(m) => self.def_class_method(*m),
         }
     }
@@ -716,10 +655,6 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             default_value,
             location,
         })))
-    }
-
-    fn def_class_use(&self, _expr: ast::UseTrait) -> Result<hir::ClassMember> {
-        panic!("trait usage not implemented")
     }
 
     fn def_class_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::ClassMember> {
@@ -751,6 +686,54 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             block,
             location,
         })))
+    }
+
+    fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<hir::Symbol> {
+        let name = self.symbol_name(expr.name);
+        let location = self.location(expr.location);
+        let id = self.item_id(&name);
+
+        self.class_stack.push(id);
+
+        let methods = expr
+            .methods
+            .into_iter()
+            .map(|m| self.def_trait_methods(m))
+            .collect::<Result<Vec<hir::TraitMethodDefinition>>>()?;
+
+        self.class_stack.pop();
+
+        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
+            hir::TraitDefinition {
+                id,
+                name,
+                methods,
+                location,
+            },
+        )))))
+    }
+
+    fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
+        let visibility = self.visibility(expr.visibility)?;
+        let name = self.symbol_name(expr.name);
+        let parameters = self.parameters(expr.parameters)?;
+        let return_type = self.type_ref(*expr.return_type)?;
+        let location = self.location(expr.location);
+
+        let block = if let Some(block) = expr.block {
+            Some(self.isolated_block(block)?)
+        } else {
+            None
+        };
+
+        Ok(hir::TraitMethodDefinition {
+            name,
+            visibility,
+            parameters,
+            return_type: Box::new(return_type),
+            block,
+            location,
+        })
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<hir::Symbol> {
@@ -865,9 +848,54 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         let location = self.location(param.location);
 
         Ok(hir::Parameter {
-            id: self.next_local_id(),
+            id: self.next_expr_id(),
             name,
             param_type,
+            location,
+        })
+    }
+
+    fn def_impl(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
+        let name = self.symbol_name(expr.name);
+        let target = self.symbol_name(expr.target);
+        let methods = self.def_impl_methods(expr.methods)?;
+        let location = self.location(expr.location);
+
+        let id = self.item_id(&name);
+
+        Ok(hir::Symbol::Impl(Box::new(hir::TraitImplementation {
+            id,
+            name,
+            target,
+            methods,
+            location,
+        })))
+    }
+
+    fn def_impl_methods(
+        &mut self,
+        methods: Vec<ast::TraitMethodImplementation>,
+    ) -> Result<Vec<hir::TraitMethodImplementation>> {
+        methods
+            .into_iter()
+            .map(|m| self.def_impl_method(m))
+            .collect::<Result<Vec<_>>>()
+    }
+
+    fn def_impl_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
+        let visibility = self.visibility(expr.visibility)?;
+        let name = self.symbol_name(expr.name);
+        let parameters = self.parameters(expr.parameters)?;
+        let return_type = self.type_ref(*expr.return_type)?;
+        let block = self.isolated_block(expr.block)?;
+        let location = self.location(expr.location);
+
+        Ok(hir::TraitMethodImplementation {
+            visibility,
+            name,
+            parameters,
+            return_type: Box::new(return_type),
+            block,
             location,
         })
     }
@@ -882,15 +910,22 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn type_scalar(&self, expr: ast::ScalarType) -> Result<hir::Type> {
         let location = self.location(expr.location);
-        let type_def = match self.resolve_item(&expr.name) {
-            Some(def) => def,
-            None => return Err(err!(self, location, MissingType, name, expr.name)),
-        };
 
-        Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
-            reference: type_def,
-            location,
-        })))
+        if expr.name == "Self" {
+            let parent_class = match self.class_stack.last() {
+                Some(id) => *id,
+                None => return Err(err!(self, location, SelfOutsideClass)),
+            };
+
+            return Ok(hir::Type::SelfRef(Box::new(hir::SelfType {
+                location,
+                reference: parent_class,
+            })));
+        }
+
+        let reference = self.resolve_item_id(&expr.name);
+
+        Ok(hir::Type::Scalar(Box::new(hir::ScalarType { reference, location })))
     }
 
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
@@ -902,10 +937,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
         let location = self.location(expr.location);
-        let reference = match self.resolve_item(&expr.name.name) {
-            Some(def) => def,
-            None => return Err(err!(self, location, MissingType, name, expr.name.name)),
-        };
+        let reference = self.resolve_item_id(&expr.name.name);
 
         let type_params = expr
             .type_params

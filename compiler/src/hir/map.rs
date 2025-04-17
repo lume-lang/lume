@@ -4,19 +4,27 @@ use crate::hir::*;
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Map {
+    /// Defines which source file this map belongs to.
+    pub(crate) file: ModuleFileId,
+
     /// Defines all the top-level items within the module.
     pub(crate) items: HashMap<ItemId, Symbol>,
 
+    /// Defines all the local statements within the current scope.
+    pub(crate) statements: HashMap<NodeId, Statement>,
+
     /// Defines all the local expressions within the current scope.
-    pub(crate) expressions: HashMap<LocalId, Expression>,
+    pub(crate) expressions: HashMap<NodeId, Expression>,
 }
 
 #[allow(dead_code)]
 impl Map {
     /// Creates a new HIR map, without any content.
-    pub fn empty() -> Self {
+    pub fn empty(file: ModuleFileId) -> Self {
         Self {
+            file,
             items: HashMap::new(),
+            statements: HashMap::new(),
             expressions: HashMap::new(),
         }
     }

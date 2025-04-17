@@ -201,19 +201,20 @@ mod tests {
 
     fn var(name: &str) -> VariableDeclaration {
         VariableDeclaration {
-            id: LocalId(0),
+            id: NodeId::empty(),
             name: Identifier {
                 name: name.to_string(),
                 location: Location::empty(),
             },
             declared_type: None,
             value: Expression {
-                id: LocalId(0),
+                id: NodeId::empty(),
                 kind: ExpressionKind::Literal(Box::new(Literal {
-                    id: LocalId(0),
+                    id: NodeId::empty(),
                     kind: LiteralKind::Int(Box::new(IntLiteral {
-                        id: LocalId(0),
+                        id: NodeId::empty(),
                         value: 0,
+                        kind: IntKind::I32,
                     })),
                     location: Location::empty(),
                 })),

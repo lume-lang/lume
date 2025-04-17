@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
-use crate::{ModuleFileId, ModuleId, id::hash_id};
-use ast::ast;
+use crate::{
+    driver::{ModuleFileId, ModuleId},
+    id::hash_id,
+};
 use derive::Node;
 
 mod errors;
@@ -11,24 +11,25 @@ pub(crate) mod symbols;
 
 pub type Map = map::Map;
 
-pub type ParsedExpressions = HashMap<ModuleFileId, Vec<ast::TopLevelExpression>>;
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
-pub struct Symbols(pub HashMap<ModuleFileId, Vec<Symbol>>);
-
-impl Symbols {
-    pub fn new() -> Self {
-        Symbols(HashMap::new())
-    }
+/// Trait for types that can be converted into an owner ID.
+pub trait IntoOwner {
+    /// Gets the ID of the module file that owns this node.
+    fn owner(&self) -> ModuleFileId;
 }
 
 /// Uniquely identifies a definition within a module, such as a type, function or class.
 #[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct ItemId(pub ModuleId, pub u64);
+pub struct ItemId(pub ModuleFileId, pub u64);
 
 impl std::fmt::Debug for ItemId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "item(mod({}), {})", self.0.0, self.1)
+        write!(f, "{}", hash_id(self))
+    }
+}
+
+impl IntoOwner for ItemId {
+    fn owner(&self) -> ModuleFileId {
+        self.0
     }
 }
 
@@ -36,42 +37,36 @@ impl std::fmt::Debug for ItemId {
 #[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct LocalId(pub u64);
 
+impl LocalId {
+    pub fn empty() -> Self {
+        Self(0)
+    }
+}
+
 impl std::fmt::Debug for LocalId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "local({})", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
-/// Defines a trait which can convert any Id type into a `u64` type.
-pub trait Indexable {
-    /// Converts the Id type into a `u64` value.
-    fn index(&self) -> u64;
-}
+/// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
+#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+pub struct NodeId(pub ModuleFileId, pub LocalId);
 
-impl Indexable for ItemId {
-    fn index(&self) -> u64 {
-        hash_id(&(self.0, self.1))
+impl NodeId {
+    pub fn empty() -> Self {
+        Self(ModuleFileId::empty(), LocalId::empty())
     }
 }
 
-impl Indexable for LocalId {
-    fn index(&self) -> u64 {
-        self.0
+impl std::fmt::Debug for NodeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", hash_id(self))
     }
 }
 
-/// Defines a generic struct which any `Id` type can turn into.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Index(pub u64);
-
-impl Index {
-    pub fn from<T: Indexable>(id: &T) -> Self {
-        Self(id.index())
-    }
-}
-
-impl Indexable for Index {
-    fn index(&self) -> u64 {
+impl IntoOwner for NodeId {
+    fn owner(&self) -> ModuleFileId {
         self.0
     }
 }
@@ -91,7 +86,7 @@ pub struct Location {
 impl Location {
     pub fn empty() -> Self {
         Self {
-            file: ModuleFileId(0),
+            file: ModuleFileId(ModuleId(0), 0),
             start: 0,
             length: 0,
         }
@@ -198,6 +193,7 @@ pub enum Symbol {
     Function(Box<FunctionDefinition>),
     ExternalFunction(Box<ExternalFunctionDefinition>),
     Type(Box<TypeDefinition>),
+    Impl(Box<TraitImplementation>),
 }
 
 impl Symbol {
@@ -207,6 +203,7 @@ impl Symbol {
             Symbol::Function(symbol) => symbol.id,
             Symbol::ExternalFunction(symbol) => symbol.id,
             Symbol::Type(symbol) => symbol.id(),
+            Symbol::Impl(symbol) => symbol.id,
         }
     }
 
@@ -216,6 +213,7 @@ impl Symbol {
             Symbol::Function(symbol) => symbol.ident(),
             Symbol::ExternalFunction(symbol) => symbol.ident(),
             Symbol::Type(symbol) => symbol.ident(),
+            Symbol::Impl(symbol) => symbol.ident(),
         }
     }
 }
@@ -268,7 +266,7 @@ impl ExternalFunctionDefinition {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Parameter {
-    pub id: LocalId,
+    pub id: NodeId,
     pub name: Identifier,
     pub param_type: Type,
     pub location: Location,
@@ -287,6 +285,7 @@ pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
     Class(Box<ClassDefinition>),
+    Trait(Box<TraitDefinition>),
 }
 
 impl TypeDefinition {
@@ -295,6 +294,7 @@ impl TypeDefinition {
             TypeDefinition::Enum(def) => def.id,
             TypeDefinition::Alias(def) => def.id,
             TypeDefinition::Class(def) => def.id,
+            TypeDefinition::Trait(def) => def.id,
         }
     }
 
@@ -303,6 +303,7 @@ impl TypeDefinition {
             TypeDefinition::Enum(def) => def.ident(),
             TypeDefinition::Alias(def) => def.ident(),
             TypeDefinition::Class(def) => def.ident(),
+            TypeDefinition::Trait(def) => def.ident(),
         }
     }
 }
@@ -361,7 +362,6 @@ impl ClassDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum ClassMember {
     Property(Box<Property>),
-    Use(Box<UseTrait>),
     Method(Box<MethodDefinition>),
     ExternalMethod(Box<ExternalMethodDefinition>),
 }
@@ -372,12 +372,6 @@ pub struct Property {
     pub name: Identifier,
     pub property_type: Type,
     pub default_value: Option<Expression>,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct UseTrait {
-    pub trait_type: Box<Type>,
     pub location: Location,
 }
 
@@ -401,33 +395,84 @@ pub struct ExternalMethodDefinition {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitDefinition {
+    pub id: ItemId,
+    pub name: SymbolName,
+    pub methods: Vec<TraitMethodDefinition>,
+    pub location: Location,
+}
+
+impl TraitDefinition {
+    pub fn ident(&self) -> &Identifier {
+        &self.name.name
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitMethodDefinition {
+    pub visibility: Visibility,
+    pub name: SymbolName,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Box<Type>,
+    pub block: Option<Block>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitImplementation {
+    pub id: ItemId,
+    pub name: SymbolName,
+    pub target: SymbolName,
+    pub methods: Vec<TraitMethodImplementation>,
+    pub location: Location,
+}
+
+impl TraitImplementation {
+    pub fn ident(&self) -> &Identifier {
+        &self.name.name
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TraitMethodImplementation {
+    pub visibility: Visibility,
+    pub name: SymbolName,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Box<Type>,
+    pub block: Block,
+    pub location: Location,
+}
+
+impl TraitMethodImplementation {
+    pub fn ident(&self) -> &Identifier {
+        &self.name.name
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Statement {
-    pub id: LocalId,
+    pub id: NodeId,
     pub kind: StatementKind,
     pub location: Location,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum StatementKind {
-    Const(Box<ConstDeclaration>),
     Variable(Box<VariableDeclaration>),
     Break(Box<Break>),
     Continue(Box<Continue>),
     Return(Box<Return>),
+    If(Box<If>),
+    Unless(Box<Unless>),
+    InfiniteLoop(Box<InfiniteLoop>),
+    IteratorLoop(Box<IteratorLoop>),
+    PredicateLoop(Box<PredicateLoop>),
     Expression(Box<Expression>),
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
-pub struct ConstDeclaration {
-    pub id: LocalId,
-    pub name: Identifier,
-    pub declared_type: Option<Type>,
-    pub value: Expression,
-}
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
-    pub id: LocalId,
+    pub id: NodeId,
     pub name: Identifier,
     pub declared_type: Option<Type>,
     pub value: Expression,
@@ -435,23 +480,68 @@ pub struct VariableDeclaration {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Break {
-    pub id: LocalId,
+    pub id: NodeId,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Continue {
-    pub id: LocalId,
+    pub id: NodeId,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Return {
-    pub id: LocalId,
+    pub id: NodeId,
     pub value: Expression,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct If {
+    pub id: NodeId,
+    pub cases: Vec<Condition>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Unless {
+    pub id: NodeId,
+    pub cases: Vec<Condition>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Condition {
+    pub id: NodeId,
+    pub condition: Option<Expression>,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct InfiniteLoop {
+    pub id: NodeId,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct IteratorLoop {
+    pub id: NodeId,
+    pub collection: Expression,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct PredicateLoop {
+    pub id: NodeId,
+    pub condition: Expression,
+    pub block: Block,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Expression {
-    pub id: LocalId,
+    pub id: NodeId,
     pub location: Location,
     pub kind: ExpressionKind,
 }
@@ -465,23 +555,18 @@ pub enum ExpressionKind {
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
-    If(Box<If>),
-    Unless(Box<Unless>),
-    InfiniteLoop(Box<InfiniteLoop>),
-    IteratorLoop(Box<IteratorLoop>),
-    PredicateLoop(Box<PredicateLoop>),
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Assignment {
-    pub id: LocalId,
+    pub id: NodeId,
     pub target: Expression,
     pub value: Expression,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct FunctionCall {
-    pub id: LocalId,
+    pub id: NodeId,
     pub reference: ItemId,
     pub name: Identifier,
     pub arguments: Vec<Expression>,
@@ -489,7 +574,7 @@ pub struct FunctionCall {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct MethodCall {
-    pub id: LocalId,
+    pub id: NodeId,
     pub callee: Expression,
     pub name: Identifier,
     pub arguments: Vec<Expression>,
@@ -497,7 +582,7 @@ pub struct MethodCall {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Literal {
-    pub id: LocalId,
+    pub id: NodeId,
     pub location: Location,
     pub kind: LiteralKind,
 }
@@ -512,31 +597,79 @@ pub enum LiteralKind {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
-    pub id: LocalId,
+    pub id: NodeId,
     pub value: i64,
+    pub kind: IntKind,
+}
+
+#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq)]
+pub enum IntKind {
+    I8,
+    U8,
+    I16,
+    U16,
+    I32,
+    U32,
+    I64,
+    U64,
+    IPtr,
+    UPtr,
+}
+
+impl From<ast::ast::IntKind> for IntKind {
+    fn from(kind: ast::ast::IntKind) -> Self {
+        match kind {
+            ast::ast::IntKind::I8 => IntKind::I8,
+            ast::ast::IntKind::U8 => IntKind::U8,
+            ast::ast::IntKind::I16 => IntKind::I16,
+            ast::ast::IntKind::U16 => IntKind::U16,
+            ast::ast::IntKind::I32 => IntKind::I32,
+            ast::ast::IntKind::U32 => IntKind::U32,
+            ast::ast::IntKind::I64 => IntKind::I64,
+            ast::ast::IntKind::U64 => IntKind::U64,
+            ast::ast::IntKind::IPtr => IntKind::IPtr,
+            ast::ast::IntKind::UPtr => IntKind::UPtr,
+        }
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
-    pub id: LocalId,
+    pub id: NodeId,
     pub value: f64,
+    pub kind: FloatKind,
+}
+
+#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq)]
+pub enum FloatKind {
+    F32,
+    F64,
+}
+
+impl From<ast::ast::FloatKind> for FloatKind {
+    fn from(kind: ast::ast::FloatKind) -> Self {
+        match kind {
+            ast::ast::FloatKind::F32 => FloatKind::F32,
+            ast::ast::FloatKind::F64 => FloatKind::F64,
+        }
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
-    pub id: LocalId,
+    pub id: NodeId,
     pub value: String,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
-    pub id: LocalId,
+    pub id: NodeId,
     pub value: bool,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Member {
-    pub id: LocalId,
+    pub id: NodeId,
     pub callee: Expression,
     pub name: String,
     pub location: Location,
@@ -544,7 +677,7 @@ pub struct Member {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Range {
-    pub id: LocalId,
+    pub id: NodeId,
     pub lower: Expression,
     pub upper: Expression,
     pub inclusive: bool,
@@ -553,8 +686,8 @@ pub struct Range {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Variable {
-    pub id: LocalId,
-    pub reference: LocalId,
+    pub id: NodeId,
+    pub reference: NodeId,
     pub name: Identifier,
 }
 
@@ -565,55 +698,11 @@ impl Node for Variable {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct If {
-    pub id: LocalId,
-    pub cases: Vec<Condition>,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Unless {
-    pub id: LocalId,
-    pub cases: Vec<Condition>,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Condition {
-    pub id: LocalId,
-    pub condition: Option<Expression>,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct InfiniteLoop {
-    pub id: LocalId,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct IteratorLoop {
-    pub id: LocalId,
-    pub collection: Expression,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct PredicateLoop {
-    pub id: LocalId,
-    pub condition: Expression,
-    pub block: Block,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
     Generic(Box<GenericType>),
+    SelfRef(Box<SelfType>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -632,5 +721,11 @@ pub struct ArrayType {
 pub struct GenericType {
     pub reference: ItemId,
     pub type_params: Vec<Box<Type>>,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct SelfType {
+    pub reference: ItemId,
     pub location: Location,
 }
