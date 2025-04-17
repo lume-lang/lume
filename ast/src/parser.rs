@@ -58,6 +58,11 @@ const DEFAULT_TYPE_ALIASES: &[(&'static str, &'static str)] = &[
     ("boolean", "Boolean"),
 ];
 
+/// Defines the default imports from the `std` module.
+const DEFAULT_STD_IMPORTS: &[&'static str] = &[
+    "Boolean", "Float", "Double", "Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Pointer",
+];
+
 impl Token {
     /// Gets the precedence of the token kind.
     ///
@@ -153,7 +158,7 @@ impl Parser {
             self.tokens.push(token);
         }
 
-        let mut expressions = Vec::new();
+        let mut expressions = self.import_std();
 
         loop {
             if self.eof() {
@@ -164,6 +169,18 @@ impl Parser {
         }
 
         Ok(expressions)
+    }
+
+    /// Imports the standard library into the current file, so it's always available.
+    fn import_std(&mut self) -> Vec<TopLevelExpression> {
+        let mut imports = Vec::new();
+
+        imports.push(Import::from_names(&["std"], DEFAULT_STD_IMPORTS));
+
+        imports
+            .into_iter()
+            .map(|import| TopLevelExpression::Import(Box::new(import)))
+            .collect()
     }
 
     /// Determines whether the parser has reached the end-of-file.

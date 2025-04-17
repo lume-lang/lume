@@ -134,6 +134,33 @@ pub struct Import {
 }
 
 impl Import {
+    pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
+        let path = IdentifierPath {
+            path: path
+                .into_iter()
+                .map(|p| Identifier {
+                    name: p.to_string(),
+                    location: Location(0..0),
+                })
+                .collect(),
+            location: Location(0..0),
+        };
+
+        let names = names
+            .into_iter()
+            .map(|p| Identifier {
+                name: p.to_string(),
+                location: Location(0..0),
+            })
+            .collect();
+
+        Self {
+            path,
+            names,
+            location: Location(0..0),
+        }
+    }
+
     pub fn flatten(self) -> Vec<IdentifierPath> {
         self.names
             .iter()
