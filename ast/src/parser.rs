@@ -902,6 +902,10 @@ impl Parser {
             TokenKind::Break => self.loop_break(),
             TokenKind::Continue => self.loop_continue(),
             TokenKind::Return => self.return_statement(),
+            TokenKind::If | TokenKind::Unless => Ok(self.conditional()?),
+            TokenKind::Loop => Ok(self.infinite_loop()?),
+            TokenKind::For => Ok(self.iterator_loop()?),
+            TokenKind::While => Ok(self.predicate_loop()?),
             _ => {
                 let expression = self.expression()?;
 
@@ -938,7 +942,7 @@ impl Parser {
     }
 
     /// Parses a conditional statement at the current cursor position.
-    fn conditional(&mut self) -> Result<Expression> {
+    fn conditional(&mut self) -> Result<Statement> {
         match self.token()?.kind {
             TokenKind::If => self.if_conditional(),
             TokenKind::Unless => self.unless_conditional(),
@@ -947,7 +951,7 @@ impl Parser {
     }
 
     /// Parses an "if" conditional statement at the current cursor position.
-    fn if_conditional(&mut self) -> Result<Expression> {
+    fn if_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::If)?.start();
         let mut cases = Vec::new();
 
@@ -967,11 +971,11 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(Expression::If(Box::new(conditional)))
+        Ok(Statement::If(Box::new(conditional)))
     }
 
     /// Parses an "unless" conditional statement at the current cursor position.
-    fn unless_conditional(&mut self) -> Result<Expression> {
+    fn unless_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Unless)?.start();
         let mut cases = Vec::new();
 
@@ -993,7 +997,7 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(Expression::Unless(Box::new(conditional)))
+        Ok(Statement::Unless(Box::new(conditional)))
     }
 
     /// Parses a case within a conditional statement at the current cursor position.
@@ -1053,20 +1057,20 @@ impl Parser {
     }
 
     /// Parses an infinite loop statement at the current cursor position.
-    fn infinite_loop(&mut self) -> Result<Expression> {
+    fn infinite_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Loop)?.start();
         let block = self.block()?;
 
         let location = start..block.location.end();
 
-        Ok(Expression::InfiniteLoop(Box::new(InfiniteLoop {
+        Ok(Statement::InfiniteLoop(Box::new(InfiniteLoop {
             block,
             location: location.into(),
         })))
     }
 
     /// Parses an iterator loop statement at the current cursor position.
-    fn iterator_loop(&mut self) -> Result<Expression> {
+    fn iterator_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::For)?.start();
 
         let pattern = self.identifier()?;
@@ -1078,7 +1082,7 @@ impl Parser {
 
         let location = start..block.location.end();
 
-        Ok(Expression::IteratorLoop(Box::new(IteratorLoop {
+        Ok(Statement::IteratorLoop(Box::new(IteratorLoop {
             pattern,
             collection,
             block,
@@ -1087,7 +1091,7 @@ impl Parser {
     }
 
     /// Parses a predicate loop statement at the current cursor position.
-    fn predicate_loop(&mut self) -> Result<Expression> {
+    fn predicate_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::While)?.start();
 
         let condition = self.expression()?;
@@ -1095,7 +1099,7 @@ impl Parser {
 
         let location = start..block.location.end();
 
-        Ok(Expression::PredicateLoop(Box::new(PredicateLoop {
+        Ok(Statement::PredicateLoop(Box::new(PredicateLoop {
             condition,
             block,
             location: location.into(),
@@ -1157,10 +1161,6 @@ impl Parser {
         match kind {
             TokenKind::LeftParen => Ok(self.nested_expression()?),
             TokenKind::Identifier => Ok(self.named_expression()?),
-            TokenKind::If | TokenKind::Unless => Ok(self.conditional()?),
-            TokenKind::Loop => Ok(self.infinite_loop()?),
-            TokenKind::For => Ok(self.iterator_loop()?),
-            TokenKind::While => Ok(self.predicate_loop()?),
 
             k if k.is_literal() => Ok(self.literal()?),
             k if k.is_unary() => Ok(self.unary()?),

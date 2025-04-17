@@ -269,6 +269,11 @@ pub enum Statement {
     Break(Box<Break>),
     Continue(Box<Continue>),
     Return(Box<Return>),
+    If(Box<IfCondition>),
+    Unless(Box<UnlessCondition>),
+    InfiniteLoop(Box<InfiniteLoop>),
+    IteratorLoop(Box<IteratorLoop>),
+    PredicateLoop(Box<PredicateLoop>),
     Expression(Box<Expression>),
 }
 
@@ -276,6 +281,22 @@ pub enum Statement {
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
+    pub value: Expression,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Break {
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Continue {
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Return {
     pub value: Expression,
     pub location: Location,
 }
@@ -321,22 +342,6 @@ pub struct PredicateLoop {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Break {
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Continue {
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Return {
-    pub value: Expression,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum Expression {
     Assignment(Box<Assignment>),
     Call(Box<Call>),
@@ -344,11 +349,6 @@ pub enum Expression {
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
-    If(Box<IfCondition>),
-    Unless(Box<UnlessCondition>),
-    InfiniteLoop(Box<InfiniteLoop>),
-    IteratorLoop(Box<IteratorLoop>),
-    PredicateLoop(Box<PredicateLoop>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

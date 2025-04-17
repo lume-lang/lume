@@ -31,45 +31,44 @@ expression: "parse_expr(\"loop { let a = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    Expression(
-                        InfiniteLoop(
-                            InfiniteLoop {
-                                block: Block {
-                                    statements: [
-                                        VariableDeclaration(
-                                            VariableDeclaration {
-                                                name: Identifier {
-                                                    name: "a",
-                                                    location: Location(
-                                                        31..32,
-                                                    ),
-                                                },
-                                                variable_type: None,
-                                                value: Literal(
-                                                    Int(
-                                                        IntLiteral {
-                                                            value: 0,
-                                                            location: Location(
-                                                                35..36,
-                                                            ),
-                                                        },
-                                                    ),
-                                                ),
+                    InfiniteLoop(
+                        InfiniteLoop {
+                            block: Block {
+                                statements: [
+                                    VariableDeclaration(
+                                        VariableDeclaration {
+                                            name: Identifier {
+                                                name: "a",
                                                 location: Location(
-                                                    27..36,
+                                                    31..32,
                                                 ),
                                             },
-                                        ),
-                                    ],
-                                    location: Location(
-                                        25..38,
+                                            variable_type: None,
+                                            value: Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 0,
+                                                        location: Location(
+                                                            35..36,
+                                                        ),
+                                                        kind: I32,
+                                                    },
+                                                ),
+                                            ),
+                                            location: Location(
+                                                27..36,
+                                            ),
+                                        },
                                     ),
-                                },
+                                ],
                                 location: Location(
-                                    20..38,
+                                    25..38,
                                 ),
                             },
-                        ),
+                            location: Location(
+                                20..38,
+                            ),
+                        },
                     ),
                 ],
                 location: Location(

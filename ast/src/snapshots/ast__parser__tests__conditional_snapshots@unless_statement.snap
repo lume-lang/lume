@@ -31,15 +31,13 @@ expression: "parse_expr(\"unless true { let a = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    Expression(
-                        Unless(
-                            UnlessCondition {
-                                cases: [],
-                                location: Location(
-                                    20..45,
-                                ),
-                            },
-                        ),
+                    Unless(
+                        UnlessCondition {
+                            cases: [],
+                            location: Location(
+                                20..45,
+                            ),
+                        },
                     ),
                 ],
                 location: Location(

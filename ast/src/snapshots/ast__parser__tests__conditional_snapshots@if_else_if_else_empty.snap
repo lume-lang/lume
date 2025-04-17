@@ -31,15 +31,13 @@ expression: "parse_expr(\"if true { } else if false { } else { }\")"
             ),
             block: Block {
                 statements: [
-                    Expression(
-                        If(
-                            IfCondition {
-                                cases: [],
-                                location: Location(
-                                    20..58,
-                                ),
-                            },
-                        ),
+                    If(
+                        IfCondition {
+                            cases: [],
+                            location: Location(
+                                20..58,
+                            ),
+                        },
                     ),
                 ],
                 location: Location(

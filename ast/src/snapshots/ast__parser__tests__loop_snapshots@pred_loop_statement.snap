@@ -31,55 +31,54 @@ expression: "parse_expr(\"while true { let a = 0 }\")"
             ),
             block: Block {
                 statements: [
-                    Expression(
-                        PredicateLoop(
-                            PredicateLoop {
-                                condition: Literal(
-                                    Boolean(
-                                        BooleanLiteral {
-                                            value: true,
+                    PredicateLoop(
+                        PredicateLoop {
+                            condition: Literal(
+                                Boolean(
+                                    BooleanLiteral {
+                                        value: true,
+                                        location: Location(
+                                            26..30,
+                                        ),
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [
+                                    VariableDeclaration(
+                                        VariableDeclaration {
+                                            name: Identifier {
+                                                name: "a",
+                                                location: Location(
+                                                    37..38,
+                                                ),
+                                            },
+                                            variable_type: None,
+                                            value: Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 0,
+                                                        location: Location(
+                                                            41..42,
+                                                        ),
+                                                        kind: I32,
+                                                    },
+                                                ),
+                                            ),
                                             location: Location(
-                                                26..30,
+                                                33..42,
                                             ),
                                         },
                                     ),
-                                ),
-                                block: Block {
-                                    statements: [
-                                        VariableDeclaration(
-                                            VariableDeclaration {
-                                                name: Identifier {
-                                                    name: "a",
-                                                    location: Location(
-                                                        37..38,
-                                                    ),
-                                                },
-                                                variable_type: None,
-                                                value: Literal(
-                                                    Int(
-                                                        IntLiteral {
-                                                            value: 0,
-                                                            location: Location(
-                                                                41..42,
-                                                            ),
-                                                        },
-                                                    ),
-                                                ),
-                                                location: Location(
-                                                    33..42,
-                                                ),
-                                            },
-                                        ),
-                                    ],
-                                    location: Location(
-                                        31..44,
-                                    ),
-                                },
+                                ],
                                 location: Location(
-                                    20..44,
+                                    31..44,
                                 ),
                             },
-                        ),
+                            location: Location(
+                                20..44,
+                            ),
+                        },
                     ),
                 ],
                 location: Location(

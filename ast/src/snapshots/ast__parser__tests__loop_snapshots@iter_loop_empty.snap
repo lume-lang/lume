@@ -31,36 +31,34 @@ expression: "parse_expr(\"for pattern in collection { }\")"
             ),
             block: Block {
                 statements: [
-                    Expression(
-                        IteratorLoop(
-                            IteratorLoop {
-                                pattern: Identifier {
-                                    name: "pattern",
-                                    location: Location(
-                                        24..31,
-                                    ),
-                                },
-                                collection: Variable(
-                                    Variable {
-                                        name: Identifier {
-                                            name: "collection",
-                                            location: Location(
-                                                35..45,
-                                            ),
-                                        },
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: Location(
-                                        46..49,
-                                    ),
-                                },
+                    IteratorLoop(
+                        IteratorLoop {
+                            pattern: Identifier {
+                                name: "pattern",
                                 location: Location(
-                                    20..49,
+                                    24..31,
                                 ),
                             },
-                        ),
+                            collection: Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "collection",
+                                        location: Location(
+                                            35..45,
+                                        ),
+                                    },
+                                },
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    46..49,
+                                ),
+                            },
+                            location: Location(
+                                20..49,
+                            ),
+                        },
                     ),
                 ],
                 location: Location(
