@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::Result;
+
 /// Defines a source file, which can be used to provide context for diagnostics.
 ///
 /// This trait represents some sort of source code, which will be reported to the user as
@@ -100,7 +102,7 @@ impl NamedSource {
     }
 
     /// Creates a new [`NamedSource`] instance from an existing file.
-    pub fn from_file(path: PathBuf) -> Result<NamedSource, std::io::Error> {
+    pub fn from_file(path: PathBuf) -> Result<NamedSource> {
         let name = path.to_string_lossy().to_string();
         let content = std::fs::read_to_string(path)?;
 
