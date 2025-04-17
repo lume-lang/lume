@@ -36,19 +36,19 @@ pub struct Project {
     pub id: ProjectId,
 
     /// Defines the path to the Arcfile.
-    path: PathBuf,
+    pub path: PathBuf,
 
     /// Defines the name of the package.
-    name: String,
+    pub name: String,
 
     /// Defines the minimum required version of Lume.
-    lume_version: VersionReq,
+    pub lume_version: VersionReq,
 
     /// Defines the current version of the package.
-    version: Option<Version>,
+    pub version: Option<Version>,
 
     /// Defines an optional description of the package.
-    description: Option<String>,
+    pub description: Option<String>,
 }
 
 impl Project {
