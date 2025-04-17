@@ -47,6 +47,7 @@ expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
                                         location: Location(
                                             28..29,
                                         ),
+                                        kind: I32,
                                     },
                                 ),
                             ),
@@ -71,6 +72,7 @@ expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
                                         location: Location(
                                             38..39,
                                         ),
+                                        kind: I32,
                                     },
                                 ),
                             ),

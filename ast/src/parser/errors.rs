@@ -172,6 +172,18 @@ pub struct InvalidLiteral {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Invalid literal type", code = "LM1079")]
+pub struct InvalidLiteralType {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Invalid literal type suffix '{found}'")]
+    pub range: Range<usize>,
+
+    pub found: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "Unexpected function body",
     code = "LM1090",

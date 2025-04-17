@@ -47,6 +47,7 @@ expression: "parse(\"fn main() -> void { let a = 0 }\")"
                                         location: Location(
                                             28..29,
                                         ),
+                                        kind: I32,
                                     },
                                 ),
                             ),

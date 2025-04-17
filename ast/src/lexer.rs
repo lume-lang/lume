@@ -259,7 +259,7 @@ impl std::fmt::Display for TokenKind {
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Token {
-    /// Defines the type of the token.
+    /// Defines the kind of the token.
     pub kind: TokenKind,
 
     /// Defines the start and end position of the token.
@@ -267,6 +267,9 @@ pub struct Token {
 
     /// Defines the value of the token.
     pub value: Option<String>,
+
+    /// Defines the "kind" of the token. This is only used for integer- and floating-point literals.
+    pub ty: Option<String>,
 }
 
 impl Token {
@@ -275,6 +278,7 @@ impl Token {
             kind,
             index: 0..0,
             value: Some(value),
+            ty: None,
         }
     }
 
@@ -283,6 +287,7 @@ impl Token {
             kind,
             index: 0..0,
             value: None,
+            ty: None,
         }
     }
 
@@ -599,7 +604,20 @@ impl Lexer {
         let end_index = self.position;
         let number_str = self.source.content[start_index..end_index].to_string();
 
-        Token::new(token_kind, number_str)
+        let kind = match self.current_char_or_eof() {
+            '_' => {
+                self.next();
+
+                let kind = self.take_while(|c| c.is_ascii_alphanumeric());
+
+                Some(kind)
+            }
+            _ => None,
+        };
+
+        let mut token = Token::new(token_kind, number_str);
+        token.ty = kind;
+        token
     }
 
     /// Parses a radix prefix from the input stream.
@@ -641,7 +659,7 @@ impl Lexer {
                 }
 
                 // Decimal
-                '0'..='9' | '_' => self.consume_digits(radix),
+                '0'..='9' => self.consume_digits(radix),
 
                 // Scientific notation - not a radix prefix
                 '.' | 'e' | 'E' => {}
@@ -657,7 +675,7 @@ impl Lexer {
     }
 
     fn consume_digits(&mut self, radix: u32) {
-        self.skip_while(|c| c.is_digit(radix) || c == '_');
+        self.skip_while(|c| c.is_digit(radix));
     }
 
     fn consume_float_exponent(&mut self) {
@@ -737,6 +755,16 @@ mod tests {
             kind,
             value,
             index: position..end,
+            ty: None,
+        }
+    }
+
+    fn token_ty(kind: TokenKind, value: Option<String>, position: usize, end: usize, ty: &'static str) -> Token {
+        Token {
+            kind,
+            value,
+            index: position..end,
+            ty: Some(ty.to_string()),
         }
     }
 
@@ -924,8 +952,8 @@ mod tests {
         assert_token!("0X01", TokenKind::Integer, Some("0X01"), 0, 4);
         assert_token!("0o01", TokenKind::Integer, Some("0o01"), 0, 4);
         assert_token!("0O01", TokenKind::Integer, Some("0O01"), 0, 4);
-        assert_token!("0_0", TokenKind::Integer, Some("0_0"), 0, 3);
-        assert_token!("0_000", TokenKind::Integer, Some("0_000"), 0, 5);
+        assert_token!("0", TokenKind::Integer, Some("0"), 0, 1);
+        assert_token!("0000", TokenKind::Integer, Some("0000"), 0, 4);
         assert_token!("10.0", TokenKind::Float, Some("10.0"), 0, 4);
         assert_token!("10.123", TokenKind::Float, Some("10.123"), 0, 6);
 
@@ -939,6 +967,11 @@ mod tests {
         assert_tokens!("10E5", token(TokenKind::Float, Some("10E5".into()), 0, 4));
         assert_tokens!("1.0e5", token(TokenKind::Float, Some("1.0e5".into()), 0, 5));
         assert_tokens!("1.0E5", token(TokenKind::Float, Some("1.0E5".into()), 0, 5));
+
+        assert_tokens!("1_u32", token_ty(TokenKind::Integer, Some("1".into()), 0, 5, "u32"));
+        assert_tokens!("1_f32", token_ty(TokenKind::Integer, Some("1".into()), 0, 5, "f32"));
+        assert_tokens!("1.1_f64", token_ty(TokenKind::Float, Some("1.1".into()), 0, 7, "f64"));
+        assert_tokens!("0x0_u64", token_ty(TokenKind::Integer, Some("0x0".into()), 0, 7, "u64"));
     }
 
     #[test]

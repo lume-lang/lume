@@ -49,6 +49,7 @@ expression: "parse_expr(\"let _ = (0..=1)\")"
                                                 location: Location(
                                                     29..30,
                                                 ),
+                                                kind: I32,
                                             },
                                         ),
                                     ),
@@ -59,6 +60,7 @@ expression: "parse_expr(\"let _ = (0..=1)\")"
                                                 location: Location(
                                                     33..34,
                                                 ),
+                                                kind: I32,
                                             },
                                         ),
                                     ),

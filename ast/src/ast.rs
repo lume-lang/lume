@@ -414,12 +414,34 @@ pub enum Literal {
 pub struct IntLiteral {
     pub value: i64,
     pub location: Location,
+    pub kind: IntKind,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub enum IntKind {
+    I8,
+    U8,
+    I16,
+    U16,
+    I32,
+    U32,
+    I64,
+    U64,
+    IPtr,
+    UPtr,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
     pub value: f64,
     pub location: Location,
+    pub kind: FloatKind,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub enum FloatKind {
+    F32,
+    F64,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

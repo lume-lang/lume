@@ -39,6 +39,24 @@ const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
 /// expression before a number expression, it'd mean "the negative of the following expression".
 const UNARY_PRECEDENCE: u8 = 3;
 
+/// Defines the built-in aliaes for types, making it easier for
+/// new-comers to adapt to the type system.
+const DEFAULT_TYPE_ALIASES: &[(&'static str, &'static str)] = &[
+    ("byte", "UInt8"),
+    ("sbyte", "Int8"),
+    ("short", "Int16"),
+    ("ushort", "UInt16"),
+    ("int", "Int32"),
+    ("uint", "UInt32"),
+    ("long", "Int64"),
+    ("ulong", "UInt64"),
+    ("float", "Float32"),
+    ("double", "Float64"),
+    ("string", "String"),
+    ("bool", "Boolean"),
+    ("boolean", "Boolean"),
+];
+
 impl Token {
     /// Gets the precedence of the token kind.
     ///
@@ -959,22 +977,36 @@ impl Parser {
     fn scalar_or_generic_type(&mut self) -> Result<Type> {
         let name = self.consume(TokenKind::Identifier)?;
 
+        // Attempt to "un-alias" the type name, if it is an alias.
+        let type_name = self.resolve_type_alias(name.value.unwrap());
+
         if self.peek(TokenKind::Less)? {
             let identifier = Identifier {
-                name: name.value.unwrap(),
+                name: type_name,
                 location: name.index.into(),
             };
 
             self.generic_type_arguments(identifier)
         } else {
             let location = name.index;
-            let name = name.value.unwrap();
 
             Ok(Type::Scalar(Box::new(ScalarType {
-                name,
+                name: type_name,
                 location: location.into(),
             })))
         }
+    }
+
+    /// Attempts to resolve the given type name into a more specific type,
+    /// given that it's equal to some built-in type alias.
+    fn resolve_type_alias(&self, name: String) -> String {
+        for (alias, ty) in DEFAULT_TYPE_ALIASES {
+            if *alias == &name {
+                return ty.to_string();
+            }
+        }
+
+        name
     }
 
     /// Parses an array type at the current cursor position.
@@ -1493,9 +1525,28 @@ impl Parser {
                     Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
+                let kind = if let Some(ty) = token.ty {
+                    match ty.as_str() {
+                        "i8" => IntKind::I8,
+                        "u8" => IntKind::U8,
+                        "i16" => IntKind::I16,
+                        "u16" => IntKind::U16,
+                        "i32" => IntKind::I32,
+                        "u32" => IntKind::U32,
+                        "i64" => IntKind::I64,
+                        "u64" => IntKind::U64,
+                        "iptr" => IntKind::IPtr,
+                        "uptr" => IntKind::UPtr,
+                        t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
+                    }
+                } else {
+                    IntKind::I32
+                };
+
                 Literal::Int(Box::new(IntLiteral {
                     value: int_value,
                     location,
+                    kind,
                 }))
             }
             TokenKind::Float => {
@@ -1505,9 +1556,20 @@ impl Parser {
                     Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
+                let kind = if let Some(ty) = token.ty {
+                    match ty.as_str() {
+                        "f32" => FloatKind::F32,
+                        "f64" => FloatKind::F64,
+                        t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
+                    }
+                } else {
+                    FloatKind::F64
+                };
+
                 Literal::Float(Box::new(FloatLiteral {
                     value: float_value,
                     location,
+                    kind,
                 }))
             }
             TokenKind::String => {
