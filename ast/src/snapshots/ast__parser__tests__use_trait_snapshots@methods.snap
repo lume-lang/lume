@@ -63,7 +63,7 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                         ),
                     },
                     location: Location(
-                        53..122,
+                        53..223,
                     ),
                 },
                 TraitMethodImplementation {
@@ -110,7 +110,7 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                         ),
                     },
                     location: Location(
-                        144..209,
+                        144..223,
                     ),
                 },
             ],

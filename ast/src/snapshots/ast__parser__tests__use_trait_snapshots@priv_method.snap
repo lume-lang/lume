@@ -111,7 +111,7 @@ expression: "parse(r#\"\n            use Add in Int32 {\n                fn add(
                         ),
                     },
                     location: Location(
-                        48..130,
+                        48..144,
                     ),
                 },
             ],

@@ -1,3 +1,4 @@
+use diag::Error;
 use diag::Result;
 use diag::source::NamedSource;
 
@@ -159,7 +160,7 @@ impl Parser {
                 break;
             }
 
-            expressions.push(self.top_level_expression()?);
+            expressions.push(self.parse_top_level_expression()?);
         }
 
         Ok(expressions)
@@ -192,6 +193,13 @@ impl Parser {
     /// Returns the parsed token or a parsing error.
     fn last_token(&self) -> Result<Token> {
         self.token_at(self.tokens.len() - 1)
+    }
+
+    /// Parses the previous token from the lexer.
+    ///
+    /// Returns the parsed token or a parsing error.
+    fn previous_token(&self) -> Result<Token> {
+        self.token_at(self.tokens.len() - 2)
     }
 
     /// Peeks the next token from the lexer at some offset and returns it if it matches the expected kind.
@@ -282,8 +290,137 @@ impl Parser {
         }
     }
 
+    /// Invokes the given closure `f`, while preserving the start- and end-index
+    /// of the consumed span. The span is returned as a `Location`, along with the
+    /// result of the closure.
+    fn consume_with_loc<T>(&mut self, mut f: impl FnMut(&mut Parser) -> Result<T>) -> Result<(T, Location)> {
+        // Get the start-index of the current token, whatever it is.
+        let start = self.token()?.start();
+
+        let result = f(self)?;
+
+        let end = self.token_at(self.index - 1)?.end();
+
+        Ok((result, (start..end).into()))
+    }
+
+    /// Parses a sequence of statements, where the closure `f`
+    /// is invoked, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of expressions or statements, such as blocks.
+    /// Upon returning, the `close` token will have been consumed.
+    fn consume_seq_to_end<T>(
+        &mut self,
+        close: TokenKind,
+        mut f: impl FnMut(&mut Parser) -> Result<T>,
+    ) -> Result<Vec<T>> {
+        let mut v = Vec::new();
+
+        while self.consume_if(close)?.is_none() {
+            v.push(f(self)?);
+        }
+
+        Ok(v)
+    }
+
+    /// Parses a sequence of delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of expressions or statements, such as arrays,
+    /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    fn consume_delim_seq_to_end<T>(
+        &mut self,
+        close: TokenKind,
+        delim: TokenKind,
+        mut f: impl FnMut(&mut Parser) -> Result<T>,
+    ) -> Result<Vec<T>> {
+        let mut v = Vec::new();
+
+        while self.consume_if(close)?.is_none() {
+            if !v.is_empty() && !self.peek(close)? {
+                self.consume(delim)?;
+            }
+
+            v.push(f(self)?);
+        }
+
+        Ok(v)
+    }
+
+    /// Parses an enclosed sequence of delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of expressions or statements, such as arrays,
+    /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    fn consume_enclosed_delim_seq<T>(
+        &mut self,
+        open: TokenKind,
+        close: TokenKind,
+        delim: TokenKind,
+        f: impl FnMut(&mut Parser) -> Result<T>,
+    ) -> Result<Vec<T>> {
+        self.consume(open)?;
+        self.consume_delim_seq_to_end(close, delim, f)
+    }
+
+    /// Parses an enclosed sequence of comma-delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of expressions or statements, such as arrays,
+    /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    fn consume_comma_seq<T>(
+        &mut self,
+        open: TokenKind,
+        close: TokenKind,
+        f: impl FnMut(&mut Parser) -> Result<T>,
+    ) -> Result<Vec<T>> {
+        self.consume_enclosed_delim_seq(open, close, TokenKind::Comma, f)
+    }
+
+    /// Parses a parenthesis-enclosed sequence of comma-delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of expressions or statements, such as arrays,
+    /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
+        self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, f)
+    }
+
+    /// Parses a curly-braced enclosed sequence of statements, where the closure `f`
+    /// is invoked, until the given "close" token is found.
+    ///
+    /// This is useful for any sequence of statements within a block.
+    /// Upon returning, both the `open` and `close` tokens will have been consumed.
+    fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
+        self.consume(TokenKind::LeftCurly)?;
+        self.consume_seq_to_end(TokenKind::RightCurly, f)
+    }
+
+    /// Checks whether the current token is of the given type. If so, the token is consumed.
+    fn check(&mut self, kind: TokenKind) -> bool {
+        match self.consume_if(kind) {
+            Ok(t) => t.is_some(),
+            Err(_) => false,
+        }
+    }
+
+    /// Checks whether the current token is an `Builtin` token.
+    fn check_builtin(&mut self) -> bool {
+        self.check(TokenKind::Builtin)
+    }
+
+    /// Checks whether the current token is an `External` token.
+    fn check_external(&mut self) -> bool {
+        self.check(TokenKind::External)
+    }
+
+    /// Asserts that the current token is an `fn` token.
+    fn expect_fn(&mut self) -> Result<Token> {
+        self.consume(TokenKind::Fn)
+    }
+
     /// Parses the next token as an identifier.
-    fn identifier(&mut self) -> Result<Identifier> {
+    fn parse_identifier(&mut self) -> Result<Identifier> {
         let identifier = match self.consume(TokenKind::Identifier) {
             Ok(identifier) => identifier,
             Err(_) => return Err(err!(self, ExpectedIdentifier)),
@@ -297,16 +434,24 @@ impl Parser {
         Ok(identifier)
     }
 
+    /// Parses the next token as an identifier. If the parsing fails, return `Err(err)`.
+    fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
+        match self.parse_identifier() {
+            Ok(name) => Ok(name),
+            Err(_) => Err(err),
+        }
+    }
+
     /// Parses the next token(s) as an identifier path.
     ///
     /// Identifier paths are much like regular identifiers, but can be joined together
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std.fmt.error`.
-    fn identifier_path(&mut self) -> Result<IdentifierPath> {
+    fn parse_identifier_path(&mut self) -> Result<IdentifierPath> {
         let mut segments = Vec::new();
 
         loop {
-            segments.push(self.identifier()?);
+            segments.push(self.parse_identifier()?);
 
             if self.consume_if(IDENTIFIER_SEPARATOR)?.is_none() {
                 break;
@@ -325,30 +470,16 @@ impl Parser {
     }
 
     /// Returns a block for functions or methods.
-    fn block(&mut self) -> Result<Block> {
-        let mut statements = Vec::new();
+    fn parse_block(&mut self) -> Result<Block> {
+        let (statements, location) = self.consume_with_loc(|p| p.consume_curly_seq(|p| p.parse_statement()))?;
 
-        let start = self.consume(TokenKind::LeftCurly)?.start();
-
-        loop {
-            if self.peek(TokenKind::RightCurly)? {
-                break;
-            }
-            statements.push(self.statement()?);
-        }
-
-        let end = self.consume(TokenKind::RightCurly)?.end();
-
-        Ok(Block {
-            statements,
-            location: (start..end).into(),
-        })
+        Ok(Block { statements, location })
     }
 
     /// Returns an empty block for external functions.
     ///
     /// Also functions as an extra layer to report errors, if a function body is declared.
-    fn external_block(&mut self) -> Result<Block> {
+    fn parse_external_block(&mut self) -> Result<Block> {
         if self.peek(TokenKind::LeftCurly)? {
             return Err(err!(self, ExternalFunctionBody));
         }
@@ -365,55 +496,52 @@ impl Parser {
     /// Returns a block, if the next token is a left curly bracket (`{`), as a `Some(block)`.
     ///
     /// Otherwise, returns `None`.
-    fn opt_block(&mut self) -> Result<Option<Block>> {
+    fn parse_opt_block(&mut self) -> Result<Option<Block>> {
         if self.peek(TokenKind::LeftCurly)? {
-            return Ok(Some(self.block()?));
+            return Ok(Some(self.parse_block()?));
         }
 
         Ok(None)
     }
 
-    fn top_level_expression(&mut self) -> Result<TopLevelExpression> {
+    /// Returns an empty block for external functions and an actual block for non-external functions.
+    fn parse_opt_external_block(&mut self, external: bool) -> Result<Block> {
+        if external {
+            self.parse_external_block()
+        } else {
+            self.parse_block()
+        }
+    }
+
+    fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         let current = self.token()?;
 
         match current.kind {
-            TokenKind::Import => self.import(),
-            TokenKind::Namespace => self.namespace(),
-            TokenKind::Fn | TokenKind::Pub => self.function(),
-            TokenKind::Enum | TokenKind::Type | TokenKind::Class | TokenKind::Trait => self.type_definition(),
-            TokenKind::Use => self.use_trait(),
+            TokenKind::Import => self.parse_import(),
+            TokenKind::Namespace => self.parse_namespace(),
+            TokenKind::Fn | TokenKind::Pub => self.parse_fn(),
+            TokenKind::Class => self.parse_class(),
+            TokenKind::Trait => self.parse_trait(),
+            TokenKind::Enum => self.parse_enum(),
+            TokenKind::Type => self.parse_type_alias(),
+            TokenKind::Use => self.parse_use(),
             _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
         }
     }
 
-    fn import(&mut self) -> Result<TopLevelExpression> {
+    fn parse_import(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Import)?.start();
 
-        let path = match self.identifier_path() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
-        };
-
-        let mut names = Vec::new();
+        let path = self.parse_identifier_path()?;
 
         if self.eof() {
             return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
         }
 
-        match self.token()?.kind {
-            TokenKind::LeftParen => {
-                self.skip()?;
-
-                while self.consume_if(TokenKind::RightParen)?.is_none() {
-                    if !names.is_empty() && !self.peek(TokenKind::RightParen)? {
-                        self.consume(TokenKind::Comma)?;
-                    }
-
-                    names.push(self.identifier()?);
-                }
-            }
+        let names = match self.token()?.kind {
+            TokenKind::LeftParen => self.consume_paren_seq(|p| p.parse_identifier())?,
             kind => return Err(err!(self, InvalidImportPath, found, kind)),
-        }
+        };
 
         let end = self.token_at(self.index - 1)?.end();
 
@@ -426,49 +554,30 @@ impl Parser {
         Ok(TopLevelExpression::Import(Box::new(import_def)))
     }
 
-    fn namespace(&mut self) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Namespace)?.start();
+    fn parse_namespace(&mut self) -> Result<TopLevelExpression> {
+        let (path, location) = self.consume_with_loc(|p| {
+            p.consume(TokenKind::Namespace)?;
 
-        let path = match self.identifier_path() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
-        };
+            p.parse_identifier_path()
+        })?;
 
-        let end = path.location.0.end;
-
-        let namespace_def = Namespace {
-            path,
-            location: (start..end).into(),
-        };
-
-        Ok(TopLevelExpression::Namespace(Box::new(namespace_def)))
+        Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
     }
 
-    fn function(&mut self) -> Result<TopLevelExpression> {
+    fn parse_fn(&mut self) -> Result<TopLevelExpression> {
         let start = self.token()?.start();
-        let visibility = self.visibility()?;
+        let visibility = self.parse_visibility()?;
 
-        self.consume(TokenKind::Fn)?;
+        self.expect_fn()?;
 
-        let external = self.consume_if(TokenKind::External)?.is_some();
+        let external = self.check_external();
+        let name = self.parse_ident_or_err(err!(self, ExpectedFunctionName))?;
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_fn_params()?;
+        let return_type = self.parse_fn_return_type()?;
+        let block = self.parse_opt_external_block(external)?;
 
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedFunctionName)),
-        };
-
-        let type_parameters = self.type_parameters()?;
-        let parameters = self.parameters()?;
-
-        self.consume(TokenKind::Arrow)?;
-        let return_type = self.parse_type()?;
-        let block = if external {
-            self.external_block()?
-        } else {
-            self.block()?
-        };
-
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.last_token()?.end();
 
         let function_def = FunctionDefinition {
             visibility,
@@ -484,29 +593,17 @@ impl Parser {
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
     }
 
-    fn parameters(&mut self) -> Result<Vec<Parameter>> {
+    fn parse_fn_params(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
         if !self.peek(TokenKind::LeftParen)? {
             return Ok(Vec::new());
         }
 
-        self.consume(TokenKind::LeftParen)?;
-
-        let mut parameters = Vec::new();
-
-        while self.consume_if(TokenKind::RightParen)?.is_none() {
-            if !parameters.is_empty() && !self.peek(TokenKind::RightParen)? {
-                self.consume(TokenKind::Comma)?;
-            }
-
-            parameters.push(self.parameter()?);
-        }
-
-        Ok(parameters)
+        self.consume_paren_seq(|p| p.parse_fn_param())
     }
 
-    fn parameter(&mut self) -> Result<Parameter> {
-        let name = self.identifier()?;
+    fn parse_fn_param(&mut self) -> Result<Parameter> {
+        let name = self.parse_identifier()?;
 
         self.consume(TokenKind::Colon)?;
 
@@ -522,33 +619,23 @@ impl Parser {
         })
     }
 
-    fn type_definition(&mut self) -> Result<TopLevelExpression> {
-        let def = match self.token()?.kind {
-            TokenKind::Class => self.class()?,
-            TokenKind::Trait => self.trait_definition()?,
-            TokenKind::Enum => self.enum_definition()?,
-            TokenKind::Type => self.type_alias_definition()?,
-            _ => return Err(err!(self, ExpectedIdentifier)),
-        };
+    /// Parses the return type of the current function definition.
+    fn parse_fn_return_type(&mut self) -> Result<Type> {
+        self.consume(TokenKind::Arrow)?;
 
-        Ok(TopLevelExpression::TypeDefinition(Box::new(def)))
+        self.parse_type()
     }
 
-    fn class(&mut self) -> Result<TypeDefinition> {
+    fn parse_class(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Class)?.start();
 
-        let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
+        let builtin = self.check_builtin();
+        let name = self.parse_ident_or_err(err!(self, ExpectedClassName))?;
 
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedClassName)),
-        };
+        let type_parameters = self.parse_type_parameters()?;
+        let members = self.consume_curly_seq(|p| p.parse_class_member())?;
 
-        let type_parameters = self.type_parameters()?;
-
-        self.consume(TokenKind::LeftCurly)?;
-        let members = self.class_members()?;
-        let end = self.consume(TokenKind::RightCurly)?.end();
+        let end = self.last_token()?.end();
 
         let class_def = ClassDefinition {
             name,
@@ -558,34 +645,22 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(TypeDefinition::Class(Box::new(class_def)))
+        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Class(
+            Box::new(class_def),
+        ))))
     }
 
-    fn class_members(&mut self) -> Result<Vec<ClassMember>> {
-        let mut members = Vec::new();
-
-        loop {
-            if self.peek(TokenKind::RightCurly)? {
-                break;
-            }
-
-            members.push(self.class_member()?);
-        }
-
-        Ok(members)
-    }
-
-    fn class_member(&mut self) -> Result<ClassMember> {
-        let visibility = self.visibility()?;
+    fn parse_class_member(&mut self) -> Result<ClassMember> {
+        let visibility = self.parse_visibility()?;
 
         match self.token()?.kind {
-            TokenKind::Let => self.property(visibility),
-            TokenKind::Fn => self.method(visibility),
-            kind => return Err(err!(self, ExpectedClassMember, actual, kind)),
+            TokenKind::Let => self.parse_property(visibility),
+            TokenKind::Fn => self.parse_method(visibility),
+            _ => return Err(err!(self, ExpectedClassMember)),
         }
     }
 
-    fn visibility(&mut self) -> Result<Visibility> {
+    fn parse_visibility(&mut self) -> Result<Visibility> {
         match self.token()?.kind {
             // If the member is marked as public, make it so.
             TokenKind::Pub => {
@@ -607,26 +682,20 @@ impl Parser {
         }
     }
 
-    fn property(&mut self, visibility: Visibility) -> Result<ClassMember> {
+    fn parse_property(&mut self, visibility: Visibility) -> Result<ClassMember> {
         let start = self.consume(TokenKind::Let)?.start();
 
-        let kind = self.token()?.kind;
-        let name = match self.identifier() {
+        let name = match self.parse_identifier() {
             Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedClassMember, actual, kind)),
+            Err(_) => return Err(err!(self, ExpectedClassMember)),
         };
 
         self.consume(TokenKind::Colon)?;
 
         let property_type = self.parse_type()?;
+        let default_value = self.parse_opt_assignment()?;
 
-        let default_value = if self.consume_if(TokenKind::Assign)?.is_some() {
-            Some(self.expression()?)
-        } else {
-            None
-        };
-
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.last_token()?.end();
 
         let property_def = Property {
             visibility,
@@ -639,26 +708,20 @@ impl Parser {
         Ok(ClassMember::Property(Box::new(property_def)))
     }
 
-    fn method(&mut self, visibility: Visibility) -> Result<ClassMember> {
-        let start = self.consume(TokenKind::Fn)?.start();
+    fn parse_method(&mut self, visibility: Visibility) -> Result<ClassMember> {
+        let start = self.expect_fn()?.start();
+        let external = self.check_external();
 
-        let external = self.consume_if(TokenKind::External)?.is_some();
-
-        let name = match self.identifier() {
+        let name = match self.parse_identifier() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
-        let type_parameters = self.type_parameters()?;
-        let parameters = self.parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_fn_params()?;
 
-        self.consume(TokenKind::Arrow)?;
-        let return_type = self.parse_type()?;
-        let block = if external {
-            self.external_block()?
-        } else {
-            self.block()?
-        };
+        let return_type = self.parse_fn_return_type()?;
+        let block = self.parse_opt_external_block(external)?;
 
         let end = self.token_at(self.index - 1)?.end();
 
@@ -676,19 +739,13 @@ impl Parser {
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
     }
 
-    fn trait_definition(&mut self) -> Result<TypeDefinition> {
+    fn parse_trait(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Trait)?.start();
 
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedTraitName)),
-        };
-
-        let type_parameters = self.type_parameters()?;
-
-        self.consume(TokenKind::LeftCurly)?;
-        let methods = self.trait_methods()?;
-        let end = self.consume(TokenKind::RightCurly)?.end();
+        let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
+        let type_parameters = self.parse_type_parameters()?;
+        let methods = self.consume_curly_seq(|p| p.parse_trait_method())?;
+        let end = self.last_token()?.end();
 
         let trait_def = TraitDefinition {
             name,
@@ -697,41 +754,26 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(TypeDefinition::Trait(Box::new(trait_def)))
+        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Trait(
+            Box::new(trait_def),
+        ))))
     }
 
-    fn trait_methods(&mut self) -> Result<Vec<TraitMethodDefinition>> {
-        let mut methods = Vec::new();
+    fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
+        let visibility = self.parse_visibility()?;
+        let start = self.expect_fn()?.start();
 
-        loop {
-            if self.peek(TokenKind::RightCurly)? {
-                break;
-            }
-
-            methods.push(self.trait_method()?);
-        }
-
-        Ok(methods)
-    }
-
-    fn trait_method(&mut self) -> Result<TraitMethodDefinition> {
-        let visibility = self.visibility()?;
-
-        let start = self.consume(TokenKind::Fn)?.start();
-
-        let name = match self.identifier() {
+        let name = match self.parse_identifier() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
-        let type_parameters = self.type_parameters()?;
-        let parameters = self.parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_fn_params()?;
+        let return_type = self.parse_fn_return_type()?;
+        let block = self.parse_opt_block()?;
 
-        self.consume(TokenKind::Arrow)?;
-        let return_type = self.parse_type()?;
-        let block = self.opt_block()?;
-
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.previous_token()?.end();
 
         Ok(TraitMethodDefinition {
             visibility,
@@ -752,57 +794,31 @@ impl Parser {
     ///   V6,
     /// }
     /// ```
-    fn enum_definition(&mut self) -> Result<TypeDefinition> {
+    fn parse_enum(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Enum)?.start();
 
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
-        };
+        let name = self.parse_identifier()?;
+        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, |p| p.parse_enum_case())?;
 
-        self.consume(TokenKind::LeftCurly)?;
+        let end = self.last_token()?.end();
 
-        let mut cases = Vec::new();
-        while !self.peek(TokenKind::RightCurly)? {
-            cases.push(self.enum_case_definition()?);
-
-            // If there's no comma on the last line, the enum case is done.
-            if self.consume_if(TokenKind::Comma)?.is_none() {
-                break;
-            }
-        }
-
-        let end = self.consume(TokenKind::RightCurly)?.end();
-
-        Ok(TypeDefinition::Enum(Box::new(EnumDefinition {
-            name,
-            cases,
-            location: (start..end).into(),
-        })))
+        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Enum(
+            Box::new(EnumDefinition {
+                name,
+                cases,
+                location: (start..end).into(),
+            }),
+        ))))
     }
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
-    fn enum_case_definition(&mut self) -> Result<EnumDefinitionCase> {
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
-        };
+    fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
+        let name = self.parse_identifier()?;
 
         let parameters = if self.consume_if(TokenKind::LeftParen)?.is_some() {
-            let mut params = Vec::new();
-
-            while !self.peek(TokenKind::RightParen)? {
-                params.push(Box::new(self.parse_type()?));
-
-                // If there's no comma on the last line, the enum case parameters are done.
-                if self.consume_if(TokenKind::Comma)?.is_none() {
-                    break;
-                }
-            }
-
-            self.consume(TokenKind::RightParen)?;
-
-            params
+            self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, |p| {
+                Ok(Box::new(p.parse_type()?))
+            })?
         } else {
             Vec::new()
         };
@@ -822,13 +838,9 @@ impl Parser {
     /// ```ignore
     /// type Alias = String | Int
     /// ```
-    fn type_alias_definition(&mut self) -> Result<TypeDefinition> {
+    fn parse_type_alias(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Type)?.start();
-
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
-        };
+        let name = self.parse_identifier()?;
 
         // Skip equal sign between name and type
         self.consume(TokenKind::Assign)?;
@@ -842,71 +854,39 @@ impl Parser {
             location: (start..end).into(),
         };
 
-        Ok(TypeDefinition::Alias(Box::new(alias)))
-    }
-
-    fn arguments(&mut self) -> Result<Vec<Expression>> {
-        // If no opening parenthesis, no arguments are defined.
-        if !self.peek(TokenKind::LeftParen)? {
-            return Ok(Vec::new());
-        }
-
-        self.consume(TokenKind::LeftParen)?;
-
-        let mut arguments = Vec::new();
-
-        while self.consume_if(TokenKind::RightParen)?.is_none() {
-            if !arguments.is_empty() && !self.peek(TokenKind::RightParen)? {
-                self.consume(TokenKind::Comma)?;
-            }
-
-            arguments.push(self.expression()?);
-        }
-
-        Ok(arguments)
+        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Alias(
+            Box::new(alias),
+        ))))
     }
 
     /// Parses zero-or-more type parameters.
-    fn type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
-        if self.consume_if(TokenKind::Less)?.is_none() {
+    fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
+        if !self.peek(TokenKind::Less)? {
             return Ok(Vec::new());
         }
 
-        let mut parameters = Vec::new();
-
-        while self.consume_if(TokenKind::Greater)?.is_none() {
-            if !parameters.is_empty() && !self.peek(TokenKind::Greater)? {
-                self.consume(TokenKind::Comma)?;
-            }
-
-            parameters.push(TypeParameter {
-                name: self.identifier()?,
-            });
-        }
-
-        Ok(parameters)
+        self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
+            Ok(TypeParameter {
+                name: p.parse_identifier()?,
+            })
+        })
     }
 
-    fn use_trait(&mut self) -> Result<TopLevelExpression> {
+    fn parse_use(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
 
-        let name = match self.identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedTraitName)),
-        };
-
-        let type_parameters = self.type_parameters()?;
+        let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
+        let type_parameters = self.parse_type_parameters()?;
 
         self.consume(TokenKind::In)?;
 
-        let target = match self.identifier() {
+        let target = match self.parse_identifier() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedClassName)),
         };
 
-        self.consume(TokenKind::LeftCurly)?;
-        let methods = self.trait_method_implementations()?;
-        let end = self.consume(TokenKind::RightCurly)?.end();
+        let methods = self.consume_curly_seq(|p| p.parse_use_impl())?;
+        let end = self.last_token()?.end();
 
         let use_trait = UseTrait {
             name,
@@ -919,37 +899,21 @@ impl Parser {
         Ok(TopLevelExpression::Use(Box::new(use_trait)))
     }
 
-    fn trait_method_implementations(&mut self) -> Result<Vec<TraitMethodImplementation>> {
-        let mut methods = Vec::new();
+    fn parse_use_impl(&mut self) -> Result<TraitMethodImplementation> {
+        let visibility = self.parse_visibility()?;
+        let start = self.expect_fn()?.start();
 
-        loop {
-            if self.peek(TokenKind::RightCurly)? {
-                break;
-            }
-
-            methods.push(self.trait_method_implementation()?);
-        }
-
-        Ok(methods)
-    }
-
-    fn trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
-        let visibility = self.visibility()?;
-        let start = self.consume(TokenKind::Fn)?.start();
-
-        let name = match self.identifier() {
+        let name = match self.parse_identifier() {
             Ok(name) => name,
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
-        let type_parameters = self.type_parameters()?;
-        let parameters = self.parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
+        let parameters = self.parse_fn_params()?;
+        let return_type = self.parse_fn_return_type()?;
+        let block = self.parse_block()?;
 
-        self.consume(TokenKind::Arrow)?;
-        let return_type = self.parse_type()?;
-        let block = self.block()?;
-
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.last_token()?.end();
 
         Ok(TraitMethodImplementation {
             visibility,
@@ -967,28 +931,28 @@ impl Parser {
         let token = self.token()?;
 
         match token.kind {
-            TokenKind::Identifier => self.scalar_or_generic_type(),
-            TokenKind::LeftBracket => self.array_type(),
+            TokenKind::Identifier => self.parse_scalar_or_generic_type(),
+            TokenKind::LeftBracket => self.parse_array_type(),
             _ => Err(err!(self, UnexpectedType, actual, token.kind.clone())),
         }
     }
 
     /// Parses either a scalar- or generic-type at the current cursor position.
-    fn scalar_or_generic_type(&mut self) -> Result<Type> {
-        let name = self.consume(TokenKind::Identifier)?;
+    fn parse_scalar_or_generic_type(&mut self) -> Result<Type> {
+        let name = self.parse_identifier()?;
 
         // Attempt to "un-alias" the type name, if it is an alias.
-        let type_name = self.resolve_type_alias(name.value.unwrap());
+        let type_name = self.resolve_type_alias(name.name);
 
         if self.peek(TokenKind::Less)? {
             let identifier = Identifier {
                 name: type_name,
-                location: name.index.into(),
+                location: name.location,
             };
 
-            self.generic_type_arguments(identifier)
+            self.parse_generic_type_arguments(identifier)
         } else {
-            let location = name.index;
+            let location = name.location;
 
             Ok(Type::Scalar(Box::new(ScalarType {
                 name: type_name,
@@ -1010,7 +974,7 @@ impl Parser {
     }
 
     /// Parses an array type at the current cursor position.
-    fn array_type(&mut self) -> Result<Type> {
+    fn parse_array_type(&mut self) -> Result<Type> {
         let start = self.consume(TokenKind::LeftBracket)?.start();
 
         let element_type = Box::new(self.parse_type()?);
@@ -1026,43 +990,40 @@ impl Parser {
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
-    fn generic_type_arguments(&mut self, identifier: Identifier) -> Result<Type> {
-        let start = self.consume(TokenKind::Less)?.start();
+    fn parse_generic_type_arguments(&mut self, name: Identifier) -> Result<Type> {
+        let (type_params, location) = self.consume_with_loc(|p| {
+            p.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| Ok(Box::new(p.parse_type()?)))
+        })?;
 
-        let mut type_params = Vec::new();
-
-        while self.consume_if(TokenKind::Greater)?.is_none() {
-            if !type_params.is_empty() && !self.peek(TokenKind::Greater)? {
-                self.consume(TokenKind::Comma)?;
-            }
-
-            type_params.push(Box::new(self.parse_type()?));
-        }
-
-        let end = self.token_at(self.index - 1)?.end();
-
-        let generic_type = GenericType {
-            name: identifier,
+        Ok(Type::Generic(Box::new(GenericType {
+            name,
             type_params,
-            location: (start..end).into(),
-        };
+            location,
+        })))
+    }
 
-        Ok(Type::Generic(Box::new(generic_type)))
+    /// Parses some abstract type at the current cursor position.
+    fn parse_opt_type(&mut self) -> Result<Option<Type>> {
+        if self.consume_if(TokenKind::Colon)?.is_none() {
+            Ok(None)
+        } else {
+            Ok(Some(self.parse_type()?))
+        }
     }
 
     /// Parses some abstract statement at the current cursor position.
-    fn statement(&mut self) -> Result<Statement> {
+    fn parse_statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
-            TokenKind::Let => self.variable_declaration(),
-            TokenKind::Break => self.loop_break(),
-            TokenKind::Continue => self.loop_continue(),
-            TokenKind::Return => self.return_statement(),
-            TokenKind::If | TokenKind::Unless => Ok(self.conditional()?),
-            TokenKind::Loop => Ok(self.infinite_loop()?),
-            TokenKind::For => Ok(self.iterator_loop()?),
-            TokenKind::While => Ok(self.predicate_loop()?),
+            TokenKind::Let => self.parse_variable_declaration(),
+            TokenKind::Break => self.parse_break(),
+            TokenKind::Continue => self.parse_continue(),
+            TokenKind::Return => self.parse_return(),
+            TokenKind::If | TokenKind::Unless => Ok(self.parse_conditional()?),
+            TokenKind::Loop => Ok(self.parse_infinite_loop()?),
+            TokenKind::For => Ok(self.parse_iterator_loop()?),
+            TokenKind::While => Ok(self.parse_predicate_loop()?),
             _ => {
-                let expression = self.expression()?;
+                let expression = self.parse_expression()?;
 
                 Ok(Statement::Expression(Box::new(expression)))
             }
@@ -1070,20 +1031,16 @@ impl Parser {
     }
 
     /// Parses a variable declaration statement at the current cursor position.
-    fn variable_declaration(&mut self) -> Result<Statement> {
+    fn parse_variable_declaration(&mut self) -> Result<Statement> {
         // Whatever the token is, consume it.
         let start = self.consume_any()?.start();
 
-        let name = self.identifier()?;
-        let variable_type = if self.consume_if(TokenKind::Colon)?.is_some() {
-            Some(self.parse_type()?)
-        } else {
-            None
-        };
+        let name = self.parse_identifier()?;
+        let variable_type = self.parse_opt_type()?;
 
         self.consume(TokenKind::Assign)?;
 
-        let value = self.expression()?;
+        let value = self.parse_expression()?;
         let end = value.location().end();
 
         let variable = VariableDeclaration {
@@ -1097,27 +1054,27 @@ impl Parser {
     }
 
     /// Parses a conditional statement at the current cursor position.
-    fn conditional(&mut self) -> Result<Statement> {
+    fn parse_conditional(&mut self) -> Result<Statement> {
         match self.token()?.kind {
-            TokenKind::If => self.if_conditional(),
-            TokenKind::Unless => self.unless_conditional(),
+            TokenKind::If => self.parse_if_conditional(),
+            TokenKind::Unless => self.parse_unless_conditional(),
             _ => return Err(err!(self, ExpectedIdentifier)),
         }
     }
 
     /// Parses an "if" conditional statement at the current cursor position.
-    fn if_conditional(&mut self) -> Result<Statement> {
+    fn parse_if_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::If)?.start();
         let mut cases = Vec::new();
 
         // Append the primary case
-        self.conditional_case(&mut cases)?;
+        self.parse_conditional_case(&mut cases)?;
 
         // Append the `else if` case
-        self.else_if_conditional_cases(&mut cases)?;
+        self.parse_else_if_conditional_cases(&mut cases)?;
 
         // Append the `else` case
-        self.else_conditional_case(&mut cases)?;
+        self.parse_else_conditional_case(&mut cases)?;
 
         let end = cases.last().unwrap().location.end();
 
@@ -1130,12 +1087,12 @@ impl Parser {
     }
 
     /// Parses an "unless" conditional statement at the current cursor position.
-    fn unless_conditional(&mut self) -> Result<Statement> {
+    fn parse_unless_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Unless)?.start();
         let mut cases = Vec::new();
 
         // Append the primary case
-        self.conditional_case(&mut cases)?;
+        self.parse_conditional_case(&mut cases)?;
 
         // Moan if any `else if` blocks are found
         if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If, 1)? {
@@ -1143,7 +1100,7 @@ impl Parser {
         }
 
         // Append the `else` case
-        self.else_conditional_case(&mut cases)?;
+        self.parse_else_conditional_case(&mut cases)?;
 
         let end = cases.last().unwrap().location.end();
 
@@ -1156,9 +1113,9 @@ impl Parser {
     }
 
     /// Parses a case within a conditional statement at the current cursor position.
-    fn conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
-        let condition = self.expression()?;
-        let block = self.block()?;
+    fn parse_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        let condition = self.parse_expression()?;
+        let block = self.parse_block()?;
 
         let start = condition.location().start();
         let end = block.location().end();
@@ -1175,7 +1132,7 @@ impl Parser {
     }
 
     /// Parses zero-or-more `else-if` cases within a conditional statement at the current cursor position.
-    fn else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+    fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
             if !self.peek(TokenKind::Else)? || !self.peek_next(TokenKind::If, 1)? {
                 break;
@@ -1184,20 +1141,20 @@ impl Parser {
             self.consume(TokenKind::Else)?;
             self.consume(TokenKind::If)?;
 
-            self.conditional_case(cases)?;
+            self.parse_conditional_case(cases)?;
         }
 
         Ok(())
     }
 
     /// Parses zero-or-one `else` cases within a conditional statement at the current cursor position.
-    fn else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+    fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let start = match self.consume_if(TokenKind::Else)? {
             Some(t) => t.index.start,
             None => return Ok(()),
         };
 
-        let block = self.block()?;
+        let block = self.parse_block()?;
         let end = block.location.end();
 
         let case = Condition {
@@ -1212,9 +1169,9 @@ impl Parser {
     }
 
     /// Parses an infinite loop statement at the current cursor position.
-    fn infinite_loop(&mut self) -> Result<Statement> {
+    fn parse_infinite_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Loop)?.start();
-        let block = self.block()?;
+        let block = self.parse_block()?;
 
         let location = start..block.location.end();
 
@@ -1225,15 +1182,15 @@ impl Parser {
     }
 
     /// Parses an iterator loop statement at the current cursor position.
-    fn iterator_loop(&mut self) -> Result<Statement> {
+    fn parse_iterator_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::For)?.start();
 
-        let pattern = self.identifier()?;
+        let pattern = self.parse_identifier()?;
 
         self.consume(TokenKind::In)?;
 
-        let collection = self.expression()?;
-        let block = self.block()?;
+        let collection = self.parse_expression()?;
+        let block = self.parse_block()?;
 
         let location = start..block.location.end();
 
@@ -1246,11 +1203,11 @@ impl Parser {
     }
 
     /// Parses a predicate loop statement at the current cursor position.
-    fn predicate_loop(&mut self) -> Result<Statement> {
+    fn parse_predicate_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::While)?.start();
 
-        let condition = self.expression()?;
-        let block = self.block()?;
+        let condition = self.parse_expression()?;
+        let block = self.parse_block()?;
 
         let location = start..block.location.end();
 
@@ -1262,24 +1219,24 @@ impl Parser {
     }
 
     /// Parses a `break` statement at the current cursor position.
-    fn loop_break(&mut self) -> Result<Statement> {
+    fn parse_break(&mut self) -> Result<Statement> {
         let location: Location = self.consume(TokenKind::Break)?.index.into();
 
         Ok(Statement::Break(Box::new(Break { location })))
     }
 
     /// Parses a `continue` statement at the current cursor position.
-    fn loop_continue(&mut self) -> Result<Statement> {
+    fn parse_continue(&mut self) -> Result<Statement> {
         let location: Location = self.consume(TokenKind::Continue)?.index.into();
 
         Ok(Statement::Continue(Box::new(Continue { location })))
     }
 
     /// Parses a return statement at the current cursor position.
-    fn return_statement(&mut self) -> Result<Statement> {
+    fn parse_return(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Return)?.start();
 
-        let value = self.expression()?;
+        let value = self.parse_expression()?;
         let end = value.location().end();
 
         let statement = Statement::Return(Box::new(Return {
@@ -1291,16 +1248,16 @@ impl Parser {
     }
 
     /// Parses an expression on the current cursor position.
-    fn expression(&mut self) -> Result<Expression> {
-        self.expression_with_precedence(0)
+    fn parse_expression(&mut self) -> Result<Expression> {
+        self.parse_expression_with_precedence(0)
     }
 
     /// Parses an expression on the current cursor position, with a minimum precedence.
-    fn expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
-        let mut left = self.prefix_expression()?;
+    fn parse_expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
+        let mut left = self.parse_prefix_expression()?;
 
         while precedence < self.token()?.precedence() {
-            left = self.infix_expression(left)?;
+            left = self.parse_infix_expression(left)?;
         }
 
         Ok(left)
@@ -1310,15 +1267,15 @@ impl Parser {
     ///
     /// Prefix expressions are expressions which appear at the start of an expression,
     /// such as literals of prefix operators. In Pratt Parsing, this is also called "Nud" or "Null Denotation".
-    fn prefix_expression(&mut self) -> Result<Expression> {
+    fn parse_prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token()?.kind;
 
         match kind {
-            TokenKind::LeftParen => Ok(self.nested_expression()?),
-            TokenKind::Identifier => Ok(self.named_expression()?),
+            TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
+            TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
-            k if k.is_literal() => Ok(self.literal()?),
-            k if k.is_unary() => Ok(self.unary()?),
+            k if k.is_literal() => Ok(self.parse_literal()?),
+            k if k.is_unary() => Ok(self.parse_unary()?),
 
             _ => Err(err!(self, InvalidExpression, actual, kind)),
         }
@@ -1328,7 +1285,7 @@ impl Parser {
     ///
     /// Infix expressions are expressions which appear in the middle of an expression,
     /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
-    fn infix_expression(&mut self, left: Expression) -> Result<Expression> {
+    fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
         //
         // In essence, this statement is handling cases where:
@@ -1338,7 +1295,7 @@ impl Parser {
         // would be parsed as an operator expression, such as `c = Call(New('Foo'), '.', [Call('bar')])`, where
         // it really should be something like `c = Member(New('Foo'), 'bar')`.
         if self.peek(TokenKind::Dot)? {
-            return self.member(left);
+            return self.parse_member(left);
         }
 
         let operator = match self.consume_any()? {
@@ -1348,7 +1305,7 @@ impl Parser {
 
         let operator_loc = operator.index.clone();
 
-        let right = self.expression_with_precedence(operator.precedence())?;
+        let right = self.parse_expression_with_precedence(operator.precedence())?;
         let name: String = operator.into();
 
         let start = left.location().start();
@@ -1367,14 +1324,14 @@ impl Parser {
     }
 
     /// Parses an expression on the current cursor position, which is nested within parentheses.
-    fn nested_expression(&mut self) -> Result<Expression> {
+    fn parse_nested_expression(&mut self) -> Result<Expression> {
         self.consume(TokenKind::LeftParen)?;
 
-        let expression = self.expression_with_precedence(0)?;
+        let expression = self.parse_expression_with_precedence(0)?;
 
         // If the expression is followed by two dots ('..'), it's a range expression.
         if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
-            return self.range_expression(expression);
+            return self.parse_range_expression(expression);
         }
 
         self.consume(TokenKind::RightParen)?;
@@ -1383,12 +1340,12 @@ impl Parser {
     }
 
     /// Parses a range expression on the current cursor position.
-    fn range_expression(&mut self, lower: Expression) -> Result<Expression> {
+    fn parse_range_expression(&mut self, lower: Expression) -> Result<Expression> {
         self.consume(TokenKind::Dot)?;
         self.consume(TokenKind::Dot)?;
 
         let inclusive = self.consume_if(TokenKind::Assign)?.is_some();
-        let upper = self.expression()?;
+        let upper = self.parse_expression()?;
 
         let start = lower.location().start();
         let end = upper.location().end();
@@ -1405,31 +1362,31 @@ impl Parser {
     }
 
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
-    fn named_expression(&mut self) -> Result<Expression> {
-        let identifier = self.identifier()?;
+    fn parse_named_expression(&mut self) -> Result<Expression> {
+        let identifier = self.parse_identifier()?;
         let expression = Expression::Variable(Box::new(Variable {
             name: identifier.clone(),
         }));
 
         match self.token()?.kind {
             // If the next token is an opening parenthesis, it's a method invocation
-            TokenKind::LeftParen => self.call(identifier),
+            TokenKind::LeftParen => self.parse_call(identifier),
 
             // If the next token is a dot, it's some form of member access
-            TokenKind::Dot => self.member(expression),
+            TokenKind::Dot => self.parse_member(expression),
 
             // If the next token is an equal sign, it's an assignment expression
-            TokenKind::Assign => self.assignment(expression),
+            TokenKind::Assign => self.parse_assignment(expression),
 
             // If the name stands alone, it's likely a variable reference
-            _ => self.variable(identifier),
+            _ => self.parse_variable(identifier),
         }
     }
 
     /// Parses a call expression on the current cursor position.
-    fn call(&mut self, target: Identifier) -> Result<Expression> {
-        let type_parameters = self.type_parameters()?;
-        let arguments = self.arguments()?;
+    fn parse_call(&mut self, target: Identifier) -> Result<Expression> {
+        let type_parameters = self.parse_type_parameters()?;
+        let arguments = self.parse_call_arguments()?;
 
         let start = target.location.start();
         let end = match arguments.last() {
@@ -1448,11 +1405,16 @@ impl Parser {
         Ok(Expression::Call(Box::new(call)))
     }
 
+    /// Parses zero-or-more call arguments at the current cursor position.
+    fn parse_call_arguments(&mut self) -> Result<Vec<Expression>> {
+        self.consume_paren_seq(|p| p.parse_expression())
+    }
+
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
-    fn member(&mut self, target: Expression) -> Result<Expression> {
+    fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
         if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
-            return self.range_expression(target);
+            return self.parse_range_expression(target);
         }
 
         // Consume the dot token
@@ -1467,7 +1429,7 @@ impl Parser {
                 location: name.index.into(),
             };
 
-            return self.call(identifier);
+            return self.parse_call(identifier);
         }
 
         let start = target.location().start();
@@ -1481,7 +1443,7 @@ impl Parser {
 
         // If there is yet another dot, it's part of a longer expression.
         if self.peek(TokenKind::Dot)? {
-            return self.member(expression);
+            return self.parse_member(expression);
         }
 
         // Otherwise, return the expression, as-is.
@@ -1489,11 +1451,11 @@ impl Parser {
     }
 
     /// Parses an assignment expression on the current cursor position.
-    fn assignment(&mut self, target: Expression) -> Result<Expression> {
+    fn parse_assignment(&mut self, target: Expression) -> Result<Expression> {
         // Consume the equal sign
         self.consume(TokenKind::Assign)?;
 
-        let value = self.expression()?;
+        let value = self.parse_expression()?;
 
         let start = target.location().start();
         let end = value.location().end();
@@ -1506,14 +1468,14 @@ impl Parser {
     }
 
     /// Parses a variable reference expression on the current cursor position.
-    fn variable(&mut self, target: Identifier) -> Result<Expression> {
+    fn parse_variable(&mut self, target: Identifier) -> Result<Expression> {
         let variable = Variable { name: target };
 
         Ok(Expression::Variable(Box::new(variable)))
     }
 
     /// Parses a literal value expression on the current cursor position.
-    fn literal(&mut self) -> Result<Expression> {
+    fn parse_literal(&mut self) -> Result<Expression> {
         let token = self.token()?;
         let location: Location = token.index.into();
 
@@ -1588,13 +1550,13 @@ impl Parser {
     }
 
     /// Parses a unary expression on the current cursor position.
-    fn unary(&mut self) -> Result<Expression> {
+    fn parse_unary(&mut self) -> Result<Expression> {
         let operator = match self.consume_any()? {
             t if t.kind.is_unary() => t,
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
-        let right = self.expression_with_precedence(UNARY_PRECEDENCE)?;
+        let right = self.parse_expression_with_precedence(UNARY_PRECEDENCE)?;
 
         // As a quality of life feature, we can apply the unary operator directly to the expression,
         // if it can be done at parsing time. If not, we create an ordinary unary expression.
@@ -1629,6 +1591,15 @@ impl Parser {
         }
 
         Ok(right)
+    }
+
+    /// Parses some expression, if an equal sign is consumed. Otherwise, returns `None`.
+    fn parse_opt_assignment(&mut self) -> Result<Option<Expression>> {
+        if self.consume_if(TokenKind::Assign)?.is_none() {
+            Ok(None)
+        } else {
+            Ok(Some(self.parse_expression()?))
+        }
     }
 }
 

@@ -128,7 +128,7 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
                         ),
                     },
                     location: Location(
-                        66..148,
+                        66..162,
                     ),
                 },
             ],

@@ -140,10 +140,8 @@ pub struct ExpectedClassMember {
     #[span]
     pub source: NamedSource,
 
-    #[label("Expected a class member definition, found {actual:?} instead")]
+    #[label("Expected a class member definition")]
     pub range: Range<usize>,
-
-    pub actual: TokenKind,
 }
 
 #[derive(Diagnostic, Debug)]

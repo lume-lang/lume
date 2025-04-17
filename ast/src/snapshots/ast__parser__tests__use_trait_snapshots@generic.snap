@@ -120,7 +120,7 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                         ),
                     },
                     location: Location(
-                        59..141,
+                        59..155,
                     ),
                 },
             ],
