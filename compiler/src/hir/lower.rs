@@ -960,7 +960,11 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
         let reference = self.resolve_item_id(&expr.name);
 
-        Ok(hir::Type::Scalar(Box::new(hir::ScalarType { reference, location })))
+        Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
+            reference,
+            type_params: Vec::new(),
+            location,
+        })))
     }
 
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
@@ -980,7 +984,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             .map(|c| self.type_ref(*c))
             .collect::<Result<Vec<hir::Type>>>()?;
 
-        Ok(hir::Type::Generic(Box::new(hir::GenericType {
+        Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
             reference,
             type_params: type_params.into_iter().map(|c| Box::new(c)).collect(),
             location,

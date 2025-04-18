@@ -725,13 +725,13 @@ impl Node for Variable {
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
-    Generic(Box<GenericType>),
     SelfRef(Box<SelfType>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ScalarType {
     pub reference: ItemId,
+    pub type_params: Vec<Box<Type>>,
     pub location: Location,
 }
 
