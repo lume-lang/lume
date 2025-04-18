@@ -2,8 +2,16 @@ use std::{collections::HashMap, path::PathBuf};
 
 use crate::{hir, id::hash_id, std::Assets, thir};
 use arc::{Project, ProjectId};
-use ast::parser::Parser;
+use ast::{
+    ast::{Import, TopLevelExpression},
+    parser::Parser,
+};
 use diag::{Result, source::NamedSource};
+
+/// Defines the default imports from the `std` module.
+const DEFAULT_STD_IMPORTS: &[&'static str] = &[
+    "Boolean", "Float", "Double", "Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "Pointer",
+];
 
 /// Uniquely identifies a module within a compilation job.
 #[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
@@ -145,6 +153,18 @@ impl Driver {
         sources_files.extend(Assets::as_sources()?);
 
         Ok(sources_files)
+    }
+
+    /// Imports the standard library into the current file, so it's always available.
+    fn std_imports(&mut self) -> Vec<TopLevelExpression> {
+        let mut imports = Vec::new();
+
+        imports.push(Import::from_names(&["std"], DEFAULT_STD_IMPORTS));
+
+        imports
+            .into_iter()
+            .map(|import| TopLevelExpression::Import(Box::new(import)))
+            .collect()
     }
 
     /// Parses all the modules within the given state object.
