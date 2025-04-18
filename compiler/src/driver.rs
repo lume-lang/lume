@@ -196,7 +196,8 @@ impl Driver {
     fn type_check(&mut self, sources: Sources) -> Result<thir::ThirBuildCtx> {
         let mut thir_ctx = thir::ThirBuildCtx::from_sources(sources);
 
-        thir_ctx.evaluate()?;
+        // Infers the types of all expressions within the HIR maps.
+        thir_ctx.infer()?;
 
         thir_ctx.typecheck()?;
 

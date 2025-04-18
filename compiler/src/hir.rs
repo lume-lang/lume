@@ -567,6 +567,7 @@ pub struct Expression {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
+    New(Box<New>),
     FunctionCall(Box<FunctionCall>),
     MethodCall(Box<MethodCall>),
     Literal(Box<Literal>),
@@ -580,6 +581,13 @@ pub struct Assignment {
     pub id: NodeId,
     pub target: Expression,
     pub value: Expression,
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct New {
+    pub id: NodeId,
+    pub name: Box<Type>,
+    pub arguments: Vec<Expression>,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]

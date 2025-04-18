@@ -48,8 +48,8 @@ impl ThirBuildCtx {
         self.hir.insert(hir.file, hir);
     }
 
-    /// Attempts to evaluate the types of all expressions within the HIR maps.
-    pub(crate) fn evaluate(&mut self) -> Result<()> {
+    /// Attempts to infer the types of all expressions within the HIR maps.
+    pub(crate) fn infer(&mut self) -> Result<()> {
         for (_, hir) in &self.hir {
             for (id, expr) in &hir.expressions {
                 let ir_expr = self.expr(expr)?;

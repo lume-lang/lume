@@ -8,6 +8,7 @@ impl ThirBuildCtx {
     pub(super) fn expr(&self, expr: &hir::Expression) -> Result<ir::Expr> {
         let kind = match &expr.kind {
             hir::ExpressionKind::Assignment(a) => self.expr_assignment(&a)?,
+            hir::ExpressionKind::New(a) => self.expr_new(&a)?,
             hir::ExpressionKind::FunctionCall(a) => self.expr_function_call(&a)?,
             hir::ExpressionKind::MethodCall(a) => self.expr_method_call(&a)?,
             hir::ExpressionKind::Literal(a) => self.expr_literal(&a)?,
@@ -27,6 +28,10 @@ impl ThirBuildCtx {
             target: expr.target.id,
             value: expr.value.id,
         })
+    }
+
+    fn expr_new<'a>(&self, _expr: &hir::New) -> Result<ir::ExprKind> {
+        todo!()
     }
 
     fn expr_function_call<'a>(&self, expr: &hir::FunctionCall) -> Result<ir::ExprKind> {

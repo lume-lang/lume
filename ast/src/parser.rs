@@ -1302,6 +1302,7 @@ impl Parser {
 
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
+            TokenKind::New => Ok(self.parse_new_expression()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
             k if k.is_literal() => Ok(self.parse_literal()?),
@@ -1389,6 +1390,25 @@ impl Parser {
         };
 
         Ok(Expression::Range(Box::new(range)))
+    }
+
+    /// Parses a `New` expression on the current cursor position.
+    fn parse_new_expression(&mut self) -> Result<Expression> {
+        let start = self.consume(TokenKind::New)?.start();
+
+        let name = self.parse_type()?;
+        let arguments = self.parse_call_arguments()?;
+
+        let end = match arguments.last() {
+            Some(a) => a.location().end(),
+            None => name.location().end(),
+        };
+
+        Ok(Expression::New(Box::new(New {
+            name: Box::new(name),
+            arguments,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
@@ -1936,6 +1956,15 @@ mod tests {
         assert_expr_snap_eq!("let _ = (a..=b);", "expr_inclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1));", "expr_nested_exclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1));", "expr_nested_inclusive");
+    }
+
+    #[test]
+    fn test_new_snapshots() {
+        assert_expr_snap_eq!("let _ = new A();", "empty");
+        assert_expr_snap_eq!("let _ = new A(a);", "param_1");
+        assert_expr_snap_eq!("let _ = new A(a, b);", "param_2");
+        assert_expr_snap_eq!("let _ = new A<T>(a, b);", "generic");
+        assert_expr_snap_eq!("let _ = new [A](a);", "array");
     }
 
     #[test]

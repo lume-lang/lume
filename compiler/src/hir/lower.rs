@@ -424,6 +424,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
         let expr = match statement {
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
+            ast::Expression::New(e) => self.expr_new(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
@@ -453,6 +454,23 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             id,
             location,
             kind: hir::ExpressionKind::Assignment(Box::new(hir::Assignment { id, target, value })),
+        })
+    }
+
+    fn expr_new(&mut self, expr: ast::New) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let name = self.type_ref(*expr.name)?;
+        let arguments = self.expressions(expr.arguments)?;
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::New(Box::new(hir::New {
+                id,
+                name: Box::new(name),
+                arguments,
+            })),
         })
     }
 
