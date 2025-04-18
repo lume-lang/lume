@@ -1,0 +1,80 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                pub fn ==() -> bool {\n                    return true\n                }\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Public(
+                                Public {
+                                    location: Location(
+                                        41..44,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "==",
+                                location: Location(
+                                    48..50,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Scalar(
+                                ScalarType {
+                                    name: "Boolean",
+                                    location: Location(
+                                        56..60,
+                                    ),
+                                },
+                            ),
+                            block: Block {
+                                statements: [
+                                    Return(
+                                        Return {
+                                            value: Literal(
+                                                Boolean(
+                                                    BooleanLiteral {
+                                                        value: true,
+                                                        location: Location(
+                                                            90..94,
+                                                        ),
+                                                    },
+                                                ),
+                                            ),
+                                            location: Location(
+                                                83..94,
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                location: Location(
+                                    61..112,
+                                ),
+                            },
+                            location: Location(
+                                45..112,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..126,
+                ),
+            },
+        ),
+    ),
+]

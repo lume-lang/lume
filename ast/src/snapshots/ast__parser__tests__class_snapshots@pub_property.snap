@@ -1,0 +1,66 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                pub let x: Int32 = 1\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    Property(
+                        Property {
+                            visibility: Public(
+                                Public {
+                                    location: Location(
+                                        41..44,
+                                    ),
+                                },
+                            ),
+                            name: Identifier {
+                                name: "x",
+                                location: Location(
+                                    49..50,
+                                ),
+                            },
+                            property_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        52..57,
+                                    ),
+                                },
+                            ),
+                            default_value: Some(
+                                Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 1,
+                                            location: Location(
+                                                60..61,
+                                            ),
+                                            kind: I32,
+                                        },
+                                    ),
+                                ),
+                            ),
+                            location: Location(
+                                45..75,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..75,
+                ),
+            },
+        ),
+    ),
+]

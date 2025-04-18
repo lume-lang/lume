@@ -1,0 +1,54 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                let x: Int32\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    Property(
+                        Property {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        41..44,
+                                    ),
+                                },
+                            ),
+                            name: Identifier {
+                                name: "x",
+                                location: Location(
+                                    45..46,
+                                ),
+                            },
+                            property_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        48..53,
+                                    ),
+                                },
+                            ),
+                            default_value: None,
+                            location: Location(
+                                41..67,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..67,
+                ),
+            },
+        ),
+    ),
+]

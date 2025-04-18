@@ -1,0 +1,13 @@
+---
+source: ast/src/parser.rs
+expression: "parse_err(\"enum Foo { Bar Baz }\")"
+---
+UnexpectedToken {
+    source: NamedSource {
+        name: "<test>",
+        content: "enum Foo { Bar Baz }",
+    },
+    range: 15..18,
+    expected: ,,
+    actual: identifier,
+}

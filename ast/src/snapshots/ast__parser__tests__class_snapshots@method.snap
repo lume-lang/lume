@@ -1,0 +1,81 @@
+---
+source: ast/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                fn bar() -> Int32 {\n                    return 0\n                }\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        41..43,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "bar",
+                                location: Location(
+                                    44..47,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        53..58,
+                                    ),
+                                },
+                            ),
+                            block: Block {
+                                statements: [
+                                    Return(
+                                        Return {
+                                            value: Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 0,
+                                                        location: Location(
+                                                            88..89,
+                                                        ),
+                                                        kind: I32,
+                                                    },
+                                                ),
+                                            ),
+                                            location: Location(
+                                                81..89,
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                location: Location(
+                                    59..107,
+                                ),
+                            },
+                            location: Location(
+                                41..107,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..121,
+                ),
+            },
+        ),
+    ),
+]

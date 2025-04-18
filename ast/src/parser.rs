@@ -823,7 +823,7 @@ impl Parser {
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
         let name = self.parse_identifier()?;
 
-        let parameters = if self.consume_if(TokenKind::LeftParen)?.is_some() {
+        let parameters = if self.peek(TokenKind::LeftParen)? {
             self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, |p| {
                 Ok(Box::new(p.parse_type()?))
             })?
@@ -1927,6 +1927,83 @@ mod tests {
     }
 
     #[test]
+    fn test_class_snapshots() {
+        assert_snap_eq!("class Int32 {}", "empty");
+        assert_snap_eq!("class builtin Int32 {}", "builtin");
+        assert_err_snap_eq!("class 1A {}", "invalid_name");
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                fn bar() -> Int32 {
+                    return 0
+                }
+            }"#,
+            "method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                pub fn bar() -> Int32 {
+                    return 0
+                }
+            }"#,
+            "pub_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                fn external bar() -> Int32
+            }"#,
+            "ext_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                pub fn ==() -> bool {
+                    return true
+                }
+            }"#,
+            "operator_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                fn bar<T>() -> Int32 { }
+            }"#,
+            "generic_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                let x: Int32 = 0
+            }"#,
+            "property"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                let x: Int32
+            }"#,
+            "property_no_default"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                pub let x: Int32 = 1
+            }"#,
+            "pub_property"
+        );
+    }
+
+    #[test]
     fn test_generic_class_snapshots() {
         assert_snap_eq!("class Test {}", "no_generics");
         assert_snap_eq!("class Test<> {}", "empty_generics");
@@ -1944,6 +2021,55 @@ mod tests {
         assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
         assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
         assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
+    }
+
+    #[test]
+    fn test_enum_snapshots() {
+        assert_snap_eq!("enum Foo {}", "empty");
+        assert_snap_eq!("enum Foo { Bar }", "single_variant");
+        assert_snap_eq!("enum Foo { Bar, Baz }", "multiple_variants");
+        assert_err_snap_eq!("enum Foo { Bar Baz }", "missing_comma");
+        assert_err_snap_eq!("enum Foo { Bar, Baz, }", "extra_comma");
+
+        assert_snap_eq!(
+            r#"
+            enum Foo {
+                Bar()
+            }"#,
+            "variant_param_empty"
+        );
+
+        assert_snap_eq!(
+            r#"
+            enum Foo {
+                Bar(int)
+            }"#,
+            "variant_param_single"
+        );
+
+        assert_snap_eq!(
+            r#"
+            enum Foo {
+                Bar(int, int)
+            }"#,
+            "variant_param_multiple"
+        );
+
+        assert_snap_eq!(
+            r#"
+            enum Foo {
+                Bar(int, int),
+                Baz(int, int)
+            }"#,
+            "multiple_variants_multiple_params"
+        );
+    }
+
+    #[test]
+    fn test_type_alias_snapshots() {
+        assert_snap_eq!("type A = B", "scalar");
+        assert_snap_eq!("type A = [B]", "array");
+        assert_snap_eq!("type A = B<C>", "generic");
     }
 
     #[test]
