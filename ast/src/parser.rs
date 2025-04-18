@@ -1420,7 +1420,7 @@ impl Parser {
 
         match self.token()?.kind {
             // If the next token is an opening parenthesis, it's a method invocation
-            TokenKind::LeftParen => self.parse_call(identifier),
+            TokenKind::LeftParen | TokenKind::Less => self.parse_call(identifier),
 
             // If the next token is a dot, it's some form of member access
             TokenKind::Dot => self.parse_member(expression),
@@ -1473,7 +1473,7 @@ impl Parser {
         let name = self.consume(TokenKind::Identifier)?;
 
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenKind::LeftParen)? {
+        if self.peek(TokenKind::LeftParen)? || self.peek(TokenKind::Less)? {
             let identifier = Identifier {
                 name: name.value.unwrap(),
                 location: name.index.into(),
@@ -1965,6 +1965,14 @@ mod tests {
         assert_expr_snap_eq!("let _ = new A(a, b);", "param_2");
         assert_expr_snap_eq!("let _ = new A<T>(a, b);", "generic");
         assert_expr_snap_eq!("let _ = new [A](a);", "array");
+    }
+
+    #[test]
+    fn test_call_snapshots() {
+        assert_expr_snap_eq!("let _ = a.call();", "empty");
+        assert_expr_snap_eq!("let _ = a.call(a);", "param_1");
+        assert_expr_snap_eq!("let _ = a.call(a, b);", "param_2");
+        assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "generic");
     }
 
     #[test]
