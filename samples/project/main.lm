@@ -1,1 +1,5 @@
-fn external main() -> void
+fn main() -> int {
+    let a: Int32 = 1_i32
+
+    return 0
+}
