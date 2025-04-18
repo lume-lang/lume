@@ -42,7 +42,18 @@ expression: "parse_expr(\"let _ = a.call(a);\")"
                             variable_type: None,
                             value: Call(
                                 Call {
-                                    callee: None,
+                                    callee: Some(
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: Location(
+                                                        28..29,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
                                     name: Identifier {
                                         name: "call",
                                         location: Location(

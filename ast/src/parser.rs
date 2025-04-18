@@ -1420,7 +1420,7 @@ impl Parser {
 
         match self.token()?.kind {
             // If the next token is an opening parenthesis, it's a method invocation
-            TokenKind::LeftParen | TokenKind::Less => self.parse_call(identifier),
+            TokenKind::LeftParen | TokenKind::Less => self.parse_call(None, identifier),
 
             // If the next token is a dot, it's some form of member access
             TokenKind::Dot => self.parse_member(expression),
@@ -1434,19 +1434,19 @@ impl Parser {
     }
 
     /// Parses a call expression on the current cursor position.
-    fn parse_call(&mut self, target: Identifier) -> Result<Expression> {
+    fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
         let type_parameters = self.parse_type_parameters()?;
         let arguments = self.parse_call_arguments()?;
 
-        let start = target.location.start();
+        let start = name.location.start();
         let end = match arguments.last() {
             Some(a) => a.location().end(),
-            None => target.location.end(),
+            None => name.location.end(),
         };
 
         let call = Call {
-            callee: None,
-            name: target,
+            callee,
+            name,
             arguments,
             type_parameters,
             location: (start..end).into(),
@@ -1479,7 +1479,7 @@ impl Parser {
                 location: name.index.into(),
             };
 
-            return self.parse_call(identifier);
+            return self.parse_call(Some(target), identifier);
         }
 
         let start = target.location().start();

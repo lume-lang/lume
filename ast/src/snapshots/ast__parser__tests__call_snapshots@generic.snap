@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"let _ = a.call(a, b);\")"
+expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
 ---
 [
     FunctionDefinition(
@@ -66,7 +66,7 @@ expression: "parse_expr(\"let _ = a.call(a, b);\")"
                                                 name: Identifier {
                                                     name: "a",
                                                     location: Location(
-                                                        35..36,
+                                                        38..39,
                                                     ),
                                                 },
                                             },
@@ -76,30 +76,39 @@ expression: "parse_expr(\"let _ = a.call(a, b);\")"
                                                 name: Identifier {
                                                     name: "b",
                                                     location: Location(
-                                                        38..39,
+                                                        41..42,
                                                     ),
                                                 },
                                             },
                                         ),
                                     ],
-                                    type_parameters: [],
+                                    type_parameters: [
+                                        TypeParameter {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: Location(
+                                                    35..36,
+                                                ),
+                                            },
+                                        },
+                                    ],
                                     location: Location(
-                                        30..39,
+                                        30..42,
                                     ),
                                 },
                             ),
                             location: Location(
-                                20..41,
+                                20..44,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..43,
+                    18..46,
                 ),
             },
             location: Location(
-                0..43,
+                0..46,
             ),
         },
     ),
