@@ -419,6 +419,11 @@ impl Parser {
         self.consume(TokenKind::Fn)
     }
 
+    /// Asserts that the current token is a `;` token.
+    fn expect_semi(&mut self) -> Result<Token> {
+        self.consume(TokenKind::Semicolon)
+    }
+
     /// Parses the next token as an identifier.
     fn parse_identifier(&mut self) -> Result<Identifier> {
         let identifier = match self.consume(TokenKind::Identifier) {
@@ -695,7 +700,7 @@ impl Parser {
         let property_type = self.parse_type()?;
         let default_value = self.parse_opt_assignment()?;
 
-        let end = self.last_token()?.end();
+        let end = self.expect_semi()?.end();
 
         let property_def = Property {
             visibility,
@@ -909,7 +914,9 @@ impl Parser {
 
     fn parse_use_impl(&mut self) -> Result<TraitMethodImplementation> {
         let visibility = self.parse_visibility()?;
-        let start = self.expect_fn()?.start();
+        self.expect_fn()?;
+
+        let start = visibility.location().start();
 
         let name = match self.parse_identifier() {
             Ok(name) => name,
@@ -921,7 +928,7 @@ impl Parser {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_block()?;
 
-        let end = self.last_token()?.end();
+        let end = block.location.end();
 
         Ok(TraitMethodImplementation {
             visibility,
@@ -1049,7 +1056,7 @@ impl Parser {
         self.consume(TokenKind::Assign)?;
 
         let value = self.parse_expression()?;
-        let end = value.location().end();
+        let end = self.expect_semi()?.end();
 
         let variable = VariableDeclaration {
             name,
@@ -1228,24 +1235,30 @@ impl Parser {
 
     /// Parses a `break` statement at the current cursor position.
     fn parse_break(&mut self) -> Result<Statement> {
-        let location: Location = self.consume(TokenKind::Break)?.index.into();
+        let start = self.consume(TokenKind::Break)?.start();
+        let end = self.expect_semi()?.end();
 
-        Ok(Statement::Break(Box::new(Break { location })))
+        Ok(Statement::Break(Box::new(Break {
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses a `continue` statement at the current cursor position.
     fn parse_continue(&mut self) -> Result<Statement> {
-        let location: Location = self.consume(TokenKind::Continue)?.index.into();
+        let start = self.consume(TokenKind::Continue)?.start();
+        let end = self.expect_semi()?.end();
 
-        Ok(Statement::Continue(Box::new(Continue { location })))
+        Ok(Statement::Continue(Box::new(Continue {
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses a return statement at the current cursor position.
     fn parse_return(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Return)?.start();
 
-        let value = self.parse_expression()?;
-        let end = value.location().end();
+        let value = self.parse_opt_expression()?;
+        let end = self.expect_semi()?.end();
 
         let statement = Statement::Return(Box::new(Return {
             value,
@@ -1258,6 +1271,15 @@ impl Parser {
     /// Parses an expression on the current cursor position.
     fn parse_expression(&mut self) -> Result<Expression> {
         self.parse_expression_with_precedence(0)
+    }
+
+    /// Parses an expression on the current cursor position, if one is defined.
+    fn parse_opt_expression(&mut self) -> Result<Option<Expression>> {
+        if self.peek(TokenKind::Semicolon)? {
+            Ok(None)
+        } else {
+            Ok(Some(self.parse_expression()?))
+        }
     }
 
     /// Parses an expression on the current cursor position, with a minimum precedence.
@@ -1856,8 +1878,8 @@ mod tests {
     #[test]
     fn test_function_definition_snapshots() {
         assert_snap_eq!("fn main() -> void {}", "empty");
-        assert_snap_eq!("fn main() -> void { let a = 0 }", "statement");
-        assert_snap_eq!("fn main() -> void { let a = 0 let b = 1 }", "statements");
+        assert_snap_eq!("fn main() -> void { let a = 0; }", "statement");
+        assert_snap_eq!("fn main() -> void { let a = 0; let b = 1; }", "statements");
         assert_err_snap_eq!("fn main() {}", "no_return_type");
         assert_snap_eq!("fn main(argc: u8) -> void { }", "parameter");
         assert_snap_eq!("fn main(argc: u8, arcv: [String]) -> void { }", "parameters");
@@ -1869,7 +1891,7 @@ mod tests {
     #[test]
     fn test_conditional_snapshots() {
         assert_expr_snap_eq!("if true { }", "if_empty");
-        assert_expr_snap_eq!("if true { let a = 1 }", "if_statement");
+        assert_expr_snap_eq!("if true { let a = 1; }", "if_statement");
         assert_expr_snap_eq!("if true { } else if false { }", "if_else_if_empty");
         assert_expr_snap_eq!("if true { } else { }", "if_else_empty");
         assert_expr_snap_eq!("if true { } else if false { } else { }", "if_else_if_else_empty");
@@ -1877,13 +1899,13 @@ mod tests {
         assert_expr_snap_eq!("unless true { } else { }", "unless_else_empty");
         assert_expr_snap_eq!("if a == 1 { }", "equality_empty");
         assert_expr_snap_eq!("if a != 1 { }", "inequality_empty");
-        assert_expr_snap_eq!("if true { let a = 0 }", "if_statement");
-        assert_expr_snap_eq!("if true { let a = 0 let b = 0 }", "if_statements");
+        assert_expr_snap_eq!("if true { let a = 0; }", "if_statement");
+        assert_expr_snap_eq!("if true { let a = 0; let b = 0; }", "if_statements");
         assert_expr_snap_eq!(
-            "if true { let a = 0 } else if false { let a = 0 }",
+            "if true { let a = 0; } else if false { let a = 0; }",
             "else_if_statements"
         );
-        assert_expr_snap_eq!("unless true { let a = 0 }", "unless_statement");
+        assert_expr_snap_eq!("unless true { let a = 0; }", "unless_statement");
         assert_expr_err_snap_eq!("unless true { } else if false {}", "unless_else_if");
         assert_expr_err_eq!("unless true { } else if false { }", "Unexpected `else if` clause");
     }
@@ -1891,29 +1913,29 @@ mod tests {
     #[test]
     fn test_loop_snapshots() {
         assert_expr_snap_eq!("loop { }", "inf_loop_empty");
-        assert_expr_snap_eq!("loop { let a = 0 }", "inf_loop_statement");
-        assert_expr_snap_eq!("loop { break }", "inf_loop_break");
-        assert_expr_snap_eq!("loop { continue }", "inf_loop_continue");
+        assert_expr_snap_eq!("loop { let a = 0; }", "inf_loop_statement");
+        assert_expr_snap_eq!("loop { break; }", "inf_loop_break");
+        assert_expr_snap_eq!("loop { continue; }", "inf_loop_continue");
 
         assert_expr_snap_eq!("while true { }", "pred_loop_empty");
-        assert_expr_snap_eq!("while true { let a = 0 }", "pred_loop_statement");
-        assert_expr_snap_eq!("while true { break }", "pred_loop_break");
-        assert_expr_snap_eq!("while true { continue }", "pred_loop_continue");
+        assert_expr_snap_eq!("while true { let a = 0; }", "pred_loop_statement");
+        assert_expr_snap_eq!("while true { break; }", "pred_loop_break");
+        assert_expr_snap_eq!("while true { continue; }", "pred_loop_continue");
 
         assert_expr_snap_eq!("for pattern in collection { }", "iter_loop_empty");
-        assert_expr_snap_eq!("for pattern in collection { let a = 0 }", "iter_loop_statement");
-        assert_expr_snap_eq!("for pattern in collection { break }", "iter_loop_break");
-        assert_expr_snap_eq!("for pattern in collection { continue }", "iter_loop_continue");
+        assert_expr_snap_eq!("for pattern in collection { let a = 0; }", "iter_loop_statement");
+        assert_expr_snap_eq!("for pattern in collection { break; }", "iter_loop_break");
+        assert_expr_snap_eq!("for pattern in collection { continue; }", "iter_loop_continue");
     }
 
     #[test]
     fn test_range_snapshots() {
-        assert_expr_snap_eq!("let _ = (0..1)", "literal_exclusive");
-        assert_expr_snap_eq!("let _ = (0..=1)", "literal_inclusive");
-        assert_expr_snap_eq!("let _ = (a..b)", "expr_exclusive");
-        assert_expr_snap_eq!("let _ = (a..=b)", "expr_inclusive");
-        assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1))", "expr_nested_exclusive");
-        assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1))", "expr_nested_inclusive");
+        assert_expr_snap_eq!("let _ = (0..1);", "literal_exclusive");
+        assert_expr_snap_eq!("let _ = (0..=1);", "literal_inclusive");
+        assert_expr_snap_eq!("let _ = (a..b);", "expr_exclusive");
+        assert_expr_snap_eq!("let _ = (a..=b);", "expr_inclusive");
+        assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1));", "expr_nested_exclusive");
+        assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1));", "expr_nested_inclusive");
     }
 
     #[test]
@@ -1936,7 +1958,7 @@ mod tests {
             r#"
             class Foo {
                 fn bar() -> Int32 {
-                    return 0
+                    return 0;
                 }
             }"#,
             "method"
@@ -1946,7 +1968,7 @@ mod tests {
             r#"
             class Foo {
                 pub fn bar() -> Int32 {
-                    return 0
+                    return 0;
                 }
             }"#,
             "pub_method"
@@ -1964,7 +1986,7 @@ mod tests {
             r#"
             class Foo {
                 pub fn ==() -> bool {
-                    return true
+                    return true;
                 }
             }"#,
             "operator_method"
@@ -1981,7 +2003,7 @@ mod tests {
         assert_snap_eq!(
             r#"
             class Foo {
-                let x: Int32 = 0
+                let x: Int32 = 0;
             }"#,
             "property"
         );
@@ -1989,7 +2011,7 @@ mod tests {
         assert_snap_eq!(
             r#"
             class Foo {
-                let x: Int32
+                let x: Int32;
             }"#,
             "property_no_default"
         );
@@ -1997,7 +2019,7 @@ mod tests {
         assert_snap_eq!(
             r#"
             class Foo {
-                pub let x: Int32 = 1
+                pub let x: Int32 = 1;
             }"#,
             "pub_property"
         );
@@ -2077,7 +2099,7 @@ mod tests {
         assert_snap_eq!("trait Add { }", "empty");
         assert_snap_eq!("trait Add { pub fn add(other: int) -> int }", "method");
         assert_snap_eq!(
-            "trait Add { pub fn add(other: int) -> int { self + other } }",
+            "trait Add { pub fn add(other: int) -> int { return self + other; } }",
             "method_impl"
         );
         assert_snap_eq!("trait Add<T> { }", "generic");
@@ -2093,7 +2115,7 @@ mod tests {
             r#"
             use Add in Int32 {
                 fn add(other: Int32) -> Int32 {
-                    self + other
+                    return self + other;
                 }
             }"#,
             "priv_method"
@@ -2103,7 +2125,7 @@ mod tests {
             r#"
             use Add in Int32 {
                 pub fn add(other: Int32) -> Int32 {
-                    self + other
+                    return self + other;
                 }
             }"#,
             "pub_method"
@@ -2113,11 +2135,11 @@ mod tests {
             r#"
             use Cast in Int32 {
                 pub fn to_string() -> String {
-                    self
+                    return self;
                 }
 
                 pub fn to_int() -> Int32 {
-                    self
+                    return self;
                 }
             }"#,
             "methods"
@@ -2127,7 +2149,7 @@ mod tests {
             r#"
             use Add<Int32> in Int32 {
                 pub fn add(other: Int32) -> Int32 {
-                    self + other
+                    return self + other;
                 }
             }"#,
             "generic"
@@ -2137,7 +2159,7 @@ mod tests {
             r#"
             use Add<Int32, Int64> in Int32 {
                 pub fn add(other: Int32) -> Int64 {
-                    self + other
+                    return self + other;
                 }
             }"#,
             "generics"

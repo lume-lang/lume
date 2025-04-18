@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(r#\"\n            class Foo {\n                pub fn ==() -> bool {\n                    return true\n                }\n            }\"#)"
+expression: "parse(r#\"\n            class Foo {\n                pub fn ==() -> bool {\n                    return true;\n                }\n            }\"#)"
 ---
 [
     TypeDefinition(
@@ -44,35 +44,37 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                                 statements: [
                                     Return(
                                         Return {
-                                            value: Literal(
-                                                Boolean(
-                                                    BooleanLiteral {
-                                                        value: true,
-                                                        location: Location(
-                                                            90..94,
-                                                        ),
-                                                    },
+                                            value: Some(
+                                                Literal(
+                                                    Boolean(
+                                                        BooleanLiteral {
+                                                            value: true,
+                                                            location: Location(
+                                                                90..94,
+                                                            ),
+                                                        },
+                                                    ),
                                                 ),
                                             ),
                                             location: Location(
-                                                83..94,
+                                                83..95,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    61..112,
+                                    61..113,
                                 ),
                             },
                             location: Location(
-                                45..112,
+                                45..113,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    13..126,
+                    13..127,
                 ),
             },
         ),

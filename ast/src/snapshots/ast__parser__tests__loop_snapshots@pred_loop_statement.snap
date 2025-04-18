@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"while true { let a = 0 }\")"
+expression: "parse_expr(\"while true { let a = 0; }\")"
 ---
 [
     FunctionDefinition(
@@ -66,27 +66,27 @@ expression: "parse_expr(\"while true { let a = 0 }\")"
                                                 ),
                                             ),
                                             location: Location(
-                                                33..42,
+                                                33..43,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    31..44,
+                                    31..45,
                                 ),
                             },
                             location: Location(
-                                20..44,
+                                20..45,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..46,
+                    18..47,
                 ),
             },
             location: Location(
-                0..46,
+                0..47,
             ),
         },
     ),

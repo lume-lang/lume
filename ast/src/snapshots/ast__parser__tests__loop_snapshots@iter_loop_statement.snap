@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"for pattern in collection { let a = 0 }\")"
+expression: "parse_expr(\"for pattern in collection { let a = 0; }\")"
 ---
 [
     FunctionDefinition(
@@ -72,27 +72,27 @@ expression: "parse_expr(\"for pattern in collection { let a = 0 }\")"
                                                 ),
                                             ),
                                             location: Location(
-                                                48..57,
+                                                48..58,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    46..59,
+                                    46..60,
                                 ),
                             },
                             location: Location(
-                                20..59,
+                                20..60,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..61,
+                    18..62,
                 ),
             },
             location: Location(
-                0..61,
+                0..62,
             ),
         },
     ),

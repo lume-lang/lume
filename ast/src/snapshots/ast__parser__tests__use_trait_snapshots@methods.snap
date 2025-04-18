@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn to_string() -> String {\n                    self\n                }\n\n                pub fn to_int() -> Int32 {\n                    self\n                }\n            }\"#)"
+expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn to_string() -> String {\n                    return self;\n                }\n\n                pub fn to_int() -> Int32 {\n                    return self;\n                }\n            }\"#)"
 ---
 [
     Use(
@@ -45,39 +45,46 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                     ),
                     block: Block {
                         statements: [
-                            Expression(
-                                Variable(
-                                    Variable {
-                                        name: Identifier {
-                                            name: "self",
-                                            location: Location(
-                                                100..104,
-                                            ),
-                                        },
-                                    },
-                                ),
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "self",
+                                                    location: Location(
+                                                        107..111,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        100..112,
+                                    ),
+                                },
                             ),
                         ],
                         location: Location(
-                            78..122,
+                            78..130,
                         ),
                     },
                     location: Location(
-                        53..223,
+                        49..130,
                     ),
                 },
                 TraitMethodImplementation {
                     visibility: Public(
                         Public {
                             location: Location(
-                                140..143,
+                                148..151,
                             ),
                         },
                     ),
                     name: Identifier {
                         name: "to_int",
                         location: Location(
-                            147..153,
+                            155..161,
                         ),
                     },
                     parameters: [],
@@ -86,36 +93,43 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                         ScalarType {
                             name: "Int32",
                             location: Location(
-                                159..164,
+                                167..172,
                             ),
                         },
                     ),
                     block: Block {
                         statements: [
-                            Expression(
-                                Variable(
-                                    Variable {
-                                        name: Identifier {
-                                            name: "self",
-                                            location: Location(
-                                                187..191,
-                                            ),
-                                        },
-                                    },
-                                ),
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "self",
+                                                    location: Location(
+                                                        202..206,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        195..207,
+                                    ),
+                                },
                             ),
                         ],
                         location: Location(
-                            165..209,
+                            173..225,
                         ),
                     },
                     location: Location(
-                        144..223,
+                        148..225,
                     ),
                 },
             ],
             location: Location(
-                13..223,
+                13..239,
             ),
         },
     ),

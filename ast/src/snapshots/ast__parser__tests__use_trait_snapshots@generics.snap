@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n                pub fn add(other: Int32) -> Int64 {\n                    self + other\n                }\n            }\"#)"
+expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n                pub fn add(other: Int32) -> Int64 {\n                    return self + other;\n                }\n            }\"#)"
 ---
 [
     Use(
@@ -82,58 +82,65 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
                     ),
                     block: Block {
                         statements: [
-                            Expression(
-                                Call(
-                                    Call {
-                                        callee: Some(
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "self",
-                                                        location: Location(
-                                                            118..122,
-                                                        ),
-                                                    },
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Call(
+                                            Call {
+                                                callee: Some(
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "self",
+                                                                location: Location(
+                                                                    125..129,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        130..131,
+                                                    ),
                                                 },
-                                            ),
+                                                arguments: [
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "other",
+                                                                location: Location(
+                                                                    132..137,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                                type_parameters: [],
+                                                location: Location(
+                                                    125..132,
+                                                ),
+                                            },
                                         ),
-                                        name: Identifier {
-                                            name: "+",
-                                            location: Location(
-                                                123..124,
-                                            ),
-                                        },
-                                        arguments: [
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "other",
-                                                        location: Location(
-                                                            125..130,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                        type_parameters: [],
-                                        location: Location(
-                                            118..125,
-                                        ),
-                                    },
-                                ),
+                                    ),
+                                    location: Location(
+                                        118..138,
+                                    ),
+                                },
                             ),
                         ],
                         location: Location(
-                            96..148,
+                            96..156,
                         ),
                     },
                     location: Location(
-                        66..162,
+                        62..156,
                     ),
                 },
             ],
             location: Location(
-                13..162,
+                13..170,
             ),
         },
     ),

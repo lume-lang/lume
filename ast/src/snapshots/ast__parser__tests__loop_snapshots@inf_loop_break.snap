@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"loop { break }\")"
+expression: "parse_expr(\"loop { break; }\")"
 ---
 [
     FunctionDefinition(
@@ -38,27 +38,27 @@ expression: "parse_expr(\"loop { break }\")"
                                     Break(
                                         Break {
                                             location: Location(
-                                                27..32,
+                                                27..33,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    25..34,
+                                    25..35,
                                 ),
                             },
                             location: Location(
-                                20..34,
+                                20..35,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..36,
+                    18..37,
                 ),
             },
             location: Location(
-                0..36,
+                0..37,
             ),
         },
     ),

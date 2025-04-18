@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"while true { break }\")"
+expression: "parse_expr(\"while true { break; }\")"
 ---
 [
     FunctionDefinition(
@@ -48,27 +48,27 @@ expression: "parse_expr(\"while true { break }\")"
                                     Break(
                                         Break {
                                             location: Location(
-                                                33..38,
+                                                33..39,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    31..40,
+                                    31..41,
                                 ),
                             },
                             location: Location(
-                                20..40,
+                                20..41,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..42,
+                    18..43,
                 ),
             },
             location: Location(
-                0..42,
+                0..43,
             ),
         },
     ),

@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(r#\"\n            class Foo {\n                let x: Int32 = 0\n            }\"#)"
+expression: "parse(r#\"\n            class Foo {\n                let x: Int32 = 0;\n            }\"#)"
 ---
 [
     TypeDefinition(
@@ -51,14 +51,14 @@ expression: "parse(r#\"\n            class Foo {\n                let x: Int32 =
                                 ),
                             ),
                             location: Location(
-                                41..71,
+                                41..58,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    13..71,
+                    13..72,
                 ),
             },
         ),

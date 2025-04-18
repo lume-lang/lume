@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -> Int32 {\n                    return 0\n                }\n            }\"#)"
+expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -> Int32 {\n                    return 0;\n                }\n            }\"#)"
 ---
 [
     TypeDefinition(
@@ -44,36 +44,38 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -
                                 statements: [
                                     Return(
                                         Return {
-                                            value: Literal(
-                                                Int(
-                                                    IntLiteral {
-                                                        value: 0,
-                                                        location: Location(
-                                                            92..93,
-                                                        ),
-                                                        kind: I32,
-                                                    },
+                                            value: Some(
+                                                Literal(
+                                                    Int(
+                                                        IntLiteral {
+                                                            value: 0,
+                                                            location: Location(
+                                                                92..93,
+                                                            ),
+                                                            kind: I32,
+                                                        },
+                                                    ),
                                                 ),
                                             ),
                                             location: Location(
-                                                85..93,
+                                                85..94,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    63..111,
+                                    63..112,
                                 ),
                             },
                             location: Location(
-                                45..111,
+                                45..112,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    13..125,
+                    13..126,
                 ),
             },
         ),

@@ -305,7 +305,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
-        let value = self.expression(statement.value)?;
+        let value = self.opt_expression(statement.value)?;
         let location = self.location(statement.location);
 
         Ok(hir::Statement {
@@ -434,6 +434,13 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
         self.map.expressions.insert(expr.id, expr.clone());
 
         Ok(expr)
+    }
+
+    fn opt_expression(&mut self, statement: Option<ast::Expression>) -> Result<Option<hir::Expression>> {
+        match statement {
+            Some(expr) => Ok(Some(self.expression(expr)?)),
+            None => Ok(None),
+        }
     }
 
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {

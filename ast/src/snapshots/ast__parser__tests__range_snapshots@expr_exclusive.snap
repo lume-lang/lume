@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"let _ = (a..b)\")"
+expression: "parse_expr(\"let _ = (a..b);\")"
 ---
 [
     FunctionDefinition(
@@ -69,17 +69,17 @@ expression: "parse_expr(\"let _ = (a..b)\")"
                                 },
                             ),
                             location: Location(
-                                20..33,
+                                20..35,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..36,
+                    18..37,
                 ),
             },
             location: Location(
-                0..36,
+                0..37,
             ),
         },
     ),

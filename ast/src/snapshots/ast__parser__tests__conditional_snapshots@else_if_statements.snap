@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"if true { let a = 0 } else if false { let a = 0 }\")"
+expression: "parse_expr(\"if true { let a = 0; } else if false { let a = 0; }\")"
 ---
 [
     FunctionDefinition(
@@ -35,17 +35,17 @@ expression: "parse_expr(\"if true { let a = 0 } else if false { let a = 0 }\")"
                         IfCondition {
                             cases: [],
                             location: Location(
-                                20..69,
+                                20..71,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..71,
+                    18..73,
                 ),
             },
             location: Location(
-                0..71,
+                0..73,
             ),
         },
     ),

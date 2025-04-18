@@ -5,7 +5,7 @@ use diag::Result;
 use diag::source::NamedSource;
 
 const SYMBOLS: &[char] = &[
-    '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':',
+    '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
 ];
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -61,6 +61,7 @@ pub enum TokenKind {
     RightBracket,
     RightCurly,
     RightParen,
+    Semicolon,
     String,
     Sub,
     SubAssign,
@@ -120,6 +121,7 @@ impl TokenKind {
                 | TokenKind::RightBracket
                 | TokenKind::RightCurly
                 | TokenKind::RightParen
+                | TokenKind::Semicolon
                 | TokenKind::Sub
                 | TokenKind::SubAssign
                 | TokenKind::Trait
@@ -221,6 +223,7 @@ impl Into<&'static str> for TokenKind {
             TokenKind::RightBracket => "]",
             TokenKind::RightCurly => "}",
             TokenKind::RightParen => ")",
+            TokenKind::Semicolon => ";",
             TokenKind::String => "string",
             TokenKind::Sub => "-",
             TokenKind::SubAssign => "-=",
@@ -554,6 +557,7 @@ impl Lexer {
                 ']' => return Ok((TokenKind::RightBracket, 1)),
                 '}' => return Ok((TokenKind::RightCurly, 1)),
                 ')' => return Ok((TokenKind::RightParen, 1)),
+                ';' => return Ok((TokenKind::Semicolon, 1)),
                 '-' => return Ok((TokenKind::Sub, 1)),
                 _ => {}
             }
@@ -883,6 +887,7 @@ mod tests {
         assert_token!("]", TokenKind::RightBracket, Some("]"), 0, 1);
         assert_token!("}", TokenKind::RightCurly, Some("}"), 0, 1);
         assert_token!(")", TokenKind::RightParen, Some(")"), 0, 1);
+        assert_token!(";", TokenKind::Semicolon, Some(";"), 0, 1);
         assert_token!("-", TokenKind::Sub, Some("-"), 0, 1);
     }
 

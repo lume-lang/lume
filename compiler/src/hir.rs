@@ -509,7 +509,7 @@ pub struct Continue {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: NodeId,
-    pub value: Expression,
+    pub value: Option<Expression>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

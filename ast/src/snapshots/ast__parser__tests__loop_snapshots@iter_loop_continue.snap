@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"for pattern in collection { continue }\")"
+expression: "parse_expr(\"for pattern in collection { continue; }\")"
 ---
 [
     FunctionDefinition(
@@ -54,27 +54,27 @@ expression: "parse_expr(\"for pattern in collection { continue }\")"
                                     Continue(
                                         Continue {
                                             location: Location(
-                                                48..56,
+                                                48..57,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    46..58,
+                                    46..59,
                                 ),
                             },
                             location: Location(
-                                20..58,
+                                20..59,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..60,
+                    18..61,
                 ),
             },
             location: Location(
-                0..60,
+                0..61,
             ),
         },
     ),

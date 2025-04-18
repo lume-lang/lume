@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"loop { continue }\")"
+expression: "parse_expr(\"loop { continue; }\")"
 ---
 [
     FunctionDefinition(
@@ -38,27 +38,27 @@ expression: "parse_expr(\"loop { continue }\")"
                                     Continue(
                                         Continue {
                                             location: Location(
-                                                27..35,
+                                                27..36,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    25..37,
+                                    25..38,
                                 ),
                             },
                             location: Location(
-                                20..37,
+                                20..38,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..39,
+                    18..40,
                 ),
             },
             location: Location(
-                0..39,
+                0..40,
             ),
         },
     ),

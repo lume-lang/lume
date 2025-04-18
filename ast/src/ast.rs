@@ -368,7 +368,7 @@ pub struct Continue {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Return {
-    pub value: Expression,
+    pub value: Option<Expression>,
     pub location: Location,
 }
 

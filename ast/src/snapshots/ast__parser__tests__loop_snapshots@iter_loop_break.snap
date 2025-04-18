@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse_expr(\"for pattern in collection { break }\")"
+expression: "parse_expr(\"for pattern in collection { break; }\")"
 ---
 [
     FunctionDefinition(
@@ -54,27 +54,27 @@ expression: "parse_expr(\"for pattern in collection { break }\")"
                                     Break(
                                         Break {
                                             location: Location(
-                                                48..53,
+                                                48..54,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    46..55,
+                                    46..56,
                                 ),
                             },
                             location: Location(
-                                20..55,
+                                20..56,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..57,
+                    18..58,
                 ),
             },
             location: Location(
-                0..57,
+                0..58,
             ),
         },
     ),

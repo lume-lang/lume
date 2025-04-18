@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
+expression: "parse(\"fn main() -> void { let a = 0; let b = 1; }\")"
 ---
 [
     FunctionDefinition(
@@ -52,7 +52,7 @@ expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
                                 ),
                             ),
                             location: Location(
-                                20..29,
+                                20..30,
                             ),
                         },
                     ),
@@ -61,7 +61,7 @@ expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
                             name: Identifier {
                                 name: "b",
                                 location: Location(
-                                    34..35,
+                                    35..36,
                                 ),
                             },
                             variable_type: None,
@@ -70,24 +70,24 @@ expression: "parse(\"fn main() -> void { let a = 0 let b = 1 }\")"
                                     IntLiteral {
                                         value: 1,
                                         location: Location(
-                                            38..39,
+                                            39..40,
                                         ),
                                         kind: I32,
                                     },
                                 ),
                             ),
                             location: Location(
-                                30..39,
+                                31..41,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..41,
+                    18..43,
                 ),
             },
             location: Location(
-                0..41,
+                0..43,
             ),
         },
     ),

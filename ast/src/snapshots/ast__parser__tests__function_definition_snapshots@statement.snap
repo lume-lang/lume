@@ -1,6 +1,6 @@
 ---
 source: ast/src/parser.rs
-expression: "parse(\"fn main() -> void { let a = 0 }\")"
+expression: "parse(\"fn main() -> void { let a = 0; }\")"
 ---
 [
     FunctionDefinition(
@@ -52,17 +52,17 @@ expression: "parse(\"fn main() -> void { let a = 0 }\")"
                                 ),
                             ),
                             location: Location(
-                                20..29,
+                                20..30,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..31,
+                    18..32,
                 ),
             },
             location: Location(
-                0..31,
+                0..32,
             ),
         },
     ),
