@@ -65,16 +65,18 @@ impl Driver {
 
     /// Gets all the source files to include in the compilation.
     fn source_files(&self) -> Result<Vec<NamedSource>> {
-        // Apppend all the files within the project itself
+        // Add all the source files within the standard library.
+        let mut sources_files = Assets::as_sources()?;
+
+        // As well as all the files within the project itself
         let project_file_names = self.opts.project.files()?;
 
-        let mut sources_files = project_file_names
-            .into_iter()
-            .map(|s| NamedSource::from_file(s))
-            .collect::<Result<Vec<_>>>()?;
-
-        // As well as all the source files within the standard library
-        sources_files.extend(Assets::as_sources()?);
+        sources_files.extend(
+            project_file_names
+                .into_iter()
+                .map(|s| NamedSource::from_file(s))
+                .collect::<Result<Vec<_>>>()?,
+        );
 
         Ok(sources_files)
     }
