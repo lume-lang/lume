@@ -1,0 +1,14 @@
+[package]
+name = "lume_diag_macros"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+lume_diag = { path = "../lume_diag" }
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2.0.9", features = ["full"] }

@@ -1,0 +1,26 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"namespace std\")"
+---
+[
+    Namespace(
+        Namespace {
+            path: IdentifierPath {
+                path: [
+                    Identifier {
+                        name: "std",
+                        location: Location(
+                            10..13,
+                        ),
+                    },
+                ],
+                location: Location(
+                    10..13,
+                ),
+            },
+            location: Location(
+                0..13,
+            ),
+        },
+    ),
+]

@@ -1,9 +1,0 @@
-[package]
-name = "diag"
-version.workspace = true
-edition = "2024"
-rust-version.workspace = true
-
-[dependencies]
-"annotate-snippets" = "0.11.5"
-serde = { version = "1.0.219", features = ["serde_derive"] }

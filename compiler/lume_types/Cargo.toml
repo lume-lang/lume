@@ -1,0 +1,11 @@
+[package]
+name = "lume_types"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+lume_diag = { path = "../lume_diag" }
+lume_hir = { path = "../lume_hir" }
+indexmap = { version = "^2.9", features = ["serde"] }
+serde = { version = "1.0.219", features = ["serde_derive"] }

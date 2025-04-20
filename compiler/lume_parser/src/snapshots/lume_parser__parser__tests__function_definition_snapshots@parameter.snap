@@ -1,0 +1,63 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn main(argc: u8) -> void { }\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [
+                Parameter {
+                    name: Identifier {
+                        name: "argc",
+                        location: Location(
+                            8..12,
+                        ),
+                    },
+                    param_type: Scalar(
+                        ScalarType {
+                            name: "u8",
+                            location: Location(
+                                14..16,
+                            ),
+                        },
+                    ),
+                    location: Location(
+                        8..16,
+                    ),
+                },
+            ],
+            type_parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        21..25,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    26..29,
+                ),
+            },
+            location: Location(
+                0..29,
+            ),
+        },
+    ),
+]

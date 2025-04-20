@@ -1,0 +1,27 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"use Add in Int32 {}\")"
+---
+[
+    Use(
+        UseTrait {
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    4..7,
+                ),
+            },
+            target: Identifier {
+                name: "Int32",
+                location: Location(
+                    11..16,
+                ),
+            },
+            type_parameters: [],
+            methods: [],
+            location: Location(
+                0..19,
+            ),
+        },
+    ),
+]

@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"class Test<T1 T2> {}\")"
+---
+UnexpectedToken {
+    source: NamedSource {
+        name: "<test>",
+        content: "class Test<T1 T2> {}",
+    },
+    range: 14..16,
+    expected: ,,
+    actual: identifier,
+}

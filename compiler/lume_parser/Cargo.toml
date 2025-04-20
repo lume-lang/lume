@@ -1,0 +1,14 @@
+[package]
+name = "lume_parser"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+lume_ast = { path = "../lume_ast" }
+lume_diag = { path = "../lume_diag" }
+lume_diag_macros = { path = "../lume_diag_macros" }
+serde = { version = "1.0.219", features = ["serde_derive"] }
+
+[dev-dependencies]
+insta = { version = "1.42.2", features = ["yaml"] }

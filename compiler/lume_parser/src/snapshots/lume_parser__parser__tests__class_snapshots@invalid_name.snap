@@ -1,0 +1,11 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"class 1A {}\")"
+---
+ExpectedClassName {
+    source: NamedSource {
+        name: "<test>",
+        content: "class 1A {}",
+    },
+    range: 6..7,
+}

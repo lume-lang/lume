@@ -1,0 +1,16 @@
+[package]
+name = "lume_driver"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+arc = { path = "../arc" }
+lume_diag = { path = "../lume_diag" }
+lume_hir = { path = "../lume_hir" }
+lume_parser = { path = "../lume_parser" }
+lume_types = { path = "../lume_types" }
+indexmap = { version = "^2.9", features = ["serde"] }
+fxhash = "^0.2"
+serde = { version = "1.0.219", features = ["serde_derive"] }
+rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }

@@ -1,0 +1,139 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                pub fn add(other: Int32) -> Int32 {\n                    return self + other;\n                }\n            }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Identifier {
+                name: "Add",
+                location: Location(
+                    17..20,
+                ),
+            },
+            target: Identifier {
+                name: "Int32",
+                location: Location(
+                    31..36,
+                ),
+            },
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "Int32",
+                        location: Location(
+                            21..26,
+                        ),
+                    },
+                },
+            ],
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                55..58,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            62..65,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: Location(
+                                    66..71,
+                                ),
+                            },
+                            param_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        73..78,
+                                    ),
+                                },
+                            ),
+                            location: Location(
+                                66..78,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Scalar(
+                        ScalarType {
+                            name: "Int32",
+                            location: Location(
+                                83..88,
+                            ),
+                        },
+                    ),
+                    block: Block {
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Call(
+                                            Call {
+                                                callee: Some(
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "self",
+                                                                location: Location(
+                                                                    118..122,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        123..124,
+                                                    ),
+                                                },
+                                                arguments: [
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "other",
+                                                                location: Location(
+                                                                    125..130,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                                type_parameters: [],
+                                                location: Location(
+                                                    118..125,
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        111..131,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            89..149,
+                        ),
+                    },
+                    location: Location(
+                        55..149,
+                    ),
+                },
+            ],
+            location: Location(
+                13..163,
+            ),
+        },
+    ),
+]

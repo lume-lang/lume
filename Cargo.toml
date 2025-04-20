@@ -1,5 +1,5 @@
 [workspace]
-members = ["arc", "ast", "cli", "compiler", "derive", "diag", "diag_macros"]
+members = ["compiler/lume_cli"]
 resolver = "3"
 
 [workspace.package]

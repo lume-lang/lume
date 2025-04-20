@@ -1,0 +1,73 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [],
+                methods: [
+                    TraitMethodDefinition {
+                        visibility: Private(
+                            Private {
+                                location: Location(
+                                    12..14,
+                                ),
+                            },
+                        ),
+                        name: Identifier {
+                            name: "add",
+                            location: Location(
+                                15..18,
+                            ),
+                        },
+                        parameters: [
+                            Parameter {
+                                name: Identifier {
+                                    name: "other",
+                                    location: Location(
+                                        19..24,
+                                    ),
+                                },
+                                param_type: Scalar(
+                                    ScalarType {
+                                        name: "Int32",
+                                        location: Location(
+                                            26..29,
+                                        ),
+                                    },
+                                ),
+                                location: Location(
+                                    19..29,
+                                ),
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    34..37,
+                                ),
+                            },
+                        ),
+                        block: None,
+                        location: Location(
+                            12..37,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..39,
+                ),
+            },
+        ),
+    ),
+]

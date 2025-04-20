@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parser/src/lexer.rs
+expression: "lex_all(\"\\\"hello world\")"
+---
+Err(
+    MissingEndingQuote {
+        source: NamedSource {
+            name: "<empty>",
+            content: "\"hello world",
+        },
+        range: 13..14,
+    },
+)

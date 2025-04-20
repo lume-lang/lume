@@ -1,0 +1,11 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"class Test<T1,> {}\")"
+---
+ExpectedIdentifier {
+    source: NamedSource {
+        name: "<test>",
+        content: "class Test<T1,> {}",
+    },
+    range: 14..15,
+}

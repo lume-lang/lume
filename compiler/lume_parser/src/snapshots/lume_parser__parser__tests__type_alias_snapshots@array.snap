@@ -1,0 +1,36 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"type A = [B]\")"
+---
+[
+    TypeDefinition(
+        Alias(
+            AliasDefinition {
+                name: Identifier {
+                    name: "A",
+                    location: Location(
+                        5..6,
+                    ),
+                },
+                definition: Array(
+                    ArrayType {
+                        element_type: Scalar(
+                            ScalarType {
+                                name: "B",
+                                location: Location(
+                                    10..11,
+                                ),
+                            },
+                        ),
+                        location: Location(
+                            9..12,
+                        ),
+                    },
+                ),
+                location: Location(
+                    0..12,
+                ),
+            },
+        ),
+    ),
+]

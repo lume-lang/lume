@@ -1,0 +1,13 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"fn test<T1 T2>() -> void {}\")"
+---
+UnexpectedToken {
+    source: NamedSource {
+        name: "<test>",
+        content: "fn test<T1 T2>() -> void {}",
+    },
+    range: 11..13,
+    expected: ,,
+    actual: identifier,
+}

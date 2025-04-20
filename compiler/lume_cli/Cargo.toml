@@ -1,0 +1,12 @@
+[package]
+name = "lume_cli"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+arc = { path = "../arc" }
+lume_diag = { path = "../lume_diag" }
+lume_diag_macros = { path = "../lume_diag_macros" }
+lume_driver = { path = "../lume_driver" }
+getopts = "^0.2"
