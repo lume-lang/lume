@@ -400,18 +400,16 @@ impl Lexer {
 
     /// Gets characters while the predicate returns `true`.
     fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
-        let mut result = String::new();
+        let start = self.position;
 
         loop {
-            let c = self.current_char();
-            if c.is_none() || !predicate(c.unwrap()) {
-                break;
-            }
-
-            result.push(self.consume());
+            match self.current_char() {
+                Some(c) if predicate(c) => self.next(),
+                _ => break,
+            };
         }
 
-        result
+        self.source.content[start..self.position].to_string()
     }
 
     /// Skips characters while the predicate returns `true`.
