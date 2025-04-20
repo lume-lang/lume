@@ -52,6 +52,18 @@ impl FunctionId {
     pub fn is_public(self, ctx: &TypeDatabaseContext) -> bool {
         self.get(ctx).visibility == Visibility::Public
     }
+
+    pub fn return_type<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeRef {
+        &self.get(ctx).return_type
+    }
+
+    pub fn set_return_type(&self, ctx: &mut TypeDatabaseContext, ty: TypeRef) {
+        self.get_mut(ctx).return_type = ty;
+    }
+
+    pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
+        self.get_mut(ctx).parameters.push(name, ty)
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -59,7 +71,7 @@ pub struct Function {
     pub name: SymbolName,
     pub location: Location,
     pub visibility: Visibility,
-    pub arguments: Parameters,
+    pub parameters: Parameters,
     pub return_type: TypeRef,
 }
 
@@ -75,7 +87,7 @@ impl Function {
             name,
             location,
             visibility,
-            arguments: Parameters::new(),
+            parameters: Parameters::new(),
             return_type: TypeRef::unknown(),
         };
 

@@ -108,7 +108,24 @@ impl DefineTypes<'_> {
         Ok(())
     }
 
-    fn define_function(&mut self, _func: &lume_hir::FunctionDefinition) -> Result<()> {
+    fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
+        let function_id = Function::alloc(
+            &mut self.ctx,
+            func.name.clone(),
+            func.visibility.clone(),
+            func.location.clone(),
+        );
+
+        for param in &func.parameters {
+            let name = param.name.name.clone();
+            let type_ref = TypeRef::lower_from(&self.ctx, &param.param_type);
+
+            function_id.add_parameter(&mut self.ctx, name, type_ref);
+        }
+
+        let return_type = TypeRef::lower_from(&self.ctx, &func.return_type);
+        function_id.set_return_type(&mut self.ctx, return_type);
+
         Ok(())
     }
 }
