@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use lume_diag::Result;
-use lume_hir::{self, ExpressionId, Identifier, Location, SymbolName, Visibility};
+use lume_hir::{self, ExpressionId, Identifier, Location, StatementId, SymbolName, Visibility};
 
 mod define;
 pub mod typech;
@@ -424,6 +424,9 @@ pub struct TypeDatabaseContext {
 
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
+
+    /// Defines a mapping between statements and their resolved types.
+    pub resolved_stmts: IndexMap<StatementId, TypeRef>,
 }
 
 impl TypeDatabaseContext {
@@ -434,36 +437,35 @@ impl TypeDatabaseContext {
             methods: Vec::new(),
             functions: Vec::new(),
             resolved_exprs: IndexMap::new(),
+            resolved_stmts: IndexMap::new(),
         }
     }
 
     pub fn type_of_expr(&self, id: ExpressionId) -> &TypeRef {
         self.resolved_exprs.get(&id).unwrap()
     }
+
+    pub fn type_of_stmt(&self, id: StatementId) -> &TypeRef {
+        self.resolved_stmts.get(&id).unwrap()
+    }
+
+    fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
+        Ok(())
+    }
 }
 
 #[derive(serde::Serialize, Debug)]
 pub struct ThirBuildCtx {
-    /// The HIR maps to typecheck over.
-    hir: lume_hir::map::Map,
-
     /// Defines the type database context.
     tcx: TypeDatabaseContext,
 }
 
 impl ThirBuildCtx {
-    /// Creates a new THIR build context from the given HIR map.
-    pub fn new(hir: lume_hir::map::Map) -> Self {
+    /// Creates a new empty THIR build context.
+    pub fn new() -> Self {
         ThirBuildCtx {
-            // thir: Map::new(),
-            hir,
             tcx: TypeDatabaseContext::new(),
         }
-    }
-
-    /// Retrieves the HIR map from the build context.
-    pub fn hir(&self) -> &lume_hir::map::Map {
-        &self.hir
     }
 
     /// Retrieves the type context from the build context.
@@ -471,36 +473,47 @@ impl ThirBuildCtx {
         &self.tcx
     }
 
+    /// Retrieves the type context from the build context.
+    pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
+        &mut self.tcx
+    }
+
     /// Attempts to infer the types of all expressions within the HIR maps.
-    pub fn infer(&mut self) -> Result<()> {
-        self.define_types()?;
+    pub fn infer(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
+        self.define_types(hir)?;
 
-        self.infer_exprs()?;
-
-        println!("{:#?}", self.tcx());
+        self.infer_exprs(hir)?;
 
         Ok(())
     }
 
     /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_stmt(&self, id: lume_hir::StatementId) -> &lume_hir::Statement {
-        match self.hir().statements().get(&id) {
+    pub(crate) fn hir_stmt<'a>(
+        &'a self,
+        hir: &'a lume_hir::map::Map,
+        id: lume_hir::StatementId,
+    ) -> &'a lume_hir::Statement {
+        match hir.statements().get(&id) {
             Some(expr) => expr,
             None => panic!("no statement with given ID found: {:?}", id),
         }
     }
 
     /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_expr(&self, id: ExpressionId) -> &lume_hir::Expression {
-        match self.hir().expressions().get(&id) {
+    pub(crate) fn hir_expr<'a>(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
+        match hir.expressions().get(&id) {
             Some(expr) => expr,
             None => panic!("no expression with given ID found: {:?}", id),
         }
     }
 
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
-    pub(crate) fn hir_expect_var_stmt(&self, id: lume_hir::StatementId) -> &lume_hir::VariableDeclaration {
-        let stmt = self.hir_stmt(id);
+    pub(crate) fn hir_expect_var_stmt<'a>(
+        &'a self,
+        hir: &'a lume_hir::map::Map,
+        id: lume_hir::StatementId,
+    ) -> &'a lume_hir::VariableDeclaration {
+        let stmt = self.hir_stmt(hir, id);
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(decl) => decl,
@@ -511,9 +524,9 @@ impl ThirBuildCtx {
     /// Attempt to infer the types of all expressions in the current module.
     ///
     /// The resolved types are stored in the `resolved_exprs` field of the `TypeDatabaseContext`.
-    pub fn infer_exprs(&mut self) -> Result<()> {
-        for (id, expr) in self.hir.expressions() {
-            let type_ref = self.type_of(expr.id)?;
+    pub fn infer_exprs(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
+        for (id, expr) in hir.expressions() {
+            let type_ref = self.type_of(hir, expr.id)?;
 
             self.tcx.resolved_exprs.insert(*id, type_ref);
         }
@@ -528,16 +541,16 @@ impl ThirBuildCtx {
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
-    pub(crate) fn type_of(&self, def: ExpressionId) -> Result<TypeRef> {
-        let expr = self.hir_expr(def);
+    pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
+        let expr = self.hir_expr(hir, def);
 
         match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
+            lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(&*e),
             lume_hir::ExpressionKind::Variable(var) => {
-                let decl = self.hir_expect_var_stmt(var.reference);
+                let decl = self.hir_expect_var_stmt(hir, var.reference);
 
-                Ok(self.type_of(decl.value.id)?)
+                Ok(self.type_of(hir, decl.value.id)?)
             }
             k => todo!("unhandled node type in type_of(): {:?}", k),
         }

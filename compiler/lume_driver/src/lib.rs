@@ -107,12 +107,14 @@ impl Driver {
 
     /// Type checks all the given source files.
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_types::ThirBuildCtx> {
-        let mut thir_ctx = lume_types::ThirBuildCtx::new(hir);
+        let mut thir_ctx = lume_types::ThirBuildCtx::new();
 
         // Infers the types of all expressions within the HIR maps.
-        thir_ctx.infer()?;
+        thir_ctx.infer(&hir)?;
 
-        thir_ctx.typecheck()?;
+        thir_ctx.typecheck(&hir)?;
+
+        println!("{:#?}", thir_ctx);
 
         Ok(thir_ctx)
     }

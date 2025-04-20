@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 lume_diag = { path = "../lume_diag" }
+lume_diag_macros = { path = "../lume_diag_macros" }
 lume_hir = { path = "../lume_hir" }
 indexmap = { version = "^2.9", features = ["serde"] }
 serde = { version = "1.0.219", features = ["serde_derive"] }

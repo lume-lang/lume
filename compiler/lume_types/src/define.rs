@@ -5,9 +5,9 @@ use lume_hir::{self, ItemId, Symbol};
 use crate::*;
 
 impl ThirBuildCtx {
-    pub(super) fn define_types(&mut self) -> Result<()> {
+    pub(super) fn define_types(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypes {
-            symbols: self.hir.items(),
+            symbols: hir.items(),
             ctx: &mut self.tcx,
         };
 

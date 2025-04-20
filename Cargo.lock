@@ -320,6 +320,7 @@ version = "0.1.0"
 dependencies = [
  "indexmap",
  "lume_diag",
+ "lume_diag_macros",
  "lume_hir",
  "serde",
 ]
