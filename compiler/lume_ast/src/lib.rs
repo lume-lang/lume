@@ -33,6 +33,15 @@ pub struct Identifier {
     pub location: Location,
 }
 
+impl Identifier {
+    pub fn new(name: &str) -> Self {
+        Identifier {
+            name: name.to_string(),
+            location: Location(0..0),
+        }
+    }
+}
+
 impl std::fmt::Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name)
@@ -49,6 +58,17 @@ impl std::hash::Hash for Identifier {
 pub struct IdentifierPath {
     pub path: Vec<Identifier>,
     pub location: Location,
+}
+
+impl IdentifierPath {
+    pub fn new(name: &[&str]) -> Self {
+        let path = name.iter().map(|&s| Identifier::new(s)).collect();
+
+        IdentifierPath {
+            path,
+            location: Location(0..0),
+        }
+    }
 }
 
 impl std::fmt::Display for IdentifierPath {
@@ -126,30 +146,18 @@ pub struct Import {
 
 impl Import {
     pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
-        let path = IdentifierPath {
-            path: path
-                .into_iter()
-                .map(|p| Identifier {
-                    name: p.to_string(),
-                    location: Location(0..0),
-                })
-                .collect(),
-            location: Location(0..0),
-        };
-
-        let names = names
-            .into_iter()
-            .map(|p| Identifier {
-                name: p.to_string(),
-                location: Location(0..0),
-            })
-            .collect();
+        let path = IdentifierPath::new(path);
+        let names = names.into_iter().map(|p| Identifier::new(p)).collect();
 
         Self {
             path,
             names,
             location: Location(0..0),
         }
+    }
+
+    pub fn std(names: &[&'static str]) -> Self {
+        Self::from_names(&["std"], names)
     }
 
     pub fn flatten(self) -> Vec<IdentifierPath> {

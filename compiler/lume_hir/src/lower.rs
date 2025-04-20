@@ -7,6 +7,11 @@ use crate::id::{ModuleFileId, hash_id};
 use crate::{self as hir};
 use lume_ast::{self as ast, Node};
 
+const DEFAULT_STD_IMPORTS: &[&'static str] = &[
+    "Boolean", "String", "Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "IntPtr", "UIntPtr",
+    "Float", "Double", "Array", "Pointer",
+];
+
 macro_rules! err {
     (
         $self:expr,
@@ -71,6 +76,8 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
             local_id_counter: 0,
         };
 
+        lower.insert_implicit_imports()?;
+
         for expr in expressions {
             match expr {
                 ast::TopLevelExpression::Namespace(i) => lower.top_namespace(*i)?,
@@ -79,6 +86,13 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         }
 
         Ok(())
+    }
+
+    /// Adds implicit imports to the module.
+    fn insert_implicit_imports(&mut self) -> Result<()> {
+        let import_item = ast::Import::std(DEFAULT_STD_IMPORTS);
+
+        self.top_import(import_item)
     }
 
     /// Converts the given value into an [`hir::ItemId`].
