@@ -47,7 +47,7 @@ fn run() -> Result<i32> {
     }
 
     match matches.free.first().map(|s| s.as_str()) {
-        Some("build") => run::run(&matches.free[1..]),
+        Some("run") => run::run(&matches.free[1..]),
         Some(cmd) => Err(UnknownCommandError { command: cmd.into() }.into()),
         None => {
             print_usage();
