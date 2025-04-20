@@ -273,14 +273,11 @@ name = "lume_driver"
 version = "0.1.0"
 dependencies = [
  "arc",
- "fxhash",
- "indexmap",
  "lume_diag",
  "lume_hir",
  "lume_parser",
  "lume_types",
  "rust-embed",
- "serde",
 ]
 
 [[package]]
