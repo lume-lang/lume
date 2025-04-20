@@ -25,7 +25,7 @@ macro_rules! err {
     };
 }
 
-pub(crate) struct LowerModuleFile<'ctx, 'map> {
+pub(crate) struct LowerModule<'ctx, 'map> {
     /// Defines the ID of the file is being lowered.
     file: ModuleFileId,
 
@@ -39,7 +39,7 @@ pub(crate) struct LowerModuleFile<'ctx, 'map> {
     locals: hir::symbols::SymbolTable,
 
     /// Mapping between all imported items and their corresponding item IDs.
-    imports: HashMap<String, hir::ItemId>,
+    imports: HashMap<String, hir::SymbolName>,
 
     /// Defines the currently containing namespace expressions exist within, if any.
     namespace: hir::IdentifierPath,
@@ -51,19 +51,18 @@ pub(crate) struct LowerModuleFile<'ctx, 'map> {
     local_id_counter: u64,
 }
 
-impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
-    /// Lowers the single given source file into HIR.
+impl<'ctx, 'map> LowerModule<'ctx, 'map> {
+    /// Lowers the single given source module into HIR.
     pub(crate) fn lower(
+        map: &'map mut hir::map::Map,
         file: ModuleFileId,
         source: &'ctx NamedSource,
         expressions: Vec<ast::TopLevelExpression>,
-    ) -> Result<hir::map::Map> {
-        let mut map = hir::map::Map::empty(file);
-
-        let mut lower = LowerModuleFile {
+    ) -> Result<()> {
+        let mut lower = LowerModule {
             file,
             source,
-            map: &mut map,
+            map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
             namespace: hir::IdentifierPath::empty(),
@@ -78,46 +77,50 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             }
         }
 
-        Ok(map)
+        Ok(())
     }
 
     /// Converts the given value into an [`hir::ItemId`].
     fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> hir::ItemId {
         let id = hash_id(&value);
 
-        hir::ItemId(self.file, id)
+        hir::ItemId(self.map.module, id)
     }
 
     /// Generates the next [`hir::NodeId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
-    fn next_expr_id(&mut self) -> hir::NodeId {
+    fn next_expr_id(&mut self) -> hir::ExpressionId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::NodeId(self.file, hir::LocalId(id, hir::LocalKind::Expression))
+        hir::ExpressionId(self.map.module, hir::LocalId(id))
     }
 
     /// Generates the next [`hir::NodeId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
-    fn next_stmt_id(&mut self) -> hir::NodeId {
+    fn next_stmt_id(&mut self) -> hir::StatementId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::NodeId(self.file, hir::LocalId(id, hir::LocalKind::Statement))
+        hir::StatementId(self.map.module, hir::LocalId(id))
     }
 
-    /// Gets the [`hir::ItemId`] for the item with the given name.
-    fn resolve_item_id(&self, name: &String) -> hir::ItemId {
+    /// Gets the [`hir::SymbolName`] for the item with the given name.
+    fn resolve_symbol_name(&self, name: &String) -> hir::SymbolName {
+        for (import, symbol) in &self.imports {
+            if import == name {
+                return symbol.clone();
+            }
+        }
+
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
-        let symbol_name = self.symbol_name(ast::Identifier {
+        self.symbol_name(ast::Identifier {
             name: name.clone(),
             location: ast::Location(0..0),
-        });
-
-        self.item_id(symbol_name)
+        })
     }
 
     fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
@@ -181,11 +184,13 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
     }
 
     fn top_import(&mut self, expr: ast::Import) -> Result<()> {
-        for import in expr.flatten() {
-            let id = self.item_id(&import);
-            let path = import.path.last().unwrap();
+        for imported_name in &expr.names {
+            let imported_symbol_name = hir::SymbolName {
+                name: self.identifier(imported_name.clone()),
+                namespace: self.identifier_path(expr.path.clone()),
+            };
 
-            self.imports.insert(path.name.clone(), id);
+            self.imports.insert(imported_name.name.clone(), imported_symbol_name);
         }
 
         Ok(())
@@ -237,10 +242,11 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
             ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
             ast::Statement::Expression(s) => {
+                let id = self.next_stmt_id();
                 let expr = self.expression(*s)?;
 
                 hir::Statement {
-                    id: expr.id,
+                    id,
                     location: expr.location.clone(),
                     kind: hir::StatementKind::Expression(Box::new(expr)),
                 }
@@ -490,14 +496,9 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
                 arguments,
             }))
         } else {
-            let reference = self.resolve_item_id(&name.name);
+            let name = self.resolve_symbol_name(&name.name);
 
-            hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall {
-                id,
-                reference,
-                name,
-                arguments,
-            }))
+            hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall { id, name, arguments }))
         };
 
         Ok(hir::Expression { id, location, kind })
@@ -694,7 +695,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn def_class_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::ClassMember> {
         let visibility = self.visibility(expr.visibility)?;
-        let name = self.symbol_name(expr.name);
+        let name = self.identifier(expr.name);
         let parameters = self.parameters(expr.parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;
         let location = self.location(expr.location);
@@ -945,23 +946,10 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn type_scalar(&self, expr: ast::ScalarType) -> Result<hir::Type> {
         let location = self.location(expr.location);
-
-        if expr.name == "Self" {
-            let parent_class = match self.class_stack.last() {
-                Some(id) => *id,
-                None => return Err(err!(self, location, SelfOutsideClass)),
-            };
-
-            return Ok(hir::Type::SelfRef(Box::new(hir::SelfType {
-                location,
-                reference: parent_class,
-            })));
-        }
-
-        let reference = self.resolve_item_id(&expr.name);
+        let name = self.resolve_symbol_name(&expr.name);
 
         Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
-            reference,
+            name,
             type_params: Vec::new(),
             location,
         })))
@@ -976,7 +964,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
 
     fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
         let location = self.location(expr.location);
-        let reference = self.resolve_item_id(&expr.name.name);
+        let name = self.resolve_symbol_name(&expr.name.name);
 
         let type_params = expr
             .type_params
@@ -985,7 +973,7 @@ impl<'ctx, 'map> LowerModuleFile<'ctx, 'map> {
             .collect::<Result<Vec<hir::Type>>>()?;
 
         Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
-            reference,
+            name,
             type_params: type_params.into_iter().map(|c| Box::new(c)).collect(),
             location,
         })))

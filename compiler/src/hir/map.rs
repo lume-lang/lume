@@ -1,31 +1,31 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
 use crate::hir::*;
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Map {
-    /// Defines which source file this map belongs to.
-    pub(crate) file: ModuleFileId,
+    /// Defines which module this map belongs to.
+    pub(crate) module: ModuleId,
 
     /// Defines all the top-level items within the module.
-    pub(crate) items: HashMap<ItemId, Symbol>,
+    pub(crate) items: IndexMap<ItemId, Symbol>,
 
     /// Defines all the local statements within the current scope.
-    pub(crate) statements: HashMap<NodeId, Statement>,
+    pub(crate) statements: IndexMap<StatementId, Statement>,
 
     /// Defines all the local expressions within the current scope.
-    pub(crate) expressions: HashMap<NodeId, Expression>,
+    pub(crate) expressions: IndexMap<ExpressionId, Expression>,
 }
 
 #[allow(dead_code)]
 impl Map {
     /// Creates a new HIR map, without any content.
-    pub fn empty(file: ModuleFileId) -> Self {
+    pub fn empty(module: ModuleId) -> Self {
         Self {
-            file,
-            items: HashMap::new(),
-            statements: HashMap::new(),
-            expressions: HashMap::new(),
+            module,
+            items: IndexMap::new(),
+            statements: IndexMap::new(),
+            expressions: IndexMap::new(),
         }
     }
 
@@ -37,13 +37,16 @@ impl Map {
         }
     }
 
+    /// Gets the type definition with the given ItemID within the map.
+    pub(crate) fn item_type(&self, item: ItemId) -> &TypeDefinition {
+        match self.item(item) {
+            Symbol::Type(def) => def,
+            k => bug!("Expected type definition, found {:?} instead: {:?}", k, item),
+        }
+    }
+
     /// Gets the location of the given item.
     pub(crate) fn item_span(&self, item: ItemId) -> Location {
         *self.item(item).location()
-    }
-
-    /// Gets the location for the identifier of the given item.
-    pub(crate) fn item_ident_span(&self, item: ItemId) -> Location {
-        self.item(item).ident().location
     }
 }

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::{hir, id::hash_id, std::Assets, thir};
 use arc::{Project, ProjectId};
@@ -47,40 +47,6 @@ impl ModuleFileId {
     /// Creates a new [`ModuleFileId`] from a string, by taking it's hash value.
     pub fn from(module: ModuleId, value: String) -> ModuleFileId {
         ModuleFileId(module, hash_id(value.as_bytes()))
-    }
-}
-
-pub(crate) struct ModuleFile {
-    /// Defines the name and content of the source file.
-    pub(crate) source: NamedSource,
-
-    /// Defines the parsed HIR (High-Level Intermediate Representation) within the source file.
-    pub(crate) hir: hir::Map,
-}
-
-impl ModuleFile {
-    /// Creates a new source file from the given named source and parsed HIR.
-    pub fn new(source: NamedSource, hir: hir::Map) -> Self {
-        ModuleFile { source, hir }
-    }
-}
-
-/// Defines a collection of source files.
-pub(crate) struct Sources {
-    /// Defines the unique identifier of the module containing the source files.
-    pub id: ModuleId,
-
-    /// Defines all the files within the module.
-    pub files: HashMap<ModuleFileId, ModuleFile>,
-}
-
-impl Sources {
-    /// Creates a new empty source collection.
-    pub fn new(id: ModuleId) -> Self {
-        Sources {
-            id,
-            files: HashMap::new(),
-        }
     }
 }
 
@@ -168,14 +134,15 @@ impl Driver {
     }
 
     /// Parses all the modules within the given state object.
-    fn parse(&mut self) -> Result<Sources> {
+    fn parse(&mut self) -> Result<hir::map::Map> {
         let module_id = ModuleId::from(self.opts.project.id);
+
+        // Create a new HIR map for the module.
+        let mut hir = hir::map::Map::empty(module_id);
 
         // Read all the sources files before parsing, so if any of them
         // are inaccessible, we don't waste effort parsing them.
         let source_files = self.source_files()?;
-
-        let mut sources = Sources::new(module_id);
 
         for named_source in source_files {
             let source_id = ModuleFileId::from(module_id, named_source.name.clone());
@@ -184,17 +151,15 @@ impl Driver {
             let expressions = Parser::new(named_source.clone()).parse()?;
 
             // Lowers the parsed module expressions down to HIR.
-            let map = hir::lower::LowerModuleFile::lower(source_id, &named_source, expressions)?;
-
-            sources.files.insert(source_id, ModuleFile::new(named_source, map));
+            hir::lower::LowerModule::lower(&mut hir, source_id, &named_source, expressions)?;
         }
 
-        Ok(sources)
+        Ok(hir)
     }
 
     /// Type checks all the given source files.
-    fn type_check(&mut self, sources: Sources) -> Result<thir::ThirBuildCtx> {
-        let mut thir_ctx = thir::ThirBuildCtx::from_sources(sources);
+    fn type_check(&mut self, hir: hir::map::Map) -> Result<thir::ThirBuildCtx> {
+        let mut thir_ctx = thir::ThirBuildCtx::new(hir);
 
         // Infers the types of all expressions within the HIR maps.
         thir_ctx.infer()?;

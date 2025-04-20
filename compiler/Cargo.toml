@@ -10,6 +10,7 @@ ast = { path = "../ast" }
 derive = { path = "../derive" }
 diag = { path = "../diag" }
 diag_macros = { path = "../diag_macros" }
+indexmap = { version = "^2.9", features = ["serde"] }
 fxhash = "^0.2"
 serde = { version = "1.0.219", features = ["serde_derive"] }
 llvm-sys = { version = "191" }

@@ -1,3 +1,5 @@
+namespace std
+
 # Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
 class builtin Float {
     pub fn external +(other: Float) -> Float
