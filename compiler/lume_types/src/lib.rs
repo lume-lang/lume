@@ -368,9 +368,32 @@ pub struct Trait {
     pub name: SymbolName,
 }
 
+impl Trait {
+    pub fn new(name: SymbolName) -> Self {
+        Self { name }
+    }
+}
+
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Enum {
     pub name: SymbolName,
+}
+
+impl Enum {
+    pub fn new(name: SymbolName) -> Self {
+        Self { name }
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct Alias {
+    pub name: SymbolName,
+}
+
+impl Alias {
+    pub fn new(name: SymbolName) -> Self {
+        Self { name }
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -383,6 +406,9 @@ pub enum TypeKind {
 
     /// The type is a regular user-defined enumeration.
     Enum(Box<Enum>),
+
+    /// The type is an alias to some other type.
+    Alias(Box<Alias>),
 
     /// Represents a non-value.
     Void,

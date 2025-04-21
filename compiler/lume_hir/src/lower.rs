@@ -757,6 +757,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
                 id,
+                type_id: None,
                 name,
                 methods,
                 location,
@@ -801,6 +802,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
             hir::EnumDefinition {
                 id,
+                type_id: None,
                 name,
                 cases,
                 location,
@@ -838,6 +840,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Alias(Box::new(
             hir::AliasDefinition {
                 id,
+                type_id: None,
                 name,
                 definition: Box::new(definition),
                 location,

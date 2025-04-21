@@ -46,8 +46,27 @@ impl DefineTypes<'_> {
 
                 class.type_id = Some(type_id);
             }
-            lume_hir::TypeDefinition::Alias(_) => return Ok(()),
-            _ => todo!(),
+            lume_hir::TypeDefinition::Alias(alias) => {
+                let name = alias.name.clone();
+                let kind = TypeKind::Alias(Box::new(Alias::new(name.clone())));
+                let type_id = Type::alloc(&mut self.ctx.tcx, name, kind);
+
+                alias.type_id = Some(type_id);
+            }
+            lume_hir::TypeDefinition::Trait(trait_def) => {
+                let name = trait_def.name.clone();
+                let kind = TypeKind::Trait(Box::new(Trait::new(name.clone())));
+                let type_id = Type::alloc(&mut self.ctx.tcx, name, kind);
+
+                trait_def.type_id = Some(type_id);
+            }
+            lume_hir::TypeDefinition::Enum(enum_def) => {
+                let name = enum_def.name.clone();
+                let kind = TypeKind::Enum(Box::new(Enum::new(name.clone())));
+                let type_id = Type::alloc(&mut self.ctx.tcx, name, kind);
+
+                enum_def.type_id = Some(type_id);
+            }
         };
 
         Ok(())

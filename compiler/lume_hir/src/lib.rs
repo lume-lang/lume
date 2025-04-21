@@ -258,6 +258,7 @@ impl TypeDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub id: ItemId,
+    pub type_id: Option<TypeId>,
     pub name: SymbolName,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
@@ -280,6 +281,7 @@ pub struct EnumDefinitionCase {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct AliasDefinition {
     pub id: ItemId,
+    pub type_id: Option<TypeId>,
     pub name: SymbolName,
     pub definition: Box<Type>,
     pub location: Location,
@@ -376,6 +378,7 @@ pub struct ExternalMethodDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub id: ItemId,
+    pub type_id: Option<TypeId>,
     pub name: SymbolName,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
