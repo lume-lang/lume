@@ -238,7 +238,8 @@ pub struct InvalidImportPath {
 #[diagnostic(
     message = "Constrained type parameter not found",
     code = "LM1109",
-    help = "You can only define constraints for type parameters defined in the current scope"
+    help = "You can only define constraints for type parameters defined in the current definition",
+    help = "Defined type parameters: {defined:?}"
 )]
 pub struct ConstrainedTypeParameterNotFound {
     #[span]
@@ -248,6 +249,8 @@ pub struct ConstrainedTypeParameterNotFound {
     pub range: Range<usize>,
 
     pub found: String,
+
+    pub defined: Vec<String>,
 }
 
 #[derive(Diagnostic, Debug)]

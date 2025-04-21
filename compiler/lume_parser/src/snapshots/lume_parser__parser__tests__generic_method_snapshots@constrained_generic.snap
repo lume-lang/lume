@@ -1,0 +1,81 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"class Test { fn test<T>() -> void where T: Numeric {} }\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        13..15,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "test",
+                                location: Location(
+                                    16..20,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [
+                                TypeParameter {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: Location(
+                                            21..22,
+                                        ),
+                                    },
+                                    constraints: [
+                                        Scalar(
+                                            ScalarType {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    43..50,
+                                                ),
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ],
+                            return_type: Scalar(
+                                ScalarType {
+                                    name: "void",
+                                    location: Location(
+                                        29..33,
+                                    ),
+                                },
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    51..53,
+                                ),
+                            },
+                            location: Location(
+                                13..53,
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    0..55,
+                ),
+            },
+        ),
+    ),
+]

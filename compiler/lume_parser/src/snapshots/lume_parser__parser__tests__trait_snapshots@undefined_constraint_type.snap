@@ -1,0 +1,15 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"trait Add<T> where T1: Numeric {}\")"
+---
+ConstrainedTypeParameterNotFound {
+    source: NamedSource {
+        name: "<temp>",
+        content: "trait Add<T> where T1: Numeric {}",
+    },
+    range: 19..21,
+    found: "T1",
+    defined: [
+        "T",
+    ],
+}

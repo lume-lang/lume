@@ -27,7 +27,7 @@ pub trait Node {
     fn location(&self) -> &Location;
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+#[derive(serde::Serialize, Node, Debug, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
@@ -54,7 +54,13 @@ impl std::hash::Hash for Identifier {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, Eq)]
 pub struct IdentifierPath {
     pub path: Vec<Identifier>,
     pub location: Location,
@@ -87,6 +93,12 @@ impl std::fmt::Display for IdentifierPath {
 impl std::hash::Hash for IdentifierPath {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.to_string().hash(state);
+    }
+}
+
+impl PartialEq for IdentifierPath {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
     }
 }
 

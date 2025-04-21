@@ -1,0 +1,15 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"fn test<T>() -> void where T1: Numeric {}\")"
+---
+ConstrainedTypeParameterNotFound {
+    source: NamedSource {
+        name: "<temp>",
+        content: "fn test<T>() -> void where T1: Numeric {}",
+    },
+    range: 27..29,
+    found: "T1",
+    defined: [
+        "T",
+    ],
+}

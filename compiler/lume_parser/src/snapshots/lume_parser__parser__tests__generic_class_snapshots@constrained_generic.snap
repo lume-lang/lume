@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"class Test<T> where T: Numeric {}\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                11..12,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: "Numeric",
+                                    location: Location(
+                                        23..30,
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                location: Location(
+                    0..33,
+                ),
+            },
+        ),
+    ),
+]

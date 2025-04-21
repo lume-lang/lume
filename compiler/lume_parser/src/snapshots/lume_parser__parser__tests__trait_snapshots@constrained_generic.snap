@@ -1,0 +1,42 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"trait Add<T> where T: Numeric {}\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                10..11,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: "Numeric",
+                                    location: Location(
+                                        22..29,
+                                    ),
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                methods: [],
+                location: Location(
+                    0..32,
+                ),
+            },
+        ),
+    ),
+]

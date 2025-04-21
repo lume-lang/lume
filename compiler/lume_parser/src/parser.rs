@@ -914,7 +914,17 @@ impl<'a> Parser<'a> {
 
             let parameter = match type_parameters.iter_mut().find(|p| p.name == name) {
                 Some(parameter) => parameter,
-                None => return Err(err!(self, ConstrainedTypeParameterNotFound, found, name.name)),
+                None => {
+                    let defined = type_parameters.iter().map(|p| p.name.to_string()).collect::<Vec<_>>();
+
+                    return Err(ConstrainedTypeParameterNotFound {
+                        source: self.source.clone(),
+                        range: name.location.0,
+                        found: name.name,
+                        defined,
+                    }
+                    .into());
+                }
             };
 
             parameter.constraints = constraint;
@@ -2038,8 +2048,14 @@ mod tests {
         assert_snap_eq!("fn test<>() -> void {}", "empty_generics");
         assert_snap_eq!("fn test<T>() -> void {}", "single_generic");
         assert_snap_eq!("fn test<T1, T2>() -> void {}", "multiple_generics");
+        assert_snap_eq!("fn test<T>() -> void where T: Numeric {}", "constrained_generic");
+        assert_snap_eq!(
+            "fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {}",
+            "constrained_generics"
+        );
         assert_err_snap_eq!("fn test<T1,>() -> void {}", "missing_generic");
         assert_err_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
+        assert_err_snap_eq!("fn test<T>() -> void where T1: Numeric {}", "undefined_constraint_type");
     }
 
     #[test]
@@ -2125,8 +2141,14 @@ mod tests {
         assert_snap_eq!("class Test<> {}", "empty_generics");
         assert_snap_eq!("class Test<T> {}", "single_generic");
         assert_snap_eq!("class Test<T1, T2> {}", "multiple_generics");
+        assert_snap_eq!("class Test<T> where T: Numeric {}", "constrained_generic");
+        assert_snap_eq!(
+            "class Test<T1, T2> where T1: Numeric where T2: Numeric {}",
+            "constrained_generics"
+        );
         assert_err_snap_eq!("class Test<T1,> {}", "missing_generic");
         assert_err_snap_eq!("class Test<T1 T2> {}", "missing_comma");
+        assert_err_snap_eq!("class Test<T> where T1: Numeric {}", "undefined_constraint_type");
     }
 
     #[test]
@@ -2135,8 +2157,20 @@ mod tests {
         assert_snap_eq!("class Test { fn test<>() -> void {} }", "empty_generics");
         assert_snap_eq!("class Test { fn test<T>() -> void {} }", "single_generic");
         assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
+        assert_snap_eq!(
+            "class Test { fn test<T>() -> void where T: Numeric {} }",
+            "constrained_generic"
+        );
+        assert_snap_eq!(
+            "class Test { fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {} }",
+            "constrained_generics"
+        );
         assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
         assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
+        assert_err_snap_eq!(
+            "class Test { fn test<T>() -> void where T1: Numeric {} }",
+            "undefined_constraint_type"
+        );
     }
 
     #[test]
@@ -2199,6 +2233,12 @@ mod tests {
         assert_snap_eq!("trait Add<T> { }", "generic");
         assert_snap_eq!("trait Add<T1, T2> { }", "generics");
         assert_snap_eq!("trait Add { fn add(other: int) -> int }", "private_method");
+        assert_snap_eq!("trait Add<T> where T: Numeric {}", "constrained_generic");
+        assert_snap_eq!(
+            "trait Add<T1, T2> where T1: Numeric where T2: Numeric {}",
+            "constrained_generics"
+        );
+        assert_err_snap_eq!("trait Add<T> where T1: Numeric {}", "undefined_constraint_type");
     }
 
     #[test]

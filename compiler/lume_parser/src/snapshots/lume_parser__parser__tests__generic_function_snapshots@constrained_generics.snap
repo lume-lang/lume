@@ -1,0 +1,80 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "test",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: Location(
+                            8..10,
+                        ),
+                    },
+                    constraints: [
+                        Scalar(
+                            ScalarType {
+                                name: "Numeric",
+                                location: Location(
+                                    36..43,
+                                ),
+                            },
+                        ),
+                    ],
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: Location(
+                            12..14,
+                        ),
+                    },
+                    constraints: [
+                        Scalar(
+                            ScalarType {
+                                name: "Numeric",
+                                location: Location(
+                                    54..61,
+                                ),
+                            },
+                        ),
+                    ],
+                },
+            ],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        21..25,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    62..64,
+                ),
+            },
+            location: Location(
+                0..64,
+            ),
+        },
+    ),
+]

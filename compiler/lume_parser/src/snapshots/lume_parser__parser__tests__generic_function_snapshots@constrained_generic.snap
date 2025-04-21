@@ -1,0 +1,62 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn test<T>() -> void where T: Numeric {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "test",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            8..9,
+                        ),
+                    },
+                    constraints: [
+                        Scalar(
+                            ScalarType {
+                                name: "Numeric",
+                                location: Location(
+                                    30..37,
+                                ),
+                            },
+                        ),
+                    ],
+                },
+            ],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        16..20,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    38..40,
+                ),
+            },
+            location: Location(
+                0..40,
+            ),
+        },
+    ),
+]
