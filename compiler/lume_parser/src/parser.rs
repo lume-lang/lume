@@ -43,19 +43,20 @@ const UNARY_PRECEDENCE: u8 = 3;
 /// Defines the built-in aliaes for types, making it easier for
 /// new-comers to adapt to the type system.
 const DEFAULT_TYPE_ALIASES: &[(&'static str, &'static str)] = &[
-    ("byte", "UInt8"),
-    ("sbyte", "Int8"),
-    ("short", "Int16"),
-    ("ushort", "UInt16"),
-    ("int", "Int32"),
-    ("uint", "UInt32"),
-    ("long", "Int64"),
-    ("ulong", "UInt64"),
-    ("float", "Float32"),
-    ("double", "Float64"),
-    ("string", "String"),
+    ("i8", "Int8"),
+    ("u8", "UInt8"),
+    ("i16", "Int16"),
+    ("u16", "UInt16"),
+    ("i32", "Int32"),
+    ("u32", "UInt32"),
+    ("i64", "Int64"),
+    ("u64", "UInt64"),
+    ("isize", "IntPtr"),
+    ("usize", "UIntPtr"),
+    ("f32", "Float"),
+    ("f64", "Double"),
+    ("str", "String"),
     ("bool", "Boolean"),
-    ("boolean", "Boolean"),
 ];
 
 impl Token {
