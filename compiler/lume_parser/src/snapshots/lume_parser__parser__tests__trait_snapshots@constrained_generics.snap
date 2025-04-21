@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"trait Add<T1, T2> where T1: Numeric where T2: Numeric {}\")"
+expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -25,7 +25,7 @@ expression: "parse(\"trait Add<T1, T2> where T1: Numeric where T2: Numeric {}\")
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        28..35,
+                                        14..21,
                                     ),
                                 },
                             ),
@@ -35,7 +35,7 @@ expression: "parse(\"trait Add<T1, T2> where T1: Numeric where T2: Numeric {}\")
                         name: Identifier {
                             name: "T2",
                             location: Location(
-                                14..16,
+                                23..25,
                             ),
                         },
                         constraints: [
@@ -43,7 +43,7 @@ expression: "parse(\"trait Add<T1, T2> where T1: Numeric where T2: Numeric {}\")
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        46..53,
+                                        27..34,
                                     ),
                                 },
                             ),
@@ -52,7 +52,7 @@ expression: "parse(\"trait Add<T1, T2> where T1: Numeric where T2: Numeric {}\")
                 ],
                 methods: [],
                 location: Location(
-                    0..56,
+                    0..38,
                 ),
             },
         ),

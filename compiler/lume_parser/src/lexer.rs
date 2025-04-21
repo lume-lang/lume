@@ -72,7 +72,6 @@ pub enum TokenKind {
     Type,
     Unless,
     Use,
-    Where,
     While,
     Whitespace,
 }
@@ -132,7 +131,6 @@ impl TokenKind {
                 | TokenKind::Type
                 | TokenKind::Unless
                 | TokenKind::Use
-                | TokenKind::Where
                 | TokenKind::While
                 | TokenKind::Whitespace
         )
@@ -237,7 +235,6 @@ impl Into<&'static str> for TokenKind {
             TokenKind::Type => "type",
             TokenKind::Unless => "unless",
             TokenKind::Use => "use",
-            TokenKind::Where => "where",
             TokenKind::While => "while",
             TokenKind::Whitespace => "whitespace",
         }
@@ -505,7 +502,6 @@ impl Lexer {
             "false" => Token::empty(TokenKind::False),
             "unless" => Token::empty(TokenKind::Unless),
             "use" => Token::empty(TokenKind::Use),
-            "where" => Token::empty(TokenKind::Where),
             "while" => Token::empty(TokenKind::While),
             _ => Token::new(TokenKind::Identifier, content),
         }
@@ -871,7 +867,6 @@ mod tests {
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
         assert_token!("unless", TokenKind::Unless, None::<String>, 0, 6);
         assert_token!("use", TokenKind::Use, None::<String>, 0, 3);
-        assert_token!("where", TokenKind::Where, None::<String>, 0, 5);
         assert_token!("while", TokenKind::While, None::<String>, 0, 5);
     }
 

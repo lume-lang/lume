@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test<T> where T: Numeric {}\")"
+expression: "parse(\"class Test<T: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -27,7 +27,7 @@ expression: "parse(\"class Test<T> where T: Numeric {}\")"
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        23..30,
+                                        14..21,
                                     ),
                                 },
                             ),
@@ -35,7 +35,7 @@ expression: "parse(\"class Test<T> where T: Numeric {}\")"
                     },
                 ],
                 location: Location(
-                    0..33,
+                    0..25,
                 ),
             },
         ),

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test<T1, T2> where T1: Numeric where T2: Numeric {}\")"
+expression: "parse(\"class Test<T1: Numeric, T2: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -27,7 +27,7 @@ expression: "parse(\"class Test<T1, T2> where T1: Numeric where T2: Numeric {}\"
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        29..36,
+                                        15..22,
                                     ),
                                 },
                             ),
@@ -37,7 +37,7 @@ expression: "parse(\"class Test<T1, T2> where T1: Numeric where T2: Numeric {}\"
                         name: Identifier {
                             name: "T2",
                             location: Location(
-                                15..17,
+                                24..26,
                             ),
                         },
                         constraints: [
@@ -45,7 +45,7 @@ expression: "parse(\"class Test<T1, T2> where T1: Numeric where T2: Numeric {}\"
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        47..54,
+                                        28..35,
                                     ),
                                 },
                             ),
@@ -53,7 +53,7 @@ expression: "parse(\"class Test<T1, T2> where T1: Numeric where T2: Numeric {}\"
                     },
                 ],
                 location: Location(
-                    0..57,
+                    0..39,
                 ),
             },
         ),

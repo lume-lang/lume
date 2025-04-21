@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
+expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -> void {}\")"
 ---
 [
     FunctionDefinition(
@@ -37,13 +37,21 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                 ),
                             },
                         ),
+                        Scalar(
+                            ScalarType {
+                                name: "Floating",
+                                location: Location(
+                                    22..30,
+                                ),
+                            },
+                        ),
                     ],
                 },
                 TypeParameter {
                     name: Identifier {
                         name: "T2",
                         location: Location(
-                            21..23,
+                            32..34,
                         ),
                     },
                     constraints: [
@@ -51,7 +59,15 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                             ScalarType {
                                 name: "Numeric",
                                 location: Location(
-                                    25..32,
+                                    36..43,
+                                ),
+                            },
+                        ),
+                        Scalar(
+                            ScalarType {
+                                name: "Floating",
+                                location: Location(
+                                    46..54,
                                 ),
                             },
                         ),
@@ -62,18 +78,18 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                 ScalarType {
                     name: "void",
                     location: Location(
-                        39..43,
+                        61..65,
                     ),
                 },
             ),
             block: Block {
                 statements: [],
                 location: Location(
-                    44..46,
+                    66..68,
                 ),
             },
             location: Location(
-                0..46,
+                0..68,
             ),
         },
     ),

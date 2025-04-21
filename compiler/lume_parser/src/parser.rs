@@ -421,11 +421,6 @@ impl<'a> Parser<'a> {
         self.check(TokenKind::External)
     }
 
-    /// Asserts that the current token is a `:` token.
-    fn expect_colon(&mut self) -> Result<Token> {
-        self.consume(TokenKind::Colon)
-    }
-
     /// Asserts that the current token is an `fn` token.
     fn expect_fn(&mut self) -> Result<Token> {
         self.consume(TokenKind::Fn)
@@ -589,13 +584,11 @@ impl<'a> Parser<'a> {
 
         let external = self.check_external();
         let name = self.parse_ident_or_err(err!(self, ExpectedFunctionName))?;
-        let mut type_parameters = self.parse_type_parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-
-        self.parse_type_constraints(&mut type_parameters)?;
-
         let block = self.parse_opt_external_block(external)?;
+
         let end = self.last_token()?.end();
 
         let function_def = FunctionDefinition {
@@ -650,11 +643,9 @@ impl<'a> Parser<'a> {
 
         let builtin = self.check_builtin();
         let name = self.parse_ident_or_err(err!(self, ExpectedClassName))?;
-
-        let mut type_parameters = self.parse_type_parameters()?;
-        self.parse_type_constraints(&mut type_parameters)?;
-
+        let type_parameters = self.parse_type_parameters()?;
         let members = self.consume_curly_seq(|p| p.parse_class_member())?;
+
         let end = self.last_token()?.end();
 
         let class_def = ClassDefinition {
@@ -733,13 +724,11 @@ impl<'a> Parser<'a> {
         let external = self.check_external();
 
         let name = self.parse_method_name()?;
-        let mut type_parameters = self.parse_type_parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-
-        self.parse_type_constraints(&mut type_parameters)?;
-
         let block = self.parse_opt_external_block(external)?;
+
         let end = self.token_at(self.index - 1)?.end();
 
         let method_def = MethodDefinition {
@@ -772,11 +761,9 @@ impl<'a> Parser<'a> {
         let start = self.consume(TokenKind::Trait)?.start();
 
         let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
-        let mut type_parameters = self.parse_type_parameters()?;
-
-        self.parse_type_constraints(&mut type_parameters)?;
-
+        let type_parameters = self.parse_type_parameters()?;
         let methods = self.consume_curly_seq(|p| p.parse_trait_method())?;
+
         let end = self.last_token()?.end();
 
         let trait_def = TraitDefinition {
@@ -800,13 +787,11 @@ impl<'a> Parser<'a> {
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
-        let mut type_parameters = self.parse_type_parameters()?;
+        let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-
-        self.parse_type_constraints(&mut type_parameters)?;
-
         let block = self.parse_opt_block()?;
+
         let end = self.previous_token()?.end();
 
         Ok(TraitMethodDefinition {
@@ -900,55 +885,19 @@ impl<'a> Parser<'a> {
         }
 
         self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
-            Ok(TypeParameter {
-                name: p.parse_identifier()?,
-                constraints: Vec::new(),
-            })
-        })
-    }
+            let name = p.parse_identifier()?;
+            let mut constraints = Vec::new();
 
-    /// Parses zero-or-more type constraints.
-    fn parse_type_constraints(&mut self, type_parameters: &mut Vec<TypeParameter>) -> Result<()> {
-        while self.consume_if(TokenKind::Where)?.is_some() {
-            let (name, constraint) = self.parse_type_constraint_bounds()?;
+            if p.consume_if(TokenKind::Colon)?.is_some() {
+                constraints.push(Box::new(p.parse_type()?));
 
-            let parameter = match type_parameters.iter_mut().find(|p| p.name == name) {
-                Some(parameter) => parameter,
-                None => {
-                    let defined = type_parameters.iter().map(|p| p.name.to_string()).collect::<Vec<_>>();
-
-                    return Err(ConstrainedTypeParameterNotFound {
-                        source: self.source.clone(),
-                        range: name.location.0,
-                        found: name.name,
-                        defined,
-                    }
-                    .into());
+                while p.consume_if(TokenKind::Add)?.is_some() {
+                    constraints.push(Box::new(p.parse_type()?));
                 }
-            };
-
-            parameter.constraints = constraint;
-        }
-
-        Ok(())
-    }
-
-    /// Parses a single type constraint.
-    fn parse_type_constraint_bounds(&mut self) -> Result<(Identifier, Vec<Box<Type>>)> {
-        let name = self.parse_identifier()?;
-        let mut constraints = Vec::new();
-
-        self.expect_colon()?;
-
-        loop {
-            constraints.push(Box::new(self.parse_type()?));
-
-            if self.consume_if(TokenKind::Comma)?.is_none() {
-                break;
             }
-        }
 
-        Ok((name, constraints))
+            Ok(TypeParameter { name, constraints })
+        })
     }
 
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
@@ -2041,14 +1990,18 @@ mod tests {
         assert_snap_eq!("fn test<>() -> void {}", "empty_generics");
         assert_snap_eq!("fn test<T>() -> void {}", "single_generic");
         assert_snap_eq!("fn test<T1, T2>() -> void {}", "multiple_generics");
-        assert_snap_eq!("fn test<T>() -> void where T: Numeric {}", "constrained_generic");
+        assert_snap_eq!("fn test<T: Numeric>() -> void {}", "constrained_generic");
+        assert_snap_eq!("fn test<T1: Numeric, T2: Numeric>() -> void {}", "constrained_generics");
         assert_snap_eq!(
-            "fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {}",
-            "constrained_generics"
+            "fn test<T: Numeric + Floating>() -> void {}",
+            "multiple_constrained_types"
+        );
+        assert_snap_eq!(
+            "fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -> void {}",
+            "multiple_types_with_multiple_constraints"
         );
         assert_err_snap_eq!("fn test<T1,>() -> void {}", "missing_generic");
         assert_err_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
-        assert_err_snap_eq!("fn test<T>() -> void where T1: Numeric {}", "undefined_constraint_type");
     }
 
     #[test]
@@ -2134,14 +2087,10 @@ mod tests {
         assert_snap_eq!("class Test<> {}", "empty_generics");
         assert_snap_eq!("class Test<T> {}", "single_generic");
         assert_snap_eq!("class Test<T1, T2> {}", "multiple_generics");
-        assert_snap_eq!("class Test<T> where T: Numeric {}", "constrained_generic");
-        assert_snap_eq!(
-            "class Test<T1, T2> where T1: Numeric where T2: Numeric {}",
-            "constrained_generics"
-        );
+        assert_snap_eq!("class Test<T: Numeric> {}", "constrained_generic");
+        assert_snap_eq!("class Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
         assert_err_snap_eq!("class Test<T1,> {}", "missing_generic");
         assert_err_snap_eq!("class Test<T1 T2> {}", "missing_comma");
-        assert_err_snap_eq!("class Test<T> where T1: Numeric {}", "undefined_constraint_type");
     }
 
     #[test]
@@ -2150,20 +2099,13 @@ mod tests {
         assert_snap_eq!("class Test { fn test<>() -> void {} }", "empty_generics");
         assert_snap_eq!("class Test { fn test<T>() -> void {} }", "single_generic");
         assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
+        assert_snap_eq!("class Test { fn test<T: Numeric>() -> void {} }", "constrained_generic");
         assert_snap_eq!(
-            "class Test { fn test<T>() -> void where T: Numeric {} }",
-            "constrained_generic"
-        );
-        assert_snap_eq!(
-            "class Test { fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {} }",
+            "class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
             "constrained_generics"
         );
         assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
         assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
-        assert_err_snap_eq!(
-            "class Test { fn test<T>() -> void where T1: Numeric {} }",
-            "undefined_constraint_type"
-        );
     }
 
     #[test]
@@ -2226,12 +2168,8 @@ mod tests {
         assert_snap_eq!("trait Add<T> { }", "generic");
         assert_snap_eq!("trait Add<T1, T2> { }", "generics");
         assert_snap_eq!("trait Add { fn add(other: int) -> int }", "private_method");
-        assert_snap_eq!("trait Add<T> where T: Numeric {}", "constrained_generic");
-        assert_snap_eq!(
-            "trait Add<T1, T2> where T1: Numeric where T2: Numeric {}",
-            "constrained_generics"
-        );
-        assert_err_snap_eq!("trait Add<T> where T1: Numeric {}", "undefined_constraint_type");
+        assert_snap_eq!("trait Add<T: Numeric> {}", "constrained_generic");
+        assert_snap_eq!("trait Add<T1: Numeric, T2: Numeric> {}", "constrained_generics");
     }
 
     #[test]

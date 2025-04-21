@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test { fn test<T>() -> void where T: Numeric {} }\")"
+expression: "parse(\"class Test { fn test<T: Numeric>() -> void {} }\")"
 ---
 [
     TypeDefinition(
@@ -44,7 +44,7 @@ expression: "parse(\"class Test { fn test<T>() -> void where T: Numeric {} }\")"
                                             ScalarType {
                                                 name: "Numeric",
                                                 location: Location(
-                                                    43..50,
+                                                    24..31,
                                                 ),
                                             },
                                         ),
@@ -55,25 +55,25 @@ expression: "parse(\"class Test { fn test<T>() -> void where T: Numeric {} }\")"
                                 ScalarType {
                                     name: "void",
                                     location: Location(
-                                        29..33,
+                                        38..42,
                                     ),
                                 },
                             ),
                             block: Block {
                                 statements: [],
                                 location: Location(
-                                    51..53,
+                                    43..45,
                                 ),
                             },
                             location: Location(
-                                13..53,
+                                13..45,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    0..55,
+                    0..47,
                 ),
             },
         ),

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"trait Add<T> where T: Numeric {}\")"
+expression: "parse(\"trait Add<T: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -25,7 +25,7 @@ expression: "parse(\"trait Add<T> where T: Numeric {}\")"
                                 ScalarType {
                                     name: "Numeric",
                                     location: Location(
-                                        22..29,
+                                        13..20,
                                     ),
                                 },
                             ),
@@ -34,7 +34,7 @@ expression: "parse(\"trait Add<T> where T: Numeric {}\")"
                 ],
                 methods: [],
                 location: Location(
-                    0..32,
+                    0..24,
                 ),
             },
         ),

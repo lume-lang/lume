@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test { fn test<T1, T2>() -> void where T1: Numeric where T2: Numeric {} }\")"
+expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }\")"
 ---
 [
     TypeDefinition(
@@ -44,7 +44,7 @@ expression: "parse(\"class Test { fn test<T1, T2>() -> void where T1: Numeric wh
                                             ScalarType {
                                                 name: "Numeric",
                                                 location: Location(
-                                                    49..56,
+                                                    25..32,
                                                 ),
                                             },
                                         ),
@@ -54,7 +54,7 @@ expression: "parse(\"class Test { fn test<T1, T2>() -> void where T1: Numeric wh
                                     name: Identifier {
                                         name: "T2",
                                         location: Location(
-                                            25..27,
+                                            34..36,
                                         ),
                                     },
                                     constraints: [
@@ -62,7 +62,7 @@ expression: "parse(\"class Test { fn test<T1, T2>() -> void where T1: Numeric wh
                                             ScalarType {
                                                 name: "Numeric",
                                                 location: Location(
-                                                    67..74,
+                                                    38..45,
                                                 ),
                                             },
                                         ),
@@ -73,25 +73,25 @@ expression: "parse(\"class Test { fn test<T1, T2>() -> void where T1: Numeric wh
                                 ScalarType {
                                     name: "void",
                                     location: Location(
-                                        34..38,
+                                        52..56,
                                     ),
                                 },
                             ),
                             block: Block {
                                 statements: [],
                                 location: Location(
-                                    75..77,
+                                    57..59,
                                 ),
                             },
                             location: Location(
-                                13..77,
+                                13..59,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    0..79,
+                    0..61,
                 ),
             },
         ),
