@@ -1003,14 +1003,10 @@ mod tests {
 
     use super::*;
 
-    fn source(input: &str) -> NamedSource {
-        NamedSource::new("<test>".into(), input.into())
-    }
-
     fn parse(input: &str) -> Vec<ast::TopLevelExpression> {
-        let mut parser = Parser::new(source(input));
+        let parser = Parser::parse_str(input);
 
-        parser.parse().unwrap()
+        parser.unwrap()
     }
 
     fn lower(input: &str) -> Result<hir::map::Map> {

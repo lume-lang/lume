@@ -70,9 +70,9 @@ impl Token {
     }
 }
 
-pub struct Parser {
+pub struct Parser<'a> {
     /// Defines the source code which is being parsed.
-    source: NamedSource,
+    source: &'a NamedSource,
 
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
@@ -108,8 +108,8 @@ macro_rules! err {
     };
 }
 
-impl Parser {
-    pub fn new(source: NamedSource) -> Self {
+impl<'a> Parser<'a> {
+    pub fn new(source: &'a NamedSource) -> Self {
         let lexer = Lexer::new(source.clone());
 
         Parser {
@@ -121,18 +121,25 @@ impl Parser {
         }
     }
 
-    /// Creates a new [`Parser`] from a string.
-    pub fn from_str(source: &'static str) -> Self {
-        let source = NamedSource::new("<empty>".into(), source.into());
+    /// Parses the given source.
+    ///
+    /// This function iterates through the tokens of the module source code,
+    /// parsing each top-level expression and collecting them into a vector.
+    pub fn parse_str<'b>(str: &'b str) -> Result<Vec<TopLevelExpression>> {
+        let source = NamedSource::new("<temp>".to_string(), str.to_string());
+        let mut parser = Parser::new(&source);
 
-        Parser::new(source)
+        parser.parse()
     }
 
-    /// Creates a new [`Parser`] from a string.
-    pub fn from_string(source: String) -> Self {
-        let source = NamedSource::new("<empty>".into(), source);
+    /// Parses the given source text.
+    ///
+    /// This function iterates through the tokens of the module source code,
+    /// parsing each top-level expression and collecting them into a vector.
+    pub fn parse_src<'b>(src: &'b NamedSource) -> Result<Vec<TopLevelExpression>> {
+        let mut parser = Parser::new(src);
 
-        Parser::new(source)
+        parser.parse()
     }
 
     /// Parses the module within the parser state.
@@ -1654,22 +1661,18 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lume_diag::{Error, source::NamedSource};
-
-    fn source(input: &str) -> NamedSource {
-        NamedSource::new("<test>".into(), input.into())
-    }
+    use lume_diag::Error;
 
     fn parse(input: &str) -> Vec<TopLevelExpression> {
-        let mut parser = Parser::new(source(input));
+        let parser = Parser::parse_str(input);
 
-        parser.parse().unwrap()
+        parser.unwrap()
     }
 
     fn parse_err(input: &str) -> Error {
-        let mut parser = Parser::new(source(input));
+        let parser = Parser::parse_str(input);
 
-        parser.parse().unwrap_err()
+        parser.unwrap_err()
     }
 
     fn parse_expr(input: &str) -> Vec<TopLevelExpression> {
@@ -1787,7 +1790,7 @@ mod tests {
     #[test]
     fn test_imports() {
         assert_eq!(
-            Parser::from_str("import std (Int)").parse().unwrap(),
+            Parser::parse_str("import std (Int)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![Identifier {
@@ -1805,7 +1808,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::from_str("import std.io (File)").parse().unwrap(),
+            Parser::parse_str("import std.io (File)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![
@@ -1829,7 +1832,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::from_str("import std.io (File, Buffer)").parse().unwrap(),
+            Parser::parse_str("import std.io (File, Buffer)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![
@@ -1859,7 +1862,7 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::from_str("import std.io ()").parse().unwrap(),
+            Parser::parse_str("import std.io ()").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
                 path: IdentifierPath {
                     path: vec![
