@@ -709,6 +709,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         };
 
         Ok(hir::ClassMember::Property(Box::new(hir::Property {
+            prop_id: None,
             name,
             visibility,
             property_type,
@@ -728,6 +729,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         if expr.external {
             return Ok(hir::ClassMember::ExternalMethod(Box::new(
                 hir::ExternalMethodDefinition {
+                    method_id: None,
                     name,
                     visibility,
                     type_parameters,
@@ -741,6 +743,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         let block = self.isolated_block(expr.block)?;
 
         Ok(hir::ClassMember::Method(Box::new(hir::MethodDefinition {
+            method_id: None,
             name,
             visibility,
             type_parameters,
@@ -794,6 +797,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         };
 
         Ok(hir::TraitMethodDefinition {
+            method_id: None,
             name,
             visibility,
             type_parameters,
@@ -877,6 +881,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
             return Ok(hir::Symbol::ExternalFunction(Box::new(
                 hir::ExternalFunctionDefinition {
                     id,
+                    func_id: None,
                     visibility,
                     name,
                     type_parameters,
@@ -891,6 +896,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Symbol::Function(Box::new(hir::FunctionDefinition {
             id,
+            func_id: None,
             visibility,
             name,
             type_parameters,

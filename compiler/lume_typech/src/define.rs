@@ -7,6 +7,7 @@ use crate::*;
 impl ThirBuildCtx {
     pub(super) fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         DefineTypes::run_all(hir, self)?;
+        DefineTypeParameters::run_all(hir, self)?;
         DefineMethodBodies::run_all(hir, self)?;
 
         Ok(())
@@ -30,6 +31,7 @@ impl DefineTypes<'_> {
         for (_, symbol) in hir.items.iter_mut() {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
         }
@@ -43,6 +45,30 @@ impl DefineTypes<'_> {
                 let name = class.name.clone();
                 let kind = TypeKind::Class(Box::new(Class::new(name.clone())));
                 let type_id = Type::alloc(&mut self.ctx.tcx, name, kind);
+
+                for property in &mut class.properties_mut() {
+                    let property_name = property.name.name.clone();
+                    let visibility = property.visibility;
+                    let property_id = Property::alloc(&mut self.ctx.tcx, type_id, property_name, visibility);
+
+                    property.prop_id = Some(property_id);
+                }
+
+                for method in &mut class.methods_mut() {
+                    let method_name = method.name.name.clone();
+                    let visibility = method.visibility;
+                    let method_id = Method::alloc(&mut self.ctx.tcx, type_id, method_name, visibility);
+
+                    method.method_id = Some(method_id);
+                }
+
+                for method in &mut class.external_methods_mut() {
+                    let method_name = method.name.name.clone();
+                    let visibility = method.visibility;
+                    let method_id = Method::alloc(&mut self.ctx.tcx, type_id, method_name, visibility);
+
+                    method.method_id = Some(method_id);
+                }
 
                 class.type_id = Some(type_id);
             }
@@ -68,6 +94,90 @@ impl DefineTypes<'_> {
                 enum_def.type_id = Some(type_id);
             }
         };
+
+        Ok(())
+    }
+
+    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
+        let name = func.name.clone();
+        let visibility = func.visibility;
+        let type_id = Function::alloc(&mut self.ctx.tcx, name, visibility);
+
+        func.func_id = Some(type_id);
+
+        Ok(())
+    }
+}
+
+struct DefineTypeParameters<'a> {
+    ctx: &'a mut ThirBuildCtx,
+}
+
+impl DefineTypeParameters<'_> {
+    fn run_all<'a>(hir: &'a mut lume_hir::map::Map, ctx: &'a mut ThirBuildCtx) -> Result<()> {
+        let mut define = DefineTypeParameters { ctx };
+
+        define.run(hir)?;
+
+        Ok(())
+    }
+
+    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
+        for (_, symbol) in hir.items.iter_mut() {
+            match symbol {
+                lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Function(f) => self.define_function(&*f)?,
+                _ => (),
+            }
+        }
+
+        Ok(())
+    }
+
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+        match ty {
+            lume_hir::TypeDefinition::Class(class) => {
+                let type_id = class.type_id.unwrap();
+
+                for type_param in &class.type_parameters {
+                    type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                }
+
+                for method in &class.methods() {
+                    let method_id = method.method_id.unwrap();
+
+                    for type_param in &method.type_parameters {
+                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    }
+                }
+
+                for method in &class.external_methods() {
+                    let method_id = method.method_id.unwrap();
+
+                    for type_param in &method.type_parameters {
+                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    }
+                }
+            }
+            lume_hir::TypeDefinition::Trait(trait_def) => {
+                let type_id = trait_def.type_id.unwrap();
+
+                for type_param in &trait_def.type_parameters {
+                    type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                }
+            }
+            _ => {}
+        };
+
+        Ok(())
+    }
+
+    fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
+        let func_id = func.func_id.unwrap();
+
+        for type_param in &func.type_parameters {
+            func_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+        }
 
         Ok(())
     }
@@ -108,24 +218,14 @@ impl DefineMethodBodies<'_> {
                 }
 
                 for property in class.properties() {
-                    let property_id = Property::alloc(
-                        &mut self.ctx.tcx,
-                        type_id,
-                        property.name.name.clone(),
-                        property.visibility.clone(),
-                    );
+                    let property_id = property.prop_id.unwrap();
 
                     let property_type = self.ctx.lower_type_ref(&property.property_type);
                     property_id.set_property_type(&mut self.ctx.tcx, property_type);
                 }
 
                 for method in class.methods() {
-                    let method_id = Method::alloc(
-                        &mut self.ctx.tcx,
-                        type_id,
-                        method.name.name.clone(),
-                        method.visibility.clone(),
-                    );
+                    let method_id = method.method_id.unwrap();
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
@@ -139,12 +239,7 @@ impl DefineMethodBodies<'_> {
                 }
 
                 for method in class.external_methods() {
-                    let method_id = Method::alloc(
-                        &mut self.ctx.tcx,
-                        type_id,
-                        method.name.name.clone(),
-                        method.visibility.clone(),
-                    );
+                    let method_id = method.method_id.unwrap();
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
@@ -157,15 +252,14 @@ impl DefineMethodBodies<'_> {
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
             }
-            lume_hir::TypeDefinition::Alias(_) => return Ok(()),
-            _ => todo!(),
+            _ => (),
         };
 
         Ok(())
     }
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
-        let function_id = Function::alloc(&mut self.ctx.tcx, func.name.clone(), func.visibility.clone());
+        let function_id = func.func_id.unwrap();
 
         for param in &func.parameters {
             let name = param.name.name.clone();

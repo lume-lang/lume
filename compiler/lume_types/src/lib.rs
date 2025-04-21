@@ -148,7 +148,7 @@ impl std::fmt::Debug for SymbolName {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Visibility {
     // Order matters here, since `Ord` and `PartialOrd` determines
     // the order of enums by the order of their variants!
@@ -182,7 +182,7 @@ impl Parameters {
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct FunctionId(pub u32);
 
 impl FunctionId {
@@ -213,12 +213,20 @@ impl FunctionId {
     pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
         self.get_mut(ctx).parameters.push(name, ty)
     }
+
+    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
+        let id = TypeParameter::alloc(ctx, name);
+        self.get_mut(ctx).type_parameters.push(id);
+
+        id
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Function {
     pub name: SymbolName,
     pub visibility: Visibility,
+    pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
@@ -229,6 +237,7 @@ impl Function {
         let function = Function {
             name,
             visibility,
+            type_parameters: Vec::new(),
             parameters: Parameters::new(),
             return_type: TypeRef::unknown(),
         };
@@ -294,7 +303,7 @@ impl Property {
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct MethodId(pub u32);
 
 impl MethodId {
@@ -325,6 +334,13 @@ impl MethodId {
     pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
         self.get_mut(ctx).parameters.push(name, ty)
     }
+
+    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
+        let id = TypeParameter::alloc(ctx, name);
+        self.get_mut(ctx).type_parameters.push(id);
+
+        id
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -332,6 +348,7 @@ pub struct Method {
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: String,
+    pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
@@ -343,6 +360,7 @@ impl Method {
             visibility,
             callee: TypeRef::new(class),
             name,
+            type_parameters: Vec::new(),
             parameters: Parameters::new(),
             return_type: TypeRef::unknown(),
         };
@@ -355,22 +373,30 @@ impl Method {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Class {
     pub name: SymbolName,
+    pub type_parameters: Vec<TypeParameterId>,
 }
 
 impl Class {
     pub fn new(name: SymbolName) -> Self {
-        Self { name }
+        Self {
+            name,
+            type_parameters: Vec::new(),
+        }
     }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Trait {
     pub name: SymbolName,
+    pub type_parameters: Vec<TypeParameterId>,
 }
 
 impl Trait {
     pub fn new(name: SymbolName) -> Self {
-        Self { name }
+        Self {
+            name,
+            type_parameters: Vec::new(),
+        }
     }
 }
 
@@ -485,6 +511,30 @@ impl TypeId {
     pub fn is_void(&self, ctx: &TypeDatabaseContext) -> bool {
         matches!(self.kind(ctx), TypeKind::Void)
     }
+
+    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
+        let id = TypeParameter::alloc(ctx, name);
+
+        match self.get_mut(ctx) {
+            Type {
+                kind: TypeKind::Class(class),
+                ..
+            } => {
+                class.type_parameters.push(id);
+            }
+            Type {
+                kind: TypeKind::Trait(trait_def),
+                ..
+            } => {
+                trait_def.type_parameters.push(id);
+            }
+            _ => {
+                panic!("Cannot add type parameter to non-generic type");
+            }
+        };
+
+        id
+    }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -543,12 +593,45 @@ impl TypeRef {
     }
 }
 
+#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct TypeParameterId(pub u32);
+
+impl TypeParameterId {
+    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeParameter {
+        &ctx.type_parameters[self.0 as usize]
+    }
+
+    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut TypeParameter {
+        &mut ctx.type_parameters[self.0 as usize]
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct TypeParameter {
+    pub name: String,
+    pub constraints: Vec<TypeRef>,
+}
+
+impl TypeParameter {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
+        let id = ctx.type_parameters.len();
+        let param = TypeParameter {
+            name,
+            constraints: Vec::new(),
+        };
+
+        ctx.type_parameters.push(param);
+        TypeParameterId(id as u32)
+    }
+}
+
 #[derive(serde::Serialize, Debug)]
 pub struct TypeDatabaseContext {
     pub types: Vec<Type>,
     pub properties: Vec<Property>,
     pub methods: Vec<Method>,
     pub functions: Vec<Function>,
+    pub type_parameters: Vec<TypeParameter>,
 }
 
 impl TypeDatabaseContext {
@@ -558,6 +641,7 @@ impl TypeDatabaseContext {
             properties: Vec::new(),
             methods: Vec::new(),
             functions: Vec::new(),
+            type_parameters: Vec::new(),
         }
     }
 

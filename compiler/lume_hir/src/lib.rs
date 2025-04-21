@@ -1,6 +1,6 @@
 use crate::id::{ModuleFileId, ModuleId, hash_id};
 use lume_macros::Node;
-use lume_types::{Identifier, IdentifierPath, SymbolName, TypeId, Visibility};
+use lume_types::{FunctionId, Identifier, IdentifierPath, MethodId, PropertyId, SymbolName, TypeId, Visibility};
 
 mod errors;
 pub mod id;
@@ -189,6 +189,7 @@ impl ExternalSymbol {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: ItemId,
+    pub func_id: Option<FunctionId>,
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
@@ -207,6 +208,7 @@ impl FunctionDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ExternalFunctionDefinition {
     pub id: ItemId,
+    pub func_id: Option<FunctionId>,
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
@@ -315,10 +317,23 @@ impl ClassDefinition {
         self.members.iter()
     }
 
+    pub fn members_iter_mut(&mut self) -> impl Iterator<Item = &mut ClassMember> {
+        self.members.iter_mut()
+    }
+
     pub fn properties(&self) -> Vec<&Property> {
         self.members_iter()
             .filter_map(|member| match member {
                 ClassMember::Property(property) => Some(property.as_ref()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn properties_mut(&mut self) -> Vec<&mut Property> {
+        self.members_iter_mut()
+            .filter_map(|member| match member {
+                ClassMember::Property(property) => Some(property.as_mut()),
                 _ => None,
             })
             .collect()
@@ -333,10 +348,28 @@ impl ClassDefinition {
             .collect()
     }
 
+    pub fn methods_mut(&mut self) -> Vec<&mut MethodDefinition> {
+        self.members_iter_mut()
+            .filter_map(|member| match member {
+                ClassMember::Method(method) => Some(method.as_mut()),
+                _ => None,
+            })
+            .collect()
+    }
+
     pub fn external_methods(&self) -> Vec<&ExternalMethodDefinition> {
         self.members_iter()
             .filter_map(|member| match member {
                 ClassMember::ExternalMethod(method) => Some(method.as_ref()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    pub fn external_methods_mut(&mut self) -> Vec<&mut ExternalMethodDefinition> {
+        self.members_iter_mut()
+            .filter_map(|member| match member {
+                ClassMember::ExternalMethod(method) => Some(method.as_mut()),
                 _ => None,
             })
             .collect()
@@ -352,6 +385,7 @@ pub enum ClassMember {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Property {
+    pub prop_id: Option<PropertyId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub property_type: Type,
@@ -361,6 +395,7 @@ pub struct Property {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
+    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -372,6 +407,7 @@ pub struct MethodDefinition {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ExternalMethodDefinition {
+    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -398,6 +434,7 @@ impl TraitDefinition {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
+    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
