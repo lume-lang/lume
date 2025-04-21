@@ -192,6 +192,7 @@ pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
     pub location: Location,
@@ -209,6 +210,7 @@ pub struct ExternalFunctionDefinition {
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub location: Location,
 }
@@ -300,6 +302,7 @@ pub struct ClassDefinition {
     pub name: SymbolName,
     pub builtin: bool,
     pub members: Vec<ClassMember>,
+    pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
 }
 
@@ -361,6 +364,7 @@ pub struct MethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
     pub location: Location,
@@ -371,6 +375,7 @@ pub struct ExternalMethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub location: Location,
 }
@@ -380,6 +385,7 @@ pub struct TraitDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
     pub name: SymbolName,
+    pub type_parameters: Vec<TypeParameter>,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
 }
@@ -395,6 +401,7 @@ pub struct TraitMethodDefinition {
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Option<Block>,
     pub location: Location,
@@ -420,6 +427,7 @@ pub struct TraitMethodImplementation {
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
+    pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub block: Block,
     pub location: Location,
@@ -558,6 +566,7 @@ pub struct New {
 pub struct FunctionCall {
     pub id: ExpressionId,
     pub name: SymbolName,
+    pub type_parameters: Vec<TypeParameter>,
     pub arguments: Vec<Expression>,
 }
 
@@ -566,6 +575,7 @@ pub struct MethodCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
     pub arguments: Vec<Expression>,
 }
 
@@ -676,6 +686,13 @@ pub struct Variable {
     pub id: ExpressionId,
     pub reference: StatementId,
     pub name: Identifier,
+    pub location: Location,
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct TypeParameter {
+    pub name: Identifier,
+    pub constraints: Vec<Box<Type>>,
     pub location: Location,
 }
 

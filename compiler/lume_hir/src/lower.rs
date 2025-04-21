@@ -496,6 +496,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let name = self.identifier(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let arguments = self.expressions(expr.arguments)?;
         let location = self.location(expr.location);
 
@@ -506,12 +507,18 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 id,
                 callee,
                 name,
+                type_parameters,
                 arguments,
             }))
         } else {
             let name = self.resolve_symbol_name(&name.name);
 
-            hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall { id, name, arguments }))
+            hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall {
+                id,
+                name,
+                type_parameters,
+                arguments,
+            }))
         };
 
         Ok(hir::Expression { id, location, kind })
@@ -655,6 +662,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn def_class(&mut self, expr: ast::ClassDefinition) -> Result<hir::Symbol> {
         let name = self.symbol_name(expr.name);
         let builtin = expr.builtin;
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -674,6 +682,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 type_id: None,
                 name,
                 builtin,
+                type_parameters,
                 members,
                 location,
             },
@@ -711,6 +720,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn def_class_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::ClassMember> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.identifier(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;
         let location = self.location(expr.location);
@@ -720,6 +730,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 hir::ExternalMethodDefinition {
                     name,
                     visibility,
+                    type_parameters,
                     parameters,
                     return_type: Box::new(return_type),
                     location,
@@ -732,6 +743,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::ClassMember::Method(Box::new(hir::MethodDefinition {
             name,
             visibility,
+            type_parameters,
             parameters,
             return_type: Box::new(return_type),
             block,
@@ -741,6 +753,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<hir::Symbol> {
         let name = self.symbol_name(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -759,6 +772,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 id,
                 type_id: None,
                 name,
+                type_parameters,
                 methods,
                 location,
             },
@@ -768,6 +782,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;
         let location = self.location(expr.location);
@@ -781,6 +796,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::TraitMethodDefinition {
             name,
             visibility,
+            type_parameters,
             parameters,
             return_type: Box::new(return_type),
             block,
@@ -851,6 +867,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<hir::Symbol> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;
         let location = self.location(expr.location);
@@ -862,6 +879,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                     id,
                     visibility,
                     name,
+                    type_parameters,
                     parameters,
                     return_type: Box::new(return_type),
                     location,
@@ -875,6 +893,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
             id,
             visibility,
             name,
+            type_parameters,
             parameters,
             return_type: Box::new(return_type),
             block,
@@ -940,6 +959,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
         let parameters = self.parameters(expr.parameters)?;
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;
         let block = self.isolated_block(expr.block)?;
         let location = self.location(expr.location);
@@ -948,10 +968,33 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
             visibility,
             name,
             parameters,
+            type_parameters,
             return_type: Box::new(return_type),
             block,
             location,
         })
+    }
+
+    fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<Vec<hir::TypeParameter>> {
+        params
+            .into_iter()
+            .map(|param| {
+                let location = self.location(param.name.location.clone());
+                let name = self.identifier(param.name);
+
+                let constraints = param
+                    .constraints
+                    .into_iter()
+                    .map(|ty| Ok(Box::new(self.type_ref(*ty)?)))
+                    .collect::<Result<Vec<_>>>()?;
+
+                Ok(hir::TypeParameter {
+                    name,
+                    constraints,
+                    location,
+                })
+            })
+            .collect::<Result<Vec<_>>>()
     }
 
     fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
