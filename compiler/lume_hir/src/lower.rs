@@ -994,3 +994,60 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         })))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use lume_parser::parser::Parser;
+
+    use crate::id::ModuleId;
+
+    use super::*;
+
+    fn source(input: &str) -> NamedSource {
+        NamedSource::new("<test>".into(), input.into())
+    }
+
+    fn parse(input: &str) -> Vec<ast::TopLevelExpression> {
+        let mut parser = Parser::new(source(input));
+
+        parser.parse().unwrap()
+    }
+
+    fn lower(input: &str) -> Result<hir::map::Map> {
+        let expressions = parse(input);
+
+        let mut map = hir::map::Map::empty(ModuleId::empty());
+        let file = ModuleFileId::empty();
+        let source = NamedSource::new("".to_owned(), "".to_string());
+
+        LowerModule::lower(&mut map, file, &source, expressions)?;
+
+        Ok(map)
+    }
+
+    macro_rules! set_snapshot_suffix {
+        ($($expr:expr),*) => {
+            let mut settings = insta::Settings::clone_current();
+            settings.set_snapshot_suffix(format!($($expr,)*));
+            let _guard = settings.bind_to_scope();
+        }
+    }
+
+    macro_rules! assert_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(lower($input));
+        };
+    }
+
+    #[test]
+    fn test_type_aliasing() {
+        assert_snap_eq!("type A = B", "scalar_to_scalar");
+        assert_snap_eq!("type A = [B]", "scalar_to_array");
+        assert_snap_eq!("type A = B<C>", "scalar_to_generic");
+    }
+}

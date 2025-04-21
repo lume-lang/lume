@@ -13,3 +13,7 @@ lume_macros = { path = "../lume_macros" }
 indexmap = { version = "^2.9", features = ["serde"] }
 fxhash = "^0.2"
 serde = { version = "1.0.219", features = ["serde_derive"] }
+
+[dev-dependencies]
+lume_parser = { path = "../lume_parser" }
+insta = { version = "1.42.2", features = ["yaml"] }

@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"type A = B<C>\")"
+---
+Ok(
+    Map {
+        module: mod(0),
+        items: {
+            10060190011017930945: Type(
+                Alias(
+                    AliasDefinition {
+                        id: 10060190011017930945,
+                        name: 'A',
+                        definition: Scalar(
+                            ScalarType {
+                                name: 'B',
+                                type_params: [
+                                    Scalar(
+                                        ScalarType {
+                                            name: 'C',
+                                            type_params: [],
+                                            location: ModuleFileId(mod(0), 0):11:12,
+                                        },
+                                    ),
+                                ],
+                                location: ModuleFileId(mod(0), 0):10:13,
+                            },
+                        ),
+                        location: ModuleFileId(mod(0), 0):0:13,
+                    },
+                ),
+            ),
+        },
+        statements: {},
+        expressions: {},
+    },
+)

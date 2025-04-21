@@ -287,10 +287,12 @@ dependencies = [
  "arc",
  "fxhash",
  "indexmap",
+ "insta",
  "lume_ast",
  "lume_diag",
  "lume_diag_macros",
  "lume_macros",
+ "lume_parser",
  "serde",
 ]
 
