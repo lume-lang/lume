@@ -907,8 +907,8 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     }
 
     fn def_impl(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
-        let name = self.symbol_name(expr.name);
-        let target = self.symbol_name(expr.target);
+        let name = self.type_ref(*expr.name)?;
+        let target = self.type_ref(*expr.target)?;
         let methods = self.def_impl_methods(expr.methods)?;
         let location = self.location(expr.location);
 
@@ -916,8 +916,8 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Symbol::Impl(Box::new(hir::TraitImplementation {
             id,
-            name,
-            target,
+            name: Box::new(name),
+            target: Box::new(target),
             methods,
             location,
         })))

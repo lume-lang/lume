@@ -5,29 +5,37 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
 [
     Use(
         UseTrait {
-            name: Identifier {
-                name: "Add",
-                location: Location(
-                    17..20,
-                ),
-            },
-            target: Identifier {
-                name: "Int32",
-                location: Location(
-                    31..36,
-                ),
-            },
-            type_parameters: [
-                TypeParameter {
+            name: Generic(
+                GenericType {
                     name: Identifier {
-                        name: "Int32",
+                        name: "Add",
                         location: Location(
-                            21..26,
+                            17..20,
                         ),
                     },
-                    constraints: [],
+                    type_params: [
+                        Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    21..26,
+                                ),
+                            },
+                        ),
+                    ],
+                    location: Location(
+                        20..27,
+                    ),
                 },
-            ],
+            ),
+            target: Scalar(
+                ScalarType {
+                    name: "Int32",
+                    location: Location(
+                        31..36,
+                    ),
+                },
+            ),
             methods: [
                 TraitMethodImplementation {
                     visibility: Public(

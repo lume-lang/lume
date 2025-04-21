@@ -953,24 +953,17 @@ impl<'a> Parser<'a> {
 
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
-
-        let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
-        let type_parameters = self.parse_type_parameters()?;
+        let name = self.parse_type()?;
 
         self.consume(TokenKind::In)?;
-
-        let target = match self.parse_identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedClassName)),
-        };
+        let target = self.parse_type()?;
 
         let methods = self.consume_curly_seq(|p| p.parse_use_impl())?;
         let end = self.last_token()?.end();
 
         let use_trait = UseTrait {
-            name,
-            type_parameters,
-            target,
+            name: Box::new(name),
+            target: Box::new(target),
             methods,
             location: (start..end).into(),
         };
@@ -2297,6 +2290,14 @@ mod tests {
                 }
             }"#,
             "generics"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Enumerable<T> in Vector<T> {
+                pub fn next() -> T { }
+            }"#,
+            "generic_type"
         );
     }
 }

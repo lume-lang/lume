@@ -400,15 +400,15 @@ pub struct TraitMethodDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
     pub id: ItemId,
-    pub name: SymbolName,
-    pub target: SymbolName,
+    pub name: Box<Type>,
+    pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
     pub location: Location,
 }
 
 impl TraitImplementation {
     pub fn ident(&self) -> &Identifier {
-        &self.name.name
+        &self.name.ident()
     }
 }
 
@@ -676,20 +676,29 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Hash, Node, Debug, Clone, PartialEq)]
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+impl Type {
+    pub fn ident(&self) -> &Identifier {
+        match self {
+            Type::Scalar(ty) => &ty.name.name,
+            Type::Array(ty) => &ty.element_type.ident(),
+        }
+    }
+}
+
+#[derive(serde::Serialize, Hash, Node, Debug, Clone, PartialEq)]
 pub struct ScalarType {
     pub name: SymbolName,
     pub type_params: Vec<Box<Type>>,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Hash, Node, Debug, Clone, PartialEq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
     pub location: Location,

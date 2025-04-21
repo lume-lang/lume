@@ -1,0 +1,95 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            use Enumerable<T> in Vector<T> {\n                pub fn next() -> T { }\n            }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Generic(
+                GenericType {
+                    name: Identifier {
+                        name: "Enumerable",
+                        location: Location(
+                            17..27,
+                        ),
+                    },
+                    type_params: [
+                        Scalar(
+                            ScalarType {
+                                name: "T",
+                                location: Location(
+                                    28..29,
+                                ),
+                            },
+                        ),
+                    ],
+                    location: Location(
+                        27..30,
+                    ),
+                },
+            ),
+            target: Generic(
+                GenericType {
+                    name: Identifier {
+                        name: "Vector",
+                        location: Location(
+                            34..40,
+                        ),
+                    },
+                    type_params: [
+                        Scalar(
+                            ScalarType {
+                                name: "T",
+                                location: Location(
+                                    41..42,
+                                ),
+                            },
+                        ),
+                    ],
+                    location: Location(
+                        40..43,
+                    ),
+                },
+            ),
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                62..65,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "next",
+                        location: Location(
+                            69..73,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Scalar(
+                        ScalarType {
+                            name: "T",
+                            location: Location(
+                                79..80,
+                            ),
+                        },
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            81..84,
+                        ),
+                    },
+                    location: Location(
+                        62..84,
+                    ),
+                },
+            ],
+            location: Location(
+                13..98,
+            ),
+        },
+    ),
+]

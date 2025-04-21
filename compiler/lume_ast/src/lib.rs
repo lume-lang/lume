@@ -327,9 +327,8 @@ impl std::fmt::Display for AliasDefinition {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct UseTrait {
-    pub name: Identifier,
-    pub target: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
+    pub name: Box<Type>,
+    pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
     pub location: Location,
 }

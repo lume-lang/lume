@@ -5,38 +5,45 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
 [
     Use(
         UseTrait {
-            name: Identifier {
-                name: "Add",
-                location: Location(
-                    17..20,
-                ),
-            },
-            target: Identifier {
-                name: "Int32",
-                location: Location(
-                    38..43,
-                ),
-            },
-            type_parameters: [
-                TypeParameter {
+            name: Generic(
+                GenericType {
                     name: Identifier {
-                        name: "Int32",
+                        name: "Add",
                         location: Location(
-                            21..26,
+                            17..20,
                         ),
                     },
-                    constraints: [],
-                },
-                TypeParameter {
-                    name: Identifier {
-                        name: "Int64",
-                        location: Location(
-                            28..33,
+                    type_params: [
+                        Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    21..26,
+                                ),
+                            },
                         ),
-                    },
-                    constraints: [],
+                        Scalar(
+                            ScalarType {
+                                name: "Int64",
+                                location: Location(
+                                    28..33,
+                                ),
+                            },
+                        ),
+                    ],
+                    location: Location(
+                        20..34,
+                    ),
                 },
-            ],
+            ),
+            target: Scalar(
+                ScalarType {
+                    name: "Int32",
+                    location: Location(
+                        38..43,
+                    ),
+                },
+            ),
             methods: [
                 TraitMethodImplementation {
                     visibility: Public(
