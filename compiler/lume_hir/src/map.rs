@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use lume_diag::source::NamedSource;
 
 use crate::*;
 
@@ -6,6 +7,9 @@ use crate::*;
 pub struct Map {
     /// Defines which module this map belongs to.
     pub(crate) module: ModuleId,
+
+    /// Defines all the source files which are part of the module.
+    pub(crate) files: IndexMap<ModuleFileId, NamedSource>,
 
     /// Defines all the top-level items within the module.
     pub(crate) items: IndexMap<ItemId, Symbol>,
@@ -22,10 +26,21 @@ impl Map {
     pub fn empty(module: ModuleId) -> Self {
         Self {
             module,
+            files: IndexMap::new(),
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),
         }
+    }
+
+    /// Gets all the files within the HIR map.
+    pub fn files(&self) -> &IndexMap<ModuleFileId, NamedSource> {
+        &self.files
+    }
+
+    /// Gets the file within the HIR map with the given ID.
+    pub fn file(&self, id: ModuleFileId) -> Option<&NamedSource> {
+        self.files.get(&id)
     }
 
     /// Gets all the items within the HIR map.

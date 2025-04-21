@@ -96,10 +96,10 @@ impl Driver {
             let source_id = ModuleFileId::from(module_id, named_source.name.clone());
 
             // Parse the contents of the source file.
-            let expressions = Parser::new(&named_source).parse()?;
+            let expressions = Parser::parse_src(&named_source)?;
 
             // Lowers the parsed module expressions down to HIR.
-            lume_hir::lower::LowerModule::lower(&mut hir, source_id, &named_source, expressions)?;
+            lume_hir::lower::LowerModule::lower(&mut hir, source_id, named_source, expressions)?;
         }
 
         Ok(hir)

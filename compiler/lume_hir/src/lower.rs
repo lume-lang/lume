@@ -62,12 +62,12 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     pub fn lower(
         map: &'map mut hir::map::Map,
         file: ModuleFileId,
-        source: &'ctx NamedSource,
+        source: NamedSource,
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
         let mut lower = LowerModule {
             file,
-            source,
+            source: &source,
             map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
@@ -84,6 +84,10 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 expr => lower.top_level_expression(expr)?,
             }
         }
+
+        drop(lower);
+
+        map.files.insert(file, source);
 
         Ok(())
     }
@@ -1016,7 +1020,7 @@ mod tests {
         let file = ModuleFileId::empty();
         let source = NamedSource::new("".to_owned(), "".to_string());
 
-        LowerModule::lower(&mut map, file, &source, expressions)?;
+        LowerModule::lower(&mut map, file, source, expressions)?;
 
         Ok(map)
     }

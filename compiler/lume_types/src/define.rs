@@ -1,13 +1,12 @@
-use indexmap::IndexMap;
 use lume_diag::Result;
-use lume_hir::{self, ItemId, Symbol};
+use lume_hir::{self};
 
 use crate::*;
 
 impl ThirBuildCtx {
     pub(super) fn define_types(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypes {
-            symbols: hir.items(),
+            hir,
             ctx: &mut self.tcx,
         };
 
@@ -18,13 +17,13 @@ impl ThirBuildCtx {
 }
 
 struct DefineTypes<'a> {
-    symbols: &'a IndexMap<ItemId, Symbol>,
+    hir: &'a lume_hir::map::Map,
     ctx: &'a mut TypeDatabaseContext,
 }
 
 impl DefineTypes<'_> {
     fn run(&mut self) -> Result<()> {
-        for (_, symbol) in self.symbols {
+        for (_, symbol) in self.hir.items() {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(&*t)?,
                 lume_hir::Symbol::Function(f) => self.define_function(&*f)?,
