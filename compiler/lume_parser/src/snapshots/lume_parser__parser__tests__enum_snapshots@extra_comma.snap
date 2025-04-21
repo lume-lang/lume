@@ -8,4 +8,5 @@ ExpectedIdentifier {
         content: "enum Foo { Bar, Baz, }",
     },
     range: 21..22,
+    actual: },
 }

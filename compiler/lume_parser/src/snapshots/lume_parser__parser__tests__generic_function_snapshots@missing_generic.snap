@@ -8,4 +8,5 @@ ExpectedIdentifier {
         content: "fn test<T1,>() -> void {}",
     },
     range: 11..12,
+    actual: >,
 }

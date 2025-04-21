@@ -80,59 +80,27 @@ impl TokenKind {
     pub fn is_keyword(&self) -> bool {
         matches!(
             self,
-            TokenKind::Add
-                | TokenKind::AddAssign
-                | TokenKind::And
-                | TokenKind::Arrow
-                | TokenKind::Assign
-                | TokenKind::Break
+            TokenKind::Break
                 | TokenKind::Class
-                | TokenKind::Colon
-                | TokenKind::Comma
                 | TokenKind::Continue
-                | TokenKind::Decrement
-                | TokenKind::Div
-                | TokenKind::DivAssign
-                | TokenKind::Dot
                 | TokenKind::Else
-                | TokenKind::Equal
-                | TokenKind::Exclamation
                 | TokenKind::External
                 | TokenKind::False
                 | TokenKind::Fn
                 | TokenKind::For
-                | TokenKind::Greater
-                | TokenKind::GreaterEqual
                 | TokenKind::If
                 | TokenKind::Import
                 | TokenKind::In
-                | TokenKind::Increment
-                | TokenKind::LeftBracket
-                | TokenKind::LeftCurly
-                | TokenKind::LeftParen
-                | TokenKind::Less
-                | TokenKind::LessEqual
                 | TokenKind::Loop
-                | TokenKind::Mul
-                | TokenKind::MulAssign
                 | TokenKind::Namespace
-                | TokenKind::NotEqual
-                | TokenKind::Pipe
                 | TokenKind::Pub
                 | TokenKind::Return
-                | TokenKind::RightBracket
-                | TokenKind::RightCurly
-                | TokenKind::RightParen
-                | TokenKind::Semicolon
-                | TokenKind::Sub
-                | TokenKind::SubAssign
                 | TokenKind::Trait
                 | TokenKind::True
                 | TokenKind::Type
                 | TokenKind::Unless
                 | TokenKind::Use
                 | TokenKind::While
-                | TokenKind::Whitespace
         )
     }
 
@@ -168,6 +136,10 @@ impl TokenKind {
                 | TokenKind::Sub
                 | TokenKind::SubAssign
         )
+    }
+
+    pub fn has_value(&self) -> bool {
+        self.is_keyword() || self.is_operator()
     }
 }
 
@@ -326,7 +298,7 @@ impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.kind)?;
 
-        if !self.kind.is_keyword() {
+        if !self.kind.has_value() {
             if let Some(value) = &self.value {
                 write!(f, " ({})", value)?;
             }
@@ -797,7 +769,7 @@ mod tests {
             assert_eq!(token.kind, $kind);
             assert_eq!(token.index, ($position as usize)..($end as usize));
 
-            if token.kind.is_keyword() && $value.is_some() {
+            if token.kind.has_value() && $value.is_some() {
                 let val: String = $value.unwrap().to_string();
                 assert_eq!(token.value, Some(val.to_string()));
             }
@@ -821,7 +793,7 @@ mod tests {
                 assert_eq!(token.kind, exp.kind);
                 assert_eq!(token.index, exp.index);
 
-                if token.kind.is_keyword() && exp.value.is_some() {
+                if token.kind.has_value() && exp.value.is_some() {
                     let val: String = exp.value.unwrap().to_string();
                     assert_eq!(token.value, Some(val.to_string()));
                 }

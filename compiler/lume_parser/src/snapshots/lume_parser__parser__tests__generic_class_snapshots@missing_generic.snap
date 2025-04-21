@@ -8,4 +8,5 @@ ExpectedIdentifier {
         content: "class Test<T1,> {}",
     },
     range: 14..15,
+    actual: >,
 }

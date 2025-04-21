@@ -85,8 +85,10 @@ pub struct ExpectedIdentifier {
     #[span]
     pub source: NamedSource,
 
-    #[label("Expected identifier")]
+    #[label("Expected identifier, found {actual:?} instead")]
     pub range: Range<usize>,
+
+    pub actual: TokenKind,
 }
 
 #[derive(Diagnostic, Debug)]

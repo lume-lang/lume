@@ -43,6 +43,7 @@ const UNARY_PRECEDENCE: u8 = 3;
 /// Defines the built-in aliaes for types, making it easier for
 /// new-comers to adapt to the type system.
 const DEFAULT_TYPE_ALIASES: &[(&'static str, &'static str)] = &[
+    ("int", "Int32"),
     ("i8", "Int8"),
     ("u8", "UInt8"),
     ("i16", "Int16"),
@@ -185,7 +186,19 @@ impl<'a> Parser<'a> {
     fn token_at(&self, index: usize) -> Result<Token> {
         match self.tokens.get(index) {
             Some(token) => Ok(token.clone()),
-            None => return Err(err!(self, UnexpectedEndOfFile)),
+            None => {
+                let index = match self.tokens.last() {
+                    Some(t) => t.index.clone(),
+                    None => 0..1,
+                };
+
+                return Ok(Token {
+                    kind: TokenKind::Eof,
+                    index,
+                    ty: None,
+                    value: None,
+                });
+            }
         }
     }
 
@@ -434,17 +447,34 @@ impl<'a> Parser<'a> {
 
     /// Parses the next token as an identifier.
     fn parse_identifier(&mut self) -> Result<Identifier> {
-        let identifier = match self.consume(TokenKind::Identifier) {
-            Ok(identifier) => identifier,
-            Err(_) => return Err(err!(self, ExpectedIdentifier)),
+        let identifier = match self.consume_any() {
+            // Actual identifiers are obviously allowed, so they pass through.
+            Ok(ident) if ident.kind == TokenKind::Identifier => ident,
+
+            // Keywords are also allowed, so reserved keywords can be used as identifiers.
+            Ok(ident) if ident.kind.is_keyword() => ident,
+
+            Ok(ident) => {
+                return Err(ExpectedIdentifier {
+                    source: self.source.clone(),
+                    range: ident.index.clone(),
+                    actual: ident.kind,
+                }
+                .into());
+            }
+            Err(err) => return Err(err),
         };
 
-        let identifier = Identifier {
-            name: identifier.value.unwrap(),
-            location: identifier.index.into(),
+        let location = identifier.index.clone();
+        let name = match identifier {
+            v if v.kind == TokenKind::Identifier => v.value.unwrap(),
+            v => v.into(),
         };
 
-        Ok(identifier)
+        Ok(Identifier {
+            name,
+            location: location.into(),
+        })
     }
 
     /// Parses the next token as an identifier. If the parsing fails, return `Err(err)`.
@@ -1082,7 +1112,7 @@ impl<'a> Parser<'a> {
         match self.token()?.kind {
             TokenKind::If => self.parse_if_conditional(),
             TokenKind::Unless => self.parse_unless_conditional(),
-            _ => return Err(err!(self, ExpectedIdentifier)),
+            k => panic!("invalid conditional token given: {}", k),
         }
     }
 
@@ -1911,6 +1941,7 @@ mod tests {
         assert_snap_eq!("fn external main() -> void", "external");
         assert_err_snap_eq!("fn external main() -> void {}", "external_body");
         assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
+        assert_snap_eq!("fn loop() -> void {}", "reserved_keyword");
     }
 
     #[test]

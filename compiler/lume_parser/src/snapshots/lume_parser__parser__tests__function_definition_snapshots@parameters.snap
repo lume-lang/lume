@@ -29,7 +29,7 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                     },
                     param_type: Scalar(
                         ScalarType {
-                            name: "u8",
+                            name: "UInt8",
                             location: Location(
                                 14..16,
                             ),
