@@ -20,6 +20,7 @@ expression: "parse(\"trait Add<T1, T2> { }\")"
                                 10..12,
                             ),
                         },
+                        constraints: [],
                     },
                     TypeParameter {
                         name: Identifier {
@@ -28,6 +29,7 @@ expression: "parse(\"trait Add<T1, T2> { }\")"
                                 14..16,
                             ),
                         },
+                        constraints: [],
                     },
                 ],
                 methods: [],

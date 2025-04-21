@@ -235,6 +235,22 @@ pub struct InvalidImportPath {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "Constrained type parameter not found",
+    code = "LM1109",
+    help = "You can only define constraints for type parameters defined in the current scope"
+)]
+pub struct ConstrainedTypeParameterNotFound {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Could not find type parameter `{found}`")]
+    pub range: Range<usize>,
+
+    pub found: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Unimplemented", code = "LM9999")]
 pub struct Unimplemented {
     #[span]

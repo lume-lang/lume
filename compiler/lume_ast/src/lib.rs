@@ -526,6 +526,7 @@ impl Node for Variable {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct TypeParameter {
     pub name: Identifier,
+    pub constraints: Vec<Box<Type>>,
 }
 
 impl Node for TypeParameter {

@@ -39,6 +39,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar<T>() ->
                                             48..49,
                                         ),
                                     },
+                                    constraints: [],
                                 },
                             ],
                             return_type: Scalar(

@@ -20,6 +20,7 @@ expression: "parse(\"trait Add<T> { }\")"
                                 10..11,
                             ),
                         },
+                        constraints: [],
                     },
                 ],
                 methods: [],

@@ -25,6 +25,7 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
                             21..26,
                         ),
                     },
+                    constraints: [],
                 },
                 TypeParameter {
                     name: Identifier {
@@ -33,6 +34,7 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
                             28..33,
                         ),
                     },
+                    constraints: [],
                 },
             ],
             methods: [

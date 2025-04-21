@@ -28,6 +28,7 @@ expression: "parse(\"fn test<T>() -> void {}\")"
                             8..9,
                         ),
                     },
+                    constraints: [],
                 },
             ],
             return_type: Scalar(

@@ -28,6 +28,7 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                             8..10,
                         ),
                     },
+                    constraints: [],
                 },
                 TypeParameter {
                     name: Identifier {
@@ -36,6 +37,7 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                             12..14,
                         ),
                     },
+                    constraints: [],
                 },
             ],
             return_type: Scalar(

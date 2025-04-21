@@ -90,6 +90,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                                     35..36,
                                                 ),
                                             },
+                                            constraints: [],
                                         },
                                     ],
                                     location: Location(

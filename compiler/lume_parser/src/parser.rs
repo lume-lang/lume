@@ -421,6 +421,11 @@ impl<'a> Parser<'a> {
         self.check(TokenKind::External)
     }
 
+    /// Asserts that the current token is a `:` token.
+    fn expect_colon(&mut self) -> Result<Token> {
+        self.consume(TokenKind::Colon)
+    }
+
     /// Asserts that the current token is an `fn` token.
     fn expect_fn(&mut self) -> Result<Token> {
         self.consume(TokenKind::Fn)
@@ -584,11 +589,13 @@ impl<'a> Parser<'a> {
 
         let external = self.check_external();
         let name = self.parse_ident_or_err(err!(self, ExpectedFunctionName))?;
-        let type_parameters = self.parse_type_parameters()?;
+        let mut type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
 
+        self.parse_type_constraints(&mut type_parameters)?;
+
+        let block = self.parse_opt_external_block(external)?;
         let end = self.last_token()?.end();
 
         let function_def = FunctionDefinition {
@@ -644,9 +651,10 @@ impl<'a> Parser<'a> {
         let builtin = self.check_builtin();
         let name = self.parse_ident_or_err(err!(self, ExpectedClassName))?;
 
-        let type_parameters = self.parse_type_parameters()?;
-        let members = self.consume_curly_seq(|p| p.parse_class_member())?;
+        let mut type_parameters = self.parse_type_parameters()?;
+        self.parse_type_constraints(&mut type_parameters)?;
 
+        let members = self.consume_curly_seq(|p| p.parse_class_member())?;
         let end = self.last_token()?.end();
 
         let class_def = ClassDefinition {
@@ -725,12 +733,13 @@ impl<'a> Parser<'a> {
         let external = self.check_external();
 
         let name = self.parse_method_name()?;
-        let type_parameters = self.parse_type_parameters()?;
+        let mut type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
-
         let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_external_block(external)?;
 
+        self.parse_type_constraints(&mut type_parameters)?;
+
+        let block = self.parse_opt_external_block(external)?;
         let end = self.token_at(self.index - 1)?.end();
 
         let method_def = MethodDefinition {
@@ -763,7 +772,10 @@ impl<'a> Parser<'a> {
         let start = self.consume(TokenKind::Trait)?.start();
 
         let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
-        let type_parameters = self.parse_type_parameters()?;
+        let mut type_parameters = self.parse_type_parameters()?;
+
+        self.parse_type_constraints(&mut type_parameters)?;
+
         let methods = self.consume_curly_seq(|p| p.parse_trait_method())?;
         let end = self.last_token()?.end();
 
@@ -788,11 +800,13 @@ impl<'a> Parser<'a> {
             Err(_) => return Err(err!(self, ExpectedFunctionName)),
         };
 
-        let type_parameters = self.parse_type_parameters()?;
+        let mut type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_block()?;
 
+        self.parse_type_constraints(&mut type_parameters)?;
+
+        let block = self.parse_opt_block()?;
         let end = self.previous_token()?.end();
 
         Ok(TraitMethodDefinition {
@@ -888,8 +902,43 @@ impl<'a> Parser<'a> {
         self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
             Ok(TypeParameter {
                 name: p.parse_identifier()?,
+                constraints: Vec::new(),
             })
         })
+    }
+
+    /// Parses zero-or-more type constraints.
+    fn parse_type_constraints(&mut self, type_parameters: &mut Vec<TypeParameter>) -> Result<()> {
+        while self.consume_if(TokenKind::Where)?.is_some() {
+            let (name, constraint) = self.parse_type_constraint_bounds()?;
+
+            let parameter = match type_parameters.iter_mut().find(|p| p.name == name) {
+                Some(parameter) => parameter,
+                None => return Err(err!(self, ConstrainedTypeParameterNotFound, found, name.name)),
+            };
+
+            parameter.constraints = constraint;
+        }
+
+        Ok(())
+    }
+
+    /// Parses a single type constraint.
+    fn parse_type_constraint_bounds(&mut self) -> Result<(Identifier, Vec<Box<Type>>)> {
+        let name = self.parse_identifier()?;
+        let mut constraints = Vec::new();
+
+        self.expect_colon()?;
+
+        loop {
+            constraints.push(Box::new(self.parse_type()?));
+
+            if self.consume_if(TokenKind::Comma)?.is_none() {
+                break;
+            }
+        }
+
+        Ok((name, constraints))
     }
 
     fn parse_use(&mut self) -> Result<TopLevelExpression> {

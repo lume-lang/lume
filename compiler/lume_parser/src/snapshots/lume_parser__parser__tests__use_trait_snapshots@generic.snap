@@ -25,6 +25,7 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                             21..26,
                         ),
                     },
+                    constraints: [],
                 },
             ],
             methods: [
