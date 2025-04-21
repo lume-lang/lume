@@ -1,11 +1,160 @@
-use indexmap::IndexMap;
 use lume_diag::Result;
-use lume_hir::{self, ExpressionId, Identifier, Location, StatementId, SymbolName, Visibility};
-
-mod define;
-pub mod typech;
 
 const UNKNOWN_TYPE_ID: TypeId = TypeId(u32::MAX);
+
+#[derive(serde::Serialize, Debug, Clone, Eq)]
+pub struct Identifier {
+    pub name: String,
+}
+
+impl std::hash::Hash for Identifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name)
+    }
+}
+
+impl From<&'static str> for Identifier {
+    fn from(name: &'static str) -> Self {
+        Self { name: name.to_string() }
+    }
+}
+
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Identifier) -> bool {
+        self.name == other.name
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, Eq)]
+pub struct IdentifierPath {
+    pub path: Vec<Identifier>,
+}
+
+impl IdentifierPath {
+    pub fn empty() -> Self {
+        Self { path: Vec::new() }
+    }
+}
+
+impl std::hash::Hash for IdentifierPath {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.path.hash(state);
+    }
+}
+
+impl From<&[&'static str]> for IdentifierPath {
+    fn from(path: &[&'static str]) -> Self {
+        Self {
+            path: path.iter().map(|name| Identifier::from(*name)).collect(),
+        }
+    }
+}
+
+impl PartialEq for IdentifierPath {
+    fn eq(&self, other: &IdentifierPath) -> bool {
+        self.path == other.path
+    }
+}
+
+#[derive(serde::Serialize, Hash, Clone, PartialEq, Eq)]
+pub struct SymbolName {
+    /// Defines the namespace which the symbol was defined in.
+    pub namespace: IdentifierPath,
+
+    /// Defines the relative name of the symbol within it's namespace.
+    pub name: Identifier,
+}
+
+impl SymbolName {
+    pub fn from_parts(namespace: &[&'static str], name: &'static str) -> Self {
+        let namespace = IdentifierPath::from(namespace);
+        let name = Identifier::from(name);
+
+        Self { namespace, name }
+    }
+
+    pub fn i8() -> Self {
+        Self::from_parts(&["std"], "Int8")
+    }
+
+    pub fn u8() -> Self {
+        Self::from_parts(&["std"], "UInt8")
+    }
+
+    pub fn i16() -> Self {
+        Self::from_parts(&["std"], "Int8")
+    }
+
+    pub fn u16() -> Self {
+        Self::from_parts(&["std"], "UInt16")
+    }
+
+    pub fn i32() -> Self {
+        Self::from_parts(&["std"], "Int32")
+    }
+
+    pub fn u32() -> Self {
+        Self::from_parts(&["std"], "UInt32")
+    }
+
+    pub fn i64() -> Self {
+        Self::from_parts(&["std"], "Int64")
+    }
+
+    pub fn u64() -> Self {
+        Self::from_parts(&["std"], "UInt64")
+    }
+
+    pub fn iptr() -> Self {
+        Self::from_parts(&["std"], "IPtr")
+    }
+
+    pub fn uptr() -> Self {
+        Self::from_parts(&["std"], "UPtr")
+    }
+
+    pub fn float() -> Self {
+        Self::from_parts(&["std"], "Float")
+    }
+
+    pub fn double() -> Self {
+        Self::from_parts(&["std"], "Double")
+    }
+
+    pub fn string() -> Self {
+        Self::from_parts(&["std"], "String")
+    }
+
+    pub fn boolean() -> Self {
+        Self::from_parts(&["std"], "Boolean")
+    }
+}
+
+impl std::fmt::Debug for SymbolName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "'")?;
+
+        for m in &self.namespace.path {
+            write!(f, "{}.", m)?;
+        }
+
+        write!(f, "{}'", self.name.name)
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Visibility {
+    // Order matters here, since `Ord` and `PartialOrd` determines
+    // the order of enums by the order of their variants!
+    Private,
+    Public,
+}
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Parameter {
@@ -69,23 +218,16 @@ impl FunctionId {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Function {
     pub name: SymbolName,
-    pub location: Location,
     pub visibility: Visibility,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
 
 impl Function {
-    pub fn alloc(
-        ctx: &mut TypeDatabaseContext,
-        name: SymbolName,
-        visibility: Visibility,
-        location: Location,
-    ) -> FunctionId {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, visibility: Visibility) -> FunctionId {
         let id = ctx.functions.len();
         let function = Function {
             name,
-            location,
             visibility,
             parameters: Parameters::new(),
             return_type: TypeRef::unknown(),
@@ -133,28 +275,18 @@ impl PropertyId {
 pub struct Property {
     pub visibility: Visibility,
     pub owner: TypeId,
-    pub name: Identifier,
+    pub name: String,
     pub property_type: TypeRef,
-    pub default_value: Option<ExpressionId>,
-    pub location: Location,
 }
 
 impl Property {
-    pub fn alloc(
-        ctx: &mut TypeDatabaseContext,
-        owner: TypeId,
-        name: Identifier,
-        visibility: Visibility,
-        location: Location,
-    ) -> PropertyId {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, owner: TypeId, name: String, visibility: Visibility) -> PropertyId {
         let id = ctx.properties.len();
         let property = Property {
             visibility,
             owner,
             name,
             property_type: TypeRef::unknown(),
-            default_value: None,
-            location,
         };
 
         ctx.properties.push(property);
@@ -199,20 +331,13 @@ impl MethodId {
 pub struct Method {
     pub visibility: Visibility,
     pub callee: TypeRef,
-    pub name: Identifier,
+    pub name: String,
     pub parameters: Parameters,
     pub return_type: TypeRef,
-    pub location: Location,
 }
 
 impl Method {
-    pub fn alloc(
-        ctx: &mut TypeDatabaseContext,
-        class: TypeId,
-        name: Identifier,
-        visibility: Visibility,
-        location: Location,
-    ) -> MethodId {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: String, visibility: Visibility) -> MethodId {
         let id = ctx.methods.len();
         let method = Method {
             visibility,
@@ -220,7 +345,6 @@ impl Method {
             name,
             parameters: Parameters::new(),
             return_type: TypeRef::unknown(),
-            location,
         };
 
         ctx.methods.push(method);
@@ -231,25 +355,22 @@ impl Method {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Class {
     pub name: SymbolName,
-    pub location: Location,
 }
 
 impl Class {
-    pub fn new(name: SymbolName, location: Location) -> Self {
-        Self { name, location }
+    pub fn new(name: SymbolName) -> Self {
+        Self { name }
     }
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Trait {
     pub name: SymbolName,
-    pub location: Location,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Enum {
     pub name: SymbolName,
-    pub location: Location,
 }
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
@@ -345,17 +466,15 @@ pub struct Type {
     pub kind: TypeKind,
     pub transport: TypeTransport,
     pub name: SymbolName,
-    pub location: Location,
 }
 
 impl Type {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, kind: TypeKind, location: Location) -> TypeId {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, kind: TypeKind) -> TypeId {
         let id = TypeId(ctx.types.len() as u32);
         let method = Type {
             kind,
             transport: TypeTransport::Reference,
             name,
-            location,
         };
 
         ctx.types.push(method);
@@ -363,24 +482,18 @@ impl Type {
     }
 
     pub fn reference_type(name: SymbolName) -> Self {
-        let location = Location::empty();
-
         Type {
-            kind: TypeKind::Class(Box::new(Class::new(name.clone(), location.clone()))),
+            kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Reference,
             name,
-            location,
         }
     }
 
     pub fn value_type(name: SymbolName) -> Self {
-        let location = Location::empty();
-
         Type {
-            kind: TypeKind::Class(Box::new(Class::new(name.clone(), location.clone()))),
+            kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Copy,
             name,
-            location,
         }
     }
 }
@@ -402,17 +515,6 @@ impl TypeRef {
     pub fn unknown() -> Self {
         Self::new(UNKNOWN_TYPE_ID)
     }
-
-    pub fn lower_from(ctx: &TypeDatabaseContext, ty: &lume_hir::Type) -> Self {
-        match ty {
-            lume_hir::Type::Scalar(t) => {
-                let found_type = TypeId::find(ctx, t.name.clone());
-
-                Self::new(found_type)
-            }
-            _ => todo!(),
-        }
-    }
 }
 
 #[derive(serde::Serialize, Debug)]
@@ -421,12 +523,6 @@ pub struct TypeDatabaseContext {
     pub properties: Vec<Property>,
     pub methods: Vec<Method>,
     pub functions: Vec<Function>,
-
-    /// Defines a mapping between expressions and their resolved types.
-    pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
-
-    /// Defines a mapping between statements and their resolved types.
-    pub resolved_stmts: IndexMap<StatementId, TypeRef>,
 }
 
 impl TypeDatabaseContext {
@@ -436,148 +532,19 @@ impl TypeDatabaseContext {
             properties: Vec::new(),
             methods: Vec::new(),
             functions: Vec::new(),
-            resolved_exprs: IndexMap::new(),
-            resolved_stmts: IndexMap::new(),
         }
     }
 
-    pub fn type_of_expr(&self, id: ExpressionId) -> &TypeRef {
-        self.resolved_exprs.get(&id).unwrap()
-    }
-
-    pub fn type_of_stmt(&self, id: StatementId) -> &TypeRef {
-        self.resolved_stmts.get(&id).unwrap()
-    }
-
-    fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
-        Ok(())
-    }
-}
-
-#[derive(serde::Serialize, Debug)]
-pub struct ThirBuildCtx {
-    /// Defines the type database context.
-    tcx: TypeDatabaseContext,
-}
-
-impl ThirBuildCtx {
-    /// Creates a new empty THIR build context.
-    pub fn new() -> Self {
-        ThirBuildCtx {
-            tcx: TypeDatabaseContext::new(),
-        }
-    }
-
-    /// Retrieves the type context from the build context.
-    pub fn tcx(&self) -> &TypeDatabaseContext {
-        &self.tcx
-    }
-
-    /// Retrieves the type context from the build context.
-    pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
-        &mut self.tcx
-    }
-
-    /// Attempts to infer the types of all expressions within the HIR maps.
-    pub fn infer(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
-        self.define_types(hir)?;
-
-        self.infer_exprs(hir)?;
-
-        Ok(())
-    }
-
-    /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_stmt<'a>(
-        &'a self,
-        hir: &'a lume_hir::map::Map,
-        id: lume_hir::StatementId,
-    ) -> &'a lume_hir::Statement {
-        match hir.statements().get(&id) {
-            Some(expr) => expr,
-            None => panic!("no statement with given ID found: {:?}", id),
-        }
-    }
-
-    /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_expr<'a>(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
-        match hir.expressions().get(&id) {
-            Some(expr) => expr,
-            None => panic!("no expression with given ID found: {:?}", id),
-        }
-    }
-
-    /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
-    pub(crate) fn hir_expect_var_stmt<'a>(
-        &'a self,
-        hir: &'a lume_hir::map::Map,
-        id: lume_hir::StatementId,
-    ) -> &'a lume_hir::VariableDeclaration {
-        let stmt = self.hir_stmt(hir, id);
-
-        match &stmt.kind {
-            lume_hir::StatementKind::Variable(decl) => decl,
-            t => panic!("invalid variable reference type: {:?}", t),
-        }
-    }
-
-    /// Attempt to infer the types of all expressions in the current module.
-    ///
-    /// The resolved types are stored in the `resolved_exprs` field of the `TypeDatabaseContext`.
-    pub fn infer_exprs(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
-        for (id, expr) in hir.expressions() {
-            let type_ref = self.type_of(hir, expr.id)?;
-
-            self.tcx.resolved_exprs.insert(*id, type_ref);
+    pub fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
+        if from != to {
+            // return Err(typech::errors::MismatchedTypes {
+            //     range: from.range(),
+            //     expected: from.clone(),
+            //     found: to.clone(),
+            // }
+            // .into());
         }
 
         Ok(())
-    }
-
-    /// Returns the *type* of the expression with the given [`ExpressionId`].
-    ///
-    /// ### Panics
-    ///
-    /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
-    pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
-        let expr = self.hir_expr(hir, def);
-
-        match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
-            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(&*e),
-            lume_hir::ExpressionKind::Variable(var) => {
-                let decl = self.hir_expect_var_stmt(hir, var.reference);
-
-                Ok(self.type_of(hir, decl.value.id)?)
-            }
-            k => todo!("unhandled node type in type_of(): {:?}", k),
-        }
-    }
-
-    fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
-        let type_id = match &lit.kind {
-            lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => TypeId::find(&self.tcx, SymbolName::i8()),
-                lume_hir::IntKind::U8 => TypeId::find(&self.tcx, SymbolName::u8()),
-                lume_hir::IntKind::I16 => TypeId::find(&self.tcx, SymbolName::i16()),
-                lume_hir::IntKind::U16 => TypeId::find(&self.tcx, SymbolName::u16()),
-                lume_hir::IntKind::I32 => TypeId::find(&self.tcx, SymbolName::i32()),
-                lume_hir::IntKind::U32 => TypeId::find(&self.tcx, SymbolName::u32()),
-                lume_hir::IntKind::I64 => TypeId::find(&self.tcx, SymbolName::i64()),
-                lume_hir::IntKind::U64 => TypeId::find(&self.tcx, SymbolName::u64()),
-                lume_hir::IntKind::IPtr => TypeId::find(&self.tcx, SymbolName::iptr()),
-                lume_hir::IntKind::UPtr => TypeId::find(&self.tcx, SymbolName::uptr()),
-            },
-            lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => TypeId::find(&self.tcx, SymbolName::float()),
-                lume_hir::FloatKind::F64 => TypeId::find(&self.tcx, SymbolName::double()),
-            },
-            lume_hir::LiteralKind::String(_) => TypeId::find(&self.tcx, SymbolName::string()),
-            lume_hir::LiteralKind::Boolean(_) => TypeId::find(&self.tcx, SymbolName::boolean()),
-        };
-
-        Ok(TypeRef::new(type_id))
     }
 }

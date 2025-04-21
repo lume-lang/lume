@@ -4,7 +4,7 @@ expression: "parse_err(\"fn test<T1 T2>() -> void {}\")"
 ---
 UnexpectedToken {
     source: NamedSource {
-        name: "<test>",
+        name: "<temp>",
         content: "fn test<T1 T2>() -> void {}",
     },
     range: 11..13,

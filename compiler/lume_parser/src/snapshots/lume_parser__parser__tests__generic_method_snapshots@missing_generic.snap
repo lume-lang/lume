@@ -4,7 +4,7 @@ expression: "parse_err(\"class Test { fn test<T1,>() -> void {} }\")"
 ---
 ExpectedIdentifier {
     source: NamedSource {
-        name: "<test>",
+        name: "<temp>",
         content: "class Test { fn test<T1,>() -> void {} }",
     },
     range: 24..25,

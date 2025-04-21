@@ -276,7 +276,7 @@ dependencies = [
  "lume_diag",
  "lume_hir",
  "lume_parser",
- "lume_types",
+ "lume_typech",
  "rust-embed",
 ]
 
@@ -293,6 +293,7 @@ dependencies = [
  "lume_diag_macros",
  "lume_macros",
  "lume_parser",
+ "lume_types",
  "serde",
 ]
 
@@ -317,13 +318,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "lume_types"
+name = "lume_typech"
 version = "0.1.0"
 dependencies = [
  "indexmap",
  "lume_diag",
  "lume_diag_macros",
  "lume_hir",
+ "lume_types",
+ "serde",
+]
+
+[[package]]
+name = "lume_types"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "lume_diag",
+ "lume_diag_macros",
  "serde",
 ]
 

@@ -4,7 +4,7 @@ expression: "parse_err(\"fn external main() -> void {}\")"
 ---
 ExternalFunctionBody {
     source: NamedSource {
-        name: "<test>",
+        name: "<temp>",
         content: "fn external main() -> void {}",
     },
     range: 27..28,

@@ -202,10 +202,7 @@ mod tests {
     fn var(name: &str) -> VariableDeclaration {
         VariableDeclaration {
             id: StatementId::empty(),
-            name: Identifier {
-                name: name.to_string(),
-                location: Location::empty(),
-            },
+            name: Identifier { name: name.to_string() },
             declared_type: None,
             value: Expression {
                 id: ExpressionId::empty(),

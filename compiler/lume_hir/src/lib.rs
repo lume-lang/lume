@@ -1,5 +1,6 @@
 use crate::id::{ModuleFileId, ModuleId, hash_id};
 use lume_macros::Node;
+use lume_types::{Identifier, IdentifierPath, SymbolName, TypeId, Visibility};
 
 mod errors;
 pub mod id;
@@ -153,161 +154,6 @@ pub struct Block {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Debug, Clone, Eq)]
-pub struct Identifier {
-    pub name: String,
-    pub location: Location,
-}
-
-impl std::hash::Hash for Identifier {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
-
-impl std::fmt::Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)
-    }
-}
-
-impl From<&'static str> for Identifier {
-    fn from(name: &'static str) -> Self {
-        Self {
-            name: name.to_string(),
-            location: Location::empty(),
-        }
-    }
-}
-
-impl PartialEq for Identifier {
-    fn eq(&self, other: &Identifier) -> bool {
-        self.name == other.name
-    }
-}
-
-#[derive(serde::Serialize, Debug, Clone, Eq)]
-pub struct IdentifierPath {
-    pub path: Vec<Identifier>,
-    pub location: Location,
-}
-
-impl IdentifierPath {
-    pub fn empty() -> Self {
-        Self {
-            path: Vec::new(),
-            location: Location::empty(),
-        }
-    }
-}
-
-impl std::hash::Hash for IdentifierPath {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.path.hash(state);
-    }
-}
-
-impl From<&[&'static str]> for IdentifierPath {
-    fn from(path: &[&'static str]) -> Self {
-        Self {
-            path: path.iter().map(|name| Identifier::from(*name)).collect(),
-            location: Location::empty(),
-        }
-    }
-}
-
-impl PartialEq for IdentifierPath {
-    fn eq(&self, other: &IdentifierPath) -> bool {
-        self.path == other.path
-    }
-}
-
-#[derive(serde::Serialize, Hash, Clone, PartialEq, Eq)]
-pub struct SymbolName {
-    /// Defines the namespace which the symbol was defined in.
-    pub namespace: IdentifierPath,
-
-    /// Defines the relative name of the symbol within it's namespace.
-    pub name: Identifier,
-}
-
-impl SymbolName {
-    pub fn from_parts(namespace: &[&'static str], name: &'static str) -> Self {
-        let namespace = IdentifierPath::from(namespace);
-        let name = Identifier::from(name);
-
-        Self { namespace, name }
-    }
-
-    pub fn i8() -> Self {
-        Self::from_parts(&["std"], "Int8")
-    }
-
-    pub fn u8() -> Self {
-        Self::from_parts(&["std"], "UInt8")
-    }
-
-    pub fn i16() -> Self {
-        Self::from_parts(&["std"], "Int8")
-    }
-
-    pub fn u16() -> Self {
-        Self::from_parts(&["std"], "UInt16")
-    }
-
-    pub fn i32() -> Self {
-        Self::from_parts(&["std"], "Int32")
-    }
-
-    pub fn u32() -> Self {
-        Self::from_parts(&["std"], "UInt32")
-    }
-
-    pub fn i64() -> Self {
-        Self::from_parts(&["std"], "Int64")
-    }
-
-    pub fn u64() -> Self {
-        Self::from_parts(&["std"], "UInt64")
-    }
-
-    pub fn iptr() -> Self {
-        Self::from_parts(&["std"], "IPtr")
-    }
-
-    pub fn uptr() -> Self {
-        Self::from_parts(&["std"], "UPtr")
-    }
-
-    pub fn float() -> Self {
-        Self::from_parts(&["std"], "Float")
-    }
-
-    pub fn double() -> Self {
-        Self::from_parts(&["std"], "Double")
-    }
-
-    pub fn string() -> Self {
-        Self::from_parts(&["std"], "String")
-    }
-
-    pub fn boolean() -> Self {
-        Self::from_parts(&["std"], "Boolean")
-    }
-}
-
-impl std::fmt::Debug for SymbolName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "'")?;
-
-        for m in &self.namespace.path {
-            write!(f, "{}.", m)?;
-        }
-
-        write!(f, "{}'", self.name.name)
-    }
-}
-
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum Symbol {
     Function(Box<FunctionDefinition>),
@@ -381,14 +227,6 @@ pub struct Parameter {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Visibility {
-    // Order matters here, since `Ord` and `PartialOrd` determines
-    // the order of enums by the order of their variants!
-    Private,
-    Public,
-}
-
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
@@ -456,6 +294,7 @@ impl AliasDefinition {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ClassDefinition {
     pub id: ItemId,
+    pub type_id: Option<TypeId>,
     pub name: SymbolName,
     pub builtin: bool,
     pub members: Vec<ClassMember>,
@@ -829,17 +668,12 @@ pub struct Range {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub id: ExpressionId,
     pub reference: StatementId,
     pub name: Identifier,
-}
-
-impl Node for Variable {
-    fn location(&self) -> &Location {
-        &self.name.location
-    }
+    pub location: Location,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

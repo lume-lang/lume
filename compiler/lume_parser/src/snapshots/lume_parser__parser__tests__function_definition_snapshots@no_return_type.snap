@@ -4,7 +4,7 @@ expression: "parse_err(\"fn main() {}\")"
 ---
 UnexpectedToken {
     source: NamedSource {
-        name: "<test>",
+        name: "<temp>",
         content: "fn main() {}",
     },
     range: 10..11,

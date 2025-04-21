@@ -12,7 +12,7 @@ pub struct Map {
     pub(crate) files: IndexMap<ModuleFileId, NamedSource>,
 
     /// Defines all the top-level items within the module.
-    pub(crate) items: IndexMap<ItemId, Symbol>,
+    pub items: IndexMap<ItemId, Symbol>,
 
     /// Defines all the local statements within the current scope.
     pub(crate) statements: IndexMap<StatementId, Statement>,

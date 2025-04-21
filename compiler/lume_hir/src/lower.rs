@@ -152,10 +152,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     }
 
     fn identifier(&self, expr: ast::Identifier) -> hir::Identifier {
-        let symbol = hir::Identifier {
-            name: expr.name,
-            location: self.location(expr.location),
-        };
+        let symbol = hir::Identifier { name: expr.name };
 
         symbol
     }
@@ -163,10 +160,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     fn identifier_path(&self, expr: ast::IdentifierPath) -> hir::IdentifierPath {
         let path = expr.path.into_iter().map(|p| self.identifier(p)).collect::<Vec<_>>();
 
-        hir::IdentifierPath {
-            path,
-            location: self.location(expr.location),
-        }
+        hir::IdentifierPath { path }
     }
 
     fn location(&self, expr: ast::Location) -> hir::Location {
@@ -585,6 +579,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 id,
                 reference: local_id.id,
                 name: self.identifier(expr.name.clone()),
+                location,
             })),
         })
     }
@@ -676,6 +671,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Class(Box::new(
             hir::ClassDefinition {
                 id,
+                type_id: None,
                 name,
                 builtin,
                 members,
