@@ -232,12 +232,33 @@ impl DefineTypeConstraints<'_> {
                 let type_params = type_id.type_params(&self.ctx.tcx).clone();
 
                 self.define_type_constraints(&**class_def, &type_params)?;
+
+                for method in class_def.methods() {
+                    let method_id = method.method_id.unwrap();
+                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+
+                    self.define_type_constraints(method, &type_params)?;
+                }
+
+                for method in class_def.external_methods() {
+                    let method_id = method.method_id.unwrap();
+                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+
+                    self.define_type_constraints(method, &type_params)?;
+                }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
                 let type_params = type_id.type_params(&self.ctx.tcx).clone();
 
                 self.define_type_constraints(&**trait_def, &type_params)?;
+
+                for method in &trait_def.methods {
+                    let method_id = method.method_id.unwrap();
+                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+
+                    self.define_type_constraints(method, &type_params)?;
+                }
             }
             _ => {}
         };

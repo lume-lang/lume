@@ -463,6 +463,12 @@ pub struct TraitMethodDefinition {
     pub location: Location,
 }
 
+impl WithTypeParameters for TraitMethodDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
     pub id: ItemId,

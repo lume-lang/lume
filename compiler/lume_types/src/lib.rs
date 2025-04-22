@@ -335,6 +335,10 @@ impl MethodId {
         self.get_mut(ctx).parameters.push(name, ty)
     }
 
+    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
+        &self.get(ctx).type_parameters
+    }
+
     pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
         let id = TypeParameter::alloc(ctx, name);
         self.get_mut(ctx).type_parameters.push(id);
