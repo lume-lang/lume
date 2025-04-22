@@ -148,38 +148,73 @@ impl DefineTypeParameters<'_> {
             lume_hir::TypeDefinition::Class(class) => {
                 let type_id = class.type_id.unwrap();
 
-                for type_param in &class.type_parameters {
-                    type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                for type_param in &mut class.type_parameters {
+                    let type_param_id = type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+
+                    type_param.type_param_id = Some(type_param_id);
+                    type_param.type_id = Some(Type::type_parameter(
+                        &mut self.ctx.tcx,
+                        type_param_id,
+                        type_param.name.clone(),
+                    ));
                 }
 
-                for method in &class.methods() {
+                for method in &mut class.methods_mut() {
                     let method_id = method.method_id.unwrap();
 
-                    for type_param in &method.type_parameters {
-                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    for type_param in &mut method.type_parameters {
+                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+
+                        type_param.type_param_id = Some(type_param_id);
+                        type_param.type_id = Some(Type::type_parameter(
+                            &mut self.ctx.tcx,
+                            type_param_id,
+                            type_param.name.clone(),
+                        ));
                     }
                 }
 
-                for method in &class.external_methods() {
+                for method in &mut class.external_methods_mut() {
                     let method_id = method.method_id.unwrap();
 
-                    for type_param in &method.type_parameters {
-                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    for type_param in &mut method.type_parameters {
+                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+
+                        type_param.type_param_id = Some(type_param_id);
+                        type_param.type_id = Some(Type::type_parameter(
+                            &mut self.ctx.tcx,
+                            type_param_id,
+                            type_param.name.clone(),
+                        ));
                     }
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
 
-                for type_param in &trait_def.type_parameters {
-                    type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                for type_param in &mut trait_def.type_parameters {
+                    let type_param_id = type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+
+                    type_param.type_param_id = Some(type_param_id);
+                    type_param.type_id = Some(Type::type_parameter(
+                        &mut self.ctx.tcx,
+                        type_param_id,
+                        type_param.name.clone(),
+                    ));
                 }
 
-                for method in &trait_def.methods {
+                for method in &mut trait_def.methods {
                     let method_id = method.method_id.unwrap();
 
-                    for type_param in &method.type_parameters {
-                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    for type_param in &mut method.type_parameters {
+                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+
+                        type_param.type_param_id = Some(type_param_id);
+                        type_param.type_id = Some(Type::type_parameter(
+                            &mut self.ctx.tcx,
+                            type_param_id,
+                            type_param.name.clone(),
+                        ));
                     }
                 }
             }
@@ -287,7 +322,7 @@ impl DefineTypeConstraints<'_> {
             let type_param = &ty.type_params()[idx];
 
             for type_constraint in &type_param.constraints {
-                let lowered_type_constraint = self.ctx.lower_type_ref(&type_constraint);
+                let lowered_type_constraint = self.ctx.mk_type_ref(&type_constraint);
 
                 type_param_id.add_constraint(&mut self.ctx.tcx, lowered_type_constraint);
             }
@@ -334,8 +369,11 @@ impl DefineMethodBodies<'_> {
                 for property in class.properties() {
                     let property_id = property.prop_id.unwrap();
 
-                    let property_type = self.ctx.lower_type_ref(&property.property_type);
-                    property_id.set_property_type(&mut self.ctx.tcx, property_type);
+                    let type_ref = self
+                        .ctx
+                        .mk_type_ref_generic(&property.property_type, &class.type_parameters);
+
+                    property_id.set_property_type(&mut self.ctx.tcx, type_ref);
                 }
 
                 for method in class.methods() {
@@ -343,12 +381,19 @@ impl DefineMethodBodies<'_> {
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
-                        let type_ref = self.ctx.lower_type_ref(&param.param_type);
+                        let type_ref = self.ctx.mk_type_ref_generic(
+                            &param.param_type,
+                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                        );
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
 
-                    let return_type = self.ctx.lower_type_ref(&method.return_type);
+                    let return_type = self.ctx.mk_type_ref_generic(
+                        &method.return_type,
+                        &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                    );
+
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
 
@@ -357,12 +402,19 @@ impl DefineMethodBodies<'_> {
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
-                        let type_ref = self.ctx.lower_type_ref(&param.param_type);
+                        let type_ref = self.ctx.mk_type_ref_generic(
+                            &param.param_type,
+                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                        );
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
 
-                    let return_type = self.ctx.lower_type_ref(&method.return_type);
+                    let return_type = self.ctx.mk_type_ref_generic(
+                        &method.return_type,
+                        &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                    );
+
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
             }
@@ -372,12 +424,19 @@ impl DefineMethodBodies<'_> {
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
-                        let type_ref = self.ctx.lower_type_ref(&param.param_type);
+                        let type_ref = self.ctx.mk_type_ref_generic(
+                            &param.param_type,
+                            &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                        );
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
 
-                    let return_type = self.ctx.lower_type_ref(&method.return_type);
+                    let return_type = self.ctx.mk_type_ref_generic(
+                        &method.return_type,
+                        &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                    );
+
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
             }
@@ -392,12 +451,12 @@ impl DefineMethodBodies<'_> {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.ctx.lower_type_ref(&param.param_type);
+            let type_ref = self.ctx.mk_type_ref_generic(&param.param_type, &func.type_parameters);
 
             function_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
         }
 
-        let return_type = self.ctx.lower_type_ref(&func.return_type);
+        let return_type = self.ctx.mk_type_ref_generic(&func.return_type, &func.type_parameters);
         function_id.set_return_type(&mut self.ctx.tcx, return_type);
 
         Ok(())

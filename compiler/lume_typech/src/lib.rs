@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use lume_diag::Result;
-use lume_hir::{ExpressionId, StatementId};
+use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 
 mod define;
@@ -60,14 +60,20 @@ impl ThirBuildCtx {
     }
 
     /// Lowers the given HIR type into a type reference.
-    pub fn lower_type_ref(&self, ty: &lume_hir::Type) -> TypeRef {
+    pub fn mk_type_ref(&self, ty: &lume_hir::Type) -> TypeRef {
+        self.mk_type_ref_generic(ty, &[])
+    }
+
+    /// Lowers the given HIR type into a type reference, which also looks
+    /// up the given type parameters.
+    pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> TypeRef {
         match ty {
             lume_hir::Type::Scalar(t) => {
-                let found_type = TypeId::find(&self.tcx, t.name.clone());
+                let found_type = self.find_type_ref_ctx(&t.name, type_params).unwrap();
                 let mut type_ref = TypeRef::new(found_type);
 
                 for type_param in &t.type_params {
-                    let type_param_ref = self.lower_type_ref(type_param);
+                    let type_param_ref = self.mk_type_ref(type_param);
                     type_ref.push_type_argument(type_param_ref);
                 }
 
@@ -75,6 +81,18 @@ impl ThirBuildCtx {
             }
             _ => todo!(),
         }
+    }
+
+    fn find_type_ref_ctx(&self, name: &SymbolName, type_params: &[TypeParameter]) -> Option<TypeId> {
+        // First, attempt to find the type name within the given type parameters.
+        for type_param in type_params {
+            if type_param.name == name.name {
+                return Some(type_param.type_id.unwrap());
+            }
+        }
+
+        // Afterwards, attempt to find the type name within the type context.
+        TypeId::find(&self.tcx, name)
     }
 
     /// Gets the HIR expression with the given ID within the source file.
@@ -149,23 +167,23 @@ impl ThirBuildCtx {
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
         let type_id = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => TypeId::find(&self.tcx, SymbolName::i8()),
-                lume_hir::IntKind::U8 => TypeId::find(&self.tcx, SymbolName::u8()),
-                lume_hir::IntKind::I16 => TypeId::find(&self.tcx, SymbolName::i16()),
-                lume_hir::IntKind::U16 => TypeId::find(&self.tcx, SymbolName::u16()),
-                lume_hir::IntKind::I32 => TypeId::find(&self.tcx, SymbolName::i32()),
-                lume_hir::IntKind::U32 => TypeId::find(&self.tcx, SymbolName::u32()),
-                lume_hir::IntKind::I64 => TypeId::find(&self.tcx, SymbolName::i64()),
-                lume_hir::IntKind::U64 => TypeId::find(&self.tcx, SymbolName::u64()),
-                lume_hir::IntKind::IPtr => TypeId::find(&self.tcx, SymbolName::iptr()),
-                lume_hir::IntKind::UPtr => TypeId::find(&self.tcx, SymbolName::uptr()),
+                lume_hir::IntKind::I8 => TypeId::find_or_err(&self.tcx, &SymbolName::i8()),
+                lume_hir::IntKind::U8 => TypeId::find_or_err(&self.tcx, &SymbolName::u8()),
+                lume_hir::IntKind::I16 => TypeId::find_or_err(&self.tcx, &SymbolName::i16()),
+                lume_hir::IntKind::U16 => TypeId::find_or_err(&self.tcx, &SymbolName::u16()),
+                lume_hir::IntKind::I32 => TypeId::find_or_err(&self.tcx, &SymbolName::i32()),
+                lume_hir::IntKind::U32 => TypeId::find_or_err(&self.tcx, &SymbolName::u32()),
+                lume_hir::IntKind::I64 => TypeId::find_or_err(&self.tcx, &SymbolName::i64()),
+                lume_hir::IntKind::U64 => TypeId::find_or_err(&self.tcx, &SymbolName::u64()),
+                lume_hir::IntKind::IPtr => TypeId::find_or_err(&self.tcx, &SymbolName::iptr()),
+                lume_hir::IntKind::UPtr => TypeId::find_or_err(&self.tcx, &SymbolName::uptr()),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => TypeId::find(&self.tcx, SymbolName::float()),
-                lume_hir::FloatKind::F64 => TypeId::find(&self.tcx, SymbolName::double()),
+                lume_hir::FloatKind::F32 => TypeId::find_or_err(&self.tcx, &SymbolName::float()),
+                lume_hir::FloatKind::F64 => TypeId::find_or_err(&self.tcx, &SymbolName::double()),
             },
-            lume_hir::LiteralKind::String(_) => TypeId::find(&self.tcx, SymbolName::string()),
-            lume_hir::LiteralKind::Boolean(_) => TypeId::find(&self.tcx, SymbolName::boolean()),
+            lume_hir::LiteralKind::String(_) => TypeId::find_or_err(&self.tcx, &SymbolName::string()),
+            lume_hir::LiteralKind::Boolean(_) => TypeId::find_or_err(&self.tcx, &SymbolName::boolean()),
         };
 
         Ok(TypeRef::new(type_id))

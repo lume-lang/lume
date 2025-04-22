@@ -440,6 +440,9 @@ pub enum TypeKind {
     /// The type is an alias to some other type.
     Alias(Box<Alias>),
 
+    /// The type is a reference to a type parameter in the current scope.
+    TypeParameter(TypeParameterId),
+
     /// Represents a non-value.
     Void,
 }
@@ -465,9 +468,16 @@ impl TypeId {
         &mut ctx.types[self.0 as usize]
     }
 
-    pub fn find(ctx: &TypeDatabaseContext, name: SymbolName) -> TypeId {
-        match ctx.types.iter().position(|t| t.name == name) {
-            Some(index) => TypeId(index as u32),
+    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<TypeId> {
+        match ctx.types.iter().position(|t| t.name == *name) {
+            Some(index) => Some(TypeId(index as u32)),
+            None => None,
+        }
+    }
+
+    pub fn find_or_err(ctx: &TypeDatabaseContext, name: &SymbolName) -> TypeId {
+        match Self::find(ctx, name) {
+            Some(id) => id,
             None => panic!("no type of name {:?} was found", name),
         }
     }
@@ -591,6 +601,17 @@ impl Type {
             transport: TypeTransport::Copy,
             name,
         }
+    }
+
+    pub fn type_parameter(ctx: &mut TypeDatabaseContext, id: TypeParameterId, name: Identifier) -> TypeId {
+        Type::alloc(
+            ctx,
+            SymbolName {
+                namespace: IdentifierPath::empty(),
+                name,
+            },
+            TypeKind::TypeParameter(id),
+        )
     }
 }
 

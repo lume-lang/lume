@@ -996,6 +996,8 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
                 Ok(hir::TypeParameter {
                     name,
+                    type_id: None,
+                    type_param_id: None,
                     constraints,
                     location,
                 })

@@ -1,6 +1,8 @@
 use crate::id::{ModuleFileId, ModuleId, hash_id};
 use lume_macros::Node;
-use lume_types::{FunctionId, Identifier, IdentifierPath, MethodId, PropertyId, SymbolName, TypeId, Visibility};
+use lume_types::{
+    FunctionId, Identifier, IdentifierPath, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility,
+};
 
 mod errors;
 pub mod id;
@@ -760,6 +762,8 @@ pub struct Variable {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct TypeParameter {
     pub name: Identifier,
+    pub type_id: Option<TypeId>,
+    pub type_param_id: Option<TypeParameterId>,
     pub constraints: Vec<Box<Type>>,
     pub location: Location,
 }
