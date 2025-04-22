@@ -1,4 +1,5 @@
 use lume_diag::Result;
+use lume_types::TypeRef;
 
 use crate::ThirBuildCtx;
 use stmt::VarDeclTypeChecker;
@@ -16,6 +17,11 @@ impl ThirBuildCtx {
     pub fn typecheck(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
         VarDeclTypeChecker::run(hir, self)?;
 
+        Ok(())
+    }
+
+    /// Checks whether the given type references are compatible.
+    pub(crate) fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<()> {
         Ok(())
     }
 }
