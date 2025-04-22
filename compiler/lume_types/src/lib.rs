@@ -479,7 +479,15 @@ impl TypeId {
     }
 
     pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<TypeId> {
-        match ctx.types.iter().position(|t| t.name == *name) {
+        // We intentionally ignore type parameters when finding types by name,
+        // since they might not refer to a type parameter which is valid under the
+        // current scope. Type parameters are only added as a type so they can be
+        // referenced by other types.
+        match ctx
+            .types
+            .iter()
+            .position(|t| t.name == *name && !matches!(t.kind, TypeKind::TypeParameter(_)))
+        {
             Some(index) => Some(TypeId(index as u32)),
             None => None,
         }
