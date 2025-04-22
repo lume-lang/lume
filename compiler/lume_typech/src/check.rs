@@ -6,7 +6,7 @@ use stmt::VarDeclTypeChecker;
 pub(crate) mod errors;
 mod stmt;
 
-pub(self) trait TypeCheckerPass<'a> {
+pub trait TypeCheckerPass<'a> {
     fn run(hir: &'a lume_hir::map::Map, tcx: &'a mut ThirBuildCtx) -> Result<()>
     where
         Self: Sized;

@@ -3,8 +3,8 @@ use lume_diag::Result;
 use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 
-mod define;
-pub mod typech;
+mod check;
+mod infer;
 
 #[derive(serde::Serialize, Debug)]
 pub struct ThirBuildCtx {

@@ -1,6 +1,6 @@
 use lume_diag::Result;
 
-use crate::{ThirBuildCtx, typech::TypeCheckerPass};
+use crate::{ThirBuildCtx, check::TypeCheckerPass};
 
 pub(super) struct VarDeclTypeChecker;
 
