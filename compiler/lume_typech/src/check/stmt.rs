@@ -22,7 +22,7 @@ impl VarDeclTypeChecker {
         let value_expr = tcx.type_of_expr(stmt.value.id);
 
         let resolved_type = if let Some(declared_type) = &stmt.declared_type {
-            let declared_type_ref = tcx.mk_type_ref(declared_type);
+            let declared_type_ref = tcx.mk_type_ref(declared_type)?;
 
             tcx.check_type_compatibility(value_expr, &declared_type_ref)?;
 

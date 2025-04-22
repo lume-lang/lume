@@ -90,7 +90,7 @@ impl DefineTypeConstraints<'_> {
             let type_param = &ty.type_params()[idx];
 
             for type_constraint in &type_param.constraints {
-                let lowered_type_constraint = self.ctx.mk_type_ref(&type_constraint);
+                let lowered_type_constraint = self.ctx.mk_type_ref(&type_constraint)?;
 
                 type_param_id.add_constraint(&mut self.ctx.tcx, lowered_type_constraint);
             }

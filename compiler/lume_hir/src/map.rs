@@ -4,12 +4,26 @@ use lume_diag::source::NamedSource;
 use crate::*;
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct SourceMap {
+    /// Defines all the source files which are part of the module.
+    pub mapping: IndexMap<ModuleFileId, NamedSource>,
+}
+
+impl SourceMap {
+    pub fn new() -> Self {
+        Self {
+            mapping: IndexMap::new(),
+        }
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Map {
     /// Defines which module this map belongs to.
     pub(crate) module: ModuleId,
 
     /// Defines all the source files which are part of the module.
-    pub(crate) files: IndexMap<ModuleFileId, NamedSource>,
+    pub files: SourceMap,
 
     /// Defines all the top-level items within the module.
     pub items: IndexMap<ItemId, Symbol>,
@@ -26,7 +40,7 @@ impl Map {
     pub fn empty(module: ModuleId) -> Self {
         Self {
             module,
-            files: IndexMap::new(),
+            files: SourceMap::new(),
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),
@@ -35,12 +49,12 @@ impl Map {
 
     /// Gets all the files within the HIR map.
     pub fn files(&self) -> &IndexMap<ModuleFileId, NamedSource> {
-        &self.files
+        &self.files.mapping
     }
 
     /// Gets the file within the HIR map with the given ID.
     pub fn file(&self, id: ModuleFileId) -> Option<&NamedSource> {
-        self.files.get(&id)
+        self.files().get(&id)
     }
 
     /// Gets all the items within the HIR map.

@@ -87,7 +87,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         drop(lower);
 
-        map.files.insert(file, source);
+        map.files.mapping.insert(file, source);
 
         Ok(())
     }

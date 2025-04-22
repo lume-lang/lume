@@ -42,7 +42,7 @@ impl DefineMethodBodies<'_> {
 
                     let type_ref = self
                         .ctx
-                        .mk_type_ref_generic(&property.property_type, &class.type_parameters);
+                        .mk_type_ref_generic(&property.property_type, &class.type_parameters)?;
 
                     property_id.set_property_type(&mut self.ctx.tcx, type_ref);
                 }
@@ -55,7 +55,7 @@ impl DefineMethodBodies<'_> {
                         let type_ref = self.ctx.mk_type_ref_generic(
                             &param.param_type,
                             &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                        );
+                        )?;
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
@@ -63,7 +63,7 @@ impl DefineMethodBodies<'_> {
                     let return_type = self.ctx.mk_type_ref_generic(
                         &method.return_type,
                         &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                    );
+                    )?;
 
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
@@ -76,7 +76,7 @@ impl DefineMethodBodies<'_> {
                         let type_ref = self.ctx.mk_type_ref_generic(
                             &param.param_type,
                             &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                        );
+                        )?;
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
@@ -84,7 +84,7 @@ impl DefineMethodBodies<'_> {
                     let return_type = self.ctx.mk_type_ref_generic(
                         &method.return_type,
                         &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                    );
+                    )?;
 
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
@@ -98,7 +98,7 @@ impl DefineMethodBodies<'_> {
                         let type_ref = self.ctx.mk_type_ref_generic(
                             &param.param_type,
                             &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
-                        );
+                        )?;
 
                         method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
                     }
@@ -106,7 +106,7 @@ impl DefineMethodBodies<'_> {
                     let return_type = self.ctx.mk_type_ref_generic(
                         &method.return_type,
                         &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
-                    );
+                    )?;
 
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
@@ -122,12 +122,12 @@ impl DefineMethodBodies<'_> {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.ctx.mk_type_ref_generic(&param.param_type, &func.type_parameters);
+            let type_ref = self.ctx.mk_type_ref_generic(&param.param_type, &func.type_parameters)?;
 
             function_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
         }
 
-        let return_type = self.ctx.mk_type_ref_generic(&func.return_type, &func.type_parameters);
+        let return_type = self.ctx.mk_type_ref_generic(&func.return_type, &func.type_parameters)?;
         function_id.set_return_type(&mut self.ctx.tcx, return_type);
 
         Ok(())

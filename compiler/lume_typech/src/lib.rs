@@ -1,15 +1,19 @@
 use indexmap::IndexMap;
 use lume_diag::Result;
-use lume_hir::{ExpressionId, StatementId, TypeParameter};
+use lume_hir::{ExpressionId, StatementId, TypeParameter, map::SourceMap};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 
 mod check;
+mod errors;
 mod infer;
 
 #[derive(serde::Serialize, Debug)]
 pub struct ThirBuildCtx {
     /// Defines the type database context.
     tcx: TypeDatabaseContext,
+
+    /// Defines the sources currently being processed.
+    sources: SourceMap,
 
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
@@ -20,9 +24,10 @@ pub struct ThirBuildCtx {
 
 impl ThirBuildCtx {
     /// Creates a new empty THIR build context.
-    pub fn new() -> Self {
+    pub fn new(sources: SourceMap) -> Self {
         ThirBuildCtx {
             tcx: TypeDatabaseContext::new(),
+            sources,
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
         }
@@ -60,24 +65,35 @@ impl ThirBuildCtx {
     }
 
     /// Lowers the given HIR type into a type reference.
-    pub fn mk_type_ref(&self, ty: &lume_hir::Type) -> TypeRef {
+    pub fn mk_type_ref(&self, ty: &lume_hir::Type) -> Result<TypeRef> {
         self.mk_type_ref_generic(ty, &[])
     }
 
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
-    pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> TypeRef {
+    pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> Result<TypeRef> {
         match ty {
             lume_hir::Type::Scalar(t) => {
-                let found_type = self.find_type_ref_ctx(&t.name, type_params).unwrap();
+                let found_type = match self.find_type_ref_ctx(&t.name, type_params) {
+                    Some(id) => id,
+                    None => {
+                        return Err(errors::MissingType {
+                            source: self.sources.mapping.get(&t.location.file).unwrap().clone(),
+                            range: t.location.start()..t.location.end(),
+                            name: t.name.clone(),
+                        }
+                        .into());
+                    }
+                };
+
                 let mut type_ref = TypeRef::new(found_type);
 
                 for type_param in &t.type_params {
-                    let type_param_ref = self.mk_type_ref(type_param);
+                    let type_param_ref = self.mk_type_ref(type_param)?;
                     type_ref.push_type_argument(type_param_ref);
                 }
 
-                type_ref
+                Ok(type_ref)
             }
             _ => todo!(),
         }
