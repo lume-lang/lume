@@ -8,10 +8,10 @@ pub mod lower;
 pub mod map;
 pub(crate) mod symbols;
 
-/// Trait for types that can be converted into an owner ID.
-pub trait IntoOwner {
-    /// Gets the ID of the module that owns this node.
-    fn owner(&self) -> ModuleId;
+/// Trait for HIR nodes which can contain some amount of type parameters.
+pub trait WithTypeParameters {
+    /// Gets all the type parameters of this node.
+    fn type_params(&self) -> &Vec<TypeParameter>;
 }
 
 /// Uniquely identifies a definition within a module, such as a type, function or class.
@@ -21,12 +21,6 @@ pub struct ItemId(pub ModuleId, pub u64);
 impl std::fmt::Debug for ItemId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", hash_id(self))
-    }
-}
-
-impl IntoOwner for ItemId {
-    fn owner(&self) -> ModuleId {
-        self.0
     }
 }
 
@@ -66,12 +60,6 @@ impl std::fmt::Debug for StatementId {
     }
 }
 
-impl IntoOwner for StatementId {
-    fn owner(&self) -> ModuleId {
-        self.0
-    }
-}
-
 /// Uniquely identifies any local expression, such as variables, literals, calls or otherwise.
 #[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ExpressionId(pub ModuleId, pub LocalId);
@@ -89,12 +77,6 @@ impl ExpressionId {
 impl std::fmt::Debug for ExpressionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", hash_id(self))
-    }
-}
-
-impl IntoOwner for ExpressionId {
-    fn owner(&self) -> ModuleId {
-        self.0
     }
 }
 
@@ -144,6 +126,7 @@ impl std::fmt::Debug for Location {
     }
 }
 
+/// Trait for HIR nodes which have some location attached.
 pub trait Node {
     fn location(&self) -> &Location;
 }
@@ -205,6 +188,12 @@ impl FunctionDefinition {
     }
 }
 
+impl WithTypeParameters for FunctionDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ExternalFunctionDefinition {
     pub id: ItemId,
@@ -220,6 +209,12 @@ pub struct ExternalFunctionDefinition {
 impl ExternalFunctionDefinition {
     pub fn ident(&self) -> &Identifier {
         &self.name.name
+    }
+}
+
+impl WithTypeParameters for ExternalFunctionDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
     }
 }
 
@@ -376,6 +371,12 @@ impl ClassDefinition {
     }
 }
 
+impl WithTypeParameters for ClassDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum ClassMember {
     Property(Box<Property>),
@@ -405,6 +406,12 @@ pub struct MethodDefinition {
     pub location: Location,
 }
 
+impl WithTypeParameters for MethodDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
+}
+
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct ExternalMethodDefinition {
     pub method_id: Option<MethodId>,
@@ -414,6 +421,12 @@ pub struct ExternalMethodDefinition {
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
     pub location: Location,
+}
+
+impl WithTypeParameters for ExternalMethodDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -429,6 +442,12 @@ pub struct TraitDefinition {
 impl TraitDefinition {
     pub fn name(&self) -> &SymbolName {
         &self.name
+    }
+}
+
+impl WithTypeParameters for TraitDefinition {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
     }
 }
 
@@ -473,6 +492,12 @@ pub struct TraitMethodImplementation {
 impl TraitMethodImplementation {
     pub fn ident(&self) -> &Identifier {
         &self.name.name
+    }
+}
+
+impl WithTypeParameters for TraitMethodImplementation {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
     }
 }
 

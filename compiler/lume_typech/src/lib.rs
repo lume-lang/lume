@@ -64,8 +64,14 @@ impl ThirBuildCtx {
         match ty {
             lume_hir::Type::Scalar(t) => {
                 let found_type = TypeId::find(&self.tcx, t.name.clone());
+                let mut type_ref = TypeRef::new(found_type);
 
-                TypeRef::new(found_type)
+                for type_param in &t.type_params {
+                    let type_param_ref = self.lower_type_ref(type_param);
+                    type_ref.push_type_argument(type_param_ref);
+                }
+
+                type_ref
             }
             _ => todo!(),
         }

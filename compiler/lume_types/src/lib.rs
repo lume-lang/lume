@@ -512,6 +512,22 @@ impl TypeId {
         matches!(self.kind(ctx), TypeKind::Void)
     }
 
+    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
+        match self.get(ctx) {
+            Type {
+                kind: TypeKind::Class(class),
+                ..
+            } => &class.type_parameters,
+            Type {
+                kind: TypeKind::Trait(trait_def),
+                ..
+            } => &trait_def.type_parameters,
+            _ => {
+                panic!("Cannot add type parameter to non-generic type");
+            }
+        }
+    }
+
     pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
         let id = TypeParameter::alloc(ctx, name);
 
@@ -577,7 +593,7 @@ impl Type {
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct TypeRef {
     instance_of: TypeId,
-    type_arguments: Vec<TypeId>,
+    type_arguments: Vec<TypeRef>,
 }
 
 impl TypeRef {
@@ -586,6 +602,10 @@ impl TypeRef {
             instance_of,
             type_arguments: Vec::new(),
         }
+    }
+
+    pub fn push_type_argument(&mut self, type_argument: TypeRef) {
+        self.type_arguments.push(type_argument);
     }
 
     pub fn unknown() -> Self {
@@ -603,6 +623,10 @@ impl TypeParameterId {
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut TypeParameter {
         &mut ctx.type_parameters[self.0 as usize]
+    }
+
+    pub fn add_constraint(&self, ctx: &mut TypeDatabaseContext, constraint: TypeRef) {
+        self.get_mut(ctx).constraints.push(constraint);
     }
 }
 
