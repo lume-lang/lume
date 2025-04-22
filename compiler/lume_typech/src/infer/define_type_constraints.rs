@@ -72,10 +72,9 @@ impl DefineTypeConstraints<'_> {
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
+        let type_params = func_id.type_params(&self.ctx.tcx).clone();
 
-        for type_param in &func.type_parameters {
-            func_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
-        }
+        self.define_type_constraints(func, &type_params)?;
 
         Ok(())
     }
