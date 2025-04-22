@@ -366,6 +366,21 @@ impl DefineMethodBodies<'_> {
                     method_id.set_return_type(&mut self.ctx.tcx, return_type);
                 }
             }
+            lume_hir::TypeDefinition::Trait(trait_def) => {
+                for method in &trait_def.methods {
+                    let method_id = method.method_id.unwrap();
+
+                    for param in &method.parameters {
+                        let name = param.name.name.clone();
+                        let type_ref = self.ctx.lower_type_ref(&param.param_type);
+
+                        method_id.add_parameter(&mut self.ctx.tcx, name, type_ref);
+                    }
+
+                    let return_type = self.ctx.lower_type_ref(&method.return_type);
+                    method_id.set_return_type(&mut self.ctx.tcx, return_type);
+                }
+            }
             _ => (),
         };
 
