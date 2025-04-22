@@ -784,7 +784,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
     fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
         let visibility = self.visibility(expr.visibility)?;
-        let name = self.symbol_name(expr.name);
+        let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
         let return_type = self.type_ref(*expr.return_type)?;

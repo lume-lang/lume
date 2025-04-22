@@ -85,6 +85,14 @@ impl DefineTypes<'_> {
                 let kind = TypeKind::Trait(Box::new(Trait::new(name.clone())));
                 let type_id = Type::alloc(&mut self.ctx.tcx, name, kind);
 
+                for method in &mut trait_def.methods {
+                    let method_name = method.name.name.clone();
+                    let visibility = method.visibility;
+                    let method_id = Method::alloc(&mut self.ctx.tcx, type_id, method_name, visibility);
+
+                    method.method_id = Some(method_id);
+                }
+
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
@@ -165,6 +173,14 @@ impl DefineTypeParameters<'_> {
 
                 for type_param in &trait_def.type_parameters {
                     type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                }
+
+                for method in &trait_def.methods {
+                    let method_id = method.method_id.unwrap();
+
+                    for type_param in &method.type_parameters {
+                        method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    }
                 }
             }
             _ => {}

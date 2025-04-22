@@ -455,7 +455,7 @@ impl WithTypeParameters for TraitDefinition {
 pub struct TraitMethodDefinition {
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
-    pub name: SymbolName,
+    pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Box<Type>,
