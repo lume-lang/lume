@@ -3,8 +3,8 @@ use std::Assets;
 
 use arc::Project;
 use lume_diag::{Result, source::NamedSource};
-use lume_hir::id::{ModuleFileId, ModuleId};
 use lume_parser::parser::Parser;
+use lume_state::{ModuleFileId, ModuleId};
 
 mod std;
 
@@ -56,9 +56,11 @@ impl Driver {
 
     /// Builds the given compiler state into an executable or library.
     pub fn build(&mut self) -> Result<()> {
-        let sources = self.parse()?;
+        let mut state = lume_state::State::default();
 
-        let _thir_ctx = self.type_check(sources)?;
+        let sources = self.parse(&mut state)?;
+
+        let _thir_ctx = self.type_check(&mut state, sources)?;
 
         Ok(())
     }
@@ -82,7 +84,7 @@ impl Driver {
     }
 
     /// Parses all the modules within the given state object.
-    fn parse(&mut self) -> Result<lume_hir::map::Map> {
+    fn parse(&mut self, state: &mut lume_state::State) -> Result<lume_hir::map::Map> {
         let module_id = ModuleId::from(self.opts.project.id);
 
         // Create a new HIR map for the module.
@@ -95,23 +97,31 @@ impl Driver {
         for named_source in source_files {
             let source_id = ModuleFileId::from(module_id, named_source.name.clone());
 
+            // Register source file in the state.
+            state.source_map.mapping.insert(source_id, named_source);
+
             // Parse the contents of the source file.
-            let expressions = Parser::parse_src(&named_source)?;
+            let expressions = Parser::parse_src(state, source_id)?;
 
             // Lowers the parsed module expressions down to HIR.
-            lume_hir::lower::LowerModule::lower(&mut hir, source_id, named_source, expressions)?;
+            lume_hir::lower::LowerModule::lower(state, &mut hir, source_id, expressions)?;
         }
 
         Ok(hir)
     }
 
     /// Type checks all the given source files.
-    fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let mut thir_ctx = lume_typech::ThirBuildCtx::new(hir.files.clone());
+    fn type_check<'a>(
+        &mut self,
+        state: &'a mut lume_state::State,
+        mut hir: lume_hir::map::Map,
+    ) -> Result<lume_typech::ThirBuildCtx<'a>> {
+        let mut thir_ctx = lume_typech::ThirBuildCtx::new(state);
 
-        // Infers the types of all expressions within the HIR maps.
-        thir_ctx.infer(&mut hir)?;
+        // Defines the types of all nodes within the HIR maps.
+        thir_ctx.define_types(&mut hir)?;
 
+        // Then, make sure they're all valid.
         thir_ctx.typecheck(&hir)?;
 
         println!("{:#?}", thir_ctx);

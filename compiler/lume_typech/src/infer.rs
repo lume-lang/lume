@@ -8,26 +8,19 @@ mod define_type_constraints;
 mod define_type_params;
 mod define_types;
 
-impl ThirBuildCtx {
-    /// Attempts to infer the types of all expressions within the HIR maps.
-    pub fn infer(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        self.define_types(hir)?;
-
-        self.infer_exprs(hir)?;
-
-        Ok(())
-    }
-
+impl ThirBuildCtx<'_> {
     /// Defines all the different types, type parameters and type constraints within
     /// the HIR maps into the type database.
     ///
     /// The defined types are stored within the `ThirBuildCtx` struct, which can be
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
-    fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        infer::define_types::DefineTypes::run_all(hir, self)?;
-        infer::define_type_params::DefineTypeParameters::run_all(hir, self)?;
-        infer::define_type_constraints::DefineTypeConstraints::run_all(hir, self)?;
-        infer::define_method_bodies::DefineMethodBodies::run_all(hir, self)?;
+    pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
+        infer::define_types::DefineTypes::run_all(self, hir)?;
+        infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
+        infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
+        infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
+
+        self.infer_exprs(hir)?;
 
         Ok(())
     }
@@ -86,23 +79,23 @@ impl ThirBuildCtx {
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
         let type_id = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => TypeId::find_or_err(&self.tcx, &SymbolName::i8()),
-                lume_hir::IntKind::U8 => TypeId::find_or_err(&self.tcx, &SymbolName::u8()),
-                lume_hir::IntKind::I16 => TypeId::find_or_err(&self.tcx, &SymbolName::i16()),
-                lume_hir::IntKind::U16 => TypeId::find_or_err(&self.tcx, &SymbolName::u16()),
-                lume_hir::IntKind::I32 => TypeId::find_or_err(&self.tcx, &SymbolName::i32()),
-                lume_hir::IntKind::U32 => TypeId::find_or_err(&self.tcx, &SymbolName::u32()),
-                lume_hir::IntKind::I64 => TypeId::find_or_err(&self.tcx, &SymbolName::i64()),
-                lume_hir::IntKind::U64 => TypeId::find_or_err(&self.tcx, &SymbolName::u64()),
-                lume_hir::IntKind::IPtr => TypeId::find_or_err(&self.tcx, &SymbolName::iptr()),
-                lume_hir::IntKind::UPtr => TypeId::find_or_err(&self.tcx, &SymbolName::uptr()),
+                lume_hir::IntKind::I8 => TypeId::find_or_err(self.tcx(), &SymbolName::i8()),
+                lume_hir::IntKind::U8 => TypeId::find_or_err(self.tcx(), &SymbolName::u8()),
+                lume_hir::IntKind::I16 => TypeId::find_or_err(self.tcx(), &SymbolName::i16()),
+                lume_hir::IntKind::U16 => TypeId::find_or_err(self.tcx(), &SymbolName::u16()),
+                lume_hir::IntKind::I32 => TypeId::find_or_err(self.tcx(), &SymbolName::i32()),
+                lume_hir::IntKind::U32 => TypeId::find_or_err(self.tcx(), &SymbolName::u32()),
+                lume_hir::IntKind::I64 => TypeId::find_or_err(self.tcx(), &SymbolName::i64()),
+                lume_hir::IntKind::U64 => TypeId::find_or_err(self.tcx(), &SymbolName::u64()),
+                lume_hir::IntKind::IPtr => TypeId::find_or_err(self.tcx(), &SymbolName::iptr()),
+                lume_hir::IntKind::UPtr => TypeId::find_or_err(self.tcx(), &SymbolName::uptr()),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => TypeId::find_or_err(&self.tcx, &SymbolName::float()),
-                lume_hir::FloatKind::F64 => TypeId::find_or_err(&self.tcx, &SymbolName::double()),
+                lume_hir::FloatKind::F32 => TypeId::find_or_err(self.tcx(), &SymbolName::float()),
+                lume_hir::FloatKind::F64 => TypeId::find_or_err(self.tcx(), &SymbolName::double()),
             },
-            lume_hir::LiteralKind::String(_) => TypeId::find_or_err(&self.tcx, &SymbolName::string()),
-            lume_hir::LiteralKind::Boolean(_) => TypeId::find_or_err(&self.tcx, &SymbolName::boolean()),
+            lume_hir::LiteralKind::String(_) => TypeId::find_or_err(self.tcx(), &SymbolName::string()),
+            lume_hir::LiteralKind::Boolean(_) => TypeId::find_or_err(self.tcx(), &SymbolName::boolean()),
         };
 
         Ok(TypeRef::new(type_id))
@@ -122,7 +115,7 @@ impl ThirBuildCtx {
                     Some(id) => id,
                     None => {
                         return Err(errors::MissingType {
-                            source: self.sources.mapping.get(&t.location.file).unwrap().clone(),
+                            source: self.state.source_of(t.location.file)?.clone(),
                             range: t.location.start()..t.location.end(),
                             name: t.name.clone(),
                         }
@@ -152,6 +145,6 @@ impl ThirBuildCtx {
         }
 
         // Afterwards, attempt to find the type name within the type context.
-        TypeId::find(&self.tcx, name)
+        TypeId::find(&self.tcx(), name)
     }
 }

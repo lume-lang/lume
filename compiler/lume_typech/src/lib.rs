@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use lume_hir::{ExpressionId, StatementId, TypeParameter, map::SourceMap};
+use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 
 mod check;
@@ -7,12 +7,9 @@ mod errors;
 mod infer;
 
 #[derive(serde::Serialize, Debug)]
-pub struct ThirBuildCtx {
-    /// Defines the type database context.
-    tcx: TypeDatabaseContext,
-
-    /// Defines the sources currently being processed.
-    sources: SourceMap,
+pub struct ThirBuildCtx<'a> {
+    /// Defines the parent state.
+    state: &'a mut lume_state::State,
 
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
@@ -22,12 +19,11 @@ pub struct ThirBuildCtx {
 }
 
 #[allow(dead_code)]
-impl ThirBuildCtx {
+impl ThirBuildCtx<'_> {
     /// Creates a new empty THIR build context.
-    pub fn new(sources: SourceMap) -> Self {
+    pub fn new<'a>(state: &'a mut lume_state::State) -> ThirBuildCtx<'a> {
         ThirBuildCtx {
-            tcx: TypeDatabaseContext::new(),
-            sources,
+            state,
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
         }
@@ -35,12 +31,12 @@ impl ThirBuildCtx {
 
     /// Retrieves the type context from the build context.
     pub fn tcx(&self) -> &TypeDatabaseContext {
-        &self.tcx
+        self.state.tcx()
     }
 
     /// Retrieves the type context from the build context.
     pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
-        &mut self.tcx
+        self.state.tcx_mut()
     }
 
     /// Gets the type of the expression with the given ID within the source file.

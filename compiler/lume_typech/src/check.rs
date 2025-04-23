@@ -13,7 +13,7 @@ pub trait TypeCheckerPass<'a> {
         Self: Sized;
 }
 
-impl ThirBuildCtx {
+impl ThirBuildCtx<'_> {
     pub fn typecheck(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
         VarDeclTypeChecker::run(hir, self)?;
 

@@ -2,14 +2,14 @@ use lume_diag::Result;
 use lume_hir::{self, WithTypeParameters};
 use lume_types::*;
 
-use crate::*;
+use crate::ThirBuildCtx;
 
-pub(super) struct DefineTypeConstraints<'a> {
-    ctx: &'a mut ThirBuildCtx,
+pub(super) struct DefineTypeConstraints<'a, 'b> {
+    ctx: &'a mut ThirBuildCtx<'b>,
 }
 
-impl DefineTypeConstraints<'_> {
-    pub(super) fn run_all<'a>(hir: &'a mut lume_hir::map::Map, ctx: &'a mut ThirBuildCtx) -> Result<()> {
+impl DefineTypeConstraints<'_, '_> {
+    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypeConstraints { ctx };
 
         define.run(hir)?;
@@ -33,33 +33,33 @@ impl DefineTypeConstraints<'_> {
         match ty {
             lume_hir::TypeDefinition::Class(class_def) => {
                 let type_id = class_def.type_id.unwrap();
-                let type_params = type_id.type_params(&self.ctx.tcx).clone();
+                let type_params = type_id.type_params(self.ctx.tcx()).clone();
 
                 self.define_type_constraints(&**class_def, &type_params)?;
 
                 for method in class_def.methods() {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
 
                     self.define_type_constraints(method, &type_params)?;
                 }
 
                 for method in class_def.external_methods() {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
 
                     self.define_type_constraints(method, &type_params)?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
-                let type_params = type_id.type_params(&self.ctx.tcx).clone();
+                let type_params = type_id.type_params(self.ctx.tcx()).clone();
 
                 self.define_type_constraints(&**trait_def, &type_params)?;
 
                 for method in &trait_def.methods {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(&self.ctx.tcx).clone();
+                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
 
                     self.define_type_constraints(method, &type_params)?;
                 }
@@ -72,7 +72,7 @@ impl DefineTypeConstraints<'_> {
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
-        let type_params = func_id.type_params(&self.ctx.tcx).clone();
+        let type_params = func_id.type_params(self.ctx.tcx()).clone();
 
         self.define_type_constraints(func, &type_params)?;
 
@@ -92,7 +92,7 @@ impl DefineTypeConstraints<'_> {
             for type_constraint in &type_param.constraints {
                 let lowered_type_constraint = self.ctx.mk_type_ref(type_constraint)?;
 
-                type_param_id.add_constraint(&mut self.ctx.tcx, lowered_type_constraint);
+                type_param_id.add_constraint(self.ctx.tcx_mut(), lowered_type_constraint);
             }
         }
 

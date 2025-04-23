@@ -2,14 +2,14 @@ use lume_diag::Result;
 use lume_hir::{self};
 use lume_types::*;
 
-use crate::*;
+use crate::ThirBuildCtx;
 
-pub(super) struct DefineTypeParameters<'a> {
-    ctx: &'a mut ThirBuildCtx,
+pub(super) struct DefineTypeParameters<'a, 'b> {
+    ctx: &'a mut ThirBuildCtx<'b>,
 }
 
-impl DefineTypeParameters<'_> {
-    pub(super) fn run_all<'a>(hir: &'a mut lume_hir::map::Map, ctx: &'a mut ThirBuildCtx) -> Result<()> {
+impl DefineTypeParameters<'_, '_> {
+    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypeParameters { ctx };
 
         define.run(hir)?;
@@ -35,11 +35,11 @@ impl DefineTypeParameters<'_> {
                 let type_id = class.type_id.unwrap();
 
                 for type_param in &mut class.type_parameters {
-                    let type_param_id = type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    let type_param_id = type_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(Type::type_parameter(
-                        &mut self.ctx.tcx,
+                        self.ctx.tcx_mut(),
                         type_param_id,
                         type_param.name.clone(),
                     ));
@@ -49,11 +49,11 @@ impl DefineTypeParameters<'_> {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                        let type_param_id = method_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(Type::type_parameter(
-                            &mut self.ctx.tcx,
+                            self.ctx.tcx_mut(),
                             type_param_id,
                             type_param.name.clone(),
                         ));
@@ -64,11 +64,11 @@ impl DefineTypeParameters<'_> {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                        let type_param_id = method_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(Type::type_parameter(
-                            &mut self.ctx.tcx,
+                            self.ctx.tcx_mut(),
                             type_param_id,
                             type_param.name.clone(),
                         ));
@@ -79,11 +79,11 @@ impl DefineTypeParameters<'_> {
                 let type_id = trait_def.type_id.unwrap();
 
                 for type_param in &mut trait_def.type_parameters {
-                    let type_param_id = type_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                    let type_param_id = type_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(Type::type_parameter(
-                        &mut self.ctx.tcx,
+                        self.ctx.tcx_mut(),
                         type_param_id,
                         type_param.name.clone(),
                     ));
@@ -93,11 +93,11 @@ impl DefineTypeParameters<'_> {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = method_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+                        let type_param_id = method_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(Type::type_parameter(
-                            &mut self.ctx.tcx,
+                            self.ctx.tcx_mut(),
                             type_param_id,
                             type_param.name.clone(),
                         ));
@@ -114,7 +114,7 @@ impl DefineTypeParameters<'_> {
         let func_id = func.func_id.unwrap();
 
         for type_param in &func.type_parameters {
-            func_id.add_type_param(&mut self.ctx.tcx, type_param.name.name.clone());
+            func_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
         }
 
         Ok(())

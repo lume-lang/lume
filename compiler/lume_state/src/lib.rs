@@ -2,6 +2,11 @@ use std::hash::Hash;
 
 use arc::ProjectId;
 use fxhash::hash64;
+use indexmap::IndexMap;
+use lume_diag::{Result, source::NamedSource};
+use lume_types::TypeDatabaseContext;
+
+mod errors;
 
 /// Hashes some ID using the FxHasher algorithm, which was extracted
 /// from the Rustc compiler.
@@ -49,5 +54,43 @@ impl ModuleFileId {
     /// Creates a new [`ModuleFileId`] from a string, by taking it's hash value.
     pub fn from(module: ModuleId, value: String) -> ModuleFileId {
         ModuleFileId(module, hash_id(value.as_bytes()))
+    }
+}
+
+#[derive(serde::Serialize, Default, Debug, Clone, PartialEq)]
+pub struct SourceMap {
+    /// Defines all the source files which are part of the module.
+    pub mapping: IndexMap<ModuleFileId, NamedSource>,
+}
+
+impl SourceMap {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[derive(serde::Serialize, Default, Debug)]
+pub struct State {
+    pub source_map: SourceMap,
+    types: TypeDatabaseContext,
+}
+
+impl State {
+    /// Gets the source of the module file with the given ID.
+    pub fn source_of(&self, id: ModuleFileId) -> Result<&NamedSource> {
+        self.source_map
+            .mapping
+            .get(&id)
+            .ok_or(errors::MissingSourceFile { id }.into())
+    }
+
+    /// Retrieves the type context from the build context.
+    pub fn tcx(&self) -> &TypeDatabaseContext {
+        &self.types
+    }
+
+    /// Retrieves the type context from the build context.
+    pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
+        &mut self.types
     }
 }

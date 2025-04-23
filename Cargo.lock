@@ -276,6 +276,7 @@ dependencies = [
  "lume_diag",
  "lume_hir",
  "lume_parser",
+ "lume_state",
  "lume_typech",
  "rust-embed",
 ]
@@ -293,6 +294,7 @@ dependencies = [
  "lume_diag_macros",
  "lume_macros",
  "lume_parser",
+ "lume_state",
  "lume_types",
  "serde",
 ]
@@ -314,6 +316,20 @@ dependencies = [
  "lume_ast",
  "lume_diag",
  "lume_diag_macros",
+ "lume_state",
+ "serde",
+]
+
+[[package]]
+name = "lume_state"
+version = "0.1.0"
+dependencies = [
+ "arc",
+ "fxhash",
+ "indexmap",
+ "lume_diag",
+ "lume_diag_macros",
+ "lume_types",
  "serde",
 ]
 
@@ -325,6 +341,7 @@ dependencies = [
  "lume_diag",
  "lume_diag_macros",
  "lume_hir",
+ "lume_state",
  "lume_types",
  "serde",
 ]

@@ -2,6 +2,7 @@ use lume_ast::*;
 use lume_diag::Error;
 use lume_diag::Result;
 use lume_diag::source::NamedSource;
+use lume_state::ModuleFileId;
 
 use crate::lexer::*;
 use crate::parser::errors::*;
@@ -138,7 +139,8 @@ impl<'a> Parser<'a> {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse_src(src: &NamedSource) -> Result<Vec<TopLevelExpression>> {
+    pub fn parse_src(state: &lume_state::State, module: ModuleFileId) -> Result<Vec<TopLevelExpression>> {
+        let src = state.source_of(module)?;
         let mut parser = Parser::new(src);
 
         parser.parse()

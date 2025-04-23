@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use lume_diag::{Result, source::NamedSource};
+use lume_diag::Result;
+use lume_state::{ModuleFileId, hash_id};
 
 use crate::errors::*;
-use crate::id::{ModuleFileId, hash_id};
 use crate::{self as hir};
 use lume_ast::{self as ast, Node};
 
@@ -23,7 +23,7 @@ macro_rules! err {
         ),*
     ) => {
         $kind {
-            source: $self.source.clone(),
+            source: $self.state.source_of($self.file).unwrap().clone(),
             range: $location.into(),
             $( $field: $value ),*
         }
@@ -31,15 +31,15 @@ macro_rules! err {
     };
 }
 
-pub struct LowerModule<'ctx, 'map> {
+pub struct LowerModule<'a> {
     /// Defines the ID of the file is being lowered.
     file: ModuleFileId,
 
-    /// Defines the source code of the file is being lowered.
-    source: &'ctx NamedSource,
+    /// Defines the parent state.
+    state: &'a lume_state::State,
 
     /// Defines the type map to register types to.
-    map: &'map mut hir::map::Map,
+    map: &'a mut hir::map::Map,
 
     /// Defines all the local symbols within the current scope.
     locals: hir::symbols::SymbolTable,
@@ -57,17 +57,17 @@ pub struct LowerModule<'ctx, 'map> {
     local_id_counter: u64,
 }
 
-impl<'ctx, 'map> LowerModule<'ctx, 'map> {
+impl<'a> LowerModule<'a> {
     /// Lowers the single given source module into HIR.
     pub fn lower(
-        map: &'map mut hir::map::Map,
+        state: &'a lume_state::State,
+        map: &'a mut hir::map::Map,
         file: ModuleFileId,
-        source: NamedSource,
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
         let mut lower = LowerModule {
             file,
-            source: &source,
+            state,
             map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
@@ -84,10 +84,6 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
                 expr => lower.top_level_expression(expr)?,
             }
         }
-
-        drop(lower);
-
-        map.files.mapping.insert(file, source);
 
         Ok(())
     }
@@ -1046,8 +1042,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 #[cfg(test)]
 mod tests {
     use lume_parser::parser::Parser;
-
-    use crate::id::ModuleId;
+    use lume_state::ModuleId;
 
     use super::*;
 
@@ -1060,11 +1055,12 @@ mod tests {
     fn lower(input: &str) -> Result<hir::map::Map> {
         let expressions = parse(input);
 
-        let mut map = hir::map::Map::empty(ModuleId::empty());
+        let module_id = ModuleId::empty();
+        let state = lume_state::State::default();
+        let mut map = hir::map::Map::empty(module_id);
         let file = ModuleFileId::empty();
-        let source = NamedSource::new("".to_owned(), "".to_string());
 
-        LowerModule::lower(&mut map, file, source, expressions)?;
+        LowerModule::lower(&state, &mut map, file, expressions)?;
 
         Ok(map)
     }

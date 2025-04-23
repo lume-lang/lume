@@ -9,5 +9,6 @@ arc = { path = "../arc" }
 lume_diag = { path = "../lume_diag" }
 lume_hir = { path = "../lume_hir" }
 lume_parser = { path = "../lume_parser" }
+lume_state = { path = "../lume_state" }
 lume_typech = { path = "../lume_typech" }
 rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }

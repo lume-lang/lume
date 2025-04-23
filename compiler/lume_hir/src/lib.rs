@@ -1,11 +1,10 @@
-use crate::id::{ModuleFileId, ModuleId, hash_id};
 use lume_macros::Node;
+use lume_state::{ModuleFileId, ModuleId, hash_id};
 use lume_types::{
     FunctionId, Identifier, IdentifierPath, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility,
 };
 
 mod errors;
-pub mod id;
 pub mod lower;
 pub mod map;
 pub(crate) mod symbols;
