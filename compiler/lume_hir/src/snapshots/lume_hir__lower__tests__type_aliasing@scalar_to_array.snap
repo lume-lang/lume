@@ -5,13 +5,15 @@ expression: "lower(\"type A = [B]\")"
 Ok(
     Map {
         module: mod(0),
-        files: {
-            ModuleFileId(
-                mod(0),
-                0,
-            ): NamedSource {
-                name: "",
-                content: "",
+        files: SourceMap {
+            mapping: {
+                ModuleFileId(
+                    mod(0),
+                    0,
+                ): NamedSource {
+                    name: "",
+                    content: "",
+                },
             },
         },
         items: {
@@ -19,6 +21,7 @@ Ok(
                 Alias(
                     AliasDefinition {
                         id: 10060190011017930945,
+                        type_id: None,
                         name: 'A',
                         definition: Array(
                             ArrayType {

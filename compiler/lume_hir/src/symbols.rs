@@ -200,8 +200,10 @@ mod tests {
     use super::*;
 
     fn var(name: &str) -> VariableDeclaration {
+        let statement_id = StatementId::empty();
+
         VariableDeclaration {
-            id: StatementId::empty(),
+            id: statement_id,
             name: Identifier { name: name.to_string() },
             declared_type: None,
             value: Expression {
