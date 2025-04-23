@@ -5,17 +5,6 @@ expression: "lower(\"type A = B\")"
 Ok(
     Map {
         module: mod(0),
-        files: SourceMap {
-            mapping: {
-                ModuleFileId(
-                    mod(0),
-                    0,
-                ): NamedSource {
-                    name: "",
-                    content: "",
-                },
-            },
-        },
         items: {
             10060190011017930945: Type(
                 Alias(
