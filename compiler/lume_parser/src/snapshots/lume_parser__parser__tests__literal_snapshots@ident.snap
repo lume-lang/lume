@@ -1,0 +1,56 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"ident\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Scalar(
+                ScalarType {
+                    name: "void",
+                    location: Location(
+                        13..17,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [
+                    Expression(
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "ident",
+                                    location: Location(
+                                        20..25,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                ],
+                location: Location(
+                    18..27,
+                ),
+            },
+            location: Location(
+                0..27,
+            ),
+        },
+    ),
+]

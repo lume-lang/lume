@@ -44,7 +44,7 @@ pub enum TokenKind {
     Import,
     In,
     Increment,
-    Integer,
+    Integer(u32),
     LeftBracket,
     LeftCurly,
     LeftParen,
@@ -107,7 +107,7 @@ impl TokenKind {
     pub fn is_literal(&self) -> bool {
         matches!(
             self,
-            TokenKind::Integer | TokenKind::Float | TokenKind::String | TokenKind::False | TokenKind::True
+            TokenKind::Integer(_) | TokenKind::Float | TokenKind::String | TokenKind::False | TokenKind::True
         )
     }
 
@@ -191,7 +191,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Namespace => "namespace",
             TokenKind::New => "new",
             TokenKind::NotEqual => "!=",
-            TokenKind::Integer => "integer",
+            TokenKind::Integer(_) => "integer",
             TokenKind::Pipe => "|",
             TokenKind::Pub => "pub",
             TokenKind::Return => "return",
@@ -560,11 +560,12 @@ impl Lexer {
 
     /// Parses a number token at the current cursor position.
     fn number(&mut self) -> Token {
-        let mut token_kind = TokenKind::Integer;
         let start_index = self.position;
 
         // Read the radix prefix, if any.
         let radix = self.parse_radix_prefix();
+
+        let mut token_kind = TokenKind::Integer(radix);
 
         // Attempt to parse any following groups, such as decimal point or float exponent.
         match self.current_char_or_eof() {
@@ -666,7 +667,26 @@ impl Lexer {
     }
 
     fn consume_digits(&mut self, radix: u32) {
-        self.skip_while(|c| c.is_digit(radix));
+        let mut last_numeric = self.position;
+
+        loop {
+            let c = match self.current_char() {
+                Some(c) => c,
+                None => break,
+            };
+
+            if !c.is_digit(radix) && c != '_' {
+                break;
+            }
+
+            self.next();
+
+            if c.is_digit(radix) {
+                last_numeric = self.position;
+            }
+        }
+
+        self.position = last_numeric;
     }
 
     fn consume_float_exponent(&mut self) {
@@ -674,7 +694,7 @@ impl Lexer {
             self.next();
         }
 
-        self.consume_digits(10);
+        self.skip_while(|c| c.is_digit(10));
     }
 
     /// Parses a string token at the current cursor position.
@@ -937,23 +957,26 @@ mod tests {
 
     #[test]
     fn test_number() {
-        assert_token!("1", TokenKind::Integer, Some("1"), 0, 1);
-        assert_token!("10", TokenKind::Integer, Some("10"), 0, 2);
-        assert_token!("0b01", TokenKind::Integer, Some("0b01"), 0, 4);
-        assert_token!("0B01", TokenKind::Integer, Some("0B01"), 0, 4);
-        assert_token!("0x01", TokenKind::Integer, Some("0x01"), 0, 4);
-        assert_token!("0X01", TokenKind::Integer, Some("0X01"), 0, 4);
-        assert_token!("0o01", TokenKind::Integer, Some("0o01"), 0, 4);
-        assert_token!("0O01", TokenKind::Integer, Some("0O01"), 0, 4);
-        assert_token!("0", TokenKind::Integer, Some("0"), 0, 1);
-        assert_token!("0000", TokenKind::Integer, Some("0000"), 0, 4);
+        assert_token!("1", TokenKind::Integer(10), Some("1"), 0, 1);
+        assert_token!("10", TokenKind::Integer(10), Some("10"), 0, 2);
+        assert_token!("0b01", TokenKind::Integer(2), Some("0b01"), 0, 4);
+        assert_token!("0B01", TokenKind::Integer(2), Some("0B01"), 0, 4);
+        assert_token!("0x01", TokenKind::Integer(16), Some("0x01"), 0, 4);
+        assert_token!("0X01", TokenKind::Integer(16), Some("0X01"), 0, 4);
+        assert_token!("0o01", TokenKind::Integer(8), Some("0o01"), 0, 4);
+        assert_token!("0O01", TokenKind::Integer(8), Some("0O01"), 0, 4);
+        assert_token!("0", TokenKind::Integer(10), Some("0"), 0, 1);
+        assert_token!("0000", TokenKind::Integer(10), Some("0000"), 0, 4);
         assert_token!("10.0", TokenKind::Float, Some("10.0"), 0, 4);
         assert_token!("10.123", TokenKind::Float, Some("10.123"), 0, 6);
+        assert_token!("0_0", TokenKind::Integer(10), Some("0_0"), 0, 3);
+        assert_token!("00_00", TokenKind::Integer(10), Some("00_00"), 0, 5);
+        assert_token!("1_000_000", TokenKind::Integer(10), Some("1_000_000"), 0, 9);
 
         assert_tokens!(
             "-1",
             token(TokenKind::Sub, None, 0, 1),
-            token(TokenKind::Integer, Some("1".into()), 1, 2)
+            token(TokenKind::Integer(10), Some("1".into()), 1, 2)
         );
 
         assert_tokens!("10e5", token(TokenKind::Float, Some("10e5".into()), 0, 4));
@@ -961,10 +984,24 @@ mod tests {
         assert_tokens!("1.0e5", token(TokenKind::Float, Some("1.0e5".into()), 0, 5));
         assert_tokens!("1.0E5", token(TokenKind::Float, Some("1.0E5".into()), 0, 5));
 
-        assert_tokens!("1_u32", token_ty(TokenKind::Integer, Some("1".into()), 0, 5, "u32"));
-        assert_tokens!("1_f32", token_ty(TokenKind::Integer, Some("1".into()), 0, 5, "f32"));
+        assert_tokens!("1_u32", token_ty(TokenKind::Integer(10), Some("1".into()), 0, 5, "u32"));
+        assert_tokens!("1_f32", token_ty(TokenKind::Integer(10), Some("1".into()), 0, 5, "f32"));
         assert_tokens!("1.1_f64", token_ty(TokenKind::Float, Some("1.1".into()), 0, 7, "f64"));
-        assert_tokens!("0x0_u64", token_ty(TokenKind::Integer, Some("0x0".into()), 0, 7, "u64"));
+
+        assert_tokens!(
+            "0x0_u64",
+            token_ty(TokenKind::Integer(16), Some("0x0".into()), 0, 7, "u64")
+        );
+
+        assert_tokens!(
+            "1_000_u32",
+            token_ty(TokenKind::Integer(10), Some("1_000".into()), 0, 9, "u32")
+        );
+
+        assert_tokens!(
+            "0xDEAD_BEEF_u32",
+            token_ty(TokenKind::Integer(16), Some("0xDEAD_BEEF".into()), 0, 15, "u32")
+        );
     }
 
     #[test]
