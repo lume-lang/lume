@@ -128,7 +128,7 @@ impl Diagnostic {
         let arg = self.args.iter().find(|arg| matches!(arg, DiagnosticArg::Severity(_)));
 
         match arg {
-            Some(DiagnosticArg::Severity(severity)) => Some(severity.clone()),
+            Some(DiagnosticArg::Severity(severity)) => Some(*severity),
             _ => None,
         }
     }

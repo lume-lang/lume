@@ -138,7 +138,7 @@ impl ProjectParser {
             Err(_) => {
                 return Err(ArcfileMissingName {
                     source: self.source.clone(),
-                    range: (0..0).into(),
+                    range: 0..0,
                 }
                 .into());
             }
@@ -149,7 +149,7 @@ impl ProjectParser {
             Err(_) => {
                 return Err(ArcfileMissingVersion {
                     source: self.source.clone(),
-                    range: (0..0).into(),
+                    range: 0..0,
                 }
                 .into());
             }
@@ -160,7 +160,7 @@ impl ProjectParser {
             Err(_) => {
                 return Err(ArcfileMissingLumeVersion {
                     source: self.source.clone(),
-                    range: (0..0).into(),
+                    range: 0..0,
                 }
                 .into());
             }
@@ -172,7 +172,7 @@ impl ProjectParser {
         if !lume_version.matches(&current_lume_version) {
             return Err(ArcfileIncompatibleLumeVersion {
                 source: self.source.clone(),
-                range: (0..0).into(),
+                range: 0..0,
                 current: current_lume_version.to_string(),
                 required: lume_version.to_string(),
             }
@@ -253,7 +253,7 @@ impl ProjectParser {
             Err(_) => {
                 return Err(ArcfileInvalidVersion {
                     source: self.source.clone(),
-                    range: (0..0).into(),
+                    range: 0..0,
                     field: name.to_string(),
                     version: version_str,
                 }
@@ -276,7 +276,7 @@ impl ProjectParser {
             Err(_) => {
                 return Err(ArcfileInvalidVersion {
                     source: self.source.clone(),
-                    range: (0..0).into(),
+                    range: 0..0,
                     field: name.to_string(),
                     version: version_str,
                 }
@@ -303,11 +303,9 @@ impl ProjectParser {
     fn current_lume_version(&self) -> Version {
         let version_str = env!("CARGO_PKG_VERSION");
 
-        let version = match Version::parse(version_str.as_ref()) {
+        match Version::parse(version_str) {
             Ok(version) => version,
             Err(_) => panic!("Invalid Lume compiler version: {}", version_str),
-        };
-
-        version
+        }
     }
 }

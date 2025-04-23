@@ -19,8 +19,8 @@ impl DefineMethodBodies<'_> {
     fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in hir.items() {
             match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(&*t)?,
-                lume_hir::Symbol::Function(f) => self.define_function(&*f)?,
+                lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
         }

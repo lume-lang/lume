@@ -114,11 +114,15 @@ impl Location {
     pub fn len(&self) -> usize {
         self.length
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
-impl Into<std::ops::Range<usize>> for Location {
-    fn into(self) -> std::ops::Range<usize> {
-        self.start..self.end()
+impl From<Location> for std::ops::Range<usize> {
+    fn from(val: Location) -> std::ops::Range<usize> {
+        val.start..val.end()
     }
 }
 
@@ -482,7 +486,7 @@ pub struct TraitImplementation {
 
 impl TraitImplementation {
     pub fn ident(&self) -> &Identifier {
-        &self.name.ident()
+        self.name.ident()
     }
 }
 
@@ -778,7 +782,7 @@ impl Type {
     pub fn ident(&self) -> &Identifier {
         match self {
             Type::Scalar(ty) => &ty.name.name,
-            Type::Array(ty) => &ty.element_type.ident(),
+            Type::Array(ty) => ty.element_type.ident(),
         }
     }
 }

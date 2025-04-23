@@ -15,6 +15,10 @@ impl Location {
     pub fn len(&self) -> usize {
         self.0.end - self.0.start
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl From<std::ops::Range<usize>> for Location {
@@ -159,7 +163,7 @@ pub struct Import {
 impl Import {
     pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
         let path = IdentifierPath::new(path);
-        let names = names.into_iter().map(|p| Identifier::new(p)).collect();
+        let names = names.iter().map(|p| Identifier::new(p)).collect();
 
         Self {
             path,
@@ -222,12 +226,6 @@ impl TypeDefinition {
             TypeDefinition::Enum(enum_def) => &enum_def.name,
             TypeDefinition::Alias(alias_def) => &alias_def.name,
         }
-    }
-}
-
-impl std::fmt::Display for TypeDefinition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self))
     }
 }
 

@@ -62,7 +62,7 @@ fn main() {
         Err(err) => {
             let mut handler = lume_diag::handler::DiagnosticHandler::new();
             handler.exit_on_error();
-            handler.report_and_drain(err.into_diag());
+            handler.report_and_drain(err.as_diag());
         }
     }
 }

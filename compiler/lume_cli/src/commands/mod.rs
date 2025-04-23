@@ -13,7 +13,7 @@ pub fn project_or_cwd(path: Option<&str>) -> Result<String> {
     };
 
     // If no path is specified, use the current working directory.
-    if let None = path {
+    if path.is_none() {
         return Ok(cwd.to_string_lossy().into_owned());
     }
 

@@ -63,21 +63,19 @@ pub trait Handler<'a> {
 ///
 /// // ...
 /// ```
+#[derive(Default)]
 pub struct DiagnosticHandler<'a> {
     /// Defines whether to exit upon emitting an error.
     exit_on_error: bool,
 
     /// Stores all the diagnostics which have been reported.
-    emitted_diagnostics: Vec<Box<LumeDiagnostic<'a>>>,
+    emitted_diagnostics: Vec<LumeDiagnostic<'a>>,
 }
 
 impl<'a> DiagnosticHandler<'a> {
     /// Creates a new empty handler.
     pub fn new() -> Self {
-        DiagnosticHandler {
-            exit_on_error: false,
-            emitted_diagnostics: Vec::new(),
-        }
+        DiagnosticHandler::default()
     }
 
     /// Enables the handler to exit upon emitting an error.
@@ -88,7 +86,7 @@ impl<'a> DiagnosticHandler<'a> {
 
 impl<'a> Handler<'a> for DiagnosticHandler<'a> {
     fn report(&mut self, diagnostic: impl Into<LumeDiagnostic<'a>>) {
-        self.emitted_diagnostics.push(Box::new(diagnostic.into()));
+        self.emitted_diagnostics.push(diagnostic.into());
     }
 
     fn drain(&mut self) {

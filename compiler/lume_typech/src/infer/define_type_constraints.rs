@@ -21,7 +21,7 @@ impl DefineTypeConstraints<'_> {
         for (_, symbol) in &hir.items {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
-                lume_hir::Symbol::Function(f) => self.define_function(&*f)?,
+                lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
         }
@@ -79,7 +79,7 @@ impl DefineTypeConstraints<'_> {
         Ok(())
     }
 
-    fn define_type_constraints(&mut self, ty: &impl WithTypeParameters, params: &Vec<TypeParameterId>) -> Result<()> {
+    fn define_type_constraints(&mut self, ty: &impl WithTypeParameters, params: &[TypeParameterId]) -> Result<()> {
         let type_param_ids = params
             .iter()
             .enumerate()
@@ -90,7 +90,7 @@ impl DefineTypeConstraints<'_> {
             let type_param = &ty.type_params()[idx];
 
             for type_constraint in &type_param.constraints {
-                let lowered_type_constraint = self.ctx.mk_type_ref(&type_constraint)?;
+                let lowered_type_constraint = self.ctx.mk_type_ref(type_constraint)?;
 
                 type_param_id.add_constraint(&mut self.ctx.tcx, lowered_type_constraint);
             }

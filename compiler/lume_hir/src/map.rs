@@ -17,6 +17,14 @@ impl SourceMap {
     }
 }
 
+impl Default for SourceMap {
+    fn default() -> Self {
+        Self {
+            mapping: IndexMap::new(),
+        }
+    }
+}
+
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Map {
     /// Defines which module this map belongs to.

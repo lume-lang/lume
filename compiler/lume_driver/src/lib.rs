@@ -1,4 +1,4 @@
-use ::std::path::PathBuf;
+use ::std::path::Path;
 use std::Assets;
 
 use arc::Project;
@@ -35,7 +35,7 @@ impl Driver {
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
-    pub fn build_project(root: &PathBuf) -> Result<Self> {
+    pub fn build_project(root: &Path) -> Result<Self> {
         let mut driver = Driver::from_root(root)?;
 
         driver.build()?;
@@ -47,7 +47,7 @@ impl Driver {
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
-    pub fn from_root(root: &PathBuf) -> Result<Self> {
+    pub fn from_root(root: &Path) -> Result<Self> {
         let project = Project::locate(root)?;
         let opts = Options::from_project(project);
 

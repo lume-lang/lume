@@ -32,9 +32,9 @@ pub enum Severity {
     Help,
 }
 
-impl Into<Level> for Severity {
-    fn into(self) -> Level {
-        match self {
+impl From<Severity> for Level {
+    fn from(val: Severity) -> Level {
+        match val {
             Severity::Error => Level::Error,
             Severity::Warning => Level::Warning,
             Severity::Info => Level::Info,
@@ -68,7 +68,7 @@ pub struct SpanLine(pub usize);
 
 impl SpanLine {
     /// Determines the line number, where the given span is located.
-    pub fn from_source<'a>(source: &'a dyn Source, range: &SpanRange) -> Self {
+    pub fn from_source(source: &dyn Source, range: &SpanRange) -> Self {
         let mut line = 0usize;
 
         for (index, char) in source.content().chars().enumerate() {
@@ -187,23 +187,23 @@ impl<'a> Label<'a> {
 
 pub trait Diagnostic: std::fmt::Debug {
     /// Defines which message to be raised to the user, when reported.
-    fn message<'a>(&'a self) -> String;
+    fn message(&self) -> String;
 
     /// Diagnostic severity level.
     ///
     /// This may be used by the renderer to determine how to display the diagnostic or
     /// even halt the program, depending on the severity level.
-    fn severity<'a>(&'a self) -> Severity {
+    fn severity(&self) -> Severity {
         Severity::default()
     }
 
     /// Unique diagnostic code, which can be used to look up more information about the error.
-    fn code<'a>(&'a self) -> Option<&'a str> {
+    fn code(&self) -> Option<&str> {
         None
     }
 
     /// Source span to attach labels to.
-    fn span<'a>(&'a self) -> Option<&'a dyn Source> {
+    fn span(&self) -> Option<&dyn Source> {
         None
     }
 
@@ -213,17 +213,17 @@ pub trait Diagnostic: std::fmt::Debug {
     }
 
     /// Defines the cause of the diagnostic, if any.
-    fn source<'a>(&'a self) -> Option<&'a dyn std::error::Error> {
+    fn source(&self) -> Option<&dyn std::error::Error> {
         None
     }
 
     /// Help messages, which can be used to provide additional information about the diagnostic.
-    fn help<'a>(&'a self) -> Option<Vec<String>> {
+    fn help(&self) -> Option<Vec<String>> {
         None
     }
 
     /// Turns the current diagnostic into a [`LumeDiagnostic`] object.
-    fn into_diag<'a>(&'a self) -> LumeDiagnostic<'a> {
+    fn as_diag<'a>(&'a self) -> LumeDiagnostic<'a> {
         LumeDiagnostic {
             message: self.message(),
             severity: self.severity(),
@@ -259,7 +259,7 @@ impl From<Box<dyn std::error::Error + Send + Sync>> for Box<dyn Diagnostic + Sen
         struct BoxedDiagnostic(Box<dyn std::error::Error + Send + Sync>);
 
         impl Diagnostic for BoxedDiagnostic {
-            fn message<'a>(&'a self) -> String {
+            fn message(&self) -> String {
                 self.0.to_string()
             }
         }
@@ -372,7 +372,7 @@ impl<'a> LumeDiagnostic<'a> {
 
     /// Adds the given label to the diagnostic.
     pub fn add_label(mut self, label: Label<'a>) -> Self {
-        if let None = self.labels {
+        if self.labels.is_none() {
             self.labels = Some(Vec::new());
         }
 
@@ -383,11 +383,11 @@ impl<'a> LumeDiagnostic<'a> {
 
     /// Adds the given labels to the diagnostic.
     pub fn add_labels(mut self, labels: impl IntoIterator<Item = Label<'a>>) -> Self {
-        if let None = self.labels {
+        if self.labels.is_none() {
             self.labels = Some(Vec::new());
         }
 
-        let labels = labels.into_iter().map(|l| Box::new(l)).collect::<Vec<Box<Label<'a>>>>();
+        let labels = labels.into_iter().map(Box::new).collect::<Vec<Box<Label<'a>>>>();
 
         self.labels.as_mut().unwrap().extend(labels);
 
@@ -396,7 +396,7 @@ impl<'a> LumeDiagnostic<'a> {
 
     /// Adds the given help message to the diagnostic.
     pub fn add_help(mut self, help: String) -> Self {
-        if let None = self.help {
+        if self.help.is_none() {
             self.help = Some(Vec::new());
         }
 
@@ -407,7 +407,7 @@ impl<'a> LumeDiagnostic<'a> {
 
     /// Appends the given help messages to the diagnostic.
     pub fn append_help(mut self, help: impl IntoIterator<Item = String>) -> Self {
-        if let None = self.help {
+        if self.help.is_none() {
             self.help = Some(Vec::new());
         }
 
@@ -426,13 +426,13 @@ impl<'a> LumeDiagnostic<'a> {
 
     /// Renders the diagnostic message to the console, using a custom renderer implementation.
     pub fn render_with(&'a self, renderer: Renderer) {
-        let message = self.into_message();
+        let message = self.get_message();
 
         println!("{}", renderer.render(message));
     }
 
     /// Converts the diagnostic into a [`annotate_snippets::Message`] instance.
-    fn into_message(&'a self) -> Message<'a> {
+    fn get_message(&'a self) -> Message<'a> {
         let level: Level = self.severity.into();
 
         let mut message = level.title(&self.message);

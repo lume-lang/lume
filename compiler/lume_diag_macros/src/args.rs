@@ -17,11 +17,11 @@ impl DiagnosticArg {
         let field_ident = field.ident.as_ref();
         let field_ident = field_ident.unwrap();
 
-        for attr in &field.attrs {
+        if let Some(attr) = field.attrs.first() {
             if let syn::Meta::Path(path) = &attr.meta {
                 let ident = match path.get_ident() {
                     Some(ident) => ident,
-                    None => return Err(Error::new_spanned(&path, "Expected identifier")),
+                    None => return Err(Error::new_spanned(path, "Expected identifier")),
                 };
 
                 let arg = match ident.to_string().as_str() {
@@ -38,7 +38,7 @@ impl DiagnosticArg {
                 };
 
                 let arg = match ident.to_string().as_str() {
-                    "label" => Self::parse_label(&field_ident, &meta)?,
+                    "label" => Self::parse_label(field_ident, meta)?,
                     _ => return Err(Error::new_spanned(ident, "Invalid property attribute")),
                 };
 
@@ -95,11 +95,11 @@ impl DiagnosticArg {
         };
 
         match ident.to_string().as_str() {
-            "code" => Self::parse_code(&name_value),
-            "message" => Self::parse_message(&name_value),
-            "help" => Self::parse_help(&name_value),
-            "severity" => Self::parse_severity(&name_value),
-            _ => return Err(Error::new_spanned(ident, "Invalid diagnostic attribute")),
+            "code" => Self::parse_code(name_value),
+            "message" => Self::parse_message(name_value),
+            "help" => Self::parse_help(name_value),
+            "severity" => Self::parse_severity(name_value),
+            _ => Err(Error::new_spanned(ident, "Invalid diagnostic attribute")),
         }
     }
 

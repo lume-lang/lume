@@ -7,7 +7,7 @@ use crate::id::{ModuleFileId, hash_id};
 use crate::{self as hir};
 use lume_ast::{self as ast, Node};
 
-const DEFAULT_STD_IMPORTS: &[&'static str] = &[
+const DEFAULT_STD_IMPORTS: &[&str] = &[
     "Boolean", "String", "Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "IntPtr", "UIntPtr",
     "Float", "Double", "Array", "Pointer",
 ];
@@ -143,18 +143,14 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     }
 
     fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
-        let symbol = hir::SymbolName {
+        hir::SymbolName {
             name: self.identifier(name),
             namespace: self.namespace.clone(),
-        };
-
-        symbol
+        }
     }
 
     fn identifier(&self, expr: ast::Identifier) -> hir::Identifier {
-        let symbol = hir::Identifier { name: expr.name };
-
-        symbol
+        hir::Identifier { name: expr.name }
     }
 
     fn identifier_path(&self, expr: ast::IdentifierPath) -> hir::IdentifierPath {
@@ -164,13 +160,11 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
     }
 
     fn location(&self, expr: ast::Location) -> hir::Location {
-        let symbol = hir::Location {
+        hir::Location {
             file: self.file,
             start: expr.start(),
             length: expr.len(),
-        };
-
-        symbol
+        }
     }
 
     fn top_namespace(&mut self, expr: ast::Namespace) -> Result<()> {
@@ -260,7 +254,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
                 hir::Statement {
                     id,
-                    location: expr.location.clone(),
+                    location: expr.location,
                     kind: hir::StatementKind::Expression(Box::new(expr)),
                 }
             }
@@ -346,7 +340,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
         })
     }
@@ -363,7 +357,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::Unless(Box::new(hir::Unless { id, cases, location })),
         })
     }
@@ -395,7 +389,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
         })
     }
@@ -408,7 +402,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::IteratorLoop(Box::new(hir::IteratorLoop {
                 id,
                 collection,
@@ -426,7 +420,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::PredicateLoop(Box::new(hir::PredicateLoop {
                 id,
                 condition,
@@ -529,7 +523,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Expression {
             id: literal.id,
-            location: literal.location.clone(),
+            location: literal.location,
             kind: hir::ExpressionKind::Literal(Box::new(literal)),
         })
     }
@@ -541,7 +535,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Member(Box::new(hir::Member {
                 id,
                 callee,
@@ -559,7 +553,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Range(Box::new(hir::Range {
                 id,
                 lower,
@@ -581,7 +575,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Variable(Box::new(hir::Variable {
                 id,
                 reference: local_id.id,
@@ -844,7 +838,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
         let symbol = hir::EnumDefinitionCase {
             id,
             name,
-            parameters: parameters.into_iter().map(|c| Box::new(c)).collect(),
+            parameters: parameters.into_iter().map(Box::new).collect(),
             location,
         };
 
@@ -1043,7 +1037,7 @@ impl<'ctx, 'map> LowerModule<'ctx, 'map> {
 
         Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
             name,
-            type_params: type_params.into_iter().map(|c| Box::new(c)).collect(),
+            type_params: type_params.into_iter().map(Box::new).collect(),
             location,
         })))
     }

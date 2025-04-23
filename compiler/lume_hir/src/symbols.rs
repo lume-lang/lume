@@ -138,7 +138,7 @@ impl SymbolTable {
     /// To retrieve the symbol, the table will iterate, in reverse order, up until a symbol with the same
     /// name is found, inside of the current scope. If the iterator reaches a boundary, it will stop searching
     /// for local symbols and continue searching in the global scope.
-    pub(crate) fn retrieve<'s>(&self, name: &'s str) -> Option<&VariableDeclaration> {
+    pub(crate) fn retrieve(&self, name: &str) -> Option<&VariableDeclaration> {
         if let Some(symbol) = self.retrieve_scoped(name) {
             return Some(symbol);
         }
@@ -168,7 +168,7 @@ impl SymbolTable {
     }
 
     /// Attempts to retrieve a symbol of the given name from the current scope.
-    fn retrieve_scoped<'s>(&self, name: &'s str) -> Option<&VariableDeclaration> {
+    fn retrieve_scoped(&self, name: &str) -> Option<&VariableDeclaration> {
         for entry in self.symbols.iter().rev() {
             match entry {
                 SymbolTableEntry::Frame(f) => match f.entries.get(name) {
@@ -183,11 +183,10 @@ impl SymbolTable {
     }
 
     /// Attempts to retrieve a symbol of the given name from the global scope.
-    fn retrieve_global<'s>(&self, name: &'s str) -> Option<&VariableDeclaration> {
+    fn retrieve_global(&self, name: &str) -> Option<&VariableDeclaration> {
         if let Some(SymbolTableEntry::Frame(f)) = self.symbols.first() {
-            match f.entries.get(name) {
-                Some(v) => return Some(v),
-                None => {}
+            if let Some(v) = f.entries.get(name) {
+                return Some(v);
             }
         }
 

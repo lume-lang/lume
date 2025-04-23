@@ -42,7 +42,7 @@ const UNARY_PRECEDENCE: u8 = 3;
 
 /// Defines the built-in aliaes for types, making it easier for
 /// new-comers to adapt to the type system.
-const DEFAULT_TYPE_ALIASES: &[(&'static str, &'static str)] = &[
+const DEFAULT_TYPE_ALIASES: &[(&str, &str)] = &[
     ("int", "Int32"),
     ("i8", "Int8"),
     ("u8", "UInt8"),
@@ -127,7 +127,7 @@ impl<'a> Parser<'a> {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse_str<'b>(str: &'b str) -> Result<Vec<TopLevelExpression>> {
+    pub fn parse_str(str: &str) -> Result<Vec<TopLevelExpression>> {
         let source = NamedSource::new("<temp>".to_string(), str.to_string());
         let mut parser = Parser::new(&source);
 
@@ -138,7 +138,7 @@ impl<'a> Parser<'a> {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse_src<'b>(src: &'b NamedSource) -> Result<Vec<TopLevelExpression>> {
+    pub fn parse_src(src: &NamedSource) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new(src);
 
         parser.parse()
@@ -192,12 +192,12 @@ impl<'a> Parser<'a> {
                     None => 0..1,
                 };
 
-                return Ok(Token {
+                Ok(Token {
                     kind: TokenKind::Eof,
                     index,
                     ty: None,
                     value: None,
-                });
+                })
             }
         }
     }
@@ -568,7 +568,7 @@ impl<'a> Parser<'a> {
             TokenKind::Enum => self.parse_enum(),
             TokenKind::Type => self.parse_type_alias(),
             TokenKind::Use => self.parse_use(),
-            _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind.clone())),
+            _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind)),
         }
     }
 
@@ -698,7 +698,7 @@ impl<'a> Parser<'a> {
         match self.token()?.kind {
             TokenKind::Let => self.parse_property(visibility),
             TokenKind::Fn => self.parse_method(visibility),
-            _ => return Err(err!(self, ExpectedClassMember)),
+            _ => Err(err!(self, ExpectedClassMember)),
         }
     }
 
@@ -987,7 +987,7 @@ impl<'a> Parser<'a> {
         match token.kind {
             TokenKind::Identifier => self.parse_scalar_or_generic_type(),
             TokenKind::LeftBracket => self.parse_array_type(),
-            _ => Err(err!(self, UnexpectedType, actual, token.kind.clone())),
+            _ => Err(err!(self, UnexpectedType, actual, token.kind)),
         }
     }
 
@@ -1010,7 +1010,7 @@ impl<'a> Parser<'a> {
 
             Ok(Type::Scalar(Box::new(ScalarType {
                 name: type_name,
-                location: location.into(),
+                location,
             })))
         }
     }
@@ -1019,7 +1019,7 @@ impl<'a> Parser<'a> {
     /// given that it's equal to some built-in type alias.
     fn resolve_type_alias(&self, name: String) -> String {
         for (alias, ty) in DEFAULT_TYPE_ALIASES {
-            if *alias == &name {
+            if alias == &name {
                 return ty.to_string();
             }
         }

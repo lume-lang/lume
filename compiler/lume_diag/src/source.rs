@@ -8,52 +8,52 @@ use crate::Result;
 /// part of the reporting process.
 pub trait Source: Send + Sync + std::fmt::Debug {
     /// Defines the name of the source file.
-    fn name<'a>(&'a self) -> Option<&'a str> {
+    fn name(&self) -> Option<&str> {
         None
     }
 
     /// Gets the full content of the source file.
-    fn content<'a>(&'a self) -> Box<&'a str>;
+    fn content(&self) -> Box<&str>;
 }
 
 impl Source for [u8] {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         Box::new(std::str::from_utf8(self).unwrap())
     }
 }
 
 impl Source for &[u8] {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <[u8] as Source>::content(self)
     }
 }
 
 impl Source for Vec<u8> {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <[u8] as Source>::content(self)
     }
 }
 
 impl Source for str {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <[u8] as Source>::content(self.as_bytes())
     }
 }
 
 impl Source for &str {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <str as Source>::content(self)
     }
 }
 
 impl Source for String {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <str as Source>::content(self)
     }
 }
 
 impl Source for &String {
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         <String as Source>::content(self)
     }
 }
@@ -73,11 +73,11 @@ impl StringSource {
 }
 
 impl Source for StringSource {
-    fn name<'a>(&'a self) -> Option<&'a str> {
+    fn name(&self) -> Option<&str> {
         None
     }
 
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         Box::new(self.content.as_str())
     }
 }
@@ -111,11 +111,11 @@ impl NamedSource {
 }
 
 impl Source for NamedSource {
-    fn name<'a>(&'a self) -> Option<&'a str> {
+    fn name(&self) -> Option<&str> {
         Some(self.name.as_str())
     }
 
-    fn content<'a>(&'a self) -> Box<&'a str> {
+    fn content(&self) -> Box<&str> {
         Box::new(self.content.as_str())
     }
 }

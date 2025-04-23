@@ -169,14 +169,14 @@ pub struct Parameter {
     pub ty: TypeRef,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Default, Debug, Clone, PartialEq)]
 pub struct Parameters {
     pub params: Vec<Parameter>,
 }
 
 impl Parameters {
     pub fn new() -> Self {
-        Self { params: Vec::new() }
+        Self::default()
     }
 
     pub fn push(&mut self, name: String, ty: TypeRef) {
@@ -483,14 +483,10 @@ impl TypeId {
         // since they might not refer to a type parameter which is valid under the
         // current scope. Type parameters are only added as a type so they can be
         // referenced by other types.
-        match ctx
-            .types
+        ctx.types
             .iter()
             .position(|t| t.name == *name && !matches!(t.kind, TypeKind::TypeParameter(_)))
-        {
-            Some(index) => Some(TypeId(index as u32)),
-            None => None,
-        }
+            .map(|idx| TypeId(idx as u32))
     }
 
     pub fn find_or_err(ctx: &TypeDatabaseContext, name: &SymbolName) -> TypeId {
@@ -692,7 +688,7 @@ impl TypeParameter {
     }
 }
 
-#[derive(serde::Serialize, Debug)]
+#[derive(serde::Serialize, Default, Debug)]
 pub struct TypeDatabaseContext {
     pub types: Vec<Type>,
     pub properties: Vec<Property>,
@@ -703,13 +699,7 @@ pub struct TypeDatabaseContext {
 
 impl TypeDatabaseContext {
     pub fn new() -> Self {
-        Self {
-            types: Vec::new(),
-            properties: Vec::new(),
-            methods: Vec::new(),
-            functions: Vec::new(),
-            type_parameters: Vec::new(),
-        }
+        Self::default()
     }
 
     pub fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {

@@ -72,7 +72,7 @@ impl ThirBuildCtx {
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
-            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(&*e),
+            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
             lume_hir::ExpressionKind::Variable(var) => {
                 let decl = self.hir_expect_var_stmt(hir, var.reference);
 

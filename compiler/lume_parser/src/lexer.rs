@@ -143,9 +143,9 @@ impl TokenKind {
     }
 }
 
-impl Into<&'static str> for TokenKind {
-    fn into(self) -> &'static str {
-        match self {
+impl From<TokenKind> for &'static str {
+    fn from(val: TokenKind) -> &'static str {
+        match val {
             TokenKind::Add => "+",
             TokenKind::AddAssign => "+=",
             TokenKind::And => "&",
@@ -213,9 +213,9 @@ impl Into<&'static str> for TokenKind {
     }
 }
 
-impl Into<String> for TokenKind {
-    fn into(self) -> String {
-        <TokenKind as Into<&'static str>>::into(self).to_string()
+impl From<TokenKind> for String {
+    fn from(val: TokenKind) -> String {
+        <TokenKind as Into<&'static str>>::into(val).to_string()
     }
 }
 
@@ -273,6 +273,10 @@ impl Token {
         self.index.end - self.index.start
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     pub fn start(&self) -> usize {
         self.index.start
     }
@@ -282,15 +286,15 @@ impl Token {
     }
 }
 
-impl Into<&'static str> for Token {
-    fn into(self) -> &'static str {
-        self.kind.into()
+impl From<Token> for &'static str {
+    fn from(val: Token) -> &'static str {
+        val.kind.into()
     }
 }
 
-impl Into<String> for Token {
-    fn into(self) -> String {
-        self.kind.into()
+impl From<Token> for String {
+    fn from(val: Token) -> Self {
+        val.kind.into()
     }
 }
 
@@ -495,7 +499,7 @@ impl Lexer {
             Err(err) => return Err(err),
         };
 
-        let symbol: String = chars[..len].into_iter().collect();
+        let symbol: String = chars[..len].iter().collect();
 
         for _ in 0..len {
             self.next();
@@ -504,7 +508,7 @@ impl Lexer {
         Ok(Token::new(kind, symbol))
     }
 
-    fn symbol_value(&mut self, chars: &Vec<char>) -> Result<(TokenKind, usize)> {
+    fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
@@ -520,7 +524,7 @@ impl Lexer {
             }
         }
 
-        if chars.len() >= 1 {
+        if !chars.is_empty() {
             match chars[0] {
                 '+' => return Ok((TokenKind::Add, 1)),
                 '&' => return Ok((TokenKind::And, 1)),

@@ -18,7 +18,7 @@ impl<'a> TypeCheckerPass<'a> for VarDeclTypeChecker {
 }
 
 impl VarDeclTypeChecker {
-    fn check_stmt<'a>(tcx: &'a mut ThirBuildCtx, stmt: &lume_hir::VariableDeclaration) -> Result<()> {
+    fn check_stmt(tcx: &mut ThirBuildCtx, stmt: &lume_hir::VariableDeclaration) -> Result<()> {
         let value_expr = tcx.type_of_expr(stmt.value.id);
 
         let resolved_type = if let Some(declared_type) = &stmt.declared_type {

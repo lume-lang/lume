@@ -21,7 +21,7 @@ impl DefineTypeParameters<'_> {
         for (_, symbol) in hir.items.iter_mut() {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
-                lume_hir::Symbol::Function(f) => self.define_function(&*f)?,
+                lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
         }
