@@ -1,0 +1,40 @@
+---
+source: compiler/arc/src/parser.rs
+expression: parser.parse().unwrap()
+---
+Project {
+    id: ProjectId(
+        12583667913092150357,
+    ),
+    path: "<test>",
+    name: "some-package",
+    lume_version: Spanned {
+        value: VersionReq {
+            comparators: [
+                Comparator {
+                    op: Caret,
+                    major: 1,
+                    minor: Some(
+                        0,
+                    ),
+                    patch: Some(
+                        0,
+                    ),
+                    pre: Prerelease("rc3"),
+                },
+            ],
+        },
+        span: 101..112,
+    },
+    version: Some(
+        Spanned {
+            value: Version {
+                major: 1,
+                minor: 0,
+                patch: 0,
+            },
+            span: 66..73,
+        },
+    ),
+    description: None,
+}

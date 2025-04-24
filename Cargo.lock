@@ -24,6 +24,7 @@ version = "0.1.0"
 dependencies = [
  "fxhash",
  "glob",
+ "insta",
  "lume_diag",
  "lume_diag_macros",
  "semver",

@@ -11,3 +11,6 @@ fxhash = "^0.2"
 glob = "^0"
 semver = { version = "^1", features = ["serde"] }
 toml_edit = "^0.22"
+
+[dev-dependencies]
+insta = { version = "1.42.2" }

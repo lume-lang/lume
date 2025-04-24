@@ -1,0 +1,11 @@
+---
+source: compiler/arc/src/parser.rs
+expression: "parse_err(r#\"[package]\n            name = 'sample'\"#)"
+---
+ArcfileMissingLumeVersion {
+    source: NamedSource {
+        name: "<test>",
+        content: "[package]\n            name = 'sample'",
+    },
+    range: 0..37,
+}

@@ -1,0 +1,14 @@
+---
+source: compiler/arc/src/parser.rs
+expression: "parse_err(r#\"[package]\n            name = 1\"#)"
+---
+ArcfileUnexpectedType {
+    source: NamedSource {
+        name: "<test>",
+        content: "[package]\n            name = 1",
+    },
+    range: 29..30,
+    name: "name",
+    expected: "string",
+    found: "integer",
+}

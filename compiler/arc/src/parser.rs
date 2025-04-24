@@ -232,3 +232,182 @@ impl ProjectParser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parser(input: &str) -> ProjectParser {
+        let source = NamedSource::new("<test>".to_string(), input.to_string());
+
+        ProjectParser::from_source(source).unwrap()
+    }
+
+    fn parse(input: &str) -> Project {
+        parser(input).parse().unwrap()
+    }
+
+    fn parse_err(input: &str) -> lume_diag::Error {
+        parser(input).parse().unwrap_err()
+    }
+
+    macro_rules! assert_snap {
+        ($input: expr) => {
+            insta::assert_debug_snapshot!($input);
+        };
+    }
+
+    macro_rules! assert_snap_eq {
+        ($input: expr) => {
+            assert_snap!(parse($input));
+        };
+    }
+
+    macro_rules! assert_err_snap_eq {
+        ($input: expr) => {
+            assert_snap!(parse_err($input));
+        };
+    }
+
+    #[test]
+    fn test_empty_file() {
+        assert_err_snap_eq!("");
+    }
+
+    #[test]
+    fn test_without_package() {
+        assert_err_snap_eq!("name = 'Test'");
+    }
+
+    #[test]
+    fn test_without_name() {
+        assert_err_snap_eq!(
+            r#"[package]
+            lume_version = '^0'"#
+        );
+    }
+
+    #[test]
+    fn test_without_lume_version() {
+        assert_err_snap_eq!(
+            r#"[package]
+            name = 'sample'"#
+        );
+    }
+
+    #[test]
+    fn test_with_unexpected_package_type() {
+        assert_err_snap_eq!(r#"package = 'sample'"#);
+    }
+
+    #[test]
+    fn test_with_unexpected_name_type() {
+        assert_err_snap_eq!(
+            r#"[package]
+            name = 1"#
+        );
+    }
+
+    #[test]
+    fn test_with_unexpected_lume_version_type() {
+        assert_err_snap_eq!(
+            r#"[package]
+            name = 'sample'
+            lume_version = 1"#
+        );
+    }
+
+    #[test]
+    fn test_invalid_version_string() {
+        assert_err_snap_eq!(
+            r#"[package]
+            name = 'sample'
+            lume_version = '^1-1'"#
+        );
+    }
+
+    #[test]
+    fn test_name() {
+        assert_snap_eq!(
+            r#"[package]
+            name = 'some-package'
+            lume_version = '^0'"#
+        );
+    }
+
+    #[test]
+    fn test_description() {
+        assert_snap_eq!(
+            r#"[package]
+            name = 'sample'
+            lume_version = '^0'
+            description = 'Some description'"#
+        );
+    }
+
+    #[test]
+    fn test_version() {
+        assert_snap_eq!(
+            r#"[package]
+            name = 'some-package'
+            version = '1.0.0'
+            lume_version = '^0'"#
+        );
+    }
+
+    #[test]
+    fn test_incompatible_version() {
+        let mut parser = parser(
+            r#"[package]
+            name = 'some-package'
+            version = '1.0.0'
+            lume_version = '^2'"#,
+        );
+
+        parser.current_lume_version = Version::new(1, 0, 0);
+
+        assert_snap!(parser.parse().unwrap_err());
+    }
+
+    #[test]
+    fn test_prerelease_lume_version_success() {
+        let mut parser = parser(
+            r#"[package]
+            name = 'some-package'
+            version = '1.0.0'
+            lume_version = '1.0.0-rc3'"#,
+        );
+
+        parser.current_lume_version = Version::parse("1.0.0-rc3").unwrap();
+
+        assert_snap!(parser.parse().unwrap());
+    }
+
+    #[test]
+    fn test_prerelease_lume_version_stable() {
+        let mut parser = parser(
+            r#"[package]
+            name = 'some-package'
+            version = '1.0.0'
+            lume_version = '1.0.0-rc3'"#,
+        );
+
+        parser.current_lume_version = Version::parse("1.0.0").unwrap();
+
+        assert_snap!(parser.parse().unwrap());
+    }
+
+    #[test]
+    fn test_prerelease_lume_version_failure() {
+        let mut parser = parser(
+            r#"[package]
+            name = 'some-package'
+            version = '1.0.0'
+            lume_version = '1.0.0-rc3'"#,
+        );
+
+        parser.current_lume_version = Version::parse("1.0.0-rc2").unwrap();
+
+        assert_snap!(parser.parse().unwrap_err());
+    }
+}
