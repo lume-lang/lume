@@ -4,21 +4,21 @@ use lume_diag::source::NamedSource;
 use lume_diag_macros::Diagnostic;
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Error occured while reading Arcfile", code = "ARC0102")]
+#[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
 pub struct ArcfileIoError {
     #[source]
     pub inner: std::io::Error,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Error occured while reading Arcfile", code = "ARC0103")]
+#[diagnostic(message = "failed to read Arcfile", code = "ARC0103")]
 pub struct ArcfileGlobError {
     #[source]
     pub inner: glob::GlobError,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Error occured while parsing Arcfile", code = "ARC0104")]
+#[diagnostic(message = "failed to parse Arcfile", code = "ARC0104")]
 pub struct ArcfileTomlError {
     #[source]
     pub inner: toml_edit::TomlError,
@@ -39,26 +39,13 @@ pub struct ArcfileUnexpectedType {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "No `{name}` section was found in the Arcfile", code = "ARC0203")]
+#[diagnostic(message = "no `{name}` section was found in the Arcfile", code = "ARC0203")]
 pub struct ArcfileMissingSection {
     pub name: String,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "Property `{name}` must be a `{expected}`, but found `{actual}`",
-    code = "ARC0204"
-)]
-pub struct ArcfileInvalidPropertyType {
-    pub name: String,
-
-    pub expected: String,
-
-    pub actual: String,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "No package name was found in the Arcfile", code = "ARC0210")]
+#[diagnostic(message = "missing `name` attribute", code = "ARC0210")]
 pub struct ArcfileMissingName {
     #[span]
     pub source: NamedSource,
@@ -68,10 +55,7 @@ pub struct ArcfileMissingName {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "No minimum required Lume version was found in the Arcfile",
-    code = "ARC0212"
-)]
+#[diagnostic(message = "missing `lume_version` attribute", code = "ARC0212")]
 pub struct ArcfileMissingLumeVersion {
     #[span]
     pub source: NamedSource,
