@@ -21,7 +21,21 @@ pub struct ArcfileGlobError {
 #[diagnostic(message = "Error occured while parsing Arcfile", code = "ARC0104")]
 pub struct ArcfileTomlError {
     #[source]
-    pub inner: toml::de::Error,
+    pub inner: toml_edit::TomlError,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unexpected type", code = "ARC0108")]
+pub struct ArcfileUnexpectedType {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("Expected `{name}` to be of type '{expected}', but found '{found}'")]
+    pub range: Range<usize>,
+
+    pub name: String,
+    pub expected: String,
+    pub found: &'static str,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -54,16 +68,6 @@ pub struct ArcfileMissingName {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "No package version was found in the Arcfile", code = "ARC0211")]
-pub struct ArcfileMissingVersion {
-    #[span]
-    pub source: NamedSource,
-
-    #[label("Package table is missing a `version` field.")]
-    pub range: Range<usize>,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "No minimum required Lume version was found in the Arcfile",
     code = "ARC0212"
@@ -77,12 +81,12 @@ pub struct ArcfileMissingLumeVersion {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Invalid version `{version}` for field `{field}`", code = "ARC0213")]
+#[diagnostic(message = "invalid version string", code = "ARC0213")]
 pub struct ArcfileInvalidVersion {
     #[span]
     pub source: NamedSource,
 
-    #[label("This field should be SemVer-compatible")]
+    #[label("Invalid version `{version}` for field `{field}`")]
     pub range: Range<usize>,
 
     pub version: String,
@@ -92,17 +96,17 @@ pub struct ArcfileInvalidVersion {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Lume version `{current}` is incompatible with the required version `{required}`",
-    code = "ARC0214"
+    message = "incompatible Lume version",
+    code = "ARC0214",
+    help = "consider updating your Lume compiler to the newest version"
 )]
 pub struct ArcfileIncompatibleLumeVersion {
     #[span]
     pub source: NamedSource,
 
-    #[label("This field should be SemVer-compatible")]
+    #[label("Current Lume version {current} is lower than minimum required version {required}.")]
     pub range: Range<usize>,
 
-    pub current: String,
-
-    pub required: String,
+    pub current: semver::Version,
+    pub required: semver::VersionReq,
 }

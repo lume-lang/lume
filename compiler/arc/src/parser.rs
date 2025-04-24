@@ -1,10 +1,9 @@
-use crate::{Project, ProjectId, errors::*};
+use crate::{Project, ProjectId, Spanned, errors::*};
 
 use lume_diag::Result;
-use lume_diag::source::{NamedSource, Source};
+use lume_diag::source::NamedSource;
 use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
-use toml::{Table, Value};
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
@@ -14,6 +13,12 @@ pub(crate) struct ProjectParser {
 
     /// Source file of the project's Arcfile.
     source: NamedSource,
+
+    /// Represents the parsed TOML document.
+    document: toml_edit::ImDocument<String>,
+
+    /// Defines the current Lume version.
+    current_lume_version: Version,
 }
 
 impl ProjectParser {
@@ -30,9 +35,20 @@ impl ProjectParser {
 
         let source = NamedSource::new(file_name, content);
 
+        Self::from_source(source)
+    }
+
+    pub fn from_source(source: NamedSource) -> Result<Self> {
+        let document = match toml_edit::ImDocument::parse(source.content.clone()) {
+            Ok(doc) => doc,
+            Err(err) => return Err(ArcfileTomlError { inner: err }.into()),
+        };
+
         Ok(Self {
-            path: path.to_path_buf(),
+            path: PathBuf::from(source.name.clone()),
             source,
+            document,
+            current_lume_version: Self::current_lume_version(),
         })
     }
 
@@ -51,181 +67,163 @@ impl ProjectParser {
 
     /// Parses the project from the TOML table.
     fn parse(&self) -> Result<Project> {
-        let table = match self.source.content().parse::<Table>() {
-            Ok(table) => table,
-            Err(err) => return Err(ArcfileTomlError { inner: err }.into()),
-        };
+        let mut project = Project::default();
 
-        let package = self.required("package", self.section(&table, "package")?)?;
+        self.parse_package(&mut project)?;
 
-        let name = match self.required("name", self.string(&package, "name")?) {
-            Ok(name) => name,
-            Err(_) => {
-                return Err(ArcfileMissingName {
-                    source: self.source.clone(),
-                    range: 0..0,
-                }
-                .into());
-            }
-        };
-
-        let version = match self.required("version", self.version(&package, "version")?) {
-            Ok(version) => version,
-            Err(_) => {
-                return Err(ArcfileMissingVersion {
-                    source: self.source.clone(),
-                    range: 0..0,
-                }
-                .into());
-            }
-        };
-
-        let lume_version = match self.required("lume_version", self.version_req(&package, "lume_version")?) {
-            Ok(version) => version,
-            Err(_) => {
-                return Err(ArcfileMissingLumeVersion {
-                    source: self.source.clone(),
-                    range: 0..0,
-                }
-                .into());
-            }
-        };
-
-        let description = self.string(&package, "description")?;
-
-        let current_lume_version = self.current_lume_version();
-        if !lume_version.matches(&current_lume_version) {
-            return Err(ArcfileIncompatibleLumeVersion {
-                source: self.source.clone(),
-                range: 0..0,
-                current: current_lume_version.to_string(),
-                required: lume_version.to_string(),
-            }
-            .into());
-        }
-
-        let id = ProjectId::from(name.clone());
-
-        let project = Project {
-            id,
-            path: self.path.to_path_buf(),
-            name,
-            lume_version,
-            version: Some(version),
-            description,
-        };
+        project.id = ProjectId::from(project.name.as_str());
+        project.path = self.path.clone();
 
         Ok(project)
     }
 
-    /// Gets the property value from the given table and asserts its type.
-    ///
-    /// If the property is not found within the table, returns `None`.
-    fn property(&self, table: &Table, name: &str, property_type: &str) -> Result<Option<Value>> {
-        let property: &toml::Value = match table.get(name) {
-            Some(property) => property,
-            None => return Ok(None),
+    /// Gets the section from the given table.
+    fn parse_package(&self, project: &mut Project) -> Result<()> {
+        let section = match self.section(&self.document, "package")? {
+            Some(sec) => sec,
+            None => {
+                return Err(ArcfileMissingSection {
+                    name: "package".to_string(),
+                }
+                .into());
+            }
         };
 
-        if property.type_str() != property_type {
-            return Err(self.invalid_property(name, property_type, property.type_str()).into());
-        }
+        project.name = match self.string(section, "name")? {
+            Some(sec) => sec.value().clone(),
+            None => {
+                return Err(ArcfileMissingName {
+                    source: self.source.clone(),
+                    range: section.span().unwrap(),
+                }
+                .into());
+            }
+        };
 
-        Ok(Some(property.clone()))
-    }
+        project.version = self.version(section, "version")?;
 
-    /// Calls the given callback and returns it's result if given. If the callback returns `None`, returns an error.
-    fn required<T>(&self, name: &str, value: Option<T>) -> Result<T> {
-        match value {
-            Some(property) => Ok(property),
-            None => Err(self.missing_section(name).into()),
-        }
+        project.lume_version = match self.version_req(section, "lume_version")? {
+            Some(sec) => sec,
+            None => {
+                return Err(ArcfileMissingLumeVersion {
+                    source: self.source.clone(),
+                    range: section.span().unwrap(),
+                }
+                .into());
+            }
+        };
+
+        project.description = self.string(section, "description")?.map(|s| s.value().clone());
+
+        self.verify_lume_version(&project)?;
+
+        Ok(())
     }
 
     /// Gets the section from the given table.
-    fn section(&self, table: &Table, name: &str) -> Result<Option<Table>> {
-        let property = match self.property(table, name, "table")? {
+    fn section<'a>(&'a self, table: &'a toml_edit::Table, name: &str) -> Result<Option<&'a toml_edit::Table>> {
+        let property = match table.get(name) {
             Some(property) => property,
             None => return Ok(None),
         };
 
-        let table = property.as_table().unwrap().clone();
-
-        Ok(Some(table))
-    }
-
-    /// Gets the string from the given table.
-    fn string(&self, table: &Table, name: &str) -> Result<Option<String>> {
-        let prop = match self.property(table, name, "string")? {
-            Some(prop) => prop,
-            None => return Ok(None),
-        };
-
-        let content: &str = prop.as_str().unwrap();
-
-        Ok(Some(content.to_string()))
-    }
-
-    /// Gets the SemVer-version requirement from the given table property.
-    fn version_req(&self, table: &Table, name: &str) -> Result<Option<VersionReq>> {
-        let version_str = match self.string(table, name)? {
-            Some(prop) => prop,
-            None => return Ok(None),
-        };
-
-        let version = match VersionReq::parse(version_str.as_ref()) {
-            Ok(version) => version,
-            Err(_) => {
-                return Err(ArcfileInvalidVersion {
-                    source: self.source.clone(),
-                    range: 0..0,
-                    field: name.to_string(),
-                    version: version_str,
-                }
-                .into());
-            }
-        };
-
-        Ok(Some(version))
-    }
-
-    /// Gets the SemVer-version from the given table property.
-    fn version(&self, table: &Table, name: &str) -> Result<Option<Version>> {
-        let version_str = match self.string(table, name)? {
-            Some(prop) => prop,
-            None => return Ok(None),
-        };
-
-        let version = match Version::parse(version_str.as_ref()) {
-            Ok(version) => version,
-            Err(_) => {
-                return Err(ArcfileInvalidVersion {
-                    source: self.source.clone(),
-                    range: 0..0,
-                    field: name.to_string(),
-                    version: version_str,
-                }
-                .into());
-            }
-        };
-
-        Ok(Some(version))
-    }
-
-    fn missing_section(&self, section: &str) -> ArcfileMissingSection {
-        ArcfileMissingSection { name: section.into() }
-    }
-
-    fn invalid_property(&self, property: &str, expected: &str, actual: &str) -> ArcfileInvalidPropertyType {
-        ArcfileInvalidPropertyType {
-            name: property.into(),
-            expected: expected.into(),
-            actual: actual.into(),
+        match &property {
+            toml_edit::Item::Table(table) => return Ok(Some(table)),
+            item => Err(self.unexpected_type(name, "table", item).into()),
         }
     }
 
+    /// Gets the string from the given table.
+    fn string<'a>(
+        &'a self,
+        table: &'a toml_edit::Table,
+        name: &str,
+    ) -> Result<Option<&'a toml_edit::Formatted<String>>> {
+        let property = match table.get(name) {
+            Some(property) => property,
+            None => return Ok(None),
+        };
+
+        match &property {
+            toml_edit::Item::Value(toml_edit::Value::String(val)) => return Ok(Some(val)),
+            item => Err(self.unexpected_type(name, "string", item).into()),
+        }
+    }
+
+    /// Gets the SemVer-version requirement from the given table property.
+    fn version_req(&self, table: &toml_edit::Table, name: &str) -> Result<Option<Spanned<VersionReq>>> {
+        let version_str = match self.string(table, name)? {
+            Some(prop) => prop,
+            None => return Ok(None),
+        };
+
+        match VersionReq::parse(version_str.value()) {
+            Ok(version) => {
+                let span = Spanned::new(version, version_str.span().unwrap());
+
+                Ok(Some(span))
+            }
+            Err(_) => Err(self.invalid_version(name, version_str).into()),
+        }
+    }
+
+    /// Gets the SemVer-version from the given table property.
+    fn version(&self, table: &toml_edit::Table, name: &str) -> Result<Option<Spanned<Version>>> {
+        let version_str = match self.string(table, name)? {
+            Some(prop) => prop,
+            None => return Ok(None),
+        };
+
+        match Version::parse(version_str.value()) {
+            Ok(version) => {
+                let span = Spanned::new(version, version_str.span().unwrap());
+
+                Ok(Some(span))
+            }
+            Err(_) => Err(self.invalid_version(name, version_str).into()),
+        }
+    }
+
+    fn unexpected_type(&self, name: &str, expected: &str, found: &toml_edit::Item) -> ArcfileUnexpectedType {
+        ArcfileUnexpectedType {
+            source: self.source.clone(),
+            range: found.span().unwrap(),
+            name: name.to_string(),
+            expected: expected.to_string(),
+            found: found.type_name(),
+        }
+    }
+
+    fn invalid_version(&self, field: &str, value: &toml_edit::Formatted<String>) -> ArcfileInvalidVersion {
+        ArcfileInvalidVersion {
+            source: self.source.clone(),
+            range: value.span().unwrap(),
+            field: field.to_string(),
+            version: value.to_string(),
+        }
+    }
+
+    /// Verifies that the current Lume compiler version is compatible
+    /// with the one required by the project.
+    fn verify_lume_version(&self, project: &Project) -> Result<()> {
+        let required_lume_version = project.lume_version.clone();
+        let current_lume_version = self.current_lume_version.clone();
+
+        if !required_lume_version.value().matches(&current_lume_version) {
+            return Err(ArcfileIncompatibleLumeVersion {
+                source: self.source.clone(),
+                range: required_lume_version.span().clone(),
+                current: current_lume_version,
+                required: required_lume_version.into_value(),
+            }
+            .into());
+        }
+
+        Ok(())
+    }
+
     /// Gets the current Lume compiler version.
-    fn current_lume_version(&self) -> Version {
+    fn current_lume_version() -> Version {
         let version_str = env!("CARGO_PKG_VERSION");
 
         match Version::parse(version_str) {

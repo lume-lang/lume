@@ -1,29 +1,56 @@
 pub mod errors;
 pub(crate) mod parser;
 
-use crate::errors::*;
+use crate::errors::ArcfileGlobError;
+use crate::parser::ProjectParser;
 
 use fxhash::hash64;
 use glob::glob;
 use lume_diag::Result;
-use parser::ProjectParser;
 use semver::{Version, VersionReq};
-use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Spanned<T> {
+    value: T,
+    span: std::ops::Range<usize>,
+}
+
+impl<T> Spanned<T> {
+    /// Creates a new spanned value.
+    pub fn new(value: T, span: std::ops::Range<usize>) -> Spanned<T> {
+        Self { value, span }
+    }
+
+    /// Gets a reference to the value held by the span.
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    /// Moves the span into the held value.
+    pub fn into_value(self) -> T {
+        self.value
+    }
+
+    /// Gets a reference to the value held by the span.
+    pub fn span(&self) -> &std::ops::Range<usize> {
+        &self.span
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ProjectId(pub u64);
 
-impl From<String> for ProjectId {
+impl From<&str> for ProjectId {
     /// Creates a new [`ProjectId`] from a string, by taking it's hash value.
-    fn from(value: String) -> ProjectId {
+    fn from(value: &str) -> ProjectId {
         let hash = hash64(value.as_bytes());
 
         ProjectId(hash)
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     /// Uniquely identifies the project.
     pub id: ProjectId,
@@ -35,10 +62,10 @@ pub struct Project {
     pub name: String,
 
     /// Defines the minimum required version of Lume.
-    pub lume_version: VersionReq,
+    pub lume_version: Spanned<VersionReq>,
 
     /// Defines the current version of the package.
-    pub version: Option<Version>,
+    pub version: Option<Spanned<Version>>,
 
     /// Defines an optional description of the package.
     pub description: Option<String>,
