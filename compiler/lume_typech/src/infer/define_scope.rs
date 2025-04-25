@@ -67,13 +67,14 @@ impl<'a> ItemScope<'a> {
 }
 
 pub(super) struct ScopeVisitor<'a, 'b> {
+    hir: &'a lume_hir::map::Map,
     tcx: &'a mut ThirBuildCtx<'b>,
 }
 
 impl<'a, 'b> TypeCheckerPass<'a> for ScopeVisitor<'a, 'b> {
     fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in hir.items() {
-            ScopeVisitor { tcx }.visit(symbol)?;
+            ScopeVisitor { hir, tcx }.visit(symbol)?;
         }
 
         Ok(())
@@ -162,13 +163,13 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
     }
 
     fn variable_declaration(&mut self, stmt: &lume_hir::VariableDeclaration, scope: &ItemScope) -> Result<()> {
-        let value_expr = self.tcx.type_of_expr(stmt.value.id);
+        let value_expr = self.tcx.type_of(self.hir, stmt.value.id)?;
 
         let resolved_type = if let Some(declared_type) = &stmt.declared_type {
             let type_params = scope.flat_type_params();
             let declared_type_ref = self.tcx.mk_type_ref_generic(declared_type, &type_params)?;
 
-            self.tcx.check_type_compatibility(value_expr, &declared_type_ref)?;
+            self.tcx.check_type_compatibility(&value_expr, &declared_type_ref)?;
 
             declared_type_ref
         } else {

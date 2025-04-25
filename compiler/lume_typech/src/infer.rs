@@ -63,6 +63,11 @@ impl ThirBuildCtx<'_> {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
+        // If the expression has been memorized, return it instead.
+        if let Some(existing) = self.resolved_exprs.get(&def) {
+            return Ok(existing.clone());
+        }
+
         let expr = self.hir_expr(hir, def);
 
         match &expr.kind {
