@@ -35,17 +35,17 @@ impl ProjectParser {
 
         let source = NamedSource::new(file_name, content);
 
-        Self::from_source(source)
+        Self::from_source(path, source)
     }
 
-    pub fn from_source(source: NamedSource) -> Result<Self> {
+    pub fn from_source(path: &Path, source: NamedSource) -> Result<Self> {
         let document = match toml_edit::ImDocument::parse(source.content.clone()) {
             Ok(doc) => doc,
             Err(err) => return Err(ArcfileTomlError { inner: err }.into()),
         };
 
         Ok(Self {
-            path: PathBuf::from(source.name.clone()),
+            path: path.to_path_buf(),
             source,
             document,
             current_lume_version: Self::current_lume_version(),
@@ -240,7 +240,7 @@ mod tests {
     fn parser(input: &str) -> ProjectParser {
         let source = NamedSource::new("<test>".to_string(), input.to_string());
 
-        ProjectParser::from_source(source).unwrap()
+        ProjectParser::from_source(Path::new("<test>"), source).unwrap()
     }
 
     fn parse(input: &str) -> Project {
