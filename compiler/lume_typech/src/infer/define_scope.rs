@@ -113,6 +113,8 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
         let mut scope = ItemScope::method(scope, method_id);
         scope.type_parameters.extend(method.type_params().clone());
 
+        self.define_block_scope(&method.block, &scope)?;
+
         Ok(())
     }
 
@@ -134,6 +136,10 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
 
         let mut scope = ItemScope::method(scope, method_id);
         scope.type_parameters.extend(method.type_params().clone());
+
+        if let Some(block) = &method.block {
+            self.define_block_scope(block, &scope)?;
+        }
 
         Ok(())
     }
