@@ -8,8 +8,24 @@ use crate::{self as hir};
 use lume_ast::{self as ast, Node};
 
 const DEFAULT_STD_IMPORTS: &[&str] = &[
-    "Boolean", "String", "Int8", "UInt8", "Int16", "UInt16", "Int32", "UInt32", "Int64", "UInt64", "IntPtr", "UIntPtr",
-    "Float", "Double", "Array", "Pointer",
+    "Boolean",
+    "String",
+    "Int8",
+    "UInt8",
+    "Int16",
+    "UInt16",
+    "Int32",
+    "UInt32",
+    "Int64",
+    "UInt64",
+    "IntPtr",
+    "UIntPtr",
+    "Float",
+    "Double",
+    "Array",
+    "Pointer",
+    "Range",
+    "RangeInclusive",
 ];
 
 macro_rules! err {
