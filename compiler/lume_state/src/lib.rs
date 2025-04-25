@@ -71,11 +71,16 @@ impl SourceMap {
 
 #[derive(serde::Serialize, Default, Debug)]
 pub struct State {
-    pub source_map: SourceMap,
+    source_map: SourceMap,
     types: TypeDatabaseContext,
 }
 
 impl State {
+    /// Pushes a new source file onto the state object.
+    pub fn push_source(&mut self, id: ModuleFileId, source: NamedSource) {
+        self.source_map.mapping.insert(id, source);
+    }
+
     /// Gets the source of the module file with the given ID.
     pub fn source_of(&self, id: ModuleFileId) -> Result<&NamedSource> {
         self.source_map

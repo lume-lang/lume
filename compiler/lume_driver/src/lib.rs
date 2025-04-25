@@ -98,7 +98,7 @@ impl Driver {
             let source_id = ModuleFileId::from(module_id, named_source.name.clone());
 
             // Register source file in the state.
-            state.source_map.mapping.insert(source_id, named_source);
+            state.push_source(source_id, named_source);
 
             // Parse the contents of the source file.
             let expressions = Parser::parse_src(state, source_id)?;
