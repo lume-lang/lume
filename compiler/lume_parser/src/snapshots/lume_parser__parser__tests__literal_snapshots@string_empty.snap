@@ -21,13 +21,15 @@ expression: "parse_expr(\"\\\"\\\"\")"
             },
             parameters: [],
             type_parameters: [],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        13..17,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            13..17,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [

@@ -41,13 +41,15 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                 },
             ],
             type_parameters: [],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        21..25,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            21..25,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [],

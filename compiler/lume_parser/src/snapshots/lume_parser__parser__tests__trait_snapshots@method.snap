@@ -50,13 +50,15 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int }\")"
                             },
                         ],
                         type_parameters: [],
-                        return_type: Scalar(
-                            ScalarType {
-                                name: "Int32",
-                                location: Location(
-                                    38..41,
-                                ),
-                            },
+                        return_type: Some(
+                            Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        38..41,
+                                    ),
+                                },
+                            ),
                         ),
                         block: None,
                         location: Location(

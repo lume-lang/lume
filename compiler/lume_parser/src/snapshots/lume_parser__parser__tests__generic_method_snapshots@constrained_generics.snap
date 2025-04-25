@@ -69,13 +69,15 @@ expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {}
                                     ],
                                 },
                             ],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "void",
-                                    location: Location(
-                                        52..56,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "void",
+                                        location: Location(
+                                            52..56,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [],

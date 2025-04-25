@@ -60,12 +60,14 @@ impl DefineMethodBodies<'_, '_> {
                         method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
                     }
 
-                    let return_type = self.ctx.mk_type_ref_generic(
-                        &method.return_type,
-                        &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                    )?;
+                    if let Some(ret) = &method.return_type {
+                        let return_type = self.ctx.mk_type_ref_generic(
+                            ret,
+                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                        )?;
 
-                    method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                    }
                 }
 
                 for method in class.external_methods() {
@@ -81,12 +83,14 @@ impl DefineMethodBodies<'_, '_> {
                         method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
                     }
 
-                    let return_type = self.ctx.mk_type_ref_generic(
-                        &method.return_type,
-                        &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                    )?;
+                    if let Some(ret) = &method.return_type {
+                        let return_type = self.ctx.mk_type_ref_generic(
+                            ret,
+                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                        )?;
 
-                    method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                    }
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
@@ -103,12 +107,14 @@ impl DefineMethodBodies<'_, '_> {
                         method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
                     }
 
-                    let return_type = self.ctx.mk_type_ref_generic(
-                        &method.return_type,
-                        &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
-                    )?;
+                    if let Some(ret) = &method.return_type {
+                        let return_type = self.ctx.mk_type_ref_generic(
+                            ret,
+                            &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                        )?;
 
-                    method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                    }
                 }
             }
             _ => (),
@@ -127,8 +133,10 @@ impl DefineMethodBodies<'_, '_> {
             function_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
         }
 
-        let return_type = self.ctx.mk_type_ref_generic(&func.return_type, &func.type_parameters)?;
-        function_id.set_return_type(self.ctx.tcx_mut(), return_type);
+        if let Some(ret) = &func.return_type {
+            let return_type = self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?;
+            function_id.set_return_type(self.ctx.tcx_mut(), return_type);
+        }
 
         Ok(())
     }

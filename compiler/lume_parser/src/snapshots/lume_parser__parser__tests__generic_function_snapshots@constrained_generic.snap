@@ -40,13 +40,15 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                     ],
                 },
             ],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        25..29,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            25..29,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [],

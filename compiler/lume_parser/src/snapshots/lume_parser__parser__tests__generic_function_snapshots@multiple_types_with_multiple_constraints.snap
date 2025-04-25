@@ -74,13 +74,15 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                     ],
                 },
             ],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        61..65,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            61..65,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [],

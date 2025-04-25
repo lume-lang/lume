@@ -1,0 +1,78 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            use Add in Int32 {\n                fn add(other: Int32) {}\n            }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Scalar(
+                ScalarType {
+                    name: "Add",
+                    location: Location(
+                        17..20,
+                    ),
+                },
+            ),
+            target: Scalar(
+                ScalarType {
+                    name: "Int32",
+                    location: Location(
+                        24..29,
+                    ),
+                },
+            ),
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Private(
+                        Private {
+                            location: Location(
+                                48..50,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            51..54,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: Location(
+                                    55..60,
+                                ),
+                            },
+                            param_type: Scalar(
+                                ScalarType {
+                                    name: "Int32",
+                                    location: Location(
+                                        62..67,
+                                    ),
+                                },
+                            ),
+                            location: Location(
+                                55..67,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: None,
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            69..71,
+                        ),
+                    },
+                    location: Location(
+                        48..71,
+                    ),
+                },
+            ],
+            location: Location(
+                13..85,
+            ),
+        },
+    ),
+]

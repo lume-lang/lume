@@ -51,13 +51,15 @@ expression: "parse(\"class Test { fn test<T: Numeric>() -> void {} }\")"
                                     ],
                                 },
                             ],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "void",
-                                    location: Location(
-                                        38..42,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "void",
+                                        location: Location(
+                                            38..42,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [],

@@ -73,13 +73,15 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                         },
                     ],
                     type_parameters: [],
-                    return_type: Scalar(
-                        ScalarType {
-                            name: "Int32",
-                            location: Location(
-                                83..88,
-                            ),
-                        },
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    83..88,
+                                ),
+                            },
+                        ),
                     ),
                     block: Block {
                         statements: [

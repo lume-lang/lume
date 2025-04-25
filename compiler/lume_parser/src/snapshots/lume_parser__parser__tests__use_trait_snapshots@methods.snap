@@ -38,13 +38,15 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                     },
                     parameters: [],
                     type_parameters: [],
-                    return_type: Scalar(
-                        ScalarType {
-                            name: "String",
-                            location: Location(
-                                71..77,
-                            ),
-                        },
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: "String",
+                                location: Location(
+                                    71..77,
+                                ),
+                            },
+                        ),
                     ),
                     block: Block {
                         statements: [
@@ -92,13 +94,15 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                     },
                     parameters: [],
                     type_parameters: [],
-                    return_type: Scalar(
-                        ScalarType {
-                            name: "Int32",
-                            location: Location(
-                                167..172,
-                            ),
-                        },
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    167..172,
+                                ),
+                            },
+                        ),
                     ),
                     block: Block {
                         statements: [

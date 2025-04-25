@@ -32,13 +32,15 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar() -> In
                             },
                             parameters: [],
                             type_parameters: [],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        53..58,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "Int32",
+                                        location: Location(
+                                            53..58,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [

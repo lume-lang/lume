@@ -67,13 +67,15 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                 },
             ],
             type_parameters: [],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        37..41,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            37..41,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [],

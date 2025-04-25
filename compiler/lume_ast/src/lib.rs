@@ -205,7 +205,7 @@ pub struct FunctionDefinition {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Box<Type>,
+    pub return_type: Option<Box<Type>>,
     pub block: Block,
     pub location: Location,
 }
@@ -260,7 +260,7 @@ pub struct MethodDefinition {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Box<Type>,
+    pub return_type: Option<Box<Type>>,
     pub block: Block,
     pub location: Location,
 }
@@ -279,7 +279,7 @@ pub struct TraitMethodDefinition {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Box<Type>,
+    pub return_type: Option<Box<Type>>,
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -337,7 +337,7 @@ pub struct TraitMethodImplementation {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Box<Type>,
+    pub return_type: Option<Box<Type>>,
     pub block: Block,
     pub location: Location,
 }

@@ -68,13 +68,15 @@ expression: "parse(r#\"\n            use Enumerable<T> in Vector<T> {\n         
                     },
                     parameters: [],
                     type_parameters: [],
-                    return_type: Scalar(
-                        ScalarType {
-                            name: "T",
-                            location: Location(
-                                79..80,
-                            ),
-                        },
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: "T",
+                                location: Location(
+                                    79..80,
+                                ),
+                            },
+                        ),
                     ),
                     block: Block {
                         statements: [],

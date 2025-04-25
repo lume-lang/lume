@@ -32,13 +32,15 @@ expression: "parse(\"class Test { fn test<>() -> void {} }\")"
                             },
                             parameters: [],
                             type_parameters: [],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "void",
-                                    location: Location(
-                                        28..32,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "void",
+                                        location: Location(
+                                            28..32,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [],

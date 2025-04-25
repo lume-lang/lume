@@ -733,7 +733,7 @@ impl<'a> LowerModule<'a> {
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.type_ref(*expr.return_type)?;
+        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
         let location = self.location(expr.location);
 
         if expr.external {
@@ -744,7 +744,7 @@ impl<'a> LowerModule<'a> {
                     visibility,
                     type_parameters,
                     parameters,
-                    return_type: Box::new(return_type),
+                    return_type,
                     location,
                 },
             )));
@@ -758,7 +758,7 @@ impl<'a> LowerModule<'a> {
             visibility,
             type_parameters,
             parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location,
         })))
@@ -797,7 +797,7 @@ impl<'a> LowerModule<'a> {
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.type_ref(*expr.return_type)?;
+        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
         let location = self.location(expr.location);
 
         let block = if let Some(block) = expr.block {
@@ -812,7 +812,7 @@ impl<'a> LowerModule<'a> {
             visibility,
             type_parameters,
             parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location,
         })
@@ -883,7 +883,7 @@ impl<'a> LowerModule<'a> {
         let name = self.symbol_name(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.type_ref(*expr.return_type)?;
+        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -896,7 +896,7 @@ impl<'a> LowerModule<'a> {
                     name,
                     type_parameters,
                     parameters,
-                    return_type: Box::new(return_type),
+                    return_type,
                     location,
                 },
             )));
@@ -911,7 +911,7 @@ impl<'a> LowerModule<'a> {
             name,
             type_parameters,
             parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location,
         })))
@@ -976,7 +976,7 @@ impl<'a> LowerModule<'a> {
         let name = self.symbol_name(expr.name);
         let parameters = self.parameters(expr.parameters)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let return_type = self.type_ref(*expr.return_type)?;
+        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
         let block = self.isolated_block(expr.block)?;
         let location = self.location(expr.location);
 
@@ -985,7 +985,7 @@ impl<'a> LowerModule<'a> {
             name,
             parameters,
             type_parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location,
         })
@@ -1020,6 +1020,13 @@ impl<'a> LowerModule<'a> {
             ast::Type::Scalar(t) => self.type_scalar(*t),
             ast::Type::Array(t) => self.type_array(*t),
             ast::Type::Generic(t) => self.type_generic(*t),
+        }
+    }
+
+    fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<Option<hir::Type>> {
+        match expr {
+            Some(e) => Ok(Some(self.type_ref(e)?)),
+            None => Ok(None),
         }
     }
 

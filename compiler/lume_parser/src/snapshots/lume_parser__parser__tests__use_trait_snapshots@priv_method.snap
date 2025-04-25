@@ -58,13 +58,15 @@ expression: "parse(r#\"\n            use Add in Int32 {\n                fn add(
                         },
                     ],
                     type_parameters: [],
-                    return_type: Scalar(
-                        ScalarType {
-                            name: "Int32",
-                            location: Location(
-                                72..77,
-                            ),
-                        },
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: "Int32",
+                                location: Location(
+                                    72..77,
+                                ),
+                            },
+                        ),
                     ),
                     block: Block {
                         statements: [

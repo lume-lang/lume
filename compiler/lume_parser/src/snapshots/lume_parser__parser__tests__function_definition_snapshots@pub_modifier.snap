@@ -21,13 +21,15 @@ expression: "parse(\"pub fn main() -> void {}\")"
             },
             parameters: [],
             type_parameters: [],
-            return_type: Scalar(
-                ScalarType {
-                    name: "void",
-                    location: Location(
-                        17..21,
-                    ),
-                },
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: "void",
+                        location: Location(
+                            17..21,
+                        ),
+                    },
+                ),
             ),
             block: Block {
                 statements: [],

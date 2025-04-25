@@ -630,7 +630,7 @@ impl<'a> Parser<'a> {
             name,
             parameters,
             type_parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location: (start..end).into(),
         };
@@ -665,10 +665,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses the return type of the current function definition.
-    fn parse_fn_return_type(&mut self) -> Result<Type> {
-        self.consume(TokenKind::Arrow)?;
+    fn parse_fn_return_type(&mut self) -> Result<Option<Box<Type>>> {
+        if self.consume_if(TokenKind::Arrow)?.is_none() {
+            return Ok(None);
+        }
 
-        self.parse_type()
+        Ok(Some(Box::new(self.parse_type()?)))
     }
 
     fn parse_class(&mut self) -> Result<TopLevelExpression> {
@@ -770,7 +772,7 @@ impl<'a> Parser<'a> {
             name,
             parameters,
             type_parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location: (start..end).into(),
         };
@@ -832,7 +834,7 @@ impl<'a> Parser<'a> {
             name,
             parameters,
             type_parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location: (start..end).into(),
         })
@@ -976,7 +978,7 @@ impl<'a> Parser<'a> {
             name,
             parameters,
             type_parameters,
-            return_type: Box::new(return_type),
+            return_type,
             block,
             location: (start..end).into(),
         })
@@ -1959,7 +1961,7 @@ mod tests {
         assert_snap_eq!("fn main() -> void {}", "empty");
         assert_snap_eq!("fn main() -> void { let a = 0; }", "statement");
         assert_snap_eq!("fn main() -> void { let a = 0; let b = 1; }", "statements");
-        assert_err_snap_eq!("fn main() {}", "no_return_type");
+        assert_snap_eq!("fn main() {}", "no_return_type");
         assert_snap_eq!("fn main(argc: u8) -> void { }", "parameter");
         assert_snap_eq!("fn main(argc: u8, arcv: [String]) -> void { }", "parameters");
         assert_snap_eq!("fn external main() -> void", "external");
@@ -2102,6 +2104,14 @@ mod tests {
                 }
             }"#,
             "method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                fn bar() { }
+            }"#,
+            "method_no_ret"
         );
 
         assert_snap_eq!(
@@ -2254,6 +2264,7 @@ mod tests {
         assert_snap_eq!("trait Add { fn add(other: int) -> int }", "private_method");
         assert_snap_eq!("trait Add<T: Numeric> {}", "constrained_generic");
         assert_snap_eq!("trait Add<T1: Numeric, T2: Numeric> {}", "constrained_generics");
+        assert_snap_eq!("trait Add { pub fn add(other: int) { } }", "method_no_ret");
     }
 
     #[test]
@@ -2278,6 +2289,14 @@ mod tests {
                 }
             }"#,
             "pub_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            use Add in Int32 {
+                fn add(other: Int32) {}
+            }"#,
+            "method_no_ret"
         );
 
         assert_snap_eq!(

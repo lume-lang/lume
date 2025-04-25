@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
+expression: "parse(\"trait Add { pub fn add(other: int) { } }\")"
 ---
 [
     TypeDefinition(
@@ -15,17 +15,17 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                 type_parameters: [],
                 methods: [
                     TraitMethodDefinition {
-                        visibility: Private(
-                            Private {
+                        visibility: Public(
+                            Public {
                                 location: Location(
-                                    12..14,
+                                    12..15,
                                 ),
                             },
                         ),
                         name: Identifier {
                             name: "add",
                             location: Location(
-                                15..18,
+                                19..22,
                             ),
                         },
                         parameters: [
@@ -33,41 +33,39 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                                 name: Identifier {
                                     name: "other",
                                     location: Location(
-                                        19..24,
+                                        23..28,
                                     ),
                                 },
                                 param_type: Scalar(
                                     ScalarType {
                                         name: "Int32",
                                         location: Location(
-                                            26..29,
+                                            30..33,
                                         ),
                                     },
                                 ),
                                 location: Location(
-                                    19..29,
+                                    23..33,
                                 ),
                             },
                         ],
                         type_parameters: [],
-                        return_type: Some(
-                            Scalar(
-                                ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        34..37,
-                                    ),
-                                },
-                            ),
+                        return_type: None,
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: Location(
+                                    35..38,
+                                ),
+                            },
                         ),
-                        block: None,
                         location: Location(
-                            12..37,
+                            16..38,
                         ),
                     },
                 ],
                 location: Location(
-                    0..39,
+                    0..40,
                 ),
             },
         ),

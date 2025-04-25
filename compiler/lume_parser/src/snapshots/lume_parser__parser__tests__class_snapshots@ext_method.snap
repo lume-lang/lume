@@ -32,13 +32,15 @@ expression: "parse(r#\"\n            class Foo {\n                fn external ba
                             },
                             parameters: [],
                             type_parameters: [],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        62..67,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "Int32",
+                                        location: Location(
+                                            62..67,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [],

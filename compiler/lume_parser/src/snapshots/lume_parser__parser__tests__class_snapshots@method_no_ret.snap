@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(r#\"\n            class Foo {\n                fn bar<T>() -> Int32 { }\n            }\"#)"
+expression: "parse(r#\"\n            class Foo {\n                fn bar() { }\n            }\"#)"
 ---
 [
     TypeDefinition(
@@ -31,42 +31,23 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar<T>() ->
                                 ),
                             },
                             parameters: [],
-                            type_parameters: [
-                                TypeParameter {
-                                    name: Identifier {
-                                        name: "T",
-                                        location: Location(
-                                            48..49,
-                                        ),
-                                    },
-                                    constraints: [],
-                                },
-                            ],
-                            return_type: Some(
-                                Scalar(
-                                    ScalarType {
-                                        name: "Int32",
-                                        location: Location(
-                                            56..61,
-                                        ),
-                                    },
-                                ),
-                            ),
+                            type_parameters: [],
+                            return_type: None,
                             block: Block {
                                 statements: [],
                                 location: Location(
-                                    62..65,
+                                    50..53,
                                 ),
                             },
                             location: Location(
-                                41..65,
+                                41..53,
                             ),
                         },
                     ),
                 ],
                 type_parameters: [],
                 location: Location(
-                    13..79,
+                    13..67,
                 ),
             },
         ),

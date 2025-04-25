@@ -32,13 +32,15 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                             },
                             parameters: [],
                             type_parameters: [],
-                            return_type: Scalar(
-                                ScalarType {
-                                    name: "Boolean",
-                                    location: Location(
-                                        56..60,
-                                    ),
-                                },
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: "Boolean",
+                                        location: Location(
+                                            56..60,
+                                        ),
+                                    },
+                                ),
                             ),
                             block: Block {
                                 statements: [
