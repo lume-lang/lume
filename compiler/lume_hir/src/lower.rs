@@ -557,15 +557,25 @@ impl<'a> LowerModule<'a> {
         let lower = self.expression(expr.lower)?;
         let upper = self.expression(expr.upper)?;
 
+        let range_type = if expr.inclusive {
+            ast::Type::Scalar(Box::new(ast::ScalarType {
+                name: "RangeInclusive".to_string(),
+                location: lume_ast::Location(0..0),
+            }))
+        } else {
+            ast::Type::Scalar(Box::new(ast::ScalarType {
+                name: "Range".to_string(),
+                location: lume_ast::Location(0..0),
+            }))
+        };
+
         Ok(hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Range(Box::new(hir::Range {
+            kind: hir::ExpressionKind::New(Box::new(hir::New {
                 id,
-                lower,
-                upper,
-                inclusive: expr.inclusive,
-                location,
+                name: Box::new(self.type_ref(range_type)?),
+                arguments: vec![lower, upper],
             })),
         })
     }

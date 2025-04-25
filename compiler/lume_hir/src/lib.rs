@@ -617,7 +617,6 @@ pub enum ExpressionKind {
     MethodCall(Box<MethodCall>),
     Literal(Box<Literal>),
     Member(Box<Member>),
-    Range(Box<Range>),
     Variable(Box<Variable>),
 }
 
@@ -742,15 +741,6 @@ pub struct Member {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: String,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct Range {
-    pub id: ExpressionId,
-    pub lower: Expression,
-    pub upper: Expression,
-    pub inclusive: bool,
     pub location: Location,
 }
 
