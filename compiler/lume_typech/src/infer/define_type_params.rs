@@ -110,11 +110,18 @@ impl DefineTypeParameters<'_, '_> {
         Ok(())
     }
 
-    fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
+    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
 
-        for type_param in &func.type_parameters {
-            func_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+        for type_param in &mut func.type_parameters {
+            let type_param_id = func_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+
+            type_param.type_param_id = Some(type_param_id);
+            type_param.type_id = Some(Type::type_parameter(
+                self.ctx.tcx_mut(),
+                type_param_id,
+                type_param.name.clone(),
+            ));
         }
 
         Ok(())
