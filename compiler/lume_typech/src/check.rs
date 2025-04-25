@@ -2,21 +2,17 @@ use lume_diag::Result;
 use lume_types::TypeRef;
 
 use crate::ThirBuildCtx;
-use stmt::VarDeclTypeChecker;
 
 pub(crate) mod errors;
-mod stmt;
 
 pub trait TypeCheckerPass<'a> {
-    fn run(hir: &'a lume_hir::map::Map, tcx: &'a mut ThirBuildCtx) -> Result<()>
+    fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()>
     where
         Self: Sized;
 }
 
 impl ThirBuildCtx<'_> {
-    pub fn typecheck(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
-        VarDeclTypeChecker::run(hir, self)?;
-
+    pub fn typecheck(&mut self, _hir: &lume_hir::map::Map) -> Result<()> {
         Ok(())
     }
 

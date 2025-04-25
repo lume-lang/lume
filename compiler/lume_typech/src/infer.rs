@@ -1,9 +1,10 @@
 use lume_diag::Result;
 use lume_hir::{self};
 
-use crate::*;
+use crate::{check::TypeCheckerPass, *};
 
 mod define_method_bodies;
+mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
@@ -19,6 +20,7 @@ impl ThirBuildCtx<'_> {
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
+        infer::define_scope::ScopeVisitor::run(self, hir)?;
 
         self.infer_exprs(hir)?;
 
