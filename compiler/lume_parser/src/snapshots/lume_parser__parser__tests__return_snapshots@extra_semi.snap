@@ -1,0 +1,12 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr_err(\"return;;\")"
+---
+InvalidExpression {
+    source: NamedSource {
+        name: "<temp>",
+        content: "fn main() -> void { return;; }",
+    },
+    range: 27..28,
+    actual: ;,
+}

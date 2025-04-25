@@ -2061,6 +2061,14 @@ mod tests {
     }
 
     #[test]
+    fn test_return_snapshots() {
+        assert_expr_snap_eq!("return;", "empty");
+        assert_expr_snap_eq!("return 1;", "scalar");
+        assert_expr_snap_eq!("return a.b(c);", "call");
+        assert_expr_err_snap_eq!("return;;", "extra_semi");
+    }
+
+    #[test]
     fn test_generic_function_snapshots() {
         assert_snap_eq!("fn test() -> void {}", "no_generics");
         assert_snap_eq!("fn test<>() -> void {}", "empty_generics");
