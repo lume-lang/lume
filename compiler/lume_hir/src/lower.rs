@@ -79,10 +79,7 @@ impl<'a> LowerModule<'a> {
         lower.insert_implicit_imports()?;
 
         for expr in expressions {
-            match expr {
-                ast::TopLevelExpression::Namespace(i) => lower.top_namespace(*i)?,
-                expr => lower.top_level_expression(expr)?,
-            }
+            lower.top_level_expression(expr)?;
         }
 
         Ok(())
@@ -170,15 +167,12 @@ impl<'a> LowerModule<'a> {
     }
 
     fn top_level_expression(&mut self, expr: ast::TopLevelExpression) -> Result<()> {
-        if let ast::TopLevelExpression::Import(i) = expr {
-            return self.top_import(*i);
-        }
-
         let hir_ast = match expr {
+            ast::TopLevelExpression::Import(i) => return self.top_import(*i),
+            ast::TopLevelExpression::Namespace(i) => return self.top_namespace(*i),
             ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
             ast::TopLevelExpression::Use(f) => self.def_impl(*f)?,
-            _ => todo!(),
         };
 
         self.map.items.insert(hir_ast.id(), hir_ast.clone());
