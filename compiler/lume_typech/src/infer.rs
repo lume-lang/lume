@@ -72,13 +72,51 @@ impl ThirBuildCtx<'_> {
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
+            lume_hir::ExpressionKind::New(new) => {
+                let type_ref = self.mk_type_ref(&new.name)?;
+                let type_def = type_ref.get(self.tcx());
+
+                match &type_def.kind {
+                    lume_types::TypeKind::Class(_) => Ok(type_ref),
+                    kind => Err(crate::errors::AbstractTypeInstantiate {
+                        source: self.state.source_of(expr.location.file)?.clone(),
+                        range: expr.location.into(),
+                        name: type_def.name.clone(),
+                        kind: match kind {
+                            lume_types::TypeKind::Trait(_) => "trait",
+                            lume_types::TypeKind::Alias(_) => "alias",
+                            lume_types::TypeKind::Enum(_) => "enum",
+                            lume_types::TypeKind::TypeParameter(_) => "type parameter",
+                            lume_types::TypeKind::Void => "void",
+                            lume_types::TypeKind::Class(_) => unreachable!(),
+                        },
+                    }
+                    .into()),
+                }
+            }
+            lume_hir::ExpressionKind::FunctionCall(call) => {
+                let definition = match lume_types::Function::find(self.tcx(), &call.name) {
+                    Some(def) => def,
+                    None => {
+                        return Err(crate::errors::MissingFunction {
+                            source: self.state.source_of(expr.location.file)?.clone(),
+                            range: expr.location.into(),
+                            name: call.name.clone(),
+                        }
+                        .into());
+                    }
+                };
+
+                Ok(definition.return_type.clone())
+            }
+            lume_hir::ExpressionKind::MethodCall(_) => todo!("method call"),
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
+            lume_hir::ExpressionKind::Member(_) => todo!("member reference"),
             lume_hir::ExpressionKind::Variable(var) => {
                 let decl = self.hir_expect_var_stmt(hir, var.reference);
 
                 Ok(self.type_of(hir, decl.value.id)?)
             }
-            k => todo!("unhandled node type in type_of(): {:?}", k),
         }
     }
 

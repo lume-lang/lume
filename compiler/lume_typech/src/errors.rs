@@ -15,3 +15,28 @@ pub struct MissingType {
 
     pub name: SymbolName,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find function {name}", code = "LM4112")]
+pub struct MissingFunction {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("no such function was found")]
+    pub range: Range<usize>,
+
+    pub name: SymbolName,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "cannot instantiate non-concrete type {name}", code = "LM4114")]
+pub struct AbstractTypeInstantiate {
+    #[span]
+    pub source: NamedSource,
+
+    #[label("`new` can only instantiate class-types, found {kind}")]
+    pub range: Range<usize>,
+
+    pub name: SymbolName,
+    pub kind: &'static str,
+}

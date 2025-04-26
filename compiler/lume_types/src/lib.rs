@@ -256,8 +256,8 @@ impl Function {
         FunctionId(id as u32)
     }
 
-    pub fn find(ctx: &TypeDatabaseContext, name: SymbolName) -> Option<&Function> {
-        ctx.functions.iter().find(|f| f.name == name)
+    pub fn find<'a>(ctx: &'a TypeDatabaseContext, name: &SymbolName) -> Option<&'a Function> {
+        ctx.functions.iter().find(|f| &f.name == name)
     }
 }
 
@@ -641,6 +641,10 @@ impl TypeRef {
             instance_of,
             type_arguments: Vec::new(),
         }
+    }
+
+    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Type {
+        self.instance_of.get(ctx)
     }
 
     pub fn push_type_argument(&mut self, type_argument: TypeRef) {
