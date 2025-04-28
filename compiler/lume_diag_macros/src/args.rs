@@ -8,6 +8,7 @@ pub enum DiagnosticArg {
     Help(String),
     Severity(Severity),
     Source(Ident),
+    Related(Ident),
     Span(Ident),
     Label(String, Ident),
 }
@@ -27,6 +28,7 @@ impl DiagnosticArg {
                 let arg = match ident.to_string().as_str() {
                     "span" => DiagnosticArg::Span(field_ident.clone()),
                     "source" => DiagnosticArg::Source(field_ident.clone()),
+                    "related" => DiagnosticArg::Related(field_ident.clone()),
                     _ => return Err(Error::new_spanned(ident, "Invalid property attribute")),
                 };
 
@@ -43,8 +45,6 @@ impl DiagnosticArg {
                 };
 
                 return Ok(Some(arg));
-            } else {
-                return Err(Error::new_spanned(attr, "Expected path attribute"));
             }
         }
 

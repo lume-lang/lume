@@ -58,6 +58,7 @@ impl Diagnostic {
         let span_block = self.span_block()?;
         let labels_block = self.labels_block()?;
         let source_block = self.source_block()?;
+        let related_block = self.related_block()?;
         let severity_block = self.severity_block()?;
 
         let stream = quote! {
@@ -68,6 +69,7 @@ impl Diagnostic {
                 #span_block
                 #labels_block
                 #source_block
+                #related_block
                 #severity_block
             }
         };
@@ -272,6 +274,23 @@ impl Diagnostic {
         let stream = quote! {
             fn source<'a>(&'a self) -> Option<&'a dyn std::error::Error> {
                 Some(&self.#source)
+            }
+        };
+
+        Ok(stream)
+    }
+
+    /// Creates the implementation block for the `related` trait function.
+    fn related_block(&self) -> syn::Result<TokenStream> {
+        let arg = self.args.iter().find(|arg| matches!(arg, DiagnosticArg::Related(_)));
+        let related = match arg {
+            Some(DiagnosticArg::Related(related)) => related.clone(),
+            _ => return Ok(TokenStream::new()),
+        };
+
+        let stream = quote! {
+            fn related<'a>(&'a self) -> Vec<::lume_diag::LumeDiagnostic<'a>> {
+                self.#related.iter().map(|e| e.as_diag()).collect()
             }
         };
 

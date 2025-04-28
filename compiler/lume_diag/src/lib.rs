@@ -217,6 +217,11 @@ pub trait Diagnostic: std::fmt::Debug {
         None
     }
 
+    /// Any related errors, which can be used to provide additional information about the diagnostic.
+    fn related<'a>(&'a self) -> Vec<LumeDiagnostic<'a>> {
+        Vec::new()
+    }
+
     /// Help messages, which can be used to provide additional information about the diagnostic.
     fn help(&self) -> Option<Vec<String>> {
         None
@@ -230,6 +235,7 @@ pub trait Diagnostic: std::fmt::Debug {
             code: self.code(),
             labels: self.labels(),
             source: self.source(),
+            related: self.related(),
             help: self.help(),
         }
     }
@@ -316,6 +322,9 @@ pub struct LumeDiagnostic<'a> {
     /// Chained error, which caused the diagnostic to be raised.
     pub source: Option<&'a dyn std::error::Error>,
 
+    /// Zero-or-more related diagnostics, which can point to related locations in the source code.
+    pub related: Vec<LumeDiagnostic<'a>>,
+
     /// Help messages, which can be used to provide additional information about the diagnostic.
     pub help: Option<Vec<String>>,
 }
@@ -338,6 +347,7 @@ impl<'a> LumeDiagnostic<'a> {
     ///     code: None,
     ///     labels: None,
     ///     source: None,
+    ///     related: Vec::new(),
     ///     help: None,
     /// }
     /// ```
@@ -412,6 +422,20 @@ impl<'a> LumeDiagnostic<'a> {
         }
 
         self.help.as_mut().unwrap().extend(help);
+
+        self
+    }
+
+    /// Adds the given diagnostic to the diagnostic.
+    pub fn add_related(mut self, diagnostic: LumeDiagnostic<'a>) -> Self {
+        self.related.push(diagnostic);
+
+        self
+    }
+
+    /// Adds the given related diagnostics to the diagnostic.
+    pub fn append_related(mut self, diagnostics: impl IntoIterator<Item = LumeDiagnostic<'a>>) -> Self {
+        self.related.extend(diagnostics);
 
         self
     }
