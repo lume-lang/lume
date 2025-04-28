@@ -5,8 +5,9 @@ use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 mod check;
 mod errors;
 mod infer;
+mod method;
 
-#[derive(serde::Serialize, Debug)]
+#[derive(Debug)]
 pub struct ThirBuildCtx<'a> {
     /// Defines the parent state.
     state: &'a mut lume_state::State,

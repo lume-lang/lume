@@ -17,7 +17,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Checks whether the given type references are compatible.
-    pub(crate) fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<()> {
-        Ok(())
+    pub(crate) fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<bool> {
+        Ok(true)
     }
 }

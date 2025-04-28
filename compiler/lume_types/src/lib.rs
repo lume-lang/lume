@@ -1,3 +1,4 @@
+use indexmap::IndexMap;
 use lume_diag::Result;
 
 const UNKNOWN_TYPE_ID: TypeId = TypeId(u32::MAX);
@@ -186,6 +187,18 @@ impl Parameters {
             ty,
         });
     }
+
+    pub fn inner(&self) -> &[Parameter] {
+        &self.params
+    }
+
+    pub fn len(&self) -> usize {
+        self.params.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.params.is_empty()
+    }
 }
 
 #[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
@@ -317,11 +330,11 @@ impl Property {
 pub struct MethodId(pub u32);
 
 impl MethodId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Method {
+    pub fn get(self, ctx: &TypeDatabaseContext) -> &Method {
         &ctx.methods[self.0 as usize]
     }
 
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Method {
+    pub fn get_mut(self, ctx: &mut TypeDatabaseContext) -> &mut Method {
         &mut ctx.methods[self.0 as usize]
     }
 
@@ -496,6 +509,10 @@ impl TypeId {
         }
     }
 
+    pub fn name(&self, ctx: &TypeDatabaseContext) -> SymbolName {
+        self.get(ctx).name.clone()
+    }
+
     pub fn transport(&self, ctx: &TypeDatabaseContext) -> TypeTransport {
         self.get(ctx).transport
     }
@@ -586,6 +603,8 @@ pub struct Type {
     pub kind: TypeKind,
     pub transport: TypeTransport,
     pub name: SymbolName,
+
+    pub methods: IndexMap<String, MethodId>,
 }
 
 impl Type {
@@ -595,6 +614,7 @@ impl Type {
             kind,
             transport: TypeTransport::Reference,
             name,
+            methods: IndexMap::new(),
         };
 
         ctx.types.push(method);
@@ -606,6 +626,7 @@ impl Type {
             kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Reference,
             name,
+            methods: IndexMap::new(),
         }
     }
 
@@ -614,6 +635,7 @@ impl Type {
             kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Copy,
             name,
+            methods: IndexMap::new(),
         }
     }
 
@@ -649,6 +671,14 @@ impl TypeRef {
 
     pub fn push_type_argument(&mut self, type_argument: TypeRef) {
         self.type_arguments.push(type_argument);
+    }
+
+    pub fn name(&self, ctx: &TypeDatabaseContext) -> SymbolName {
+        self.get(ctx).name.clone()
+    }
+
+    pub fn methods(&self, ctx: &TypeDatabaseContext) -> Vec<MethodId> {
+        self.get(ctx).methods.values().cloned().collect()
     }
 
     pub fn unknown() -> Self {

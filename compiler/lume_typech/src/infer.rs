@@ -109,7 +109,21 @@ impl ThirBuildCtx<'_> {
 
                 Ok(definition.return_type.clone())
             }
-            lume_hir::ExpressionKind::MethodCall(_) => todo!("method call"),
+            lume_hir::ExpressionKind::MethodCall(call) => {
+                let callee_type = self.type_of(hir, call.callee.id)?;
+                let method =
+                    match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_parameters)? {
+                        method::MethodLookupResult::Success(method) => method,
+                        method::MethodLookupResult::Failure(err) => {
+                            return Err(err.compound_err(
+                                self.state.source_of(expr.location.file)?.clone(),
+                                expr.location.clone(),
+                            ));
+                        }
+                    };
+
+                Ok(method.return_type.clone())
+            }
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
             lume_hir::ExpressionKind::Member(_) => todo!("member reference"),
             lume_hir::ExpressionKind::Variable(var) => {
