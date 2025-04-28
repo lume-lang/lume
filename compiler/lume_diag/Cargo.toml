@@ -5,5 +5,6 @@ edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
-"annotate-snippets" = "0.11.5"
+ariadne = "^0.5.1"
+indexmap = "2.9.0"
 serde = { version = "1.0.219", features = ["serde_derive"] }

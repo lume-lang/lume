@@ -92,13 +92,13 @@ impl<'a> Handler<'a> for DiagnosticHandler<'a> {
     fn drain(&mut self) {
         let mut encountered_errors = 0usize;
 
-        for diagnostic in &self.emitted_diagnostics {
-            diagnostic.render();
-
+        while let Some(diagnostic) = self.emitted_diagnostics.pop() {
             // If the diagnostic is an error, mark it down.
             if diagnostic.severity == Severity::Error {
                 encountered_errors += 1;
             }
+
+            diagnostic.render();
         }
 
         // If we've encountered any errors,

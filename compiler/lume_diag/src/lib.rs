@@ -1,5 +1,6 @@
 use crate::source::*;
-use annotate_snippets::{Level, Message, Renderer, Snippet};
+use ariadne::{ColorGenerator, Report, ReportKind, sources};
+use indexmap::IndexMap;
 use std::ops::Range;
 
 pub mod handler;
@@ -32,14 +33,14 @@ pub enum Severity {
     Help,
 }
 
-impl From<Severity> for Level {
-    fn from(val: Severity) -> Level {
+impl From<Severity> for ariadne::ReportKind<'_> {
+    fn from(val: Severity) -> ariadne::ReportKind<'static> {
         match val {
-            Severity::Error => Level::Error,
-            Severity::Warning => Level::Warning,
-            Severity::Info => Level::Info,
-            Severity::Note => Level::Note,
-            Severity::Help => Level::Help,
+            Severity::Error => ariadne::ReportKind::Custom("error", ariadne::Color::Red),
+            Severity::Warning => ariadne::ReportKind::Custom("warning", ariadne::Color::Yellow),
+            Severity::Info => ariadne::ReportKind::Custom("info", ariadne::Color::BrightBlue),
+            Severity::Note => ariadne::ReportKind::Custom("note", ariadne::Color::BrightBlue),
+            Severity::Help => ariadne::ReportKind::Custom("help", ariadne::Color::BrightBlue),
         }
     }
 }
@@ -110,78 +111,12 @@ pub struct Label<'a> {
 
 impl<'a> Label<'a> {
     /// Creates a new [`Span`] from the given source, range, and label.
-    pub fn new(source: &'a dyn Source, range: impl Into<SpanRange>, label: String) -> Self {
+    pub fn new(source: &'a dyn source::Source, range: impl Into<SpanRange>, label: String) -> Self {
         Self {
             source,
             range: range.into(),
             label,
         }
-    }
-
-    /// Creates a new [`annotate_snippets::Snippet`] from the span, which
-    /// can then be reported to the user via the [`annotate_snippets::renderer::Renderer`] class.
-    pub fn into_snippet(&'a self, level: Level) -> Snippet<'a> {
-        let SpanLine(line) = SpanLine::from_source(self.source, &self.range);
-        let snipped_source_indices = self.source_snippet(self.source);
-
-        let mut annotation_span = self.range.0.clone();
-        annotation_span.start -= snipped_source_indices.start;
-        annotation_span.end -= snipped_source_indices.start;
-
-        let annotation = level.span(annotation_span).label(&self.label);
-        let snipped_source = &self.source.content()[snipped_source_indices];
-
-        let mut snippet = Snippet::source(snipped_source).line_start(line).annotation(annotation);
-
-        if let Some(name) = &self.source.name() {
-            snippet = snippet.origin(name);
-        }
-
-        snippet
-    }
-
-    /// Gets the indices of the snippet within the source file.
-    ///
-    /// This method will return the indices of the source code, which the span is pointing to,
-    /// as well as the line immediately before and after the snippet. The indices will point to the
-    /// start and end of each line.
-    fn source_snippet(&'a self, source: &'a dyn Source) -> Range<usize> {
-        let bytes = source.content().as_bytes();
-
-        let start = self.range.0.start;
-        let end = self.range.0.end;
-
-        // Find the start of the line containing the `start`
-        let mut line_start = start;
-        while line_start > 0 && bytes[line_start - 1] != b'\n' {
-            line_start -= 1;
-        }
-
-        // Find the end of the line containing the `end`
-        let mut line_end = end;
-        while line_end < bytes.len() && bytes[line_end] != b'\n' {
-            line_end += 1;
-        }
-
-        // Now find the line before
-        let mut before_start = line_start;
-        if before_start > 0 {
-            before_start -= 1; // move before the newline
-            while before_start > 0 && bytes[before_start - 1] != b'\n' {
-                before_start -= 1;
-            }
-        }
-
-        // Find the line after
-        let mut after_end = line_end;
-        if after_end < bytes.len() {
-            after_end += 1; // skip the newline
-            while after_end < bytes.len() && bytes[after_end] != b'\n' {
-                after_end += 1;
-            }
-        }
-
-        before_start..after_end
     }
 }
 
@@ -358,6 +293,7 @@ impl<'a> LumeDiagnostic<'a> {
             code: None,
             labels: None,
             source: None,
+            related: Vec::new(),
             help: None,
         }
     }
@@ -441,53 +377,41 @@ impl<'a> LumeDiagnostic<'a> {
     }
 
     /// Renders the diagnostic message to the console.
-    ///
-    /// By default, the "style" rendered is used for rendering. To use a different renderer,
-    /// see the [`render_with`] method.
-    pub fn render(&'a self) {
-        self.render_with(Renderer::styled());
-    }
+    pub fn render(self) {
+        let level: ReportKind = self.severity.into();
 
-    /// Renders the diagnostic message to the console, using a custom renderer implementation.
-    pub fn render_with(&'a self, renderer: Renderer) {
-        let message = self.get_message();
+        let mut builder = Report::build(level, (String::new(), 0..0));
+        let mut colors = ColorGenerator::from_state([25000, 5000, 28000], 0.7);
+        let mut source_map: IndexMap<String, &str> = IndexMap::new();
 
-        println!("{}", renderer.render(message));
-    }
+        builder = builder.with_message(self.message);
 
-    /// Converts the diagnostic into a [`annotate_snippets::Message`] instance.
-    fn get_message(&'a self) -> Message<'a> {
-        let level: Level = self.severity.into();
-
-        let mut message = level.title(&self.message);
-
-        if let Some(code) = &self.code {
-            message = message.id(code);
+        if let Some(code) = self.code {
+            builder = builder.with_code(code);
         }
 
-        if let Some(labels) = &self.labels {
+        if let Some(labels) = self.labels {
             for label in labels {
-                message = message.snippet(label.into_snippet(level));
+                let source_name = label.source.name().unwrap_or("<unknown>");
+
+                source_map.insert(source_name.to_string(), *label.source.content());
+
+                let color = colors.next();
+                let label = ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
+                    .with_message(&label.label)
+                    .with_color(color);
+
+                builder = builder.with_label(label);
             }
         }
 
-        if let Some(source) = &self.source {
-            let source_desc = source.to_owned().to_string();
-
-            // While not exactly ideal, I'm unsure how else to handle the shorter
-            // lifetime of the error description string.
-            let source_desc_static: &'static str = Box::leak(source_desc.into_boxed_str());
-
-            message = message.footer(Level::Error.title(source_desc_static));
-        }
-
-        if let Some(help) = &self.help {
+        if let Some(help) = self.help {
             for line in help {
-                message = message.footer(Level::Help.title(line));
+                builder = builder.with_help(line);
             }
         }
 
-        message
+        builder.finish().print(sources(source_map)).unwrap();
     }
 }
 
