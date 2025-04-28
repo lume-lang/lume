@@ -12,7 +12,7 @@ pub struct MissingMethod {
     #[span]
     pub source: NamedSource,
 
-    #[label("could not find method '{method_name}' on type {type_name}")]
+    #[label("could not find method {method_name} on type {type_name}")]
     pub range: Range<usize>,
 
     pub type_name: SymbolName,
@@ -32,7 +32,7 @@ pub struct SuggestedMethod {
     #[span]
     pub source: NamedSource,
 
-    #[label("found similar method '{method_name}' on type {type_name}")]
+    #[label("found similar method {method_name} on type {type_name}")]
     pub range: Range<usize>,
 
     pub method_name: Identifier,
