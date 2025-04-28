@@ -1,29 +1,6 @@
 use indexmap::IndexMap;
-use lume_diag::source::NamedSource;
 
 use crate::*;
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
-pub struct SourceMap {
-    /// Defines all the source files which are part of the module.
-    pub mapping: IndexMap<ModuleFileId, NamedSource>,
-}
-
-impl SourceMap {
-    pub fn new() -> Self {
-        Self {
-            mapping: IndexMap::new(),
-        }
-    }
-}
-
-impl Default for SourceMap {
-    fn default() -> Self {
-        Self {
-            mapping: IndexMap::new(),
-        }
-    }
-}
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Map {
