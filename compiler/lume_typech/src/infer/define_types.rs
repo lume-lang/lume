@@ -39,9 +39,14 @@ impl DefineTypes<'_, '_> {
                 for property in &mut class.properties_mut() {
                     let property_name = property.name.name.clone();
                     let visibility = property.visibility;
-                    let property_id = Property::alloc(self.ctx.tcx_mut(), type_id, property_name, visibility);
+                    let property_id = Property::alloc(self.ctx.tcx_mut(), type_id, property_name.clone(), visibility);
 
                     property.prop_id = Some(property_id);
+
+                    type_id
+                        .get_mut(self.ctx.tcx_mut())
+                        .properties
+                        .insert(property_name, property_id);
                 }
 
                 for method in &mut class.methods_mut() {

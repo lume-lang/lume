@@ -633,6 +633,7 @@ pub struct Type {
     pub transport: TypeTransport,
     pub name: SymbolName,
 
+    pub properties: IndexMap<String, PropertyId>,
     pub methods: IndexMap<String, MethodId>,
 }
 
@@ -643,6 +644,7 @@ impl Type {
             kind,
             transport: TypeTransport::Reference,
             name,
+            properties: IndexMap::new(),
             methods: IndexMap::new(),
         };
 
@@ -655,6 +657,7 @@ impl Type {
             kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Reference,
             name,
+            properties: IndexMap::new(),
             methods: IndexMap::new(),
         }
     }
@@ -664,6 +667,7 @@ impl Type {
             kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
             transport: TypeTransport::Copy,
             name,
+            properties: IndexMap::new(),
             methods: IndexMap::new(),
         }
     }
@@ -705,6 +709,14 @@ impl TypeRef {
 
     pub fn name(&self, ctx: &TypeDatabaseContext) -> SymbolName {
         self.get(ctx).name.clone()
+    }
+
+    pub fn property(&self, ctx: &TypeDatabaseContext, name: &String) -> Option<PropertyId> {
+        self.get(ctx).properties.get(name).cloned()
+    }
+
+    pub fn properties(&self, ctx: &TypeDatabaseContext) -> Vec<PropertyId> {
+        self.get(ctx).properties.values().cloned().collect()
     }
 
     pub fn methods(&self, ctx: &TypeDatabaseContext) -> Vec<MethodId> {

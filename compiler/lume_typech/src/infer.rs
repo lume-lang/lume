@@ -1,5 +1,6 @@
 use lume_diag::Result;
 use lume_hir::{self};
+use lume_types::Identifier;
 
 use crate::{check::TypeCheckerPass, *};
 
@@ -122,7 +123,26 @@ impl ThirBuildCtx<'_> {
                 Ok(method.return_type.clone())
             }
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
-            lume_hir::ExpressionKind::Member(_) => todo!("member reference"),
+            lume_hir::ExpressionKind::Member(expr) => {
+                let callee_type = self.type_of(hir, expr.callee.id)?;
+                let property_id = match callee_type.property(self.tcx(), &expr.name) {
+                    Some(property_id) => property_id,
+                    None => {
+                        return Err(errors::MissingProperty {
+                            source: expr.location.file.clone(),
+                            range: expr.location.index.clone(),
+                            type_name: callee_type.name(self.tcx()),
+                            property_name: Identifier {
+                                name: expr.name.clone(),
+                                location: expr.location.clone(),
+                            },
+                        }
+                        .into());
+                    }
+                };
+
+                Ok(property_id.get(self.tcx()).property_type.clone())
+            }
             lume_hir::ExpressionKind::Variable(var) => {
                 let decl = self.hir_expect_var_stmt(hir, var.reference);
 
