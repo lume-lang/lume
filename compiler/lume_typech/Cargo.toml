@@ -10,6 +10,8 @@ lume_diag_macros = { path = "../lume_diag_macros" }
 lume_hir = { path = "../lume_hir" }
 lume_state = { path = "../lume_state" }
 lume_types = { path = "../lume_types" }
+
+ariadne = { workspace = true }
 levenshtein = { version = "=1.0.5" }
 indexmap = { version = "^2.9", features = ["serde"] }
 serde = { version = "1.0.219", features = ["serde_derive"] }

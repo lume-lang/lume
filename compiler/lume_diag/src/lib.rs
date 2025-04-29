@@ -286,9 +286,9 @@ impl<'a> LumeDiagnostic<'a> {
     ///     help: None,
     /// }
     /// ```
-    pub fn new(message: String) -> Self {
+    pub fn new(message: impl Into<String>) -> Self {
         Self {
-            message,
+            message: message.into(),
             severity: Severity::default(),
             code: None,
             labels: None,
