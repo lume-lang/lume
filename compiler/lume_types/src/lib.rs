@@ -73,7 +73,7 @@ impl PartialEq for IdentifierPath {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Eq)]
 pub struct SymbolName {
     /// Defines the namespace which the symbol was defined in.
     pub namespace: IdentifierPath,
@@ -82,6 +82,12 @@ pub struct SymbolName {
     pub name: Identifier,
 
     pub location: Location,
+}
+
+impl PartialEq for SymbolName {
+    fn eq(&self, other: &SymbolName) -> bool {
+        self.namespace == other.namespace && self.name == other.name
+    }
 }
 
 impl std::hash::Hash for SymbolName {
