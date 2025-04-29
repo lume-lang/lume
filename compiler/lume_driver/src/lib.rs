@@ -76,7 +76,14 @@ impl Driver {
         sources_files.extend(
             project_file_names
                 .into_iter()
-                .map(|s| NamedSource::from_file(s))
+                .map(|s| {
+                    let relative_path = self.opts.project.relative_source_path(&s).to_string_lossy().to_string();
+
+                    let mut src = NamedSource::from_file(s)?;
+                    src.name = relative_path;
+
+                    Ok(src)
+                })
                 .collect::<Result<Vec<_>>>()?,
         );
 

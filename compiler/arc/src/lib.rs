@@ -77,6 +77,24 @@ impl Project {
         ProjectParser::locate(root)
     }
 
+    /// Gets the absolute path to the project directory.
+    ///
+    /// The project directory is the parent directory of the Arcfile.
+    pub fn root(&self) -> &Path {
+        self.path.parent().unwrap()
+    }
+
+    /// Gets the relative path to a file within the project directory.
+    pub fn relative_source_path<'a>(&'a self, file: &'a Path) -> &'a Path {
+        let root = self.root();
+
+        if file.is_absolute() && file.starts_with(root) {
+            file.strip_prefix(root).unwrap()
+        } else {
+            file
+        }
+    }
+
     /// Attempts to find all the Lume source files within the project.
     ///
     /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
