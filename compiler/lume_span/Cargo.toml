@@ -1,0 +1,10 @@
+[package]
+name = "lume_span"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+fxhash = "^0.2"
+indexmap = { version = "^2.9", features = ["serde"] }
+serde = { version = "1.0.219", features = ["serde_derive"] }
