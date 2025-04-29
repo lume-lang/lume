@@ -1,4 +1,7 @@
-use lume_diag::{Result, source::NamedSource};
+use std::sync::Arc;
+
+use lume_diag::Result;
+use lume_span::{PackageId, SourceFile};
 use rust_embed::Embed;
 
 #[derive(Embed)]
@@ -6,15 +9,19 @@ use rust_embed::Embed;
 pub(crate) struct Assets;
 
 impl Assets {
-    /// Read all the standard library files as [`NamedSource`]-instances.
-    pub(crate) fn as_sources() -> Result<Vec<NamedSource>> {
+    /// Read all the standard library files as [`Arc<SourceFile>`]-instances.
+    pub(crate) fn as_sources(package: PackageId) -> Result<Vec<Arc<SourceFile>>> {
         Assets::iter()
             .map(|asset| {
                 let name = asset.as_ref();
                 let embedded_file = Assets::get(name).unwrap();
                 let content = std::str::from_utf8(embedded_file.data.as_ref()).unwrap();
 
-                Ok(NamedSource::new(name.to_string(), content.to_string()))
+                Ok(Arc::new(SourceFile::new(
+                    package,
+                    name.to_string(),
+                    content.to_string(),
+                )))
             })
             .collect::<Result<Vec<_>>>()
     }

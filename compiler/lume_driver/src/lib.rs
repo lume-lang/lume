@@ -1,12 +1,12 @@
-use ::std::path::Path;
-use std::Assets;
+use std::{path::Path, sync::Arc};
 
 use arc::Project;
-use lume_diag::{Result, source::NamedSource};
+use lume_diag::Result;
 use lume_parser::parser::Parser;
-use lume_state::{ModuleFileId, ModuleId};
+use lume_span::SourceFile;
+use stdlib::Assets;
 
-mod std;
+mod stdlib;
 
 pub(crate) struct Options {
     /// Defines the structure of the Arcfile within the project.
@@ -66,9 +66,11 @@ impl Driver {
     }
 
     /// Gets all the source files to include in the compilation.
-    fn source_files(&self) -> Result<Vec<NamedSource>> {
+    fn source_files(&self) -> Result<Vec<Arc<SourceFile>>> {
+        let package_id = self.opts.project.id;
+
         // Add all the source files within the standard library.
-        let mut sources_files = Assets::as_sources()?;
+        let mut sources_files = Assets::as_sources(package_id)?;
 
         // As well as all the files within the project itself
         let project_file_names = self.opts.project.files()?;
@@ -76,13 +78,19 @@ impl Driver {
         sources_files.extend(
             project_file_names
                 .into_iter()
-                .map(|s| {
-                    let relative_path = self.opts.project.relative_source_path(&s).to_string_lossy().to_string();
+                .map(|path| {
+                    // We get the relative path of the file within the project,
+                    // so error messages don't use the full path to a file.
+                    let relative_path = self
+                        .opts
+                        .project
+                        .relative_source_path(&path)
+                        .to_string_lossy()
+                        .to_string();
 
-                    let mut src = NamedSource::from_file(s)?;
-                    src.name = relative_path;
+                    let content = std::fs::read_to_string(path)?;
 
-                    Ok(src)
+                    Ok(Arc::new(SourceFile::new(package_id, relative_path, content)))
                 })
                 .collect::<Result<Vec<_>>>()?,
         );
@@ -92,26 +100,24 @@ impl Driver {
 
     /// Parses all the modules within the given state object.
     fn parse(&mut self, state: &mut lume_state::State) -> Result<lume_hir::map::Map> {
-        let module_id = ModuleId::from(self.opts.project.id);
+        let package_id = self.opts.project.id;
 
         // Create a new HIR map for the module.
-        let mut hir = lume_hir::map::Map::empty(module_id);
+        let mut hir = lume_hir::map::Map::empty(package_id);
 
         // Read all the sources files before parsing, so if any of them
         // are inaccessible, we don't waste effort parsing them.
         let source_files = self.source_files()?;
 
-        for named_source in source_files {
-            let source_id = ModuleFileId::from(module_id, named_source.name.clone());
-
+        for source_file in source_files {
             // Register source file in the state.
-            state.push_source(source_id, named_source);
+            state.source_map.insert(source_file.clone());
 
             // Parse the contents of the source file.
-            let expressions = Parser::parse_src(state, source_id)?;
+            let expressions = Parser::parse_src(state, source_file.id)?;
 
             // Lowers the parsed module expressions down to HIR.
-            lume_hir::lower::LowerModule::lower(state, &mut hir, source_id, expressions)?;
+            lume_hir::lower::LowerModule::lower(&mut hir, source_file, expressions)?;
         }
 
         Ok(hir)

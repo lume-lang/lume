@@ -1,9 +1,10 @@
 use std::ops::Range;
+use std::sync::Arc;
 
 use crate::parser::errors::*;
 use lume_ast::Identifier;
 use lume_diag::Result;
-use lume_diag::source::NamedSource;
+use lume_span::SourceFile;
 
 const SYMBOLS: &[char] = &[
     '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
@@ -324,7 +325,7 @@ impl From<Token> for Identifier {
 #[derive(Debug)]
 pub struct Lexer {
     /// Declares the source to lex tokens from.
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     /// Defines the current position in the source.
     position: usize,
@@ -332,7 +333,7 @@ pub struct Lexer {
 
 impl Lexer {
     /// Creates a new lexer instance.
-    pub fn new(source: NamedSource) -> Self {
+    pub fn new(source: Arc<SourceFile>) -> Self {
         Lexer { source, position: 0 }
     }
 
@@ -737,12 +738,9 @@ mod tests {
     use super::*;
 
     fn lexer(source: &str) -> Lexer {
-        let source = NamedSource {
-            name: "<empty>".into(),
-            content: source.to_owned(),
-        };
+        let source = SourceFile::internal(source);
 
-        Lexer::new(source.clone())
+        Lexer::new(Arc::new(source))
     }
 
     fn lex_all(source: &str) -> Result<Vec<Token>> {

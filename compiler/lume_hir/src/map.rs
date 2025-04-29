@@ -2,10 +2,10 @@ use indexmap::IndexMap;
 
 use crate::*;
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Map {
-    /// Defines which module this map belongs to.
-    pub(crate) module: ModuleId,
+    /// Defines which package this map belongs to.
+    pub(crate) package: PackageId,
 
     /// Defines all the top-level items within the module.
     pub items: IndexMap<ItemId, Symbol>,
@@ -19,9 +19,9 @@ pub struct Map {
 
 impl Map {
     /// Creates a new HIR map, without any content.
-    pub fn empty(module: ModuleId) -> Self {
+    pub fn empty(package: PackageId) -> Self {
         Self {
-            module,
+            package,
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),

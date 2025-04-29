@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::*;
 
 /// Defines a single frame within the symbol table. Each frame can contain multiple entries.
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SymbolTableFrame {
     /// Defines all the symbols defined within the frame.
     entries: HashMap<String, VariableDeclaration>,
@@ -18,7 +18,7 @@ impl SymbolTableFrame {
 }
 
 /// Defines a single frame within the symbol table. Each frame can be either be symbols or a boundary.
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SymbolTableEntry {
     /// Frames indicate a scope with zero-or-more symbols defined within it.
     /// The symbol table can jump frames to access symbols defined in parent scopes.
@@ -76,7 +76,7 @@ impl SymbolTableEntry {
 ///
 /// Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
 /// which was called before `a` was declared.
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SymbolTable {
     /// Defines all the entries within the table, ordered by the declaration order.
     symbols: Vec<SymbolTableEntry>,
@@ -203,7 +203,10 @@ mod tests {
 
         VariableDeclaration {
             id: statement_id,
-            name: Identifier { name: name.to_string() },
+            name: Identifier {
+                name: name.to_string(),
+                location: Location::empty(),
+            },
             declared_type: None,
             value: Expression {
                 id: ExpressionId::empty(),

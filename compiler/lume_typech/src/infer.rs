@@ -79,8 +79,8 @@ impl ThirBuildCtx<'_> {
                 match &type_def.kind {
                     lume_types::TypeKind::Class(_) => Ok(type_ref),
                     kind => Err(crate::errors::AbstractTypeInstantiate {
-                        source: self.state.source_of(expr.location.file)?.clone(),
-                        range: expr.location.into(),
+                        source: expr.location.file.clone(),
+                        range: expr.location.index.clone(),
                         name: type_def.name.clone(),
                         kind: match kind {
                             lume_types::TypeKind::Trait(_) => "trait",
@@ -99,8 +99,8 @@ impl ThirBuildCtx<'_> {
                     Some(def) => def,
                     None => {
                         return Err(crate::errors::MissingFunction {
-                            source: self.state.source_of(expr.location.file)?.clone(),
-                            range: expr.location.into(),
+                            source: expr.location.file.clone(),
+                            range: expr.location.index.clone(),
                             name: call.name.clone(),
                         }
                         .into());
@@ -115,10 +115,7 @@ impl ThirBuildCtx<'_> {
                     match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_parameters)? {
                         method::MethodLookupResult::Success(method) => method,
                         method::MethodLookupResult::Failure(err) => {
-                            return Err(err.compound_err(
-                                self.state.source_of(expr.location.file)?.clone(),
-                                expr.location.clone(),
-                            ));
+                            return Err(err.compound_err(expr.location.clone()));
                         }
                     };
 
@@ -174,8 +171,8 @@ impl ThirBuildCtx<'_> {
                     Some(id) => id,
                     None => {
                         return Err(errors::MissingType {
-                            source: self.state.source_of(t.location.file)?.clone(),
-                            range: t.location.start()..t.location.end(),
+                            source: t.location.file.clone(),
+                            range: t.location.index.clone(),
                             name: t.name.clone(),
                         }
                         .into());

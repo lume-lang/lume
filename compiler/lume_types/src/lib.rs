@@ -1,11 +1,13 @@
 use indexmap::IndexMap;
 use lume_diag::Result;
+use lume_span::Location;
 
 const UNKNOWN_TYPE_ID: TypeId = TypeId(u32::MAX);
 
-#[derive(serde::Serialize, Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
+    pub location: Location,
 }
 
 impl std::hash::Hash for Identifier {
@@ -22,7 +24,10 @@ impl std::fmt::Display for Identifier {
 
 impl From<&'static str> for Identifier {
     fn from(name: &'static str) -> Self {
-        Self { name: name.to_string() }
+        Self {
+            name: name.to_string(),
+            location: Location::empty(),
+        }
     }
 }
 
@@ -32,14 +37,18 @@ impl PartialEq for Identifier {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct IdentifierPath {
     pub path: Vec<Identifier>,
+    pub location: Location,
 }
 
 impl IdentifierPath {
     pub fn empty() -> Self {
-        Self { path: Vec::new() }
+        Self {
+            path: Vec::new(),
+            location: Location::empty(),
+        }
     }
 }
 
@@ -53,6 +62,7 @@ impl From<&[&'static str]> for IdentifierPath {
     fn from(path: &[&'static str]) -> Self {
         Self {
             path: path.iter().map(|name| Identifier::from(*name)).collect(),
+            location: Location::empty(),
         }
     }
 }
@@ -63,13 +73,22 @@ impl PartialEq for IdentifierPath {
     }
 }
 
-#[derive(serde::Serialize, Hash, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct SymbolName {
     /// Defines the namespace which the symbol was defined in.
     pub namespace: IdentifierPath,
 
     /// Defines the relative name of the symbol within it's namespace.
     pub name: Identifier,
+
+    pub location: Location,
+}
+
+impl std::hash::Hash for SymbolName {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.namespace.hash(state);
+        self.name.hash(state);
+    }
 }
 
 impl SymbolName {
@@ -77,7 +96,11 @@ impl SymbolName {
         let namespace = IdentifierPath::from(namespace);
         let name = Identifier::from(name);
 
-        Self { namespace, name }
+        Self {
+            namespace,
+            name,
+            location: Location::empty(),
+        }
     }
 
     pub fn i8() -> Self {
@@ -245,7 +268,7 @@ impl FunctionId {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub name: SymbolName,
     pub visibility: Visibility,
@@ -370,18 +393,18 @@ impl MethodId {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Method {
     pub visibility: Visibility,
     pub callee: TypeRef,
-    pub name: String,
+    pub name: Identifier,
     pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
 
 impl Method {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: String, visibility: Visibility) -> MethodId {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: Identifier, visibility: Visibility) -> MethodId {
         let id = ctx.methods.len();
         let method = Method {
             visibility,
@@ -397,7 +420,7 @@ impl Method {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Class {
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
@@ -412,7 +435,7 @@ impl Class {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Trait {
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
@@ -427,7 +450,7 @@ impl Trait {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
     pub name: SymbolName,
 }
@@ -438,7 +461,7 @@ impl Enum {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Alias {
     pub name: SymbolName,
 }
@@ -449,7 +472,7 @@ impl Alias {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
     /// The type is a regular user-defined class.
     Class(Box<Class>),
@@ -598,7 +621,7 @@ impl TypeId {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Type {
     pub kind: TypeKind,
     pub transport: TypeTransport,
@@ -644,6 +667,7 @@ impl Type {
             ctx,
             SymbolName {
                 namespace: IdentifierPath::empty(),
+                location: name.location.clone(),
                 name,
             },
             TypeKind::TypeParameter(id),
@@ -722,7 +746,7 @@ impl TypeParameter {
     }
 }
 
-#[derive(serde::Serialize, Default, Debug)]
+#[derive(Default, Debug)]
 pub struct TypeDatabaseContext {
     pub types: Vec<Type>,
     pub properties: Vec<Property>,

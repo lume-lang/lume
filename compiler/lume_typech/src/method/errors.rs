@@ -1,7 +1,7 @@
-use std::ops::Range;
+use std::{ops::Range, sync::Arc};
 
-use lume_diag::source::NamedSource;
 use lume_diag_macros::Diagnostic;
+use lume_span::SourceFile;
 use lume_types::{Identifier, SymbolName};
 
 use super::MethodDisqualificationReason;
@@ -10,7 +10,7 @@ use super::MethodDisqualificationReason;
 #[diagnostic(message = "no such method was found", code = "LM4113")]
 pub struct MissingMethod {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("could not find method {method_name} on type {type_name}")]
     pub range: Range<usize>,
@@ -30,7 +30,7 @@ pub struct MissingMethod {
     help = "incompatible because: {reason}")]
 pub struct SuggestedMethod {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("found similar method {method_name} on type {type_name}")]
     pub range: Range<usize>,

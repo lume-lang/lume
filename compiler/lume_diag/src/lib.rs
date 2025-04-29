@@ -381,8 +381,8 @@ impl<'a> LumeDiagnostic<'a> {
         let level: ReportKind = self.severity.into();
 
         let mut builder = Report::build(level, (String::new(), 0..0));
-        let mut colors = ColorGenerator::from_state([25000, 5000, 28000], 0.7);
-        let mut source_map: IndexMap<String, &str> = IndexMap::new();
+        let mut colors = ColorGenerator::from_state([12571, 61269, 28000], 0.5);
+        let mut source_map: IndexMap<String, String> = IndexMap::new();
 
         builder = builder.with_message(self.message);
 
@@ -392,16 +392,15 @@ impl<'a> LumeDiagnostic<'a> {
 
         if let Some(labels) = self.labels {
             for label in labels {
-                let source_name = label.source.name().unwrap_or("<unknown>");
+                builder = builder.with_label(Self::create_label(&mut source_map, *label, &mut colors));
+            }
+        }
 
-                source_map.insert(source_name.to_string(), *label.source.content());
-
-                let color = colors.next();
-                let label = ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
-                    .with_message(&label.label)
-                    .with_color(color);
-
-                builder = builder.with_label(label);
+        for related in self.related {
+            if let Some(labels) = related.labels {
+                for label in labels {
+                    builder = builder.with_label(Self::create_label(&mut source_map, *label, &mut colors));
+                }
             }
         }
 
@@ -412,6 +411,23 @@ impl<'a> LumeDiagnostic<'a> {
         }
 
         builder.finish().print(sources(source_map)).unwrap();
+    }
+
+    fn create_label(
+        sources: &mut IndexMap<String, String>,
+        label: Label<'a>,
+        colors: &mut ColorGenerator,
+    ) -> ariadne::Label<(String, std::ops::Range<usize>)> {
+        let source_name = label.source.name().unwrap_or(String::from("<unknown>"));
+
+        sources.insert(source_name.clone(), *label.source.content());
+
+        let color = colors.next();
+        let label = ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
+            .with_message(&label.label)
+            .with_color(color);
+
+        label
     }
 }
 

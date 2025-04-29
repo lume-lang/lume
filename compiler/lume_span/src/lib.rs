@@ -64,7 +64,7 @@ impl std::fmt::Display for FileName {
 /// Uniquely identifies a source file.
 ///
 /// Each source file has a parent [`PackageId`], which defines which package it belongs to.
-#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceFileId(pub PackageId, pub u64);
 
 impl SourceFileId {
@@ -74,13 +74,13 @@ impl SourceFileId {
     }
 
     /// Creates a new [`SourceFileId`] with the given parent package ID and name.
-    pub fn new<'a>(package: PackageId, name: impl Into<&'a str>) -> Self {
-        Self(package, hash_id(name.into()))
+    pub fn new(package: PackageId, name: impl Into<String>) -> Self {
+        Self(package, hash_id(&name.into()))
     }
 }
 
 /// A single source file within a package.
-#[derive(serde::Serialize, PartialEq, Eq)]
+#[derive(serde::Serialize, Debug, PartialEq, Eq)]
 pub struct SourceFile {
     /// Defines the unique identifier of the source file.
     pub id: SourceFileId,
@@ -95,12 +95,39 @@ pub struct SourceFile {
     pub package: PackageId,
 }
 
+impl SourceFile {
+    /// Creates a new [`SourceFile`] with the given parent package ID and name.
+    pub fn new<'a>(package: PackageId, path: impl Into<PathBuf>, content: impl Into<String>) -> Self {
+        Self {
+            id: SourceFileId::empty(),
+            name: FileName::Real(path.into()),
+            content: content.into(),
+            package,
+        }
+    }
+
+    /// Creates a new empty [`SourceFile`] with no content.
+    pub fn empty() -> Self {
+        Self::internal("")
+    }
+
+    /// Creates a new internal [`SourceFile`] with the given content.
+    pub fn internal(content: impl Into<String>) -> Self {
+        Self {
+            id: SourceFileId::empty(),
+            name: FileName::Internal,
+            content: content.into(),
+            package: PackageId::empty(),
+        }
+    }
+}
+
 /// Represents some marked location within a source file.
 ///
 /// This structure is used heavily throughout the compiler, to define
 /// locations of statements and expressions, which are used to create more useful
 /// diagnostics and error messages.
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Location {
     /// Defines the original source code.
     pub file: Arc<SourceFile>,
@@ -109,8 +136,39 @@ pub struct Location {
     pub index: Range<usize>,
 }
 
+impl Location {
+    pub fn empty() -> Self {
+        Self {
+            file: Arc::new(SourceFile::empty()),
+            index: 0..0,
+        }
+    }
+
+    pub fn start(&self) -> usize {
+        self.index.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.index.end
+    }
+
+    pub fn len(&self) -> usize {
+        self.end() - self.start()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+impl std::fmt::Display for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}:{}", self.file.name, self.start(), self.end())
+    }
+}
+
 /// Defines a source map, which maps source file IDs to their corresponding source files.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SourceMap {
     /// Defines all the source files within the mapping.
     files: IndexMap<SourceFileId, Arc<SourceFile>>,
@@ -123,8 +181,8 @@ impl SourceMap {
     }
 
     /// Gets a source file from the mapping with the given ID, if any.
-    pub fn get(&self, idx: SourceFileId) -> Option<&Arc<SourceFile>> {
-        self.files.get(&idx)
+    pub fn get(&self, idx: SourceFileId) -> Option<Arc<SourceFile>> {
+        self.files.get(&idx).cloned()
     }
 
     /// Inserts a new source file into the mapping.

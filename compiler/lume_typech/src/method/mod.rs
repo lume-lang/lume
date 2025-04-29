@@ -1,6 +1,6 @@
 use levenshtein::levenshtein;
-use lume_diag::{Result, source::NamedSource};
-use lume_hir::Location;
+use lume_diag::Result;
+use lume_span::Location;
 use lume_types::{Identifier, Method, MethodId, SymbolName};
 
 use crate::ThirBuildCtx;
@@ -69,18 +69,18 @@ pub(crate) struct MethodLookupError<'a> {
 
 impl MethodLookupError<'_> {
     /// Compound the error and inner suggestions, if any, into a suitable error.
-    pub fn compound_err(self, source: NamedSource, location: Location) -> lume_diag::Error {
+    pub fn compound_err(self, location: Location) -> lume_diag::Error {
         let suggestions = self
             .suggestions
             .into_iter()
             .map(|suggestion| {
+                let method_name = suggestion.def.name.clone();
+
                 errors::SuggestedMethod {
-                    source: source.clone(),
-                    range: location.into(),
+                    source: method_name.location.file.clone(),
+                    range: method_name.location.index.clone(),
                     type_name: self.type_name.clone(),
-                    method_name: Identifier {
-                        name: suggestion.def.name.clone(),
-                    },
+                    method_name,
                     reason: suggestion.reason,
                 }
                 .into()
@@ -88,8 +88,8 @@ impl MethodLookupError<'_> {
             .collect();
 
         errors::MissingMethod {
-            source,
-            range: location.into(),
+            source: location.file,
+            range: location.index,
             type_name: self.type_name,
             method_name: self.method_name,
             suggestions,
@@ -116,11 +116,11 @@ impl<'tcx> ThirBuildCtx<'tcx> {
 
             // No matter if all the other checks pass, if the method name does not match, we should
             // only suggest it.
-            let is_qualified = method.name == method_name.name;
+            let is_qualified = &method.name == method_name;
 
             // If the name is not an exact match, or even if the Levenshtein distance is too high,
             // skip this method and continue to the next one.
-            if !is_qualified && levenshtein(&method.name, &method_name.name) > MAX_LEVENSHTEIN_DISTANCE {
+            if !is_qualified && levenshtein(&method.name.name, &method_name.name) > MAX_LEVENSHTEIN_DISTANCE {
                 continue;
             }
 

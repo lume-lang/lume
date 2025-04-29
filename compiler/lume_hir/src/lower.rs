@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use lume_diag::Result;
-use lume_state::{ModuleFileId, hash_id};
+use lume_span::{Location, SourceFile, hash_id};
 
 use crate::errors::*;
 use crate::{self as hir};
@@ -39,8 +40,8 @@ macro_rules! err {
         ),*
     ) => {
         $kind {
-            source: $self.state.source_of($self.file).unwrap().clone(),
-            range: $location.into(),
+            source: $self.file.clone(),
+            range: $location.index,
             $( $field: $value ),*
         }
         .into()
@@ -48,11 +49,8 @@ macro_rules! err {
 }
 
 pub struct LowerModule<'a> {
-    /// Defines the ID of the file is being lowered.
-    file: ModuleFileId,
-
-    /// Defines the parent state.
-    state: &'a lume_state::State,
+    /// Defines the file is being lowered.
+    file: Arc<SourceFile>,
 
     /// Defines the type map to register types to.
     map: &'a mut hir::map::Map,
@@ -76,14 +74,12 @@ pub struct LowerModule<'a> {
 impl<'a> LowerModule<'a> {
     /// Lowers the single given source module into HIR.
     pub fn lower(
-        state: &'a lume_state::State,
         map: &'a mut hir::map::Map,
-        file: ModuleFileId,
+        file: Arc<SourceFile>,
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
         let mut lower = LowerModule {
             file,
-            state,
             map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
@@ -112,7 +108,7 @@ impl<'a> LowerModule<'a> {
     fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> hir::ItemId {
         let id = hash_id(&value);
 
-        hir::ItemId(self.map.module, id)
+        hir::ItemId(self.map.package, id)
     }
 
     /// Generates the next [`hir::NodeId`] instance in the chain.
@@ -122,7 +118,7 @@ impl<'a> LowerModule<'a> {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::ExpressionId(self.map.module, hir::LocalId(id))
+        hir::ExpressionId(self.map.package, hir::LocalId(id))
     }
 
     /// Generates the next [`hir::NodeId`] instance in the chain.
@@ -132,7 +128,7 @@ impl<'a> LowerModule<'a> {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::StatementId(self.map.module, hir::LocalId(id))
+        hir::StatementId(self.map.package, hir::LocalId(id))
     }
 
     /// Gets the [`hir::SymbolName`] for the item with the given name.
@@ -152,27 +148,35 @@ impl<'a> LowerModule<'a> {
     }
 
     fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
+        let location = self.location(name.location.clone());
+
         hir::SymbolName {
             name: self.identifier(name),
             namespace: self.namespace.clone(),
+            location,
         }
     }
 
     fn identifier(&self, expr: ast::Identifier) -> hir::Identifier {
-        hir::Identifier { name: expr.name }
+        let location = self.location(expr.location.clone());
+
+        hir::Identifier {
+            name: expr.name,
+            location,
+        }
     }
 
     fn identifier_path(&self, expr: ast::IdentifierPath) -> hir::IdentifierPath {
+        let location = self.location(expr.location.clone());
         let path = expr.path.into_iter().map(|p| self.identifier(p)).collect::<Vec<_>>();
 
-        hir::IdentifierPath { path }
+        hir::IdentifierPath { path, location }
     }
 
-    fn location(&self, expr: ast::Location) -> hir::Location {
-        hir::Location {
-            file: self.file,
-            start: expr.start(),
-            length: expr.len(),
+    fn location(&self, expr: ast::Location) -> Location {
+        Location {
+            file: self.file.clone(),
+            index: expr.0,
         }
     }
 
@@ -198,9 +202,12 @@ impl<'a> LowerModule<'a> {
 
     fn top_import(&mut self, expr: ast::Import) -> Result<()> {
         for imported_name in &expr.names {
+            let location = self.location(imported_name.location.clone());
+
             let imported_symbol_name = hir::SymbolName {
                 name: self.identifier(imported_name.clone()),
                 namespace: self.identifier_path(expr.path.clone()),
+                location,
             };
 
             self.imports.insert(imported_name.name.clone(), imported_symbol_name);
@@ -260,7 +267,7 @@ impl<'a> LowerModule<'a> {
 
                 hir::Statement {
                     id,
-                    location: expr.location,
+                    location: expr.location.clone(),
                     kind: hir::StatementKind::Expression(Box::new(expr)),
                 }
             }
@@ -346,7 +353,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Statement {
             id,
-            location,
+            location: location.clone(),
             kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
         })
     }
@@ -363,7 +370,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Statement {
             id,
-            location,
+            location: location.clone(),
             kind: hir::StatementKind::Unless(Box::new(hir::Unless { id, cases, location })),
         })
     }
@@ -395,7 +402,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Statement {
             id,
-            location,
+            location: location.clone(),
             kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
         })
     }
@@ -408,7 +415,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Statement {
             id,
-            location,
+            location: location.clone(),
             kind: hir::StatementKind::IteratorLoop(Box::new(hir::IteratorLoop {
                 id,
                 collection,
@@ -426,7 +433,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Statement {
             id,
-            location,
+            location: location.clone(),
             kind: hir::StatementKind::PredicateLoop(Box::new(hir::PredicateLoop {
                 id,
                 condition,
@@ -529,7 +536,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Expression {
             id: literal.id,
-            location: literal.location,
+            location: literal.location.clone(),
             kind: hir::ExpressionKind::Literal(Box::new(literal)),
         })
     }
@@ -541,7 +548,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Expression {
             id,
-            location,
+            location: location.clone(),
             kind: hir::ExpressionKind::Member(Box::new(hir::Member {
                 id,
                 callee,
@@ -591,7 +598,7 @@ impl<'a> LowerModule<'a> {
 
         Ok(hir::Expression {
             id,
-            location,
+            location: location.clone(),
             kind: hir::ExpressionKind::Variable(Box::new(hir::Variable {
                 id,
                 reference: local_id.id,
@@ -1069,25 +1076,22 @@ impl<'a> LowerModule<'a> {
 #[cfg(test)]
 mod tests {
     use lume_parser::parser::Parser;
-    use lume_state::ModuleId;
+    use lume_span::PackageId;
 
     use super::*;
 
-    fn parse(input: &str) -> Vec<ast::TopLevelExpression> {
-        let parser = Parser::parse_str(input);
-
-        parser.unwrap()
-    }
-
     fn lower(input: &str) -> Result<hir::map::Map> {
-        let expressions = parse(input);
+        let source = Arc::new(SourceFile::internal(input));
+        let mut state = lume_state::State::default();
 
-        let module_id = ModuleId::empty();
-        let state = lume_state::State::default();
+        state.source_map.insert(source.clone());
+
+        let expressions = Parser::parse_src(&state, source.id).unwrap();
+
+        let module_id = PackageId::empty();
         let mut map = hir::map::Map::empty(module_id);
-        let file = ModuleFileId::empty();
 
-        LowerModule::lower(&state, &mut map, file, expressions)?;
+        LowerModule::lower(&mut map, source, expressions)?;
 
         Ok(map)
     }

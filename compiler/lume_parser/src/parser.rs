@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
 use lume_ast::*;
 use lume_diag::Error;
 use lume_diag::Result;
-use lume_diag::source::NamedSource;
-use lume_state::ModuleFileId;
+use lume_span::SourceFile;
+use lume_span::SourceFileId;
 
 use crate::lexer::*;
 use crate::parser::errors::*;
@@ -73,9 +75,9 @@ impl Token {
     }
 }
 
-pub struct Parser<'a> {
+pub struct Parser {
     /// Defines the source code which is being parsed.
-    source: &'a NamedSource,
+    source: Arc<SourceFile>,
 
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
@@ -111,8 +113,8 @@ macro_rules! err {
     };
 }
 
-impl<'a> Parser<'a> {
-    pub fn new(source: &'a NamedSource) -> Self {
+impl Parser {
+    pub fn new(source: Arc<SourceFile>) -> Self {
         let lexer = Lexer::new(source.clone());
 
         Parser {
@@ -129,8 +131,8 @@ impl<'a> Parser<'a> {
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
     pub fn parse_str(str: &str) -> Result<Vec<TopLevelExpression>> {
-        let source = NamedSource::new("<temp>".to_string(), str.to_string());
-        let mut parser = Parser::new(&source);
+        let source = SourceFile::internal(str);
+        let mut parser = Parser::new(Arc::new(source));
 
         parser.parse()
     }
@@ -139,8 +141,8 @@ impl<'a> Parser<'a> {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse_src(state: &lume_state::State, module: ModuleFileId) -> Result<Vec<TopLevelExpression>> {
-        let src = state.source_of(module)?;
+    pub fn parse_src(state: &lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
+        let src = state.source_of(file)?;
         let mut parser = Parser::new(src);
 
         parser.parse()

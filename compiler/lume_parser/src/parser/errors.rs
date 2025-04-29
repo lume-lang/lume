@@ -1,8 +1,8 @@
-use std::ops::Range;
+use std::{ops::Range, sync::Arc};
 
 use lume_ast::Type;
-use lume_diag::source::NamedSource;
 use lume_diag_macros::Diagnostic;
+use lume_span::SourceFile;
 
 use crate::lexer::TokenKind;
 
@@ -10,7 +10,7 @@ use crate::lexer::TokenKind;
 #[diagnostic(message = "Unexpected character", code = "LM1020", help = "Check your syntax")]
 pub struct UnexpectedCharacter {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Unexpected character '{char}'")]
     pub range: Range<usize>,
@@ -26,7 +26,7 @@ pub struct UnexpectedCharacter {
 )]
 pub struct MissingEndingQuote {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("String literal was started, but has no matching end-quote")]
     pub range: Range<usize>,
@@ -36,7 +36,7 @@ pub struct MissingEndingQuote {
 #[diagnostic(message = "End of file", code = "LM1023", help = "Has the file been fully written?")]
 pub struct UnexpectedEndOfFile {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Unexpected end-of-file")]
     pub range: Range<usize>,
@@ -46,7 +46,7 @@ pub struct UnexpectedEndOfFile {
 #[diagnostic(message = "Unexpected token", code = "LM1050")]
 pub struct UnexpectedToken {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected {expected:?}, got {actual:?} instead")]
     pub range: Range<usize>,
@@ -59,7 +59,7 @@ pub struct UnexpectedToken {
 #[diagnostic(message = "Unexpected type", code = "LM1051")]
 pub struct UnexpectedType {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected type, got {actual:?} instead")]
     pub range: Range<usize>,
@@ -71,7 +71,7 @@ pub struct UnexpectedType {
 #[diagnostic(message = "Unexpected top-level statement", code = "LM1055")]
 pub struct InvalidTopLevelStatement {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a top-level statement, got {actual:?} instead")]
     pub range: Range<usize>,
@@ -83,7 +83,7 @@ pub struct InvalidTopLevelStatement {
 #[diagnostic(message = "Expected identifier", code = "LM1056")]
 pub struct ExpectedIdentifier {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected identifier, found {actual:?} instead")]
     pub range: Range<usize>,
@@ -99,7 +99,7 @@ pub struct ExpectedIdentifier {
 )]
 pub struct ExpectedFunctionName {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a function name")]
     pub range: Range<usize>,
@@ -113,7 +113,7 @@ pub struct ExpectedFunctionName {
 )]
 pub struct ExpectedClassName {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a class name")]
     pub range: Range<usize>,
@@ -127,7 +127,7 @@ pub struct ExpectedClassName {
 )]
 pub struct ExpectedTraitName {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a trait name")]
     pub range: Range<usize>,
@@ -141,7 +141,7 @@ pub struct ExpectedTraitName {
 )]
 pub struct ExpectedClassMember {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a class member definition")]
     pub range: Range<usize>,
@@ -151,7 +151,7 @@ pub struct ExpectedClassMember {
 #[diagnostic(message = "Unexpected expression", code = "LM1071")]
 pub struct InvalidExpression {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected expression, got {actual:?} instead")]
     pub range: Range<usize>,
@@ -163,7 +163,7 @@ pub struct InvalidExpression {
 #[diagnostic(message = "Invalid literal value", code = "LM1078")]
 pub struct InvalidLiteral {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Failed to parse literal value `{value}` as {target:?}")]
     pub range: Range<usize>,
@@ -176,7 +176,7 @@ pub struct InvalidLiteral {
 #[diagnostic(message = "Invalid literal type", code = "LM1079")]
 pub struct InvalidLiteralType {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Invalid literal type suffix '{found}'")]
     pub range: Range<usize>,
@@ -192,7 +192,7 @@ pub struct InvalidLiteralType {
 )]
 pub struct ExternalFunctionBody {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("External functions cannot declare a body")]
     pub range: Range<usize>,
@@ -202,7 +202,7 @@ pub struct ExternalFunctionBody {
 #[diagnostic(message = "Unexpected `else if` clause", code = "LM1097")]
 pub struct UnlessElseIfClause {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("`unless` conditionals cannot have `else if` clauses")]
     pub range: Range<usize>,
@@ -212,7 +212,7 @@ pub struct UnlessElseIfClause {
 #[diagnostic(message = "Invalid trait type", code = "LM1099")]
 pub struct InvalidTraitType {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Trait types must be either scalar or generic, found `{found}`.")]
     pub range: Range<usize>,
@@ -228,7 +228,7 @@ pub struct InvalidTraitType {
 )]
 pub struct InvalidImportPath {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected a one or more identifiers to import, found `{found}`.")]
     pub range: Range<usize>,
@@ -240,7 +240,7 @@ pub struct InvalidImportPath {
 #[diagnostic(message = "Unimplemented", code = "LM9999")]
 pub struct Unimplemented {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Unimplemented functionality: {desc}")]
     pub range: Range<usize>,

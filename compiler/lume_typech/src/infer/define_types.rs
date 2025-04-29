@@ -45,7 +45,7 @@ impl DefineTypes<'_, '_> {
                 }
 
                 for method in &mut class.methods_mut() {
-                    let method_name = &method.name.name;
+                    let method_name = &method.name;
                     let visibility = method.visibility;
                     let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
 
@@ -54,11 +54,11 @@ impl DefineTypes<'_, '_> {
                     type_id
                         .get_mut(self.ctx.tcx_mut())
                         .methods
-                        .insert(method_name.clone(), method_id);
+                        .insert(method_name.name.clone(), method_id);
                 }
 
                 for method in &mut class.external_methods_mut() {
-                    let method_name = &method.name.name;
+                    let method_name = &method.name;
                     let visibility = method.visibility;
                     let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
 
@@ -67,7 +67,7 @@ impl DefineTypes<'_, '_> {
                     type_id
                         .get_mut(self.ctx.tcx_mut())
                         .methods
-                        .insert(method_name.clone(), method_id);
+                        .insert(method_name.name.clone(), method_id);
                 }
 
                 class.type_id = Some(type_id);
@@ -85,7 +85,7 @@ impl DefineTypes<'_, '_> {
                 let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
 
                 for method in &mut trait_def.methods {
-                    let method_name = &method.name.name;
+                    let method_name = &method.name;
                     let visibility = method.visibility;
                     let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
 
@@ -94,7 +94,7 @@ impl DefineTypes<'_, '_> {
                     type_id
                         .get_mut(self.ctx.tcx_mut())
                         .methods
-                        .insert(method_name.clone(), method_id);
+                        .insert(method_name.name.clone(), method_id);
                 }
 
                 trait_def.type_id = Some(type_id);
