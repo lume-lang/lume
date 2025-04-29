@@ -23,7 +23,7 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar(int)\n     
                         parameters: [
                             Scalar(
                                 ScalarType {
-                                    name: "Int32",
+                                    name: "int",
                                     location: Location(
                                         44..47,
                                     ),

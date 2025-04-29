@@ -43,26 +43,6 @@ const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
 /// expression before a number expression, it'd mean "the negative of the following expression".
 const UNARY_PRECEDENCE: u8 = 3;
 
-/// Defines the built-in aliaes for types, making it easier for
-/// new-comers to adapt to the type system.
-const DEFAULT_TYPE_ALIASES: &[(&str, &str)] = &[
-    ("int", "Int32"),
-    ("i8", "Int8"),
-    ("u8", "UInt8"),
-    ("i16", "Int16"),
-    ("u16", "UInt16"),
-    ("i32", "Int32"),
-    ("u32", "UInt32"),
-    ("i64", "Int64"),
-    ("u64", "UInt64"),
-    ("isize", "IntPtr"),
-    ("usize", "UIntPtr"),
-    ("f32", "Float"),
-    ("f64", "Double"),
-    ("str", "String"),
-    ("bool", "Boolean"),
-];
-
 impl Token {
     /// Gets the precedence of the token kind.
     ///
@@ -1001,12 +981,9 @@ impl Parser {
     fn parse_scalar_or_generic_type(&mut self) -> Result<Type> {
         let name = self.parse_identifier()?;
 
-        // Attempt to "un-alias" the type name, if it is an alias.
-        let type_name = self.resolve_type_alias(name.name);
-
         if self.peek(TokenKind::Less)? {
             let identifier = Identifier {
-                name: type_name,
+                name: name.name,
                 location: name.location,
             };
 
@@ -1015,22 +992,10 @@ impl Parser {
             let location = name.location;
 
             Ok(Type::Scalar(Box::new(ScalarType {
-                name: type_name,
+                name: name.name,
                 location,
             })))
         }
-    }
-
-    /// Attempts to resolve the given type name into a more specific type,
-    /// given that it's equal to some built-in type alias.
-    fn resolve_type_alias(&self, name: String) -> String {
-        for (alias, ty) in DEFAULT_TYPE_ALIASES {
-            if alias == &name {
-                return ty.to_string();
-            }
-        }
-
-        name
     }
 
     /// Parses an array type at the current cursor position.

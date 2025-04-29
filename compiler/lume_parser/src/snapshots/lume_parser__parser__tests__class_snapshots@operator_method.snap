@@ -35,7 +35,7 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "Boolean",
+                                        name: "bool",
                                         location: Location(
                                             56..60,
                                         ),

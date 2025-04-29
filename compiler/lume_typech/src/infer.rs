@@ -1,5 +1,5 @@
 use lume_diag::Result;
-use lume_hir::{self};
+use lume_hir::{self, ScalarType};
 use lume_types::Identifier;
 
 use crate::{check::TypeCheckerPass, *};
@@ -9,6 +9,28 @@ mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
+
+/// Defines a list of types which are often used in other languages,
+/// but have a different name in Lume.
+const NEWCOMER_TYPE_NAMES: &[(&str, &str)] = &[
+    ("int", "Int32"),
+    ("i8", "Int8"),
+    ("u8", "UInt8"),
+    ("i16", "Int16"),
+    ("u16", "UInt16"),
+    ("i32", "Int32"),
+    ("u32", "UInt32"),
+    ("i64", "Int64"),
+    ("u64", "UInt64"),
+    ("isize", "IntPtr"),
+    ("usize", "UIntPtr"),
+    ("f32", "Float"),
+    ("f64", "Double"),
+    ("str", "String"),
+    ("string", "String"),
+    ("bool", "Boolean"),
+    ("boolean", "Boolean"),
+];
 
 impl ThirBuildCtx<'_> {
     /// Defines all the different types, type parameters and type constraints within
@@ -189,14 +211,7 @@ impl ThirBuildCtx<'_> {
             lume_hir::Type::Scalar(t) => {
                 let found_type = match self.find_type_ref_ctx(&t.name, type_params) {
                     Some(id) => id,
-                    None => {
-                        return Err(errors::MissingType {
-                            source: t.location.file.clone(),
-                            range: t.location.index.clone(),
-                            name: t.name.clone(),
-                        }
-                        .into());
-                    }
+                    None => return Err(self.missing_type_err(t)),
                 };
 
                 let mut type_ref = TypeRef::new(found_type);
@@ -222,5 +237,29 @@ impl ThirBuildCtx<'_> {
 
         // Afterwards, attempt to find the type name within the type context.
         TypeId::find(&self.tcx(), name)
+    }
+
+    /// Returns an error indicating that the given type was not found.
+    fn missing_type_err(&self, ty: &ScalarType) -> lume_diag::Error {
+        for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
+            let ty_name = &ty.name.name.name;
+
+            if newcomer_name == ty_name {
+                return check::errors::UnavailableScalarType {
+                    source: ty.location.file.clone(),
+                    range: ty.location.index.clone(),
+                    found: ty.name.name.to_string(),
+                    suggestion: lume_name,
+                }
+                .into();
+            }
+        }
+
+        errors::MissingType {
+            source: ty.location.file.clone(),
+            range: ty.location.index.clone(),
+            name: ty.name.clone(),
+        }
+        .into()
     }
 }

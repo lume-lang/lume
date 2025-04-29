@@ -38,7 +38,7 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                                 },
                                 param_type: Scalar(
                                     ScalarType {
-                                        name: "Int32",
+                                        name: "int",
                                         location: Location(
                                             26..29,
                                         ),
@@ -53,7 +53,7 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                         return_type: Some(
                             Scalar(
                                 ScalarType {
-                                    name: "Int32",
+                                    name: "int",
                                     location: Location(
                                         34..37,
                                     ),
