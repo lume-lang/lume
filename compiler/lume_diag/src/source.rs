@@ -1,6 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
-
-use crate::Result;
+use std::sync::Arc;
 
 /// Defines a source file, which can be used to provide context for diagnostics.
 ///
@@ -99,14 +97,6 @@ impl NamedSource {
     /// Creates a new [`NamedSource`] from the given name and content.
     pub fn new(name: String, content: String) -> Self {
         Self { name, content }
-    }
-
-    /// Creates a new [`NamedSource`] instance from an existing file.
-    pub fn from_file(path: PathBuf) -> Result<NamedSource> {
-        let name = path.to_string_lossy().to_string();
-        let content = std::fs::read_to_string(path)?;
-
-        Ok(NamedSource { name, content })
     }
 }
 

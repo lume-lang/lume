@@ -334,7 +334,6 @@ name = "lume_hir"
 version = "0.1.0"
 dependencies = [
  "arc",
- "fxhash",
  "indexmap",
  "insta",
  "lume_ast",
@@ -345,7 +344,6 @@ dependencies = [
  "lume_span",
  "lume_state",
  "lume_types",
- "serde",
 ]
 
 [[package]]

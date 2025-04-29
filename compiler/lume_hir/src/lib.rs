@@ -16,7 +16,7 @@ pub trait WithTypeParameters {
 }
 
 /// Uniquely identifies a definition within a module, such as a type, function or class.
-#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ItemId(pub PackageId, pub u64);
 
 impl std::fmt::Debug for ItemId {
@@ -26,7 +26,7 @@ impl std::fmt::Debug for ItemId {
 }
 
 /// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
-#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq)]
 pub struct LocalId(pub u64);
 
 impl LocalId {
@@ -42,7 +42,7 @@ impl std::fmt::Debug for LocalId {
 }
 
 /// Uniquely identifies any local statement.
-#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq)]
 pub struct StatementId(pub PackageId, pub LocalId);
 
 impl StatementId {
@@ -62,7 +62,7 @@ impl std::fmt::Debug for StatementId {
 }
 
 /// Uniquely identifies any local expression, such as variables, literals, calls or otherwise.
-#[derive(serde::Serialize, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Clone, Copy, PartialEq, Eq)]
 pub struct ExpressionId(pub PackageId, pub LocalId);
 
 impl ExpressionId {
@@ -623,7 +623,7 @@ pub struct IntLiteral {
     pub kind: IntKind,
 }
 
-#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum IntKind {
     I8,
     U8,
@@ -659,7 +659,7 @@ pub struct FloatLiteral {
     pub kind: FloatKind,
 }
 
-#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum FloatKind {
     F32,
     F64,
