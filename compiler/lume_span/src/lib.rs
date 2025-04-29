@@ -97,7 +97,7 @@ pub struct SourceFile {
 
 impl SourceFile {
     /// Creates a new [`SourceFile`] with the given parent package ID and name.
-    pub fn new<'a>(package: PackageId, path: impl Into<PathBuf>, content: impl Into<String>) -> Self {
+    pub fn new(package: PackageId, path: impl Into<PathBuf>, content: impl Into<String>) -> Self {
         Self {
             id: SourceFileId::empty(),
             name: FileName::Real(path.into()),

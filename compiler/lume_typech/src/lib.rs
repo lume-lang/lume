@@ -1,4 +1,5 @@
 use indexmap::IndexMap;
+use lume_diag::handler::DiagnosticHandler;
 use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 
@@ -12,6 +13,9 @@ pub struct ThirBuildCtx<'a> {
     /// Defines the parent state.
     state: &'a mut lume_state::State,
 
+    /// Defines the diagnostics handler.
+    dcx: DiagnosticHandler<'a>,
+
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
 
@@ -20,11 +24,12 @@ pub struct ThirBuildCtx<'a> {
 }
 
 #[allow(dead_code)]
-impl ThirBuildCtx<'_> {
+impl<'a> ThirBuildCtx<'a> {
     /// Creates a new empty THIR build context.
-    pub fn new<'a>(state: &'a mut lume_state::State) -> ThirBuildCtx<'a> {
+    pub fn new<'tcx>(state: &'tcx mut lume_state::State) -> ThirBuildCtx<'tcx> {
         ThirBuildCtx {
             state,
+            dcx: DiagnosticHandler::new(),
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
         }
@@ -38,6 +43,11 @@ impl ThirBuildCtx<'_> {
     /// Retrieves the type context from the build context.
     pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
         self.state.tcx_mut()
+    }
+
+    /// Retrieves the diagnostics handler from the build context.
+    pub fn dcx(&'a mut self) -> &'a mut DiagnosticHandler<'a> {
+        &mut self.dcx
     }
 
     /// Gets the type of the expression with the given ID within the source file.
@@ -63,7 +73,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_stmt<'a>(
+    pub(crate) fn hir_stmt(
         &'a self,
         hir: &'a lume_hir::map::Map,
         id: lume_hir::StatementId,
@@ -75,7 +85,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Gets the HIR expression with the given ID within the source file.
-    pub(crate) fn hir_expr<'a>(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
+    pub(crate) fn hir_expr(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
         match hir.expressions().get(&id) {
             Some(expr) => expr,
             None => panic!("no expression with given ID found: {:?}", id),

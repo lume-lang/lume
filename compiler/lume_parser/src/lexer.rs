@@ -670,12 +670,7 @@ impl Lexer {
     fn consume_digits(&mut self, radix: u32) {
         let mut last_numeric = self.position;
 
-        loop {
-            let c = match self.current_char() {
-                Some(c) => c,
-                None => break,
-            };
-
+        while let Some(c) = self.current_char() {
             if !c.is_digit(radix) && c != '_' {
                 break;
             }
@@ -695,7 +690,7 @@ impl Lexer {
             self.next();
         }
 
-        self.skip_while(|c| c.is_digit(10));
+        self.skip_while(|c| c.is_ascii_digit());
     }
 
     /// Parses a string token at the current cursor position.

@@ -116,7 +116,7 @@ impl ProjectParser {
 
         project.description = self.string(section, "description")?.map(|s| s.value().clone());
 
-        self.verify_lume_version(&project)?;
+        self.verify_lume_version(project)?;
 
         Ok(())
     }
@@ -129,7 +129,7 @@ impl ProjectParser {
         };
 
         match &property {
-            toml_edit::Item::Table(table) => return Ok(Some(table)),
+            toml_edit::Item::Table(table) => Ok(Some(table)),
             item => Err(self.unexpected_type(name, "table", item).into()),
         }
     }
@@ -146,7 +146,7 @@ impl ProjectParser {
         };
 
         match &property {
-            toml_edit::Item::Value(toml_edit::Value::String(val)) => return Ok(Some(val)),
+            toml_edit::Item::Value(toml_edit::Value::String(val)) => Ok(Some(val)),
             item => Err(self.unexpected_type(name, "string", item).into()),
         }
     }

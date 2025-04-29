@@ -85,8 +85,8 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
     fn visit(&mut self, symbol: &lume_hir::Symbol) -> Result<()> {
         match symbol {
             lume_hir::Symbol::Type(ty) => match &**ty {
-                lume_hir::TypeDefinition::Class(class) => self.define_class_type(&class),
-                lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(&trait_def),
+                lume_hir::TypeDefinition::Class(class) => self.define_class_type(class),
+                lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
                 _ => Ok(()),
             },
             lume_hir::Symbol::Function(func) => self.define_function_scope(func),

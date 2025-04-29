@@ -23,25 +23,25 @@ pub(crate) enum MethodLookupResult<'a> {
 pub(crate) enum MethodDisqualificationReason {
     /// The name of the method does not match the expected name, but it
     /// was similar enough to be considered a typo or a mistake.
-    NameMismatch,
+    Name,
 
     /// The number of arguments provided does not match the expected number.
-    ArgumentCountMismatch,
+    ArgumentCount,
 
     /// The types of the arguments provided do not match the expected types.
-    ArgumentTypeMismatch,
+    ArgumentType,
 
     /// The number of type parameters provided does not match the expected number.
-    TypeParameterCountMismatch,
+    TypeParameterCount,
 }
 
 impl std::fmt::Display for MethodDisqualificationReason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MethodDisqualificationReason::NameMismatch => f.write_str("name mismatch"),
-            MethodDisqualificationReason::ArgumentCountMismatch => f.write_str("argument count mismatch"),
-            MethodDisqualificationReason::ArgumentTypeMismatch => f.write_str("argument type mismatch"),
-            MethodDisqualificationReason::TypeParameterCountMismatch => f.write_str("type parameter count mismatch"),
+            MethodDisqualificationReason::Name => f.write_str("name mismatch"),
+            MethodDisqualificationReason::ArgumentCount => f.write_str("argument count mismatch"),
+            MethodDisqualificationReason::ArgumentType => f.write_str("argument type mismatch"),
+            MethodDisqualificationReason::TypeParameterCount => f.write_str("type parameter count mismatch"),
         }
     }
 }
@@ -83,7 +83,6 @@ impl MethodLookupError<'_> {
                     method_name,
                     reason: suggestion.reason,
                 }
-                .into()
             })
             .collect();
 
@@ -127,7 +126,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
             if method.parameters.len() != args.len() {
                 suggestions.push(MethodLookupSuggestion {
                     def: method,
-                    reason: MethodDisqualificationReason::ArgumentCountMismatch,
+                    reason: MethodDisqualificationReason::ArgumentCount,
                 });
 
                 continue;
@@ -136,7 +135,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
             if method.type_parameters.len() != type_params.len() {
                 suggestions.push(MethodLookupSuggestion {
                     def: method,
-                    reason: MethodDisqualificationReason::TypeParameterCountMismatch,
+                    reason: MethodDisqualificationReason::TypeParameterCount,
                 });
 
                 continue;
@@ -148,7 +147,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
                 if !self.check_type_compatibility(&arg_type, &param.ty)? {
                     suggestions.push(MethodLookupSuggestion {
                         def: method,
-                        reason: MethodDisqualificationReason::ArgumentTypeMismatch,
+                        reason: MethodDisqualificationReason::ArgumentType,
                     });
 
                     continue;
@@ -158,7 +157,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
             if !is_qualified {
                 suggestions.push(MethodLookupSuggestion {
                     def: method,
-                    reason: MethodDisqualificationReason::NameMismatch,
+                    reason: MethodDisqualificationReason::Name,
                 });
 
                 continue;

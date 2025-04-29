@@ -63,7 +63,7 @@ pub trait Handler<'a> {
 ///
 /// // ...
 /// ```
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DiagnosticHandler<'a> {
     /// Defines whether to exit upon emitting an error.
     exit_on_error: bool,

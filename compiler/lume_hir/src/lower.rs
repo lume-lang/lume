@@ -740,7 +740,7 @@ impl<'a> LowerModule<'a> {
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
         if expr.external {
@@ -804,7 +804,7 @@ impl<'a> LowerModule<'a> {
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
         let block = if let Some(block) = expr.block {
@@ -890,7 +890,7 @@ impl<'a> LowerModule<'a> {
         let name = self.symbol_name(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters)?;
-        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -983,7 +983,7 @@ impl<'a> LowerModule<'a> {
         let name = self.symbol_name(expr.name);
         let parameters = self.parameters(expr.parameters)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let return_type = self.opt_type_ref(expr.return_type.and_then(|f| Some(*f)))?;
+        let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let block = self.isolated_block(expr.block)?;
         let location = self.location(expr.location);
 

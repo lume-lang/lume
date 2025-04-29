@@ -423,11 +423,10 @@ impl<'a> LumeDiagnostic<'a> {
         sources.insert(source_name.clone(), *label.source.content());
 
         let color = colors.next();
-        let label = ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
-            .with_message(&label.label)
-            .with_color(color);
 
-        label
+        ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
+            .with_message(&label.label)
+            .with_color(color)
     }
 }
 

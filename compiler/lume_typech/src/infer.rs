@@ -236,7 +236,7 @@ impl ThirBuildCtx<'_> {
         }
 
         // Afterwards, attempt to find the type name within the type context.
-        TypeId::find(&self.tcx(), name)
+        TypeId::find(self.tcx(), name)
     }
 
     /// Returns an error indicating that the given type was not found.
