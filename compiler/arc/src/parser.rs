@@ -1,7 +1,8 @@
-use crate::{Project, ProjectId, Spanned, errors::*};
+use crate::{Project, Spanned, errors::*};
 
 use lume_diag::Result;
 use lume_diag::source::NamedSource;
+use lume_span::PackageId;
 use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
 
@@ -71,7 +72,7 @@ impl ProjectParser {
 
         self.parse_package(&mut project)?;
 
-        project.id = ProjectId::from(project.name.as_str());
+        project.id = PackageId::new(project.name.as_str());
         project.path = self.path.clone();
 
         Ok(project)

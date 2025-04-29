@@ -11,6 +11,7 @@ dependencies = [
  "insta",
  "lume_diag",
  "lume_diag_macros",
+ "lume_span",
  "semver",
  "toml_edit",
 ]
@@ -339,6 +340,7 @@ dependencies = [
  "lume_diag_macros",
  "lume_macros",
  "lume_parser",
+ "lume_span",
  "lume_state",
  "lume_types",
  "serde",
@@ -362,6 +364,15 @@ dependencies = [
  "lume_diag",
  "lume_diag_macros",
  "lume_state",
+ "serde",
+]
+
+[[package]]
+name = "lume_span"
+version = "0.1.0"
+dependencies = [
+ "fxhash",
+ "indexmap",
  "serde",
 ]
 

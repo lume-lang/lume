@@ -4,9 +4,9 @@ pub(crate) mod parser;
 use crate::errors::ArcfileGlobError;
 use crate::parser::ProjectParser;
 
-use fxhash::hash64;
 use glob::glob;
 use lume_diag::Result;
+use lume_span::PackageId;
 use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
 
@@ -38,22 +38,10 @@ impl<T> Spanned<T> {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ProjectId(pub u64);
-
-impl From<&str> for ProjectId {
-    /// Creates a new [`ProjectId`] from a string, by taking it's hash value.
-    fn from(value: &str) -> ProjectId {
-        let hash = hash64(value.as_bytes());
-
-        ProjectId(hash)
-    }
-}
-
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     /// Uniquely identifies the project.
-    pub id: ProjectId,
+    pub id: PackageId,
 
     /// Defines the path to the Arcfile.
     pub path: PathBuf,
