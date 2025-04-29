@@ -233,7 +233,7 @@ impl std::cmp::Eq for Box<dyn Diagnostic + Send + Sync> {}
 /// ```
 /// use lume_diag::LumeDiagnostic;
 ///
-/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
+/// let diagnostic = LumeDiagnostic::new("An error occurred");
 ///
 /// diagnostic.render();
 /// ```

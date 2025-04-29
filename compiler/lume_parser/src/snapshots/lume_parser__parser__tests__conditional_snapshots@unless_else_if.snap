@@ -3,9 +3,18 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr_err(\"unless true { } else if false {}\")"
 ---
 UnlessElseIfClause {
-    source: NamedSource {
-        name: "<temp>",
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
         content: "fn main() -> void { unless true { } else if false {} }",
+        package: PackageId(
+            0,
+        ),
     },
     range: 36..40,
 }

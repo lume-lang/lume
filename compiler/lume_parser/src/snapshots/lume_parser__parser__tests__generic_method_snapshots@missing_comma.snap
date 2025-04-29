@@ -3,9 +3,18 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_err(\"class Test { fn test<T1 T2>() -> void {} }\")"
 ---
 UnexpectedToken {
-    source: NamedSource {
-        name: "<temp>",
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
         content: "class Test { fn test<T1 T2>() -> void {} }",
+        package: PackageId(
+            0,
+        ),
     },
     range: 24..26,
     expected: ,,

@@ -4,7 +4,9 @@ expression: "lower(\"type A = B<C>\")"
 ---
 Ok(
     Map {
-        module: mod(0),
+        package: PackageId(
+            0,
+        ),
         items: {
             10060190011017930945: Type(
                 Alias(
@@ -20,14 +22,14 @@ Ok(
                                         ScalarType {
                                             name: 'C',
                                             type_params: [],
-                                            location: ModuleFileId(mod(0), 0):11:12,
+                                            location: <internal>:11:12,
                                         },
                                     ),
                                 ],
-                                location: ModuleFileId(mod(0), 0):10:13,
+                                location: <internal>:10:13,
                             },
                         ),
-                        location: ModuleFileId(mod(0), 0):0:13,
+                        location: <internal>:0:13,
                     },
                 ),
             ),

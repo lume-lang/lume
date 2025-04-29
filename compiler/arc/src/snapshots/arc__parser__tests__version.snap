@@ -3,8 +3,8 @@ source: compiler/arc/src/parser.rs
 expression: "parse(r#\"[package]\n            name = 'some-package'\n            version = '1.0.0'\n            lume_version = '^0'\"#)"
 ---
 Project {
-    id: ProjectId(
-        12583667913092150357,
+    id: PackageId(
+        16834419078118558222,
     ),
     path: "<test>",
     name: "some-package",

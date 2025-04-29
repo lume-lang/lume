@@ -127,7 +127,7 @@ impl SourceFile {
 /// This structure is used heavily throughout the compiler, to define
 /// locations of statements and expressions, which are used to create more useful
 /// diagnostics and error messages.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Location {
     /// Defines the original source code.
     pub file: Arc<SourceFile>,
@@ -158,6 +158,12 @@ impl Location {
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
+    }
+}
+
+impl std::fmt::Debug for Location {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}:{}", self.file.name, self.start(), self.end())
     }
 }
 

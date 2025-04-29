@@ -3,9 +3,18 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr_err(\"return;;\")"
 ---
 InvalidExpression {
-    source: NamedSource {
-        name: "<temp>",
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
         content: "fn main() -> void { return;; }",
+        package: PackageId(
+            0,
+        ),
     },
     range: 27..28,
     actual: ;,

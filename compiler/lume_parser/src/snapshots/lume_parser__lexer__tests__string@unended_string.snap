@@ -4,9 +4,18 @@ expression: "lex_all(\"\\\"hello world\")"
 ---
 Err(
     MissingEndingQuote {
-        source: NamedSource {
-            name: "<empty>",
+        source: SourceFile {
+            id: SourceFileId(
+                PackageId(
+                    0,
+                ),
+                0,
+            ),
+            name: Internal,
             content: "\"hello world",
+            package: PackageId(
+                0,
+            ),
         },
         range: 13..14,
     },

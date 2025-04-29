@@ -34,7 +34,7 @@ pub trait Handler<'a> {
 /// use lume_diag::handler::Handler;
 /// use lume_diag::handler::DiagnosticHandler;
 ///
-/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
+/// let diagnostic = LumeDiagnostic::new("An error occurred");
 ///
 /// let mut handler = DiagnosticHandler::new();
 /// handler.report(diagnostic);
@@ -47,7 +47,7 @@ pub trait Handler<'a> {
 /// use lume_diag::handler::Handler;
 /// use lume_diag::handler::DiagnosticHandler;
 ///
-/// let diagnostic = LumeDiagnostic::new("An error occurred".into());
+/// let diagnostic = LumeDiagnostic::new("An error occurred");
 ///
 /// let mut handler = DiagnosticHandler::new();
 /// handler.report_and_drain(diagnostic);
