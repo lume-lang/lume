@@ -57,6 +57,11 @@ fn run() -> Result<i32> {
 }
 
 fn main() {
+    //     let msg = format!(
+    //         "could not find method {} on type {}",
+    //         format!("{}", "invok").magenta(),
+    //         format!("{}", "Testing").blue(),
+    //     );
     match run() {
         Ok(status) => std::process::exit(status),
         Err(err) => {

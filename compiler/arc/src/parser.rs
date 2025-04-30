@@ -1,10 +1,12 @@
 use crate::{Project, Spanned, errors::*};
 
 use lume_diag::Result;
-use lume_diag::source::NamedSource;
-use lume_span::PackageId;
+use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
@@ -13,7 +15,7 @@ pub(crate) struct ProjectParser {
     path: PathBuf,
 
     /// Source file of the project's Arcfile.
-    source: NamedSource,
+    source: Arc<SourceFile>,
 
     /// Represents the parsed TOML document.
     document: toml_edit::ImDocument<String>,
@@ -34,12 +36,12 @@ impl ProjectParser {
             None => DEFAULT_ARCFILE.into(),
         };
 
-        let source = NamedSource::new(file_name, content);
+        let source = SourceFile::new(PackageId::empty(), file_name, content);
 
-        Self::from_source(path, source)
+        Self::from_source(path, Arc::new(source))
     }
 
-    pub fn from_source(path: &Path, source: NamedSource) -> Result<Self> {
+    pub fn from_source(path: &Path, source: Arc<SourceFile>) -> Result<Self> {
         let document = match toml_edit::ImDocument::parse(source.content.clone()) {
             Ok(doc) => doc,
             Err(err) => return Err(ArcfileTomlError { inner: err }.into()),
@@ -239,9 +241,9 @@ mod tests {
     use super::*;
 
     fn parser(input: &str) -> ProjectParser {
-        let source = NamedSource::new("<test>".to_string(), input.to_string());
+        let source = SourceFile::internal(input.to_string());
 
-        ProjectParser::from_source(Path::new("<test>"), source).unwrap()
+        ProjectParser::from_source(Path::new("<test>"), Arc::new(source)).unwrap()
     }
 
     fn parse(input: &str) -> Project {

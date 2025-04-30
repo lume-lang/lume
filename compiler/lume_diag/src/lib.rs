@@ -1,9 +1,11 @@
+use std::{ops::Range, sync::Arc};
+
 use crate::source::*;
-use ariadne::{ColorGenerator, Report, ReportKind, sources};
-use indexmap::IndexMap;
-use std::ops::Range;
+use codespan_reporting as codespan;
+use lume_span::SourceFile;
 
 pub mod handler;
+pub mod render;
 pub mod source;
 
 pub type Error = Box<dyn Diagnostic + Send + Sync>;
@@ -23,24 +25,24 @@ pub enum Severity {
     /// Warning. Program can continue but may be affected.
     Warning,
 
-    /// Information. Program can continue and may be unaffected.
-    Info,
-
     /// Note. Has no effect on the program, but may provide additional context.
     Note,
 
     /// Help. Has no effect on the program, but may provide extra help and tips.
     Help,
+
+    /// Unexpected. This should not have happened.
+    Bug,
 }
 
-impl From<Severity> for ariadne::ReportKind<'_> {
-    fn from(val: Severity) -> ariadne::ReportKind<'static> {
+impl From<Severity> for codespan::diagnostic::Severity {
+    fn from(val: Severity) -> codespan::diagnostic::Severity {
         match val {
-            Severity::Error => ariadne::ReportKind::Custom("error", ariadne::Color::Red),
-            Severity::Warning => ariadne::ReportKind::Custom("warning", ariadne::Color::Yellow),
-            Severity::Info => ariadne::ReportKind::Custom("info", ariadne::Color::BrightBlue),
-            Severity::Note => ariadne::ReportKind::Custom("note", ariadne::Color::BrightBlue),
-            Severity::Help => ariadne::ReportKind::Custom("help", ariadne::Color::BrightBlue),
+            Severity::Error => codespan::diagnostic::Severity::Error,
+            Severity::Warning => codespan::diagnostic::Severity::Warning,
+            Severity::Note => codespan::diagnostic::Severity::Note,
+            Severity::Help => codespan::diagnostic::Severity::Help,
+            Severity::Bug => codespan::diagnostic::Severity::Bug,
         }
     }
 }
@@ -98,20 +100,20 @@ impl From<usize> for SpanLine {
 /// a way to highlight a specific portion of the source code, and uses labels to provide
 /// additional information about the span.
 #[derive(Debug)]
-pub struct Label<'a> {
+pub struct Label {
     /// Defines the actual label to print on the snippet.
     label: String,
 
     /// Defines the source span where the label should be placed.
-    source: &'a dyn Source,
+    source: Arc<SourceFile>,
 
     /// Defines the index range where the label should be placed.
     range: SpanRange,
 }
 
-impl<'a> Label<'a> {
-    /// Creates a new [`Span`] from the given source, range, and label.
-    pub fn new(source: &'a dyn source::Source, range: impl Into<SpanRange>, label: String) -> Self {
+impl Label {
+    /// Creates a new [`Label`] from the given source, range, and label.
+    pub fn new(source: Arc<SourceFile>, range: impl Into<SpanRange>, label: String) -> Self {
         Self {
             source,
             range: range.into(),
@@ -138,12 +140,12 @@ pub trait Diagnostic: std::fmt::Debug {
     }
 
     /// Source span to attach labels to.
-    fn span(&self) -> Option<&dyn Source> {
+    fn span(&self) -> Option<Arc<SourceFile>> {
         None
     }
 
     /// Labels to attach to snippets of the source code.
-    fn labels<'a>(&'a self) -> Option<Vec<Box<Label<'a>>>> {
+    fn labels(&self) -> Option<Vec<Label>> {
         None
     }
 
@@ -252,7 +254,7 @@ pub struct LumeDiagnostic<'a> {
     pub code: Option<&'a str>,
 
     /// Labels to attach to snippets of the source code.
-    pub labels: Option<Vec<Box<Label<'a>>>>,
+    pub labels: Option<Vec<Label>>,
 
     /// Chained error, which caused the diagnostic to be raised.
     pub source: Option<&'a dyn std::error::Error>,
@@ -317,23 +319,23 @@ impl<'a> LumeDiagnostic<'a> {
     }
 
     /// Adds the given label to the diagnostic.
-    pub fn add_label(mut self, label: Label<'a>) -> Self {
+    pub fn add_label(mut self, label: Label) -> Self {
         if self.labels.is_none() {
             self.labels = Some(Vec::new());
         }
 
-        self.labels.as_mut().unwrap().push(Box::new(label));
+        self.labels.as_mut().unwrap().push(label);
 
         self
     }
 
     /// Adds the given labels to the diagnostic.
-    pub fn add_labels(mut self, labels: impl IntoIterator<Item = Label<'a>>) -> Self {
+    pub fn add_labels(mut self, labels: impl IntoIterator<Item = Label>) -> Self {
         if self.labels.is_none() {
             self.labels = Some(Vec::new());
         }
 
-        let labels = labels.into_iter().map(Box::new).collect::<Vec<Box<Label<'a>>>>();
+        let labels = labels.into_iter().collect::<Vec<Label>>();
 
         self.labels.as_mut().unwrap().extend(labels);
 
@@ -374,59 +376,6 @@ impl<'a> LumeDiagnostic<'a> {
         self.related.extend(diagnostics);
 
         self
-    }
-
-    /// Renders the diagnostic message to the console.
-    pub fn render(self) {
-        let level: ReportKind = self.severity.into();
-
-        let mut builder = Report::build(level, (String::new(), 0..0));
-        let mut colors = ColorGenerator::from_state([12571, 61269, 28000], 0.5);
-        let mut source_map: IndexMap<String, String> = IndexMap::new();
-
-        builder = builder.with_message(self.message);
-
-        if let Some(code) = self.code {
-            builder = builder.with_code(code);
-        }
-
-        if let Some(labels) = self.labels {
-            for label in labels {
-                builder = builder.with_label(Self::create_label(&mut source_map, *label, &mut colors));
-            }
-        }
-
-        for related in self.related {
-            if let Some(labels) = related.labels {
-                for label in labels {
-                    builder = builder.with_label(Self::create_label(&mut source_map, *label, &mut colors));
-                }
-            }
-        }
-
-        if let Some(help) = self.help {
-            for line in help {
-                builder = builder.with_help(line);
-            }
-        }
-
-        builder.finish().print(sources(source_map)).unwrap();
-    }
-
-    fn create_label(
-        sources: &mut IndexMap<String, String>,
-        label: Label<'a>,
-        colors: &mut ColorGenerator,
-    ) -> ariadne::Label<(String, std::ops::Range<usize>)> {
-        let source_name = label.source.name().unwrap_or(String::from("<unknown>"));
-
-        sources.insert(source_name.clone(), *label.source.content());
-
-        let color = colors.next();
-
-        ariadne::Label::new((source_name.to_string(), label.range.0.clone()))
-            .with_message(&label.label)
-            .with_color(color)
     }
 }
 

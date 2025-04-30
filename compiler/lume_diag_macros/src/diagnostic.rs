@@ -211,10 +211,8 @@ impl Diagnostic {
     fn span_block(&self) -> syn::Result<TokenStream> {
         let stream = if let Some(span) = self.span() {
             quote! {
-                fn span<'a>(&'a self) -> Option<&'a dyn ::lume_diag::source::Source> {
-                    let span = (&self.#span) as &'a dyn ::lume_diag::source::Source;
-
-                    Some(span)
+                fn span(&self) -> Option<::std::sync::Arc<::lume_span::SourceFile>> {
+                    Some(self.#span.clone())
                 }
             }
         } else {
@@ -244,14 +242,14 @@ impl Diagnostic {
                 .collect::<Vec<TokenStream>>();
 
             quote! {
-                fn labels<'a>(&'a self) -> Option<Vec<Box<::lume_diag::Label<'a>>>> {
+                fn labels(&self) -> Option<Vec<::lume_diag::Label>> {
                     let span = &self.#span;
                     let labels = vec![ #(#label_pairs),* ];
 
                     let labels = labels
                         .into_iter()
-                        .map(|(label, range)| Box::new(::lume_diag::Label::new(span, range, label.into())))
-                        .collect::<Vec<Box<::lume_diag::Label<'a>>>>();
+                        .map(|(label, range)| ::lume_diag::Label::new(span.clone(), range, label.into()))
+                        .collect::<Vec<::lume_diag::Label>>();
 
                     Some(labels)
                 }
@@ -303,9 +301,9 @@ impl Diagnostic {
             let path: TokenStream = match severity {
                 Severity::Error => quote!(::lume_diag::Severity::Error),
                 Severity::Warning => quote!(::lume_diag::Severity::Warning),
-                Severity::Info => quote!(::lume_diag::Severity::Info),
                 Severity::Help => quote!(::lume_diag::Severity::Help),
                 Severity::Note => quote!(::lume_diag::Severity::Note),
+                Severity::Bug => quote!(::lume_diag::Severity::Bug),
             };
 
             quote! {

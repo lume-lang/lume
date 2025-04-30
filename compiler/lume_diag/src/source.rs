@@ -57,7 +57,7 @@ impl Source for &String {
 }
 
 /// Represents a simple source with only string-based content.
-#[derive(serde::Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct StringSource {
     /// Defines the content of the source file.
     pub content: String,
@@ -84,7 +84,7 @@ impl Source for StringSource {
 ///
 /// This is the default implementation of the [`Source`] trait and is used
 /// internally to create diagnostics using derive-macros.
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedSource {
     /// Defines the name of the source file.
     pub name: String,

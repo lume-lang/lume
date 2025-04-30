@@ -1,7 +1,7 @@
-use std::ops::Range;
+use std::{ops::Range, sync::Arc};
 
-use lume_diag::source::NamedSource;
 use lume_diag_macros::Diagnostic;
+use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
@@ -28,7 +28,7 @@ pub struct ArcfileTomlError {
 #[diagnostic(message = "unexpected type", code = "ARC0108")]
 pub struct ArcfileUnexpectedType {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Expected `{name}` to be of type '{expected}', but found '{found}'")]
     pub range: Range<usize>,
@@ -48,7 +48,7 @@ pub struct ArcfileMissingSection {
 #[diagnostic(message = "missing `name` attribute", code = "ARC0210")]
 pub struct ArcfileMissingName {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Package table is missing a `name` field.")]
     pub range: Range<usize>,
@@ -58,7 +58,7 @@ pub struct ArcfileMissingName {
 #[diagnostic(message = "missing `lume_version` attribute", code = "ARC0212")]
 pub struct ArcfileMissingLumeVersion {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Package table is missing a `lume_version` field.")]
     pub range: Range<usize>,
@@ -68,7 +68,7 @@ pub struct ArcfileMissingLumeVersion {
 #[diagnostic(message = "invalid version string", code = "ARC0213")]
 pub struct ArcfileInvalidVersion {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Invalid version `{version}` for field `{field}`")]
     pub range: Range<usize>,
@@ -86,7 +86,7 @@ pub struct ArcfileInvalidVersion {
 )]
 pub struct ArcfileIncompatibleLumeVersion {
     #[span]
-    pub source: NamedSource,
+    pub source: Arc<SourceFile>,
 
     #[label("Current Lume version {current} is lower than minimum required version {required}.")]
     pub range: Range<usize>,

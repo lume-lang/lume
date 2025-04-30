@@ -149,13 +149,13 @@ impl DiagnosticArg {
             let severity = match ident.to_string().as_ref() {
                 "Error" => Severity::Error,
                 "Warning" => Severity::Warning,
-                "Info" => Severity::Info,
                 "Note" => Severity::Note,
                 "Help" => Severity::Help,
+                "Bug" => Severity::Bug,
                 _ => {
                     return Err(Error::new_spanned(
                         path,
-                        "Invalid severity: must be either `Error`, `Warning`,` `Info`, `Note` or `Help`",
+                        "Invalid severity: must be either `Error`, `Warning`,` `Bug`, `Note` or `Help`",
                     ));
                 }
             };
