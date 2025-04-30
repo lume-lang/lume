@@ -37,8 +37,18 @@ impl FormattedMessage {
                 _ => continue,
             };
 
+            let spec = if let Some(brace) = read.find('}') {
+                format!("{{{}}}", &read[..brace])
+            } else {
+                String::from("{}")
+            };
+
             let tokens = quote! {
-                #ident = self.#ident
+                #ident = format!(#spec, self.#ident)
+                    .if_supports_color(
+                        ::owo_colors::Stream::Stderr,
+                        |t| t.fg::<::owo_colors::colors::xterm::VistaBlue>()
+                    )
             };
 
             args.push(tokens);

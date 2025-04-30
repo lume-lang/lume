@@ -11,7 +11,7 @@ pub struct MismatchedTypes {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected type '{expected:?}', but found type '{found:?}'")]
+    #[label("expected type {expected:?}, but found type {found:?}")]
     pub range: Range<usize>,
 
     pub expected: TypeRef,
@@ -22,13 +22,13 @@ pub struct MismatchedTypes {
 #[diagnostic(
     message = "type unavailable in Lume",
     code = "LM4101",
-    help = "you can use the `{suggestion}` type, which likely is what you meant."
+    help = "you can use the {suggestion} type, which likely is what you meant."
 )]
 pub struct UnavailableScalarType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("the type `{found}` does not exist in Lume.")]
+    #[label("the type {found} does not exist in Lume.")]
     pub range: Range<usize>,
 
     pub found: String,

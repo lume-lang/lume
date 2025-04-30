@@ -12,4 +12,5 @@ lume_span = { path = "../lume_span" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { version = "^2.9", features = ["serde"] }
+owo-colors = { workspace = true }
 serde = { version = "1.0.219", features = ["serde_derive"] }

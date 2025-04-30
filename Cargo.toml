@@ -8,3 +8,4 @@ rust-version = "1.86.0"
 
 [workspace.dependencies]
 "ariadne" = { version = "=0.5.1", features = ["auto-color"] }
+owo-colors = { version = "=4.2.0", features = ["supports-colors"] }

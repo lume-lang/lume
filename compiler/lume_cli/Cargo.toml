@@ -11,3 +11,4 @@ lume_diag_macros = { path = "../lume_diag_macros" }
 lume_driver = { path = "../lume_driver" }
 
 getopts = "^0.2"
+owo-colors = { workspace = true }

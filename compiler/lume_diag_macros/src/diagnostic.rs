@@ -161,6 +161,8 @@ impl Diagnostic {
 
         let stream = quote! {
             fn message<'a>(&'a self) -> String {
+                use ::owo_colors::OwoColorize;
+
                 #formatted
             }
         };
@@ -197,6 +199,8 @@ impl Diagnostic {
 
             quote! {
                 fn help<'a>(&'a self) -> Option<Vec<String>> {
+                    use ::owo_colors::OwoColorize;
+
                     Some(vec![ #(#help_idents),* ])
                 }
             }
@@ -243,6 +247,8 @@ impl Diagnostic {
 
             quote! {
                 fn labels(&self) -> Option<Vec<::lume_diag::Label>> {
+                    use ::owo_colors::OwoColorize;
+
                     let span = &self.#span;
                     let labels = vec![ #(#label_pairs),* ];
 

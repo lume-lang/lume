@@ -15,6 +15,7 @@ lume_state = { path = "../lume_state" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { version = "^2.9", features = ["serde"] }
+owo-colors = { workspace = true }
 
 [dev-dependencies]
 lume_parser = { path = "../lume_parser" }
