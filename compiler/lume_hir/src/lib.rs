@@ -7,6 +7,7 @@ use lume_types::{
 mod errors;
 pub mod lower;
 pub mod map;
+mod stdlib;
 pub(crate) mod symbols;
 
 /// Trait for HIR nodes which can contain some amount of type parameters.

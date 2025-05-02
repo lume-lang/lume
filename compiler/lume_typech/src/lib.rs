@@ -50,28 +50,6 @@ impl<'a> ThirBuildCtx<'a> {
         &mut self.dcx
     }
 
-    /// Gets the type of the expression with the given ID within the source file.
-    ///
-    /// ## Panics
-    ///
-    /// If the given ID does not exist in the resolved expressions map, this
-    /// method will panic. This also applies if the given ID (somehow) refers to
-    /// a non-expression node, such as a statement.
-    pub(crate) fn type_of_expr(&self, id: ExpressionId) -> &TypeRef {
-        self.resolved_exprs.get(&id).unwrap()
-    }
-
-    /// Gets the type of the statement with the given ID within the source file.
-    ///
-    /// ## Panics
-    ///
-    /// If the given ID does not exist in the resolved statements map, this
-    /// method will panic. This also applies if the given ID (somehow) refers to
-    /// a non-statement node, such as an expression.
-    pub(crate) fn type_of_stmt(&self, id: StatementId) -> &TypeRef {
-        self.resolved_stmts.get(&id).unwrap()
-    }
-
     /// Gets the HIR expression with the given ID within the source file.
     pub(crate) fn hir_stmt(
         &'a self,

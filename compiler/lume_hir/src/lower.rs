@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use arc::Project;
 use lume_diag::Result;
+use lume_parser::parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
 
 use crate::errors::*;
+use crate::stdlib::Assets;
 use crate::{self as hir};
 use lume_ast::{self as ast, Node};
 
@@ -46,6 +49,79 @@ macro_rules! err {
         }
         .into()
     };
+}
+
+pub struct LowerState<'a> {
+    /// Defines the project of the current package project.
+    project: &'a Project,
+
+    /// Defines the state being lowered.
+    state: &'a mut lume_state::State,
+}
+
+impl<'a> LowerState<'a> {
+    /// Creates a new [`LowerState`] instance.
+    pub fn new(project: &'a Project, state: &'a mut lume_state::State) -> Self {
+        Self { project, state }
+    }
+
+    /// Lowers the given project and state into a HIR map.
+    pub fn lower(project: &'a Project, state: &'a mut lume_state::State) -> Result<hir::map::Map> {
+        let mut lower = LowerState::new(project, state);
+
+        lower.lower_into()
+    }
+
+    /// Lowers the current project and state into a HIR map.
+    pub fn lower_into(&mut self) -> Result<hir::map::Map> {
+        // Create a new HIR map for the module.
+        let mut hir = hir::map::Map::empty(self.project.id);
+
+        // Read all the sources files before parsing, so if any of them
+        // are inaccessible, we don't waste effort parsing them.
+        let source_files = self.source_files()?;
+
+        for source_file in source_files {
+            // Register source file in the state.
+            self.state.source_map.insert(source_file.clone());
+
+            // Parse the contents of the source file.
+            let expressions = Parser::parse_src(self.state, source_file.id)?;
+
+            // Lowers the parsed module expressions down to HIR.
+            LowerModule::lower(&mut hir, source_file, expressions)?;
+        }
+
+        Ok(hir)
+    }
+
+    /// Gets all the source files to include in the compilation.
+    fn source_files(&self) -> Result<Vec<Arc<SourceFile>>> {
+        let package_id = self.project.id;
+
+        // Add all the source files within the standard library.
+        let mut sources_files = Assets::as_sources(package_id)?;
+
+        // As well as all the files within the project itself
+        let project_file_names = self.project.files()?;
+
+        sources_files.extend(
+            project_file_names
+                .into_iter()
+                .map(|path| {
+                    // We get the relative path of the file within the project,
+                    // so error messages don't use the full path to a file.
+                    let relative_path = self.project.relative_source_path(&path).to_string_lossy().to_string();
+
+                    let content = std::fs::read_to_string(path)?;
+
+                    Ok(Arc::new(SourceFile::new(package_id, relative_path, content)))
+                })
+                .collect::<Result<Vec<_>>>()?,
+        );
+
+        Ok(sources_files)
+    }
 }
 
 pub struct LowerModule<'a> {
