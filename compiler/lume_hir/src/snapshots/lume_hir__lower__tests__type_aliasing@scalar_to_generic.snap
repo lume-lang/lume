@@ -14,21 +14,17 @@ Ok(
                         id: 10060190011017930945,
                         type_id: None,
                         name: 'A',
-                        definition: Scalar(
-                            ScalarType {
-                                name: 'B',
-                                type_params: [
-                                    Scalar(
-                                        ScalarType {
-                                            name: 'C',
-                                            type_params: [],
-                                            location: <internal>:11:12,
-                                        },
-                                    ),
-                                ],
-                                location: <internal>:10:13,
-                            },
-                        ),
+                        definition: Type {
+                            name: 'B',
+                            type_params: [
+                                Type {
+                                    name: 'C',
+                                    type_params: [],
+                                    location: <internal>:11:12,
+                                },
+                            ],
+                            location: <internal>:10:13,
+                        },
                         location: <internal>:0:13,
                     },
                 ),

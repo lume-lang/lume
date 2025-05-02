@@ -14,18 +14,17 @@ Ok(
                         id: 10060190011017930945,
                         type_id: None,
                         name: 'A',
-                        definition: Array(
-                            ArrayType {
-                                element_type: Scalar(
-                                    ScalarType {
-                                        name: 'B',
-                                        type_params: [],
-                                        location: <internal>:10:11,
-                                    },
-                                ),
-                                location: <internal>:9:12,
-                            },
-                        ),
+                        definition: Type {
+                            name: 'std.Array',
+                            type_params: [
+                                Type {
+                                    name: 'B',
+                                    type_params: [],
+                                    location: <internal>:10:11,
+                                },
+                            ],
+                            location: <internal>:9:12,
+                        },
                         location: <internal>:0:12,
                     },
                 ),
