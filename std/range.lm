@@ -1,12 +1,12 @@
 namespace std
 
-# Represents a range bounded inclusively below and exclusively above.
+/// Represents a range bounded inclusively below and exclusively above.
 class builtin Range<T> {
     let start: T;
     let end: T;
 }
 
-# Represents a range bounded inclusively below and above.
+/// Represents a range bounded inclusively below and above.
 class builtin RangeInclusive<T> {
     let start: T;
     let end: T;
