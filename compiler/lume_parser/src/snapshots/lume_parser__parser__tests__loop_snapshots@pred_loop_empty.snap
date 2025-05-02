@@ -64,6 +64,7 @@ expression: "parse_expr(\"while true { }\")"
             location: Location(
                 0..36,
             ),
+            documentation: None,
         },
     ),
 ]

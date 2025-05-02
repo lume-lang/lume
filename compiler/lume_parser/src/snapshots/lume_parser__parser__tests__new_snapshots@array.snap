@@ -89,6 +89,7 @@ expression: "parse_expr(\"let _ = new [A](a);\")"
             location: Location(
                 0..41,
             ),
+            documentation: None,
         },
     ),
 ]

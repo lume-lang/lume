@@ -61,6 +61,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar<T>() ->
                             location: Location(
                                 41..65,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -68,6 +69,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar<T>() ->
                 location: Location(
                     13..79,
                 ),
+                documentation: None,
             },
         ),
     ),

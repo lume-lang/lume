@@ -27,6 +27,7 @@ expression: "parse(\"trait Add<T> { }\")"
                 location: Location(
                     0..16,
                 ),
+                documentation: None,
             },
         ),
     ),

@@ -61,6 +61,7 @@ expression: "parse(\"class Test { fn test<T>() -> void {} }\")"
                             location: Location(
                                 13..36,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -68,6 +69,7 @@ expression: "parse(\"class Test { fn test<T>() -> void {} }\")"
                 location: Location(
                     0..38,
                 ),
+                documentation: None,
             },
         ),
     ),

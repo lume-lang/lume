@@ -70,6 +70,7 @@ expression: "parse_expr(\"for pattern in collection { }\")"
             location: Location(
                 0..51,
             ),
+            documentation: None,
         },
     ),
 ]

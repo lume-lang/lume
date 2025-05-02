@@ -78,6 +78,7 @@ expression: "parse_expr(\"for pattern in collection { continue; }\")"
             location: Location(
                 0..61,
             ),
+            documentation: None,
         },
     ),
 ]

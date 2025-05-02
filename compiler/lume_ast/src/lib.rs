@@ -208,6 +208,7 @@ pub struct FunctionDefinition {
     pub return_type: Option<Box<Type>>,
     pub block: Block,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -236,6 +237,7 @@ pub struct ClassDefinition {
     pub members: Vec<ClassMember>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -251,6 +253,7 @@ pub struct Property {
     pub property_type: Type,
     pub default_value: Option<Expression>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -263,6 +266,7 @@ pub struct MethodDefinition {
     pub return_type: Option<Box<Type>>,
     pub block: Block,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -271,6 +275,7 @@ pub struct TraitDefinition {
     pub type_parameters: Vec<TypeParameter>,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -282,6 +287,7 @@ pub struct TraitMethodDefinition {
     pub return_type: Option<Box<Type>>,
     pub block: Option<Block>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -289,6 +295,7 @@ pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 impl std::fmt::Display for EnumDefinition {
@@ -302,6 +309,7 @@ pub struct EnumDefinitionCase {
     pub name: Identifier,
     pub parameters: Vec<Box<Type>>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 impl std::fmt::Display for EnumDefinitionCase {
@@ -315,6 +323,7 @@ pub struct AliasDefinition {
     pub name: Identifier,
     pub definition: Box<Type>,
     pub location: Location,
+    pub documentation: Option<String>,
 }
 
 impl std::fmt::Display for AliasDefinition {

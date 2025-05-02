@@ -80,6 +80,7 @@ expression: "parse_expr(\"loop { let a = 0; }\")"
             location: Location(
                 0..41,
             ),
+            documentation: None,
         },
     ),
 ]

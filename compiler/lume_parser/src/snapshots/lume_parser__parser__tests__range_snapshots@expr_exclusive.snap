@@ -83,6 +83,7 @@ expression: "parse_expr(\"let _ = (a..b);\")"
             location: Location(
                 0..37,
             ),
+            documentation: None,
         },
     ),
 ]

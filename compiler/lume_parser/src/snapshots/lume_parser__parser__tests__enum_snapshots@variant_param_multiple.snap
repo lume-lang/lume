@@ -41,11 +41,13 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar(int, int)\n
                         location: Location(
                             40..53,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     13..67,
                 ),
+                documentation: None,
             },
         ),
     ),

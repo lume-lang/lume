@@ -49,6 +49,7 @@ expression: "parse_expr(\"if a == 1 { }\")"
             location: Location(
                 0..35,
             ),
+            documentation: None,
         },
     ),
 ]

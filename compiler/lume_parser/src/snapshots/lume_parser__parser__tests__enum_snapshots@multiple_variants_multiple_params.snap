@@ -41,6 +41,7 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar(int, int),\
                         location: Location(
                             40..53,
                         ),
+                        documentation: None,
                     },
                     EnumDefinitionCase {
                         name: Identifier {
@@ -70,11 +71,13 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar(int, int),\
                         location: Location(
                             71..84,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     13..98,
                 ),
+                documentation: None,
             },
         ),
     ),

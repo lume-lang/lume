@@ -93,6 +93,7 @@ expression: "parse_expr(\"let _ = a.call(a);\")"
             location: Location(
                 0..40,
             ),
+            documentation: None,
         },
     ),
 ]

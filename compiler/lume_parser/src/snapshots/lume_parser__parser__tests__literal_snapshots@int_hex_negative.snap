@@ -54,6 +54,7 @@ expression: "parse_expr(\"-0x55\")"
             location: Location(
                 0..27,
             ),
+            documentation: None,
         },
     ),
 ]

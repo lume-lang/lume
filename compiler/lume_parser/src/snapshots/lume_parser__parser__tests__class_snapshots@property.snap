@@ -53,6 +53,7 @@ expression: "parse(r#\"\n            class Foo {\n                let x: Int32 =
                             location: Location(
                                 41..58,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -60,6 +61,7 @@ expression: "parse(r#\"\n            class Foo {\n                let x: Int32 =
                 location: Location(
                     13..72,
                 ),
+                documentation: None,
             },
         ),
     ),

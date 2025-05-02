@@ -40,6 +40,7 @@ expression: "parse(\"fn loop() -> void {}\")"
             location: Location(
                 0..20,
             ),
+            documentation: None,
         },
     ),
 ]

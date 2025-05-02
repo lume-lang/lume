@@ -54,6 +54,7 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                 location: Location(
                     0..38,
                 ),
+                documentation: None,
             },
         ),
     ),

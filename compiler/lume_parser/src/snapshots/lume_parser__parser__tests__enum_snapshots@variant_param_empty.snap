@@ -24,11 +24,13 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar()\n        
                         location: Location(
                             40..45,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     13..59,
                 ),
+                documentation: None,
             },
         ),
     ),

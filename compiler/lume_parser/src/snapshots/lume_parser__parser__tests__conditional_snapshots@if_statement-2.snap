@@ -49,6 +49,7 @@ expression: "parse_expr(\"if true { let a = 0; }\")"
             location: Location(
                 0..44,
             ),
+            documentation: None,
         },
     ),
 ]

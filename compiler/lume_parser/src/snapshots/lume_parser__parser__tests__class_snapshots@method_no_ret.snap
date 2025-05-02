@@ -42,6 +42,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar() { }\n
                             location: Location(
                                 41..53,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -49,6 +50,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar() { }\n
                 location: Location(
                     13..67,
                 ),
+                documentation: None,
             },
         ),
     ),

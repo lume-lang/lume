@@ -1,0 +1,26 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"/// This is a doc comment\n            trait Foo { }\"#)"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        44..47,
+                    ),
+                },
+                type_parameters: [],
+                methods: [],
+                location: Location(
+                    38..51,
+                ),
+                documentation: Some(
+                    "This is a doc comment",
+                ),
+            },
+        ),
+    ),
+]

@@ -64,11 +64,13 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                         location: Location(
                             12..37,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     0..39,
                 ),
+                documentation: None,
             },
         ),
     ),

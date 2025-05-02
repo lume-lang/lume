@@ -50,6 +50,7 @@ expression: "parse(\"fn test<T>() -> void {}\")"
             location: Location(
                 0..23,
             ),
+            documentation: None,
         },
     ),
 ]

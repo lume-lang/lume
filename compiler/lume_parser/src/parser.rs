@@ -70,6 +70,9 @@ pub struct Parser {
 
     /// Defines all the tokens from the parsed source.
     tokens: Vec<Token>,
+
+    /// Defines the documentation comment for the current item, if any.
+    doc_token: Option<String>,
 }
 
 macro_rules! err {
@@ -103,6 +106,7 @@ impl Parser {
             index: 0,
             position: 0,
             tokens: Vec::new(),
+            doc_token: None,
         }
     }
 
@@ -138,7 +142,7 @@ impl Parser {
             let token = self.lexer.next_token()?;
 
             match token.kind {
-                TokenKind::Whitespace | TokenKind::Comment => continue,
+                TokenKind::Comment => continue,
                 TokenKind::Eof => break,
                 _ => {}
             };
@@ -152,6 +156,8 @@ impl Parser {
             if self.eof() {
                 break;
             }
+
+            self.read_doc_comment()?;
 
             expressions.push(self.parse_top_level_expression()?);
         }
@@ -419,6 +425,15 @@ impl Parser {
         self.check(TokenKind::External)
     }
 
+    /// Reads the current documentation comment into the parser's state, if any is present.
+    fn read_doc_comment(&mut self) -> Result<()> {
+        if let Some(doc_comment) = self.consume_if(TokenKind::DocComment)? {
+            self.doc_token = Some(doc_comment.value.unwrap_or_default());
+        }
+
+        Ok(())
+    }
+
     /// Asserts that the current token is an `fn` token.
     fn expect_fn(&mut self) -> Result<Token> {
         self.consume(TokenKind::Fn)
@@ -615,6 +630,7 @@ impl Parser {
             return_type,
             block,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
@@ -671,6 +687,7 @@ impl Parser {
             members,
             type_parameters,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Class(
@@ -679,6 +696,8 @@ impl Parser {
     }
 
     fn parse_class_member(&mut self) -> Result<ClassMember> {
+        self.read_doc_comment()?;
+
         let visibility = self.parse_visibility()?;
 
         match self.token()?.kind {
@@ -731,6 +750,7 @@ impl Parser {
             property_type,
             default_value,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(ClassMember::Property(Box::new(property_def)))
@@ -757,6 +777,7 @@ impl Parser {
             return_type,
             block,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(ClassMember::MethodDefinition(Box::new(method_def)))
@@ -788,6 +809,7 @@ impl Parser {
             methods,
             type_parameters,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Trait(
@@ -796,6 +818,8 @@ impl Parser {
     }
 
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
+        self.read_doc_comment()?;
+
         let visibility = self.parse_visibility()?;
         let start = self.expect_fn()?.start();
 
@@ -819,6 +843,7 @@ impl Parser {
             return_type,
             block,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         })
     }
 
@@ -843,12 +868,15 @@ impl Parser {
                 name,
                 cases,
                 location: (start..end).into(),
+                documentation: self.doc_token.take(),
             }),
         ))))
     }
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
+        self.read_doc_comment()?;
+
         let name = self.parse_identifier()?;
 
         let parameters = if self.peek(TokenKind::LeftParen)? {
@@ -866,6 +894,7 @@ impl Parser {
             name,
             parameters,
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         })
     }
 
@@ -888,6 +917,7 @@ impl Parser {
             name,
             definition: Box::new(definition),
             location: (start..end).into(),
+            documentation: self.doc_token.take(),
         };
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Alias(
@@ -2306,6 +2336,73 @@ mod tests {
                 pub fn next() -> T { }
             }"#,
             "generic_type"
+        );
+    }
+
+    #[test]
+    fn test_doc_comments_snapshots() {
+        assert_snap_eq!(
+            r#"/// This is a doc comment
+            fn foo() -> void { }"#,
+            "function"
+        );
+
+        assert_snap_eq!(
+            r#"/// This is a doc comment
+            class Foo { }"#,
+            "class"
+        );
+
+        assert_snap_eq!(
+            r#"class Foo {
+                /// This is a doc comment
+                pub let bar: Int32 = 0;
+            }"#,
+            "property"
+        );
+
+        assert_snap_eq!(
+            r#"class Foo {
+                /// This is a doc comment
+                pub fn bar() -> void { }
+            }"#,
+            "method"
+        );
+
+        assert_snap_eq!(
+            r#"/// This is a doc comment
+            trait Foo { }"#,
+            "trait"
+        );
+
+        assert_snap_eq!(
+            r#"trait Foo {
+                /// This is a doc comment
+                pub fn bar() -> void { }
+            }"#,
+            "trait_method"
+        );
+
+        assert_snap_eq!(
+            r#"/// This is a doc comment
+            enum Foo {
+                Bar
+            }"#,
+            "enum"
+        );
+
+        assert_snap_eq!(
+            r#"enum Foo {
+                /// This is a doc comment
+                Bar
+            }"#,
+            "enum_case"
+        );
+
+        assert_snap_eq!(
+            r#"/// This is a doc comment
+            type Foo = Bar"#,
+            "type_alias"
         );
     }
 }

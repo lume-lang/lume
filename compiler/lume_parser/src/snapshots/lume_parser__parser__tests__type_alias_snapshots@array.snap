@@ -30,6 +30,7 @@ expression: "parse(\"type A = [B]\")"
                 location: Location(
                     0..12,
                 ),
+                documentation: None,
             },
         ),
     ),

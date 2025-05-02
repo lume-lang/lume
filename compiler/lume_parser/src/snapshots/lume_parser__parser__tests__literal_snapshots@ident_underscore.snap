@@ -53,6 +53,7 @@ expression: "parse_expr(\"__IDENT__\")"
             location: Location(
                 0..31,
             ),
+            documentation: None,
         },
     ),
 ]

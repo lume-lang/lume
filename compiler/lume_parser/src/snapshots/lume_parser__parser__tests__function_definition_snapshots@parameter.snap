@@ -60,6 +60,7 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
             location: Location(
                 0..29,
             ),
+            documentation: None,
         },
     ),
 ]

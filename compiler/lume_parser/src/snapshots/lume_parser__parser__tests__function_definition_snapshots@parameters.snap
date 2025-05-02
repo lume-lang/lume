@@ -86,6 +86,7 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
             location: Location(
                 0..45,
             ),
+            documentation: None,
         },
     ),
 ]

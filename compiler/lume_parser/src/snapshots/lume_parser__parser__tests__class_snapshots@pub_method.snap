@@ -72,6 +72,7 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -
                             location: Location(
                                 45..112,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -79,6 +80,7 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -
                 location: Location(
                     13..126,
                 ),
+                documentation: None,
             },
         ),
     ),

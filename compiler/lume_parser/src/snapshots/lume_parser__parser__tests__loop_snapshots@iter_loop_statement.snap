@@ -96,6 +96,7 @@ expression: "parse_expr(\"for pattern in collection { let a = 0; }\")"
             location: Location(
                 0..62,
             ),
+            documentation: None,
         },
     ),
 ]

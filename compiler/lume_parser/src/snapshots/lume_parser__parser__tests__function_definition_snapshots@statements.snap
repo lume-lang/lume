@@ -91,6 +91,7 @@ expression: "parse(\"fn main() -> void { let a = 0; let b = 1; }\")"
             location: Location(
                 0..43,
             ),
+            documentation: None,
         },
     ),
 ]

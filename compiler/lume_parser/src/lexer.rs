@@ -17,6 +17,7 @@ pub enum TokenKind {
     And,
     Arrow,
     Assign,
+    DocComment,
     Break,
     Builtin,
     Class,
@@ -74,7 +75,6 @@ pub enum TokenKind {
     Unless,
     Use,
     While,
-    Whitespace,
 }
 
 impl TokenKind {
@@ -116,6 +116,10 @@ impl TokenKind {
         matches!(self, TokenKind::Exclamation | TokenKind::Sub)
     }
 
+    pub fn is_comment(&self) -> bool {
+        matches!(self, TokenKind::Comment | TokenKind::DocComment)
+    }
+
     pub fn is_operator(&self) -> bool {
         matches!(
             self,
@@ -140,7 +144,7 @@ impl TokenKind {
     }
 
     pub fn has_value(&self) -> bool {
-        self.is_keyword() || self.is_operator()
+        self.is_keyword() || self.is_operator() || self.is_comment()
     }
 }
 
@@ -152,6 +156,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::And => "&",
             TokenKind::Arrow => "->",
             TokenKind::Assign => "=",
+            TokenKind::DocComment => "doc comment",
             TokenKind::Break => "break",
             TokenKind::Builtin => "builtin",
             TokenKind::Class => "class",
@@ -209,7 +214,6 @@ impl From<TokenKind> for &'static str {
             TokenKind::Unless => "unless",
             TokenKind::Use => "use",
             TokenKind::While => "while",
-            TokenKind::Whitespace => "whitespace",
         }
     }
 }
@@ -375,16 +379,21 @@ impl Lexer {
         c
     }
 
-    /// Gets characters while the predicate returns `true`.
-    fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
-        let start = self.position;
-
+    /// Consumes characters while the predicate returns `true`.
+    fn eat_while(&mut self, predicate: impl Fn(char) -> bool) {
         loop {
             match self.current_char() {
                 Some(c) if predicate(c) => self.next(),
                 _ => break,
             };
         }
+    }
+
+    /// Gets characters while the predicate returns `true`.
+    fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
+        let start = self.position;
+
+        self.eat_while(predicate);
 
         self.source.content[start..self.position].to_string()
     }
@@ -410,9 +419,6 @@ impl Lexer {
         };
 
         let mut token = match first_char {
-            // Block comments
-            '#' => self.comment(),
-
             // Identifiers, such as keywords and standalone words.
             'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
 
@@ -426,7 +432,11 @@ impl Lexer {
             '"' => self.string()?,
 
             // Whitespace
-            ' ' | '\t' | '\n' | '\r' => self.whitespace(),
+            ' ' | '\t' | '\n' | '\r' => {
+                self.eat_while(|c| c.is_whitespace());
+
+                return self.next_token();
+            }
             _ => {
                 return Err(UnexpectedCharacter {
                     source: self.source.clone(),
@@ -445,9 +455,49 @@ impl Lexer {
 
     /// Parses a comment token at the current cursor position.
     fn comment(&mut self) -> Token {
-        let content = self.take_while(|c| c != '\n');
+        let prefix = self.take_while(|c| c == '/');
+        let content = self.take_while(|c| c != '\n').trim().to_string();
 
-        Token::new(TokenKind::Comment, content)
+        if prefix.len() == 3 {
+            Token::new(TokenKind::DocComment, content)
+        } else {
+            Token::new(TokenKind::Comment, content)
+        }
+    }
+
+    /// Parses a block of comment tokens at the current cursor position.
+    fn comment_block(&mut self) -> Token {
+        let mut kind = TokenKind::Comment;
+        let mut comments = Vec::new();
+
+        loop {
+            let position = self.position;
+            let token = self.comment();
+
+            // If this is the first iteration, update the kind of token.
+            if comments.is_empty() {
+                kind = token.kind;
+            }
+
+            // Otherwise, if the comment type doesn't match, stop iterating.
+            if !comments.is_empty() && token.kind != kind {
+                self.position = position;
+                break;
+            }
+
+            comments.push(token.value.unwrap());
+
+            // Consume the newline character.
+            self.next();
+
+            if matches!(self.current_char(), Some('\n') | None) {
+                break;
+            }
+        }
+
+        self.position -= 1;
+
+        Token::new(kind, comments.join("\n"))
     }
 
     /// Parses an identifier token at the current cursor position.
@@ -500,6 +550,10 @@ impl Lexer {
             Err(err) => return Err(err),
         };
 
+        if kind == TokenKind::Comment {
+            return Ok(self.comment_block());
+        }
+
         let symbol: String = chars[..len].iter().collect();
 
         for _ in 0..len {
@@ -512,6 +566,7 @@ impl Lexer {
     fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
+                ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
                 ('-', '>') => return Ok((TokenKind::Arrow, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
@@ -719,13 +774,6 @@ impl Lexer {
 
         Ok(Token::new(TokenKind::String, content))
     }
-
-    /// Parses a single whitespace token at the current cursor position.
-    fn whitespace(&mut self) -> Token {
-        let whitespace = self.take_while(|c| c.is_whitespace());
-
-        Token::new(TokenKind::Whitespace, whitespace)
-    }
 }
 
 #[cfg(test)]
@@ -808,12 +856,13 @@ mod tests {
                 let token = lexer.next_token().unwrap();
 
                 assert_eq!(token.kind, exp.kind);
-                assert_eq!(token.index, exp.index);
 
                 if token.kind.has_value() && exp.value.is_some() {
                     let val: String = exp.value.unwrap().to_string();
                     assert_eq!(token.value, Some(val.to_string()));
                 }
+
+                assert_eq!(token.index, exp.index);
             }
         };
     }
@@ -921,19 +970,41 @@ mod tests {
 
     #[test]
     fn test_comment() {
-        assert_token!("#", TokenKind::Comment, Some("#"), 0, 1);
-        assert_token!("# testing", TokenKind::Comment, Some("# testing"), 0, 9);
+        assert_token!("//", TokenKind::Comment, Some(""), 0, 2);
+        assert_token!("///", TokenKind::DocComment, Some(""), 0, 3);
+        assert_token!("// testing", TokenKind::Comment, Some("testing"), 0, 10);
+        assert_token!("/// testing", TokenKind::DocComment, Some("testing"), 0, 11);
 
         assert_tokens!(
-            "# comment 1\n# comment 2",
-            token(TokenKind::Comment, Some("# comment 1".into()), 0, 11),
-            token(TokenKind::Whitespace, Some("\n".into()), 11, 12),
-            token(TokenKind::Comment, Some("# comment 2".into()), 12, 23)
+            "// comment 1\n// comment 2",
+            token(TokenKind::Comment, Some("comment 1\ncomment 2".into()), 0, 25)
         );
 
         assert_tokens!(
-            "# comment 1  ",
-            token(TokenKind::Comment, Some("# comment 1  ".into()), 0, 13)
+            "// comment 1\n\n// comment 2",
+            token(TokenKind::Comment, Some("comment 1".into()), 0, 12),
+            token(TokenKind::Comment, Some("comment 2".into()), 14, 26)
+        );
+
+        assert_tokens!(
+            "/// comment 1\n/// comment 2",
+            token(TokenKind::DocComment, Some("comment 1\ncomment 2".into()), 0, 27)
+        );
+
+        assert_tokens!(
+            "/// comment 1\n// comment 2",
+            token(TokenKind::DocComment, Some("comment 1".into()), 0, 13),
+            token(TokenKind::Comment, Some("comment 2".into()), 14, 26)
+        );
+
+        assert_tokens!(
+            "// comment 1  ",
+            token(TokenKind::Comment, Some("comment 1".into()), 0, 14)
+        );
+
+        assert_tokens!(
+            "/// comment 1  ",
+            token(TokenKind::DocComment, Some("comment 1".into()), 0, 15)
         );
     }
 

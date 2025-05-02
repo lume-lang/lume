@@ -51,6 +51,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn external ba
                             location: Location(
                                 41..67,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -58,6 +59,7 @@ expression: "parse(r#\"\n            class Foo {\n                fn external ba
                 location: Location(
                     13..81,
                 ),
+                documentation: None,
             },
         ),
     ),

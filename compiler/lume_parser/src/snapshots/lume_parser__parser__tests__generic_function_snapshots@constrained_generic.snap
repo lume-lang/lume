@@ -59,6 +59,7 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
             location: Location(
                 0..32,
             ),
+            documentation: None,
         },
     ),
 ]

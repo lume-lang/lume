@@ -18,6 +18,7 @@ expression: "parse(\"class Int32 {}\")"
                 location: Location(
                     0..14,
                 ),
+                documentation: None,
             },
         ),
     ),

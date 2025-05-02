@@ -24,6 +24,7 @@ expression: "parse(\"enum Foo { Bar, Baz }\")"
                         location: Location(
                             11..14,
                         ),
+                        documentation: None,
                     },
                     EnumDefinitionCase {
                         name: Identifier {
@@ -36,11 +37,13 @@ expression: "parse(\"enum Foo { Bar, Baz }\")"
                         location: Location(
                             16..19,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     0..21,
                 ),
+                documentation: None,
             },
         ),
     ),

@@ -107,6 +107,7 @@ expression: "parse_expr(\"let _ = new A<T>(a, b);\")"
             location: Location(
                 0..45,
             ),
+            documentation: None,
         },
     ),
 ]

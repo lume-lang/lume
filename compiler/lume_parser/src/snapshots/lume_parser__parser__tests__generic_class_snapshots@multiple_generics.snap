@@ -37,6 +37,7 @@ expression: "parse(\"class Test<T1, T2> {}\")"
                 location: Location(
                     0..21,
                 ),
+                documentation: None,
             },
         ),
     ),

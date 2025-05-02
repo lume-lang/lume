@@ -70,6 +70,7 @@ expression: "parse(\"class Test { fn test<T: Numeric>() -> void {} }\")"
                             location: Location(
                                 13..45,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -77,6 +78,7 @@ expression: "parse(\"class Test { fn test<T: Numeric>() -> void {} }\")"
                 location: Location(
                     0..47,
                 ),
+                documentation: None,
             },
         ),
     ),

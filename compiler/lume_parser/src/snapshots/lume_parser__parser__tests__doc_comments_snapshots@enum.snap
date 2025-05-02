@@ -1,0 +1,39 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"/// This is a doc comment\n            enum Foo {\n                Bar\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Enum(
+            EnumDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        43..46,
+                    ),
+                },
+                cases: [
+                    EnumDefinitionCase {
+                        name: Identifier {
+                            name: "Bar",
+                            location: Location(
+                                65..68,
+                            ),
+                        },
+                        parameters: [],
+                        location: Location(
+                            65..68,
+                        ),
+                        documentation: Some(
+                            "This is a doc comment",
+                        ),
+                    },
+                ],
+                location: Location(
+                    38..82,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

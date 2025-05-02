@@ -38,6 +38,7 @@ expression: "parse(\"type A = B<C>\")"
                 location: Location(
                     0..13,
                 ),
+                documentation: None,
             },
         ),
     ),

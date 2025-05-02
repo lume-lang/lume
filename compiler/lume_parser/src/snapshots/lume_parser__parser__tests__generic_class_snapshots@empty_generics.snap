@@ -18,6 +18,7 @@ expression: "parse(\"class Test<> {}\")"
                 location: Location(
                     0..15,
                 ),
+                documentation: None,
             },
         ),
     ),

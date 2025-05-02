@@ -62,6 +62,7 @@ expression: "parse_expr(\"loop { continue; }\")"
             location: Location(
                 0..40,
             ),
+            documentation: None,
         },
     ),
 ]

@@ -93,6 +93,7 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
             location: Location(
                 0..68,
             ),
+            documentation: None,
         },
     ),
 ]

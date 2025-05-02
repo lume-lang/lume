@@ -31,6 +31,7 @@ expression: "parse(\"fn main() {}\")"
             location: Location(
                 0..12,
             ),
+            documentation: None,
         },
     ),
 ]

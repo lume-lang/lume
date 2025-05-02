@@ -24,11 +24,13 @@ expression: "parse(\"enum Foo { Bar }\")"
                         location: Location(
                             11..14,
                         ),
+                        documentation: None,
                     },
                 ],
                 location: Location(
                     0..16,
                 ),
+                documentation: None,
             },
         ),
     ),

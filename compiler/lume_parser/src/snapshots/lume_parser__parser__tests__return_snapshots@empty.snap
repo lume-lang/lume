@@ -49,6 +49,7 @@ expression: "parse_expr(\"return;\")"
             location: Location(
                 0..29,
             ),
+            documentation: None,
         },
     ),
 ]

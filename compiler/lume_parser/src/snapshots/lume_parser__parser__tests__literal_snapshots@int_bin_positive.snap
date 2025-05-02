@@ -54,6 +54,7 @@ expression: "parse_expr(\"0b01010101\")"
             location: Location(
                 0..32,
             ),
+            documentation: None,
         },
     ),
 ]

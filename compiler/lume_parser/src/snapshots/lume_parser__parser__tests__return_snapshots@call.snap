@@ -88,6 +88,7 @@ expression: "parse_expr(\"return a.b(c);\")"
             location: Location(
                 0..36,
             ),
+            documentation: None,
         },
     ),
 ]

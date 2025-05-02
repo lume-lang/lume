@@ -71,6 +71,7 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                             location: Location(
                                 45..113,
                             ),
+                            documentation: None,
                         },
                     ),
                 ],
@@ -78,6 +79,7 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                 location: Location(
                     13..127,
                 ),
+                documentation: None,
             },
         ),
     ),

@@ -102,6 +102,7 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
             location: Location(
                 0..44,
             ),
+            documentation: None,
         },
     ),
 ]

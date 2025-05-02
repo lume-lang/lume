@@ -55,6 +55,7 @@ expression: "parse(\"class Test<T1: Numeric, T2: Numeric> {}\")"
                 location: Location(
                     0..39,
                 ),
+                documentation: None,
             },
         ),
     ),

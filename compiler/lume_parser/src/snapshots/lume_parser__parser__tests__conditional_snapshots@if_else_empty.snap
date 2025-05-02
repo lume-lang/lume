@@ -49,6 +49,7 @@ expression: "parse_expr(\"if true { } else { }\")"
             location: Location(
                 0..42,
             ),
+            documentation: None,
         },
     ),
 ]

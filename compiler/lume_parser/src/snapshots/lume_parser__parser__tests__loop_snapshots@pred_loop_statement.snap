@@ -90,6 +90,7 @@ expression: "parse_expr(\"while true { let a = 0; }\")"
             location: Location(
                 0..47,
             ),
+            documentation: None,
         },
     ),
 ]

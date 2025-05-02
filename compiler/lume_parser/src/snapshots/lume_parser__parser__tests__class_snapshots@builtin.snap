@@ -18,6 +18,7 @@ expression: "parse(\"class builtin Int32 {}\")"
                 location: Location(
                     0..22,
                 ),
+                documentation: None,
             },
         ),
     ),

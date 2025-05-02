@@ -78,6 +78,7 @@ expression: "parse_expr(\"for pattern in collection { break; }\")"
             location: Location(
                 0..58,
             ),
+            documentation: None,
         },
     ),
 ]
