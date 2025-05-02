@@ -132,7 +132,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, name: &String) -> hir::SymbolName {
+    fn resolve_symbol_name(&self, name: &str) -> hir::SymbolName {
         for (import, symbol) in &self.imports {
             if import == name {
                 return symbol.clone();
@@ -142,7 +142,7 @@ impl<'a> LowerModule<'a> {
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
         self.symbol_name(ast::Identifier {
-            name: name.clone(),
+            name: String::from(name),
             location: ast::Location(0..0),
         })
     }
@@ -1041,18 +1041,23 @@ impl<'a> LowerModule<'a> {
         let location = self.location(expr.location);
         let name = self.resolve_symbol_name(&expr.name);
 
-        Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
+        Ok(hir::Type {
             name,
             type_params: Vec::new(),
             location,
-        })))
+        })
     }
 
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
+        let name = self.resolve_symbol_name("Array");
         let element_type = Box::new(self.type_ref(*expr.element_type)?);
         let location = self.location(expr.location);
 
-        Ok(hir::Type::Array(Box::new(hir::ArrayType { element_type, location })))
+        Ok(hir::Type {
+            name,
+            type_params: vec![element_type],
+            location,
+        })
     }
 
     fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
@@ -1065,11 +1070,11 @@ impl<'a> LowerModule<'a> {
             .map(|c| self.type_ref(*c))
             .collect::<Result<Vec<hir::Type>>>()?;
 
-        Ok(hir::Type::Scalar(Box::new(hir::ScalarType {
+        Ok(hir::Type {
             name,
             type_params: type_params.into_iter().map(Box::new).collect(),
             location,
-        })))
+        })
     }
 }
 

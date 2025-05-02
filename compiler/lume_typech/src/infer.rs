@@ -1,5 +1,5 @@
 use lume_diag::Result;
-use lume_hir::{self, ScalarType};
+use lume_hir::{self};
 use lume_types::Identifier;
 
 use crate::{check::TypeCheckerPass, *};
@@ -207,24 +207,19 @@ impl ThirBuildCtx<'_> {
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
     pub(crate) fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> Result<TypeRef> {
-        match ty {
-            lume_hir::Type::Scalar(t) => {
-                let found_type = match self.find_type_ref_ctx(&t.name, type_params) {
-                    Some(id) => id,
-                    None => return Err(self.missing_type_err(t)),
-                };
+        let found_type = match self.find_type_ref_ctx(&ty.name, type_params) {
+            Some(id) => id,
+            None => return Err(self.missing_type_err(ty)),
+        };
 
-                let mut type_ref = TypeRef::new(found_type);
+        let mut type_ref = TypeRef::new(found_type);
 
-                for type_param in &t.type_params {
-                    let type_param_ref = self.mk_type_ref(type_param)?;
-                    type_ref.push_type_argument(type_param_ref);
-                }
-
-                Ok(type_ref)
-            }
-            _ => todo!(),
+        for type_param in &ty.type_params {
+            let type_param_ref = self.mk_type_ref(type_param)?;
+            type_ref.push_type_argument(type_param_ref);
         }
+
+        Ok(type_ref)
     }
 
     fn find_type_ref_ctx(&self, name: &SymbolName, type_params: &[TypeParameter]) -> Option<TypeId> {
@@ -240,7 +235,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Returns an error indicating that the given type was not found.
-    fn missing_type_err(&self, ty: &ScalarType) -> lume_diag::Error {
+    fn missing_type_err(&self, ty: &lume_hir::Type) -> lume_diag::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             let ty_name = &ty.name.name.name;
 

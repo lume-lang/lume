@@ -711,44 +711,21 @@ pub struct TypeParameter {
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub enum Type {
-    Scalar(Box<ScalarType>),
-    Array(Box<ArrayType>),
-}
-
-impl Type {
-    pub fn ident(&self) -> &Identifier {
-        match self {
-            Type::Scalar(ty) => &ty.name.name,
-            Type::Array(ty) => ty.element_type.ident(),
-        }
-    }
-}
-
 #[derive(Node, Debug, Clone, PartialEq)]
-pub struct ScalarType {
+pub struct Type {
     pub name: SymbolName,
     pub type_params: Vec<Box<Type>>,
     pub location: Location,
 }
 
-impl std::hash::Hash for ScalarType {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
+impl Type {
+    pub fn ident(&self) -> &Identifier {
+        &self.name.name
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
-pub struct ArrayType {
-    pub element_type: Box<Type>,
-    pub location: Location,
-}
-
-impl std::hash::Hash for ArrayType {
+impl std::hash::Hash for Type {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        "[".hash(state);
-        self.element_type.hash(state);
-        "]".hash(state);
+        self.name.hash(state);
     }
 }
