@@ -3,9 +3,18 @@ source: compiler/arc/src/parser.rs
 expression: parser.parse().unwrap_err()
 ---
 ArcfileIncompatibleLumeVersion {
-    source: NamedSource {
-        name: "<test>",
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
         content: "[package]\n            name = 'some-package'\n            version = '1.0.0'\n            lume_version = '1.0.0-rc3'",
+        package: PackageId(
+            0,
+        ),
     },
     range: 101..112,
     current: Version {

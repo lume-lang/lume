@@ -3,9 +3,18 @@ source: compiler/arc/src/parser.rs
 expression: "parse_err(r#\"[package]\n            name = 'sample'\n            lume_version = 1\"#)"
 ---
 ArcfileUnexpectedType {
-    source: NamedSource {
-        name: "<test>",
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
         content: "[package]\n            name = 'sample'\n            lume_version = 1",
+        package: PackageId(
+            0,
+        ),
     },
     range: 65..66,
     name: "lume_version",
