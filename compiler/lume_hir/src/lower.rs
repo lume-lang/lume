@@ -138,7 +138,7 @@ pub struct LowerModule<'a> {
     imports: HashMap<String, hir::SymbolName>,
 
     /// Defines the currently containing namespace expressions exist within, if any.
-    namespace: hir::IdentifierPath,
+    namespace: hir::NamespacePath,
 
     /// Defines the currently containing class expressions exist within, if any.
     class_stack: Vec<hir::ItemId>,
@@ -159,7 +159,7 @@ impl<'a> LowerModule<'a> {
             map,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
-            namespace: hir::IdentifierPath::empty(),
+            namespace: hir::NamespacePath::empty(),
             class_stack: Vec::new(),
             local_id_counter: 0,
         };
@@ -242,11 +242,11 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn identifier_path(&self, expr: ast::IdentifierPath) -> hir::IdentifierPath {
+    fn identifier_path(&self, expr: ast::NamespacePath) -> hir::NamespacePath {
         let location = self.location(expr.location.clone());
         let path = expr.path.into_iter().map(|p| self.identifier(p)).collect::<Vec<_>>();
 
-        hir::IdentifierPath { path, location }
+        hir::NamespacePath { path, location }
     }
 
     fn location(&self, expr: ast::Location) -> Location {

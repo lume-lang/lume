@@ -11,7 +11,7 @@ use crate::parser::errors::*;
 
 pub mod errors;
 
-const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::Dot;
+const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
 
 const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Assign, 1),
@@ -484,12 +484,12 @@ impl Parser {
         }
     }
 
-    /// Parses the next token(s) as an identifier path.
+    /// Parses the next token(s) as a namespace path.
     ///
     /// Identifier paths are much like regular identifiers, but can be joined together
     /// with periods, to form longer chains of them. They can be as short as a single
-    /// link, such as `std`, but they can also be longer, such as `std.fmt.error`.
-    fn parse_identifier_path(&mut self) -> Result<IdentifierPath> {
+    /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
+    fn parse_namespace_path(&mut self) -> Result<NamespacePath> {
         let mut segments = Vec::new();
 
         loop {
@@ -503,7 +503,7 @@ impl Parser {
         let start = segments.first().unwrap().location.0.start;
         let end = segments.last().unwrap().location.0.end;
 
-        let path = IdentifierPath {
+        let path = NamespacePath {
             path: segments,
             location: (start..end).into(),
         };
@@ -573,8 +573,7 @@ impl Parser {
 
     fn parse_import(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Import)?.start();
-
-        let path = self.parse_identifier_path()?;
+        let path = self.parse_namespace_path()?;
 
         if self.eof() {
             return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
@@ -600,7 +599,7 @@ impl Parser {
         let (path, location) = self.consume_with_loc(|p| {
             p.consume(TokenKind::Namespace)?;
 
-            p.parse_identifier_path()
+            p.parse_namespace_path()
         })?;
 
         Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
@@ -1857,7 +1856,7 @@ mod tests {
         assert_eq!(
             Parser::parse_str("import std (Int)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
-                path: IdentifierPath {
+                path: NamespacePath {
                     path: vec![Identifier {
                         name: "std".into(),
                         location: Location(7..10)
@@ -1873,9 +1872,9 @@ mod tests {
         );
 
         assert_eq!(
-            Parser::parse_str("import std.io (File)").unwrap(),
+            Parser::parse_str("import std::io (File)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
-                path: IdentifierPath {
+                path: NamespacePath {
                     path: vec![
                         Identifier {
                             name: "std".into(),
@@ -1883,23 +1882,23 @@ mod tests {
                         },
                         Identifier {
                             name: "io".into(),
-                            location: Location(11..13)
+                            location: Location(12..14)
                         }
                     ],
-                    location: Location(7..13)
+                    location: Location(8..14)
                 },
                 names: vec![Identifier {
                     name: "File".into(),
-                    location: Location(15..19)
+                    location: Location(16..20)
                 }],
-                location: Location(0..20)
+                location: Location(0..21)
             }))]
         );
 
         assert_eq!(
-            Parser::parse_str("import std.io (File, Buffer)").unwrap(),
+            Parser::parse_str("import std::io (File, Buffer)").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
-                path: IdentifierPath {
+                path: NamespacePath {
                     path: vec![
                         Identifier {
                             name: "std".into(),
@@ -1907,29 +1906,29 @@ mod tests {
                         },
                         Identifier {
                             name: "io".into(),
-                            location: Location(11..13)
+                            location: Location(12..14)
                         }
                     ],
-                    location: Location(7..13)
+                    location: Location(7..14)
                 },
                 names: vec![
                     Identifier {
                         name: "File".into(),
-                        location: Location(15..19)
+                        location: Location(16..20)
                     },
                     Identifier {
                         name: "Buffer".into(),
-                        location: Location(21..27)
+                        location: Location(22..28)
                     }
                 ],
-                location: Location(0..28)
+                location: Location(0..29)
             }))]
         );
 
         assert_eq!(
-            Parser::parse_str("import std.io ()").unwrap(),
+            Parser::parse_str("import std::io ()").unwrap(),
             vec![TopLevelExpression::Import(Box::new(Import {
-                path: IdentifierPath {
+                path: NamespacePath {
                     path: vec![
                         Identifier {
                             name: "std".into(),
@@ -1937,30 +1936,30 @@ mod tests {
                         },
                         Identifier {
                             name: "io".into(),
-                            location: Location(11..13)
+                            location: Location(12..14)
                         }
                     ],
-                    location: Location(7..13)
+                    location: Location(7..14)
                 },
                 names: vec![],
-                location: Location(0..16)
+                location: Location(0..17)
             }))]
         );
 
-        assert_err_eq!("import std.io", "Invalid import path");
-        assert_err_eq!("import std.io.", "Expected identifier");
-        assert_err_eq!("import .std.io", "Expected identifier");
+        assert_err_eq!("import std::io", "Invalid import path");
+        assert_err_eq!("import std::io::", "Expected identifier");
+        assert_err_eq!("import ::std::io", "Expected identifier");
     }
 
     #[test]
     fn test_namespace_snapshots() {
         assert_snap_eq!("namespace std", "path_1");
-        assert_snap_eq!("namespace std.io", "path_2");
-        assert_snap_eq!("namespace std.io.path", "path_3");
-        assert_snap_eq!("namespace System.IO", "path_casing");
+        assert_snap_eq!("namespace std::io", "path_2");
+        assert_snap_eq!("namespace std::io::path", "path_3");
+        assert_snap_eq!("namespace System::IO", "path_casing");
         assert_err_eq!("namespace", "Expected identifier");
-        assert_err_eq!("namespace .std", "Expected identifier");
-        assert_err_eq!("namespace std.io.", "Expected identifier");
+        assert_err_eq!("namespace ::std", "Expected identifier");
+        assert_err_eq!("namespace std::io::", "Expected identifier");
     }
 
     #[test]

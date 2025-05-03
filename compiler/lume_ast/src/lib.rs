@@ -65,23 +65,23 @@ impl PartialEq for Identifier {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, Eq)]
-pub struct IdentifierPath {
+pub struct NamespacePath {
     pub path: Vec<Identifier>,
     pub location: Location,
 }
 
-impl IdentifierPath {
+impl NamespacePath {
     pub fn new(name: &[&str]) -> Self {
         let path = name.iter().map(|&s| Identifier::new(s)).collect();
 
-        IdentifierPath {
+        NamespacePath {
             path,
             location: Location(0..0),
         }
     }
 }
 
-impl std::fmt::Display for IdentifierPath {
+impl std::fmt::Display for NamespacePath {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let joined = self
             .path
@@ -94,13 +94,13 @@ impl std::fmt::Display for IdentifierPath {
     }
 }
 
-impl std::hash::Hash for IdentifierPath {
+impl std::hash::Hash for NamespacePath {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.to_string().hash(state);
     }
 }
 
-impl PartialEq for IdentifierPath {
+impl PartialEq for NamespacePath {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
     }
@@ -155,14 +155,14 @@ pub enum TopLevelExpression {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Import {
-    pub path: IdentifierPath,
+    pub path: NamespacePath,
     pub names: Vec<Identifier>,
     pub location: Location,
 }
 
 impl Import {
     pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
-        let path = IdentifierPath::new(path);
+        let path = NamespacePath::new(path);
         let names = names.iter().map(|p| Identifier::new(p)).collect();
 
         Self {
@@ -176,14 +176,14 @@ impl Import {
         Self::from_names(&["std"], names)
     }
 
-    pub fn flatten(self) -> Vec<IdentifierPath> {
+    pub fn flatten(self) -> Vec<NamespacePath> {
         self.names
             .iter()
             .map(|n| {
                 let mut path = self.path.path.clone();
                 path.push(n.clone());
 
-                IdentifierPath {
+                NamespacePath {
                     path,
                     location: self.location.clone(),
                 }
@@ -194,7 +194,7 @@ impl Import {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Namespace {
-    pub path: IdentifierPath,
+    pub path: NamespacePath,
     pub location: Location,
 }
 

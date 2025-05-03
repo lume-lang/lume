@@ -59,6 +59,7 @@ pub enum TokenKind {
     Namespace,
     New,
     NotEqual,
+    PathSeparator,
     Pipe,
     Pub,
     Return,
@@ -198,6 +199,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::New => "new",
             TokenKind::NotEqual => "!=",
             TokenKind::Integer(_) => "integer",
+            TokenKind::PathSeparator => "::",
             TokenKind::Pipe => "|",
             TokenKind::Pub => "pub",
             TokenKind::Return => "return",
@@ -566,15 +568,16 @@ impl Lexer {
     fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
-                ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
                 ('-', '>') => return Ok((TokenKind::Arrow, 2)),
+                ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
                 ('/', '=') => return Ok((TokenKind::DivAssign, 2)),
                 ('>', '=') => return Ok((TokenKind::GreaterEqual, 2)),
                 ('<', '=') => return Ok((TokenKind::LessEqual, 2)),
                 ('*', '=') => return Ok((TokenKind::MulAssign, 2)),
                 ('!', '=') => return Ok((TokenKind::NotEqual, 2)),
+                (':', ':') => return Ok((TokenKind::PathSeparator, 2)),
                 ('-', '=') => return Ok((TokenKind::SubAssign, 2)),
                 _ => {}
             }
@@ -918,6 +921,7 @@ mod tests {
         assert_token!("<=", TokenKind::LessEqual, Some("<="), 0, 2);
         assert_token!("*=", TokenKind::MulAssign, Some("*="), 0, 2);
         assert_token!("!=", TokenKind::NotEqual, Some("!="), 0, 2);
+        assert_token!("::", TokenKind::PathSeparator, Some("::"), 0, 2);
         assert_token!("-=", TokenKind::SubAssign, Some("-="), 0, 2);
 
         assert_token!("&", TokenKind::And, Some("&"), 0, 1);

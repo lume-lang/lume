@@ -38,12 +38,12 @@ impl PartialEq for Identifier {
 }
 
 #[derive(Debug, Clone, Eq)]
-pub struct IdentifierPath {
+pub struct NamespacePath {
     pub path: Vec<Identifier>,
     pub location: Location,
 }
 
-impl IdentifierPath {
+impl NamespacePath {
     pub fn empty() -> Self {
         Self {
             path: Vec::new(),
@@ -52,13 +52,13 @@ impl IdentifierPath {
     }
 }
 
-impl std::hash::Hash for IdentifierPath {
+impl std::hash::Hash for NamespacePath {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.path.hash(state);
     }
 }
 
-impl From<&[&'static str]> for IdentifierPath {
+impl From<&[&'static str]> for NamespacePath {
     fn from(path: &[&'static str]) -> Self {
         Self {
             path: path.iter().map(|name| Identifier::from(*name)).collect(),
@@ -67,8 +67,8 @@ impl From<&[&'static str]> for IdentifierPath {
     }
 }
 
-impl PartialEq for IdentifierPath {
-    fn eq(&self, other: &IdentifierPath) -> bool {
+impl PartialEq for NamespacePath {
+    fn eq(&self, other: &NamespacePath) -> bool {
         self.path == other.path
     }
 }
@@ -76,7 +76,7 @@ impl PartialEq for IdentifierPath {
 #[derive(Clone, Eq)]
 pub struct SymbolName {
     /// Defines the namespace which the symbol was defined in.
-    pub namespace: IdentifierPath,
+    pub namespace: NamespacePath,
 
     /// Defines the relative name of the symbol within it's namespace.
     pub name: Identifier,
@@ -99,7 +99,7 @@ impl std::hash::Hash for SymbolName {
 
 impl SymbolName {
     pub fn from_parts(namespace: &[&'static str], name: &'static str) -> Self {
-        let namespace = IdentifierPath::from(namespace);
+        let namespace = NamespacePath::from(namespace);
         let name = Identifier::from(name);
 
         Self {
@@ -676,7 +676,7 @@ impl Type {
         Type::alloc(
             ctx,
             SymbolName {
-                namespace: IdentifierPath::empty(),
+                namespace: NamespacePath::empty(),
                 location: name.location.clone(),
                 name,
             },

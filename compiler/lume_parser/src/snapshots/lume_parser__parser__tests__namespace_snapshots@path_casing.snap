@@ -1,11 +1,11 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"namespace System.IO\")"
+expression: "parse(\"namespace System::IO\")"
 ---
 [
     Namespace(
         Namespace {
-            path: IdentifierPath {
+            path: NamespacePath {
                 path: [
                     Identifier {
                         name: "System",
@@ -16,16 +16,16 @@ expression: "parse(\"namespace System.IO\")"
                     Identifier {
                         name: "IO",
                         location: Location(
-                            17..19,
+                            18..20,
                         ),
                     },
                 ],
                 location: Location(
-                    10..19,
+                    10..20,
                 ),
             },
             location: Location(
-                0..19,
+                0..20,
             ),
         },
     ),
