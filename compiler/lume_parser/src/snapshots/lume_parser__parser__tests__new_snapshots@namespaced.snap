@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse_expr(\"let _ = new [A](a);\")"
+expression: "parse_expr(\"let _ = new std::io::File(a);\")"
 ---
 [
     FunctionDefinition(
@@ -57,32 +57,38 @@ expression: "parse_expr(\"let _ = new [A](a);\")"
                             variable_type: None,
                             value: New(
                                 New {
-                                    name: Array(
-                                        ArrayType {
-                                            element_type: Scalar(
-                                                ScalarType {
-                                                    name: Path {
-                                                        name: Identifier {
-                                                            name: "A",
-                                                            location: Location(
-                                                                33..34,
-                                                            ),
-                                                        },
-                                                        root: NamespacePath {
-                                                            path: [],
-                                                            location: Location(
-                                                                0..0,
-                                                            ),
-                                                        },
-                                                        location: Location(
-                                                            33..34,
-                                                        ),
-                                                    },
+                                    name: Scalar(
+                                        ScalarType {
+                                            name: Path {
+                                                name: Identifier {
+                                                    name: "File",
+                                                    location: Location(
+                                                        41..45,
+                                                    ),
                                                 },
-                                            ),
-                                            location: Location(
-                                                32..35,
-                                            ),
+                                                root: NamespacePath {
+                                                    path: [
+                                                        Identifier {
+                                                            name: "std",
+                                                            location: Location(
+                                                                32..35,
+                                                            ),
+                                                        },
+                                                        Identifier {
+                                                            name: "io",
+                                                            location: Location(
+                                                                37..39,
+                                                            ),
+                                                        },
+                                                    ],
+                                                    location: Location(
+                                                        32..39,
+                                                    ),
+                                                },
+                                                location: Location(
+                                                    41..45,
+                                                ),
+                                            },
                                         },
                                     ),
                                     arguments: [
@@ -91,29 +97,29 @@ expression: "parse_expr(\"let _ = new [A](a);\")"
                                                 name: Identifier {
                                                     name: "a",
                                                     location: Location(
-                                                        36..37,
+                                                        46..47,
                                                     ),
                                                 },
                                             },
                                         ),
                                     ],
                                     location: Location(
-                                        28..37,
+                                        28..47,
                                     ),
                                 },
                             ),
                             location: Location(
-                                20..39,
+                                20..49,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..41,
+                    18..51,
                 ),
             },
             location: Location(
-                0..41,
+                0..51,
             ),
             documentation: None,
         },

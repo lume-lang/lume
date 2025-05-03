@@ -35,10 +35,23 @@ expression: "parse(r#\"class Foo {\n                /// This is a doc comment\n 
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "void",
-                                        location: Location(
-                                            86..90,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    86..90,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                86..90,
+                                            ),
+                                        },
                                     },
                                 ),
                             ),

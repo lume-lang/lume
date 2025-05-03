@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(r#\"\n            let a = 1;\n            let b = 1;\n            let c = 1;\n\n            return a.b(c);\"#)"
+expression: "lower_expr(r#\"\n            let a = 1;\n            let b = 1;\n            let c = 1;\n\n            return a.b(c);\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -146,7 +146,7 @@ Map {
                                                     },
                                                     name: Identifier {
                                                         name: "b",
-                                                        location: <internal>:111:112,
+                                                        location: <internal>:0:0,
                                                     },
                                                     type_parameters: [],
                                                     arguments: [
@@ -304,7 +304,7 @@ Map {
                                     },
                                     name: Identifier {
                                         name: "b",
-                                        location: <internal>:111:112,
+                                        location: <internal>:0:0,
                                     },
                                     type_parameters: [],
                                     arguments: [
@@ -438,7 +438,7 @@ Map {
                     },
                     name: Identifier {
                         name: "b",
-                        location: <internal>:111:112,
+                        location: <internal>:0:0,
                     },
                     type_parameters: [],
                     arguments: [

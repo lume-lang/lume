@@ -7,18 +7,44 @@ expression: "parse(\"use Add in Int32 {}\")"
         UseTrait {
             name: Scalar(
                 ScalarType {
-                    name: "Add",
-                    location: Location(
-                        4..7,
-                    ),
+                    name: Path {
+                        name: Identifier {
+                            name: "Add",
+                            location: Location(
+                                4..7,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            4..7,
+                        ),
+                    },
                 },
             ),
             target: Scalar(
                 ScalarType {
-                    name: "Int32",
-                    location: Location(
-                        11..16,
-                    ),
+                    name: Path {
+                        name: Identifier {
+                            name: "Int32",
+                            location: Location(
+                                11..16,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            11..16,
+                        ),
+                    },
                 },
             ),
             methods: [],

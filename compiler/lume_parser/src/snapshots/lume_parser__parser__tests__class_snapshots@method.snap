@@ -35,10 +35,23 @@ expression: "parse(r#\"\n            class Foo {\n                fn bar() -> In
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "Int32",
-                                        location: Location(
-                                            53..58,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    53..58,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                53..58,
+                                            ),
+                                        },
                                     },
                                 ),
                             ),

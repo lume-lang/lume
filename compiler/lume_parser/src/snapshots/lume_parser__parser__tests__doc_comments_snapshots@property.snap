@@ -31,10 +31,23 @@ expression: "parse(r#\"class Foo {\n                /// This is a doc comment\n 
                             },
                             property_type: Scalar(
                                 ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        83..88,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                83..88,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            83..88,
+                                        ),
+                                    },
                                 },
                             ),
                             default_value: Some(

@@ -24,10 +24,23 @@ expression: "parse(\"pub fn main() -> void {}\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            17..21,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    17..21,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                17..21,
+                            ),
+                        },
                     },
                 ),
             ),

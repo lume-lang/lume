@@ -25,10 +25,23 @@ expression: "parse(\"class Test<T: Numeric> {}\")"
                         constraints: [
                             Scalar(
                                 ScalarType {
-                                    name: "Numeric",
-                                    location: Location(
-                                        14..21,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                14..21,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            14..21,
+                                        ),
+                                    },
                                 },
                             ),
                         ],

@@ -24,10 +24,23 @@ expression: "parse_expr(\"let _ = call();\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            13..17,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                13..17,
+                            ),
+                        },
                     },
                 ),
             ),
@@ -45,8 +58,19 @@ expression: "parse_expr(\"let _ = call();\")"
                             value: Call(
                                 Call {
                                     callee: None,
-                                    name: Identifier {
-                                        name: "call",
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "call",
+                                            location: Location(
+                                                28..32,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
                                         location: Location(
                                             28..32,
                                         ),

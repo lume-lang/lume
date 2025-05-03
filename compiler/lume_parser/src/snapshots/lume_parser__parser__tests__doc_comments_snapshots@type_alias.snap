@@ -14,10 +14,23 @@ expression: "parse(r#\"/// This is a doc comment\n            type Foo = Bar\"#)
                 },
                 definition: Scalar(
                     ScalarType {
-                        name: "Bar",
-                        location: Location(
-                            49..52,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "Bar",
+                                location: Location(
+                                    49..52,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                49..52,
+                            ),
+                        },
                     },
                 ),
                 location: Location(

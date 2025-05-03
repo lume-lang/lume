@@ -7,8 +7,19 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
         UseTrait {
             name: Generic(
                 GenericType {
-                    name: Identifier {
-                        name: "Add",
+                    name: Path {
+                        name: Identifier {
+                            name: "Add",
+                            location: Location(
+                                17..20,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
                         location: Location(
                             17..20,
                         ),
@@ -16,10 +27,23 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                     type_params: [
                         Scalar(
                             ScalarType {
-                                name: "Int32",
-                                location: Location(
-                                    21..26,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            21..26,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        21..26,
+                                    ),
+                                },
                             },
                         ),
                     ],
@@ -30,10 +54,23 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
             ),
             target: Scalar(
                 ScalarType {
-                    name: "Int32",
-                    location: Location(
-                        31..36,
-                    ),
+                    name: Path {
+                        name: Identifier {
+                            name: "Int32",
+                            location: Location(
+                                31..36,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            31..36,
+                        ),
+                    },
                 },
             ),
             methods: [
@@ -61,10 +98,23 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                             },
                             param_type: Scalar(
                                 ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        73..78,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                73..78,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            73..78,
+                                        ),
+                                    },
                                 },
                             ),
                             location: Location(
@@ -76,10 +126,23 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                     return_type: Some(
                         Scalar(
                             ScalarType {
-                                name: "Int32",
-                                location: Location(
-                                    83..88,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            83..88,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        83..88,
+                                    ),
+                                },
                             },
                         ),
                     ),
@@ -102,8 +165,19 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                                                         },
                                                     ),
                                                 ),
-                                                name: Identifier {
-                                                    name: "+",
+                                                name: Path {
+                                                    name: Identifier {
+                                                        name: "+",
+                                                        location: Location(
+                                                            123..124,
+                                                        ),
+                                                    },
+                                                    root: NamespacePath {
+                                                        path: [],
+                                                        location: Location(
+                                                            0..0,
+                                                        ),
+                                                    },
                                                     location: Location(
                                                         123..124,
                                                     ),

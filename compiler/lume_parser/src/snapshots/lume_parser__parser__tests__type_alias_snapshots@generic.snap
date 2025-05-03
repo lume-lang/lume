@@ -14,8 +14,19 @@ expression: "parse(\"type A = B<C>\")"
                 },
                 definition: Generic(
                     GenericType {
-                        name: Identifier {
-                            name: "B",
+                        name: Path {
+                            name: Identifier {
+                                name: "B",
+                                location: Location(
+                                    9..10,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
                             location: Location(
                                 9..10,
                             ),
@@ -23,10 +34,23 @@ expression: "parse(\"type A = B<C>\")"
                         type_params: [
                             Scalar(
                                 ScalarType {
-                                    name: "C",
-                                    location: Location(
-                                        11..12,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "C",
+                                            location: Location(
+                                                11..12,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            11..12,
+                                        ),
+                                    },
                                 },
                             ),
                         ],

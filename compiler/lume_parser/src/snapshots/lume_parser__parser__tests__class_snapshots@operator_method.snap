@@ -35,10 +35,23 @@ expression: "parse(r#\"\n            class Foo {\n                pub fn ==() ->
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "bool",
-                                        location: Location(
-                                            56..60,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "bool",
+                                                location: Location(
+                                                    56..60,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                56..60,
+                                            ),
+                                        },
                                     },
                                 ),
                             ),

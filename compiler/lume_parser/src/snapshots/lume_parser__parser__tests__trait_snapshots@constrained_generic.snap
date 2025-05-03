@@ -23,10 +23,23 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                         constraints: [
                             Scalar(
                                 ScalarType {
-                                    name: "Numeric",
-                                    location: Location(
-                                        13..20,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                13..20,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            13..20,
+                                        ),
+                                    },
                                 },
                             ),
                         ],

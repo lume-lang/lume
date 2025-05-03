@@ -31,18 +31,44 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                     constraints: [
                         Scalar(
                             ScalarType {
-                                name: "Numeric",
-                                location: Location(
-                                    12..19,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: Location(
+                                            12..19,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        12..19,
+                                    ),
+                                },
                             },
                         ),
                         Scalar(
                             ScalarType {
-                                name: "Floating",
-                                location: Location(
-                                    22..30,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Floating",
+                                        location: Location(
+                                            22..30,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        22..30,
+                                    ),
+                                },
                             },
                         ),
                     ],
@@ -57,18 +83,44 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                     constraints: [
                         Scalar(
                             ScalarType {
-                                name: "Numeric",
-                                location: Location(
-                                    36..43,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: Location(
+                                            36..43,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        36..43,
+                                    ),
+                                },
                             },
                         ),
                         Scalar(
                             ScalarType {
-                                name: "Floating",
-                                location: Location(
-                                    46..54,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Floating",
+                                        location: Location(
+                                            46..54,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        46..54,
+                                    ),
+                                },
                             },
                         ),
                     ],
@@ -77,10 +129,23 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            61..65,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    61..65,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                61..65,
+                            ),
+                        },
                     },
                 ),
             ),

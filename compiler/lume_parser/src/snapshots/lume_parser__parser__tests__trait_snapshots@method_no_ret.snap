@@ -38,10 +38,23 @@ expression: "parse(\"trait Add { pub fn add(other: int) { } }\")"
                                 },
                                 param_type: Scalar(
                                     ScalarType {
-                                        name: "int",
-                                        location: Location(
-                                            30..33,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    30..33,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                30..33,
+                                            ),
+                                        },
                                     },
                                 ),
                                 location: Location(

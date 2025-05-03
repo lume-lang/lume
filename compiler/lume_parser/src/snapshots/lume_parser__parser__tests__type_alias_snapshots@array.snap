@@ -16,10 +16,23 @@ expression: "parse(\"type A = [B]\")"
                     ArrayType {
                         element_type: Scalar(
                             ScalarType {
-                                name: "B",
-                                location: Location(
-                                    10..11,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "B",
+                                        location: Location(
+                                            10..11,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        10..11,
+                                    ),
+                                },
                             },
                         ),
                         location: Location(

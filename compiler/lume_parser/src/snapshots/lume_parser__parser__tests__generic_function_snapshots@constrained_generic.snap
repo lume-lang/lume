@@ -31,10 +31,23 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                     constraints: [
                         Scalar(
                             ScalarType {
-                                name: "Numeric",
-                                location: Location(
-                                    11..18,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: Location(
+                                            11..18,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        11..18,
+                                    ),
+                                },
                             },
                         ),
                     ],
@@ -43,10 +56,23 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            25..29,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    25..29,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                25..29,
+                            ),
+                        },
                     },
                 ),
             ),

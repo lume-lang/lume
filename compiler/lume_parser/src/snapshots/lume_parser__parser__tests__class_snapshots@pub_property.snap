@@ -31,10 +31,23 @@ expression: "parse(r#\"\n            class Foo {\n                pub let x: Int
                             },
                             property_type: Scalar(
                                 ScalarType {
-                                    name: "Int32",
-                                    location: Location(
-                                        52..57,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                52..57,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            52..57,
+                                        ),
+                                    },
                                 },
                             ),
                             default_value: Some(

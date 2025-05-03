@@ -7,18 +7,44 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
         UseTrait {
             name: Scalar(
                 ScalarType {
-                    name: "Cast",
-                    location: Location(
-                        17..21,
-                    ),
+                    name: Path {
+                        name: Identifier {
+                            name: "Cast",
+                            location: Location(
+                                17..21,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            17..21,
+                        ),
+                    },
                 },
             ),
             target: Scalar(
                 ScalarType {
-                    name: "Int32",
-                    location: Location(
-                        25..30,
-                    ),
+                    name: Path {
+                        name: Identifier {
+                            name: "Int32",
+                            location: Location(
+                                25..30,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            25..30,
+                        ),
+                    },
                 },
             ),
             methods: [
@@ -41,10 +67,23 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                     return_type: Some(
                         Scalar(
                             ScalarType {
-                                name: "String",
-                                location: Location(
-                                    71..77,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "String",
+                                        location: Location(
+                                            71..77,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        71..77,
+                                    ),
+                                },
                             },
                         ),
                     ),
@@ -97,10 +136,23 @@ expression: "parse(r#\"\n            use Cast in Int32 {\n                pub fn
                     return_type: Some(
                         Scalar(
                             ScalarType {
-                                name: "Int32",
-                                location: Location(
-                                    167..172,
-                                ),
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            167..172,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        167..172,
+                                    ),
+                                },
                             },
                         ),
                     ),

@@ -42,10 +42,23 @@ expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {}
                                     constraints: [
                                         Scalar(
                                             ScalarType {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    25..32,
-                                                ),
+                                                name: Path {
+                                                    name: Identifier {
+                                                        name: "Numeric",
+                                                        location: Location(
+                                                            25..32,
+                                                        ),
+                                                    },
+                                                    root: NamespacePath {
+                                                        path: [],
+                                                        location: Location(
+                                                            0..0,
+                                                        ),
+                                                    },
+                                                    location: Location(
+                                                        25..32,
+                                                    ),
+                                                },
                                             },
                                         ),
                                     ],
@@ -60,10 +73,23 @@ expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {}
                                     constraints: [
                                         Scalar(
                                             ScalarType {
-                                                name: "Numeric",
-                                                location: Location(
-                                                    38..45,
-                                                ),
+                                                name: Path {
+                                                    name: Identifier {
+                                                        name: "Numeric",
+                                                        location: Location(
+                                                            38..45,
+                                                        ),
+                                                    },
+                                                    root: NamespacePath {
+                                                        path: [],
+                                                        location: Location(
+                                                            0..0,
+                                                        ),
+                                                    },
+                                                    location: Location(
+                                                        38..45,
+                                                    ),
+                                                },
                                             },
                                         ),
                                     ],
@@ -72,10 +98,23 @@ expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {}
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "void",
-                                        location: Location(
-                                            52..56,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    52..56,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                52..56,
+                                            ),
+                                        },
                                     },
                                 ),
                             ),

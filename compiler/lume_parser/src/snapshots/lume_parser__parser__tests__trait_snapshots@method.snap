@@ -38,10 +38,23 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int }\")"
                                 },
                                 param_type: Scalar(
                                     ScalarType {
-                                        name: "int",
-                                        location: Location(
-                                            30..33,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    30..33,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                30..33,
+                                            ),
+                                        },
                                     },
                                 ),
                                 location: Location(
@@ -53,10 +66,23 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int }\")"
                         return_type: Some(
                             Scalar(
                                 ScalarType {
-                                    name: "int",
-                                    location: Location(
-                                        38..41,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                38..41,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            38..41,
+                                        ),
+                                    },
                                 },
                             ),
                         ),

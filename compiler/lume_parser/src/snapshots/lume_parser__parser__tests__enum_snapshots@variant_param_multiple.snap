@@ -23,18 +23,44 @@ expression: "parse(r#\"\n            enum Foo {\n                Bar(int, int)\n
                         parameters: [
                             Scalar(
                                 ScalarType {
-                                    name: "int",
-                                    location: Location(
-                                        44..47,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                44..47,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            44..47,
+                                        ),
+                                    },
                                 },
                             ),
                             Scalar(
                                 ScalarType {
-                                    name: "int",
-                                    location: Location(
-                                        49..52,
-                                    ),
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                49..52,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            49..52,
+                                        ),
+                                    },
                                 },
                             ),
                         ],

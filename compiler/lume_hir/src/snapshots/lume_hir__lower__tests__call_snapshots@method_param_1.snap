@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let _ = 1.call(0);\")"
+expression: "lower_expr(\"let _ = 1.call(0);\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -59,7 +59,7 @@ Map {
                                                 },
                                                 name: Identifier {
                                                     name: "call",
-                                                    location: <internal>:29:33,
+                                                    location: <internal>:0:0,
                                                 },
                                                 type_parameters: [],
                                                 arguments: [
@@ -131,7 +131,7 @@ Map {
                                 },
                                 name: Identifier {
                                     name: "call",
-                                    location: <internal>:29:33,
+                                    location: <internal>:0:0,
                                 },
                                 type_parameters: [],
                                 arguments: [
@@ -221,7 +221,7 @@ Map {
                     },
                     name: Identifier {
                         name: "call",
-                        location: <internal>:29:33,
+                        location: <internal>:0:0,
                     },
                     type_parameters: [],
                     arguments: [

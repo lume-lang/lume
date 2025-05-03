@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"type A = [B]\")"
+expression: "lower(\"type A = [B]\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -22,7 +22,7 @@ Map {
                                 location: <internal>:10:11,
                             },
                         ],
-                        location: <internal>:9:12,
+                        location: <internal>:0:0,
                     },
                     location: <internal>:0:12,
                 },

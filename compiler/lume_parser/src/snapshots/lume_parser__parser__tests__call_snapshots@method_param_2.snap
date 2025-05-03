@@ -24,10 +24,23 @@ expression: "parse_expr(\"let _ = a.call(a, b);\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            13..17,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                13..17,
+                            ),
+                        },
                     },
                 ),
             ),
@@ -56,8 +69,19 @@ expression: "parse_expr(\"let _ = a.call(a, b);\")"
                                             },
                                         ),
                                     ),
-                                    name: Identifier {
-                                        name: "call",
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "call",
+                                            location: Location(
+                                                30..34,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
                                         location: Location(
                                             30..34,
                                         ),

@@ -29,10 +29,23 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                     },
                     param_type: Scalar(
                         ScalarType {
-                            name: "u8",
-                            location: Location(
-                                14..16,
-                            ),
+                            name: Path {
+                                name: Identifier {
+                                    name: "u8",
+                                    location: Location(
+                                        14..16,
+                                    ),
+                                },
+                                root: NamespacePath {
+                                    path: [],
+                                    location: Location(
+                                        0..0,
+                                    ),
+                                },
+                                location: Location(
+                                    14..16,
+                                ),
+                            },
                         },
                     ),
                     location: Location(
@@ -44,10 +57,23 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            21..25,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    21..25,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                21..25,
+                            ),
+                        },
                     },
                 ),
             ),

@@ -35,10 +35,23 @@ expression: "parse(\"class Test { fn test<>() -> void {} }\")"
                             return_type: Some(
                                 Scalar(
                                     ScalarType {
-                                        name: "void",
-                                        location: Location(
-                                            28..32,
-                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    28..32,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                28..32,
+                                            ),
+                                        },
                                     },
                                 ),
                             ),

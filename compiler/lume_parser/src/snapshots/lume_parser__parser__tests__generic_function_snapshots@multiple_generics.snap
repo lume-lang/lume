@@ -43,10 +43,23 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            21..25,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    21..25,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                21..25,
+                            ),
+                        },
                     },
                 ),
             ),

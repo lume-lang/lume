@@ -24,10 +24,23 @@ expression: "parse_expr(\"let _ = ((a + b)..(a + b + 1));\")"
             return_type: Some(
                 Scalar(
                     ScalarType {
-                        name: "void",
-                        location: Location(
-                            13..17,
-                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                13..17,
+                            ),
+                        },
                     },
                 ),
             ),
@@ -58,8 +71,19 @@ expression: "parse_expr(\"let _ = ((a + b)..(a + b + 1));\")"
                                                     },
                                                 ),
                                             ),
-                                            name: Identifier {
-                                                name: "+",
+                                            name: Path {
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        32..33,
+                                                    ),
+                                                },
+                                                root: NamespacePath {
+                                                    path: [],
+                                                    location: Location(
+                                                        0..0,
+                                                    ),
+                                                },
                                                 location: Location(
                                                     32..33,
                                                 ),
@@ -99,8 +123,19 @@ expression: "parse_expr(\"let _ = ((a + b)..(a + b + 1));\")"
                                                                 },
                                                             ),
                                                         ),
-                                                        name: Identifier {
-                                                            name: "+",
+                                                        name: Path {
+                                                            name: Identifier {
+                                                                name: "+",
+                                                                location: Location(
+                                                                    41..42,
+                                                                ),
+                                                            },
+                                                            root: NamespacePath {
+                                                                path: [],
+                                                                location: Location(
+                                                                    0..0,
+                                                                ),
+                                                            },
                                                             location: Location(
                                                                 41..42,
                                                             ),
@@ -124,8 +159,19 @@ expression: "parse_expr(\"let _ = ((a + b)..(a + b + 1));\")"
                                                     },
                                                 ),
                                             ),
-                                            name: Identifier {
-                                                name: "+",
+                                            name: Path {
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        45..46,
+                                                    ),
+                                                },
+                                                root: NamespacePath {
+                                                    path: [],
+                                                    location: Location(
+                                                        0..0,
+                                                    ),
+                                                },
                                                 location: Location(
                                                     45..46,
                                                 ),

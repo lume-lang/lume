@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let _ = new [A](0);\")"
+expression: "lower_expr(\"let _ = new [A](0);\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -49,7 +49,7 @@ Map {
                                                             location: <internal>:32:33,
                                                         },
                                                     ],
-                                                    location: <internal>:31:34,
+                                                    location: <internal>:0:0,
                                                 },
                                                 arguments: [
                                                     Expression {
@@ -110,7 +110,7 @@ Map {
                                             location: <internal>:32:33,
                                         },
                                     ],
-                                    location: <internal>:31:34,
+                                    location: <internal>:0:0,
                                 },
                                 arguments: [
                                     Expression {
@@ -172,7 +172,7 @@ Map {
                                 location: <internal>:32:33,
                             },
                         ],
-                        location: <internal>:31:34,
+                        location: <internal>:0:0,
                     },
                     arguments: [
                         Expression {

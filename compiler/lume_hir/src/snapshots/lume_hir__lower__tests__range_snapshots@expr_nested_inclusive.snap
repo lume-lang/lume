@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(r#\"\n            let a = 0;\n            let b = 1;\n            let _ = ((a + b)..=(a + b + 1));\"#)"
+expression: "lower_expr(r#\"\n            let a = 0;\n            let b = 1;\n            let _ = ((a + b)..=(a + b + 1));\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -131,7 +131,7 @@ Map {
                                                                 },
                                                                 name: Identifier {
                                                                     name: "+",
-                                                                    location: <internal>:90:91,
+                                                                    location: <internal>:0:0,
                                                                 },
                                                                 type_parameters: [],
                                                                 arguments: [
@@ -183,7 +183,7 @@ Map {
                                                                             },
                                                                             name: Identifier {
                                                                                 name: "+",
-                                                                                location: <internal>:100:101,
+                                                                                location: <internal>:0:0,
                                                                             },
                                                                             type_parameters: [],
                                                                             arguments: [
@@ -208,7 +208,7 @@ Map {
                                                                 },
                                                                 name: Identifier {
                                                                     name: "+",
-                                                                    location: <internal>:104:105,
+                                                                    location: <internal>:0:0,
                                                                 },
                                                                 type_parameters: [],
                                                                 arguments: [
@@ -356,7 +356,7 @@ Map {
                                                 },
                                                 name: Identifier {
                                                     name: "+",
-                                                    location: <internal>:90:91,
+                                                    location: <internal>:0:0,
                                                 },
                                                 type_parameters: [],
                                                 arguments: [
@@ -408,7 +408,7 @@ Map {
                                                             },
                                                             name: Identifier {
                                                                 name: "+",
-                                                                location: <internal>:100:101,
+                                                                location: <internal>:0:0,
                                                             },
                                                             type_parameters: [],
                                                             arguments: [
@@ -433,7 +433,7 @@ Map {
                                                 },
                                                 name: Identifier {
                                                     name: "+",
-                                                    location: <internal>:104:105,
+                                                    location: <internal>:0:0,
                                                 },
                                                 type_parameters: [],
                                                 arguments: [
@@ -555,7 +555,7 @@ Map {
                     },
                     name: Identifier {
                         name: "+",
-                        location: <internal>:90:91,
+                        location: <internal>:0:0,
                     },
                     type_parameters: [],
                     arguments: [
@@ -648,7 +648,7 @@ Map {
                     },
                     name: Identifier {
                         name: "+",
-                        location: <internal>:100:101,
+                        location: <internal>:0:0,
                     },
                     type_parameters: [],
                     arguments: [
@@ -700,7 +700,7 @@ Map {
                                 },
                                 name: Identifier {
                                     name: "+",
-                                    location: <internal>:100:101,
+                                    location: <internal>:0:0,
                                 },
                                 type_parameters: [],
                                 arguments: [
@@ -725,7 +725,7 @@ Map {
                     },
                     name: Identifier {
                         name: "+",
-                        location: <internal>:104:105,
+                        location: <internal>:0:0,
                     },
                     type_parameters: [],
                     arguments: [
@@ -785,7 +785,7 @@ Map {
                                     },
                                     name: Identifier {
                                         name: "+",
-                                        location: <internal>:90:91,
+                                        location: <internal>:0:0,
                                     },
                                     type_parameters: [],
                                     arguments: [
@@ -837,7 +837,7 @@ Map {
                                                 },
                                                 name: Identifier {
                                                     name: "+",
-                                                    location: <internal>:100:101,
+                                                    location: <internal>:0:0,
                                                 },
                                                 type_parameters: [],
                                                 arguments: [
@@ -862,7 +862,7 @@ Map {
                                     },
                                     name: Identifier {
                                         name: "+",
-                                        location: <internal>:104:105,
+                                        location: <internal>:0:0,
                                     },
                                     type_parameters: [],
                                     arguments: [

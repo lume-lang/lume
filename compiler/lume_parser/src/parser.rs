@@ -2165,6 +2165,7 @@ mod tests {
         assert_expr_snap_eq!("let _ = new A(a, b);", "param_2");
         assert_expr_snap_eq!("let _ = new A<T>(a, b);", "generic");
         assert_expr_snap_eq!("let _ = new [A](a);", "array");
+        assert_expr_snap_eq!("let _ = new std::io::File(a);", "namespaced");
     }
 
     #[test]
