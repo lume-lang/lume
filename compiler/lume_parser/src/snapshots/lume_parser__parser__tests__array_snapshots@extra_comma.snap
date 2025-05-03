@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr_err(\"let _ = [a, ];\")"
+---
+InvalidExpression {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "fn main() -> void { let _ = [a, ]; }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 32..33,
+    actual: ],
+}

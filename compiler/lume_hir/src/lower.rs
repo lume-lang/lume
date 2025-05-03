@@ -525,6 +525,7 @@ impl<'a> LowerModule<'a> {
 
     fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
         let expr = match statement {
+            ast::Expression::Array(e) => self.expr_array(*e)?,
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
             ast::Expression::New(e) => self.expr_new(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
@@ -544,6 +545,27 @@ impl<'a> LowerModule<'a> {
             Some(expr) => Ok(Some(self.expression(expr)?)),
             None => Ok(None),
         }
+    }
+
+    fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
+        // TODO: Implement proper array expression lowering
+        let name = self.type_ref(ast::Type::Scalar(Box::new(ast::ScalarType {
+            name: String::from("Array"),
+            location: expr.location.clone(),
+        })))?;
+
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::New(Box::new(hir::New {
+                id,
+                name: Box::new(name),
+                arguments: Vec::new(),
+            })),
+        })
     }
 
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {

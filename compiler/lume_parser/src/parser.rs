@@ -1342,6 +1342,7 @@ impl Parser {
 
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
+            TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
             TokenKind::New => Ok(self.parse_new_expression()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
@@ -1408,6 +1409,18 @@ impl Parser {
         self.consume(TokenKind::RightParen)?;
 
         Ok(expression)
+    }
+
+    /// Parses an array expression on the current cursor position.
+    fn parse_array_expression(&mut self) -> Result<Expression> {
+        let token = self.token()?;
+        let location: Location = token.index.into();
+
+        let values = self.consume_comma_seq(TokenKind::LeftBracket, TokenKind::RightBracket, |p| {
+            p.parse_expression()
+        })?;
+
+        Ok(Expression::Array(Box::new(Array { values, location })))
     }
 
     /// Parses a range expression on the current cursor position.
@@ -1593,10 +1606,7 @@ impl Parser {
 
                 let int_value = match i64::from_str_radix(&value, radix) {
                     Ok(v) => v,
-                    Err(err) => {
-                        println!("err: {:?}", err);
-                        return Err(err!(self, InvalidLiteral, value, value, target, token.kind));
-                    }
+                    Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
                 };
 
                 let kind = if let Some(ty) = token.ty {
@@ -2025,6 +2035,17 @@ mod tests {
         assert_expr_snap_eq!("for pattern in collection { let a = 0; }", "iter_loop_statement");
         assert_expr_snap_eq!("for pattern in collection { break; }", "iter_loop_break");
         assert_expr_snap_eq!("for pattern in collection { continue; }", "iter_loop_continue");
+        assert_expr_snap_eq!("for pattern in [1, 2, 3] { }", "iter_expr");
+    }
+
+    #[test]
+    fn test_array_snapshots() {
+        assert_expr_snap_eq!("let _ = [];", "empty");
+        assert_expr_snap_eq!("let _ = [a];", "single");
+        assert_expr_snap_eq!("let _ = [a, b];", "multiple");
+        assert_expr_snap_eq!("let _ = [a, [a, b]];", "nested");
+        assert_expr_err_snap_eq!("let _ = [a b];", "missing_comma");
+        assert_expr_err_snap_eq!("let _ = [a, ];", "extra_comma");
     }
 
     #[test]

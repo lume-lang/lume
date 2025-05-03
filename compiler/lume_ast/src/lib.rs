@@ -431,6 +431,7 @@ pub struct PredicateLoop {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum Expression {
+    Array(Box<Array>),
     Assignment(Box<Assignment>),
     New(Box<New>),
     Call(Box<Call>),
@@ -438,6 +439,12 @@ pub enum Expression {
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Array {
+    pub values: Vec<Expression>,
+    pub location: Location,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
