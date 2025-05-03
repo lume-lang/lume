@@ -209,9 +209,9 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, name: &str) -> hir::SymbolName {
+    fn resolve_symbol_name(&self, name: &ast::Path) -> hir::SymbolName {
         for (import, symbol) in &self.imports {
-            if import == name {
+            if name == import {
                 return symbol.clone();
             }
         }
@@ -219,7 +219,7 @@ impl<'a> LowerModule<'a> {
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
         self.symbol_name(ast::Identifier {
-            name: String::from(name),
+            name: name.name.name.clone(),
             location: ast::Location(0..0),
         })
     }
@@ -534,6 +534,7 @@ impl<'a> LowerModule<'a> {
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
+            ast::Expression::Path(e) => self.expr_path(*e)?,
         };
 
         self.map.expressions.insert(expr.id, expr.clone());
@@ -551,8 +552,10 @@ impl<'a> LowerModule<'a> {
     fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
         // TODO: Implement proper array expression lowering
         let name = self.type_ref(ast::Type::Scalar(Box::new(ast::ScalarType {
-            name: String::from("Array"),
-            location: expr.location.clone(),
+            name: lume_ast::Path::rooted(lume_ast::Identifier {
+                name: String::from("Array"),
+                location: expr.location.clone(),
+            }),
         })))?;
 
         let id = self.next_expr_id();
@@ -601,7 +604,7 @@ impl<'a> LowerModule<'a> {
 
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
-        let name = self.identifier(expr.name);
+        let name = self.resolve_symbol_name(&expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let arguments = self.expressions(expr.arguments)?;
         let location = self.location(expr.location);
@@ -612,13 +615,11 @@ impl<'a> LowerModule<'a> {
             hir::ExpressionKind::MethodCall(Box::new(hir::MethodCall {
                 id,
                 callee,
-                name,
+                name: name.name,
                 type_parameters,
                 arguments,
             }))
         } else {
-            let name = self.resolve_symbol_name(&name.name);
-
             hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall {
                 id,
                 name,
@@ -664,15 +665,9 @@ impl<'a> LowerModule<'a> {
         let upper = self.expression(expr.upper)?;
 
         let range_type = if expr.inclusive {
-            ast::Type::Scalar(Box::new(ast::ScalarType {
-                name: "RangeInclusive".to_string(),
-                location: lume_ast::Location(0..0),
-            }))
+            self.type_std("RangeInclusive", vec![])?
         } else {
-            ast::Type::Scalar(Box::new(ast::ScalarType {
-                name: "Range".to_string(),
-                location: lume_ast::Location(0..0),
-            }))
+            self.type_std("Range", vec![])?
         };
 
         Ok(hir::Expression {
@@ -680,7 +675,7 @@ impl<'a> LowerModule<'a> {
             location,
             kind: hir::ExpressionKind::New(Box::new(hir::New {
                 id,
-                name: Box::new(self.type_ref(range_type)?),
+                name: Box::new(range_type),
                 arguments: vec![lower, upper],
             })),
         })
@@ -705,6 +700,10 @@ impl<'a> LowerModule<'a> {
                 location,
             })),
         })
+    }
+
+    fn expr_path(&mut self, expr: ast::Path) -> Result<hir::Expression> {
+        todo!("path expressions")
     }
 
     fn literal(&mut self, expr: ast::Literal) -> Result<hir::Literal> {
@@ -1138,8 +1137,8 @@ impl<'a> LowerModule<'a> {
     }
 
     fn type_scalar(&self, expr: ast::ScalarType) -> Result<hir::Type> {
-        let location = self.location(expr.location);
         let name = self.resolve_symbol_name(&expr.name);
+        let location = self.location(expr.name.location);
 
         Ok(hir::Type {
             name,
@@ -1149,20 +1148,12 @@ impl<'a> LowerModule<'a> {
     }
 
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
-        let name = self.resolve_symbol_name("Array");
-        let element_type = Box::new(self.type_ref(*expr.element_type)?);
-        let location = self.location(expr.location);
-
-        Ok(hir::Type {
-            name,
-            type_params: vec![element_type],
-            location,
-        })
+        self.type_std("Array", vec![*expr.element_type])
     }
 
     fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
         let location = self.location(expr.location);
-        let name = self.resolve_symbol_name(&expr.name.name);
+        let name = self.resolve_symbol_name(&expr.name);
 
         let type_params = expr
             .type_params
@@ -1195,6 +1186,19 @@ impl<'a> LowerModule<'a> {
             name,
             type_params: Vec::new(),
             location,
+        })
+    }
+
+    fn type_std(&self, name: &str, type_params: Vec<ast::Type>) -> Result<hir::Type> {
+        let type_params = type_params
+            .into_iter()
+            .map(|ty| Ok(Box::new(self.type_ref(ty)?)))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Type {
+            name: SymbolName::from_parts(["std"], name),
+            type_params,
+            location: hir::Location::empty(),
         })
     }
 }

@@ -71,6 +71,13 @@ pub struct NamespacePath {
 }
 
 impl NamespacePath {
+    pub fn empty() -> Self {
+        NamespacePath {
+            path: Vec::new(),
+            location: Location(0..0),
+        }
+    }
+
     pub fn new(name: &[&str]) -> Self {
         let path = name.iter().map(|&s| Identifier::new(s)).collect();
 
@@ -88,7 +95,7 @@ impl std::fmt::Display for NamespacePath {
             .iter()
             .map(|i| i.name.as_str())
             .collect::<Vec<&str>>()
-            .join(".");
+            .join("::");
 
         f.write_str(&joined)
     }
@@ -103,6 +110,53 @@ impl std::hash::Hash for NamespacePath {
 impl PartialEq for NamespacePath {
     fn eq(&self, other: &Self) -> bool {
         self.path == other.path
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+pub struct Path {
+    pub name: Identifier,
+    pub root: NamespacePath,
+    pub location: Location,
+}
+
+impl Path {
+    pub fn rooted(name: Identifier) -> Self {
+        let location = name.location.clone();
+
+        Path {
+            name,
+            root: NamespacePath::empty(),
+            location,
+        }
+    }
+
+    pub fn merge(&mut self, other: Path) {
+        self.root.path.extend(other.root.path);
+        self.root.path.insert(0, other.name);
+        self.location = (self.location.start()..other.location.end()).into();
+    }
+}
+
+impl From<Identifier> for Path {
+    fn from(identifier: Identifier) -> Path {
+        Path::rooted(identifier)
+    }
+}
+
+impl PartialEq<String> for Path {
+    fn eq(&self, other: &String) -> bool {
+        if let Some(f) = self.root.path.first() {
+            f.name == *other
+        } else {
+            self.name.name == *other
+        }
+    }
+}
+
+impl std::fmt::Display for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}::{}", self.root, self.name))
     }
 }
 
@@ -437,6 +491,7 @@ pub enum Expression {
     Call(Box<Call>),
     Literal(Box<Literal>),
     Member(Box<Member>),
+    Path(Box<Path>),
     Range(Box<Range>),
     Variable(Box<Variable>),
 }
@@ -464,7 +519,7 @@ pub struct New {
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Call {
     pub callee: Option<Expression>,
-    pub name: Identifier,
+    pub name: Path,
     pub arguments: Vec<Expression>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
@@ -579,15 +634,20 @@ impl std::fmt::Display for Type {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct ScalarType {
-    pub name: String,
-    pub location: Location,
+    pub name: Path,
+}
+
+impl Node for ScalarType {
+    fn location(&self) -> &Location {
+        &self.name.location
+    }
 }
 
 impl std::fmt::Display for ScalarType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name.to_string())
+        f.write_fmt(format_args!("{}", self.name))
     }
 }
 
@@ -605,7 +665,7 @@ impl std::fmt::Display for ArrayType {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct GenericType {
-    pub name: Identifier,
+    pub name: Path,
     pub type_params: Vec<Box<Type>>,
     pub location: Location,
 }

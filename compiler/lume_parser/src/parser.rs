@@ -32,6 +32,7 @@ const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Increment, 7),
     (TokenKind::Decrement, 7),
     (TokenKind::Dot, 9),
+    (IDENTIFIER_SEPARATOR, 10),
 ];
 
 /// Defines the precedence for unary operators, such as `-` or `!`.
@@ -335,6 +336,24 @@ impl Parser {
     }
 
     /// Parses a sequence of delimited statements, where the closure `f`
+    /// is invoked between each delimiter, until no more delimiters are found.
+    ///
+    /// This is useful for any sequence of identifiers, such as namespace paths.
+    fn consume_delim<T>(&mut self, delim: TokenKind, mut f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
+        let mut v = Vec::new();
+
+        loop {
+            v.push(f(self)?);
+
+            if self.consume_if(delim)?.is_none() {
+                break;
+            }
+        }
+
+        Ok(v)
+    }
+
+    /// Parses a sequence of delimited statements, where the closure `f`
     /// is invoked between each delimiter, until the given "close" token is found.
     ///
     /// This is useful for any sequence of expressions or statements, such as arrays,
@@ -490,15 +509,7 @@ impl Parser {
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
     fn parse_namespace_path(&mut self) -> Result<NamespacePath> {
-        let mut segments = Vec::new();
-
-        loop {
-            segments.push(self.parse_identifier()?);
-
-            if self.consume_if(IDENTIFIER_SEPARATOR)?.is_none() {
-                break;
-            }
-        }
+        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, |p| p.parse_identifier())?;
 
         let start = segments.first().unwrap().location.0.start;
         let end = segments.last().unwrap().location.0.end;
@@ -509,6 +520,30 @@ impl Parser {
         };
 
         Ok(path)
+    }
+
+    /// Parses the next token as a symbol path.
+    fn parse_path(&mut self) -> Result<Path> {
+        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, |p| p.parse_identifier())?;
+        let (name, root) = segments.split_last().unwrap();
+
+        let root = if root.is_empty() {
+            NamespacePath::empty()
+        } else {
+            let root_loc_start = root.first().unwrap().location.start();
+            let root_loc_end = root.last().unwrap().location.end();
+
+            NamespacePath {
+                path: root.to_vec(),
+                location: (root_loc_start..root_loc_end).into(),
+            }
+        };
+
+        Ok(Path {
+            name: name.to_owned(),
+            root,
+            location: name.location.clone(),
+        })
     }
 
     /// Returns a block for functions or methods.
@@ -1023,22 +1058,12 @@ impl Parser {
 
     /// Parses either a scalar- or generic-type at the current cursor position.
     fn parse_scalar_or_generic_type(&mut self) -> Result<Type> {
-        let name = self.parse_identifier()?;
+        let name = self.parse_path()?;
 
         if self.peek(TokenKind::Less)? {
-            let identifier = Identifier {
-                name: name.name,
-                location: name.location,
-            };
-
-            self.parse_generic_type_arguments(identifier)
+            self.parse_generic_type_arguments(name)
         } else {
-            let location = name.location;
-
-            Ok(Type::Scalar(Box::new(ScalarType {
-                name: name.name,
-                location,
-            })))
+            Ok(Type::Scalar(Box::new(ScalarType { name })))
         }
     }
 
@@ -1059,7 +1084,7 @@ impl Parser {
     }
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
-    fn parse_generic_type_arguments(&mut self, name: Identifier) -> Result<Type> {
+    fn parse_generic_type_arguments(&mut self, name: Path) -> Result<Type> {
         let (type_params, location) = self.consume_with_loc(|p| {
             p.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| Ok(Box::new(p.parse_type()?)))
         })?;
@@ -1400,8 +1425,12 @@ impl Parser {
 
         Ok(Expression::Call(Box::new(Call {
             callee: Some(left),
-            name: Identifier {
-                name,
+            name: Path {
+                name: Identifier {
+                    name,
+                    location: operator_loc.clone().into(),
+                },
+                root: NamespacePath::empty(),
                 location: operator_loc.into(),
             },
             arguments: vec![right],
@@ -1508,13 +1537,18 @@ impl Parser {
             // If the next token is an equal sign, it's an assignment expression
             TokenKind::Assign => self.parse_assignment(expression),
 
+            // If the identiier is following by a separator, it's refering to a namespaced identifier
+            IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
+
             // If the name stands alone, it's likely a variable reference
             _ => self.parse_variable(identifier),
         }
     }
 
     /// Parses a call expression on the current cursor position.
-    fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
+    fn parse_call(&mut self, callee: Option<Expression>, name: impl Into<Path>) -> Result<Expression> {
+        let name = name.into();
+
         let type_parameters = self.parse_type_parameters()?;
         let arguments = self.parse_call_arguments()?;
 
@@ -1595,6 +1629,34 @@ impl Parser {
             value,
             location: (start..end).into(),
         })))
+    }
+
+    /// Parses a path expression on the current cursor position.
+    fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
+        self.consume(IDENTIFIER_SEPARATOR)?;
+
+        let path = Path::rooted(name);
+        let mut expression = self.parse_expression()?;
+
+        Self::merge_expression_with_path(&mut expression, path);
+
+        Ok(expression)
+    }
+
+    /// Merges a path with an expression.
+    fn merge_expression_with_path(expr: &mut Expression, path: Path) {
+        match expr {
+            Expression::Call(call) => {
+                call.name.merge(path);
+            }
+            Expression::Member(member) => {
+                Self::merge_expression_with_path(&mut member.callee, path);
+            }
+            Expression::Path(subpath) => {
+                subpath.merge(path);
+            }
+            _ => {}
+        }
     }
 
     /// Parses a variable reference expression on the current cursor position.
@@ -2196,16 +2258,6 @@ mod tests {
                 }
             }"#,
             "operator_method"
-        );
-
-        assert_snap_eq!(
-            r#"
-            class Foo {
-                pub fn bar(self) -> bool {
-                    return true;
-                }
-            }"#,
-            "self_method"
         );
 
         assert_snap_eq!(

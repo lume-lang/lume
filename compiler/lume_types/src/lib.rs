@@ -22,10 +22,10 @@ impl std::fmt::Display for Identifier {
     }
 }
 
-impl From<&'static str> for Identifier {
-    fn from(name: &'static str) -> Self {
+impl<T: Into<String>> From<T> for Identifier {
+    fn from(name: T) -> Self {
         Self {
-            name: name.to_string(),
+            name: name.into(),
             location: Location::empty(),
         }
     }
@@ -58,10 +58,13 @@ impl std::hash::Hash for NamespacePath {
     }
 }
 
-impl From<&[&'static str]> for NamespacePath {
-    fn from(path: &[&'static str]) -> Self {
+impl<T: IntoIterator<Item = impl Into<String>>> From<T> for NamespacePath {
+    fn from(path: T) -> Self {
         Self {
-            path: path.iter().map(|name| Identifier::from(*name)).collect(),
+            path: path
+                .into_iter()
+                .map(|name| Identifier::from(Into::<String>::into(name)))
+                .collect(),
             location: Location::empty(),
         }
     }
@@ -98,7 +101,7 @@ impl std::hash::Hash for SymbolName {
 }
 
 impl SymbolName {
-    pub fn from_parts(namespace: &[&'static str], name: &'static str) -> Self {
+    pub fn from_parts(namespace: impl IntoIterator<Item = impl Into<String>>, name: impl Into<String>) -> Self {
         let namespace = NamespacePath::from(namespace);
         let name = Identifier::from(name);
 
@@ -110,59 +113,59 @@ impl SymbolName {
     }
 
     pub fn i8() -> Self {
-        Self::from_parts(&["std"], "Int8")
+        Self::from_parts(["std"], "Int8")
     }
 
     pub fn u8() -> Self {
-        Self::from_parts(&["std"], "UInt8")
+        Self::from_parts(["std"], "UInt8")
     }
 
     pub fn i16() -> Self {
-        Self::from_parts(&["std"], "Int8")
+        Self::from_parts(["std"], "Int8")
     }
 
     pub fn u16() -> Self {
-        Self::from_parts(&["std"], "UInt16")
+        Self::from_parts(["std"], "UInt16")
     }
 
     pub fn i32() -> Self {
-        Self::from_parts(&["std"], "Int32")
+        Self::from_parts(["std"], "Int32")
     }
 
     pub fn u32() -> Self {
-        Self::from_parts(&["std"], "UInt32")
+        Self::from_parts(["std"], "UInt32")
     }
 
     pub fn i64() -> Self {
-        Self::from_parts(&["std"], "Int64")
+        Self::from_parts(["std"], "Int64")
     }
 
     pub fn u64() -> Self {
-        Self::from_parts(&["std"], "UInt64")
+        Self::from_parts(["std"], "UInt64")
     }
 
     pub fn iptr() -> Self {
-        Self::from_parts(&["std"], "IPtr")
+        Self::from_parts(["std"], "IPtr")
     }
 
     pub fn uptr() -> Self {
-        Self::from_parts(&["std"], "UPtr")
+        Self::from_parts(["std"], "UPtr")
     }
 
     pub fn float() -> Self {
-        Self::from_parts(&["std"], "Float")
+        Self::from_parts(["std"], "Float")
     }
 
     pub fn double() -> Self {
-        Self::from_parts(&["std"], "Double")
+        Self::from_parts(["std"], "Double")
     }
 
     pub fn string() -> Self {
-        Self::from_parts(&["std"], "String")
+        Self::from_parts(["std"], "String")
     }
 
     pub fn boolean() -> Self {
-        Self::from_parts(&["std"], "Boolean")
+        Self::from_parts(["std"], "Boolean")
     }
 }
 
