@@ -1,0 +1,139 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                13..17,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [
+                    VariableDeclaration(
+                        VariableDeclaration {
+                            name: Identifier {
+                                name: "_",
+                                location: Location(
+                                    24..25,
+                                ),
+                            },
+                            variable_type: None,
+                            value: Call(
+                                Call {
+                                    callee: None,
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "call",
+                                            location: Location(
+                                                33..37,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [
+                                                Identifier {
+                                                    name: "Foo",
+                                                    location: Location(
+                                                        28..31,
+                                                    ),
+                                                },
+                                            ],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            33..31,
+                                        ),
+                                    },
+                                    arguments: [
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: Location(
+                                                        41..42,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "b",
+                                                    location: Location(
+                                                        44..45,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                    type_parameters: [
+                                        TypeParameter {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: Location(
+                                                    38..39,
+                                                ),
+                                            },
+                                            constraints: [],
+                                        },
+                                    ],
+                                    location: Location(
+                                        33..45,
+                                    ),
+                                },
+                            ),
+                            location: Location(
+                                20..47,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    18..49,
+                ),
+            },
+            location: Location(
+                0..49,
+            ),
+            documentation: None,
+        },
+    ),
+]

@@ -1511,13 +1511,16 @@ impl Parser {
     /// Parses a `self` reference expression on the current cursor position.
     fn parse_self_reference(&mut self) -> Result<Expression> {
         let location = self.consume(TokenKind::SelfRef)?.index;
+        let identifier = Identifier {
+            name: "self".to_string(),
+            location: location.into(),
+        };
 
-        Ok(Expression::Variable(Box::new(Variable {
-            name: lume_ast::Identifier {
-                name: "self".to_string(),
-                location: location.into(),
-            },
-        })))
+        if self.peek(IDENTIFIER_SEPARATOR)? {
+            return self.parse_path_expression(identifier);
+        }
+
+        Ok(Expression::Variable(Box::new(Variable { name: identifier })))
     }
 
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
@@ -2068,6 +2071,7 @@ mod tests {
         assert_err_snap_eq!("fn external main() -> void {}", "external_body");
         assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
         assert_snap_eq!("fn loop() -> void {}", "reserved_keyword");
+        assert_snap_eq!("fn main() -> std::Int32 {}", "namespaced_type");
     }
 
     #[test]
@@ -2095,6 +2099,7 @@ mod tests {
         assert_expr_snap_eq!("self", "self");
         assert_expr_snap_eq!("self + self", "self_binary_op");
         assert_expr_snap_eq!("self.invoke()", "self_call");
+        assert_expr_snap_eq!("self::invoke()", "self_static_call");
     }
 
     #[test]
@@ -2179,6 +2184,8 @@ mod tests {
         assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
         assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
         assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
+        assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
+        assert_expr_snap_eq!("let _ = Foo::call<T>(a, b);", "static_generic_method");
     }
 
     #[test]
