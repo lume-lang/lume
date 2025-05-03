@@ -1,0 +1,59 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                enum Foo {\n                    Bar(int, int),\n                    Baz(int, int)\n                }\"#)"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: 'Foo',
+                    cases: [
+                        EnumDefinitionCase {
+                            id: 3235109210342419196,
+                            name: 'Bar',
+                            parameters: [
+                                Type {
+                                    name: 'int',
+                                    type_params: [],
+                                    location: <internal>:52:55,
+                                },
+                                Type {
+                                    name: 'int',
+                                    type_params: [],
+                                    location: <internal>:57:60,
+                                },
+                            ],
+                            location: <internal>:48:61,
+                        },
+                        EnumDefinitionCase {
+                            id: 443157908602914782,
+                            name: 'Baz',
+                            parameters: [
+                                Type {
+                                    name: 'int',
+                                    type_params: [],
+                                    location: <internal>:87:90,
+                                },
+                                Type {
+                                    name: 'int',
+                                    type_params: [],
+                                    location: <internal>:92:95,
+                                },
+                            ],
+                            location: <internal>:83:96,
+                        },
+                    ],
+                    location: <internal>:17:114,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

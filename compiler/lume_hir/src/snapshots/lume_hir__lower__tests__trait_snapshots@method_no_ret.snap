@@ -1,0 +1,58 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"trait Add { pub fn add(other: int) { } }\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Type(
+            Trait(
+                TraitDefinition {
+                    id: 1119898709443545213,
+                    type_id: None,
+                    name: 'Add',
+                    type_parameters: [],
+                    methods: [
+                        TraitMethodDefinition {
+                            method_id: None,
+                            visibility: Public,
+                            name: Identifier {
+                                name: "add",
+                                location: <internal>:19:22,
+                            },
+                            parameters: [
+                                Parameter {
+                                    id: 0,
+                                    name: Identifier {
+                                        name: "other",
+                                        location: <internal>:23:28,
+                                    },
+                                    param_type: Type {
+                                        name: 'int',
+                                        type_params: [],
+                                        location: <internal>:30:33,
+                                    },
+                                    location: <internal>:23:33,
+                                },
+                            ],
+                            type_parameters: [],
+                            return_type: None,
+                            block: Some(
+                                Block {
+                                    statements: [],
+                                    location: <internal>:35:38,
+                                },
+                            ),
+                            location: <internal>:16:38,
+                        },
+                    ],
+                    location: <internal>:0:40,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

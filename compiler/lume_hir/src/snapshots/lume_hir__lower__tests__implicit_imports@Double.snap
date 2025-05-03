@@ -1,0 +1,35 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(&format!(\"fn foo() -> {} {{ }}\", ty))"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: 'foo',
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'std.Double',
+                        type_params: [],
+                        location: <internal>:12:18,
+                    },
+                ),
+                block: Block {
+                    statements: [],
+                    location: <internal>:19:22,
+                },
+                location: <internal>:0:22,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

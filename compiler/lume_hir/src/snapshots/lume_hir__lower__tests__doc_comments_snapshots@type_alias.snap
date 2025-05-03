@@ -1,24 +1,24 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"type A = B\")"
+expression: "lower(r#\"/// This is a doc comment\n                type Foo = Bar\"#)"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        10060190011017930945: Type(
+        18213876290066861800: Type(
             Alias(
                 AliasDefinition {
-                    id: 10060190011017930945,
+                    id: 18213876290066861800,
                     type_id: None,
-                    name: 'A',
+                    name: 'Foo',
                     definition: Type {
-                        name: 'B',
+                        name: 'Bar',
                         type_params: [],
-                        location: <internal>:9:10,
+                        location: <internal>:53:56,
                     },
-                    location: <internal>:0:10,
+                    location: <internal>:42:56,
                 },
             ),
         ),

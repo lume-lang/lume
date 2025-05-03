@@ -1,0 +1,24 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"enum Foo {}\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: 'Foo',
+                    cases: [],
+                    location: <internal>:0:11,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,56 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"fn test<T1, T2>() -> void {}\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1608888409088296675: Function(
+            FunctionDefinition {
+                id: 1608888409088296675,
+                func_id: None,
+                visibility: Private,
+                name: 'test',
+                parameters: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T1",
+                            location: <internal>:8:10,
+                        },
+                        type_id: None,
+                        type_param_id: None,
+                        constraints: [],
+                        location: <internal>:8:10,
+                    },
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: <internal>:12:14,
+                        },
+                        type_id: None,
+                        type_param_id: None,
+                        constraints: [],
+                        location: <internal>:12:14,
+                    },
+                ],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:21:25,
+                    },
+                ),
+                block: Block {
+                    statements: [],
+                    location: <internal>:26:28,
+                },
+                location: <internal>:0:28,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

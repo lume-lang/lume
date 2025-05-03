@@ -1,0 +1,102 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower_expr(\"let _ = call();\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: 'foo',
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:12:16,
+                    },
+                ),
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 0,
+                            kind: Variable(
+                                VariableDeclaration {
+                                    id: 0,
+                                    name: Identifier {
+                                        name: "_",
+                                        location: <internal>:23:24,
+                                    },
+                                    declared_type: None,
+                                    value: Expression {
+                                        id: 5871781006564002453,
+                                        location: <internal>:27:31,
+                                        kind: FunctionCall(
+                                            FunctionCall {
+                                                id: 5871781006564002453,
+                                                name: 'call',
+                                                type_parameters: [],
+                                                arguments: [],
+                                            },
+                                        ),
+                                    },
+                                },
+                            ),
+                            location: <internal>:19:34,
+                        },
+                    ],
+                    location: <internal>:17:36,
+                },
+                location: <internal>:0:36,
+            },
+        ),
+    },
+    statements: {
+        0: Statement {
+            id: 0,
+            kind: Variable(
+                VariableDeclaration {
+                    id: 0,
+                    name: Identifier {
+                        name: "_",
+                        location: <internal>:23:24,
+                    },
+                    declared_type: None,
+                    value: Expression {
+                        id: 5871781006564002453,
+                        location: <internal>:27:31,
+                        kind: FunctionCall(
+                            FunctionCall {
+                                id: 5871781006564002453,
+                                name: 'call',
+                                type_parameters: [],
+                                arguments: [],
+                            },
+                        ),
+                    },
+                },
+            ),
+            location: <internal>:19:34,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:27:31,
+            kind: FunctionCall(
+                FunctionCall {
+                    id: 5871781006564002453,
+                    name: 'call',
+                    type_parameters: [],
+                    arguments: [],
+                },
+            ),
+        },
+    },
+}

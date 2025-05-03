@@ -1,0 +1,223 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower_expr(\"for pattern in [1, 2, 3] { let a = 0; }\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: 'foo',
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:12:16,
+                    },
+                ),
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 0,
+                            kind: IteratorLoop(
+                                IteratorLoop {
+                                    id: 0,
+                                    collection: Expression {
+                                        id: 5871781006564002453,
+                                        location: <internal>:34:35,
+                                        kind: New(
+                                            New {
+                                                id: 5871781006564002453,
+                                                name: Type {
+                                                    name: 'std.Array',
+                                                    type_params: [],
+                                                    location: <internal>:34:35,
+                                                },
+                                                arguments: [],
+                                            },
+                                        ),
+                                    },
+                                    block: Block {
+                                        statements: [
+                                            Statement {
+                                                id: 11743562013128004906,
+                                                kind: Variable(
+                                                    VariableDeclaration {
+                                                        id: 11743562013128004906,
+                                                        name: Identifier {
+                                                            name: "a",
+                                                            location: <internal>:50:51,
+                                                        },
+                                                        declared_type: None,
+                                                        value: Expression {
+                                                            id: 17615343019692007359,
+                                                            location: <internal>:54:55,
+                                                            kind: Literal(
+                                                                Literal {
+                                                                    id: 17615343019692007359,
+                                                                    location: <internal>:54:55,
+                                                                    kind: Int(
+                                                                        IntLiteral {
+                                                                            id: 17615343019692007359,
+                                                                            value: 0,
+                                                                            kind: I32,
+                                                                        },
+                                                                    ),
+                                                                },
+                                                            ),
+                                                        },
+                                                    },
+                                                ),
+                                                location: <internal>:46:56,
+                                            },
+                                        ],
+                                        location: <internal>:44:58,
+                                    },
+                                    location: <internal>:19:58,
+                                },
+                            ),
+                            location: <internal>:19:58,
+                        },
+                    ],
+                    location: <internal>:17:60,
+                },
+                location: <internal>:0:60,
+            },
+        ),
+    },
+    statements: {
+        11743562013128004906: Statement {
+            id: 11743562013128004906,
+            kind: Variable(
+                VariableDeclaration {
+                    id: 11743562013128004906,
+                    name: Identifier {
+                        name: "a",
+                        location: <internal>:50:51,
+                    },
+                    declared_type: None,
+                    value: Expression {
+                        id: 17615343019692007359,
+                        location: <internal>:54:55,
+                        kind: Literal(
+                            Literal {
+                                id: 17615343019692007359,
+                                location: <internal>:54:55,
+                                kind: Int(
+                                    IntLiteral {
+                                        id: 17615343019692007359,
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                },
+            ),
+            location: <internal>:46:56,
+        },
+        0: Statement {
+            id: 0,
+            kind: IteratorLoop(
+                IteratorLoop {
+                    id: 0,
+                    collection: Expression {
+                        id: 5871781006564002453,
+                        location: <internal>:34:35,
+                        kind: New(
+                            New {
+                                id: 5871781006564002453,
+                                name: Type {
+                                    name: 'std.Array',
+                                    type_params: [],
+                                    location: <internal>:34:35,
+                                },
+                                arguments: [],
+                            },
+                        ),
+                    },
+                    block: Block {
+                        statements: [
+                            Statement {
+                                id: 11743562013128004906,
+                                kind: Variable(
+                                    VariableDeclaration {
+                                        id: 11743562013128004906,
+                                        name: Identifier {
+                                            name: "a",
+                                            location: <internal>:50:51,
+                                        },
+                                        declared_type: None,
+                                        value: Expression {
+                                            id: 17615343019692007359,
+                                            location: <internal>:54:55,
+                                            kind: Literal(
+                                                Literal {
+                                                    id: 17615343019692007359,
+                                                    location: <internal>:54:55,
+                                                    kind: Int(
+                                                        IntLiteral {
+                                                            id: 17615343019692007359,
+                                                            value: 0,
+                                                            kind: I32,
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                        },
+                                    },
+                                ),
+                                location: <internal>:46:56,
+                            },
+                        ],
+                        location: <internal>:44:58,
+                    },
+                    location: <internal>:19:58,
+                },
+            ),
+            location: <internal>:19:58,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:34:35,
+            kind: New(
+                New {
+                    id: 5871781006564002453,
+                    name: Type {
+                        name: 'std.Array',
+                        type_params: [],
+                        location: <internal>:34:35,
+                    },
+                    arguments: [],
+                },
+            ),
+        },
+        17615343019692007359: Expression {
+            id: 17615343019692007359,
+            location: <internal>:54:55,
+            kind: Literal(
+                Literal {
+                    id: 17615343019692007359,
+                    location: <internal>:54:55,
+                    kind: Int(
+                        IntLiteral {
+                            id: 17615343019692007359,
+                            value: 0,
+                            kind: I32,
+                        },
+                    ),
+                },
+            ),
+        },
+    },
+}

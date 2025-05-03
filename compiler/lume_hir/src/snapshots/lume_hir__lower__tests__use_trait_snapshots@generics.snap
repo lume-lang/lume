@@ -1,0 +1,74 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                use Add<Int32, Int64> in Int32 {\n                    pub fn add(other: Int32) -> Int64 {}\n                }\"#)"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Impl(
+            TraitImplementation {
+                id: 1119898709443545213,
+                name: Type {
+                    name: 'Add',
+                    type_params: [
+                        Type {
+                            name: 'std.Int32',
+                            type_params: [],
+                            location: <internal>:25:30,
+                        },
+                        Type {
+                            name: 'std.Int64',
+                            type_params: [],
+                            location: <internal>:32:37,
+                        },
+                    ],
+                    location: <internal>:24:38,
+                },
+                target: Type {
+                    name: 'std.Int32',
+                    type_params: [],
+                    location: <internal>:42:47,
+                },
+                methods: [
+                    TraitMethodImplementation {
+                        visibility: Public,
+                        name: 'add',
+                        parameters: [
+                            Parameter {
+                                id: 0,
+                                name: Identifier {
+                                    name: "other",
+                                    location: <internal>:81:86,
+                                },
+                                param_type: Type {
+                                    name: 'std.Int32',
+                                    type_params: [],
+                                    location: <internal>:88:93,
+                                },
+                                location: <internal>:81:93,
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: 'std.Int64',
+                                type_params: [],
+                                location: <internal>:98:103,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:104:106,
+                        },
+                        location: <internal>:70:106,
+                    },
+                ],
+                location: <internal>:17:124,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

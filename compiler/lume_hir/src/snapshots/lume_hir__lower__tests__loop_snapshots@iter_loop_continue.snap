@@ -1,0 +1,140 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower_expr(\"for pattern in [1, 2, 3] { continue; }\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: 'foo',
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:12:16,
+                    },
+                ),
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 0,
+                            kind: IteratorLoop(
+                                IteratorLoop {
+                                    id: 0,
+                                    collection: Expression {
+                                        id: 5871781006564002453,
+                                        location: <internal>:34:35,
+                                        kind: New(
+                                            New {
+                                                id: 5871781006564002453,
+                                                name: Type {
+                                                    name: 'std.Array',
+                                                    type_params: [],
+                                                    location: <internal>:34:35,
+                                                },
+                                                arguments: [],
+                                            },
+                                        ),
+                                    },
+                                    block: Block {
+                                        statements: [
+                                            Statement {
+                                                id: 11743562013128004906,
+                                                kind: Continue(
+                                                    Continue {
+                                                        id: 11743562013128004906,
+                                                    },
+                                                ),
+                                                location: <internal>:46:55,
+                                            },
+                                        ],
+                                        location: <internal>:44:57,
+                                    },
+                                    location: <internal>:19:57,
+                                },
+                            ),
+                            location: <internal>:19:57,
+                        },
+                    ],
+                    location: <internal>:17:59,
+                },
+                location: <internal>:0:59,
+            },
+        ),
+    },
+    statements: {
+        11743562013128004906: Statement {
+            id: 11743562013128004906,
+            kind: Continue(
+                Continue {
+                    id: 11743562013128004906,
+                },
+            ),
+            location: <internal>:46:55,
+        },
+        0: Statement {
+            id: 0,
+            kind: IteratorLoop(
+                IteratorLoop {
+                    id: 0,
+                    collection: Expression {
+                        id: 5871781006564002453,
+                        location: <internal>:34:35,
+                        kind: New(
+                            New {
+                                id: 5871781006564002453,
+                                name: Type {
+                                    name: 'std.Array',
+                                    type_params: [],
+                                    location: <internal>:34:35,
+                                },
+                                arguments: [],
+                            },
+                        ),
+                    },
+                    block: Block {
+                        statements: [
+                            Statement {
+                                id: 11743562013128004906,
+                                kind: Continue(
+                                    Continue {
+                                        id: 11743562013128004906,
+                                    },
+                                ),
+                                location: <internal>:46:55,
+                            },
+                        ],
+                        location: <internal>:44:57,
+                    },
+                    location: <internal>:19:57,
+                },
+            ),
+            location: <internal>:19:57,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:34:35,
+            kind: New(
+                New {
+                    id: 5871781006564002453,
+                    name: Type {
+                        name: 'std.Array',
+                        type_params: [],
+                        location: <internal>:34:35,
+                    },
+                    arguments: [],
+                },
+            ),
+        },
+    },
+}

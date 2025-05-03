@@ -1,0 +1,50 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"trait Foo {\n                    /// This is a doc comment\n                    pub fn bar() -> void { }\n                }\"#)"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Trait(
+                TraitDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: 'Foo',
+                    type_parameters: [],
+                    methods: [
+                        TraitMethodDefinition {
+                            method_id: None,
+                            visibility: Public,
+                            name: Identifier {
+                                name: "bar",
+                                location: <internal>:85:88,
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Some(
+                                Type {
+                                    name: 'void',
+                                    type_params: [],
+                                    location: <internal>:94:98,
+                                },
+                            ),
+                            block: Some(
+                                Block {
+                                    statements: [],
+                                    location: <internal>:99:102,
+                                },
+                            ),
+                            location: <internal>:82:102,
+                        },
+                    ],
+                    location: <internal>:0:120,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

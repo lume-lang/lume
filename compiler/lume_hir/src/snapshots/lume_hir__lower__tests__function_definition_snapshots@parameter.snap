@@ -1,0 +1,49 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"fn main(argc: u8) -> void { }\")"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15299231299772503292: Function(
+            FunctionDefinition {
+                id: 15299231299772503292,
+                func_id: None,
+                visibility: Private,
+                name: 'main',
+                parameters: [
+                    Parameter {
+                        id: 0,
+                        name: Identifier {
+                            name: "argc",
+                            location: <internal>:8:12,
+                        },
+                        param_type: Type {
+                            name: 'u8',
+                            type_params: [],
+                            location: <internal>:14:16,
+                        },
+                        location: <internal>:8:16,
+                    },
+                ],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:21:25,
+                    },
+                ),
+                block: Block {
+                    statements: [],
+                    location: <internal>:26:29,
+                },
+                location: <internal>:0:29,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

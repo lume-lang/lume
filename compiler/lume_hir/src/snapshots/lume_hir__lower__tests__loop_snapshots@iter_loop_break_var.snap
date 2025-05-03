@@ -1,0 +1,213 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower_expr(r#\"\n            let collection = [1, 2, 3];\n            for pattern in collection { break; }\"#)"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: 'foo',
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: 'void',
+                        type_params: [],
+                        location: <internal>:12:16,
+                    },
+                ),
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 0,
+                            kind: Variable(
+                                VariableDeclaration {
+                                    id: 0,
+                                    name: Identifier {
+                                        name: "collection",
+                                        location: <internal>:36:46,
+                                    },
+                                    declared_type: None,
+                                    value: Expression {
+                                        id: 5871781006564002453,
+                                        location: <internal>:49:50,
+                                        kind: New(
+                                            New {
+                                                id: 5871781006564002453,
+                                                name: Type {
+                                                    name: 'std.Array',
+                                                    type_params: [],
+                                                    location: <internal>:49:50,
+                                                },
+                                                arguments: [],
+                                            },
+                                        ),
+                                    },
+                                },
+                            ),
+                            location: <internal>:32:59,
+                        },
+                        Statement {
+                            id: 11743562013128004906,
+                            kind: IteratorLoop(
+                                IteratorLoop {
+                                    id: 11743562013128004906,
+                                    collection: Expression {
+                                        id: 17615343019692007359,
+                                        location: <internal>:87:97,
+                                        kind: Variable(
+                                            Variable {
+                                                id: 17615343019692007359,
+                                                reference: 0,
+                                                name: Identifier {
+                                                    name: "collection",
+                                                    location: <internal>:87:97,
+                                                },
+                                                location: <internal>:87:97,
+                                            },
+                                        ),
+                                    },
+                                    block: Block {
+                                        statements: [
+                                            Statement {
+                                                id: 5040379952546458196,
+                                                kind: Break(
+                                                    Break {
+                                                        id: 5040379952546458196,
+                                                    },
+                                                ),
+                                                location: <internal>:100:106,
+                                            },
+                                        ],
+                                        location: <internal>:98:108,
+                                    },
+                                    location: <internal>:72:108,
+                                },
+                            ),
+                            location: <internal>:72:108,
+                        },
+                    ],
+                    location: <internal>:17:110,
+                },
+                location: <internal>:0:110,
+            },
+        ),
+    },
+    statements: {
+        0: Statement {
+            id: 0,
+            kind: Variable(
+                VariableDeclaration {
+                    id: 0,
+                    name: Identifier {
+                        name: "collection",
+                        location: <internal>:36:46,
+                    },
+                    declared_type: None,
+                    value: Expression {
+                        id: 5871781006564002453,
+                        location: <internal>:49:50,
+                        kind: New(
+                            New {
+                                id: 5871781006564002453,
+                                name: Type {
+                                    name: 'std.Array',
+                                    type_params: [],
+                                    location: <internal>:49:50,
+                                },
+                                arguments: [],
+                            },
+                        ),
+                    },
+                },
+            ),
+            location: <internal>:32:59,
+        },
+        5040379952546458196: Statement {
+            id: 5040379952546458196,
+            kind: Break(
+                Break {
+                    id: 5040379952546458196,
+                },
+            ),
+            location: <internal>:100:106,
+        },
+        11743562013128004906: Statement {
+            id: 11743562013128004906,
+            kind: IteratorLoop(
+                IteratorLoop {
+                    id: 11743562013128004906,
+                    collection: Expression {
+                        id: 17615343019692007359,
+                        location: <internal>:87:97,
+                        kind: Variable(
+                            Variable {
+                                id: 17615343019692007359,
+                                reference: 0,
+                                name: Identifier {
+                                    name: "collection",
+                                    location: <internal>:87:97,
+                                },
+                                location: <internal>:87:97,
+                            },
+                        ),
+                    },
+                    block: Block {
+                        statements: [
+                            Statement {
+                                id: 5040379952546458196,
+                                kind: Break(
+                                    Break {
+                                        id: 5040379952546458196,
+                                    },
+                                ),
+                                location: <internal>:100:106,
+                            },
+                        ],
+                        location: <internal>:98:108,
+                    },
+                    location: <internal>:72:108,
+                },
+            ),
+            location: <internal>:72:108,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:49:50,
+            kind: New(
+                New {
+                    id: 5871781006564002453,
+                    name: Type {
+                        name: 'std.Array',
+                        type_params: [],
+                        location: <internal>:49:50,
+                    },
+                    arguments: [],
+                },
+            ),
+        },
+        17615343019692007359: Expression {
+            id: 17615343019692007359,
+            location: <internal>:87:97,
+            kind: Variable(
+                Variable {
+                    id: 17615343019692007359,
+                    reference: 0,
+                    name: Identifier {
+                        name: "collection",
+                        location: <internal>:87:97,
+                    },
+                    location: <internal>:87:97,
+                },
+            ),
+        },
+    },
+}

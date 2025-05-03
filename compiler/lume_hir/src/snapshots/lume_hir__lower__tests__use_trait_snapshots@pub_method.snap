@@ -1,0 +1,63 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                use Add in Int32 {\n                    pub fn add(other: Int32) -> Int32 {}\n                }\"#)"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Impl(
+            TraitImplementation {
+                id: 1119898709443545213,
+                name: Type {
+                    name: 'Add',
+                    type_params: [],
+                    location: <internal>:21:24,
+                },
+                target: Type {
+                    name: 'std.Int32',
+                    type_params: [],
+                    location: <internal>:28:33,
+                },
+                methods: [
+                    TraitMethodImplementation {
+                        visibility: Public,
+                        name: 'add',
+                        parameters: [
+                            Parameter {
+                                id: 0,
+                                name: Identifier {
+                                    name: "other",
+                                    location: <internal>:67:72,
+                                },
+                                param_type: Type {
+                                    name: 'std.Int32',
+                                    type_params: [],
+                                    location: <internal>:74:79,
+                                },
+                                location: <internal>:67:79,
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: 'std.Int32',
+                                type_params: [],
+                                location: <internal>:84:89,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:90:92,
+                        },
+                        location: <internal>:56:92,
+                    },
+                ],
+                location: <internal>:17:110,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}
