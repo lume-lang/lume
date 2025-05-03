@@ -1206,7 +1206,7 @@ mod tests {
     use super::*;
 
     #[track_caller]
-    fn lower(input: &str) -> hir::map::Map {
+    fn lower(input: &str) -> Result<hir::map::Map> {
         let source = Arc::new(SourceFile::internal(input));
         let mut state = lume_state::State::default();
 
@@ -1217,13 +1217,13 @@ mod tests {
         let module_id = PackageId::empty();
         let mut map = hir::map::Map::empty(module_id);
 
-        LowerModule::lower(&mut map, source, expressions).unwrap();
+        LowerModule::lower(&mut map, source, expressions)?;
 
-        map
+        Ok(map)
     }
 
     #[track_caller]
-    fn lower_expr(input: &str) -> hir::map::Map {
+    fn lower_expr(input: &str) -> Result<hir::map::Map> {
         let source = format!("fn foo() -> void {{ {} }}", input);
 
         lower(&source)
@@ -1244,7 +1244,18 @@ mod tests {
         ) => {
             set_snapshot_suffix!( $($expr),+ );
 
-            insta::assert_debug_snapshot!(lower($input));
+            insta::assert_debug_snapshot!(lower($input).unwrap());
+        };
+    }
+
+    macro_rules! assert_err_snap_eq {
+        (
+            $input: expr,
+            $($expr:expr),+
+        ) => {
+            set_snapshot_suffix!( $($expr),+ );
+
+            insta::assert_debug_snapshot!(lower($input).unwrap_err());
         };
     }
 
@@ -1255,7 +1266,7 @@ mod tests {
         ) => {
             set_snapshot_suffix!( $($expr),+ );
 
-            insta::assert_debug_snapshot!(lower_expr($input));
+            insta::assert_debug_snapshot!(lower_expr($input).unwrap());
         };
     }
 
@@ -1296,6 +1307,7 @@ mod tests {
         assert_snap_eq!("fn external main() -> void", "external");
         assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
         assert_snap_eq!("fn loop() -> void {}", "reserved_keyword");
+        assert_err_snap_eq!("fn foo(self) -> void {}", "self_outside_class");
     }
 
     #[test]
