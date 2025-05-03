@@ -1655,9 +1655,6 @@ impl Parser {
             Expression::Member(member) => {
                 Self::merge_expression_with_path(&mut member.callee, path);
             }
-            Expression::Path(subpath) => {
-                subpath.merge(path);
-            }
             _ => {}
         }
     }

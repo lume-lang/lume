@@ -534,7 +534,6 @@ impl<'a> LowerModule<'a> {
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
-            ast::Expression::Path(e) => self.expr_path(*e)?,
         };
 
         self.map.expressions.insert(expr.id, expr.clone());
@@ -700,10 +699,6 @@ impl<'a> LowerModule<'a> {
                 location,
             })),
         })
-    }
-
-    fn expr_path(&mut self, expr: ast::Path) -> Result<hir::Expression> {
-        todo!("path expressions")
     }
 
     fn literal(&mut self, expr: ast::Literal) -> Result<hir::Literal> {

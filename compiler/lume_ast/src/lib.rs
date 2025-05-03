@@ -491,7 +491,6 @@ pub enum Expression {
     Call(Box<Call>),
     Literal(Box<Literal>),
     Member(Box<Member>),
-    Path(Box<Path>),
     Range(Box<Range>),
     Variable(Box<Variable>),
 }
