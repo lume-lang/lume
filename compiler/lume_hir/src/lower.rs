@@ -5,6 +5,7 @@ use arc::Project;
 use lume_diag::Result;
 use lume_parser::parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
+use lume_types::SymbolName;
 
 use crate::errors::*;
 use crate::stdlib::Assets;
@@ -141,7 +142,7 @@ pub struct LowerModule<'a> {
     namespace: hir::NamespacePath,
 
     /// Defines the currently containing class expressions exist within, if any.
-    class_stack: Vec<hir::ItemId>,
+    self_type: Option<SymbolName>,
 
     /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
     local_id_counter: u64,
@@ -160,7 +161,7 @@ impl<'a> LowerModule<'a> {
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
             namespace: hir::NamespacePath::empty(),
-            class_stack: Vec::new(),
+            self_type: None,
             local_id_counter: 0,
         };
 
@@ -781,7 +782,7 @@ impl<'a> LowerModule<'a> {
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
-        self.class_stack.push(id);
+        self.self_type = Some(name.clone());
 
         let members = expr
             .members
@@ -789,7 +790,7 @@ impl<'a> LowerModule<'a> {
             .map(|m| self.def_class_member(m))
             .collect::<Result<Vec<hir::ClassMember>>>()?;
 
-        self.class_stack.pop();
+        self.self_type = None;
 
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Class(Box::new(
             hir::ClassDefinition {
@@ -875,7 +876,7 @@ impl<'a> LowerModule<'a> {
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
-        self.class_stack.push(id);
+        self.self_type = Some(name.clone());
 
         let methods = expr
             .methods
@@ -883,7 +884,7 @@ impl<'a> LowerModule<'a> {
             .map(|m| self.def_trait_methods(m))
             .collect::<Result<Vec<hir::TraitMethodDefinition>>>()?;
 
-        self.class_stack.pop();
+        self.self_type = None;
 
         Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
@@ -1125,6 +1126,7 @@ impl<'a> LowerModule<'a> {
             ast::Type::Scalar(t) => self.type_scalar(*t),
             ast::Type::Array(t) => self.type_array(*t),
             ast::Type::Generic(t) => self.type_generic(*t),
+            ast::Type::SelfType(t) => self.type_self(*t),
         }
     }
 
@@ -1171,6 +1173,26 @@ impl<'a> LowerModule<'a> {
         Ok(hir::Type {
             name,
             type_params: type_params.into_iter().map(Box::new).collect(),
+            location,
+        })
+    }
+
+    fn type_self(&self, expr: ast::SelfType) -> Result<hir::Type> {
+        let location = self.location(expr.location);
+        let name = match &self.self_type {
+            Some(ty) => ty.clone(),
+            None => {
+                return Err(SelfOutsideClass {
+                    source: self.file.clone(),
+                    range: location.index,
+                }
+                .into());
+            }
+        };
+
+        Ok(hir::Type {
+            name,
+            type_params: Vec::new(),
             location,
         })
     }

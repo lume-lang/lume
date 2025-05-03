@@ -565,6 +565,7 @@ pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
     Generic(Box<GenericType>),
+    SelfType(Box<SelfType>),
 }
 
 impl std::fmt::Display for Type {
@@ -573,6 +574,7 @@ impl std::fmt::Display for Type {
             Type::Scalar(t) => f.write_fmt(format_args!("{}", t)),
             Type::Array(t) => f.write_fmt(format_args!("{}", t)),
             Type::Generic(t) => f.write_fmt(format_args!("{}", t)),
+            Type::SelfType(t) => f.write_fmt(format_args!("{}", t)),
         }
     }
 }
@@ -623,5 +625,16 @@ impl std::fmt::Display for GenericType {
         }
 
         Ok(())
+    }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct SelfType {
+    pub location: Location,
+}
+
+impl std::fmt::Display for SelfType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("self")
     }
 }

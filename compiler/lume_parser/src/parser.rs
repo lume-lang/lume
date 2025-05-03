@@ -645,6 +645,21 @@ impl Parser {
     }
 
     fn parse_fn_param(&mut self) -> Result<Parameter> {
+        if let Some(token) = self.consume_if(TokenKind::SelfRef)? {
+            let location = token.index;
+
+            return Ok(Parameter {
+                name: Identifier {
+                    name: "self".into(),
+                    location: location.clone().into(),
+                },
+                param_type: Type::SelfType(Box::new(SelfType {
+                    location: location.clone().into(),
+                })),
+                location: location.into(),
+            });
+        }
+
         let name = self.parse_identifier()?;
 
         self.consume(TokenKind::Colon)?;
@@ -1343,6 +1358,7 @@ impl Parser {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
             TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
             TokenKind::New => Ok(self.parse_new_expression()?),
+            TokenKind::SelfRef => Ok(self.parse_self_reference()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
             k if k.is_literal() => Ok(self.parse_literal()?),
@@ -1460,6 +1476,18 @@ impl Parser {
             name: Box::new(name),
             arguments,
             location: (start..end).into(),
+        })))
+    }
+
+    /// Parses a `self` reference expression on the current cursor position.
+    fn parse_self_reference(&mut self) -> Result<Expression> {
+        let location = self.consume(TokenKind::SelfRef)?.index;
+
+        Ok(Expression::Variable(Box::new(Variable {
+            name: lume_ast::Identifier {
+                name: "self".to_string(),
+                location: location.into(),
+            },
         })))
     }
 
@@ -1727,24 +1755,28 @@ mod tests {
     use super::*;
     use lume_diag::Error;
 
+    #[track_caller]
     fn parse(input: &str) -> Vec<TopLevelExpression> {
         let parser = Parser::parse_str(input);
 
         parser.unwrap()
     }
 
+    #[track_caller]
     fn parse_err(input: &str) -> Error {
         let parser = Parser::parse_str(input);
 
         parser.unwrap_err()
     }
 
+    #[track_caller]
     fn parse_expr(input: &str) -> Vec<TopLevelExpression> {
         let source = format!("fn main() -> void {{ {0} }}", input);
 
         parse(&source)
     }
 
+    #[track_caller]
     fn parse_expr_err(input: &str) -> Error {
         let source = format!("fn main() -> void {{ {0} }}", input);
 
@@ -1997,6 +2029,13 @@ mod tests {
     }
 
     #[test]
+    fn test_self_snapshots() {
+        assert_expr_snap_eq!("self", "self");
+        assert_expr_snap_eq!("self + self", "self_binary_op");
+        assert_expr_snap_eq!("self.invoke()", "self_call");
+    }
+
+    #[test]
     fn test_conditional_snapshots() {
         assert_expr_snap_eq!("if true { }", "if_empty");
         assert_expr_snap_eq!("if true { let a = 1; }", "if_statement");
@@ -2157,6 +2196,16 @@ mod tests {
                 }
             }"#,
             "operator_method"
+        );
+
+        assert_snap_eq!(
+            r#"
+            class Foo {
+                pub fn bar(self) -> bool {
+                    return true;
+                }
+            }"#,
+            "self_method"
         );
 
         assert_snap_eq!(

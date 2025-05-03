@@ -67,6 +67,7 @@ pub enum TokenKind {
     RightCurly,
     RightParen,
     Semicolon,
+    SelfRef,
     String,
     Sub,
     SubAssign,
@@ -97,6 +98,7 @@ impl TokenKind {
                 | TokenKind::Namespace
                 | TokenKind::Pub
                 | TokenKind::Return
+                | TokenKind::SelfRef
                 | TokenKind::Trait
                 | TokenKind::True
                 | TokenKind::Type
@@ -206,6 +208,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::RightBracket => "]",
             TokenKind::RightCurly => "}",
             TokenKind::RightParen => ")",
+            TokenKind::SelfRef => "self",
             TokenKind::Semicolon => ";",
             TokenKind::String => "string",
             TokenKind::Sub => "-",
@@ -514,6 +517,7 @@ impl Lexer {
             "else" => Token::empty(TokenKind::Else),
             "enum" => Token::empty(TokenKind::Enum),
             "external" => Token::empty(TokenKind::External),
+            "false" => Token::empty(TokenKind::False),
             "fn" => Token::empty(TokenKind::Fn),
             "for" => Token::empty(TokenKind::For),
             "if" => Token::empty(TokenKind::If),
@@ -523,12 +527,12 @@ impl Lexer {
             "loop" => Token::empty(TokenKind::Loop),
             "namespace" => Token::empty(TokenKind::Namespace),
             "new" => Token::empty(TokenKind::New),
-            "type" => Token::empty(TokenKind::Type),
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
+            "self" => Token::empty(TokenKind::SelfRef),
             "trait" => Token::empty(TokenKind::Trait),
             "true" => Token::empty(TokenKind::True),
-            "false" => Token::empty(TokenKind::False),
+            "type" => Token::empty(TokenKind::Type),
             "unless" => Token::empty(TokenKind::Unless),
             "use" => Token::empty(TokenKind::Use),
             "while" => Token::empty(TokenKind::While),
@@ -902,6 +906,7 @@ mod tests {
         assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
         assert_token!("new", TokenKind::New, None::<String>, 0, 3);
+        assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
