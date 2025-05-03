@@ -17,4 +17,5 @@ SelfOutsideClass {
         ),
     },
     range: 7..11,
+    ty: "self",
 }

@@ -1185,6 +1185,7 @@ impl<'a> LowerModule<'a> {
                 return Err(SelfOutsideClass {
                     source: self.file.clone(),
                     range: location.index,
+                    ty: String::from("self"),
                 }
                 .into());
             }

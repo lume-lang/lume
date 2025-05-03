@@ -16,13 +16,15 @@ pub struct MissingFunction {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Cannot use 'Self' outside of a class", code = "LM3013")]
+#[diagnostic(message = "cannot use {ty} outside of a class", code = "LM3013")]
 pub struct SelfOutsideClass {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Type 'Self' cannot be used outside of a class, since it has nothing to refer to")]
+    #[label("type {ty} cannot be used outside of a class, since it has nothing to refer to")]
     pub range: Range<usize>,
+
+    pub ty: String,
 }
 
 #[derive(Diagnostic, Debug)]
