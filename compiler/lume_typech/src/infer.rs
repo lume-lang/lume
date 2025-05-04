@@ -95,28 +95,6 @@ impl ThirBuildCtx<'_> {
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
-            lume_hir::ExpressionKind::New(new) => {
-                let type_ref = self.mk_type_ref(&new.name)?;
-                let type_def = type_ref.get(self.tcx());
-
-                match &type_def.kind {
-                    lume_types::TypeKind::Class(_) => Ok(type_ref),
-                    kind => Err(crate::errors::AbstractTypeInstantiate {
-                        source: expr.location.file.clone(),
-                        range: expr.location.index.clone(),
-                        name: type_def.name.clone(),
-                        kind: match kind {
-                            lume_types::TypeKind::Trait(_) => "trait",
-                            lume_types::TypeKind::Alias(_) => "alias",
-                            lume_types::TypeKind::Enum(_) => "enum",
-                            lume_types::TypeKind::TypeParameter(_) => "type parameter",
-                            lume_types::TypeKind::Void => "void",
-                            lume_types::TypeKind::Class(_) => unreachable!(),
-                        },
-                    }
-                    .into()),
-                }
-            }
             lume_hir::ExpressionKind::StaticCall(call) => {
                 let symbol = match self.lookup_symbol(&call.name) {
                     Some(symbol) => symbol,
@@ -156,7 +134,7 @@ impl ThirBuildCtx<'_> {
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callee_type = self.type_of(hir, call.callee.id)?;
                 let method =
-                    match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_parameters)? {
+                    match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_arguments)? {
                         method::MethodLookupResult::Success(method) => method,
                         method::MethodLookupResult::Failure(err) => {
                             return Err(err.compound_err(expr.location.clone()));

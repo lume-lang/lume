@@ -481,7 +481,6 @@ pub struct PredicateLoop {
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
-    New(Box<New>),
     Call(Box<Call>),
     Literal(Box<Literal>),
     Member(Box<Member>),
@@ -503,18 +502,11 @@ pub struct Assignment {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct New {
-    pub name: Box<Type>,
-    pub arguments: Vec<Expression>,
-    pub location: Location,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub struct Call {
     pub callee: Option<Expression>,
     pub name: Path,
     pub arguments: Vec<Expression>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_arguments: Vec<TypeArgument>,
     pub location: Location,
 }
 
@@ -603,6 +595,17 @@ pub struct TypeParameter {
 }
 
 impl Node for TypeParameter {
+    fn location(&self) -> &Location {
+        &self.name.location
+    }
+}
+
+#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+pub struct TypeArgument {
+    pub name: Identifier,
+}
+
+impl Node for TypeArgument {
     fn location(&self) -> &Location {
         &self.name.location
     }

@@ -188,13 +188,11 @@ impl std::fmt::Display for SymbolName {
 
 impl std::fmt::Debug for SymbolName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "'")?;
-
         for m in &self.namespace.path {
-            write!(f, "{}.", m)?;
+            write!(f, "{}::", m)?;
         }
 
-        write!(f, "{}'", self.name.name)
+        write!(f, "{}", self.name.name)
     }
 }
 

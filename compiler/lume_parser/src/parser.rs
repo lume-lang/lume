@@ -996,6 +996,19 @@ impl Parser {
         })
     }
 
+    /// Parses zero-or-more type arguments.
+    fn parse_type_arguments(&mut self) -> Result<Vec<TypeArgument>> {
+        if !self.peek(TokenKind::Less)? {
+            return Ok(Vec::new());
+        }
+
+        self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
+            let name = p.parse_identifier()?;
+
+            Ok(TypeArgument { name })
+        })
+    }
+
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
         let name = self.parse_type()?;
@@ -1382,7 +1395,6 @@ impl Parser {
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
             TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
-            TokenKind::New => Ok(self.parse_new_expression()?),
             TokenKind::SelfRef => Ok(self.parse_self_reference()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
@@ -1434,7 +1446,7 @@ impl Parser {
                 location: operator_loc.into(),
             },
             arguments: vec![right],
-            type_parameters: vec![],
+            type_arguments: vec![],
             location: (start..end).into(),
         })))
     }
@@ -1489,25 +1501,6 @@ impl Parser {
         Ok(Expression::Range(Box::new(range)))
     }
 
-    /// Parses a `New` expression on the current cursor position.
-    fn parse_new_expression(&mut self) -> Result<Expression> {
-        let start = self.consume(TokenKind::New)?.start();
-
-        let name = self.parse_type()?;
-        let arguments = self.parse_call_arguments()?;
-
-        let end = match arguments.last() {
-            Some(a) => a.location().end(),
-            None => name.location().end(),
-        };
-
-        Ok(Expression::New(Box::new(New {
-            name: Box::new(name),
-            arguments,
-            location: (start..end).into(),
-        })))
-    }
-
     /// Parses a `self` reference expression on the current cursor position.
     fn parse_self_reference(&mut self) -> Result<Expression> {
         let location = self.consume(TokenKind::SelfRef)?.index;
@@ -1552,7 +1545,7 @@ impl Parser {
     fn parse_call(&mut self, callee: Option<Expression>, name: impl Into<Path>) -> Result<Expression> {
         let name = name.into();
 
-        let type_parameters = self.parse_type_parameters()?;
+        let type_arguments = self.parse_type_arguments()?;
         let arguments = self.parse_call_arguments()?;
 
         let start = name.location.start();
@@ -1565,7 +1558,7 @@ impl Parser {
             callee,
             name,
             arguments,
-            type_parameters,
+            type_arguments,
             location: (start..end).into(),
         };
 
@@ -2158,16 +2151,6 @@ mod tests {
         assert_expr_snap_eq!("let _ = (a..=b);", "expr_inclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..(a + b + 1));", "expr_nested_exclusive");
         assert_expr_snap_eq!("let _ = ((a + b)..=(a + b + 1));", "expr_nested_inclusive");
-    }
-
-    #[test]
-    fn test_new_snapshots() {
-        assert_expr_snap_eq!("let _ = new A();", "empty");
-        assert_expr_snap_eq!("let _ = new A(a);", "param_1");
-        assert_expr_snap_eq!("let _ = new A(a, b);", "param_2");
-        assert_expr_snap_eq!("let _ = new A<T>(a, b);", "generic");
-        assert_expr_snap_eq!("let _ = new [A](a);", "array");
-        assert_expr_snap_eq!("let _ = new std::io::File(a);", "namespaced");
     }
 
     #[test]

@@ -563,7 +563,6 @@ pub struct Expression {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
-    New(Box<New>),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -592,17 +591,10 @@ pub struct Assignment {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct New {
-    pub id: ExpressionId,
-    pub name: Box<Type>,
-    pub arguments: Vec<Expression>,
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct StaticCall {
     pub id: ExpressionId,
     pub name: SymbolName,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_arguments: Vec<TypeArgument>,
     pub arguments: Vec<Expression>,
 }
 
@@ -611,7 +603,7 @@ pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_arguments: Vec<TypeArgument>,
     pub arguments: Vec<Expression>,
 }
 
@@ -723,6 +715,24 @@ pub struct TypeParameter {
     pub type_param_id: Option<TypeParameterId>,
     pub constraints: Vec<Box<Type>>,
     pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypeArgument {
+    /// Defines a named type argument, which was specified by the user.
+    Named { name: Identifier, location: Location },
+
+    /// Defines an implicit type argument, which is up to the compiler to infer.
+    Implicit { location: Location },
+}
+
+impl Node for TypeArgument {
+    fn location(&self) -> &Location {
+        match self {
+            TypeArgument::Named { location, .. } => location,
+            TypeArgument::Implicit { location } => location,
+        }
+    }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]

@@ -57,7 +57,6 @@ pub enum TokenKind {
     Mul,
     MulAssign,
     Namespace,
-    New,
     NotEqual,
     PathSeparator,
     Pipe,
@@ -198,7 +197,6 @@ impl From<TokenKind> for &'static str {
             TokenKind::Mul => "*",
             TokenKind::MulAssign => "*=",
             TokenKind::Namespace => "namespace",
-            TokenKind::New => "new",
             TokenKind::NotEqual => "!=",
             TokenKind::Integer(_) => "integer",
             TokenKind::PathSeparator => "::",
@@ -533,7 +531,6 @@ impl Lexer {
             "let" => Token::empty(TokenKind::Let),
             "loop" => Token::empty(TokenKind::Loop),
             "namespace" => Token::empty(TokenKind::Namespace),
-            "new" => Token::empty(TokenKind::New),
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
             "self" => Token::empty(TokenKind::SelfRef),
@@ -912,7 +909,6 @@ mod tests {
         assert_token!("in", TokenKind::In, None::<String>, 0, 2);
         assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
-        assert_token!("new", TokenKind::New, None::<String>, 0, 3);
         assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);

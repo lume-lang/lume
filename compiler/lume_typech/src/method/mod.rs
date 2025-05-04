@@ -104,7 +104,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
         self_ty: &'tcx lume_types::TypeRef,
         method_name: &'tcx Identifier,
         args: &'tcx [lume_hir::Expression],
-        type_params: &'tcx [lume_hir::TypeParameter],
+        type_args: &'tcx [lume_hir::TypeArgument],
     ) -> Result<MethodLookupResult<'tcx>> {
         // Contains a list of suggestions for the method lookup, in
         // case no matching method was found.
@@ -132,7 +132,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
                 continue;
             }
 
-            if method.type_parameters.len() != type_params.len() {
+            if method.type_parameters.len() != type_args.len() {
                 suggestions.push(MethodLookupSuggestion {
                     def: method,
                     reason: MethodDisqualificationReason::TypeParameterCount,

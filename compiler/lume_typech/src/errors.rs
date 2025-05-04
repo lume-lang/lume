@@ -17,12 +17,12 @@ pub struct MissingType {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find symbol {name}", code = "LM4112")]
+#[diagnostic(message = "could not find symbol {name:?}", code = "LM4112")]
 pub struct MissingSymbol {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("no such symbol was found")]
+    #[label("no symbol with name {name:?} was found")]
     pub range: Range<usize>,
 
     pub name: SymbolName,
@@ -38,19 +38,6 @@ pub struct AttemptedTypeInvocation {
     pub range: Range<usize>,
 
     pub name: SymbolName,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "cannot instantiate non-concrete type {name}", code = "LM4114")]
-pub struct AbstractTypeInstantiate {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("`new` can only instantiate class-types, found {kind}")]
-    pub range: Range<usize>,
-
-    pub name: SymbolName,
-    pub kind: &'static str,
 }
 
 #[derive(Diagnostic, Debug)]
