@@ -2475,6 +2475,14 @@ mod tests {
 
         assert_snap_eq!(
             r#"/// This is a doc comment
+            ///
+            /// Another line in the doc comment
+            fn foo() -> void { }"#,
+            "multiline"
+        );
+
+        assert_snap_eq!(
+            r#"/// This is a doc comment
             class Foo { }"#,
             "class"
         );

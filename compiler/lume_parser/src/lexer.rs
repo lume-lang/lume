@@ -460,13 +460,20 @@ impl Lexer {
 
     /// Parses a comment token at the current cursor position.
     fn comment(&mut self) -> Token {
-        let prefix = self.take_while(|c| c == '/');
+        let kind = self.eat_comment_prefix();
         let content = self.take_while(|c| c != '\n').trim().to_string();
 
-        if prefix.len() == 3 {
-            Token::new(TokenKind::DocComment, content)
-        } else {
-            Token::new(TokenKind::Comment, content)
+        Token::new(kind, content)
+    }
+
+    fn eat_comment_prefix(&mut self) -> TokenKind {
+        // Skip over all the whitespace characters, before attempting to eat the comment prefix.
+        self.eat_while(|c| c.is_whitespace());
+
+        // Eat the comment prefix characters.
+        match self.take_while(|c| c == '/').len() {
+            3 => TokenKind::DocComment,
+            _ => TokenKind::Comment,
         }
     }
 
@@ -985,25 +992,36 @@ mod tests {
         assert_token!("/// testing", TokenKind::DocComment, Some("testing"), 0, 11);
 
         assert_tokens!(
-            "// comment 1\n// comment 2",
-            token(TokenKind::Comment, Some("comment 1\ncomment 2".into()), 0, 25)
+            r#"// comment 1
+            // comment 2"#,
+            token(TokenKind::Comment, Some("comment 1\ncomment 2".into()), 0, 37)
         );
 
         assert_tokens!(
-            "// comment 1\n\n// comment 2",
-            token(TokenKind::Comment, Some("comment 1".into()), 0, 12),
-            token(TokenKind::Comment, Some("comment 2".into()), 14, 26)
+            r#"// comment 1
+            //
+            // comment 2"#,
+            token(TokenKind::Comment, Some("comment 1\n\ncomment 2".into()), 0, 52)
         );
 
         assert_tokens!(
-            "/// comment 1\n/// comment 2",
-            token(TokenKind::DocComment, Some("comment 1\ncomment 2".into()), 0, 27)
+            r#"/// comment 1
+            /// comment 2"#,
+            token(TokenKind::DocComment, Some("comment 1\ncomment 2".into()), 0, 39)
         );
 
         assert_tokens!(
-            "/// comment 1\n// comment 2",
+            r#"/// comment 1
+            ///
+            /// comment 2"#,
+            token(TokenKind::DocComment, Some("comment 1\n\ncomment 2".into()), 0, 55)
+        );
+
+        assert_tokens!(
+            r#"/// comment 1
+            // comment 2"#,
             token(TokenKind::DocComment, Some("comment 1".into()), 0, 13),
-            token(TokenKind::Comment, Some("comment 2".into()), 14, 26)
+            token(TokenKind::Comment, Some("comment 2".into()), 26, 38)
         );
 
         assert_tokens!(
