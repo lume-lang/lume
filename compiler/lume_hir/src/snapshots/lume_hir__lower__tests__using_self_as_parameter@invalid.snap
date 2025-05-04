@@ -1,0 +1,21 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"class Foo {\n            pub fn bar(a: Int32, self) -> void { }\n        }\"#).unwrap_err()"
+---
+SelfNotFirstParameter {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "class Foo {\n            pub fn bar(a: Int32, self) -> void { }\n        }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 45..49,
+    ty: "self",
+}

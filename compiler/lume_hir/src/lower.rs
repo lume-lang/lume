@@ -7,9 +7,9 @@ use lume_parser::parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
 use lume_types::SymbolName;
 
-use crate::errors::*;
 use crate::stdlib::Assets;
 use crate::{self as hir};
+use crate::{SELF_TYPE_NAME, errors::*};
 use lume_ast::{self as ast, Node};
 
 const ARRAY_STD_TYPE: &str = "Array";
@@ -1098,7 +1098,24 @@ impl<'a> LowerModule<'a> {
     fn parameters(&mut self, params: Vec<ast::Parameter>) -> Result<Vec<hir::Parameter>> {
         params
             .into_iter()
-            .map(|p| self.parameter(p))
+            .enumerate()
+            .map(|(index, param)| {
+                // Make sure that `self` is the first parameter.
+                //
+                // While it doesn't change must in the view of the compiler,
+                // using `self` as the first parameter is a best practice, since it's
+                // so much easier to see whether a method is an instance method or a static method.
+                if index > 0 && param.param_type.is_self() {
+                    return Err(SelfNotFirstParameter {
+                        source: self.file.clone(),
+                        range: param.location.0.clone(),
+                        ty: String::from(SELF_TYPE_NAME),
+                    }
+                    .into());
+                }
+
+                self.parameter(param)
+            })
             .collect::<Result<Vec<_>>>()
     }
 
@@ -1254,7 +1271,7 @@ impl<'a> LowerModule<'a> {
                 return Err(SelfOutsideClass {
                     source: self.file.clone(),
                     range: location.index,
-                    ty: String::from("self"),
+                    ty: String::from(SELF_TYPE_NAME),
                 }
                 .into());
             }
@@ -1864,5 +1881,22 @@ mod tests {
         assert_snap_eq!("type A = B", "scalar_to_scalar");
         assert_snap_eq!("type A = [B]", "scalar_to_array");
         assert_snap_eq!("type A = B<C>", "scalar_to_generic");
+    }
+
+    #[test]
+    fn test_using_self_as_parameter() {
+        assert_snap_eq!(
+            r#"class Foo {
+            pub fn bar(self, a: Int32) -> void { }
+        }"#,
+            "valid"
+        );
+
+        assert_err_snap_eq!(
+            r#"class Foo {
+            pub fn bar(a: Int32, self) -> void { }
+        }"#,
+            "invalid"
+        );
     }
 }

@@ -10,6 +10,8 @@ pub mod map;
 mod stdlib;
 pub(crate) mod symbols;
 
+pub const SELF_TYPE_NAME: &str = "self";
+
 /// Trait for HIR nodes which can contain some amount of type parameters.
 pub trait WithTypeParameters {
     /// Gets all the type parameters of this node.

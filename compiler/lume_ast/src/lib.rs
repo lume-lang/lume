@@ -619,6 +619,13 @@ pub enum Type {
     SelfType(Box<SelfType>),
 }
 
+impl Type {
+    /// Checks whether the current type is a `self` type.
+    pub fn is_self(&self) -> bool {
+        matches!(self, Type::SelfType(_))
+    }
+}
+
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {

@@ -28,7 +28,23 @@ pub struct SelfOutsideClass {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Undeclared variable", code = "LM3014")]
+#[diagnostic(
+    message = "{ty} must be the first parameter",
+    code = "LM3014",
+    help = "consider moving the {ty} parameter to the beginning"
+)]
+pub struct SelfNotFirstParameter {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("instance methods must have {ty} as the first parameter")]
+    pub range: Range<usize>,
+
+    pub ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "Undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
     #[span]
     pub source: Arc<SourceFile>,
