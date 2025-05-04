@@ -214,7 +214,7 @@ impl ThirBuildCtx<'_> {
         let mut type_ref = TypeRef::new(found_type);
 
         for type_param in &ty.type_params {
-            let type_param_ref = self.mk_type_ref(type_param)?;
+            let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
             type_ref.push_type_argument(type_param_ref);
         }
 
