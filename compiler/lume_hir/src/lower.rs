@@ -209,19 +209,72 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, name: &ast::Path) -> hir::SymbolName {
-        for (import, symbol) in &self.imports {
-            if name == import {
-                return symbol.clone();
-            }
+    fn resolve_symbol_name(&self, path: &ast::Path) -> hir::SymbolName {
+        if let Some(symbol) = self.resolve_imported_symbol(path) {
+            return symbol.clone();
         }
 
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
-        self.symbol_name(ast::Identifier {
-            name: name.name.name.clone(),
-            location: ast::Location(0..0),
-        })
+        hir::SymbolName {
+            namespace: self.identifier_path(path.root.clone()),
+            name: self.identifier(path.name.clone()),
+            location: self.location(path.location.clone()),
+        }
+    }
+
+    /// Attemps to resolve a [`hir::SymbolName`] for an imported symbol.
+    fn resolve_imported_symbol(&self, path: &ast::Path) -> Option<hir::SymbolName> {
+        for (import, symbol) in &self.imports {
+            // Match against imported paths, which match the first segment of the imported path.
+            //
+            // This handles situations where a subpath was imported, which is then referenced later, such as:
+            //
+            // ```lume
+            //     import std (io);
+            //
+            //     io::File::from_path("foo.txt");
+            // ```
+            if let Some(name) = path.root.path.first() {
+                if name.name == *import {
+                    // Since we only matched a subset of the imported symbol,
+                    // we need to merge the two paths together, so it forms a fully-qualified path.
+                    let mut merged_symbol = SymbolName {
+                        namespace: lume_types::NamespacePath::empty(),
+                        name: lume_types::Identifier::from(&path.name.name),
+                        location: self.location(path.location.clone()),
+                    };
+
+                    for segment in &symbol.namespace.path {
+                        merged_symbol
+                            .namespace
+                            .path
+                            .push(lume_types::Identifier::from(&segment.name));
+                    }
+
+                    for segment in &path.root.path {
+                        merged_symbol
+                            .namespace
+                            .path
+                            .push(lume_types::Identifier::from(&segment.name));
+                    }
+
+                    return Some(merged_symbol);
+                }
+            }
+            // Match against the the imported symbol directly, such as:
+            //
+            // ```lume
+            //     import std.io (File);
+            //
+            //     File::from_path("foo.txt");
+            // ```
+            else if path.name.name == *import {
+                return Some(symbol.clone());
+            }
+        }
+
+        None
     }
 
     fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
@@ -611,7 +664,7 @@ impl<'a> LowerModule<'a> {
         let kind = if let Some(callee) = expr.callee {
             let callee = self.expression(callee)?;
 
-            hir::ExpressionKind::MethodCall(Box::new(hir::MethodCall {
+            hir::ExpressionKind::InstanceCall(Box::new(hir::InstanceCall {
                 id,
                 callee,
                 name: name.name,
@@ -619,7 +672,7 @@ impl<'a> LowerModule<'a> {
                 arguments,
             }))
         } else {
-            hir::ExpressionKind::FunctionCall(Box::new(hir::FunctionCall {
+            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name,
                 type_parameters,

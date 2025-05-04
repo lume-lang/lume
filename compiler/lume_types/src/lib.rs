@@ -112,6 +112,17 @@ impl SymbolName {
         }
     }
 
+    pub fn with_root(base: SymbolName, name: Identifier) -> Self {
+        let mut namespace = base.namespace.clone();
+        namespace.path.push(base.name);
+
+        Self {
+            namespace,
+            name,
+            location: base.location.clone(),
+        }
+    }
+
     pub fn i8() -> Self {
         Self::from_parts(["std"], "Int8")
     }
@@ -245,6 +256,13 @@ impl FunctionId {
         &mut ctx.functions[self.0 as usize]
     }
 
+    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<FunctionId> {
+        ctx.functions
+            .iter()
+            .position(|f| f.name == *name)
+            .map(|idx| FunctionId(idx as u32))
+    }
+
     pub fn is_private(self, ctx: &TypeDatabaseContext) -> bool {
         self.get(ctx).visibility == Visibility::Private
     }
@@ -370,6 +388,13 @@ impl MethodId {
         &mut ctx.methods[self.0 as usize]
     }
 
+    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<MethodId> {
+        ctx.methods
+            .iter()
+            .position(|f| f.name == *name)
+            .map(|idx| MethodId(idx as u32))
+    }
+
     pub fn is_private(&self, ctx: &TypeDatabaseContext) -> bool {
         self.get(ctx).visibility == Visibility::Private
     }
@@ -406,7 +431,7 @@ impl MethodId {
 pub struct Method {
     pub visibility: Visibility,
     pub callee: TypeRef,
-    pub name: Identifier,
+    pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
@@ -415,10 +440,12 @@ pub struct Method {
 impl Method {
     pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: Identifier, visibility: Visibility) -> MethodId {
         let id = ctx.methods.len();
+        let qualified_name = SymbolName::with_root(class.name(ctx), name);
+
         let method = Method {
             visibility,
             callee: TypeRef::new(class),
-            name,
+            name: qualified_name,
             type_parameters: Vec::new(),
             parameters: Parameters::new(),
             return_type: TypeRef::unknown(),

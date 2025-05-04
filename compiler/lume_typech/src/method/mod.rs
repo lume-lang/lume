@@ -80,7 +80,7 @@ impl MethodLookupError<'_> {
                     source: method_name.location.file.clone(),
                     range: method_name.location.index.clone(),
                     type_name: self.type_name.clone(),
-                    method_name,
+                    method_name: method_name.name,
                     reason: suggestion.reason,
                 }
             })
@@ -115,11 +115,11 @@ impl<'tcx> ThirBuildCtx<'tcx> {
 
             // No matter if all the other checks pass, if the method name does not match, we should
             // only suggest it.
-            let is_qualified = &method.name == method_name;
+            let is_qualified = &method.name.name == method_name;
 
             // If the name is not an exact match, or even if the Levenshtein distance is too high,
             // skip this method and continue to the next one.
-            if !is_qualified && levenshtein(&method.name.name, &method_name.name) > MAX_LEVENSHTEIN_DISTANCE {
+            if !is_qualified && levenshtein(&method.name.name.name, &method_name.name) > MAX_LEVENSHTEIN_DISTANCE {
                 continue;
             }
 

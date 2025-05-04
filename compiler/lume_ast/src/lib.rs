@@ -86,6 +86,10 @@ impl NamespacePath {
             location: Location(0..0),
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.path.is_empty()
+    }
 }
 
 impl std::fmt::Display for NamespacePath {
@@ -141,16 +145,6 @@ impl Path {
 impl From<Identifier> for Path {
     fn from(identifier: Identifier) -> Path {
         Path::rooted(identifier)
-    }
-}
-
-impl PartialEq<String> for Path {
-    fn eq(&self, other: &String) -> bool {
-        if let Some(f) = self.root.path.first() {
-            f.name == *other
-        } else {
-            self.name.name == *other
-        }
     }
 }
 

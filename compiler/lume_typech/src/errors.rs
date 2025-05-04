@@ -17,12 +17,24 @@ pub struct MissingType {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find function {name}", code = "LM4112")]
-pub struct MissingFunction {
+#[diagnostic(message = "could not find symbol {name}", code = "LM4112")]
+pub struct MissingSymbol {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("no such function was found")]
+    #[label("no such symbol was found")]
+    pub range: Range<usize>,
+
+    pub name: SymbolName,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "attempted to invoke type", code = "LM4113")]
+pub struct AttemptedTypeInvocation {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("attempted to invoke type {name}")]
     pub range: Range<usize>,
 
     pub name: SymbolName,

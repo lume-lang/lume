@@ -564,8 +564,21 @@ pub struct Expression {
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
     New(Box<New>),
-    FunctionCall(Box<FunctionCall>),
-    MethodCall(Box<MethodCall>),
+
+    /// Defines a call which was invoked without any callee or receiver.
+    ///
+    /// These are either invoked from:
+    /// - a path (`std::Int32::new()`),
+    /// - or as a function call (`foo()`),
+    StaticCall(Box<StaticCall>),
+
+    /// Defines a call which was invoked within the context of a receiver
+    ///
+    /// ```lume
+    /// let a = foo();
+    /// a.bar();
+    /// ```
+    InstanceCall(Box<InstanceCall>),
     Literal(Box<Literal>),
     Member(Box<Member>),
     Variable(Box<Variable>),
@@ -586,7 +599,7 @@ pub struct New {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct FunctionCall {
+pub struct StaticCall {
     pub id: ExpressionId,
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameter>,
@@ -594,7 +607,7 @@ pub struct FunctionCall {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct MethodCall {
+pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: Identifier,

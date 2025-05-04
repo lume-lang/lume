@@ -2,7 +2,7 @@ use lume_diag::Result;
 use lume_hir::{self};
 use lume_types::Identifier;
 
-use crate::{check::TypeCheckerPass, *};
+use crate::{check::TypeCheckerPass, symbol::SymbolKind, *};
 
 mod define_method_bodies;
 mod define_scope;
@@ -117,11 +117,11 @@ impl ThirBuildCtx<'_> {
                     .into()),
                 }
             }
-            lume_hir::ExpressionKind::FunctionCall(call) => {
-                let definition = match lume_types::Function::find(self.tcx(), &call.name) {
-                    Some(def) => def,
+            lume_hir::ExpressionKind::StaticCall(call) => {
+                let symbol = match self.lookup_symbol(&call.name) {
+                    Some(symbol) => symbol,
                     None => {
-                        return Err(crate::errors::MissingFunction {
+                        return Err(crate::errors::MissingSymbol {
                             source: expr.location.file.clone(),
                             range: expr.location.index.clone(),
                             name: call.name.clone(),
@@ -130,9 +130,30 @@ impl ThirBuildCtx<'_> {
                     }
                 };
 
-                Ok(definition.return_type.clone())
+                match symbol {
+                    SymbolKind::Type(type_id) => {
+                        let ty = type_id.get(self.tcx());
+
+                        Err(errors::AttemptedTypeInvocation {
+                            source: expr.location.file.clone(),
+                            range: expr.location.index.clone(),
+                            name: ty.name.clone(),
+                        }
+                        .into())
+                    }
+                    SymbolKind::Method(method_id) => {
+                        let method = method_id.get(self.tcx());
+
+                        Ok(method.return_type.clone())
+                    }
+                    SymbolKind::Function(func_id) => {
+                        let func = func_id.get(self.tcx());
+
+                        Ok(func.return_type.clone())
+                    }
+                }
             }
-            lume_hir::ExpressionKind::MethodCall(call) => {
+            lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callee_type = self.type_of(hir, call.callee.id)?;
                 let method =
                     match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_parameters)? {

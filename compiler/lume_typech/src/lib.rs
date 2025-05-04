@@ -7,6 +7,7 @@ mod check;
 mod errors;
 mod infer;
 mod method;
+mod symbol;
 
 #[derive(Debug)]
 pub struct ThirBuildCtx<'a> {
