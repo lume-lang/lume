@@ -44,6 +44,22 @@ pub struct SelfNotFirstParameter {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "{ty} cannot be used in functions",
+    code = "LM3015",
+    help = "since functions have no instance, remove the {ty} parameter"
+)]
+pub struct SelfOutsideObjectContext {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("{ty} cannot be used in functions; they must only be used in traits and classes")]
+    pub range: Range<usize>,
+
+    pub ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
     #[span]

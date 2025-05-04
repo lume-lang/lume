@@ -1,8 +1,8 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn foo(self) -> void {}\").unwrap_err()"
+expression: "lower(\"fn foo(self) -> void { }\").unwrap_err()"
 ---
-SelfOutsideClass {
+SelfOutsideObjectContext {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -11,7 +11,7 @@ SelfOutsideClass {
             0,
         ),
         name: Internal,
-        content: "fn foo(self) -> void {}",
+        content: "fn foo(self) -> void { }",
         package: PackageId(
             0,
         ),

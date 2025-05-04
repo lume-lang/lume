@@ -903,7 +903,7 @@ impl<'a> LowerModule<'a> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters)?;
+        let parameters = self.parameters(expr.parameters, true)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
@@ -967,7 +967,7 @@ impl<'a> LowerModule<'a> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters)?;
+        let parameters = self.parameters(expr.parameters, true)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
@@ -1053,7 +1053,7 @@ impl<'a> LowerModule<'a> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let parameters = self.parameters(expr.parameters)?;
+        let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -1095,7 +1095,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn parameters(&mut self, params: Vec<ast::Parameter>) -> Result<Vec<hir::Parameter>> {
+    fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
         params
             .into_iter()
             .enumerate()
@@ -1107,6 +1107,16 @@ impl<'a> LowerModule<'a> {
                 // so much easier to see whether a method is an instance method or a static method.
                 if index > 0 && param.param_type.is_self() {
                     return Err(SelfNotFirstParameter {
+                        source: self.file.clone(),
+                        range: param.location.0.clone(),
+                        ty: String::from(SELF_TYPE_NAME),
+                    }
+                    .into());
+                }
+
+                // Using `self` outside of an object context is not allowed, such as functions.
+                if !allow_self && param.param_type.is_self() {
+                    return Err(SelfOutsideObjectContext {
                         source: self.file.clone(),
                         range: param.location.0.clone(),
                         ty: String::from(SELF_TYPE_NAME),
@@ -1162,7 +1172,7 @@ impl<'a> LowerModule<'a> {
     fn def_impl_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
-        let parameters = self.parameters(expr.parameters)?;
+        let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let block = self.isolated_block(expr.block)?;
@@ -1407,7 +1417,6 @@ mod tests {
         assert_snap_eq!("fn external main() -> void", "external");
         assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
         assert_snap_eq!("fn loop() -> void {}", "reserved_keyword");
-        assert_err_snap_eq!("fn foo(self) -> void {}", "self_outside_class");
     }
 
     #[test]
@@ -1898,5 +1907,12 @@ mod tests {
         }"#,
             "invalid"
         );
+    }
+
+    #[test]
+    fn test_using_self_in_function() {
+        assert_snap_eq!("fn foo() -> void { }", "valid");
+
+        assert_err_snap_eq!("fn foo(self) -> void { }", "invalid");
     }
 }
