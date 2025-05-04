@@ -23,4 +23,8 @@ namespace std
 /// ```
 class builtin Array<T>
 {
+    /// Allocates a new array with enough space for at least `capacity` elements.
+    ///
+    /// When creating an array with a set capacity, it's length will still be zero.
+    pub fn with_capacity(capacity: UInt64) -> Array<T> {}
 }

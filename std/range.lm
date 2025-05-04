@@ -4,10 +4,22 @@ namespace std
 class builtin Range<T> {
     let start: T;
     let end: T;
+
+    /// Creates a new range with the given bounds.
+    ///
+    /// This method creates a range bounded inclusively above and exclusively below. For
+    /// a range bounded inclusively above and below, see `RangeInclusive<T>::new(T, T)`.
+    pub fn new(start: T, end: T) -> Range<T> {}
 }
 
 /// Represents a range bounded inclusively below and above.
 class builtin RangeInclusive<T> {
     let start: T;
     let end: T;
+
+    /// Creates a new range with the given bounds.
+    ///
+    /// This method creates a range bounded inclusively above and below. For a range
+    /// bounded inclusively above and exclusively below, see `Range<T>::new(T, T)`.
+    pub fn new(start: T, end: T) -> RangeInclusive<T> {}
 }
