@@ -90,7 +90,7 @@ expression: "parse_expr(\"self + self\")"
                                         },
                                     ),
                                 ],
-                                type_parameters: [],
+                                type_arguments: [],
                                 location: Location(
                                     20..27,
                                 ),

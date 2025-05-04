@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn main(argc: u8) -> void { }\")"
+expression: "lower(\"fn main(argc: u8) -> void { }\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 id: 15299231299772503292,
                 func_id: None,
                 visibility: Private,
-                name: 'main',
+                name: main,
                 parameters: [
                     Parameter {
                         id: 0,
@@ -21,7 +21,7 @@ Map {
                             location: <internal>:8:12,
                         },
                         param_type: Type {
-                            name: 'u8',
+                            name: u8,
                             type_params: [],
                             location: <internal>:14:16,
                         },
@@ -31,7 +31,7 @@ Map {
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:21:25,
                     },

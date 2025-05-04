@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"enum Foo {\n                    /// This is a doc comment\n                    Bar\n                }\"#)"
+expression: "lower(r#\"enum Foo {\n                    /// This is a doc comment\n                    Bar\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,11 +12,11 @@ Map {
                 EnumDefinition {
                     id: 18213876290066861800,
                     type_id: None,
-                    name: 'Foo',
+                    name: Foo,
                     cases: [
                         EnumDefinitionCase {
                             id: 3235109210342419196,
-                            name: 'Bar',
+                            name: Bar,
                             parameters: [],
                             location: <internal>:77:80,
                         },

@@ -79,7 +79,7 @@ expression: "parse_expr(\"self.invoke()\")"
                                     ),
                                 },
                                 arguments: [],
-                                type_parameters: [],
+                                type_arguments: [],
                                 location: Location(
                                     25..31,
                                 ),

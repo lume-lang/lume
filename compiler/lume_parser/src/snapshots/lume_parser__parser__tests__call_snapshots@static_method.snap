@@ -104,7 +104,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                             },
                                         ),
                                     ],
-                                    type_parameters: [],
+                                    type_arguments: [],
                                     location: Location(
                                         33..42,
                                     ),

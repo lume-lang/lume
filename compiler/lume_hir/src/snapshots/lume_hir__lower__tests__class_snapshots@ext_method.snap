@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                class Foo {\n                    fn external bar() -> Int32\n                }\"#)"
+expression: "lower(r#\"\n                class Foo {\n                    fn external bar() -> Int32\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 ClassDefinition {
                     id: 18213876290066861800,
                     type_id: None,
-                    name: 'Foo',
+                    name: Foo,
                     builtin: false,
                     members: [
                         ExternalMethod(
@@ -27,7 +27,7 @@ Map {
                                 type_parameters: [],
                                 return_type: Some(
                                     Type {
-                                        name: 'std.Int32',
+                                        name: std::Int32,
                                         type_params: [],
                                         location: <internal>:70:75,
                                     },

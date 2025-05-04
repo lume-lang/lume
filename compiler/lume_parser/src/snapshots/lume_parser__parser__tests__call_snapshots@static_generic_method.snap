@@ -104,15 +104,14 @@ expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
                                             },
                                         ),
                                     ],
-                                    type_parameters: [
-                                        TypeParameter {
+                                    type_arguments: [
+                                        TypeArgument {
                                             name: Identifier {
                                                 name: "T",
                                                 location: Location(
                                                     38..39,
                                                 ),
                                             },
-                                            constraints: [],
                                         },
                                     ],
                                     location: Location(

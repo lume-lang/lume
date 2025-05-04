@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }\")"
+expression: "lower(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 ClassDefinition {
                     id: 15340443703565705568,
                     type_id: None,
-                    name: 'Test',
+                    name: Test,
                     builtin: false,
                     members: [
                         Method(
@@ -34,7 +34,7 @@ Map {
                                         type_param_id: None,
                                         constraints: [
                                             Type {
-                                                name: 'Numeric',
+                                                name: Numeric,
                                                 type_params: [],
                                                 location: <internal>:25:32,
                                             },
@@ -50,7 +50,7 @@ Map {
                                         type_param_id: None,
                                         constraints: [
                                             Type {
-                                                name: 'Numeric',
+                                                name: Numeric,
                                                 type_params: [],
                                                 location: <internal>:38:45,
                                             },
@@ -60,7 +60,7 @@ Map {
                                 ],
                                 return_type: Some(
                                     Type {
-                                        name: 'void',
+                                        name: void,
                                         type_params: [],
                                         location: <internal>:52:56,
                                     },

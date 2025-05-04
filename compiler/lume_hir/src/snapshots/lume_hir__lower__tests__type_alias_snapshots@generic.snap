@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"type A = B<C>\")"
+expression: "lower(\"type A = B<C>\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 AliasDefinition {
                     id: 10060190011017930945,
                     type_id: None,
-                    name: 'A',
+                    name: A,
                     definition: Type {
-                        name: 'B',
+                        name: B,
                         type_params: [
                             Type {
-                                name: 'C',
+                                name: C,
                                 type_params: [],
                                 location: <internal>:11:12,
                             },

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"/// This is a doc comment\n                type Foo = Bar\"#)"
+expression: "lower(r#\"/// This is a doc comment\n                type Foo = Bar\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,9 +12,9 @@ Map {
                 AliasDefinition {
                     id: 18213876290066861800,
                     type_id: None,
-                    name: 'Foo',
+                    name: Foo,
                     definition: Type {
-                        name: 'Bar',
+                        name: Bar,
                         type_params: [],
                         location: <internal>:53:56,
                     },

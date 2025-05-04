@@ -92,7 +92,7 @@ expression: "parse_expr(\"return a.b(c);\")"
                                                 },
                                             ),
                                         ],
-                                        type_parameters: [],
+                                        type_arguments: [],
                                         location: Location(
                                             29..32,
                                         ),

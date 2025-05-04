@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(r#\"\n            let a = 0;\n            let b = 1;\n            let _ = (a..=b);\"#)"
+expression: "lower_expr(r#\"\n            let a = 0;\n            let b = 1;\n            let _ = (a..=b);\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -99,14 +99,15 @@ Map {
                                     value: Expression {
                                         id: 10912160959110460649,
                                         location: <internal>:87:92,
-                                        kind: New(
-                                            New {
+                                        kind: StaticCall(
+                                            StaticCall {
                                                 id: 10912160959110460649,
-                                                name: Type {
-                                                    name: 'std.RangeInclusive',
-                                                    type_params: [],
-                                                    location: <internal>:0:0,
-                                                },
+                                                name: std::new::RangeInclusive,
+                                                type_arguments: [
+                                                    Implicit {
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ],
                                                 arguments: [
                                                     Expression {
                                                         id: 16783941965674463102,
@@ -229,14 +230,15 @@ Map {
                     value: Expression {
                         id: 10912160959110460649,
                         location: <internal>:87:92,
-                        kind: New(
-                            New {
+                        kind: StaticCall(
+                            StaticCall {
                                 id: 10912160959110460649,
-                                name: Type {
-                                    name: 'std.RangeInclusive',
-                                    type_params: [],
-                                    location: <internal>:0:0,
-                                },
+                                name: std::new::RangeInclusive,
+                                type_arguments: [
+                                    Implicit {
+                                        location: <internal>:0:0,
+                                    },
+                                ],
                                 arguments: [
                                     Expression {
                                         id: 16783941965674463102,
@@ -345,14 +347,15 @@ Map {
         10912160959110460649: Expression {
             id: 10912160959110460649,
             location: <internal>:87:92,
-            kind: New(
-                New {
+            kind: StaticCall(
+                StaticCall {
                     id: 10912160959110460649,
-                    name: Type {
-                        name: 'std.RangeInclusive',
-                        type_params: [],
-                        location: <internal>:0:0,
-                    },
+                    name: std::new::RangeInclusive,
+                    type_arguments: [
+                        Implicit {
+                            location: <internal>:0:0,
+                        },
+                    ],
                     arguments: [
                         Expression {
                             id: 16783941965674463102,

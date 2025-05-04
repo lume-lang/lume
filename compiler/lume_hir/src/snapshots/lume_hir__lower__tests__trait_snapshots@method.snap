@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"trait Add { pub fn add(other: int) -> int }\")"
+expression: "lower(\"trait Add { pub fn add(other: int) -> int }\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 TraitDefinition {
                     id: 1119898709443545213,
                     type_id: None,
-                    name: 'Add',
+                    name: Add,
                     type_parameters: [],
                     methods: [
                         TraitMethodDefinition {
@@ -30,7 +30,7 @@ Map {
                                         location: <internal>:23:28,
                                     },
                                     param_type: Type {
-                                        name: 'int',
+                                        name: int,
                                         type_params: [],
                                         location: <internal>:30:33,
                                     },
@@ -40,7 +40,7 @@ Map {
                             type_parameters: [],
                             return_type: Some(
                                 Type {
-                                    name: 'int',
+                                    name: int,
                                     type_params: [],
                                     location: <internal>:38:41,
                                 },

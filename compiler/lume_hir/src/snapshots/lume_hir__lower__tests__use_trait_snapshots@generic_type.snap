@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Enumerable<T> in Vector<T> {\n                    pub fn next() -> T {}\n                }\"#)"
+expression: "lower(r#\"\n                use Enumerable<T> in Vector<T> {\n                    pub fn next() -> T {}\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -11,10 +11,10 @@ Map {
             TraitImplementation {
                 id: 15073684727517168745,
                 name: Type {
-                    name: 'Enumerable',
+                    name: Enumerable,
                     type_params: [
                         Type {
-                            name: 'T',
+                            name: T,
                             type_params: [],
                             location: <internal>:32:33,
                         },
@@ -22,10 +22,10 @@ Map {
                     location: <internal>:31:34,
                 },
                 target: Type {
-                    name: 'Vector',
+                    name: Vector,
                     type_params: [
                         Type {
-                            name: 'T',
+                            name: T,
                             type_params: [],
                             location: <internal>:45:46,
                         },
@@ -35,12 +35,12 @@ Map {
                 methods: [
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: 'next',
+                        name: next,
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: 'T',
+                                name: T,
                                 type_params: [],
                                 location: <internal>:87:88,
                             },

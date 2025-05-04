@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Cast in Int32 {\n                    pub fn to_string() -> String {}\n\n                    pub fn to_int() -> Int32 {}\n                }\"#)"
+expression: "lower(r#\"\n                use Cast in Int32 {\n                    pub fn to_string() -> String {}\n\n                    pub fn to_int() -> Int32 {}\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -11,24 +11,24 @@ Map {
             TraitImplementation {
                 id: 13914738179290843052,
                 name: Type {
-                    name: 'Cast',
+                    name: Cast,
                     type_params: [],
                     location: <internal>:21:25,
                 },
                 target: Type {
-                    name: 'std.Int32',
+                    name: std::Int32,
                     type_params: [],
                     location: <internal>:29:34,
                 },
                 methods: [
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: 'to_string',
+                        name: to_string,
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: 'std.String',
+                                name: std::String,
                                 type_params: [],
                                 location: <internal>:79:85,
                             },
@@ -41,12 +41,12 @@ Map {
                     },
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: 'to_int',
+                        name: to_int,
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: 'std.Int32',
+                                name: std::Int32,
                                 type_params: [],
                                 location: <internal>:129:134,
                             },

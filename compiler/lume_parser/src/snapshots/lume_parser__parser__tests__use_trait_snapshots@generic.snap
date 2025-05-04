@@ -194,7 +194,7 @@ expression: "parse(r#\"\n            use Add<Int32> in Int32 {\n                
                                                         },
                                                     ),
                                                 ],
-                                                type_parameters: [],
+                                                type_arguments: [],
                                                 location: Location(
                                                     118..125,
                                                 ),

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"/// This is a doc comment\n                class Foo { }\"#)"
+expression: "lower(r#\"/// This is a doc comment\n                class Foo { }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 ClassDefinition {
                     id: 18213876290066861800,
                     type_id: None,
-                    name: 'Foo',
+                    name: Foo,
                     builtin: false,
                     members: [],
                     type_parameters: [],

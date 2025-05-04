@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -126,8 +126,8 @@ Map {
                                         Expression {
                                             id: 4208978898528913939,
                                             location: <internal>:111:114,
-                                            kind: MethodCall(
-                                                MethodCall {
+                                            kind: InstanceCall(
+                                                InstanceCall {
                                                     id: 4208978898528913939,
                                                     callee: Expression {
                                                         id: 15952540911656918845,
@@ -146,9 +146,9 @@ Map {
                                                     },
                                                     name: Identifier {
                                                         name: "b",
-                                                        location: <internal>:0:0,
+                                                        location: <internal>:111:112,
                                                     },
-                                                    type_parameters: [],
+                                                    type_arguments: [],
                                                     arguments: [
                                                         Expression {
                                                             id: 10080759905092916392,
@@ -284,8 +284,8 @@ Map {
                         Expression {
                             id: 4208978898528913939,
                             location: <internal>:111:114,
-                            kind: MethodCall(
-                                MethodCall {
+                            kind: InstanceCall(
+                                InstanceCall {
                                     id: 4208978898528913939,
                                     callee: Expression {
                                         id: 15952540911656918845,
@@ -304,9 +304,9 @@ Map {
                                     },
                                     name: Identifier {
                                         name: "b",
-                                        location: <internal>:0:0,
+                                        location: <internal>:111:112,
                                     },
-                                    type_parameters: [],
+                                    type_arguments: [],
                                     arguments: [
                                         Expression {
                                             id: 10080759905092916392,
@@ -418,8 +418,8 @@ Map {
         4208978898528913939: Expression {
             id: 4208978898528913939,
             location: <internal>:111:114,
-            kind: MethodCall(
-                MethodCall {
+            kind: InstanceCall(
+                InstanceCall {
                     id: 4208978898528913939,
                     callee: Expression {
                         id: 15952540911656918845,
@@ -438,9 +438,9 @@ Map {
                     },
                     name: Identifier {
                         name: "b",
-                        location: <internal>:0:0,
+                        location: <internal>:111:112,
                     },
-                    type_parameters: [],
+                    type_arguments: [],
                     arguments: [
                         Expression {
                             id: 10080759905092916392,

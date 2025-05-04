@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                class Foo {\n                    let x: Int32 = 0;\n                }\"#)"
+expression: "lower(r#\"\n                class Foo {\n                    let x: Int32 = 0;\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 ClassDefinition {
                     id: 18213876290066861800,
                     type_id: None,
-                    name: 'Foo',
+                    name: Foo,
                     builtin: false,
                     members: [
                         Property(
@@ -24,7 +24,7 @@ Map {
                                     location: <internal>:53:54,
                                 },
                                 property_type: Type {
-                                    name: 'std.Int32',
+                                    name: std::Int32,
                                     type_params: [],
                                     location: <internal>:56:61,
                                 },

@@ -97,15 +97,14 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                                             },
                                         ),
                                     ],
-                                    type_parameters: [
-                                        TypeParameter {
+                                    type_arguments: [
+                                        TypeArgument {
                                             name: Identifier {
                                                 name: "T",
                                                 location: Location(
                                                     33..34,
                                                 ),
                                             },
-                                            constraints: [],
                                         },
                                     ],
                                     location: Location(

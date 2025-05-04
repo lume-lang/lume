@@ -100,7 +100,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                                     },
                                                 ),
                                             ],
-                                            type_parameters: [],
+                                            type_arguments: [],
                                             location: Location(
                                                 30..34,
                                             ),
@@ -152,7 +152,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                                                 },
                                                             ),
                                                         ],
-                                                        type_parameters: [],
+                                                        type_arguments: [],
                                                         location: Location(
                                                             40..44,
                                                         ),
@@ -189,7 +189,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                                     ),
                                                 ),
                                             ],
-                                            type_parameters: [],
+                                            type_arguments: [],
                                             location: Location(
                                                 40..48,
                                             ),

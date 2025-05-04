@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let _ = call(0);\")"
+expression: "lower_expr(\"let _ = call(0);\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -37,11 +37,11 @@ Map {
                                     value: Expression {
                                         id: 5871781006564002453,
                                         location: <internal>:27:33,
-                                        kind: FunctionCall(
-                                            FunctionCall {
+                                        kind: StaticCall(
+                                            StaticCall {
                                                 id: 5871781006564002453,
-                                                name: 'call',
-                                                type_parameters: [],
+                                                name: call,
+                                                type_arguments: [],
                                                 arguments: [
                                                     Expression {
                                                         id: 11743562013128004906,
@@ -89,11 +89,11 @@ Map {
                     value: Expression {
                         id: 5871781006564002453,
                         location: <internal>:27:33,
-                        kind: FunctionCall(
-                            FunctionCall {
+                        kind: StaticCall(
+                            StaticCall {
                                 id: 5871781006564002453,
-                                name: 'call',
-                                type_parameters: [],
+                                name: call,
+                                type_arguments: [],
                                 arguments: [
                                     Expression {
                                         id: 11743562013128004906,
@@ -142,11 +142,11 @@ Map {
         5871781006564002453: Expression {
             id: 5871781006564002453,
             location: <internal>:27:33,
-            kind: FunctionCall(
-                FunctionCall {
+            kind: StaticCall(
+                StaticCall {
                     id: 5871781006564002453,
-                    name: 'call',
-                    type_parameters: [],
+                    name: call,
+                    type_arguments: [],
                     arguments: [
                         Expression {
                             id: 11743562013128004906,

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"for pattern in [1, 2, 3] { break; }\")"
+expression: "lower_expr(\"for pattern in [1, 2, 3] { break; }\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -32,25 +32,44 @@ Map {
                                     collection: Expression {
                                         id: 5871781006564002453,
                                         location: <internal>:34:35,
-                                        kind: New(
-                                            New {
+                                        kind: StaticCall(
+                                            StaticCall {
                                                 id: 5871781006564002453,
-                                                name: Type {
-                                                    name: 'std.Array',
-                                                    type_params: [],
-                                                    location: <internal>:34:35,
-                                                },
-                                                arguments: [],
+                                                name: std::Array::with_capacity,
+                                                type_arguments: [
+                                                    Implicit {
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ],
+                                                arguments: [
+                                                    Expression {
+                                                        id: 11743562013128004906,
+                                                        location: <internal>:0:0,
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: 17615343019692007359,
+                                                                location: <internal>:0:0,
+                                                                kind: Int(
+                                                                    IntLiteral {
+                                                                        id: 5040379952546458196,
+                                                                        value: 3,
+                                                                        kind: U64,
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
                                             },
                                         ),
                                     },
                                     block: Block {
                                         statements: [
                                             Statement {
-                                                id: 11743562013128004906,
+                                                id: 10912160959110460649,
                                                 kind: Break(
                                                     Break {
-                                                        id: 11743562013128004906,
+                                                        id: 10912160959110460649,
                                                     },
                                                 ),
                                                 location: <internal>:46:52,
@@ -71,11 +90,11 @@ Map {
         ),
     },
     statements: {
-        11743562013128004906: Statement {
-            id: 11743562013128004906,
+        10912160959110460649: Statement {
+            id: 10912160959110460649,
             kind: Break(
                 Break {
-                    id: 11743562013128004906,
+                    id: 10912160959110460649,
                 },
             ),
             location: <internal>:46:52,
@@ -88,25 +107,44 @@ Map {
                     collection: Expression {
                         id: 5871781006564002453,
                         location: <internal>:34:35,
-                        kind: New(
-                            New {
+                        kind: StaticCall(
+                            StaticCall {
                                 id: 5871781006564002453,
-                                name: Type {
-                                    name: 'std.Array',
-                                    type_params: [],
-                                    location: <internal>:34:35,
-                                },
-                                arguments: [],
+                                name: std::Array::with_capacity,
+                                type_arguments: [
+                                    Implicit {
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                                arguments: [
+                                    Expression {
+                                        id: 11743562013128004906,
+                                        location: <internal>:0:0,
+                                        kind: Literal(
+                                            Literal {
+                                                id: 17615343019692007359,
+                                                location: <internal>:0:0,
+                                                kind: Int(
+                                                    IntLiteral {
+                                                        id: 5040379952546458196,
+                                                        value: 3,
+                                                        kind: U64,
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
                             },
                         ),
                     },
                     block: Block {
                         statements: [
                             Statement {
-                                id: 11743562013128004906,
+                                id: 10912160959110460649,
                                 kind: Break(
                                     Break {
-                                        id: 11743562013128004906,
+                                        id: 10912160959110460649,
                                     },
                                 ),
                                 location: <internal>:46:52,
@@ -124,15 +162,34 @@ Map {
         5871781006564002453: Expression {
             id: 5871781006564002453,
             location: <internal>:34:35,
-            kind: New(
-                New {
+            kind: StaticCall(
+                StaticCall {
                     id: 5871781006564002453,
-                    name: Type {
-                        name: 'std.Array',
-                        type_params: [],
-                        location: <internal>:34:35,
-                    },
-                    arguments: [],
+                    name: std::Array::with_capacity,
+                    type_arguments: [
+                        Implicit {
+                            location: <internal>:0:0,
+                        },
+                    ],
+                    arguments: [
+                        Expression {
+                            id: 11743562013128004906,
+                            location: <internal>:0:0,
+                            kind: Literal(
+                                Literal {
+                                    id: 17615343019692007359,
+                                    location: <internal>:0:0,
+                                    kind: Int(
+                                        IntLiteral {
+                                            id: 5040379952546458196,
+                                            value: 3,
+                                            kind: U64,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ],
                 },
             ),
         },

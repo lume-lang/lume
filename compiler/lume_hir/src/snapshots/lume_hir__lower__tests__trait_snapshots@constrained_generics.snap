@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
+expression: "lower(\"trait Add<T1: Numeric, T2: Numeric> {}\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,7 +12,7 @@ Map {
                 TraitDefinition {
                     id: 1119898709443545213,
                     type_id: None,
-                    name: 'Add',
+                    name: Add,
                     type_parameters: [
                         TypeParameter {
                             name: Identifier {
@@ -23,7 +23,7 @@ Map {
                             type_param_id: None,
                             constraints: [
                                 Type {
-                                    name: 'Numeric',
+                                    name: Numeric,
                                     type_params: [],
                                     location: <internal>:14:21,
                                 },
@@ -39,7 +39,7 @@ Map {
                             type_param_id: None,
                             constraints: [
                                 Type {
-                                    name: 'Numeric',
+                                    name: Numeric,
                                     type_params: [],
                                     location: <internal>:27:34,
                                 },

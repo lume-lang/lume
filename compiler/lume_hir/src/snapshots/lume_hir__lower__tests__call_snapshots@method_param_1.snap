@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -37,8 +37,8 @@ Map {
                                     value: Expression {
                                         id: 5871781006564002453,
                                         location: <internal>:29:35,
-                                        kind: MethodCall(
-                                            MethodCall {
+                                        kind: InstanceCall(
+                                            InstanceCall {
                                                 id: 5871781006564002453,
                                                 callee: Expression {
                                                     id: 17615343019692007359,
@@ -59,9 +59,9 @@ Map {
                                                 },
                                                 name: Identifier {
                                                     name: "call",
-                                                    location: <internal>:0:0,
+                                                    location: <internal>:29:33,
                                                 },
-                                                type_parameters: [],
+                                                type_arguments: [],
                                                 arguments: [
                                                     Expression {
                                                         id: 11743562013128004906,
@@ -109,8 +109,8 @@ Map {
                     value: Expression {
                         id: 5871781006564002453,
                         location: <internal>:29:35,
-                        kind: MethodCall(
-                            MethodCall {
+                        kind: InstanceCall(
+                            InstanceCall {
                                 id: 5871781006564002453,
                                 callee: Expression {
                                     id: 17615343019692007359,
@@ -131,9 +131,9 @@ Map {
                                 },
                                 name: Identifier {
                                     name: "call",
-                                    location: <internal>:0:0,
+                                    location: <internal>:29:33,
                                 },
-                                type_parameters: [],
+                                type_arguments: [],
                                 arguments: [
                                     Expression {
                                         id: 11743562013128004906,
@@ -199,8 +199,8 @@ Map {
         5871781006564002453: Expression {
             id: 5871781006564002453,
             location: <internal>:29:35,
-            kind: MethodCall(
-                MethodCall {
+            kind: InstanceCall(
+                InstanceCall {
                     id: 5871781006564002453,
                     callee: Expression {
                         id: 17615343019692007359,
@@ -221,9 +221,9 @@ Map {
                     },
                     name: Identifier {
                         name: "call",
-                        location: <internal>:0:0,
+                        location: <internal>:29:33,
                     },
-                    type_parameters: [],
+                    type_arguments: [],
                     arguments: [
                         Expression {
                             id: 11743562013128004906,

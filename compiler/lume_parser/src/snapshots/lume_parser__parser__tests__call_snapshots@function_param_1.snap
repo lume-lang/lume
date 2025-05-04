@@ -87,7 +87,7 @@ expression: "parse_expr(\"let _ = call(a);\")"
                                             },
                                         ),
                                     ],
-                                    type_parameters: [],
+                                    type_arguments: [],
                                     location: Location(
                                         28..34,
                                     ),

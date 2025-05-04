@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let _ = call<T>(0, 1);\")"
+expression: "lower_expr(\"let _ = call<T>(0, 1);\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -37,19 +37,16 @@ Map {
                                     value: Expression {
                                         id: 5871781006564002453,
                                         location: <internal>:27:39,
-                                        kind: FunctionCall(
-                                            FunctionCall {
+                                        kind: StaticCall(
+                                            StaticCall {
                                                 id: 5871781006564002453,
-                                                name: 'call',
-                                                type_parameters: [
-                                                    TypeParameter {
+                                                name: call,
+                                                type_arguments: [
+                                                    Named {
                                                         name: Identifier {
                                                             name: "T",
                                                             location: <internal>:32:33,
                                                         },
-                                                        type_id: None,
-                                                        type_param_id: None,
-                                                        constraints: [],
                                                         location: <internal>:32:33,
                                                     },
                                                 ],
@@ -117,19 +114,16 @@ Map {
                     value: Expression {
                         id: 5871781006564002453,
                         location: <internal>:27:39,
-                        kind: FunctionCall(
-                            FunctionCall {
+                        kind: StaticCall(
+                            StaticCall {
                                 id: 5871781006564002453,
-                                name: 'call',
-                                type_parameters: [
-                                    TypeParameter {
+                                name: call,
+                                type_arguments: [
+                                    Named {
                                         name: Identifier {
                                             name: "T",
                                             location: <internal>:32:33,
                                         },
-                                        type_id: None,
-                                        type_param_id: None,
-                                        constraints: [],
                                         location: <internal>:32:33,
                                     },
                                 ],
@@ -215,19 +209,16 @@ Map {
         5871781006564002453: Expression {
             id: 5871781006564002453,
             location: <internal>:27:39,
-            kind: FunctionCall(
-                FunctionCall {
+            kind: StaticCall(
+                StaticCall {
                     id: 5871781006564002453,
-                    name: 'call',
-                    type_parameters: [
-                        TypeParameter {
+                    name: call,
+                    type_arguments: [
+                        Named {
                             name: Identifier {
                                 name: "T",
                                 location: <internal>:32:33,
                             },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [],
                             location: <internal>:32:33,
                         },
                     ],

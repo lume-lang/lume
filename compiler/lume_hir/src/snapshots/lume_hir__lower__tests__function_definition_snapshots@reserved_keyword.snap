@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn loop() -> void {}\")"
+expression: "lower(\"fn loop() -> void {}\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 11875826716677531916,
                 func_id: None,
                 visibility: Private,
-                name: 'loop',
+                name: loop,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:13:17,
                     },

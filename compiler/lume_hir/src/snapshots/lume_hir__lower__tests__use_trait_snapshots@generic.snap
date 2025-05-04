@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Add<Int32> in Int32 {\n                    pub fn add(other: Int32) -> Int32 {}\n                }\"#)"
+expression: "lower(r#\"\n                use Add<Int32> in Int32 {\n                    pub fn add(other: Int32) -> Int32 {}\n                }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -11,10 +11,10 @@ Map {
             TraitImplementation {
                 id: 1119898709443545213,
                 name: Type {
-                    name: 'Add',
+                    name: Add,
                     type_params: [
                         Type {
-                            name: 'std.Int32',
+                            name: std::Int32,
                             type_params: [],
                             location: <internal>:25:30,
                         },
@@ -22,14 +22,14 @@ Map {
                     location: <internal>:24:31,
                 },
                 target: Type {
-                    name: 'std.Int32',
+                    name: std::Int32,
                     type_params: [],
                     location: <internal>:35:40,
                 },
                 methods: [
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: 'add',
+                        name: add,
                         parameters: [
                             Parameter {
                                 id: 0,
@@ -38,7 +38,7 @@ Map {
                                     location: <internal>:74:79,
                                 },
                                 param_type: Type {
-                                    name: 'std.Int32',
+                                    name: std::Int32,
                                     type_params: [],
                                     location: <internal>:81:86,
                                 },
@@ -48,7 +48,7 @@ Map {
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: 'std.Int32',
+                                name: std::Int32,
                                 type_params: [],
                                 location: <internal>:91:96,
                             },

@@ -12,12 +12,12 @@ Map {
                 AliasDefinition {
                     id: 10060190011017930945,
                     type_id: None,
-                    name: 'A',
+                    name: A,
                     definition: Type {
-                        name: 'std.Array',
+                        name: std::Array,
                         type_params: [
                             Type {
-                                name: 'B',
+                                name: B,
                                 type_params: [],
                                 location: <internal>:10:11,
                             },

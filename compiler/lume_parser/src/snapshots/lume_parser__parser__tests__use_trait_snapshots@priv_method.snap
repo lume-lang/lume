@@ -168,7 +168,7 @@ expression: "parse(r#\"\n            use Add in Int32 {\n                fn add(
                                                         },
                                                     ),
                                                 ],
-                                                type_parameters: [],
+                                                type_arguments: [],
                                                 location: Location(
                                                     107..114,
                                                 ),

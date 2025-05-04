@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn external main() -> void\")"
+expression: "lower(\"fn external main() -> void\").unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 15299231299772503292,
                 func_id: None,
                 visibility: Private,
-                name: 'main',
+                name: main,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:22:26,
                     },

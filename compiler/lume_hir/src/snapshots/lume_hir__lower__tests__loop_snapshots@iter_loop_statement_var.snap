@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(r#\"\n            let collection = [1, 2, 3];\n            for pattern in collection { let a = 0; }\"#)"
+expression: "lower_expr(r#\"\n            let collection = [1, 2, 3];\n            for pattern in collection { let a = 0; }\"#).unwrap()"
 ---
 Map {
     package: PackageId(
@@ -12,12 +12,12 @@ Map {
                 id: 8195533856448846917,
                 func_id: None,
                 visibility: Private,
-                name: 'foo',
+                name: foo,
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: 'void',
+                        name: void,
                         type_params: [],
                         location: <internal>:12:16,
                     },
@@ -37,15 +37,34 @@ Map {
                                     value: Expression {
                                         id: 5871781006564002453,
                                         location: <internal>:49:50,
-                                        kind: New(
-                                            New {
+                                        kind: StaticCall(
+                                            StaticCall {
                                                 id: 5871781006564002453,
-                                                name: Type {
-                                                    name: 'std.Array',
-                                                    type_params: [],
-                                                    location: <internal>:49:50,
-                                                },
-                                                arguments: [],
+                                                name: std::Array::with_capacity,
+                                                type_arguments: [
+                                                    Implicit {
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ],
+                                                arguments: [
+                                                    Expression {
+                                                        id: 11743562013128004906,
+                                                        location: <internal>:0:0,
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: 17615343019692007359,
+                                                                location: <internal>:0:0,
+                                                                kind: Int(
+                                                                    IntLiteral {
+                                                                        id: 5040379952546458196,
+                                                                        value: 3,
+                                                                        kind: U64,
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ],
                                             },
                                         ),
                                     },
@@ -54,16 +73,16 @@ Map {
                             location: <internal>:32:59,
                         },
                         Statement {
-                            id: 11743562013128004906,
+                            id: 10912160959110460649,
                             kind: IteratorLoop(
                                 IteratorLoop {
-                                    id: 11743562013128004906,
+                                    id: 10912160959110460649,
                                     collection: Expression {
-                                        id: 17615343019692007359,
+                                        id: 16783941965674463102,
                                         location: <internal>:87:97,
                                         kind: Variable(
                                             Variable {
-                                                id: 17615343019692007359,
+                                                id: 16783941965674463102,
                                                 reference: 0,
                                                 name: Identifier {
                                                     name: "collection",
@@ -76,25 +95,25 @@ Map {
                                     block: Block {
                                         statements: [
                                             Statement {
-                                                id: 5040379952546458196,
+                                                id: 4208978898528913939,
                                                 kind: Variable(
                                                     VariableDeclaration {
-                                                        id: 5040379952546458196,
+                                                        id: 4208978898528913939,
                                                         name: Identifier {
                                                             name: "a",
                                                             location: <internal>:104:105,
                                                         },
                                                         declared_type: None,
                                                         value: Expression {
-                                                            id: 10912160959110460649,
+                                                            id: 10080759905092916392,
                                                             location: <internal>:108:109,
                                                             kind: Literal(
                                                                 Literal {
-                                                                    id: 10912160959110460649,
+                                                                    id: 10080759905092916392,
                                                                     location: <internal>:108:109,
                                                                     kind: Int(
                                                                         IntLiteral {
-                                                                            id: 10912160959110460649,
+                                                                            id: 10080759905092916392,
                                                                             value: 0,
                                                                             kind: I32,
                                                                         },
@@ -135,15 +154,34 @@ Map {
                     value: Expression {
                         id: 5871781006564002453,
                         location: <internal>:49:50,
-                        kind: New(
-                            New {
+                        kind: StaticCall(
+                            StaticCall {
                                 id: 5871781006564002453,
-                                name: Type {
-                                    name: 'std.Array',
-                                    type_params: [],
-                                    location: <internal>:49:50,
-                                },
-                                arguments: [],
+                                name: std::Array::with_capacity,
+                                type_arguments: [
+                                    Implicit {
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                                arguments: [
+                                    Expression {
+                                        id: 11743562013128004906,
+                                        location: <internal>:0:0,
+                                        kind: Literal(
+                                            Literal {
+                                                id: 17615343019692007359,
+                                                location: <internal>:0:0,
+                                                kind: Int(
+                                                    IntLiteral {
+                                                        id: 5040379952546458196,
+                                                        value: 3,
+                                                        kind: U64,
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    },
+                                ],
                             },
                         ),
                     },
@@ -151,26 +189,26 @@ Map {
             ),
             location: <internal>:32:59,
         },
-        5040379952546458196: Statement {
-            id: 5040379952546458196,
+        4208978898528913939: Statement {
+            id: 4208978898528913939,
             kind: Variable(
                 VariableDeclaration {
-                    id: 5040379952546458196,
+                    id: 4208978898528913939,
                     name: Identifier {
                         name: "a",
                         location: <internal>:104:105,
                     },
                     declared_type: None,
                     value: Expression {
-                        id: 10912160959110460649,
+                        id: 10080759905092916392,
                         location: <internal>:108:109,
                         kind: Literal(
                             Literal {
-                                id: 10912160959110460649,
+                                id: 10080759905092916392,
                                 location: <internal>:108:109,
                                 kind: Int(
                                     IntLiteral {
-                                        id: 10912160959110460649,
+                                        id: 10080759905092916392,
                                         value: 0,
                                         kind: I32,
                                     },
@@ -182,17 +220,17 @@ Map {
             ),
             location: <internal>:100:110,
         },
-        11743562013128004906: Statement {
-            id: 11743562013128004906,
+        10912160959110460649: Statement {
+            id: 10912160959110460649,
             kind: IteratorLoop(
                 IteratorLoop {
-                    id: 11743562013128004906,
+                    id: 10912160959110460649,
                     collection: Expression {
-                        id: 17615343019692007359,
+                        id: 16783941965674463102,
                         location: <internal>:87:97,
                         kind: Variable(
                             Variable {
-                                id: 17615343019692007359,
+                                id: 16783941965674463102,
                                 reference: 0,
                                 name: Identifier {
                                     name: "collection",
@@ -205,25 +243,25 @@ Map {
                     block: Block {
                         statements: [
                             Statement {
-                                id: 5040379952546458196,
+                                id: 4208978898528913939,
                                 kind: Variable(
                                     VariableDeclaration {
-                                        id: 5040379952546458196,
+                                        id: 4208978898528913939,
                                         name: Identifier {
                                             name: "a",
                                             location: <internal>:104:105,
                                         },
                                         declared_type: None,
                                         value: Expression {
-                                            id: 10912160959110460649,
+                                            id: 10080759905092916392,
                                             location: <internal>:108:109,
                                             kind: Literal(
                                                 Literal {
-                                                    id: 10912160959110460649,
+                                                    id: 10080759905092916392,
                                                     location: <internal>:108:109,
                                                     kind: Int(
                                                         IntLiteral {
-                                                            id: 10912160959110460649,
+                                                            id: 10080759905092916392,
                                                             value: 0,
                                                             kind: I32,
                                                         },
@@ -248,24 +286,43 @@ Map {
         5871781006564002453: Expression {
             id: 5871781006564002453,
             location: <internal>:49:50,
-            kind: New(
-                New {
+            kind: StaticCall(
+                StaticCall {
                     id: 5871781006564002453,
-                    name: Type {
-                        name: 'std.Array',
-                        type_params: [],
-                        location: <internal>:49:50,
-                    },
-                    arguments: [],
+                    name: std::Array::with_capacity,
+                    type_arguments: [
+                        Implicit {
+                            location: <internal>:0:0,
+                        },
+                    ],
+                    arguments: [
+                        Expression {
+                            id: 11743562013128004906,
+                            location: <internal>:0:0,
+                            kind: Literal(
+                                Literal {
+                                    id: 17615343019692007359,
+                                    location: <internal>:0:0,
+                                    kind: Int(
+                                        IntLiteral {
+                                            id: 5040379952546458196,
+                                            value: 3,
+                                            kind: U64,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ],
                 },
             ),
         },
-        17615343019692007359: Expression {
-            id: 17615343019692007359,
+        16783941965674463102: Expression {
+            id: 16783941965674463102,
             location: <internal>:87:97,
             kind: Variable(
                 Variable {
-                    id: 17615343019692007359,
+                    id: 16783941965674463102,
                     reference: 0,
                     name: Identifier {
                         name: "collection",
@@ -275,16 +332,16 @@ Map {
                 },
             ),
         },
-        10912160959110460649: Expression {
-            id: 10912160959110460649,
+        10080759905092916392: Expression {
+            id: 10080759905092916392,
             location: <internal>:108:109,
             kind: Literal(
                 Literal {
-                    id: 10912160959110460649,
+                    id: 10080759905092916392,
                     location: <internal>:108:109,
                     kind: Int(
                         IntLiteral {
-                            id: 10912160959110460649,
+                            id: 10080759905092916392,
                             value: 0,
                             kind: I32,
                         },

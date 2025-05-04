@@ -215,7 +215,7 @@ expression: "parse(r#\"\n            use Add<Int32, Int64> in Int32 {\n         
                                                         },
                                                     ),
                                                 ],
-                                                type_parameters: [],
+                                                type_arguments: [],
                                                 location: Location(
                                                     125..132,
                                                 ),
