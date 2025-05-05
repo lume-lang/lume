@@ -1,8 +1,9 @@
 use std::{ops::Range, sync::Arc};
 
+use lume_diag::Result;
 use lume_diag_macros::Diagnostic;
 use lume_span::SourceFile;
-use lume_types::{FunctionId, MethodId, SymbolName, TypeId};
+use lume_types::{FunctionId, Method, MethodId, SymbolName, TypeId};
 
 use crate::ThirBuildCtx;
 
@@ -16,6 +17,15 @@ pub struct AmbiguousSymbol {
     pub range: Range<usize>,
 
     pub name: SymbolName,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum CallReference {
+    /// The call refers to a function.
+    Function(FunctionId),
+
+    /// The call refers to a method.
+    Method(MethodId),
 }
 
 /// Represents the kind of a symbol in the type inference system.
@@ -32,6 +42,55 @@ pub(crate) enum SymbolKind {
 }
 
 impl ThirBuildCtx<'_> {
+    /// Attempts to look up an instance method, which matches the given call expression.
+    pub(crate) fn lookup_instance_method(
+        &self,
+        hir: &lume_hir::map::Map,
+        expr: &lume_hir::InstanceCall,
+        loc: lume_span::Location,
+    ) -> Result<&Method> {
+        let callee_type = self.type_of(hir, expr.callee.id)?;
+
+        match self.method_lookup(hir, &callee_type, &expr.name, &expr.arguments, &expr.type_arguments)? {
+            crate::method::MethodLookupResult::Success(method) => Ok(method),
+            crate::method::MethodLookupResult::Failure(err) => Err(err.compound_err(loc)),
+        }
+    }
+
+    /// Attempts to look up a static method, which matches the given call expression.
+    pub(crate) fn lookup_static_method(
+        &self,
+        expr: &lume_hir::StaticCall,
+        loc: lume_span::Location,
+    ) -> Result<CallReference> {
+        let symbol = match self.lookup_symbol(&expr.name) {
+            Some(symbol) => symbol,
+            None => {
+                return Err(crate::errors::MissingSymbol {
+                    source: loc.file.clone(),
+                    range: loc.index.clone(),
+                    name: expr.name.clone(),
+                }
+                .into());
+            }
+        };
+
+        match symbol {
+            SymbolKind::Type(type_id) => {
+                let ty = type_id.get(self.tcx());
+
+                Err(crate::errors::AttemptedTypeInvocation {
+                    source: loc.file.clone(),
+                    range: loc.index.clone(),
+                    name: ty.name.clone(),
+                }
+                .into())
+            }
+            SymbolKind::Method(method_id) => Ok(CallReference::Method(method_id)),
+            SymbolKind::Function(func_id) => Ok(CallReference::Function(func_id)),
+        }
+    }
+
     /// Attempts to look up a symbol by it's path within the current package.
     pub(crate) fn lookup_symbol(&self, name: &SymbolName) -> Option<SymbolKind> {
         if let Some(symbol) = self.lookup_type_symbol(name) {

@@ -295,6 +295,7 @@ impl FunctionId {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
+    pub id: FunctionId,
     pub name: SymbolName,
     pub visibility: Visibility,
     pub type_parameters: Vec<TypeParameterId>,
@@ -304,8 +305,9 @@ pub struct Function {
 
 impl Function {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, visibility: Visibility) -> FunctionId {
-        let id = ctx.functions.len();
+        let id = FunctionId(ctx.functions.len() as u32);
         let function = Function {
+            id,
             name,
             visibility,
             type_parameters: Vec::new(),
@@ -314,7 +316,7 @@ impl Function {
         };
 
         ctx.functions.push(function);
-        FunctionId(id as u32)
+        id
     }
 
     pub fn find<'a>(ctx: &'a TypeDatabaseContext, name: &SymbolName) -> Option<&'a Function> {
@@ -353,6 +355,7 @@ impl PropertyId {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct Property {
+    pub id: PropertyId,
     pub visibility: Visibility,
     pub owner: TypeId,
     pub name: String,
@@ -361,8 +364,9 @@ pub struct Property {
 
 impl Property {
     pub fn alloc(ctx: &mut TypeDatabaseContext, owner: TypeId, name: String, visibility: Visibility) -> PropertyId {
-        let id = ctx.properties.len();
+        let id = PropertyId(ctx.properties.len() as u32);
         let property = Property {
+            id,
             visibility,
             owner,
             name,
@@ -370,7 +374,7 @@ impl Property {
         };
 
         ctx.properties.push(property);
-        PropertyId(id as u32)
+        id
     }
 }
 
@@ -427,6 +431,7 @@ impl MethodId {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
+    pub id: MethodId,
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: SymbolName,
@@ -437,10 +442,11 @@ pub struct Method {
 
 impl Method {
     pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: Identifier, visibility: Visibility) -> MethodId {
-        let id = ctx.methods.len();
+        let id = MethodId(ctx.methods.len() as u32);
         let qualified_name = SymbolName::with_root(class.name(ctx), name);
 
         let method = Method {
+            id,
             visibility,
             callee: TypeRef::new(class),
             name: qualified_name,
@@ -450,7 +456,7 @@ impl Method {
         };
 
         ctx.methods.push(method);
-        MethodId(id as u32)
+        id
     }
 }
 
@@ -657,6 +663,7 @@ impl TypeId {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
+    pub id: TypeId,
     pub kind: TypeKind,
     pub transport: TypeTransport,
     pub name: SymbolName,
@@ -669,6 +676,7 @@ impl Type {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, kind: TypeKind) -> TypeId {
         let id = TypeId(ctx.types.len() as u32);
         let method = Type {
+            id,
             kind,
             transport: TypeTransport::Reference,
             name,
@@ -678,26 +686,6 @@ impl Type {
 
         ctx.types.push(method);
         id
-    }
-
-    pub fn reference_type(name: SymbolName) -> Self {
-        Type {
-            kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
-            transport: TypeTransport::Reference,
-            name,
-            properties: IndexMap::new(),
-            methods: IndexMap::new(),
-        }
-    }
-
-    pub fn value_type(name: SymbolName) -> Self {
-        Type {
-            kind: TypeKind::Class(Box::new(Class::new(name.clone()))),
-            transport: TypeTransport::Copy,
-            name,
-            properties: IndexMap::new(),
-            methods: IndexMap::new(),
-        }
     }
 
     pub fn type_parameter(ctx: &mut TypeDatabaseContext, id: TypeParameterId, name: Identifier) -> TypeId {
@@ -775,20 +763,22 @@ impl TypeParameterId {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct TypeParameter {
+    pub id: TypeParameterId,
     pub name: String,
     pub constraints: Vec<TypeRef>,
 }
 
 impl TypeParameter {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = ctx.type_parameters.len();
+        let id = TypeParameterId(ctx.type_parameters.len() as u32);
         let param = TypeParameter {
+            id,
             name,
             constraints: Vec::new(),
         };
 
         ctx.type_parameters.push(param);
-        TypeParameterId(id as u32)
+        id
     }
 }
 
@@ -806,16 +796,7 @@ impl TypeDatabaseContext {
         Self::default()
     }
 
-    pub fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
-        if from != to {
-            // return Err(typech::errors::MismatchedTypes {
-            //     range: from.range(),
-            //     expected: from.clone(),
-            //     found: to.clone(),
-            // }
-            // .into());
-        }
-
+    pub fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<()> {
         Ok(())
     }
 }

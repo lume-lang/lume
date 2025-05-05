@@ -2,6 +2,7 @@ use indexmap::IndexMap;
 use lume_diag::handler::DiagnosticHandler;
 use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
+use symbol::CallReference;
 
 mod check;
 mod errors;
@@ -22,6 +23,9 @@ pub struct ThirBuildCtx<'a> {
 
     /// Defines a mapping between statements and their resolved types.
     pub resolved_stmts: IndexMap<StatementId, TypeRef>,
+
+    /// Defines a mapping between calls and the corresponding symbol being called.
+    pub resolved_calls: IndexMap<ExpressionId, CallReference>,
 }
 
 #[allow(dead_code)]
@@ -33,6 +37,7 @@ impl<'a> ThirBuildCtx<'a> {
             dcx: DiagnosticHandler::new(),
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
+            resolved_calls: IndexMap::new(),
         }
     }
 

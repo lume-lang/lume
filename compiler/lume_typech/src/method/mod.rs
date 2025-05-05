@@ -98,13 +98,13 @@ impl MethodLookupError<'_> {
 }
 
 impl<'tcx> ThirBuildCtx<'tcx> {
-    pub(crate) fn method_lookup(
+    pub(crate) fn method_lookup<'a>(
         &'tcx self,
         hir: &lume_hir::map::Map,
-        self_ty: &'tcx lume_types::TypeRef,
-        method_name: &'tcx Identifier,
-        args: &'tcx [lume_hir::Expression],
-        type_args: &'tcx [lume_hir::TypeArgument],
+        self_ty: &'a lume_types::TypeRef,
+        method_name: &'a Identifier,
+        args: &'a [lume_hir::Expression],
+        type_args: &'a [lume_hir::TypeArgument],
     ) -> Result<MethodLookupResult<'tcx>> {
         // Contains a list of suggestions for the method lookup, in
         // case no matching method was found.

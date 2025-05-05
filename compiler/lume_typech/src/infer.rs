@@ -2,7 +2,7 @@ use lume_diag::Result;
 use lume_hir::{self};
 use lume_types::Identifier;
 
-use crate::{check::TypeCheckerPass, symbol::SymbolKind, *};
+use crate::{check::TypeCheckerPass, *};
 
 mod define_method_bodies;
 mod define_scope;
@@ -43,6 +43,9 @@ impl ThirBuildCtx<'_> {
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
+
+        self.infer_calls(hir)?;
+
         infer::define_scope::ScopeVisitor::run(self, hir)?;
 
         self.infer_exprs(hir)?;
@@ -59,6 +62,30 @@ impl ThirBuildCtx<'_> {
             let type_ref = self.type_of(hir, expr.id)?;
 
             self.resolved_exprs.insert(*id, type_ref);
+        }
+
+        Ok(())
+    }
+
+    /// Attempt to infer the referenced callable of all call expressions in the current module.
+    ///
+    /// The resolved references are stored in the `resolved_calls` field of the `ThirBuildCtx`, which can be
+    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
+    fn infer_calls(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
+        for (id, expr) in hir.expressions() {
+            let location = expr.location.clone();
+
+            let reference = match &expr.kind {
+                lume_hir::ExpressionKind::InstanceCall(call) => {
+                    let method = self.lookup_instance_method(hir, call, location)?;
+
+                    CallReference::Method(method.id)
+                }
+                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_static_method(call, location)?,
+                _ => continue,
+            };
+
+            self.resolved_calls.insert(*id, reference);
         }
 
         Ok(())
@@ -96,35 +123,13 @@ impl ThirBuildCtx<'_> {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
             lume_hir::ExpressionKind::StaticCall(call) => {
-                let symbol = match self.lookup_symbol(&call.name) {
-                    Some(symbol) => symbol,
-                    None => {
-                        return Err(crate::errors::MissingSymbol {
-                            source: expr.location.file.clone(),
-                            range: expr.location.index.clone(),
-                            name: call.name.clone(),
-                        }
-                        .into());
-                    }
-                };
-
-                match symbol {
-                    SymbolKind::Type(type_id) => {
-                        let ty = type_id.get(self.tcx());
-
-                        Err(errors::AttemptedTypeInvocation {
-                            source: expr.location.file.clone(),
-                            range: expr.location.index.clone(),
-                            name: ty.name.clone(),
-                        }
-                        .into())
-                    }
-                    SymbolKind::Method(method_id) => {
+                match self.lookup_static_method(call, expr.location.clone())? {
+                    CallReference::Method(method_id) => {
                         let method = method_id.get(self.tcx());
 
                         Ok(method.return_type.clone())
                     }
-                    SymbolKind::Function(func_id) => {
+                    CallReference::Function(func_id) => {
                         let func = func_id.get(self.tcx());
 
                         Ok(func.return_type.clone())
@@ -132,14 +137,7 @@ impl ThirBuildCtx<'_> {
                 }
             }
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                let callee_type = self.type_of(hir, call.callee.id)?;
-                let method =
-                    match self.method_lookup(hir, &callee_type, &call.name, &call.arguments, &call.type_arguments)? {
-                        method::MethodLookupResult::Success(method) => method,
-                        method::MethodLookupResult::Failure(err) => {
-                            return Err(err.compound_err(expr.location.clone()));
-                        }
-                    };
+                let method = self.lookup_instance_method(hir, call, expr.location.clone())?;
 
                 Ok(method.return_type.clone())
             }
