@@ -1,101 +1,29 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"-0b01010101\").unwrap()"
+description: "-0b01010101"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
+[
+    Statement {
+        id: 0,
+        kind: Expression(
+            Expression {
+                id: 5871781006564002453,
+                location: <internal>:1:11,
+                kind: Literal(
+                    Literal {
+                        id: 5871781006564002453,
+                        location: <internal>:1:11,
+                        kind: Int(
+                            IntLiteral {
+                                id: 5871781006564002453,
+                                value: -85,
+                                kind: I32,
+                            },
+                        ),
                     },
                 ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: Expression(
-                                Expression {
-                                    id: 5871781006564002453,
-                                    location: <internal>:20:30,
-                                    kind: Literal(
-                                        Literal {
-                                            id: 5871781006564002453,
-                                            location: <internal>:20:30,
-                                            kind: Int(
-                                                IntLiteral {
-                                                    id: 5871781006564002453,
-                                                    value: -85,
-                                                    kind: I32,
-                                                },
-                                            ),
-                                        },
-                                    ),
-                                },
-                            ),
-                            location: <internal>:20:30,
-                        },
-                    ],
-                    location: <internal>:17:32,
-                },
-                location: <internal>:0:32,
             },
         ),
+        location: <internal>:1:11,
     },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: Expression(
-                Expression {
-                    id: 5871781006564002453,
-                    location: <internal>:20:30,
-                    kind: Literal(
-                        Literal {
-                            id: 5871781006564002453,
-                            location: <internal>:20:30,
-                            kind: Int(
-                                IntLiteral {
-                                    id: 5871781006564002453,
-                                    value: -85,
-                                    kind: I32,
-                                },
-                            ),
-                        },
-                    ),
-                },
-            ),
-            location: <internal>:20:30,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:20:30,
-            kind: Literal(
-                Literal {
-                    id: 5871781006564002453,
-                    location: <internal>:20:30,
-                    kind: Int(
-                        IntLiteral {
-                            id: 5871781006564002453,
-                            value: -85,
-                            kind: I32,
-                        },
-                    ),
-                },
-            ),
-        },
-    },
-}
+]

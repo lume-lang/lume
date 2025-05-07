@@ -1,143 +1,46 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"while true { continue; }\").unwrap()"
+description: "while true { continue; }"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: PredicateLoop(
-                                PredicateLoop {
-                                    id: 0,
-                                    condition: Expression {
-                                        id: 5871781006564002453,
-                                        location: <internal>:25:29,
-                                        kind: Literal(
-                                            Literal {
-                                                id: 5871781006564002453,
-                                                location: <internal>:25:29,
-                                                kind: Boolean(
-                                                    BooleanLiteral {
-                                                        id: 5871781006564002453,
-                                                        value: true,
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                    block: Block {
-                                        statements: [
-                                            Statement {
-                                                id: 11743562013128004906,
-                                                kind: Continue(
-                                                    Continue {
-                                                        id: 11743562013128004906,
-                                                    },
-                                                ),
-                                                location: <internal>:32:41,
-                                            },
-                                        ],
-                                        location: <internal>:30:43,
-                                    },
-                                    location: <internal>:19:43,
+[
+    Statement {
+        id: 0,
+        kind: PredicateLoop(
+            PredicateLoop {
+                id: 0,
+                condition: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:6:10,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:6:10,
+                            kind: Boolean(
+                                BooleanLiteral {
+                                    id: 5871781006564002453,
+                                    value: true,
                                 },
                             ),
-                            location: <internal>:19:43,
-                        },
-                    ],
-                    location: <internal>:17:45,
-                },
-                location: <internal>:0:45,
-            },
-        ),
-    },
-    statements: {
-        11743562013128004906: Statement {
-            id: 11743562013128004906,
-            kind: Continue(
-                Continue {
-                    id: 11743562013128004906,
-                },
-            ),
-            location: <internal>:32:41,
-        },
-        0: Statement {
-            id: 0,
-            kind: PredicateLoop(
-                PredicateLoop {
-                    id: 0,
-                    condition: Expression {
-                        id: 5871781006564002453,
-                        location: <internal>:25:29,
-                        kind: Literal(
-                            Literal {
-                                id: 5871781006564002453,
-                                location: <internal>:25:29,
-                                kind: Boolean(
-                                    BooleanLiteral {
-                                        id: 5871781006564002453,
-                                        value: true,
-                                    },
-                                ),
-                            },
-                        ),
-                    },
-                    block: Block {
-                        statements: [
-                            Statement {
-                                id: 11743562013128004906,
-                                kind: Continue(
-                                    Continue {
-                                        id: 11743562013128004906,
-                                    },
-                                ),
-                                location: <internal>:32:41,
-                            },
-                        ],
-                        location: <internal>:30:43,
-                    },
-                    location: <internal>:19:43,
-                },
-            ),
-            location: <internal>:19:43,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:25:29,
-            kind: Literal(
-                Literal {
-                    id: 5871781006564002453,
-                    location: <internal>:25:29,
-                    kind: Boolean(
-                        BooleanLiteral {
-                            id: 5871781006564002453,
-                            value: true,
                         },
                     ),
                 },
-            ),
-        },
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 11743562013128004906,
+                            kind: Continue(
+                                Continue {
+                                    id: 11743562013128004906,
+                                },
+                            ),
+                            location: <internal>:13:22,
+                        },
+                    ],
+                    location: <internal>:11:24,
+                },
+                location: <internal>:0:24,
+            },
+        ),
+        location: <internal>:0:24,
     },
-}
+]

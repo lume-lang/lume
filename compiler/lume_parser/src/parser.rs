@@ -1155,7 +1155,7 @@ impl Parser {
 
     /// Parses zero-or-more abstract statements at the current cursor position.
     #[allow(dead_code)]
-    fn parse_statements(&mut self) -> Result<Vec<Statement>> {
+    pub fn parse_statements(&mut self) -> Result<Vec<Statement>> {
         let mut statements = Vec::new();
 
         while !self.eof() {

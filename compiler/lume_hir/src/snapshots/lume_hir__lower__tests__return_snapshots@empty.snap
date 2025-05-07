@@ -1,57 +1,16 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"return;\").unwrap()"
+description: return;
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: Return(
-                                Return {
-                                    id: 0,
-                                    value: None,
-                                },
-                            ),
-                            location: <internal>:19:26,
-                        },
-                    ],
-                    location: <internal>:17:28,
-                },
-                location: <internal>:0:28,
+[
+    Statement {
+        id: 0,
+        kind: Return(
+            Return {
+                id: 0,
+                value: None,
             },
         ),
+        location: <internal>:0:7,
     },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: Return(
-                Return {
-                    id: 0,
-                    value: None,
-                },
-            ),
-            location: <internal>:19:26,
-        },
-    },
-    expressions: {},
-}
+]

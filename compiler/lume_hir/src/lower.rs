@@ -156,13 +156,9 @@ pub struct LowerModule<'a> {
 }
 
 impl<'a> LowerModule<'a> {
-    /// Lowers the single given source module into HIR.
-    pub fn lower(
-        map: &'a mut hir::map::Map,
-        file: Arc<SourceFile>,
-        expressions: Vec<ast::TopLevelExpression>,
-    ) -> Result<()> {
-        let mut lower = LowerModule {
+    /// Creates a new lowerer for creating HIR maps from AST.
+    pub fn new(map: &mut hir::map::Map, file: Arc<SourceFile>) -> LowerModule {
+        LowerModule {
             file,
             map,
             locals: hir::symbols::SymbolTable::new(),
@@ -170,8 +166,16 @@ impl<'a> LowerModule<'a> {
             namespace: hir::NamespacePath::empty(),
             self_type: None,
             local_id_counter: 0,
-        };
+        }
+    }
 
+    /// Lowers the single given source module into HIR.
+    pub fn lower(
+        map: &'a mut hir::map::Map,
+        file: Arc<SourceFile>,
+        expressions: Vec<ast::TopLevelExpression>,
+    ) -> Result<()> {
+        let mut lower = LowerModule::new(map, file);
         lower.insert_implicit_imports()?;
 
         for expr in expressions {
@@ -1333,10 +1337,22 @@ mod tests {
     }
 
     #[track_caller]
-    fn lower_expr(input: &str) -> Result<hir::map::Map> {
-        let source = format!("fn foo() -> void {{ {} }}", input);
+    fn lower_expr(input: &str) -> Result<Vec<hir::Statement>> {
+        let source = Arc::new(SourceFile::internal(input));
+        let mut state = lume_state::State::default();
 
-        lower(&source)
+        state.source_map.insert(source.clone());
+
+        let mut parser = Parser::new_with_str(input);
+        parser.prepare()?;
+
+        let statements = parser.parse_statements()?;
+
+        let module_id = PackageId::empty();
+        let mut map = hir::map::Map::empty(module_id);
+        let mut lower = LowerModule::new(&mut map, source);
+
+        lower.statements(statements)
     }
 
     macro_rules! set_snapshot_suffix {
@@ -1354,7 +1370,12 @@ mod tests {
         ) => {
             set_snapshot_suffix!( $($expr),+ );
 
-            insta::assert_debug_snapshot!(lower($input).unwrap());
+            insta::with_settings!({
+                description => $input,
+                omit_expression => true
+            }, {
+                insta::assert_debug_snapshot!(lower($input).unwrap());
+            });
         };
     }
 
@@ -1365,7 +1386,12 @@ mod tests {
         ) => {
             set_snapshot_suffix!( $($expr),+ );
 
-            insta::assert_debug_snapshot!(lower($input).unwrap_err());
+            insta::with_settings!({
+                description => $input,
+                omit_expression => true
+            }, {
+                insta::assert_debug_snapshot!(lower($input).unwrap_err());
+            });
         };
     }
 
@@ -1376,7 +1402,12 @@ mod tests {
         ) => {
             set_snapshot_suffix!( $($expr),+ );
 
-            insta::assert_debug_snapshot!(lower_expr($input).unwrap());
+            insta::with_settings!({
+                description => $input,
+                omit_expression => true
+            }, {
+                insta::assert_debug_snapshot!(lower_expr($input).unwrap());
+            });
         };
     }
 

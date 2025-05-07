@@ -1,117 +1,37 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let IDENT = 0;\").unwrap()"
+description: let IDENT = 0;
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: Variable(
-                                VariableDeclaration {
-                                    id: 0,
-                                    name: Identifier {
-                                        name: "IDENT",
-                                        location: <internal>:23:28,
-                                    },
-                                    declared_type: None,
-                                    value: Expression {
-                                        id: 5871781006564002453,
-                                        location: <internal>:31:32,
-                                        kind: Literal(
-                                            Literal {
-                                                id: 5871781006564002453,
-                                                location: <internal>:31:32,
-                                                kind: Int(
-                                                    IntLiteral {
-                                                        id: 5871781006564002453,
-                                                        value: 0,
-                                                        kind: I32,
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "IDENT",
+                    location: <internal>:4:9,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:12:13,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:12:13,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 0,
+                                    kind: I32,
                                 },
                             ),
-                            location: <internal>:19:33,
-                        },
-                    ],
-                    location: <internal>:17:35,
-                },
-                location: <internal>:0:35,
-            },
-        ),
-    },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: Variable(
-                VariableDeclaration {
-                    id: 0,
-                    name: Identifier {
-                        name: "IDENT",
-                        location: <internal>:23:28,
-                    },
-                    declared_type: None,
-                    value: Expression {
-                        id: 5871781006564002453,
-                        location: <internal>:31:32,
-                        kind: Literal(
-                            Literal {
-                                id: 5871781006564002453,
-                                location: <internal>:31:32,
-                                kind: Int(
-                                    IntLiteral {
-                                        id: 5871781006564002453,
-                                        value: 0,
-                                        kind: I32,
-                                    },
-                                ),
-                            },
-                        ),
-                    },
-                },
-            ),
-            location: <internal>:19:33,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:31:32,
-            kind: Literal(
-                Literal {
-                    id: 5871781006564002453,
-                    location: <internal>:31:32,
-                    kind: Int(
-                        IntLiteral {
-                            id: 5871781006564002453,
-                            value: 0,
-                            kind: I32,
                         },
                     ),
                 },
-            ),
-        },
+            },
+        ),
+        location: <internal>:0:14,
     },
-}
+]

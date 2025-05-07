@@ -1,98 +1,28 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"true\").unwrap()"
+description: "true"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
+[
+    Statement {
+        id: 0,
+        kind: Expression(
+            Expression {
+                id: 5871781006564002453,
+                location: <internal>:0:4,
+                kind: Literal(
+                    Literal {
+                        id: 5871781006564002453,
+                        location: <internal>:0:4,
+                        kind: Boolean(
+                            BooleanLiteral {
+                                id: 5871781006564002453,
+                                value: true,
+                            },
+                        ),
                     },
                 ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: Expression(
-                                Expression {
-                                    id: 5871781006564002453,
-                                    location: <internal>:19:23,
-                                    kind: Literal(
-                                        Literal {
-                                            id: 5871781006564002453,
-                                            location: <internal>:19:23,
-                                            kind: Boolean(
-                                                BooleanLiteral {
-                                                    id: 5871781006564002453,
-                                                    value: true,
-                                                },
-                                            ),
-                                        },
-                                    ),
-                                },
-                            ),
-                            location: <internal>:19:23,
-                        },
-                    ],
-                    location: <internal>:17:25,
-                },
-                location: <internal>:0:25,
             },
         ),
+        location: <internal>:0:4,
     },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: Expression(
-                Expression {
-                    id: 5871781006564002453,
-                    location: <internal>:19:23,
-                    kind: Literal(
-                        Literal {
-                            id: 5871781006564002453,
-                            location: <internal>:19:23,
-                            kind: Boolean(
-                                BooleanLiteral {
-                                    id: 5871781006564002453,
-                                    value: true,
-                                },
-                            ),
-                        },
-                    ),
-                },
-            ),
-            location: <internal>:19:23,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:19:23,
-            kind: Literal(
-                Literal {
-                    id: 5871781006564002453,
-                    location: <internal>:19:23,
-                    kind: Boolean(
-                        BooleanLiteral {
-                            id: 5871781006564002453,
-                            value: true,
-                        },
-                    ),
-                },
-            ),
-        },
-    },
-}
+]

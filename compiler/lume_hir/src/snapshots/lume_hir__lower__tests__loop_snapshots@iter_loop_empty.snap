@@ -1,168 +1,54 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"for pattern in [1, 2, 3] { }\").unwrap()"
+description: "for pattern in [1, 2, 3] { }"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: IteratorLoop(
-                                IteratorLoop {
-                                    id: 0,
-                                    collection: Expression {
-                                        id: 5871781006564002453,
-                                        location: <internal>:34:35,
-                                        kind: StaticCall(
-                                            StaticCall {
-                                                id: 5871781006564002453,
-                                                name: std::Array::with_capacity,
-                                                type_arguments: [
-                                                    Implicit {
-                                                        location: <internal>:0:0,
-                                                    },
-                                                ],
-                                                arguments: [
-                                                    Expression {
-                                                        id: 11743562013128004906,
-                                                        location: <internal>:0:0,
-                                                        kind: Literal(
-                                                            Literal {
-                                                                id: 17615343019692007359,
-                                                                location: <internal>:0:0,
-                                                                kind: Int(
-                                                                    IntLiteral {
-                                                                        id: 5040379952546458196,
-                                                                        value: 3,
-                                                                        kind: U64,
-                                                                    },
-                                                                ),
-                                                            },
-                                                        ),
-                                                    },
-                                                ],
-                                            },
-                                        ),
-                                    },
-                                    block: Block {
-                                        statements: [],
-                                        location: <internal>:44:47,
-                                    },
-                                    location: <internal>:19:47,
-                                },
-                            ),
-                            location: <internal>:19:47,
-                        },
-                    ],
-                    location: <internal>:17:49,
-                },
-                location: <internal>:0:49,
-            },
-        ),
-    },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: IteratorLoop(
-                IteratorLoop {
-                    id: 0,
-                    collection: Expression {
-                        id: 5871781006564002453,
-                        location: <internal>:34:35,
-                        kind: StaticCall(
-                            StaticCall {
-                                id: 5871781006564002453,
-                                name: std::Array::with_capacity,
-                                type_arguments: [
-                                    Implicit {
-                                        location: <internal>:0:0,
-                                    },
-                                ],
-                                arguments: [
-                                    Expression {
-                                        id: 11743562013128004906,
-                                        location: <internal>:0:0,
-                                        kind: Literal(
-                                            Literal {
-                                                id: 17615343019692007359,
-                                                location: <internal>:0:0,
-                                                kind: Int(
-                                                    IntLiteral {
-                                                        id: 5040379952546458196,
-                                                        value: 3,
-                                                        kind: U64,
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                ],
-                            },
-                        ),
-                    },
-                    block: Block {
-                        statements: [],
-                        location: <internal>:44:47,
-                    },
-                    location: <internal>:19:47,
-                },
-            ),
-            location: <internal>:19:47,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:34:35,
-            kind: StaticCall(
-                StaticCall {
+[
+    Statement {
+        id: 0,
+        kind: IteratorLoop(
+            IteratorLoop {
+                id: 0,
+                collection: Expression {
                     id: 5871781006564002453,
-                    name: std::Array::with_capacity,
-                    type_arguments: [
-                        Implicit {
-                            location: <internal>:0:0,
-                        },
-                    ],
-                    arguments: [
-                        Expression {
-                            id: 11743562013128004906,
-                            location: <internal>:0:0,
-                            kind: Literal(
-                                Literal {
-                                    id: 17615343019692007359,
+                    location: <internal>:15:16,
+                    kind: StaticCall(
+                        StaticCall {
+                            id: 5871781006564002453,
+                            name: std::Array::with_capacity,
+                            type_arguments: [
+                                Implicit {
                                     location: <internal>:0:0,
-                                    kind: Int(
-                                        IntLiteral {
-                                            id: 5040379952546458196,
-                                            value: 3,
-                                            kind: U64,
+                                },
+                            ],
+                            arguments: [
+                                Expression {
+                                    id: 11743562013128004906,
+                                    location: <internal>:0:0,
+                                    kind: Literal(
+                                        Literal {
+                                            id: 17615343019692007359,
+                                            location: <internal>:0:0,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: 5040379952546458196,
+                                                    value: 3,
+                                                    kind: U64,
+                                                },
+                                            ),
                                         },
                                     ),
                                 },
-                            ),
+                            ],
                         },
-                    ],
+                    ),
                 },
-            ),
-        },
+                block: Block {
+                    statements: [],
+                    location: <internal>:25:28,
+                },
+                location: <internal>:0:28,
+            },
+        ),
+        location: <internal>:0:28,
     },
-}
+]

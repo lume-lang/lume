@@ -1,226 +1,68 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"while true { let a = 0; }\").unwrap()"
+description: "while true { let a = 0; }"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
+[
+    Statement {
+        id: 0,
+        kind: PredicateLoop(
+            PredicateLoop {
+                id: 0,
+                condition: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:6:10,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:6:10,
+                            kind: Boolean(
+                                BooleanLiteral {
+                                    id: 5871781006564002453,
+                                    value: true,
+                                },
+                            ),
+                        },
+                    ),
+                },
                 block: Block {
                     statements: [
                         Statement {
-                            id: 0,
-                            kind: PredicateLoop(
-                                PredicateLoop {
-                                    id: 0,
-                                    condition: Expression {
-                                        id: 5871781006564002453,
-                                        location: <internal>:25:29,
+                            id: 11743562013128004906,
+                            kind: Variable(
+                                VariableDeclaration {
+                                    id: 11743562013128004906,
+                                    name: Identifier {
+                                        name: "a",
+                                        location: <internal>:17:18,
+                                    },
+                                    declared_type: None,
+                                    value: Expression {
+                                        id: 17615343019692007359,
+                                        location: <internal>:21:22,
                                         kind: Literal(
                                             Literal {
-                                                id: 5871781006564002453,
-                                                location: <internal>:25:29,
-                                                kind: Boolean(
-                                                    BooleanLiteral {
-                                                        id: 5871781006564002453,
-                                                        value: true,
+                                                id: 17615343019692007359,
+                                                location: <internal>:21:22,
+                                                kind: Int(
+                                                    IntLiteral {
+                                                        id: 17615343019692007359,
+                                                        value: 0,
+                                                        kind: I32,
                                                     },
                                                 ),
                                             },
                                         ),
                                     },
-                                    block: Block {
-                                        statements: [
-                                            Statement {
-                                                id: 11743562013128004906,
-                                                kind: Variable(
-                                                    VariableDeclaration {
-                                                        id: 11743562013128004906,
-                                                        name: Identifier {
-                                                            name: "a",
-                                                            location: <internal>:36:37,
-                                                        },
-                                                        declared_type: None,
-                                                        value: Expression {
-                                                            id: 17615343019692007359,
-                                                            location: <internal>:40:41,
-                                                            kind: Literal(
-                                                                Literal {
-                                                                    id: 17615343019692007359,
-                                                                    location: <internal>:40:41,
-                                                                    kind: Int(
-                                                                        IntLiteral {
-                                                                            id: 17615343019692007359,
-                                                                            value: 0,
-                                                                            kind: I32,
-                                                                        },
-                                                                    ),
-                                                                },
-                                                            ),
-                                                        },
-                                                    },
-                                                ),
-                                                location: <internal>:32:42,
-                                            },
-                                        ],
-                                        location: <internal>:30:44,
-                                    },
-                                    location: <internal>:19:44,
                                 },
                             ),
-                            location: <internal>:19:44,
+                            location: <internal>:13:23,
                         },
                     ],
-                    location: <internal>:17:46,
+                    location: <internal>:11:25,
                 },
-                location: <internal>:0:46,
+                location: <internal>:0:25,
             },
         ),
+        location: <internal>:0:25,
     },
-    statements: {
-        11743562013128004906: Statement {
-            id: 11743562013128004906,
-            kind: Variable(
-                VariableDeclaration {
-                    id: 11743562013128004906,
-                    name: Identifier {
-                        name: "a",
-                        location: <internal>:36:37,
-                    },
-                    declared_type: None,
-                    value: Expression {
-                        id: 17615343019692007359,
-                        location: <internal>:40:41,
-                        kind: Literal(
-                            Literal {
-                                id: 17615343019692007359,
-                                location: <internal>:40:41,
-                                kind: Int(
-                                    IntLiteral {
-                                        id: 17615343019692007359,
-                                        value: 0,
-                                        kind: I32,
-                                    },
-                                ),
-                            },
-                        ),
-                    },
-                },
-            ),
-            location: <internal>:32:42,
-        },
-        0: Statement {
-            id: 0,
-            kind: PredicateLoop(
-                PredicateLoop {
-                    id: 0,
-                    condition: Expression {
-                        id: 5871781006564002453,
-                        location: <internal>:25:29,
-                        kind: Literal(
-                            Literal {
-                                id: 5871781006564002453,
-                                location: <internal>:25:29,
-                                kind: Boolean(
-                                    BooleanLiteral {
-                                        id: 5871781006564002453,
-                                        value: true,
-                                    },
-                                ),
-                            },
-                        ),
-                    },
-                    block: Block {
-                        statements: [
-                            Statement {
-                                id: 11743562013128004906,
-                                kind: Variable(
-                                    VariableDeclaration {
-                                        id: 11743562013128004906,
-                                        name: Identifier {
-                                            name: "a",
-                                            location: <internal>:36:37,
-                                        },
-                                        declared_type: None,
-                                        value: Expression {
-                                            id: 17615343019692007359,
-                                            location: <internal>:40:41,
-                                            kind: Literal(
-                                                Literal {
-                                                    id: 17615343019692007359,
-                                                    location: <internal>:40:41,
-                                                    kind: Int(
-                                                        IntLiteral {
-                                                            id: 17615343019692007359,
-                                                            value: 0,
-                                                            kind: I32,
-                                                        },
-                                                    ),
-                                                },
-                                            ),
-                                        },
-                                    },
-                                ),
-                                location: <internal>:32:42,
-                            },
-                        ],
-                        location: <internal>:30:44,
-                    },
-                    location: <internal>:19:44,
-                },
-            ),
-            location: <internal>:19:44,
-        },
-    },
-    expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:25:29,
-            kind: Literal(
-                Literal {
-                    id: 5871781006564002453,
-                    location: <internal>:25:29,
-                    kind: Boolean(
-                        BooleanLiteral {
-                            id: 5871781006564002453,
-                            value: true,
-                        },
-                    ),
-                },
-            ),
-        },
-        17615343019692007359: Expression {
-            id: 17615343019692007359,
-            location: <internal>:40:41,
-            kind: Literal(
-                Literal {
-                    id: 17615343019692007359,
-                    location: <internal>:40:41,
-                    kind: Int(
-                        IntLiteral {
-                            id: 17615343019692007359,
-                            value: 0,
-                            kind: I32,
-                        },
-                    ),
-                },
-            ),
-        },
-    },
-}
+]

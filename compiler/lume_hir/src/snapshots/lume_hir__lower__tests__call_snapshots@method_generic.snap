@@ -1,153 +1,83 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower_expr(\"let _ = 1.call<T>(0, 1);\").unwrap()"
+description: "let _ = 1.call<T>(0, 1);"
 ---
-Map {
-    package: PackageId(
-        0,
-    ),
-    items: {
-        8195533856448846917: Function(
-            FunctionDefinition {
-                id: 8195533856448846917,
-                func_id: None,
-                visibility: Private,
-                name: foo,
-                parameters: [],
-                type_parameters: [],
-                return_type: Some(
-                    Type {
-                        name: void,
-                        type_params: [],
-                        location: <internal>:12:16,
-                    },
-                ),
-                block: Block {
-                    statements: [
-                        Statement {
-                            id: 0,
-                            kind: Variable(
-                                VariableDeclaration {
-                                    id: 0,
-                                    name: Identifier {
-                                        name: "_",
-                                        location: <internal>:23:24,
-                                    },
-                                    declared_type: None,
-                                    value: Expression {
-                                        id: 5871781006564002453,
-                                        location: <internal>:29:43,
-                                        kind: InstanceCall(
-                                            InstanceCall {
-                                                id: 5871781006564002453,
-                                                callee: Expression {
-                                                    id: 5040379952546458196,
-                                                    location: <internal>:27:28,
-                                                    kind: Literal(
-                                                        Literal {
-                                                            id: 5040379952546458196,
-                                                            location: <internal>:27:28,
-                                                            kind: Int(
-                                                                IntLiteral {
-                                                                    id: 5040379952546458196,
-                                                                    value: 1,
-                                                                    kind: I32,
-                                                                },
-                                                            ),
-                                                        },
-                                                    ),
-                                                },
-                                                name: Identifier {
-                                                    name: "call",
-                                                    location: <internal>:29:33,
-                                                },
-                                                type_arguments: [
-                                                    Named {
-                                                        ty: Type {
-                                                            name: T,
-                                                            type_params: [],
-                                                            location: <internal>:34:35,
-                                                        },
-                                                        location: <internal>:34:35,
-                                                    },
-                                                ],
-                                                arguments: [
-                                                    Expression {
-                                                        id: 11743562013128004906,
-                                                        location: <internal>:37:38,
-                                                        kind: Literal(
-                                                            Literal {
-                                                                id: 11743562013128004906,
-                                                                location: <internal>:37:38,
-                                                                kind: Int(
-                                                                    IntLiteral {
-                                                                        id: 11743562013128004906,
-                                                                        value: 0,
-                                                                        kind: I32,
-                                                                    },
-                                                                ),
-                                                            },
-                                                        ),
-                                                    },
-                                                    Expression {
-                                                        id: 17615343019692007359,
-                                                        location: <internal>:40:41,
-                                                        kind: Literal(
-                                                            Literal {
-                                                                id: 17615343019692007359,
-                                                                location: <internal>:40:41,
-                                                                kind: Int(
-                                                                    IntLiteral {
-                                                                        id: 17615343019692007359,
-                                                                        value: 1,
-                                                                        kind: I32,
-                                                                    },
-                                                                ),
-                                                            },
-                                                        ),
-                                                    },
-                                                ],
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:10:24,
+                    kind: InstanceCall(
+                        InstanceCall {
+                            id: 5871781006564002453,
+                            callee: Expression {
+                                id: 5040379952546458196,
+                                location: <internal>:8:9,
+                                kind: Literal(
+                                    Literal {
+                                        id: 5040379952546458196,
+                                        location: <internal>:8:9,
+                                        kind: Int(
+                                            IntLiteral {
+                                                id: 5040379952546458196,
+                                                value: 1,
+                                                kind: I32,
                                             },
                                         ),
                                     },
+                                ),
+                            },
+                            name: Identifier {
+                                name: "call",
+                                location: <internal>:10:14,
+                            },
+                            type_arguments: [
+                                Named {
+                                    ty: Type {
+                                        name: T,
+                                        type_params: [],
+                                        location: <internal>:15:16,
+                                    },
+                                    location: <internal>:15:16,
                                 },
-                            ),
-                            location: <internal>:19:43,
-                        },
-                    ],
-                    location: <internal>:17:45,
-                },
-                location: <internal>:0:45,
-            },
-        ),
-    },
-    statements: {
-        0: Statement {
-            id: 0,
-            kind: Variable(
-                VariableDeclaration {
-                    id: 0,
-                    name: Identifier {
-                        name: "_",
-                        location: <internal>:23:24,
-                    },
-                    declared_type: None,
-                    value: Expression {
-                        id: 5871781006564002453,
-                        location: <internal>:29:43,
-                        kind: InstanceCall(
-                            InstanceCall {
-                                id: 5871781006564002453,
-                                callee: Expression {
-                                    id: 5040379952546458196,
-                                    location: <internal>:27:28,
+                            ],
+                            arguments: [
+                                Expression {
+                                    id: 11743562013128004906,
+                                    location: <internal>:18:19,
                                     kind: Literal(
                                         Literal {
-                                            id: 5040379952546458196,
-                                            location: <internal>:27:28,
+                                            id: 11743562013128004906,
+                                            location: <internal>:18:19,
                                             kind: Int(
                                                 IntLiteral {
-                                                    id: 5040379952546458196,
+                                                    id: 11743562013128004906,
+                                                    value: 0,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: 17615343019692007359,
+                                    location: <internal>:21:22,
+                                    kind: Literal(
+                                        Literal {
+                                            id: 17615343019692007359,
+                                            location: <internal>:21:22,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: 17615343019692007359,
                                                     value: 1,
                                                     kind: I32,
                                                 },
@@ -155,191 +85,12 @@ Map {
                                         },
                                     ),
                                 },
-                                name: Identifier {
-                                    name: "call",
-                                    location: <internal>:29:33,
-                                },
-                                type_arguments: [
-                                    Named {
-                                        ty: Type {
-                                            name: T,
-                                            type_params: [],
-                                            location: <internal>:34:35,
-                                        },
-                                        location: <internal>:34:35,
-                                    },
-                                ],
-                                arguments: [
-                                    Expression {
-                                        id: 11743562013128004906,
-                                        location: <internal>:37:38,
-                                        kind: Literal(
-                                            Literal {
-                                                id: 11743562013128004906,
-                                                location: <internal>:37:38,
-                                                kind: Int(
-                                                    IntLiteral {
-                                                        id: 11743562013128004906,
-                                                        value: 0,
-                                                        kind: I32,
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                    Expression {
-                                        id: 17615343019692007359,
-                                        location: <internal>:40:41,
-                                        kind: Literal(
-                                            Literal {
-                                                id: 17615343019692007359,
-                                                location: <internal>:40:41,
-                                                kind: Int(
-                                                    IntLiteral {
-                                                        id: 17615343019692007359,
-                                                        value: 1,
-                                                        kind: I32,
-                                                    },
-                                                ),
-                                            },
-                                        ),
-                                    },
-                                ],
-                            },
-                        ),
-                    },
+                            ],
+                        },
+                    ),
                 },
-            ),
-            location: <internal>:19:43,
-        },
+            },
+        ),
+        location: <internal>:0:24,
     },
-    expressions: {
-        11743562013128004906: Expression {
-            id: 11743562013128004906,
-            location: <internal>:37:38,
-            kind: Literal(
-                Literal {
-                    id: 11743562013128004906,
-                    location: <internal>:37:38,
-                    kind: Int(
-                        IntLiteral {
-                            id: 11743562013128004906,
-                            value: 0,
-                            kind: I32,
-                        },
-                    ),
-                },
-            ),
-        },
-        17615343019692007359: Expression {
-            id: 17615343019692007359,
-            location: <internal>:40:41,
-            kind: Literal(
-                Literal {
-                    id: 17615343019692007359,
-                    location: <internal>:40:41,
-                    kind: Int(
-                        IntLiteral {
-                            id: 17615343019692007359,
-                            value: 1,
-                            kind: I32,
-                        },
-                    ),
-                },
-            ),
-        },
-        5040379952546458196: Expression {
-            id: 5040379952546458196,
-            location: <internal>:27:28,
-            kind: Literal(
-                Literal {
-                    id: 5040379952546458196,
-                    location: <internal>:27:28,
-                    kind: Int(
-                        IntLiteral {
-                            id: 5040379952546458196,
-                            value: 1,
-                            kind: I32,
-                        },
-                    ),
-                },
-            ),
-        },
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
-            location: <internal>:29:43,
-            kind: InstanceCall(
-                InstanceCall {
-                    id: 5871781006564002453,
-                    callee: Expression {
-                        id: 5040379952546458196,
-                        location: <internal>:27:28,
-                        kind: Literal(
-                            Literal {
-                                id: 5040379952546458196,
-                                location: <internal>:27:28,
-                                kind: Int(
-                                    IntLiteral {
-                                        id: 5040379952546458196,
-                                        value: 1,
-                                        kind: I32,
-                                    },
-                                ),
-                            },
-                        ),
-                    },
-                    name: Identifier {
-                        name: "call",
-                        location: <internal>:29:33,
-                    },
-                    type_arguments: [
-                        Named {
-                            ty: Type {
-                                name: T,
-                                type_params: [],
-                                location: <internal>:34:35,
-                            },
-                            location: <internal>:34:35,
-                        },
-                    ],
-                    arguments: [
-                        Expression {
-                            id: 11743562013128004906,
-                            location: <internal>:37:38,
-                            kind: Literal(
-                                Literal {
-                                    id: 11743562013128004906,
-                                    location: <internal>:37:38,
-                                    kind: Int(
-                                        IntLiteral {
-                                            id: 11743562013128004906,
-                                            value: 0,
-                                            kind: I32,
-                                        },
-                                    ),
-                                },
-                            ),
-                        },
-                        Expression {
-                            id: 17615343019692007359,
-                            location: <internal>:40:41,
-                            kind: Literal(
-                                Literal {
-                                    id: 17615343019692007359,
-                                    location: <internal>:40:41,
-                                    kind: Int(
-                                        IntLiteral {
-                                            id: 17615343019692007359,
-                                            value: 1,
-                                            kind: I32,
-                                        },
-                                    ),
-                                },
-                            ),
-                        },
-                    ],
-                },
-            ),
-        },
-    },
-}
+]
