@@ -1003,9 +1003,9 @@ impl Parser {
         }
 
         self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
-            let name = p.parse_identifier()?;
+            let ty = p.parse_type()?;
 
-            Ok(TypeArgument { name })
+            Ok(TypeArgument { ty })
         })
     }
 

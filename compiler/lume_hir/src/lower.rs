@@ -1217,12 +1217,8 @@ impl<'a> LowerModule<'a> {
         params
             .into_iter()
             .map(|param| {
-                let location = self.location(param.name.location.clone());
-                let ty = hir::Type {
-                    name: self.symbol_name(param.name),
-                    type_params: vec![],
-                    location: location.clone(),
-                };
+                let location = self.location(param.ty.location().clone());
+                let ty = self.type_ref(param.ty)?;
 
                 Ok(hir::TypeArgument::Named { ty, location })
             })

@@ -602,12 +602,12 @@ impl Node for TypeParameter {
 
 #[derive(serde::Serialize, Debug, Clone, PartialEq)]
 pub struct TypeArgument {
-    pub name: Identifier,
+    pub ty: Type,
 }
 
 impl Node for TypeArgument {
     fn location(&self) -> &Location {
-        &self.name.location
+        self.ty.location()
     }
 }
 

@@ -43,12 +43,12 @@ pub struct UnexpectedEndOfFile {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected token", code = "LM1050")]
+#[diagnostic(message = "unexpected token", code = "LM1050")]
 pub struct UnexpectedToken {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected {expected:?}, got {actual:?} instead")]
+    #[label("expected {expected:?}, got {actual:?} instead")]
     pub range: Range<usize>,
 
     pub expected: TokenKind,
@@ -56,12 +56,12 @@ pub struct UnexpectedToken {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected type", code = "LM1051")]
+#[diagnostic(message = "unexpected type", code = "LM1051")]
 pub struct UnexpectedType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected type, got {actual:?} instead")]
+    #[label("expected type, got {actual:?} instead")]
     pub range: Range<usize>,
 
     pub actual: TokenKind,
