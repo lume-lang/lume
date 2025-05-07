@@ -106,12 +106,27 @@ expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
                                     ],
                                     type_arguments: [
                                         TypeArgument {
-                                            name: Identifier {
-                                                name: "T",
-                                                location: Location(
-                                                    38..39,
-                                                ),
-                                            },
+                                            ty: Scalar(
+                                                ScalarType {
+                                                    name: Path {
+                                                        name: Identifier {
+                                                            name: "T",
+                                                            location: Location(
+                                                                38..39,
+                                                            ),
+                                                        },
+                                                        root: NamespacePath {
+                                                            path: [],
+                                                            location: Location(
+                                                                0..0,
+                                                            ),
+                                                        },
+                                                        location: Location(
+                                                            38..39,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
                                         },
                                     ],
                                     location: Location(

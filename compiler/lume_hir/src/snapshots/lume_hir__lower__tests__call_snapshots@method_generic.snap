@@ -63,8 +63,9 @@ Map {
                                                 },
                                                 type_arguments: [
                                                     Named {
-                                                        name: Identifier {
-                                                            name: "T",
+                                                        ty: Type {
+                                                            name: T,
+                                                            type_params: [],
                                                             location: <internal>:34:35,
                                                         },
                                                         location: <internal>:34:35,
@@ -160,8 +161,9 @@ Map {
                                 },
                                 type_arguments: [
                                     Named {
-                                        name: Identifier {
-                                            name: "T",
+                                        ty: Type {
+                                            name: T,
+                                            type_params: [],
                                             location: <internal>:34:35,
                                         },
                                         location: <internal>:34:35,
@@ -292,8 +294,9 @@ Map {
                     },
                     type_arguments: [
                         Named {
-                            name: Identifier {
-                                name: "T",
+                            ty: Type {
+                                name: T,
+                                type_params: [],
                                 location: <internal>:34:35,
                             },
                             location: <internal>:34:35,
