@@ -38,7 +38,7 @@ expression: "parse_expr(\"self.invoke()\")"
                 arguments: [],
                 type_arguments: [],
                 location: Location(
-                    5..11,
+                    5..13,
                 ),
             },
         ),

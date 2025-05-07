@@ -80,7 +80,7 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                         },
                     ],
                     location: Location(
-                        8..20,
+                        8..22,
                     ),
                 },
             ),

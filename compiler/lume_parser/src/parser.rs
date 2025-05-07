@@ -1596,10 +1596,7 @@ impl Parser {
         let arguments = self.parse_call_arguments()?;
 
         let start = name.location.start();
-        let end = match arguments.last() {
-            Some(a) => a.location().end(),
-            None => name.location.end(),
-        };
+        let end = self.token()?.end();
 
         let call = Call {
             callee,

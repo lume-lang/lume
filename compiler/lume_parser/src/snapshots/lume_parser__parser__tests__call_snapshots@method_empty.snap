@@ -46,7 +46,7 @@ expression: "parse_expr(\"let _ = a.call();\")"
                     arguments: [],
                     type_arguments: [],
                     location: Location(
-                        10..14,
+                        10..17,
                     ),
                 },
             ),

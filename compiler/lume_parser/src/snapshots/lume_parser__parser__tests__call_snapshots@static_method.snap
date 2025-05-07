@@ -63,7 +63,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                     ],
                     type_arguments: [],
                     location: Location(
-                        13..22,
+                        13..24,
                     ),
                 },
             ),

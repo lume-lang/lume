@@ -36,7 +36,7 @@ Map {
                                     declared_type: None,
                                     value: Expression {
                                         id: 5871781006564002453,
-                                        location: <internal>:27:33,
+                                        location: <internal>:27:35,
                                         kind: StaticCall(
                                             StaticCall {
                                                 id: 5871781006564002453,
@@ -88,7 +88,7 @@ Map {
                     declared_type: None,
                     value: Expression {
                         id: 5871781006564002453,
-                        location: <internal>:27:33,
+                        location: <internal>:27:35,
                         kind: StaticCall(
                             StaticCall {
                                 id: 5871781006564002453,
@@ -141,7 +141,7 @@ Map {
         },
         5871781006564002453: Expression {
             id: 5871781006564002453,
-            location: <internal>:27:33,
+            location: <internal>:27:35,
             kind: StaticCall(
                 StaticCall {
                     id: 5871781006564002453,

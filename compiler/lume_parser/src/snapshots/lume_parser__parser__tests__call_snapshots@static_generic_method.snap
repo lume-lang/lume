@@ -87,7 +87,7 @@ expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
                         },
                     ],
                     location: Location(
-                        13..25,
+                        13..27,
                     ),
                 },
             ),

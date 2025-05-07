@@ -34,7 +34,7 @@ expression: "parse_expr(\"self::invoke()\")"
                 arguments: [],
                 type_arguments: [],
                 location: Location(
-                    6..12,
+                    6..14,
                 ),
             },
         ),

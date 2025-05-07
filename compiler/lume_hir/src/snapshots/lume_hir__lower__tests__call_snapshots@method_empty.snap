@@ -36,7 +36,7 @@ Map {
                                     declared_type: None,
                                     value: Expression {
                                         id: 5871781006564002453,
-                                        location: <internal>:29:33,
+                                        location: <internal>:29:36,
                                         kind: InstanceCall(
                                             InstanceCall {
                                                 id: 5871781006564002453,
@@ -90,7 +90,7 @@ Map {
                     declared_type: None,
                     value: Expression {
                         id: 5871781006564002453,
-                        location: <internal>:29:33,
+                        location: <internal>:29:36,
                         kind: InstanceCall(
                             InstanceCall {
                                 id: 5871781006564002453,
@@ -145,7 +145,7 @@ Map {
         },
         5871781006564002453: Expression {
             id: 5871781006564002453,
-            location: <internal>:29:33,
+            location: <internal>:29:36,
             kind: InstanceCall(
                 InstanceCall {
                     id: 5871781006564002453,

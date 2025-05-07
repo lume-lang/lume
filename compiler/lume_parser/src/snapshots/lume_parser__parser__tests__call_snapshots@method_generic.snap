@@ -91,7 +91,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                         },
                     ],
                     location: Location(
-                        10..22,
+                        10..24,
                     ),
                 },
             ),

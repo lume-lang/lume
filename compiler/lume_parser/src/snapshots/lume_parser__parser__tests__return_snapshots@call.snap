@@ -51,7 +51,7 @@ expression: "parse_expr(\"return a.b(c);\")"
                         ],
                         type_arguments: [],
                         location: Location(
-                            9..12,
+                            9..14,
                         ),
                     },
                 ),
