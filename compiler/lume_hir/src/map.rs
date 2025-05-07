@@ -38,8 +38,23 @@ impl Map {
         &self.statements
     }
 
+    /// Gets the expression with the given ID.
+    pub fn expression(&self, id: ExpressionId) -> Option<&Expression> {
+        self.expressions.get(&id)
+    }
+
+    /// Gets the expression with the given ID.
+    pub fn expression_mut(&mut self, id: ExpressionId) -> Option<&mut Expression> {
+        self.expressions.get_mut(&id)
+    }
+
     /// Gets all the expressions within the HIR map.
     pub fn expressions(&self) -> &IndexMap<ExpressionId, Expression> {
         &self.expressions
+    }
+
+    /// Gets all the expressions within the HIR map.
+    pub fn expressions_mut(&mut self) -> &mut IndexMap<ExpressionId, Expression> {
+        &mut self.expressions
     }
 }

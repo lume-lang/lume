@@ -9,6 +9,7 @@ mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
+mod infer_type_args;
 
 /// Defines a list of types which are often used in other languages,
 /// but have a different name in Lume.
@@ -46,6 +47,7 @@ impl ThirBuildCtx<'_> {
 
         self.infer_calls(hir)?;
 
+        infer::infer_type_args::InferTypeArgs::run_all(self, hir)?;
         infer::define_scope::ScopeVisitor::run(self, hir)?;
 
         self.infer_exprs(hir)?;
@@ -71,7 +73,7 @@ impl ThirBuildCtx<'_> {
     ///
     /// The resolved references are stored in the `resolved_calls` field of the `ThirBuildCtx`, which can be
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
-    fn infer_calls(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
+    fn infer_calls(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (id, expr) in hir.expressions() {
             let location = expr.location.clone();
 
@@ -86,6 +88,47 @@ impl ThirBuildCtx<'_> {
             };
 
             self.resolved_calls.insert(*id, reference);
+        }
+
+        // After all calls have been resolved, we'll update the amount type parameters
+        // in the call expressions, so
+        for (id, reference) in &mut self.resolved_calls {
+            let location = hir.expression(*id).unwrap().location.clone();
+
+            let type_params = match reference {
+                CallReference::Method(id) => &id.get(self.state.tcx()).type_parameters,
+                CallReference::Function(id) => &id.get(self.state.tcx()).type_parameters,
+            };
+
+            let type_args = match &mut hir.expressions_mut().get_mut(id).unwrap().kind {
+                lume_hir::ExpressionKind::InstanceCall(call) => &mut call.type_arguments,
+                lume_hir::ExpressionKind::StaticCall(call) => &mut call.type_arguments,
+                kind => panic!("BUG: unexpected expression kind: {:?}", kind),
+            };
+
+            // If no type arguments are provided, we are expected to infer all the of them.
+            //
+            // However, if at least one is provided, but it doesn't match the number of type parameters,
+            // we raise an error, so the user doesn't invoke the wrong function / method.
+            if !type_args.is_empty() && type_args.len() != type_params.len() {
+                return Err(crate::errors::TypeArgumentMismatch {
+                    source: location.file.clone(),
+                    range: location.index.clone(),
+                    expected: type_params.len(),
+                    found: type_args.len(),
+                }
+                .into());
+            }
+
+            // If the type arguments are meant to be inferred, match the number of type arguments
+            // with the number of type parameters, using `Implicit` type arguments.
+            if type_args.is_empty() {
+                for _ in 0..type_params.len() {
+                    type_args.push(lume_hir::TypeArgument::Implicit {
+                        location: lume_span::Location::empty(),
+                    });
+                }
+            }
         }
 
         Ok(())
@@ -229,6 +272,34 @@ impl ThirBuildCtx<'_> {
 
         // Afterwards, attempt to find the type name within the type context.
         TypeId::find(self.tcx(), name)
+    }
+
+    /// Attempts to evaluate the type of the given type argument within a call expression.
+    ///
+    /// A type can container another type, either directly through a generic parameter or a
+    /// nested type, which contains the type. This method does *not* check whether the type
+    /// is used as a property type, method parameter, return type or any other member within classes,
+    /// traits or otherwise.
+    ///
+    /// ### Panics
+    ///
+    /// This method will panic if any of the given types, or any nested types, are invalid
+    /// or unregistered within the HIR or the type context.
+    pub(crate) fn type_arg_evaluate<'a>(
+        &'a self,
+        parent: &lume_types::TypeRef,
+        child: &lume_types::TypeRef,
+        arg: &'a lume_types::TypeRef,
+    ) -> Option<&'a lume_types::TypeRef> {
+        // Before anything more taxing, just check if the types are equal.
+        if parent == child {
+            return Some(arg);
+        }
+
+        match &child.get(self.tcx()).kind {
+            lume_types::TypeKind::TypeParameter(_) | lume_types::TypeKind::Void => None,
+            kind => todo!("implement type_contains for {:?}", kind),
+        }
     }
 
     /// Returns an error indicating that the given type was not found.

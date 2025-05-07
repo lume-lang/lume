@@ -3,7 +3,7 @@ use std::{ops::Range, sync::Arc};
 use lume_diag::Result;
 use lume_diag_macros::Diagnostic;
 use lume_span::SourceFile;
-use lume_types::{FunctionId, Method, MethodId, SymbolName, TypeId};
+use lume_types::{FunctionId, FunctionSig, Method, MethodId, SymbolName, TypeDatabaseContext, TypeId};
 
 use crate::ThirBuildCtx;
 
@@ -19,13 +19,23 @@ pub struct AmbiguousSymbol {
     pub name: SymbolName,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CallReference {
     /// The call refers to a function.
     Function(FunctionId),
 
     /// The call refers to a method.
     Method(MethodId),
+}
+
+impl CallReference {
+    /// Gets the signature of the inner function / method reference.
+    pub fn sig<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> FunctionSig<'a> {
+        match self {
+            CallReference::Function(id) => id.get(ctx).sig(),
+            CallReference::Method(id) => id.get(ctx).sig(),
+        }
+    }
 }
 
 /// Represents the kind of a symbol in the type inference system.

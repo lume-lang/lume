@@ -204,14 +204,14 @@ pub enum Visibility {
     Public,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
     pub idx: usize,
     pub name: String,
     pub ty: TypeRef,
 }
 
-#[derive(serde::Serialize, Default, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Default, Debug, Clone, PartialEq, Eq)]
 pub struct Parameters {
     pub params: Vec<Parameter>,
 }
@@ -240,6 +240,17 @@ impl Parameters {
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
     }
+}
+
+/// Defines the signature of a function or method, with parameters and return type.
+///
+/// While the type infers that it's only applicable for functions, this structure
+/// is also used for methods.
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+pub struct FunctionSig<'a> {
+    pub params: &'a Parameters,
+    pub type_params: &'a [TypeParameterId],
+    pub ret_ty: &'a TypeRef,
 }
 
 #[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
@@ -321,6 +332,15 @@ impl Function {
 
     pub fn find<'a>(ctx: &'a TypeDatabaseContext, name: &SymbolName) -> Option<&'a Function> {
         ctx.functions.iter().find(|f| &f.name == name)
+    }
+
+    /// Gets the signature of the function.
+    pub fn sig<'a>(&'a self) -> FunctionSig<'a> {
+        FunctionSig {
+            params: &self.parameters,
+            type_params: &self.type_parameters,
+            ret_ty: &self.return_type,
+        }
     }
 }
 
@@ -457,6 +477,15 @@ impl Method {
 
         ctx.methods.push(method);
         id
+    }
+
+    /// Gets the signature of the method.
+    pub fn sig<'a>(&'a self) -> FunctionSig<'a> {
+        FunctionSig {
+            params: &self.parameters,
+            type_params: &self.type_parameters,
+            ret_ty: &self.return_type,
+        }
     }
 }
 
@@ -699,9 +728,17 @@ impl Type {
             TypeKind::TypeParameter(id),
         )
     }
+
+    pub fn find(ctx: &TypeDatabaseContext, predicate: impl FnMut(&&Type) -> bool) -> Option<&Type> {
+        ctx.types.iter().find(predicate)
+    }
+
+    pub fn find_type_param(ctx: &TypeDatabaseContext, type_param: TypeParameterId) -> Option<&Type> {
+        Self::find(ctx, |ty| ty.kind == TypeKind::TypeParameter(type_param))
+    }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct TypeRef {
     instance_of: TypeId,
     type_arguments: Vec<TypeRef>,
@@ -713,6 +750,10 @@ impl TypeRef {
             instance_of,
             type_arguments: Vec::new(),
         }
+    }
+
+    pub fn instance_of(&self) -> TypeId {
+        self.instance_of
     }
 
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Type {
@@ -761,7 +802,7 @@ impl TypeParameterId {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
     pub id: TypeParameterId,
     pub name: String,

@@ -52,3 +52,16 @@ pub struct MissingProperty {
     pub type_name: SymbolName,
     pub property_name: Identifier,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "type argument mismatch", code = "LM4164")]
+pub struct TypeArgumentMismatch {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected {expected} type arguments, found {found}")]
+    pub range: Range<usize>,
+
+    pub expected: usize,
+    pub found: usize,
+}

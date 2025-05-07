@@ -721,17 +721,41 @@ pub struct TypeParameter {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeArgument {
-    /// Defines a named type argument, which was specified by the user.
-    Named { name: Identifier, location: Location },
+    /// Defines a named type argument, which was specified by the user, but not yet resolved.
+    Named { ty: Type, location: Location },
+
+    /// Defines a named type argument, which has been resolved.
+    Resolved {
+        ty: lume_types::TypeRef,
+        location: Location,
+    },
 
     /// Defines an implicit type argument, which is up to the compiler to infer.
     Implicit { location: Location },
+}
+
+impl TypeArgument {
+    /// Determines whether this type argument is named.
+    pub fn is_named(&self) -> bool {
+        matches!(self, TypeArgument::Named { .. })
+    }
+
+    /// Determines whether this type argument is resolved.
+    pub fn is_resolved(&self) -> bool {
+        matches!(self, TypeArgument::Resolved { .. })
+    }
+
+    /// Determines whether this type argument is implicit.
+    pub fn is_implicit(&self) -> bool {
+        matches!(self, TypeArgument::Implicit { .. })
+    }
 }
 
 impl Node for TypeArgument {
     fn location(&self) -> &Location {
         match self {
             TypeArgument::Named { location, .. } => location,
+            TypeArgument::Resolved { location, .. } => location,
             TypeArgument::Implicit { location } => location,
         }
     }
