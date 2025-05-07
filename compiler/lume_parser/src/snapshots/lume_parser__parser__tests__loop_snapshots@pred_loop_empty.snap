@@ -3,81 +3,27 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"while true { }\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..2,
-                    ),
-                },
-            ),
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
+    PredicateLoop(
+        PredicateLoop {
+            condition: Literal(
+                Boolean(
+                    BooleanLiteral {
+                        value: true,
+                        location: Location(
+                            6..10,
+                        ),
                     },
                 ),
             ),
             block: Block {
-                statements: [
-                    PredicateLoop(
-                        PredicateLoop {
-                            condition: Literal(
-                                Boolean(
-                                    BooleanLiteral {
-                                        value: true,
-                                        location: Location(
-                                            26..30,
-                                        ),
-                                    },
-                                ),
-                            ),
-                            block: Block {
-                                statements: [],
-                                location: Location(
-                                    31..34,
-                                ),
-                            },
-                            location: Location(
-                                20..34,
-                            ),
-                        },
-                    ),
-                ],
+                statements: [],
                 location: Location(
-                    18..36,
+                    11..14,
                 ),
             },
             location: Location(
-                0..36,
+                0..14,
             ),
-            documentation: None,
         },
     ),
 ]

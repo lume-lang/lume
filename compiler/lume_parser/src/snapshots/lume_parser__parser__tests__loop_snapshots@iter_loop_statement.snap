@@ -3,113 +3,59 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"for pattern in collection { let a = 0; }\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..2,
-                    ),
-                },
-            ),
-            external: false,
-            name: Identifier {
-                name: "main",
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
                 location: Location(
-                    3..7,
+                    4..11,
                 ),
             },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
+            collection: Variable(
+                Variable {
+                    name: Identifier {
+                        name: "collection",
+                        location: Location(
+                            15..25,
+                        ),
                     },
-                ),
+                },
             ),
             block: Block {
                 statements: [
-                    IteratorLoop(
-                        IteratorLoop {
-                            pattern: Identifier {
-                                name: "pattern",
+                    VariableDeclaration(
+                        VariableDeclaration {
+                            name: Identifier {
+                                name: "a",
                                 location: Location(
-                                    24..31,
+                                    32..33,
                                 ),
                             },
-                            collection: Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "collection",
+                            variable_type: None,
+                            value: Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
                                         location: Location(
-                                            35..45,
+                                            36..37,
                                         ),
+                                        kind: I32,
                                     },
-                                },
-                            ),
-                            block: Block {
-                                statements: [
-                                    VariableDeclaration(
-                                        VariableDeclaration {
-                                            name: Identifier {
-                                                name: "a",
-                                                location: Location(
-                                                    52..53,
-                                                ),
-                                            },
-                                            variable_type: None,
-                                            value: Literal(
-                                                Int(
-                                                    IntLiteral {
-                                                        value: 0,
-                                                        location: Location(
-                                                            56..57,
-                                                        ),
-                                                        kind: I32,
-                                                    },
-                                                ),
-                                            ),
-                                            location: Location(
-                                                48..58,
-                                            ),
-                                        },
-                                    ),
-                                ],
-                                location: Location(
-                                    46..60,
                                 ),
-                            },
+                            ),
                             location: Location(
-                                20..60,
+                                28..38,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..62,
+                    26..40,
                 ),
             },
             location: Location(
-                0..62,
+                0..40,
             ),
-            documentation: None,
         },
     ),
 ]

@@ -3,95 +3,41 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"for pattern in collection { continue; }\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..2,
-                    ),
-                },
-            ),
-            external: false,
-            name: Identifier {
-                name: "main",
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
                 location: Location(
-                    3..7,
+                    4..11,
                 ),
             },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
+            collection: Variable(
+                Variable {
+                    name: Identifier {
+                        name: "collection",
+                        location: Location(
+                            15..25,
+                        ),
                     },
-                ),
+                },
             ),
             block: Block {
                 statements: [
-                    IteratorLoop(
-                        IteratorLoop {
-                            pattern: Identifier {
-                                name: "pattern",
-                                location: Location(
-                                    24..31,
-                                ),
-                            },
-                            collection: Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "collection",
-                                        location: Location(
-                                            35..45,
-                                        ),
-                                    },
-                                },
-                            ),
-                            block: Block {
-                                statements: [
-                                    Continue(
-                                        Continue {
-                                            location: Location(
-                                                48..57,
-                                            ),
-                                        },
-                                    ),
-                                ],
-                                location: Location(
-                                    46..59,
-                                ),
-                            },
+                    Continue(
+                        Continue {
                             location: Location(
-                                20..59,
+                                28..37,
                             ),
                         },
                     ),
                 ],
                 location: Location(
-                    18..61,
+                    26..39,
                 ),
             },
             location: Location(
-                0..61,
+                0..39,
             ),
-            documentation: None,
         },
     ),
 ]

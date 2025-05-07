@@ -11,12 +11,12 @@ UnexpectedToken {
             0,
         ),
         name: Internal,
-        content: "fn main() -> void { let _ = [a b]; }",
+        content: "let _ = [a b];",
         package: PackageId(
             0,
         ),
     },
-    range: 31..32,
+    range: 11..12,
     expected: ,,
     actual: identifier,
 }

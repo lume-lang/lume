@@ -98,6 +98,8 @@ macro_rules! err {
 }
 
 impl Parser {
+    /// Creates a new [`Parser`] instance with the given source file as
+    /// it's input to parse.
     pub fn new(source: Arc<SourceFile>) -> Self {
         let lexer = Lexer::new(source.clone());
 
@@ -111,13 +113,32 @@ impl Parser {
         }
     }
 
+    /// Creates a new [`Parser`] for the given source code.
+    ///
+    /// This function doesn't perform any parsing itself - it simply readies
+    /// a parser to interate over tokens from it's inner lexer.
+    pub fn new_with_str(str: &str) -> Parser {
+        let source = SourceFile::internal(str);
+
+        Parser::new(Arc::new(source))
+    }
+
+    /// Creates a new [`Parser`] for the given source code.
+    ///
+    /// This function doesn't perform any parsing itself - it simply readies
+    /// a parser to interate over tokens from it's inner lexer.
+    pub fn new_with_src(state: &lume_state::State, file: SourceFileId) -> Result<Parser> {
+        let source = state.source_of(file)?;
+
+        Ok(Parser::new(source))
+    }
+
     /// Parses the given source.
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
     pub fn parse_str(str: &str) -> Result<Vec<TopLevelExpression>> {
-        let source = SourceFile::internal(str);
-        let mut parser = Parser::new(Arc::new(source));
+        let mut parser = Parser::new_with_str(str);
 
         parser.parse()
     }
@@ -127,17 +148,21 @@ impl Parser {
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
     pub fn parse_src(state: &lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
-        let src = state.source_of(file)?;
-        let mut parser = Parser::new(src);
+        let mut parser = Parser::new_with_src(state, file)?;
 
         parser.parse()
     }
 
-    /// Parses the module within the parser state.
+    /// Prepares the parser to being parsing.
     ///
-    /// This function iterates through the tokens of the module source code,
-    /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
+    /// This function iterates through the tokens of the module source code
+    /// from the lexer and moves them into the parser.
+    pub fn prepare(&mut self) -> Result<()> {
+        // If we've already tokenized something, we shouldn't add any more.
+        if !self.tokens.is_empty() {
+            return Ok(());
+        }
+
         // Pre-tokenize the input source text.
         loop {
             let token = self.lexer.next_token()?;
@@ -150,6 +175,16 @@ impl Parser {
 
             self.tokens.push(token);
         }
+
+        Ok(())
+    }
+
+    /// Parses the module within the parser state.
+    ///
+    /// This function iterates through the tokens of the module source code,
+    /// parsing each top-level expression and collecting them into a vector.
+    pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
+        self.prepare()?;
 
         let mut expressions = Vec::new();
 
@@ -1118,6 +1153,18 @@ impl Parser {
         }
     }
 
+    /// Parses zero-or-more abstract statements at the current cursor position.
+    #[allow(dead_code)]
+    fn parse_statements(&mut self) -> Result<Vec<Statement>> {
+        let mut statements = Vec::new();
+
+        while !self.eof() {
+            statements.push(self.parse_statement()?);
+        }
+
+        Ok(statements)
+    }
+
     /// Parses some abstract statement at the current cursor position.
     fn parse_statement(&mut self) -> Result<Statement> {
         match self.token()?.kind {
@@ -1825,17 +1872,19 @@ mod tests {
     }
 
     #[track_caller]
-    fn parse_expr(input: &str) -> Vec<TopLevelExpression> {
-        let source = format!("fn main() -> void {{ {0} }}", input);
+    fn parse_expr(input: &str) -> Vec<Statement> {
+        let mut parser = Parser::new_with_str(input);
 
-        parse(&source)
+        parser.prepare().unwrap();
+        parser.parse_statements().unwrap()
     }
 
     #[track_caller]
     fn parse_expr_err(input: &str) -> Error {
-        let source = format!("fn main() -> void {{ {0} }}", input);
+        let mut parser = Parser::new_with_str(input);
 
-        parse_err(&source)
+        parser.prepare().unwrap();
+        parser.parse_statements().unwrap_err()
     }
 
     macro_rules! assert_module_eq {

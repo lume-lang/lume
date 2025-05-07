@@ -3,32 +3,28 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"return a.b(c);\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..2,
-                    ),
-                },
-            ),
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
+    Return(
+        Return {
+            value: Some(
+                Call(
+                    Call {
+                        callee: Some(
+                            Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "a",
+                                        location: Location(
+                                            7..8,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ),
                         name: Path {
                             name: Identifier {
-                                name: "void",
+                                name: "b",
                                 location: Location(
-                                    13..17,
+                                    9..10,
                                 ),
                             },
                             root: NamespacePath {
@@ -38,81 +34,31 @@ expression: "parse_expr(\"return a.b(c);\")"
                                 ),
                             },
                             location: Location(
-                                13..17,
+                                9..10,
                             ),
                         },
+                        arguments: [
+                            Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "c",
+                                        location: Location(
+                                            11..12,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                        type_arguments: [],
+                        location: Location(
+                            9..12,
+                        ),
                     },
                 ),
             ),
-            block: Block {
-                statements: [
-                    Return(
-                        Return {
-                            value: Some(
-                                Call(
-                                    Call {
-                                        callee: Some(
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "a",
-                                                        location: Location(
-                                                            27..28,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ),
-                                        name: Path {
-                                            name: Identifier {
-                                                name: "b",
-                                                location: Location(
-                                                    29..30,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
-                                                ),
-                                            },
-                                            location: Location(
-                                                29..30,
-                                            ),
-                                        },
-                                        arguments: [
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "c",
-                                                        location: Location(
-                                                            31..32,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ],
-                                        type_arguments: [],
-                                        location: Location(
-                                            29..32,
-                                        ),
-                                    },
-                                ),
-                            ),
-                            location: Location(
-                                20..34,
-                            ),
-                        },
-                    ),
-                ],
-                location: Location(
-                    18..36,
-                ),
-            },
             location: Location(
-                0..36,
+                0..14,
             ),
-            documentation: None,
         },
     ),
 ]

@@ -11,11 +11,11 @@ InvalidExpression {
             0,
         ),
         name: Internal,
-        content: "fn main() -> void { return;; }",
+        content: "return;;",
         package: PackageId(
             0,
         ),
     },
-    range: 27..28,
+    range: 7..8,
     actual: ;,
 }

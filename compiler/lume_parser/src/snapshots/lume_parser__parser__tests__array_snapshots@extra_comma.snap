@@ -11,11 +11,11 @@ InvalidExpression {
             0,
         ),
         name: Internal,
-        content: "fn main() -> void { let _ = [a, ]; }",
+        content: "let _ = [a, ];",
         package: PackageId(
             0,
         ),
     },
-    range: 32..33,
+    range: 12..13,
     actual: ],
 }

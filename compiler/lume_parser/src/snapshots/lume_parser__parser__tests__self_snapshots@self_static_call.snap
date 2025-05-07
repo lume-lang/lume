@@ -3,94 +3,40 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"self::invoke()\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
+    Expression(
+        Call(
+            Call {
+                callee: None,
+                name: Path {
+                    name: Identifier {
+                        name: "invoke",
+                        location: Location(
+                            6..12,
+                        ),
+                    },
+                    root: NamespacePath {
+                        path: [
+                            Identifier {
+                                name: "self",
+                                location: Location(
+                                    0..4,
+                                ),
+                            },
+                        ],
+                        location: Location(
+                            0..0,
+                        ),
+                    },
                     location: Location(
-                        0..2,
+                        6..4,
                     ),
                 },
-            ),
-            external: false,
-            name: Identifier {
-                name: "main",
+                arguments: [],
+                type_arguments: [],
                 location: Location(
-                    3..7,
+                    6..12,
                 ),
             },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
-                    },
-                ),
-            ),
-            block: Block {
-                statements: [
-                    Expression(
-                        Call(
-                            Call {
-                                callee: None,
-                                name: Path {
-                                    name: Identifier {
-                                        name: "invoke",
-                                        location: Location(
-                                            26..32,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [
-                                            Identifier {
-                                                name: "self",
-                                                location: Location(
-                                                    20..24,
-                                                ),
-                                            },
-                                        ],
-                                        location: Location(
-                                            0..0,
-                                        ),
-                                    },
-                                    location: Location(
-                                        26..24,
-                                    ),
-                                },
-                                arguments: [],
-                                type_arguments: [],
-                                location: Location(
-                                    26..32,
-                                ),
-                            },
-                        ),
-                    ),
-                ],
-                location: Location(
-                    18..36,
-                ),
-            },
-            location: Location(
-                0..36,
-            ),
-            documentation: None,
-        },
+        ),
     ),
 ]

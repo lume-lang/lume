@@ -11,10 +11,10 @@ UnlessElseIfClause {
             0,
         ),
         name: Internal,
-        content: "fn main() -> void { unless true { } else if false {} }",
+        content: "unless true { } else if false {}",
         package: PackageId(
             0,
         ),
     },
-    range: 36..40,
+    range: 16..20,
 }

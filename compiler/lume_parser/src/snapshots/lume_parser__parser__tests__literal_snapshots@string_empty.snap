@@ -3,70 +3,16 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"\\\"\\\"\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
+    Expression(
+        Literal(
+            String(
+                StringLiteral {
+                    value: "",
                     location: Location(
                         0..2,
                     ),
                 },
             ),
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
-                    },
-                ),
-            ),
-            block: Block {
-                statements: [
-                    Expression(
-                        Literal(
-                            String(
-                                StringLiteral {
-                                    value: "",
-                                    location: Location(
-                                        20..22,
-                                    ),
-                                },
-                            ),
-                        ),
-                    ),
-                ],
-                location: Location(
-                    18..24,
-                ),
-            },
-            location: Location(
-                0..24,
-            ),
-            documentation: None,
-        },
+        ),
     ),
 ]

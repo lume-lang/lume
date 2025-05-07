@@ -3,119 +3,65 @@ source: compiler/lume_parser/src/parser.rs
 expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
 ---
 [
-    FunctionDefinition(
-        FunctionDefinition {
-            visibility: Private(
-                Private {
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
+                location: Location(
+                    4..11,
+                ),
+            },
+            collection: Array(
+                Array {
+                    values: [
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 1,
+                                    location: Location(
+                                        16..17,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 2,
+                                    location: Location(
+                                        19..20,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 3,
+                                    location: Location(
+                                        22..23,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                    ],
                     location: Location(
-                        0..2,
+                        15..16,
                     ),
                 },
             ),
-            external: false,
-            name: Identifier {
-                name: "main",
-                location: Location(
-                    3..7,
-                ),
-            },
-            parameters: [],
-            type_parameters: [],
-            return_type: Some(
-                Scalar(
-                    ScalarType {
-                        name: Path {
-                            name: Identifier {
-                                name: "void",
-                                location: Location(
-                                    13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
-                                ),
-                            },
-                            location: Location(
-                                13..17,
-                            ),
-                        },
-                    },
-                ),
-            ),
             block: Block {
-                statements: [
-                    IteratorLoop(
-                        IteratorLoop {
-                            pattern: Identifier {
-                                name: "pattern",
-                                location: Location(
-                                    24..31,
-                                ),
-                            },
-                            collection: Array(
-                                Array {
-                                    values: [
-                                        Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 1,
-                                                    location: Location(
-                                                        36..37,
-                                                    ),
-                                                    kind: I32,
-                                                },
-                                            ),
-                                        ),
-                                        Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 2,
-                                                    location: Location(
-                                                        39..40,
-                                                    ),
-                                                    kind: I32,
-                                                },
-                                            ),
-                                        ),
-                                        Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 3,
-                                                    location: Location(
-                                                        42..43,
-                                                    ),
-                                                    kind: I32,
-                                                },
-                                            ),
-                                        ),
-                                    ],
-                                    location: Location(
-                                        35..36,
-                                    ),
-                                },
-                            ),
-                            block: Block {
-                                statements: [],
-                                location: Location(
-                                    45..48,
-                                ),
-                            },
-                            location: Location(
-                                20..48,
-                            ),
-                        },
-                    ),
-                ],
+                statements: [],
                 location: Location(
-                    18..50,
+                    25..28,
                 ),
             },
             location: Location(
-                0..50,
+                0..28,
             ),
-            documentation: None,
         },
     ),
 ]
