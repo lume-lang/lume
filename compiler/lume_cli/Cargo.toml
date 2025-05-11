@@ -6,9 +6,9 @@ rust-version.workspace = true
 
 [dependencies]
 arc = { path = "../arc" }
-lume_diag = { path = "../lume_diag" }
-lume_diag_macros = { path = "../lume_diag_macros" }
 lume_driver = { path = "../lume_driver" }
 
+error_snippet = { workspace = true }
+error_snippet_derive = { workspace = true }
 getopts = "^0.2"
 owo-colors = { workspace = true }

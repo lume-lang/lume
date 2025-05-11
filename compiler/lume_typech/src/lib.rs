@@ -1,5 +1,5 @@
+use error_snippet::{GraphicalRenderer, handler::DiagnosticHandler};
 use indexmap::IndexMap;
-use lume_diag::handler::DiagnosticHandler;
 use lume_hir::{ExpressionId, StatementId, TypeParameter};
 use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
 use symbol::CallReference;
@@ -10,13 +10,12 @@ mod infer;
 mod method;
 mod symbol;
 
-#[derive(Debug)]
 pub struct ThirBuildCtx<'a> {
     /// Defines the parent state.
     state: &'a mut lume_state::State,
 
     /// Defines the diagnostics handler.
-    dcx: DiagnosticHandler<'a>,
+    dcx: DiagnosticHandler,
 
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
@@ -34,7 +33,7 @@ impl<'a> ThirBuildCtx<'a> {
     pub fn new<'tcx>(state: &'tcx mut lume_state::State) -> ThirBuildCtx<'tcx> {
         ThirBuildCtx {
             state,
-            dcx: DiagnosticHandler::new(),
+            dcx: DiagnosticHandler::with_renderer(Box::new(GraphicalRenderer::new())),
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
             resolved_calls: IndexMap::new(),
@@ -52,7 +51,7 @@ impl<'a> ThirBuildCtx<'a> {
     }
 
     /// Retrieves the diagnostics handler from the build context.
-    pub fn dcx(&'a mut self) -> &'a mut DiagnosticHandler<'a> {
+    pub fn dcx(&'a mut self) -> &'a mut DiagnosticHandler {
         &mut self.dcx
     }
 

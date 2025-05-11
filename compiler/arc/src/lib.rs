@@ -4,8 +4,8 @@ pub(crate) mod parser;
 use crate::errors::ArcfileGlobError;
 use crate::parser::ProjectParser;
 
+use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
-use lume_diag::Result;
 use lume_span::PackageId;
 use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
@@ -99,7 +99,12 @@ impl Project {
         for file in glob(&glob_pattern).unwrap() {
             let file = match file {
                 Ok(file) => file,
-                Err(err) => return Err(ArcfileGlobError { inner: err }.into()),
+                Err(err) => {
+                    return Err(ArcfileGlobError {
+                        inner: vec![err.into_diagnostic()],
+                    }
+                    .into());
+                }
             };
 
             matched_files.push(file);

@@ -5,8 +5,8 @@ use std::env;
 
 use commands::run;
 use error::{InvalidCliError, UnknownCommandError};
+use error_snippet::{GraphicalRenderer, IntoDiagnostic, Result, handler::Handler};
 use getopts::{Options, ParsingStyle};
-use lume_diag::{Result, handler::Handler};
 
 const USAGE: &str = "Usage: lume [OPTIONS] [COMMAND | FILE]
 
@@ -34,7 +34,12 @@ fn run() -> Result<i32> {
 
     let matches = match opts.parse(&args[1..]) {
         Ok(matches) => matches,
-        Err(err) => return Err(InvalidCliError { inner: err }.into()),
+        Err(err) => {
+            return Err(InvalidCliError {
+                inner: vec![err.into_diagnostic()],
+            }
+            .into());
+        }
     };
 
     if matches.opt_present("h") {
@@ -57,17 +62,14 @@ fn run() -> Result<i32> {
 }
 
 fn main() {
-    //     let msg = format!(
-    //         "could not find method {} on type {}",
-    //         format!("{}", "invok").magenta(),
-    //         format!("{}", "Testing").blue(),
-    //     );
     match run() {
         Ok(status) => std::process::exit(status),
         Err(err) => {
-            let mut handler = lume_diag::handler::DiagnosticHandler::new();
+            let renderer = Box::new(GraphicalRenderer::new());
+            let mut handler = error_snippet::handler::DiagnosticHandler::with_renderer(renderer);
+
             handler.exit_on_error();
-            handler.report_and_drain(err.as_diag());
+            handler.report_and_drain(err).unwrap();
         }
     }
 }

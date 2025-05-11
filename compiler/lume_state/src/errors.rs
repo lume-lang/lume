@@ -1,4 +1,4 @@
-use lume_diag_macros::Diagnostic;
+use error_snippet_derive::Diagnostic;
 use lume_span::SourceFileId;
 
 #[derive(Diagnostic, Debug)]

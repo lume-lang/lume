@@ -1,5 +1,5 @@
+use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_diag::Result;
 use lume_span::Location;
 
 const UNKNOWN_TYPE_ID: TypeId = TypeId(u32::MAX);

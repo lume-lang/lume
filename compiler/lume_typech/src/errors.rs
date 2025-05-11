@@ -1,6 +1,6 @@
 use std::{ops::Range, sync::Arc};
 
-use lume_diag_macros::Diagnostic;
+use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 use lume_types::{Identifier, SymbolName};
 

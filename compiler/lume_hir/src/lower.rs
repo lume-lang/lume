@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use arc::Project;
-use lume_diag::Result;
+use error_snippet::Result;
 use lume_parser::parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
 use lume_types::SymbolName;

@@ -1,7 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
-use lume_diag::Result;
-use lume_diag_macros::Diagnostic;
+use error_snippet::Result;
+use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 use lume_types::{FunctionId, FunctionSig, Method, MethodId, SymbolName, TypeDatabaseContext, TypeId};
 

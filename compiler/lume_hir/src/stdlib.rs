@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use lume_diag::Result;
+use error_snippet::Result;
 use lume_span::{PackageId, SourceFile};
 use rust_embed::Embed;
 

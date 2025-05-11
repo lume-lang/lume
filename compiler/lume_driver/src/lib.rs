@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use arc::Project;
-use lume_diag::Result;
+use error_snippet::Result;
 
 pub(crate) struct Options {
     /// Defines the structure of the Arcfile within the project.
@@ -79,7 +79,7 @@ impl Driver {
         // Then, make sure they're all valid.
         thir_ctx.typecheck(&hir)?;
 
-        println!("{:#?}", thir_ctx);
+        println!("{:#?}", thir_ctx.tcx());
 
         Ok(thir_ctx)
     }

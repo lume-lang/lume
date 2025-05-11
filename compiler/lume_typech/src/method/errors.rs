@@ -1,6 +1,6 @@
 use std::{ops::Range, sync::Arc};
 
-use lume_diag_macros::Diagnostic;
+use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 use lume_types::{Identifier, SymbolName};
 
@@ -19,7 +19,7 @@ pub struct MissingMethod {
     pub method_name: Identifier,
 
     #[related]
-    pub suggestions: Vec<SuggestedMethod>,
+    pub suggestions: Vec<error_snippet::Error>,
 }
 
 #[derive(Diagnostic, Debug)]

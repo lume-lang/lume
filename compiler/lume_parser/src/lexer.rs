@@ -2,8 +2,8 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use crate::parser::errors::*;
+use error_snippet::Result;
 use lume_ast::Identifier;
-use lume_diag::Result;
 use lume_span::SourceFile;
 
 const SYMBOLS: &[char] = &[

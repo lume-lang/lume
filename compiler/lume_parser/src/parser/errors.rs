@@ -1,7 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
+use error_snippet_derive::Diagnostic;
 use lume_ast::Type;
-use lume_diag_macros::Diagnostic;
 use lume_span::SourceFile;
 
 use crate::lexer::TokenKind;

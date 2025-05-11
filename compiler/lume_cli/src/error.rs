@@ -1,4 +1,4 @@
-use lume_diag_macros::Diagnostic;
+use error_snippet_derive::Diagnostic;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
@@ -7,8 +7,8 @@ use lume_diag_macros::Diagnostic;
     help = "Please check your CLI arguments"
 )]
 pub struct InvalidCliError {
-    #[source]
-    pub inner: getopts::Fail,
+    #[related]
+    pub inner: Vec<error_snippet::Error>,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -28,6 +28,6 @@ pub struct UnknownCommandError {
     help = "Is the build path correct?"
 )]
 pub struct CouldNotDetermineBuildPath {
-    #[source]
-    pub inner: std::io::Error,
+    #[related]
+    pub inner: Vec<error_snippet::Error>,
 }

@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
+use error_snippet::{Error, Result};
 use lume_ast::*;
-use lume_diag::Error;
-use lume_diag::Result;
 use lume_span::SourceFile;
 use lume_span::SourceFileId;
 
@@ -1852,7 +1851,7 @@ impl Parser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use lume_diag::Error;
+    use error_snippet::Error;
 
     #[track_caller]
     fn parse(input: &str) -> Vec<TopLevelExpression> {

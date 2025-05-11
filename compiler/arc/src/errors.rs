@@ -1,27 +1,28 @@
 use std::{ops::Range, sync::Arc};
 
-use lume_diag_macros::Diagnostic;
+use error_snippet::Error;
+use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
 pub struct ArcfileIoError {
-    #[source]
-    pub inner: std::io::Error,
+    #[related]
+    pub inner: Vec<Error>,
 }
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0103")]
 pub struct ArcfileGlobError {
-    #[source]
-    pub inner: glob::GlobError,
+    #[related]
+    pub inner: Vec<Error>,
 }
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to parse Arcfile", code = "ARC0104")]
 pub struct ArcfileTomlError {
-    #[source]
-    pub inner: toml_edit::TomlError,
+    #[related]
+    pub inner: Vec<Error>,
 }
 
 #[derive(Diagnostic, Debug)]

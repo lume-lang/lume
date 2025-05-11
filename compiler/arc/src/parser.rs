@@ -1,6 +1,6 @@
 use crate::{Project, Spanned, errors::*};
 
-use lume_diag::Result;
+use error_snippet::{IntoDiagnostic, Result};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 use std::{
@@ -28,7 +28,12 @@ impl ProjectParser {
     pub fn new(path: &Path) -> Result<Self> {
         let content = match std::fs::read_to_string(path) {
             Ok(content) => content,
-            Err(err) => return Err(ArcfileIoError { inner: err }.into()),
+            Err(err) => {
+                return Err(ArcfileIoError {
+                    inner: vec![err.into()],
+                }
+                .into());
+            }
         };
 
         let file_name: String = match path.file_name() {
@@ -44,7 +49,12 @@ impl ProjectParser {
     pub fn from_source(path: &Path, source: Arc<SourceFile>) -> Result<Self> {
         let document = match toml_edit::ImDocument::parse(source.content.clone()) {
             Ok(doc) => doc,
-            Err(err) => return Err(ArcfileTomlError { inner: err }.into()),
+            Err(err) => {
+                return Err(ArcfileTomlError {
+                    inner: vec![err.into_diagnostic()],
+                }
+                .into());
+            }
         };
 
         Ok(Self {
@@ -60,7 +70,7 @@ impl ProjectParser {
         let path = root.join(DEFAULT_ARCFILE);
         if !path.is_file() {
             return Err(ArcfileIoError {
-                inner: std::io::Error::new(std::io::ErrorKind::NotFound, "Arcfile not found"),
+                inner: vec![std::io::Error::new(std::io::ErrorKind::NotFound, "Arcfile not found").into()],
             }
             .into());
         }
@@ -239,6 +249,7 @@ impl ProjectParser {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use error_snippet::Error;
 
     fn parser(input: &str) -> ProjectParser {
         let source = SourceFile::internal(input.to_string());
@@ -250,7 +261,7 @@ mod tests {
         parser(input).parse().unwrap()
     }
 
-    fn parse_err(input: &str) -> lume_diag::Error {
+    fn parse_err(input: &str) -> Error {
         parser(input).parse().unwrap_err()
     }
 

@@ -1,5 +1,5 @@
+use error_snippet::Result;
 use levenshtein::levenshtein;
-use lume_diag::Result;
 use lume_span::Location;
 use lume_types::{Identifier, Method, MethodId, SymbolName};
 
@@ -69,7 +69,7 @@ pub(crate) struct MethodLookupError<'a> {
 
 impl MethodLookupError<'_> {
     /// Compound the error and inner suggestions, if any, into a suitable error.
-    pub fn compound_err(self, location: Location) -> lume_diag::Error {
+    pub fn compound_err(self, location: Location) -> error_snippet::Error {
         let suggestions = self
             .suggestions
             .into_iter()
@@ -83,8 +83,9 @@ impl MethodLookupError<'_> {
                     method_name: method_name.name,
                     reason: suggestion.reason,
                 }
+                .into()
             })
-            .collect();
+            .collect::<Vec<error_snippet::Error>>();
 
         errors::MissingMethod {
             source: location.file,

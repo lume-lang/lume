@@ -1,4 +1,4 @@
-use lume_diag::Result;
+use error_snippet::Result;
 use lume_hir::{self};
 use lume_types::Identifier;
 
@@ -303,7 +303,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Returns an error indicating that the given type was not found.
-    fn missing_type_err(&self, ty: &lume_hir::Type) -> lume_diag::Error {
+    fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             let ty_name = &ty.name.name.name;
 

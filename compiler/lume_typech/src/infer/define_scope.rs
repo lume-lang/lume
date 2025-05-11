@@ -1,4 +1,4 @@
-use lume_diag::Result;
+use error_snippet::Result;
 use lume_hir::{TypeParameter, WithTypeParameters};
 use lume_types::{FunctionId, MethodId, TypeId};
 

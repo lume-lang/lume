@@ -122,6 +122,19 @@ impl SourceFile {
     }
 }
 
+impl error_snippet::Source for SourceFile {
+    fn name(&self) -> Option<&str> {
+        match &self.name {
+            FileName::Internal => None,
+            FileName::Real(name) => name.as_os_str().to_str(),
+        }
+    }
+
+    fn content(&self) -> Box<&str> {
+        Box::new(&self.content)
+    }
+}
+
 /// Represents some marked location within a source file.
 ///
 /// This structure is used heavily throughout the compiler, to define

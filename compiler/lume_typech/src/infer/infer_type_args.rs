@@ -1,8 +1,8 @@
 use indexmap::IndexMap;
 use std::{ops::Range, sync::Arc};
 
-use lume_diag::Result;
-use lume_diag_macros::Diagnostic;
+use error_snippet::Result;
+use error_snippet_derive::Diagnostic;
 use lume_hir::{self};
 use lume_span::SourceFile;
 

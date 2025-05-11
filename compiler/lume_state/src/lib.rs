@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use lume_diag::Result;
+use error_snippet::Result;
 use lume_span::{SourceFile, SourceFileId, SourceMap};
 use lume_types::TypeDatabaseContext;
 

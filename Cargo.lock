@@ -6,12 +6,11 @@ version = 4
 name = "arc"
 version = "0.1.0"
 dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
  "glob",
  "insta",
- "lume_diag",
- "lume_diag_macros",
  "lume_span",
- "owo-colors",
  "semver",
  "toml_edit",
 ]
@@ -127,6 +126,39 @@ name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+
+[[package]]
+name = "errno"
+version = "0.3.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "976dd42dc7e85965fe702eb8164f21f450704bdde31faefd6471dba214cb594e"
+dependencies = [
+ "libc",
+ "windows-sys",
+]
+
+[[package]]
+name = "error_snippet"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee9cd392ec16001b05ad695370993777aecd587e438203fdb058f1b7bf6e4a22"
+dependencies = [
+ "error_snippet_derive",
+ "indexmap",
+ "owo-colors",
+ "terminal_size",
+]
+
+[[package]]
+name = "error_snippet_derive"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b58f49fae20b5defd8f95157de520ed3109e0771fb5ac9d0cb168f9d524bb0eb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "fxhash"
@@ -256,6 +288,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
 
 [[package]]
+name = "linux-raw-sys"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd945864f07fe9f5371a27ad7b52a172b4b499999f1d97574c9fa68373937e12"
+
+[[package]]
 name = "lume_ast"
 version = "0.1.0"
 dependencies = [
@@ -269,9 +307,9 @@ name = "lume_cli"
 version = "0.1.0"
 dependencies = [
  "arc",
+ "error_snippet",
+ "error_snippet_derive",
  "getopts",
- "lume_diag",
- "lume_diag_macros",
  "lume_driver",
  "owo-colors",
 ]
@@ -300,7 +338,8 @@ name = "lume_driver"
 version = "0.1.0"
 dependencies = [
  "arc",
- "lume_diag",
+ "error_snippet",
+ "error_snippet_derive",
  "lume_hir",
  "lume_span",
  "lume_state",
@@ -312,11 +351,11 @@ name = "lume_hir"
 version = "0.1.0"
 dependencies = [
  "arc",
+ "error_snippet",
+ "error_snippet_derive",
  "indexmap",
  "insta",
  "lume_ast",
- "lume_diag",
- "lume_diag_macros",
  "lume_macros",
  "lume_parser",
  "lume_span",
@@ -339,6 +378,8 @@ dependencies = [
 name = "lume_parser"
 version = "0.1.0"
 dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
  "insta",
  "lume_ast",
  "lume_diag",
@@ -353,6 +394,7 @@ dependencies = [
 name = "lume_span"
 version = "0.1.0"
 dependencies = [
+ "error_snippet",
  "fxhash",
  "indexmap",
  "serde",
@@ -363,9 +405,9 @@ name = "lume_state"
 version = "0.1.0"
 dependencies = [
  "arc",
+ "error_snippet",
+ "error_snippet_derive",
  "indexmap",
- "lume_diag",
- "lume_diag_macros",
  "lume_span",
  "lume_types",
  "owo-colors",
@@ -376,10 +418,10 @@ dependencies = [
 name = "lume_typech"
 version = "0.1.0"
 dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
  "indexmap",
  "levenshtein",
- "lume_diag",
- "lume_diag_macros",
  "lume_hir",
  "lume_span",
  "lume_state",
@@ -392,9 +434,9 @@ dependencies = [
 name = "lume_types"
 version = "0.1.0"
 dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
  "indexmap",
- "lume_diag",
- "lume_diag_macros",
  "lume_span",
  "serde",
 ]
@@ -512,6 +554,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustix"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c71e83d6afe7ff64890ec6b71d6a69bb8a610ab78ce364b3352876bb4c801266"
+dependencies = [
+ "bitflags",
+ "errno",
+ "libc",
+ "linux-raw-sys",
+ "windows-sys",
+]
+
+[[package]]
 name = "same-file"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -612,6 +667,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "terminal_size"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45c6481c4829e4cc63825e62c49186a34538b7b2750b73b266581ffb612fb5ed"
+dependencies = [
+ "rustix",
+ "windows-sys",
 ]
 
 [[package]]
