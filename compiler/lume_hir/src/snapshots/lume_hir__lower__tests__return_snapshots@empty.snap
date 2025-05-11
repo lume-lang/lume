@@ -1,0 +1,16 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: return;
+---
+[
+    Statement {
+        id: 0,
+        kind: Return(
+            Return {
+                id: 0,
+                value: None,
+            },
+        ),
+        location: <internal>:0:7,
+    },
+]

@@ -1,0 +1,48 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "let a = 0; if a != 1 { }"
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "a",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:8:9,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:8:9,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 0,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:10,
+    },
+    Statement {
+        id: 11743562013128004906,
+        kind: If(
+            If {
+                id: 11743562013128004906,
+                cases: [],
+                location: <internal>:11:24,
+            },
+        ),
+        location: <internal>:11:24,
+    },
+]

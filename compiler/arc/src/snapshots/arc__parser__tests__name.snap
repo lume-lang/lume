@@ -1,0 +1,27 @@
+---
+source: compiler/arc/src/parser.rs
+expression: "parse(r#\"[package]\n            name = 'some-package'\n            lume_version = '^0'\"#)"
+---
+Project {
+    id: PackageId(
+        16834419078118558222,
+    ),
+    path: "<test>",
+    name: "some-package",
+    lume_version: Spanned {
+        value: VersionReq {
+            comparators: [
+                Comparator {
+                    op: Caret,
+                    major: 0,
+                    minor: None,
+                    patch: None,
+                    pre: Prerelease(""),
+                },
+            ],
+        },
+        span: 71..75,
+    },
+    version: None,
+    description: None,
+}

@@ -1,0 +1,11 @@
+class builtin Int32 { }
+
+trait Add<T> {
+    pub fn add(other: T) -> T
+}
+
+use Add<Int32> in Int32 {
+    pub fn add(other: Int32) -> Int32 {
+        return 0
+    }
+}

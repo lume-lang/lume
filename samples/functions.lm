@@ -1,7 +1,5 @@
-fn hello_world(): int
+fn hello_world() -> int {
     print('Hello, World!')
 
     return 0
-end
-
-hello_world()
+}

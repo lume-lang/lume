@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"__IDENT__\")"
+---
+[
+    Expression(
+        Variable(
+            Variable {
+                name: Identifier {
+                    name: "__IDENT__",
+                    location: Location(
+                        0..9,
+                    ),
+                },
+            },
+        ),
+    ),
+]

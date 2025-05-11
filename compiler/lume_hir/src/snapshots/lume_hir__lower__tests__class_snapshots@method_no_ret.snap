@@ -1,0 +1,45 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                class Foo {\n                    fn bar() { }\n                }\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Class(
+                ClassDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    builtin: false,
+                    members: [
+                        Method(
+                            MethodDefinition {
+                                method_id: None,
+                                visibility: Private,
+                                name: Identifier {
+                                    name: "bar",
+                                    location: <internal>:52:55,
+                                },
+                                parameters: [],
+                                type_parameters: [],
+                                return_type: None,
+                                block: Block {
+                                    statements: [],
+                                    location: <internal>:58:61,
+                                },
+                                location: <internal>:49:61,
+                            },
+                        ),
+                    ],
+                    type_parameters: [],
+                    location: <internal>:17:79,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

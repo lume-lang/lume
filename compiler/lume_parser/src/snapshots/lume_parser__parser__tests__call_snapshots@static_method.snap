@@ -1,0 +1,75 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Call(
+                Call {
+                    callee: None,
+                    name: Path {
+                        name: Identifier {
+                            name: "call",
+                            location: Location(
+                                13..17,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [
+                                Identifier {
+                                    name: "Foo",
+                                    location: Location(
+                                        8..11,
+                                    ),
+                                },
+                            ],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            13..11,
+                        ),
+                    },
+                    arguments: [
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        18..19,
+                                    ),
+                                },
+                            },
+                        ),
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "b",
+                                    location: Location(
+                                        21..22,
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                    type_arguments: [],
+                    location: Location(
+                        13..24,
+                    ),
+                },
+            ),
+            location: Location(
+                0..24,
+            ),
+        },
+    ),
+]

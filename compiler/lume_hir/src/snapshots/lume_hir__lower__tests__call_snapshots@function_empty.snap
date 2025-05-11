@@ -1,0 +1,32 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: let _ = call();
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:8:15,
+                    kind: StaticCall(
+                        StaticCall {
+                            id: 5871781006564002453,
+                            name: call,
+                            type_arguments: [],
+                            arguments: [],
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:15,
+    },
+]

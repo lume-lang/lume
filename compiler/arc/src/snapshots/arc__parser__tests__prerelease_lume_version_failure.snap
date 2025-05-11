@@ -1,0 +1,41 @@
+---
+source: compiler/arc/src/parser.rs
+expression: parser.parse().unwrap_err()
+---
+ArcfileIncompatibleLumeVersion {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "[package]\n            name = 'some-package'\n            version = '1.0.0'\n            lume_version = '1.0.0-rc3'",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 101..112,
+    current: Version {
+        major: 1,
+        minor: 0,
+        patch: 0,
+        pre: Prerelease("rc2"),
+    },
+    required: VersionReq {
+        comparators: [
+            Comparator {
+                op: Caret,
+                major: 1,
+                minor: Some(
+                    0,
+                ),
+                patch: Some(
+                    0,
+                ),
+                pre: Prerelease("rc3"),
+            },
+        ],
+    },
+}

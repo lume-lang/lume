@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"class Test<T1,> {}\")"
+---
+ExpectedIdentifier {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "class Test<T1,> {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 14..15,
+    actual: >,
+}

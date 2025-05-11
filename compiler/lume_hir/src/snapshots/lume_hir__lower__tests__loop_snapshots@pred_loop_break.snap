@@ -1,0 +1,46 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "while true { break; }"
+---
+[
+    Statement {
+        id: 0,
+        kind: PredicateLoop(
+            PredicateLoop {
+                id: 0,
+                condition: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:6:10,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:6:10,
+                            kind: Boolean(
+                                BooleanLiteral {
+                                    id: 5871781006564002453,
+                                    value: true,
+                                },
+                            ),
+                        },
+                    ),
+                },
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 11743562013128004906,
+                            kind: Break(
+                                Break {
+                                    id: 11743562013128004906,
+                                },
+                            ),
+                            location: <internal>:13:19,
+                        },
+                    ],
+                    location: <internal>:11:21,
+                },
+                location: <internal>:0:21,
+            },
+        ),
+        location: <internal>:0:21,
+    },
+]

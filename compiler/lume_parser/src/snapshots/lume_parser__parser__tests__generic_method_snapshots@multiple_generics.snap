@@ -1,0 +1,98 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"class Test { fn test<T1, T2>() -> void {} }\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        13..15,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "test",
+                                location: Location(
+                                    16..20,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [
+                                TypeParameter {
+                                    name: Identifier {
+                                        name: "T1",
+                                        location: Location(
+                                            21..23,
+                                        ),
+                                    },
+                                    constraints: [],
+                                },
+                                TypeParameter {
+                                    name: Identifier {
+                                        name: "T2",
+                                        location: Location(
+                                            25..27,
+                                        ),
+                                    },
+                                    constraints: [],
+                                },
+                            ],
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    34..38,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                34..38,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    39..41,
+                                ),
+                            },
+                            location: Location(
+                                13..41,
+                            ),
+                            documentation: None,
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    0..43,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

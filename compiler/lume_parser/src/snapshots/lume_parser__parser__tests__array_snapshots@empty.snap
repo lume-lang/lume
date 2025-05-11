@@ -1,0 +1,28 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"let _ = [];\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Array(
+                Array {
+                    values: [],
+                    location: Location(
+                        8..9,
+                    ),
+                },
+            ),
+            location: Location(
+                0..11,
+            ),
+        },
+    ),
+]

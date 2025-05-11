@@ -1,0 +1,100 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                pub fn bar() -> Int32 {\n                    return 0;\n                }\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Public(
+                                Public {
+                                    location: Location(
+                                        41..44,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "bar",
+                                location: Location(
+                                    48..51,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    57..62,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                57..62,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [
+                                    Return(
+                                        Return {
+                                            value: Some(
+                                                Literal(
+                                                    Int(
+                                                        IntLiteral {
+                                                            value: 0,
+                                                            location: Location(
+                                                                92..93,
+                                                            ),
+                                                            kind: I32,
+                                                        },
+                                                    ),
+                                                ),
+                                            ),
+                                            location: Location(
+                                                85..94,
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                location: Location(
+                                    63..112,
+                                ),
+                            },
+                            location: Location(
+                                45..112,
+                            ),
+                            documentation: None,
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..126,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

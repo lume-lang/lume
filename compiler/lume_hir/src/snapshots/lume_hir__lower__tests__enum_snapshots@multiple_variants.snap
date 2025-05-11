@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"enum Foo { Bar, Baz }\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    cases: [
+                        EnumDefinitionCase {
+                            id: 3235109210342419196,
+                            name: Bar,
+                            parameters: [],
+                            location: <internal>:11:14,
+                        },
+                        EnumDefinitionCase {
+                            id: 443157908602914782,
+                            name: Baz,
+                            parameters: [],
+                            location: <internal>:16:19,
+                        },
+                    ],
+                    location: <internal>:0:21,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

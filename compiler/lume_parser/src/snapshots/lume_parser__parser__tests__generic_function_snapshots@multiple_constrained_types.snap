@@ -1,0 +1,112 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "test",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: Location(
+                            8..9,
+                        ),
+                    },
+                    constraints: [
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: Location(
+                                            11..18,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        11..18,
+                                    ),
+                                },
+                            },
+                        ),
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Floating",
+                                        location: Location(
+                                            21..29,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        21..29,
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                },
+            ],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    36..40,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                36..40,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    41..43,
+                ),
+            },
+            location: Location(
+                0..43,
+            ),
+            documentation: None,
+        },
+    ),
+]

@@ -1,0 +1,131 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [
+                Parameter {
+                    name: Identifier {
+                        name: "argc",
+                        location: Location(
+                            8..12,
+                        ),
+                    },
+                    param_type: Scalar(
+                        ScalarType {
+                            name: Path {
+                                name: Identifier {
+                                    name: "u8",
+                                    location: Location(
+                                        14..16,
+                                    ),
+                                },
+                                root: NamespacePath {
+                                    path: [],
+                                    location: Location(
+                                        0..0,
+                                    ),
+                                },
+                                location: Location(
+                                    14..16,
+                                ),
+                            },
+                        },
+                    ),
+                    location: Location(
+                        8..16,
+                    ),
+                },
+                Parameter {
+                    name: Identifier {
+                        name: "arcv",
+                        location: Location(
+                            18..22,
+                        ),
+                    },
+                    param_type: Array(
+                        ArrayType {
+                            element_type: Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "String",
+                                            location: Location(
+                                                25..31,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            25..31,
+                                        ),
+                                    },
+                                },
+                            ),
+                            location: Location(
+                                24..32,
+                            ),
+                        },
+                    ),
+                    location: Location(
+                        18..32,
+                    ),
+                },
+            ],
+            type_parameters: [],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    37..41,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                37..41,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    42..45,
+                ),
+            },
+            location: Location(
+                0..45,
+            ),
+            documentation: None,
+        },
+    ),
+]

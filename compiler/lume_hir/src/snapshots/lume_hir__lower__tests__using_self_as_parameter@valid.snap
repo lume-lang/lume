@@ -1,0 +1,78 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"class Foo {\n            pub fn bar(self, a: Int32) -> void { }\n        }\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Class(
+                ClassDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    builtin: false,
+                    members: [
+                        Method(
+                            MethodDefinition {
+                                method_id: None,
+                                visibility: Public,
+                                name: Identifier {
+                                    name: "bar",
+                                    location: <internal>:31:34,
+                                },
+                                parameters: [
+                                    Parameter {
+                                        id: 0,
+                                        name: Identifier {
+                                            name: "self",
+                                            location: <internal>:35:39,
+                                        },
+                                        param_type: Type {
+                                            name: Foo,
+                                            type_params: [],
+                                            location: <internal>:35:39,
+                                        },
+                                        location: <internal>:35:39,
+                                    },
+                                    Parameter {
+                                        id: 5871781006564002453,
+                                        name: Identifier {
+                                            name: "a",
+                                            location: <internal>:41:42,
+                                        },
+                                        param_type: Type {
+                                            name: std::Int32,
+                                            type_params: [],
+                                            location: <internal>:44:49,
+                                        },
+                                        location: <internal>:41:49,
+                                    },
+                                ],
+                                type_parameters: [],
+                                return_type: Some(
+                                    Type {
+                                        name: void,
+                                        type_params: [],
+                                        location: <internal>:54:58,
+                                    },
+                                ),
+                                block: Block {
+                                    statements: [],
+                                    location: <internal>:59:62,
+                                },
+                                location: <internal>:28:62,
+                            },
+                        ),
+                    ],
+                    type_parameters: [],
+                    location: <internal>:0:72,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,31 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"/// This is a doc comment\n                enum Foo {\n                    Bar\n                }\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    cases: [
+                        EnumDefinitionCase {
+                            id: 3235109210342419196,
+                            name: Bar,
+                            parameters: [],
+                            location: <internal>:73:76,
+                        },
+                    ],
+                    location: <internal>:42:94,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

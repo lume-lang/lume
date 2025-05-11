@@ -1,0 +1,67 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
+---
+[
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
+                location: Location(
+                    4..11,
+                ),
+            },
+            collection: Array(
+                Array {
+                    values: [
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 1,
+                                    location: Location(
+                                        16..17,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 2,
+                                    location: Location(
+                                        19..20,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 3,
+                                    location: Location(
+                                        22..23,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                    ],
+                    location: Location(
+                        15..16,
+                    ),
+                },
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    25..28,
+                ),
+            },
+            location: Location(
+                0..28,
+            ),
+        },
+    ),
+]

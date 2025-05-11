@@ -1,0 +1,58 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"let _ = call(a);\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Call(
+                Call {
+                    callee: None,
+                    name: Path {
+                        name: Identifier {
+                            name: "call",
+                            location: Location(
+                                8..12,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            8..12,
+                        ),
+                    },
+                    arguments: [
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        13..14,
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                    type_arguments: [],
+                    location: Location(
+                        8..16,
+                    ),
+                },
+            ),
+            location: Location(
+                0..16,
+            ),
+        },
+    ),
+]

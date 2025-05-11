@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"-0o125\")"
+---
+[
+    Expression(
+        Literal(
+            Int(
+                IntLiteral {
+                    value: -85,
+                    location: Location(
+                        1..6,
+                    ),
+                    kind: I32,
+                },
+            ),
+        ),
+    ),
+]

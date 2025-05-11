@@ -1,3 +1,6 @@
 /main.rb
 /main.lm
 **/.DS_Store
+
+/target
+/**/snapshots/*.snap.new

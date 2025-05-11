@@ -1,0 +1,28 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"/// This is a doc comment\n                type Foo = Bar\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Alias(
+                AliasDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    definition: Type {
+                        name: Bar,
+                        type_params: [],
+                        location: <internal>:53:56,
+                    },
+                    location: <internal>:42:56,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

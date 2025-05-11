@@ -1,0 +1,61 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"/// This is a doc comment\n            fn foo() -> void { }\"#)"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        38..40,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "foo",
+                location: Location(
+                    41..44,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    50..54,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                50..54,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    55..58,
+                ),
+            },
+            location: Location(
+                38..58,
+            ),
+            documentation: Some(
+                "This is a doc comment",
+            ),
+        },
+    ),
+]

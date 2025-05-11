@@ -1,0 +1,30 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "loop { break; }"
+---
+[
+    Statement {
+        id: 0,
+        kind: InfiniteLoop(
+            InfiniteLoop {
+                id: 0,
+                block: Block {
+                    statements: [
+                        Statement {
+                            id: 5871781006564002453,
+                            kind: Break(
+                                Break {
+                                    id: 5871781006564002453,
+                                },
+                            ),
+                            location: <internal>:7:13,
+                        },
+                    ],
+                    location: <internal>:5:15,
+                },
+                location: <internal>:0:15,
+            },
+        ),
+        location: <internal>:0:15,
+    },
+]

@@ -1,0 +1,79 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"class Test { fn test() -> void {} }\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        13..15,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "test",
+                                location: Location(
+                                    16..20,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "void",
+                                                location: Location(
+                                                    26..30,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                26..30,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    31..33,
+                                ),
+                            },
+                            location: Location(
+                                13..33,
+                            ),
+                            documentation: None,
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    0..35,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"for pattern in collection { }\")"
+---
+[
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
+                location: Location(
+                    4..11,
+                ),
+            },
+            collection: Variable(
+                Variable {
+                    name: Identifier {
+                        name: "collection",
+                        location: Location(
+                            15..25,
+                        ),
+                    },
+                },
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    26..29,
+                ),
+            },
+            location: Location(
+                0..29,
+            ),
+        },
+    ),
+]

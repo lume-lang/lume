@@ -1,0 +1,29 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "55"
+---
+[
+    Statement {
+        id: 0,
+        kind: Expression(
+            Expression {
+                id: 5871781006564002453,
+                location: <internal>:0:2,
+                kind: Literal(
+                    Literal {
+                        id: 5871781006564002453,
+                        location: <internal>:0:2,
+                        kind: Int(
+                            IntLiteral {
+                                id: 5871781006564002453,
+                                value: 55,
+                                kind: I32,
+                            },
+                        ),
+                    },
+                ),
+            },
+        ),
+        location: <internal>:0:2,
+    },
+]

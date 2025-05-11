@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr_err(\"let _ = [a b];\")"
+---
+UnexpectedToken {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "let _ = [a b];",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 11..12,
+    expected: ,,
+    actual: identifier,
+}

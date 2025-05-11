@@ -1,0 +1,64 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"return a.b(c);\")"
+---
+[
+    Return(
+        Return {
+            value: Some(
+                Call(
+                    Call {
+                        callee: Some(
+                            Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "a",
+                                        location: Location(
+                                            7..8,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ),
+                        name: Path {
+                            name: Identifier {
+                                name: "b",
+                                location: Location(
+                                    9..10,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                9..10,
+                            ),
+                        },
+                        arguments: [
+                            Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "c",
+                                        location: Location(
+                                            11..12,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                        type_arguments: [],
+                        location: Location(
+                            9..14,
+                        ),
+                    },
+                ),
+            ),
+            location: Location(
+                0..14,
+            ),
+        },
+    ),
+]

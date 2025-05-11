@@ -1,0 +1,52 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"fn test<T: Numeric>() -> void {}\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1608888409088296675: Function(
+            FunctionDefinition {
+                id: 1608888409088296675,
+                func_id: None,
+                visibility: Private,
+                name: test,
+                parameters: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: <internal>:8:9,
+                        },
+                        type_id: None,
+                        type_param_id: None,
+                        constraints: [
+                            Type {
+                                name: Numeric,
+                                type_params: [],
+                                location: <internal>:11:18,
+                            },
+                        ],
+                        location: <internal>:8:9,
+                    },
+                ],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:25:29,
+                    },
+                ),
+                block: Block {
+                    statements: [],
+                    location: <internal>:30:32,
+                },
+                location: <internal>:0:32,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,37 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn main() {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: None,
+            block: Block {
+                statements: [],
+                location: Location(
+                    10..12,
+                ),
+            },
+            location: Location(
+                0..12,
+            ),
+            documentation: None,
+        },
+    ),
+]

@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"unless true { } else { }\")"
+---
+[
+    Unless(
+        UnlessCondition {
+            cases: [],
+            location: Location(
+                0..24,
+            ),
+        },
+    ),
+]

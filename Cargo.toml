@@ -1,0 +1,13 @@
+[workspace]
+members = ["compiler/lume_cli"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0"
+rust-version = "1.86.0"
+
+[workspace.dependencies]
+error_snippet = { version = "=0.1.4", features = ["derive", "termsize"] }
+error_snippet_derive = { version = "=0.1.2" }
+"ariadne" = { version = "=0.5.1", features = ["auto-color"] }
+owo-colors = { version = "=4.2.0", features = ["supports-colors"] }

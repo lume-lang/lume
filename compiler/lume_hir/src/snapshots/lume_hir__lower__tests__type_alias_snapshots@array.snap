@@ -1,0 +1,34 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"type A = [B]\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        10060190011017930945: Type(
+            Alias(
+                AliasDefinition {
+                    id: 10060190011017930945,
+                    type_id: None,
+                    name: A,
+                    definition: Type {
+                        name: std::Array,
+                        type_params: [
+                            Type {
+                                name: B,
+                                type_params: [],
+                                location: <internal>:10:11,
+                            },
+                        ],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:12,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

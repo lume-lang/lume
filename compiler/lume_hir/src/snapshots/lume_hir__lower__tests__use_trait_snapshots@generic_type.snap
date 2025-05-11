@@ -1,0 +1,61 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                use Enumerable<T> in Vector<T> {\n                    pub fn next() -> T {}\n                }\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15073684727517168745: Impl(
+            TraitImplementation {
+                id: 15073684727517168745,
+                name: Type {
+                    name: Enumerable,
+                    type_params: [
+                        Type {
+                            name: T,
+                            type_params: [],
+                            location: <internal>:32:33,
+                        },
+                    ],
+                    location: <internal>:31:34,
+                },
+                target: Type {
+                    name: Vector,
+                    type_params: [
+                        Type {
+                            name: T,
+                            type_params: [],
+                            location: <internal>:45:46,
+                        },
+                    ],
+                    location: <internal>:44:47,
+                },
+                methods: [
+                    TraitMethodImplementation {
+                        visibility: Public,
+                        name: next,
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: T,
+                                type_params: [],
+                                location: <internal>:87:88,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:89:91,
+                        },
+                        location: <internal>:70:91,
+                    },
+                ],
+                location: <internal>:17:109,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

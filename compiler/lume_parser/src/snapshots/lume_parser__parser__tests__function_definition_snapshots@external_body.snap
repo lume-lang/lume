@@ -1,0 +1,20 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_err(\"fn external main() -> void {}\")"
+---
+ExternalFunctionBody {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "fn external main() -> void {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 27..28,
+}

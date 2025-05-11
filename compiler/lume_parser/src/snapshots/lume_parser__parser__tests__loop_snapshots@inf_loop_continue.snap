@@ -1,0 +1,27 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"loop { continue; }\")"
+---
+[
+    InfiniteLoop(
+        InfiniteLoop {
+            block: Block {
+                statements: [
+                    Continue(
+                        Continue {
+                            location: Location(
+                                7..16,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    5..18,
+                ),
+            },
+            location: Location(
+                0..18,
+            ),
+        },
+    ),
+]

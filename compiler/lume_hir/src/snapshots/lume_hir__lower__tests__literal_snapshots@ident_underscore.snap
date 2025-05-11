@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: let __IDENT__ = 0;
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "__IDENT__",
+                    location: <internal>:4:13,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:16:17,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:16:17,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 0,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:18,
+    },
+]

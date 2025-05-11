@@ -1,0 +1,44 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(r#\"\n                class Foo {\n                    let x: Int32;\n                }\"#).unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Class(
+                ClassDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    builtin: false,
+                    members: [
+                        Property(
+                            Property {
+                                prop_id: None,
+                                visibility: Private,
+                                name: Identifier {
+                                    name: "x",
+                                    location: <internal>:53:54,
+                                },
+                                property_type: Type {
+                                    name: std::Int32,
+                                    type_params: [],
+                                    location: <internal>:56:61,
+                                },
+                                default_value: None,
+                                location: <internal>:49:62,
+                            },
+                        ),
+                    ],
+                    type_parameters: [],
+                    location: <internal>:17:80,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

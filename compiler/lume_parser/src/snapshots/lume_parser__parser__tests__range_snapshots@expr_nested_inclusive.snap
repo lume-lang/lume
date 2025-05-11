@@ -1,0 +1,166 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Range(
+                Range {
+                    lower: Call(
+                        Call {
+                            callee: Some(
+                                Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "a",
+                                            location: Location(
+                                                10..11,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                            name: Path {
+                                name: Identifier {
+                                    name: "+",
+                                    location: Location(
+                                        12..13,
+                                    ),
+                                },
+                                root: NamespacePath {
+                                    path: [],
+                                    location: Location(
+                                        0..0,
+                                    ),
+                                },
+                                location: Location(
+                                    12..13,
+                                ),
+                            },
+                            arguments: [
+                                Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "b",
+                                            location: Location(
+                                                14..15,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
+                            type_arguments: [],
+                            location: Location(
+                                10..14,
+                            ),
+                        },
+                    ),
+                    upper: Call(
+                        Call {
+                            callee: Some(
+                                Call(
+                                    Call {
+                                        callee: Some(
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "a",
+                                                        location: Location(
+                                                            20..21,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                        ),
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "+",
+                                                location: Location(
+                                                    22..23,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                22..23,
+                                            ),
+                                        },
+                                        arguments: [
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "b",
+                                                        location: Location(
+                                                            24..25,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                        ],
+                                        type_arguments: [],
+                                        location: Location(
+                                            20..24,
+                                        ),
+                                    },
+                                ),
+                            ),
+                            name: Path {
+                                name: Identifier {
+                                    name: "+",
+                                    location: Location(
+                                        26..27,
+                                    ),
+                                },
+                                root: NamespacePath {
+                                    path: [],
+                                    location: Location(
+                                        0..0,
+                                    ),
+                                },
+                                location: Location(
+                                    26..27,
+                                ),
+                            },
+                            arguments: [
+                                Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 1,
+                                            location: Location(
+                                                28..29,
+                                            ),
+                                            kind: I32,
+                                        },
+                                    ),
+                                ),
+                            ],
+                            type_arguments: [],
+                            location: Location(
+                                20..28,
+                            ),
+                        },
+                    ),
+                    inclusive: true,
+                    location: Location(
+                        10..28,
+                    ),
+                },
+            ),
+            location: Location(
+                0..32,
+            ),
+        },
+    ),
+]

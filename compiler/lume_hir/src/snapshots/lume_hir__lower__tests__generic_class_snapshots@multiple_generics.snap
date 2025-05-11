@@ -1,0 +1,47 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"class Test<T1, T2> {}\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15340443703565705568: Type(
+            Class(
+                ClassDefinition {
+                    id: 15340443703565705568,
+                    type_id: None,
+                    name: Test,
+                    builtin: false,
+                    members: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: <internal>:11:13,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:11:13,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: <internal>:15:17,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:15:17,
+                        },
+                    ],
+                    location: <internal>:0:21,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

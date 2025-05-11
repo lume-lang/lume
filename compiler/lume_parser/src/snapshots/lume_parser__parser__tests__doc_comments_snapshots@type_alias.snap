@@ -1,0 +1,45 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"/// This is a doc comment\n            type Foo = Bar\"#)"
+---
+[
+    TypeDefinition(
+        Alias(
+            AliasDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        43..46,
+                    ),
+                },
+                definition: Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "Bar",
+                                location: Location(
+                                    49..52,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                49..52,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    38..52,
+                ),
+                documentation: Some(
+                    "This is a doc comment",
+                ),
+            },
+        ),
+    ),
+]

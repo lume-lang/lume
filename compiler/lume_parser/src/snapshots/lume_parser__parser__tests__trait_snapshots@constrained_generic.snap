@@ -1,0 +1,56 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"trait Add<T: Numeric> {}\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                10..11,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                13..20,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            13..20,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                methods: [],
+                location: Location(
+                    0..24,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

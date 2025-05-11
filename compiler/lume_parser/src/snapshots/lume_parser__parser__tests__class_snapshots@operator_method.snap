@@ -1,0 +1,99 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                pub fn ==() -> bool {\n                    return true;\n                }\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Public(
+                                Public {
+                                    location: Location(
+                                        41..44,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "==",
+                                location: Location(
+                                    48..50,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: Some(
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "bool",
+                                                location: Location(
+                                                    56..60,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                56..60,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ),
+                            block: Block {
+                                statements: [
+                                    Return(
+                                        Return {
+                                            value: Some(
+                                                Literal(
+                                                    Boolean(
+                                                        BooleanLiteral {
+                                                            value: true,
+                                                            location: Location(
+                                                                90..94,
+                                                            ),
+                                                        },
+                                                    ),
+                                                ),
+                                            ),
+                                            location: Location(
+                                                83..95,
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                location: Location(
+                                    61..113,
+                                ),
+                            },
+                            location: Location(
+                                45..113,
+                            ),
+                            documentation: None,
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..127,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

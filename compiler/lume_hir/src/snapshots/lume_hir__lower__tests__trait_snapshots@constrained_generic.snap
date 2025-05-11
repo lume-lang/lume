@@ -1,0 +1,42 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"trait Add<T: Numeric> {}\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Type(
+            Trait(
+                TraitDefinition {
+                    id: 1119898709443545213,
+                    type_id: None,
+                    name: Add,
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: <internal>:10:11,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [
+                                Type {
+                                    name: Numeric,
+                                    type_params: [],
+                                    location: <internal>:13:20,
+                                },
+                            ],
+                            location: <internal>:10:11,
+                        },
+                    ],
+                    methods: [],
+                    location: <internal>:0:24,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

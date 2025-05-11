@@ -1,0 +1,25 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"trait Add { }\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Type(
+            Trait(
+                TraitDefinition {
+                    id: 1119898709443545213,
+                    type_id: None,
+                    name: Add,
+                    type_parameters: [],
+                    methods: [],
+                    location: <internal>:0:13,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,59 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"fn external main() -> void\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: true,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    12..16,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "void",
+                                location: Location(
+                                    22..26,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [],
+                                location: Location(
+                                    0..0,
+                                ),
+                            },
+                            location: Location(
+                                22..26,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    26..26,
+                ),
+            },
+            location: Location(
+                0..26,
+            ),
+            documentation: None,
+        },
+    ),
+]

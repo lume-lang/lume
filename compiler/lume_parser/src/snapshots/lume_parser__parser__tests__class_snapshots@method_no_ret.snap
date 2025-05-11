@@ -1,0 +1,57 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"\n            class Foo {\n                fn bar() { }\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        19..22,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    MethodDefinition(
+                        MethodDefinition {
+                            visibility: Private(
+                                Private {
+                                    location: Location(
+                                        41..43,
+                                    ),
+                                },
+                            ),
+                            external: false,
+                            name: Identifier {
+                                name: "bar",
+                                location: Location(
+                                    44..47,
+                                ),
+                            },
+                            parameters: [],
+                            type_parameters: [],
+                            return_type: None,
+                            block: Block {
+                                statements: [],
+                                location: Location(
+                                    50..53,
+                                ),
+                            },
+                            location: Location(
+                                41..53,
+                            ),
+                            documentation: None,
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    13..67,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

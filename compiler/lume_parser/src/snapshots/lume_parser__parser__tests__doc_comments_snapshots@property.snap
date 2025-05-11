@@ -1,0 +1,83 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(r#\"class Foo {\n                /// This is a doc comment\n                pub let bar: Int32 = 0;\n            }\"#)"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                builtin: false,
+                members: [
+                    Property(
+                        Property {
+                            visibility: Public(
+                                Public {
+                                    location: Location(
+                                        70..73,
+                                    ),
+                                },
+                            ),
+                            name: Identifier {
+                                name: "bar",
+                                location: Location(
+                                    78..81,
+                                ),
+                            },
+                            property_type: Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                83..88,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            83..88,
+                                        ),
+                                    },
+                                },
+                            ),
+                            default_value: Some(
+                                Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                91..92,
+                                            ),
+                                            kind: I32,
+                                        },
+                                    ),
+                                ),
+                            ),
+                            location: Location(
+                                74..93,
+                            ),
+                            documentation: Some(
+                                "This is a doc comment",
+                            ),
+                        },
+                    ),
+                ],
+                type_parameters: [],
+                location: Location(
+                    0..107,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

@@ -1,0 +1,26 @@
+---
+source: compiler/lume_hir/src/lower.rs
+expression: "lower(\"class Int32 {}\").unwrap()"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15249499769657949080: Type(
+            Class(
+                ClassDefinition {
+                    id: 15249499769657949080,
+                    type_id: None,
+                    name: Int32,
+                    builtin: false,
+                    members: [],
+                    type_parameters: [],
+                    location: <internal>:0:14,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

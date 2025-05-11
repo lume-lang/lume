@@ -1,0 +1,25 @@
+---
+source: compiler/lume_parser/src/parser.rs
+expression: "parse(\"class Test {}\")"
+---
+[
+    TypeDefinition(
+        Class(
+            ClassDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        6..10,
+                    ),
+                },
+                builtin: false,
+                members: [],
+                type_parameters: [],
+                location: Location(
+                    0..13,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]
