@@ -1,31 +1,7 @@
 namespace std
 
 /// Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
-class builtin Float {
-    pub fn external +(other: Float) -> Float
-    pub fn external -(other: Float) -> Float
-    pub fn external *(other: Float) -> Float
-    pub fn external /(other: Float) -> Float
-
-    pub fn external ==(other: Float) -> Boolean
-    pub fn external !=(other: Float) -> Boolean
-    pub fn external >(other: Float) -> Boolean
-    pub fn external <(other: Float) -> Boolean
-    pub fn external >=(other: Float) -> Boolean
-    pub fn external <=(other: Float) -> Boolean
-}
+struct builtin Float { }
 
 /// Represents an 64-bit double-precision floating-point number, which is precise to ~16 decimal places.
-class builtin Double {
-    pub fn external +(other: Double) -> Double
-    pub fn external -(other: Double) -> Double
-    pub fn external *(other: Double) -> Double
-    pub fn external /(other: Double) -> Double
-
-    pub fn external ==(other: Double) -> Boolean
-    pub fn external !=(other: Double) -> Boolean
-    pub fn external >(other: Double) -> Boolean
-    pub fn external <(other: Double) -> Boolean
-    pub fn external >=(other: Double) -> Boolean
-    pub fn external <=(other: Double) -> Boolean
-}
+struct builtin Double { }

@@ -21,8 +21,10 @@ namespace std
 /// ```
 /// let a: [Int32] = [10, 20, 30];
 /// ```
-class builtin Array<T>
-{
+struct Array<T>
+{ }
+
+impl<T> Array<T> {
     /// Allocates a new array with enough space for at least `capacity` elements.
     ///
     /// When creating an array with a set capacity, it's length will still be zero.

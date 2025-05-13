@@ -1,124 +1,28 @@
 namespace std
 
 /// Represents an 8-bit signed integer, which can store values from `-128` to `127`.
-class builtin Int8 {
-    pub fn external +(other: Int8) -> Int8
-    pub fn external -(other: Int8) -> Int8
-    pub fn external *(other: Int8) -> Int8
-    pub fn external /(other: Int8) -> Int8
-
-    pub fn external ==(other: Int8) -> Boolean
-    pub fn external !=(other: Int8) -> Boolean
-    pub fn external >(other: Int8) -> Boolean
-    pub fn external <(other: Int8) -> Boolean
-    pub fn external >=(other: Int8) -> Boolean
-    pub fn external <=(other: Int8) -> Boolean
-}
+struct builtin Int8 { }
 
 /// Represents an 16-bit signed integer, which can store values from `-32768` to `32767`.
-class builtin Int16 {
-    pub fn external +(other: Int16) -> Int16
-    pub fn external -(other: Int16) -> Int16
-    pub fn external *(other: Int16) -> Int16
-    pub fn external /(other: Int16) -> Int16
-
-    pub fn external ==(other: Int16) -> Boolean
-    pub fn external !=(other: Int16) -> Boolean
-    pub fn external >(other: Int16) -> Boolean
-    pub fn external <(other: Int16) -> Boolean
-    pub fn external >=(other: Int16) -> Boolean
-    pub fn external <=(other: Int16) -> Boolean
-}
+struct builtin Int16 { }
 
 /// Represents an 32-bit signed integer, which can store values from `-2147483648` to `2147483647`.
-class builtin Int32 {
-    pub fn external +(other: Int32) -> Int32
-    pub fn external -(other: Int32) -> Int32
-    pub fn external *(other: Int32) -> Int32
-    pub fn external /(other: Int32) -> Int32
-
-    pub fn external ==(other: Int32) -> Boolean
-    pub fn external !=(other: Int32) -> Boolean
-    pub fn external >(other: Int32) -> Boolean
-    pub fn external <(other: Int32) -> Boolean
-    pub fn external >=(other: Int32) -> Boolean
-    pub fn external <=(other: Int32) -> Boolean
-}
+struct builtin Int32 { }
 
 /// Represents an 64-bit signed integer, which can store values from `-9223372036854775808` to `9223372036854775807`.
-class builtin Int64 {
-    pub fn external +(other: Int64) -> Int64
-    pub fn external -(other: Int64) -> Int64
-    pub fn external *(other: Int64) -> Int64
-    pub fn external /(other: Int64) -> Int64
-
-    pub fn external ==(other: Int64) -> Boolean
-    pub fn external !=(other: Int64) -> Boolean
-    pub fn external >(other: Int64) -> Boolean
-    pub fn external <(other: Int64) -> Boolean
-    pub fn external >=(other: Int64) -> Boolean
-    pub fn external <=(other: Int64) -> Boolean
-}
+struct builtin Int64 { }
 
 /// Represents an 8-bit unsigned integer, which can store values from `0` to `255`.
-class builtin UInt8 {
-    pub fn external +(other: UInt8) -> UInt8
-    pub fn external -(other: UInt8) -> UInt8
-    pub fn external *(other: UInt8) -> UInt8
-    pub fn external /(other: UInt8) -> UInt8
-
-    pub fn external ==(other: UInt8) -> Boolean
-    pub fn external !=(other: UInt8) -> Boolean
-    pub fn external >(other: UInt8) -> Boolean
-    pub fn external <(other: UInt8) -> Boolean
-    pub fn external >=(other: UInt8) -> Boolean
-    pub fn external <=(other: UInt8) -> Boolean
-}
+struct builtin UInt8 { }
 
 /// Represents an 16-bit unsigned integer, which can store values from `0` to `65535`.
-class builtin UInt16 {
-    pub fn external +(other: UInt16) -> UInt16
-    pub fn external -(other: UInt16) -> UInt16
-    pub fn external *(other: UInt16) -> UInt16
-    pub fn external /(other: UInt16) -> UInt16
-
-    pub fn external ==(other: UInt16) -> Boolean
-    pub fn external !=(other: UInt16) -> Boolean
-    pub fn external >(other: UInt16) -> Boolean
-    pub fn external <(other: UInt16) -> Boolean
-    pub fn external >=(other: UInt16) -> Boolean
-    pub fn external <=(other: UInt16) -> Boolean
-}
+struct builtin UInt16 { }
 
 /// Represents an 32-bit unsigned integer, which can store values from `0` to `4294967295`.
-class builtin UInt32 {
-    pub fn external +(other: UInt32) -> UInt32
-    pub fn external -(other: UInt32) -> UInt32
-    pub fn external *(other: UInt32) -> UInt32
-    pub fn external /(other: UInt32) -> UInt32
-
-    pub fn external ==(other: UInt32) -> Boolean
-    pub fn external !=(other: UInt32) -> Boolean
-    pub fn external >(other: UInt32) -> Boolean
-    pub fn external <(other: UInt32) -> Boolean
-    pub fn external >=(other: UInt32) -> Boolean
-    pub fn external <=(other: UInt32) -> Boolean
-}
+struct builtin UInt32 { }
 
 /// Represents an 64-bit unsigned integer, which can store values from `0` to `18446744073709551615`.
-class builtin UInt64 {
-    pub fn external +(other: UInt64) -> UInt64
-    pub fn external -(other: UInt64) -> UInt64
-    pub fn external *(other: UInt64) -> UInt64
-    pub fn external /(other: UInt64) -> UInt64
-
-    pub fn external ==(other: UInt64) -> Boolean
-    pub fn external !=(other: UInt64) -> Boolean
-    pub fn external >(other: UInt64) -> Boolean
-    pub fn external <(other: UInt64) -> Boolean
-    pub fn external >=(other: UInt64) -> Boolean
-    pub fn external <=(other: UInt64) -> Boolean
-}
+struct builtin UInt64 { }
 
 type IntPtr = Int64
 type UIntPtr = UInt64

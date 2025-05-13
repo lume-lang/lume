@@ -1,10 +1,12 @@
 namespace std
 
 /// Represents a range bounded inclusively below and exclusively above.
-class builtin Range<T> {
-    let start: T;
-    let end: T;
+struct builtin Range<T> {
+    start: T;
+    end: T;
+}
 
+impl<T> Range<T> {
     /// Creates a new range with the given bounds.
     ///
     /// This method creates a range bounded inclusively above and exclusively below. For
@@ -13,10 +15,12 @@ class builtin Range<T> {
 }
 
 /// Represents a range bounded inclusively below and above.
-class builtin RangeInclusive<T> {
-    let start: T;
-    let end: T;
+struct builtin RangeInclusive<T> {
+    start: T;
+    end: T;
+}
 
+impl<T> RangeInclusive<T> {
     /// Creates a new range with the given bounds.
     ///
     /// This method creates a range bounded inclusively above and below. For a range

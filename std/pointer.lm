@@ -4,6 +4,5 @@ namespace std
 ///
 /// Pointers cannot be created manually - they can only be created by the compiler itself, as a result
 /// of creating a built-in type or some other memory allocation.
-class builtin Pointer
-{
-}
+struct builtin Pointer
+{ }

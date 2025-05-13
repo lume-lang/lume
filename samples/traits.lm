@@ -1,4 +1,4 @@
-class builtin Int32 { }
+struct Int32 { }
 
 trait Add<T> {
     pub fn add(other: T) -> T
