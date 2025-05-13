@@ -198,6 +198,7 @@ pub enum TopLevelExpression {
     Namespace(Box<Namespace>),
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
+    Impl(Box<Implementation>),
     Use(Box<UseTrait>),
 }
 
@@ -261,7 +262,7 @@ pub struct FunctionDefinition {
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
-    Class(Box<ClassDefinition>),
+    Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
@@ -270,7 +271,7 @@ pub enum TypeDefinition {
 impl TypeDefinition {
     pub fn name(&self) -> &Identifier {
         match self {
-            TypeDefinition::Class(class) => &class.name,
+            TypeDefinition::Struct(struct_def) => &struct_def.name,
             TypeDefinition::Trait(trait_def) => &trait_def.name,
             TypeDefinition::Enum(enum_def) => &enum_def.name,
             TypeDefinition::Alias(alias_def) => &alias_def.name,
@@ -279,19 +280,13 @@ impl TypeDefinition {
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub struct ClassDefinition {
+pub struct StructDefinition {
     pub name: Identifier,
     pub builtin: bool,
-    pub members: Vec<ClassMember>,
+    pub properties: Vec<Property>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
     pub documentation: Option<String>,
-}
-
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
-pub enum ClassMember {
-    Property(Box<Property>),
-    MethodDefinition(Box<MethodDefinition>),
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
@@ -378,6 +373,15 @@ impl std::fmt::Display for AliasDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
+}
+
+#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+pub struct Implementation {
+    pub visibility: Visibility,
+    pub name: Box<Type>,
+    pub methods: Vec<MethodDefinition>,
+    pub type_parameters: Vec<TypeParameter>,
+    pub location: Location,
 }
 
 #[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]

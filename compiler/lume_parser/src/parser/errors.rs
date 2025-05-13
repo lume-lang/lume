@@ -107,15 +107,15 @@ pub struct ExpectedFunctionName {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Unexpected class name",
+    message = "enexpected struct name",
     code = "LM1058",
-    help = "Class names only allow alphanumeric characters and underscores"
+    help = "struct names only allow alphanumeric characters and underscores"
 )]
-pub struct ExpectedClassName {
+pub struct ExpectedStructName {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a class name")]
+    #[label("expected a struct name")]
     pub range: Range<usize>,
 }
 
@@ -134,16 +134,40 @@ pub struct ExpectedTraitName {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "Unexpected class member",
-    code = "LM1062",
-    help = "Class members can be defined using `let` for properties or `fn` for methods."
-)]
-pub struct ExpectedClassMember {
+#[diagnostic(message = "expected struct property", code = "LM1062")]
+pub struct ExpectedStructProperty {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a class member definition")]
+    #[label("expected a struct property definition")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "property in implementation",
+    code = "LM1063",
+    help = "properties can only be defined in `struct` blocks"
+)]
+pub struct PropertyInImpl {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("found unexpected property in implementation block")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "method in struct",
+    code = "LM1064",
+    help = "methods can only be defined in `impl` blocks"
+)]
+pub struct MethodInStruct {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("found unexpected method in struct block")]
     pub range: Range<usize>,
 }
 

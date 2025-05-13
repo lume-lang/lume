@@ -1,8 +1,8 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse_err(\"class 1A {}\")"
+expression: "parse_err(\"impl 1A {}\")"
 ---
-ExpectedClassName {
+UnexpectedType {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -11,10 +11,11 @@ ExpectedClassName {
             0,
         ),
         name: Internal,
-        content: "class 1A {}",
+        content: "impl 1A {}",
         package: PackageId(
             0,
         ),
     },
-    range: 6..7,
+    range: 5..6,
+    actual: integer,
 }

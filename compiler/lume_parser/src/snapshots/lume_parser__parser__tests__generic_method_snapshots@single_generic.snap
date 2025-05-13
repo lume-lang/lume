@@ -1,89 +1,104 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test { fn test<T>() -> void {} }\")"
+expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
 ---
 [
-    TypeDefinition(
-        Class(
-            ClassDefinition {
-                name: Identifier {
-                    name: "Test",
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
                     location: Location(
-                        6..10,
+                        0..4,
                     ),
                 },
-                builtin: false,
-                members: [
-                    MethodDefinition(
-                        MethodDefinition {
-                            visibility: Private(
-                                Private {
-                                    location: Location(
-                                        13..15,
-                                    ),
-                                },
-                            ),
-                            external: false,
-                            name: Identifier {
-                                name: "test",
-                                location: Location(
-                                    16..20,
-                                ),
-                            },
-                            parameters: [],
-                            type_parameters: [
-                                TypeParameter {
-                                    name: Identifier {
-                                        name: "T",
-                                        location: Location(
-                                            21..22,
-                                        ),
-                                    },
-                                    constraints: [],
-                                },
-                            ],
-                            return_type: Some(
-                                Scalar(
-                                    ScalarType {
-                                        name: Path {
-                                            name: Identifier {
-                                                name: "void",
-                                                location: Location(
-                                                    29..33,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
-                                                ),
-                                            },
-                                            location: Location(
-                                                29..33,
-                                            ),
-                                        },
-                                    },
-                                ),
-                            ),
-                            block: Block {
-                                statements: [],
-                                location: Location(
-                                    34..36,
-                                ),
-                            },
+            ),
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Test",
                             location: Location(
-                                13..36,
+                                5..9,
                             ),
-                            documentation: None,
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            5..9,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Private(
+                        Private {
+                            location: Location(
+                                12..14,
+                            ),
                         },
                     ),
-                ],
-                type_parameters: [],
-                location: Location(
-                    0..38,
-                ),
-                documentation: None,
-            },
-        ),
+                    external: false,
+                    name: Identifier {
+                        name: "test",
+                        location: Location(
+                            15..19,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: Location(
+                                    20..21,
+                                ),
+                            },
+                            constraints: [],
+                        },
+                    ],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            28..32,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        28..32,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            33..35,
+                        ),
+                    },
+                    location: Location(
+                        12..35,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                0..37,
+            ),
+        },
     ),
 ]

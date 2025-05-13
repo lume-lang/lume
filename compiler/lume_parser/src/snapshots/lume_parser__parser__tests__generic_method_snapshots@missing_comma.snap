@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse_err(\"class Test { fn test<T1 T2>() -> void {} }\")"
+expression: "parse_err(\"impl Test { fn test<T1 T2>() -> void {} }\")"
 ---
 UnexpectedToken {
     source: SourceFile {
@@ -11,12 +11,12 @@ UnexpectedToken {
             0,
         ),
         name: Internal,
-        content: "class Test { fn test<T1 T2>() -> void {} }",
+        content: "impl Test { fn test<T1 T2>() -> void {} }",
         package: PackageId(
             0,
         ),
     },
-    range: 24..26,
+    range: 23..25,
     expected: ,,
     actual: identifier,
 }

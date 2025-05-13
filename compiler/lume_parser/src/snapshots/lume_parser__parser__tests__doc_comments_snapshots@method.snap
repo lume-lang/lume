@@ -1,81 +1,96 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(r#\"class Foo {\n                /// This is a doc comment\n                pub fn bar() -> void { }\n            }\"#)"
+expression: "parse(r#\"impl Foo {\n                /// This is a doc comment\n                pub fn bar() -> void { }\n            }\"#)"
 ---
 [
-    TypeDefinition(
-        Class(
-            ClassDefinition {
-                name: Identifier {
-                    name: "Foo",
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
                     location: Location(
-                        6..9,
+                        0..4,
                     ),
                 },
-                builtin: false,
-                members: [
-                    MethodDefinition(
-                        MethodDefinition {
-                            visibility: Public(
-                                Public {
-                                    location: Location(
-                                        70..73,
-                                    ),
-                                },
-                            ),
-                            external: false,
-                            name: Identifier {
-                                name: "bar",
-                                location: Location(
-                                    77..80,
-                                ),
-                            },
-                            parameters: [],
-                            type_parameters: [],
-                            return_type: Some(
-                                Scalar(
-                                    ScalarType {
-                                        name: Path {
-                                            name: Identifier {
-                                                name: "void",
-                                                location: Location(
-                                                    86..90,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
-                                                ),
-                                            },
-                                            location: Location(
-                                                86..90,
-                                            ),
-                                        },
-                                    },
-                                ),
-                            ),
-                            block: Block {
-                                statements: [],
-                                location: Location(
-                                    91..94,
-                                ),
-                            },
+            ),
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Foo",
                             location: Location(
-                                74..94,
+                                5..8,
                             ),
-                            documentation: Some(
-                                "This is a doc comment",
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            5..8,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                69..72,
                             ),
                         },
                     ),
-                ],
-                type_parameters: [],
-                location: Location(
-                    0..108,
-                ),
-                documentation: None,
-            },
-        ),
+                    external: false,
+                    name: Identifier {
+                        name: "bar",
+                        location: Location(
+                            76..79,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            85..89,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        85..89,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            90..93,
+                        ),
+                    },
+                    location: Location(
+                        69..93,
+                    ),
+                    documentation: Some(
+                        "This is a doc comment",
+                    ),
+                },
+            ],
+            location: Location(
+                0..107,
+            ),
+        },
     ),
 ]

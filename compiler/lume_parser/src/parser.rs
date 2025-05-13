@@ -234,6 +234,13 @@ impl Parser {
         self.token_at(self.index)
     }
 
+    /// Parses the previous token from the lexer.
+    ///
+    /// Returns the parsed token or a parsing error.
+    fn previous_token(&self) -> Result<Token> {
+        self.token_at(self.index - 1)
+    }
+
     /// Parses the last token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
@@ -241,18 +248,11 @@ impl Parser {
         self.token_at(self.tokens.len() - 1)
     }
 
-    /// Parses the previous token from the lexer.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn previous_token(&self) -> Result<Token> {
-        self.token_at(self.tokens.len() - 2)
-    }
-
-    /// Peeks the next token from the lexer at some offset and returns it if it matches the expected kind.
+    /// Peeks the token from the lexer at some offset and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
-    fn peek_next(&self, kind: TokenKind, offset: usize) -> Result<bool> {
-        let token = match self.token_at(self.index + offset) {
+    fn peek_offset(&self, kind: TokenKind, offset: isize) -> Result<bool> {
+        let token = match self.token_at(self.index.saturating_add_signed(offset)) {
             Ok(token) => token,
             Err(_) => return Ok(false),
         };
@@ -267,8 +267,15 @@ impl Parser {
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
+    fn peek_next(&self, kind: TokenKind) -> Result<bool> {
+        self.peek_offset(kind, 1)
+    }
+
+    /// Peeks the next token from the lexer and returns it if it matches the expected kind.
+    ///
+    /// Returns a boolean indicating whether the token matches the expected kind.
     fn peek(&self, kind: TokenKind) -> Result<bool> {
-        self.peek_next(kind, 0)
+        self.peek_offset(kind, 0)
     }
 
     /// Advances the cursor position by a single token.
@@ -468,11 +475,6 @@ impl Parser {
         }
     }
 
-    /// Checks whether the current token is an `Builtin` token.
-    fn check_builtin(&mut self) -> bool {
-        self.check(TokenKind::Builtin)
-    }
-
     /// Checks whether the current token is an `External` token.
     fn check_external(&mut self) -> bool {
         self.check(TokenKind::External)
@@ -490,6 +492,11 @@ impl Parser {
     /// Asserts that the current token is an `fn` token.
     fn expect_fn(&mut self) -> Result<Token> {
         self.consume(TokenKind::Fn)
+    }
+
+    /// Asserts that the current token is an `impl` token.
+    fn expect_impl(&mut self) -> Result<Token> {
+        self.consume(TokenKind::Impl)
     }
 
     /// Asserts that the current token is a `;` token.
@@ -625,18 +632,27 @@ impl Parser {
     }
 
     fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
-        let current = self.token()?;
-
-        match current.kind {
+        match self.token()?.kind {
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
-            TokenKind::Fn | TokenKind::Pub => self.parse_fn(),
-            TokenKind::Class => self.parse_class(),
+            TokenKind::Impl => self.parse_impl(),
+            TokenKind::Fn => self.parse_fn(),
+            TokenKind::Pub => self.parse_pub_top_level_expression(),
+            TokenKind::Struct => self.parse_struct(),
             TokenKind::Trait => self.parse_trait(),
             TokenKind::Enum => self.parse_enum(),
             TokenKind::Type => self.parse_type_alias(),
             TokenKind::Use => self.parse_use(),
-            _ => Err(err!(self, InvalidTopLevelStatement, actual, current.kind)),
+            k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
+        }
+    }
+
+    fn parse_pub_top_level_expression(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        match self.token()?.kind {
+            TokenKind::Fn => self.parse_fn_visibility(visibility),
+            k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
         }
     }
 
@@ -674,9 +690,40 @@ impl Parser {
         Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
     }
 
-    fn parse_fn(&mut self) -> Result<TopLevelExpression> {
-        let start = self.token()?.start();
+    fn parse_impl(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
+
+        self.parse_impl_visibility(visibility)
+    }
+
+    fn parse_impl_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
+        let start = visibility.location().start();
+
+        self.expect_impl()?;
+
+        let type_parameters = self.parse_type_parameters()?;
+        let name = self.parse_type()?;
+        let methods = self.consume_curly_seq(|p| p.parse_method())?;
+
+        let end = self.previous_token()?.end();
+
+        Ok(TopLevelExpression::Impl(Box::new(Implementation {
+            visibility,
+            name: Box::new(name),
+            methods,
+            type_parameters,
+            location: (start..end).into(),
+        })))
+    }
+
+    fn parse_fn(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_fn_visibility(visibility)
+    }
+
+    fn parse_fn_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
+        let start = visibility.location().start();
 
         self.expect_fn()?;
 
@@ -687,7 +734,7 @@ impl Parser {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_opt_external_block(external)?;
 
-        let end = self.last_token()?.end();
+        let end = self.previous_token()?.end();
 
         let function_def = FunctionDefinition {
             visibility,
@@ -754,40 +801,29 @@ impl Parser {
         Ok(Some(Box::new(self.parse_type()?)))
     }
 
-    fn parse_class(&mut self) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Class)?.start();
+    fn parse_struct(&mut self) -> Result<TopLevelExpression> {
+        let start = self.consume(TokenKind::Struct)?.start();
 
-        let builtin = self.check_builtin();
-        let name = self.parse_ident_or_err(err!(self, ExpectedClassName))?;
+        let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
+
+        let name = self.parse_ident_or_err(err!(self, ExpectedStructName))?;
         let type_parameters = self.parse_type_parameters()?;
-        let members = self.consume_curly_seq(|p| p.parse_class_member())?;
+        let properties = self.consume_curly_seq(|p| p.parse_struct_property())?;
 
-        let end = self.last_token()?.end();
+        let end = self.previous_token()?.end();
 
-        let class_def = ClassDefinition {
+        let struct_def = StructDefinition {
             name,
             builtin,
-            members,
+            properties,
             type_parameters,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
         };
 
-        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Class(
-            Box::new(class_def),
+        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Struct(
+            Box::new(struct_def),
         ))))
-    }
-
-    fn parse_class_member(&mut self) -> Result<ClassMember> {
-        self.read_doc_comment()?;
-
-        let visibility = self.parse_visibility()?;
-
-        match self.token()?.kind {
-            TokenKind::Let => self.parse_property(visibility),
-            TokenKind::Fn => self.parse_method(visibility),
-            _ => Err(err!(self, ExpectedClassMember)),
-        }
     }
 
     fn parse_visibility(&mut self) -> Result<Visibility> {
@@ -812,35 +848,50 @@ impl Parser {
         }
     }
 
-    fn parse_property(&mut self, visibility: Visibility) -> Result<ClassMember> {
-        let start = self.consume(TokenKind::Let)?.start();
+    fn parse_struct_property(&mut self) -> Result<Property> {
+        self.read_doc_comment()?;
+
+        let visibility = self.parse_visibility()?;
 
         let name = match self.parse_identifier() {
             Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedClassMember)),
+            Err(_) => return Err(err!(self, ExpectedStructProperty)),
         };
 
-        self.consume(TokenKind::Colon)?;
+        // Report a special error if we found an identifier, such as
+        // a method declaration, which isn't allowed within a `struct` block.
+        if self.consume_if(TokenKind::Colon)?.is_none() && self.peek(TokenKind::Identifier)? {
+            return Err(err!(self, MethodInStruct));
+        }
 
         let property_type = self.parse_type()?;
         let default_value = self.parse_opt_assignment()?;
 
+        let start = visibility.location().start();
         let end = self.expect_semi()?.end();
 
-        let property_def = Property {
+        Ok(Property {
             visibility,
             name,
             property_type,
             default_value,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
-        };
-
-        Ok(ClassMember::Property(Box::new(property_def)))
+        })
     }
 
-    fn parse_method(&mut self, visibility: Visibility) -> Result<ClassMember> {
-        let start = self.expect_fn()?.start();
+    fn parse_method(&mut self) -> Result<MethodDefinition> {
+        self.read_doc_comment()?;
+
+        let visibility = self.parse_visibility()?;
+        let start = visibility.location().start();
+
+        // Report a special error if we found an identifier, such as
+        // a property declaration, which isn't allowed within an `impl` block.
+        if self.consume_if(TokenKind::Fn)?.is_none() && self.peek(TokenKind::Identifier)? {
+            return Err(err!(self, PropertyInImpl));
+        }
+
         let external = self.check_external();
 
         let name = self.parse_method_name()?;
@@ -851,7 +902,7 @@ impl Parser {
 
         let end = self.token_at(self.index - 1)?.end();
 
-        let method_def = MethodDefinition {
+        Ok(MethodDefinition {
             visibility,
             external,
             name,
@@ -861,9 +912,7 @@ impl Parser {
             block,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
-        };
-
-        Ok(ClassMember::MethodDefinition(Box::new(method_def)))
+        })
     }
 
     fn parse_method_name(&mut self) -> Result<Identifier> {
@@ -885,7 +934,7 @@ impl Parser {
         let type_parameters = self.parse_type_parameters()?;
         let methods = self.consume_curly_seq(|p| p.parse_trait_method())?;
 
-        let end = self.last_token()?.end();
+        let end = self.previous_token()?.end();
 
         let trait_def = TraitDefinition {
             name,
@@ -932,7 +981,7 @@ impl Parser {
 
     /// Parses a single enum type definition, such as:
     ///
-    /// ```ignore
+    /// ```lm
     /// enum IpAddrKind {
     ///   V4,
     ///   V6,
@@ -944,7 +993,7 @@ impl Parser {
         let name = self.parse_identifier()?;
         let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, |p| p.parse_enum_case())?;
 
-        let end = self.last_token()?.end();
+        let end = self.previous_token()?.end();
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Enum(
             Box::new(EnumDefinition {
@@ -983,7 +1032,7 @@ impl Parser {
 
     /// Parses a single type alias definition, such as:
     ///
-    /// ```ignore
+    /// ```lm
     /// type Alias = String | Int
     /// ```
     fn parse_type_alias(&mut self) -> Result<TopLevelExpression> {
@@ -1051,7 +1100,7 @@ impl Parser {
         let target = self.parse_type()?;
 
         let methods = self.consume_curly_seq(|p| p.parse_use_impl())?;
-        let end = self.last_token()?.end();
+        let end = self.previous_token()?.end();
 
         let use_trait = UseTrait {
             name: Box::new(name),
@@ -1248,7 +1297,7 @@ impl Parser {
         self.parse_conditional_case(&mut cases)?;
 
         // Moan if any `else if` blocks are found
-        if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If, 1)? {
+        if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If)? {
             return Err(err!(self, UnlessElseIfClause));
         }
 
@@ -1287,7 +1336,7 @@ impl Parser {
     /// Parses zero-or-more `else-if` cases within a conditional statement at the current cursor position.
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
-            if !self.peek(TokenKind::Else)? || !self.peek_next(TokenKind::If, 1)? {
+            if !self.peek(TokenKind::Else)? || !self.peek_next(TokenKind::If)? {
                 break;
             }
 
@@ -1504,7 +1553,7 @@ impl Parser {
         let expression = self.parse_expression_with_precedence(0)?;
 
         // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
+        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot)? {
             return self.parse_range_expression(expression);
         }
 
@@ -1579,7 +1628,7 @@ impl Parser {
             // If the next token is an equal sign, it's an assignment expression
             TokenKind::Assign => self.parse_assignment(expression),
 
-            // If the identiier is following by a separator, it's refering to a namespaced identifier
+            // If the identifier is following by a separator, it's refering to a namespaced identifier
             IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
 
             // If the name stands alone, it's likely a variable reference
@@ -1616,7 +1665,7 @@ impl Parser {
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot, 1)? {
+        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot)? {
             return self.parse_range_expression(target);
         }
 
@@ -2242,14 +2291,19 @@ mod tests {
     }
 
     #[test]
-    fn test_class_snapshots() {
-        assert_snap_eq!("class Int32 {}", "empty");
-        assert_snap_eq!("class builtin Int32 {}", "builtin");
-        assert_err_snap_eq!("class 1A {}", "invalid_name");
+    fn test_struct_snapshots() {
+        assert_snap_eq!("struct Int32 {}", "empty_decl");
+        assert_snap_eq!("impl Int32 {}", "empty_impl");
+
+        assert_err_snap_eq!("struct 1A {}", "invalid_decl_name");
+        assert_err_snap_eq!("impl 1A {}", "invalid_impl_name");
+
+        assert_err_snap_eq!("impl Foo { pub x: Bar; }", "property_in_impl");
+        assert_err_snap_eq!("struct Foo { pub fn bar() -> void { } }", "method_in_struct");
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 fn bar() -> Int32 {
                     return 0;
                 }
@@ -2259,7 +2313,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 fn bar() { }
             }"#,
             "method_no_ret"
@@ -2267,7 +2321,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 pub fn bar() -> Int32 {
                     return 0;
                 }
@@ -2277,7 +2331,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 fn external bar() -> Int32
             }"#,
             "ext_method"
@@ -2285,7 +2339,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 pub fn ==() -> bool {
                     return true;
                 }
@@ -2295,7 +2349,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
+            impl Foo {
                 fn bar<T>() -> Int32 { }
             }"#,
             "generic_method"
@@ -2303,54 +2357,54 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-            class Foo {
-                let x: Int32 = 0;
+            struct Foo {
+                x: Int32 = 0;
             }"#,
             "property"
         );
 
         assert_snap_eq!(
             r#"
-            class Foo {
-                let x: Int32;
+            struct Foo {
+                x: Int32;
             }"#,
             "property_no_default"
         );
 
         assert_snap_eq!(
             r#"
-            class Foo {
-                pub let x: Int32 = 1;
+            struct Foo {
+                pub x: Int32 = 1;
             }"#,
             "pub_property"
         );
     }
 
     #[test]
-    fn test_generic_class_snapshots() {
-        assert_snap_eq!("class Test {}", "no_generics");
-        assert_snap_eq!("class Test<> {}", "empty_generics");
-        assert_snap_eq!("class Test<T> {}", "single_generic");
-        assert_snap_eq!("class Test<T1, T2> {}", "multiple_generics");
-        assert_snap_eq!("class Test<T: Numeric> {}", "constrained_generic");
-        assert_snap_eq!("class Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
-        assert_err_snap_eq!("class Test<T1,> {}", "missing_generic");
-        assert_err_snap_eq!("class Test<T1 T2> {}", "missing_comma");
+    fn test_generic_struct_snapshots() {
+        assert_snap_eq!("struct Test {}", "no_generics");
+        assert_snap_eq!("struct Test<> {}", "empty_generics");
+        assert_snap_eq!("struct Test<T> {}", "single_generic");
+        assert_snap_eq!("struct Test<T1, T2> {}", "multiple_generics");
+        assert_snap_eq!("struct Test<T: Numeric> {}", "constrained_generic");
+        assert_snap_eq!("struct Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
+        assert_err_snap_eq!("struct Test<T1,> {}", "missing_generic");
+        assert_err_snap_eq!("struct Test<T1 T2> {}", "missing_comma");
     }
 
     #[test]
     fn test_generic_method_snapshots() {
-        assert_snap_eq!("class Test { fn test() -> void {} }", "no_generics");
-        assert_snap_eq!("class Test { fn test<>() -> void {} }", "empty_generics");
-        assert_snap_eq!("class Test { fn test<T>() -> void {} }", "single_generic");
-        assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
-        assert_snap_eq!("class Test { fn test<T: Numeric>() -> void {} }", "constrained_generic");
+        assert_snap_eq!("impl Test { fn test() -> void {} }", "no_generics");
+        assert_snap_eq!("impl Test { fn test<>() -> void {} }", "empty_generics");
+        assert_snap_eq!("impl Test { fn test<T>() -> void {} }", "single_generic");
+        assert_snap_eq!("impl Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
+        assert_snap_eq!("impl Test { fn test<T: Numeric>() -> void {} }", "constrained_generic");
         assert_snap_eq!(
-            "class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
+            "impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
             "constrained_generics"
         );
-        assert_err_snap_eq!("class Test { fn test<T1,>() -> void {} }", "missing_generic");
-        assert_err_snap_eq!("class Test { fn test<T1 T2>() -> void {} }", "missing_comma");
+        assert_err_snap_eq!("impl Test { fn test<T1,>() -> void {} }", "missing_generic");
+        assert_err_snap_eq!("impl Test { fn test<T1 T2>() -> void {} }", "missing_comma");
     }
 
     #[test]
@@ -2511,20 +2565,20 @@ mod tests {
 
         assert_snap_eq!(
             r#"/// This is a doc comment
-            class Foo { }"#,
-            "class"
+            struct Foo { }"#,
+            "struct"
         );
 
         assert_snap_eq!(
-            r#"class Foo {
+            r#"struct Foo {
                 /// This is a doc comment
-                pub let bar: Int32 = 0;
+                pub bar: Int32 = 0;
             }"#,
             "property"
         );
 
         assert_snap_eq!(
-            r#"class Foo {
+            r#"impl Foo {
                 /// This is a doc comment
                 pub fn bar() -> void { }
             }"#,

@@ -20,7 +20,6 @@ pub enum TokenKind {
     DocComment,
     Break,
     Builtin,
-    Class,
     Colon,
     Comma,
     Comment,
@@ -43,6 +42,7 @@ pub enum TokenKind {
     GreaterEqual,
     Identifier,
     If,
+    Impl,
     Import,
     In,
     Increment,
@@ -68,6 +68,7 @@ pub enum TokenKind {
     Semicolon,
     SelfRef,
     String,
+    Struct,
     Sub,
     SubAssign,
     Trait,
@@ -83,7 +84,7 @@ impl TokenKind {
         matches!(
             self,
             TokenKind::Break
-                | TokenKind::Class
+                | TokenKind::Builtin
                 | TokenKind::Continue
                 | TokenKind::Else
                 | TokenKind::External
@@ -91,6 +92,7 @@ impl TokenKind {
                 | TokenKind::Fn
                 | TokenKind::For
                 | TokenKind::If
+                | TokenKind::Impl
                 | TokenKind::Import
                 | TokenKind::In
                 | TokenKind::Loop
@@ -98,6 +100,7 @@ impl TokenKind {
                 | TokenKind::Pub
                 | TokenKind::Return
                 | TokenKind::SelfRef
+                | TokenKind::Struct
                 | TokenKind::Trait
                 | TokenKind::True
                 | TokenKind::Type
@@ -161,7 +164,6 @@ impl From<TokenKind> for &'static str {
             TokenKind::DocComment => "doc comment",
             TokenKind::Break => "break",
             TokenKind::Builtin => "builtin",
-            TokenKind::Class => "class",
             TokenKind::Colon => ":",
             TokenKind::Comma => ",",
             TokenKind::Comment => "comment",
@@ -184,6 +186,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::GreaterEqual => ">=",
             TokenKind::If => "if",
             TokenKind::Identifier => "identifier",
+            TokenKind::Impl => "impl",
             TokenKind::Import => "import",
             TokenKind::In => "in",
             TokenKind::Increment => "++",
@@ -209,6 +212,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::SelfRef => "self",
             TokenKind::Semicolon => ";",
             TokenKind::String => "string",
+            TokenKind::Struct => "struct",
             TokenKind::Sub => "-",
             TokenKind::SubAssign => "-=",
             TokenKind::Trait => "trait",
@@ -517,7 +521,6 @@ impl Lexer {
         match content.as_str() {
             "break" => Token::empty(TokenKind::Break),
             "builtin" => Token::empty(TokenKind::Builtin),
-            "class" => Token::empty(TokenKind::Class),
             "continue" => Token::empty(TokenKind::Continue),
             "else" => Token::empty(TokenKind::Else),
             "enum" => Token::empty(TokenKind::Enum),
@@ -526,6 +529,7 @@ impl Lexer {
             "fn" => Token::empty(TokenKind::Fn),
             "for" => Token::empty(TokenKind::For),
             "if" => Token::empty(TokenKind::If),
+            "impl" => Token::empty(TokenKind::Impl),
             "import" => Token::empty(TokenKind::Import),
             "in" => Token::empty(TokenKind::In),
             "let" => Token::empty(TokenKind::Let),
@@ -534,6 +538,7 @@ impl Lexer {
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
             "self" => Token::empty(TokenKind::SelfRef),
+            "struct" => Token::empty(TokenKind::Struct),
             "trait" => Token::empty(TokenKind::Trait),
             "true" => Token::empty(TokenKind::True),
             "type" => Token::empty(TokenKind::Type),
@@ -900,16 +905,19 @@ mod tests {
     #[test]
     fn test_keywords_map() {
         assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
+        assert_token!("builtin", TokenKind::Builtin, None::<String>, 0, 7);
         assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);
         assert_token!("external", TokenKind::External, None::<String>, 0, 8);
         assert_token!("for", TokenKind::For, None::<String>, 0, 3);
         assert_token!("fn", TokenKind::Fn, None::<String>, 0, 2);
         assert_token!("if", TokenKind::If, None::<String>, 0, 2);
         assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
+        assert_token!("impl", TokenKind::Impl, None::<String>, 0, 4);
         assert_token!("in", TokenKind::In, None::<String>, 0, 2);
         assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
         assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
+        assert_token!("struct", TokenKind::Struct, None::<String>, 0, 6);
         assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);

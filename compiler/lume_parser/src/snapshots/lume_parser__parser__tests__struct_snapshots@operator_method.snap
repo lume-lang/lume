@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"impl Test { fn test() -> void {} }\")"
+expression: "parse(r#\"\n            impl Foo {\n                pub fn ==() -> bool {\n                    return true;\n                }\n            }\"#)"
 ---
 [
     Impl(
@@ -8,7 +8,7 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..4,
+                        13..17,
                     ),
                 },
             ),
@@ -16,9 +16,9 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                 ScalarType {
                     name: Path {
                         name: Identifier {
-                            name: "Test",
+                            name: "Foo",
                             location: Location(
-                                5..9,
+                                18..21,
                             ),
                         },
                         root: NamespacePath {
@@ -28,25 +28,25 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                             ),
                         },
                         location: Location(
-                            5..9,
+                            18..21,
                         ),
                     },
                 },
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private(
-                        Private {
+                    visibility: Public(
+                        Public {
                             location: Location(
-                                12..14,
+                                40..43,
                             ),
                         },
                     ),
                     external: false,
                     name: Identifier {
-                        name: "test",
+                        name: "==",
                         location: Location(
-                            15..19,
+                            47..49,
                         ),
                     },
                     parameters: [],
@@ -56,9 +56,9 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                             ScalarType {
                                 name: Path {
                                     name: Identifier {
-                                        name: "void",
+                                        name: "bool",
                                         location: Location(
-                                            25..29,
+                                            55..59,
                                         ),
                                     },
                                     root: NamespacePath {
@@ -68,26 +68,46 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                                         ),
                                     },
                                     location: Location(
-                                        25..29,
+                                        55..59,
                                     ),
                                 },
                             },
                         ),
                     ),
                     block: Block {
-                        statements: [],
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Literal(
+                                            Boolean(
+                                                BooleanLiteral {
+                                                    value: true,
+                                                    location: Location(
+                                                        89..93,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                    location: Location(
+                                        82..94,
+                                    ),
+                                },
+                            ),
+                        ],
                         location: Location(
-                            30..32,
+                            60..112,
                         ),
                     },
                     location: Location(
-                        12..32,
+                        40..112,
                     ),
                     documentation: None,
                 },
             ],
             location: Location(
-                0..34,
+                13..126,
             ),
         },
     ),

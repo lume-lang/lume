@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"impl Test { fn test() -> void {} }\")"
+expression: "parse(r#\"\n            impl Foo {\n                fn external bar() -> Int32\n            }\"#)"
 ---
 [
     Impl(
@@ -8,7 +8,7 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..4,
+                        13..17,
                     ),
                 },
             ),
@@ -16,9 +16,9 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                 ScalarType {
                     name: Path {
                         name: Identifier {
-                            name: "Test",
+                            name: "Foo",
                             location: Location(
-                                5..9,
+                                18..21,
                             ),
                         },
                         root: NamespacePath {
@@ -28,7 +28,7 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                             ),
                         },
                         location: Location(
-                            5..9,
+                            18..21,
                         ),
                     },
                 },
@@ -38,15 +38,15 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                     visibility: Private(
                         Private {
                             location: Location(
-                                12..14,
+                                40..42,
                             ),
                         },
                     ),
-                    external: false,
+                    external: true,
                     name: Identifier {
-                        name: "test",
+                        name: "bar",
                         location: Location(
-                            15..19,
+                            52..55,
                         ),
                     },
                     parameters: [],
@@ -56,9 +56,9 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                             ScalarType {
                                 name: Path {
                                     name: Identifier {
-                                        name: "void",
+                                        name: "Int32",
                                         location: Location(
-                                            25..29,
+                                            61..66,
                                         ),
                                     },
                                     root: NamespacePath {
@@ -68,7 +68,7 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                                         ),
                                     },
                                     location: Location(
-                                        25..29,
+                                        61..66,
                                     ),
                                 },
                             },
@@ -77,17 +77,17 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
                     block: Block {
                         statements: [],
                         location: Location(
-                            30..32,
+                            79..80,
                         ),
                     },
                     location: Location(
-                        12..32,
+                        40..66,
                     ),
                     documentation: None,
                 },
             ],
             location: Location(
-                0..34,
+                13..80,
             ),
         },
     ),

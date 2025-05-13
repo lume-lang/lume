@@ -1,108 +1,71 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }\")"
+expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }\")"
 ---
 [
-    TypeDefinition(
-        Class(
-            ClassDefinition {
-                name: Identifier {
-                    name: "Test",
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
                     location: Location(
-                        6..10,
+                        0..4,
                     ),
                 },
-                builtin: false,
-                members: [
-                    MethodDefinition(
-                        MethodDefinition {
-                            visibility: Private(
-                                Private {
-                                    location: Location(
-                                        13..15,
-                                    ),
-                                },
+            ),
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Test",
+                            location: Location(
+                                5..9,
                             ),
-                            external: false,
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            5..9,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Private(
+                        Private {
+                            location: Location(
+                                12..14,
+                            ),
+                        },
+                    ),
+                    external: false,
+                    name: Identifier {
+                        name: "test",
+                        location: Location(
+                            15..19,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
                             name: Identifier {
-                                name: "test",
+                                name: "T1",
                                 location: Location(
-                                    16..20,
+                                    20..22,
                                 ),
                             },
-                            parameters: [],
-                            type_parameters: [
-                                TypeParameter {
-                                    name: Identifier {
-                                        name: "T1",
-                                        location: Location(
-                                            21..23,
-                                        ),
-                                    },
-                                    constraints: [
-                                        Scalar(
-                                            ScalarType {
-                                                name: Path {
-                                                    name: Identifier {
-                                                        name: "Numeric",
-                                                        location: Location(
-                                                            25..32,
-                                                        ),
-                                                    },
-                                                    root: NamespacePath {
-                                                        path: [],
-                                                        location: Location(
-                                                            0..0,
-                                                        ),
-                                                    },
-                                                    location: Location(
-                                                        25..32,
-                                                    ),
-                                                },
-                                            },
-                                        ),
-                                    ],
-                                },
-                                TypeParameter {
-                                    name: Identifier {
-                                        name: "T2",
-                                        location: Location(
-                                            34..36,
-                                        ),
-                                    },
-                                    constraints: [
-                                        Scalar(
-                                            ScalarType {
-                                                name: Path {
-                                                    name: Identifier {
-                                                        name: "Numeric",
-                                                        location: Location(
-                                                            38..45,
-                                                        ),
-                                                    },
-                                                    root: NamespacePath {
-                                                        path: [],
-                                                        location: Location(
-                                                            0..0,
-                                                        ),
-                                                    },
-                                                    location: Location(
-                                                        38..45,
-                                                    ),
-                                                },
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ],
-                            return_type: Some(
+                            constraints: [
                                 Scalar(
                                     ScalarType {
                                         name: Path {
                                             name: Identifier {
-                                                name: "void",
+                                                name: "Numeric",
                                                 location: Location(
-                                                    52..56,
+                                                    24..31,
                                                 ),
                                             },
                                             root: NamespacePath {
@@ -112,31 +75,83 @@ expression: "parse(\"class Test { fn test<T1: Numeric, T2: Numeric>() -> void {}
                                                 ),
                                             },
                                             location: Location(
-                                                52..56,
+                                                24..31,
                                             ),
                                         },
                                     },
                                 ),
-                            ),
-                            block: Block {
-                                statements: [],
+                            ],
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
                                 location: Location(
-                                    57..59,
+                                    33..35,
                                 ),
                             },
-                            location: Location(
-                                13..59,
-                            ),
-                            documentation: None,
+                            constraints: [
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    37..44,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                37..44,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                         },
+                    ],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            51..55,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        51..55,
+                                    ),
+                                },
+                            },
+                        ),
                     ),
-                ],
-                type_parameters: [],
-                location: Location(
-                    0..61,
-                ),
-                documentation: None,
-            },
-        ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            56..58,
+                        ),
+                    },
+                    location: Location(
+                        12..58,
+                    ),
+                    documentation: None,
+                },
+            ],
+            location: Location(
+                0..60,
+            ),
+        },
     ),
 ]

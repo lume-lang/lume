@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/parser.rs
-expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n                pub bar: Int32 = 0;\n            }\"#)"
+expression: "parse(r#\"\n            struct Foo {\n                x: Int32 = 0;\n            }\"#)"
 ---
 [
     TypeDefinition(
@@ -9,22 +9,22 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                 name: Identifier {
                     name: "Foo",
                     location: Location(
-                        7..10,
+                        20..23,
                     ),
                 },
                 properties: [
                     Property {
-                        visibility: Public(
-                            Public {
+                        visibility: Private(
+                            Private {
                                 location: Location(
-                                    71..74,
+                                    42..43,
                                 ),
                             },
                         ),
                         name: Identifier {
-                            name: "bar",
+                            name: "x",
                             location: Location(
-                                75..78,
+                                42..43,
                             ),
                         },
                         property_type: Scalar(
@@ -33,7 +33,7 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                                     name: Identifier {
                                         name: "Int32",
                                         location: Location(
-                                            80..85,
+                                            45..50,
                                         ),
                                     },
                                     root: NamespacePath {
@@ -43,7 +43,7 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                                         ),
                                     },
                                     location: Location(
-                                        80..85,
+                                        45..50,
                                     ),
                                 },
                             },
@@ -54,7 +54,7 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                                     IntLiteral {
                                         value: 0,
                                         location: Location(
-                                            88..89,
+                                            53..54,
                                         ),
                                         kind: I32,
                                     },
@@ -62,16 +62,14 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                             ),
                         ),
                         location: Location(
-                            71..90,
+                            42..55,
                         ),
-                        documentation: Some(
-                            "This is a doc comment",
-                        ),
+                        documentation: None,
                     },
                 ],
                 type_parameters: [],
                 location: Location(
-                    0..104,
+                    13..69,
                 ),
                 documentation: None,
             },
