@@ -21,6 +21,7 @@ impl DefineTypes<'_, '_> {
         for (_, symbol) in hir.items.iter_mut() {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
                 lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
@@ -31,51 +32,16 @@ impl DefineTypes<'_, '_> {
 
     fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
-            lume_hir::TypeDefinition::Class(class) => {
-                let name = class.name.clone();
-                let kind = TypeKind::Class(Box::new(Class::new(name.clone())));
+            lume_hir::TypeDefinition::Struct(struct_def) => {
+                let name = struct_def.name.clone();
+                let kind = TypeKind::Struct(Box::new(Struct::new(name.clone())));
                 let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
 
-                for property in &mut class.properties_mut() {
-                    let property_name = property.name.name.clone();
-                    let visibility = property.visibility;
-                    let property_id = Property::alloc(self.ctx.tcx_mut(), type_id, property_name.clone(), visibility);
+                struct_def.type_id = Some(type_id);
 
-                    property.prop_id = Some(property_id);
-
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
-                        .properties
-                        .insert(property_name, property_id);
+                if struct_def.builtin {
+                    type_id.set_copied(self.ctx.tcx_mut());
                 }
-
-                for method in &mut class.methods_mut() {
-                    let method_name = &method.name;
-                    let visibility = method.visibility;
-                    let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
-
-                    method.method_id = Some(method_id);
-
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
-                        .methods
-                        .insert(method_name.name.clone(), method_id);
-                }
-
-                for method in &mut class.external_methods_mut() {
-                    let method_name = &method.name;
-                    let visibility = method.visibility;
-                    let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
-
-                    method.method_id = Some(method_id);
-
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
-                        .methods
-                        .insert(method_name.name.clone(), method_id);
-                }
-
-                class.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Alias(alias) => {
                 let name = alias.name.clone();
@@ -89,19 +55,6 @@ impl DefineTypes<'_, '_> {
                 let kind = TypeKind::Trait(Box::new(Trait::new(name.clone())));
                 let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
 
-                for method in &mut trait_def.methods {
-                    let method_name = &method.name;
-                    let visibility = method.visibility;
-                    let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
-
-                    method.method_id = Some(method_id);
-
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
-                        .methods
-                        .insert(method_name.name.clone(), method_id);
-                }
-
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
@@ -112,6 +65,15 @@ impl DefineTypes<'_, '_> {
                 enum_def.type_id = Some(type_id);
             }
         };
+
+        Ok(())
+    }
+
+    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
+        let target = implementation.target.name.clone();
+        let impl_id = Implementation::alloc(self.ctx.tcx_mut(), target);
+
+        implementation.impl_id = Some(impl_id);
 
         Ok(())
     }

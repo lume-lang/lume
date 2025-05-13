@@ -4,6 +4,8 @@ use lume_types::Identifier;
 
 use crate::{check::TypeCheckerPass, *};
 
+mod define_fields;
+mod define_impl;
 mod define_method_bodies;
 mod define_scope;
 mod define_type_constraints;
@@ -41,8 +43,10 @@ impl ThirBuildCtx<'_> {
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
     pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self, hir)?;
+        infer::define_fields::DefineFields::run_all(self, hir)?;
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
+        infer::define_impl::DefineImpl::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
 
         self.infer_calls(hir)?;

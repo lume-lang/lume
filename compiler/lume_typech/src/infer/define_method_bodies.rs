@@ -30,31 +30,25 @@ impl DefineMethodBodies<'_, '_> {
 
     fn define_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         match &ty {
-            lume_hir::TypeDefinition::Class(class) => {
-                let type_id = class.type_id.unwrap();
-
-                if class.builtin {
-                    type_id.set_copied(self.ctx.tcx_mut());
-                }
-
-                for property in class.properties() {
+            lume_hir::TypeDefinition::Struct(struct_def) => {
+                for property in struct_def.properties() {
                     let property_id = property.prop_id.unwrap();
 
                     let type_ref = self
                         .ctx
-                        .mk_type_ref_generic(&property.property_type, &class.type_parameters)?;
+                        .mk_type_ref_generic(&property.property_type, &struct_def.type_parameters)?;
 
                     property_id.set_property_type(self.ctx.tcx_mut(), type_ref);
                 }
 
-                for method in class.methods() {
+                for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
 
                     for param in &method.parameters {
                         let name = param.name.name.clone();
                         let type_ref = self.ctx.mk_type_ref_generic(
                             &param.param_type,
-                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
                         method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
@@ -63,30 +57,7 @@ impl DefineMethodBodies<'_, '_> {
                     if let Some(ret) = &method.return_type {
                         let return_type = self.ctx.mk_type_ref_generic(
                             ret,
-                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                        )?;
-
-                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
-                    }
-                }
-
-                for method in class.external_methods() {
-                    let method_id = method.method_id.unwrap();
-
-                    for param in &method.parameters {
-                        let name = param.name.name.clone();
-                        let type_ref = self.ctx.mk_type_ref_generic(
-                            &param.param_type,
-                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
-                        )?;
-
-                        method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
-                    }
-
-                    if let Some(ret) = &method.return_type {
-                        let return_type = self.ctx.mk_type_ref_generic(
-                            ret,
-                            &[&class.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
                         method_id.set_return_type(self.ctx.tcx_mut(), return_type);
