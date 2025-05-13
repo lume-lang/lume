@@ -1,0 +1,59 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        enum Foo {\n            Bar(int)\n        }\"#)"
+---
+[
+    TypeDefinition(
+        Enum(
+            EnumDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        14..17,
+                    ),
+                },
+                cases: [
+                    EnumDefinitionCase {
+                        name: Identifier {
+                            name: "Bar",
+                            location: Location(
+                                32..35,
+                            ),
+                        },
+                        parameters: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                36..39,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            36..39,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            32..40,
+                        ),
+                        documentation: None,
+                    },
+                ],
+                location: Location(
+                    9..50,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"ident\")"
+---
+[
+    Expression(
+        Variable(
+            Variable {
+                name: Identifier {
+                    name: "ident",
+                    location: Location(
+                        0..5,
+                    ),
+                },
+            },
+        ),
+    ),
+]

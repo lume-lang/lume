@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use arc::Project;
 use error_snippet::Result;
-use lume_parser::parser::Parser;
+use lume_parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
 use lume_types::SymbolName;
 
@@ -1344,7 +1344,7 @@ impl<'a> LowerModule<'a> {
 
 #[cfg(test)]
 mod tests {
-    use lume_parser::parser::Parser;
+    use lume_parser::Parser;
     use lume_span::PackageId;
 
     use super::*;

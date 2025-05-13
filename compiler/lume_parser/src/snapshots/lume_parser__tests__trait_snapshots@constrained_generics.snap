@@ -1,0 +1,87 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T1",
+                            location: Location(
+                                10..12,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                14..21,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            14..21,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: Location(
+                                23..25,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                27..34,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            27..34,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                methods: [],
+                location: Location(
+                    0..38,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

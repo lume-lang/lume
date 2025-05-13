@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"impl Test { fn test<T1,>() -> void {} }\")"
+---
+ExpectedIdentifier {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "impl Test { fn test<T1,>() -> void {} }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 23..24,
+    actual: >,
+}

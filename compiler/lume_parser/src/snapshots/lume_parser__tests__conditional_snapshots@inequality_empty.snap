@@ -1,0 +1,14 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"if a != 1 { }\")"
+---
+[
+    If(
+        IfCondition {
+            cases: [],
+            location: Location(
+                0..13,
+            ),
+        },
+    ),
+]

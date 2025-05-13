@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"\\\"\\\"\")"
+---
+[
+    Expression(
+        Literal(
+            String(
+                StringLiteral {
+                    value: "",
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+        ),
+    ),
+]

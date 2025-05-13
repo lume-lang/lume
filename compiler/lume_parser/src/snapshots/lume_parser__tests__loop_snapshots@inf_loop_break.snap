@@ -1,0 +1,27 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"loop { break; }\")"
+---
+[
+    InfiniteLoop(
+        InfiniteLoop {
+            block: Block {
+                statements: [
+                    Break(
+                        Break {
+                            location: Location(
+                                7..13,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    5..15,
+                ),
+            },
+            location: Location(
+                0..15,
+            ),
+        },
+    ),
+]

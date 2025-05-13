@@ -1,0 +1,19 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"0\")"
+---
+[
+    Expression(
+        Literal(
+            Int(
+                IntLiteral {
+                    value: 0,
+                    location: Location(
+                        0..1,
+                    ),
+                    kind: I32,
+                },
+            ),
+        ),
+    ),
+]

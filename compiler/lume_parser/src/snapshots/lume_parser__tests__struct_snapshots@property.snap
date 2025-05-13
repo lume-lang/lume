@@ -1,0 +1,79 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        struct Foo {\n            x: Int32 = 0;\n        }\"#)"
+---
+[
+    TypeDefinition(
+        Struct(
+            StructDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        16..19,
+                    ),
+                },
+                builtin: false,
+                properties: [
+                    Property {
+                        visibility: Private(
+                            Private {
+                                location: Location(
+                                    34..35,
+                                ),
+                            },
+                        ),
+                        name: Identifier {
+                            name: "x",
+                            location: Location(
+                                34..35,
+                            ),
+                        },
+                        property_type: Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            37..42,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        37..42,
+                                    ),
+                                },
+                            },
+                        ),
+                        default_value: Some(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            45..46,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ),
+                        location: Location(
+                            34..47,
+                        ),
+                        documentation: None,
+                    },
+                ],
+                type_parameters: [],
+                location: Location(
+                    9..57,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

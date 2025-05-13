@@ -1,0 +1,88 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"trait Add { pub fn add(other: int) { } }\")"
+---
+[
+    TypeDefinition(
+        Trait(
+            TraitDefinition {
+                name: Identifier {
+                    name: "Add",
+                    location: Location(
+                        6..9,
+                    ),
+                },
+                type_parameters: [],
+                methods: [
+                    TraitMethodDefinition {
+                        visibility: Public(
+                            Public {
+                                location: Location(
+                                    12..15,
+                                ),
+                            },
+                        ),
+                        name: Identifier {
+                            name: "add",
+                            location: Location(
+                                19..22,
+                            ),
+                        },
+                        parameters: [
+                            Parameter {
+                                name: Identifier {
+                                    name: "other",
+                                    location: Location(
+                                        23..28,
+                                    ),
+                                },
+                                param_type: Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    30..33,
+                                                ),
+                                            },
+                                            root: NamespacePath {
+                                                path: [],
+                                                location: Location(
+                                                    0..0,
+                                                ),
+                                            },
+                                            location: Location(
+                                                30..33,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                location: Location(
+                                    23..33,
+                                ),
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: None,
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: Location(
+                                    35..38,
+                                ),
+                            },
+                        ),
+                        location: Location(
+                            16..38,
+                        ),
+                        documentation: None,
+                    },
+                ],
+                location: Location(
+                    0..40,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

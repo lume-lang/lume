@@ -1,0 +1,37 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"while true { continue; }\")"
+---
+[
+    PredicateLoop(
+        PredicateLoop {
+            condition: Literal(
+                Boolean(
+                    BooleanLiteral {
+                        value: true,
+                        location: Location(
+                            6..10,
+                        ),
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [
+                    Continue(
+                        Continue {
+                            location: Location(
+                                13..22,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    11..24,
+                ),
+            },
+            location: Location(
+                0..24,
+            ),
+        },
+    ),
+]

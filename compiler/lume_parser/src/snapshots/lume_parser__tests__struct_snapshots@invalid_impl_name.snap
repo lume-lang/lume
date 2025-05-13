@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"impl 1A {}\")"
+---
+UnexpectedType {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "impl 1A {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 5..6,
+    actual: integer,
+}

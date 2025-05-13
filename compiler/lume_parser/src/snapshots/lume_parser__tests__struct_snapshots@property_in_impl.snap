@@ -1,0 +1,20 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"impl Foo { pub x: Bar; }\")"
+---
+PropertyInImpl {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "impl Foo { pub x: Bar; }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 15..16,
+}

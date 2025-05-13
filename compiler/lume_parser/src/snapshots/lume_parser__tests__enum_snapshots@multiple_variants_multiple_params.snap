@@ -1,0 +1,136 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        enum Foo {\n            Bar(int, int),\n            Baz(int, int)\n        }\"#)"
+---
+[
+    TypeDefinition(
+        Enum(
+            EnumDefinition {
+                name: Identifier {
+                    name: "Foo",
+                    location: Location(
+                        14..17,
+                    ),
+                },
+                cases: [
+                    EnumDefinitionCase {
+                        name: Identifier {
+                            name: "Bar",
+                            location: Location(
+                                32..35,
+                            ),
+                        },
+                        parameters: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                36..39,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            36..39,
+                                        ),
+                                    },
+                                },
+                            ),
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                41..44,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            41..44,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            32..45,
+                        ),
+                        documentation: None,
+                    },
+                    EnumDefinitionCase {
+                        name: Identifier {
+                            name: "Baz",
+                            location: Location(
+                                59..62,
+                            ),
+                        },
+                        parameters: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                63..66,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            63..66,
+                                        ),
+                                    },
+                                },
+                            ),
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: Location(
+                                                68..71,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            68..71,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            59..72,
+                        ),
+                        documentation: None,
+                    },
+                ],
+                location: Location(
+                    9..82,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

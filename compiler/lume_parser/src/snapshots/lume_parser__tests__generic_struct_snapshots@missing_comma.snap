@@ -1,0 +1,22 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"struct Test<T1 T2> {}\")"
+---
+UnexpectedToken {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "struct Test<T1 T2> {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 15..17,
+    expected: ,,
+    actual: identifier,
+}

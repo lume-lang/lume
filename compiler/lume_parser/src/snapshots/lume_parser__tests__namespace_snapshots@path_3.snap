@@ -1,0 +1,38 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"namespace std::io::path\")"
+---
+[
+    Namespace(
+        Namespace {
+            path: NamespacePath {
+                path: [
+                    Identifier {
+                        name: "std",
+                        location: Location(
+                            10..13,
+                        ),
+                    },
+                    Identifier {
+                        name: "io",
+                        location: Location(
+                            15..17,
+                        ),
+                    },
+                    Identifier {
+                        name: "path",
+                        location: Location(
+                            19..23,
+                        ),
+                    },
+                ],
+                location: Location(
+                    10..23,
+                ),
+            },
+            location: Location(
+                0..23,
+            ),
+        },
+    ),
+]

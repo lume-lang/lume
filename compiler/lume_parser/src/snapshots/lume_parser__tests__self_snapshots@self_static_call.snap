@@ -1,0 +1,42 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"self::invoke()\")"
+---
+[
+    Expression(
+        Call(
+            Call {
+                callee: None,
+                name: Path {
+                    name: Identifier {
+                        name: "invoke",
+                        location: Location(
+                            6..12,
+                        ),
+                    },
+                    root: NamespacePath {
+                        path: [
+                            Identifier {
+                                name: "self",
+                                location: Location(
+                                    0..4,
+                                ),
+                            },
+                        ],
+                        location: Location(
+                            0..0,
+                        ),
+                    },
+                    location: Location(
+                        6..4,
+                    ),
+                },
+                arguments: [],
+                type_arguments: [],
+                location: Location(
+                    6..14,
+                ),
+            },
+        ),
+    ),
+]

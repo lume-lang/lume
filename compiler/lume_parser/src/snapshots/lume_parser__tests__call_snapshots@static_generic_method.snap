@@ -1,0 +1,99 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Call(
+                Call {
+                    callee: None,
+                    name: Path {
+                        name: Identifier {
+                            name: "call",
+                            location: Location(
+                                13..17,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [
+                                Identifier {
+                                    name: "Foo",
+                                    location: Location(
+                                        8..11,
+                                    ),
+                                },
+                            ],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            13..11,
+                        ),
+                    },
+                    arguments: [
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        21..22,
+                                    ),
+                                },
+                            },
+                        ),
+                        Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "b",
+                                    location: Location(
+                                        24..25,
+                                    ),
+                                },
+                            },
+                        ),
+                    ],
+                    type_arguments: [
+                        TypeArgument {
+                            ty: Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "T",
+                                            location: Location(
+                                                18..19,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            18..19,
+                                        ),
+                                    },
+                                },
+                            ),
+                        },
+                    ],
+                    location: Location(
+                        13..27,
+                    ),
+                },
+            ),
+            location: Location(
+                0..27,
+            ),
+        },
+    ),
+]

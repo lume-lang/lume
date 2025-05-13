@@ -1,0 +1,61 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"for pattern in collection { let a = 0; }\")"
+---
+[
+    IteratorLoop(
+        IteratorLoop {
+            pattern: Identifier {
+                name: "pattern",
+                location: Location(
+                    4..11,
+                ),
+            },
+            collection: Variable(
+                Variable {
+                    name: Identifier {
+                        name: "collection",
+                        location: Location(
+                            15..25,
+                        ),
+                    },
+                },
+            ),
+            block: Block {
+                statements: [
+                    VariableDeclaration(
+                        VariableDeclaration {
+                            name: Identifier {
+                                name: "a",
+                                location: Location(
+                                    32..33,
+                                ),
+                            },
+                            variable_type: None,
+                            value: Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            36..37,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                            location: Location(
+                                28..38,
+                            ),
+                        },
+                    ),
+                ],
+                location: Location(
+                    26..40,
+                ),
+            },
+            location: Location(
+                0..40,
+            ),
+        },
+    ),
+]

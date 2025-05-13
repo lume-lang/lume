@@ -1,0 +1,195 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_string() -> String {\n                return self;\n            }\n\n            pub fn to_int() -> Int32 {\n                return self;\n            }\n        }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Cast",
+                            location: Location(
+                                13..17,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            13..17,
+                        ),
+                    },
+                },
+            ),
+            target: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Int32",
+                            location: Location(
+                                21..26,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            21..26,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                41..44,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "to_string",
+                        location: Location(
+                            48..57,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "String",
+                                        location: Location(
+                                            63..69,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        63..69,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "self",
+                                                    location: Location(
+                                                        95..99,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        88..100,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            70..114,
+                        ),
+                    },
+                    location: Location(
+                        41..114,
+                    ),
+                },
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                128..131,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "to_int",
+                        location: Location(
+                            135..141,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            147..152,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        147..152,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "self",
+                                                    location: Location(
+                                                        178..182,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        171..183,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            153..197,
+                        ),
+                    },
+                    location: Location(
+                        128..197,
+                    ),
+                },
+            ],
+            location: Location(
+                9..207,
+            ),
+        },
+    ),
+]

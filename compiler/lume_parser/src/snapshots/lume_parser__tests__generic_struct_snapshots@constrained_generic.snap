@@ -1,0 +1,57 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"struct Test<T: Numeric> {}\")"
+---
+[
+    TypeDefinition(
+        Struct(
+            StructDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        7..11,
+                    ),
+                },
+                builtin: false,
+                properties: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: Location(
+                                12..13,
+                            ),
+                        },
+                        constraints: [
+                            Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                15..22,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            15..22,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
+                    },
+                ],
+                location: Location(
+                    0..26,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

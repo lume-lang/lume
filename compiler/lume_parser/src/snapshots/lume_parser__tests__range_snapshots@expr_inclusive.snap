@@ -1,0 +1,48 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"let _ = (a..=b);\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Range(
+                Range {
+                    lower: Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "a",
+                                location: Location(
+                                    9..10,
+                                ),
+                            },
+                        },
+                    ),
+                    upper: Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "b",
+                                location: Location(
+                                    13..14,
+                                ),
+                            },
+                        },
+                    ),
+                    inclusive: true,
+                    location: Location(
+                        9..14,
+                    ),
+                },
+            ),
+            location: Location(
+                0..16,
+            ),
+        },
+    ),
+]

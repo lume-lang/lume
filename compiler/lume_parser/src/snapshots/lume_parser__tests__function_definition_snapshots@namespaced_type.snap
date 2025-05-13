@@ -1,0 +1,66 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"fn main() -> std::Int32 {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "main",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Some(
+                Scalar(
+                    ScalarType {
+                        name: Path {
+                            name: Identifier {
+                                name: "Int32",
+                                location: Location(
+                                    18..23,
+                                ),
+                            },
+                            root: NamespacePath {
+                                path: [
+                                    Identifier {
+                                        name: "std",
+                                        location: Location(
+                                            13..16,
+                                        ),
+                                    },
+                                ],
+                                location: Location(
+                                    13..16,
+                                ),
+                            },
+                            location: Location(
+                                18..23,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    24..26,
+                ),
+            },
+            location: Location(
+                0..26,
+            ),
+            documentation: None,
+        },
+    ),
+]

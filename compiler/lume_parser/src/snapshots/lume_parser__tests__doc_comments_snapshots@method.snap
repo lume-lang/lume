@@ -1,0 +1,97 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"impl Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }\"#)"
+---
+[
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..4,
+                    ),
+                },
+            ),
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Foo",
+                            location: Location(
+                                5..8,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            5..8,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                61..64,
+                            ),
+                        },
+                    ),
+                    external: false,
+                    name: Identifier {
+                        name: "bar",
+                        location: Location(
+                            68..71,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "void",
+                                        location: Location(
+                                            77..81,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        77..81,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            82..85,
+                        ),
+                    },
+                    location: Location(
+                        61..85,
+                    ),
+                    documentation: Some(
+                        "This is a doc comment",
+                    ),
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                0..95,
+            ),
+        },
+    ),
+]

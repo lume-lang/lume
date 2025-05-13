@@ -1,0 +1,115 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        impl Foo {\n            pub fn ==() -> bool {\n                return true;\n            }\n        }\"#)"
+---
+[
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        9..13,
+                    ),
+                },
+            ),
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Foo",
+                            location: Location(
+                                14..17,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            14..17,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                32..35,
+                            ),
+                        },
+                    ),
+                    external: false,
+                    name: Identifier {
+                        name: "==",
+                        location: Location(
+                            39..41,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "bool",
+                                        location: Location(
+                                            47..51,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        47..51,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Literal(
+                                            Boolean(
+                                                BooleanLiteral {
+                                                    value: true,
+                                                    location: Location(
+                                                        77..81,
+                                                    ),
+                                                },
+                                            ),
+                                        ),
+                                    ),
+                                    location: Location(
+                                        70..82,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            52..96,
+                        ),
+                    },
+                    location: Location(
+                        32..96,
+                    ),
+                    documentation: None,
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                9..106,
+            ),
+        },
+    ),
+]

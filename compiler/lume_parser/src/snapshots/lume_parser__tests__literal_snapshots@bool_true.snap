@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"true\")"
+---
+[
+    Expression(
+        Literal(
+            Boolean(
+                BooleanLiteral {
+                    value: true,
+                    location: Location(
+                        0..4,
+                    ),
+                },
+            ),
+        ),
+    ),
+]

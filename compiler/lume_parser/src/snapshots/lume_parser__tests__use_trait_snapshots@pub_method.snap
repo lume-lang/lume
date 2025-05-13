@@ -1,0 +1,198 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(r#\"\n        use Add in Int32 {\n            pub fn add(other: Int32) -> Int32 {\n                return self + other;\n            }\n        }\"#)"
+---
+[
+    Use(
+        UseTrait {
+            name: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Add",
+                            location: Location(
+                                13..16,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            13..16,
+                        ),
+                    },
+                },
+            ),
+            target: Scalar(
+                ScalarType {
+                    name: Path {
+                        name: Identifier {
+                            name: "Int32",
+                            location: Location(
+                                20..25,
+                            ),
+                        },
+                        root: NamespacePath {
+                            path: [],
+                            location: Location(
+                                0..0,
+                            ),
+                        },
+                        location: Location(
+                            20..25,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                40..43,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "add",
+                        location: Location(
+                            47..50,
+                        ),
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: Location(
+                                    51..56,
+                                ),
+                            },
+                            param_type: Scalar(
+                                ScalarType {
+                                    name: Path {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                58..63,
+                                            ),
+                                        },
+                                        root: NamespacePath {
+                                            path: [],
+                                            location: Location(
+                                                0..0,
+                                            ),
+                                        },
+                                        location: Location(
+                                            58..63,
+                                        ),
+                                    },
+                                },
+                            ),
+                            location: Location(
+                                51..63,
+                            ),
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Some(
+                        Scalar(
+                            ScalarType {
+                                name: Path {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: Location(
+                                            68..73,
+                                        ),
+                                    },
+                                    root: NamespacePath {
+                                        path: [],
+                                        location: Location(
+                                            0..0,
+                                        ),
+                                    },
+                                    location: Location(
+                                        68..73,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [
+                            Return(
+                                Return {
+                                    value: Some(
+                                        Call(
+                                            Call {
+                                                callee: Some(
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "self",
+                                                                location: Location(
+                                                                    99..103,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ),
+                                                name: Path {
+                                                    name: Identifier {
+                                                        name: "+",
+                                                        location: Location(
+                                                            104..105,
+                                                        ),
+                                                    },
+                                                    root: NamespacePath {
+                                                        path: [],
+                                                        location: Location(
+                                                            0..0,
+                                                        ),
+                                                    },
+                                                    location: Location(
+                                                        104..105,
+                                                    ),
+                                                },
+                                                arguments: [
+                                                    Variable(
+                                                        Variable {
+                                                            name: Identifier {
+                                                                name: "other",
+                                                                location: Location(
+                                                                    106..111,
+                                                                ),
+                                                            },
+                                                        },
+                                                    ),
+                                                ],
+                                                type_arguments: [],
+                                                location: Location(
+                                                    99..106,
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        92..112,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            74..126,
+                        ),
+                    },
+                    location: Location(
+                        40..126,
+                    ),
+                },
+            ],
+            location: Location(
+                9..136,
+            ),
+        },
+    ),
+]
