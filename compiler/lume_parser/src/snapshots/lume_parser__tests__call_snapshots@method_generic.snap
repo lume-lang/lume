@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
+expression: "parse_expr(\"let _ = a.call::<T>(a, b);\")"
 ---
 [
     VariableDeclaration(
@@ -49,7 +49,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                 name: Identifier {
                                     name: "a",
                                     location: Location(
-                                        18..19,
+                                        20..21,
                                     ),
                                 },
                             },
@@ -59,7 +59,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                 name: Identifier {
                                     name: "b",
                                     location: Location(
-                                        21..22,
+                                        23..24,
                                     ),
                                 },
                             },
@@ -73,7 +73,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                         name: Identifier {
                                             name: "T",
                                             location: Location(
-                                                15..16,
+                                                17..18,
                                             ),
                                         },
                                         root: NamespacePath {
@@ -83,7 +83,7 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                             ),
                                         },
                                         location: Location(
-                                            15..16,
+                                            17..18,
                                         ),
                                     },
                                 },
@@ -91,12 +91,12 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                         },
                     ],
                     location: Location(
-                        10..24,
+                        10..26,
                     ),
                 },
             ),
             location: Location(
-                0..24,
+                0..26,
             ),
         },
     ),

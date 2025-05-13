@@ -356,7 +356,7 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");
     assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
     assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
-    assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
+    assert_expr_snap_eq!("let _ = a.call::<T>(a, b);", "method_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
     assert_expr_snap_eq!("let _ = Foo::call::<T>(a, b);", "static_generic_method");
 }

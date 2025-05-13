@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-description: "let _ = 1.call<T>(0, 1);"
+description: "let _ = 1.call::<T>(0, 1);"
 ---
 [
     Statement {
@@ -15,7 +15,7 @@ description: "let _ = 1.call<T>(0, 1);"
                 declared_type: None,
                 value: Expression {
                     id: 5871781006564002453,
-                    location: <internal>:10:24,
+                    location: <internal>:10:26,
                     kind: InstanceCall(
                         InstanceCall {
                             id: 5871781006564002453,
@@ -45,19 +45,19 @@ description: "let _ = 1.call<T>(0, 1);"
                                     ty: Type {
                                         name: T,
                                         type_params: [],
-                                        location: <internal>:15:16,
+                                        location: <internal>:17:18,
                                     },
-                                    location: <internal>:15:16,
+                                    location: <internal>:17:18,
                                 },
                             ],
                             arguments: [
                                 Expression {
                                     id: 11743562013128004906,
-                                    location: <internal>:18:19,
+                                    location: <internal>:20:21,
                                     kind: Literal(
                                         Literal {
                                             id: 11743562013128004906,
-                                            location: <internal>:18:19,
+                                            location: <internal>:20:21,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: 11743562013128004906,
@@ -70,11 +70,11 @@ description: "let _ = 1.call<T>(0, 1);"
                                 },
                                 Expression {
                                     id: 17615343019692007359,
-                                    location: <internal>:21:22,
+                                    location: <internal>:23:24,
                                     kind: Literal(
                                         Literal {
                                             id: 17615343019692007359,
-                                            location: <internal>:21:22,
+                                            location: <internal>:23:24,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: 17615343019692007359,
@@ -91,6 +91,6 @@ description: "let _ = 1.call<T>(0, 1);"
                 },
             },
         ),
-        location: <internal>:0:24,
+        location: <internal>:0:26,
     },
 ]

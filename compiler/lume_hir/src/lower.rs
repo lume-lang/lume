@@ -1608,12 +1608,12 @@ mod tests {
         assert_expr_snap_eq!("let _ = call();", "function_empty");
         assert_expr_snap_eq!("let _ = call(0);", "function_param_1");
         assert_expr_snap_eq!("let _ = call(0, 1);", "function_param_2");
-        assert_expr_snap_eq!("let _ = call<T>(0, 1);", "function_generic");
+        assert_expr_snap_eq!("let _ = call::<T>(0, 1);", "function_generic");
 
         assert_expr_snap_eq!("let _ = 1.call();", "method_empty");
         assert_expr_snap_eq!("let _ = 1.call(0);", "method_param_1");
         assert_expr_snap_eq!("let _ = 1.call(0, 1);", "method_param_2");
-        assert_expr_snap_eq!("let _ = 1.call<T>(0, 1);", "method_generic");
+        assert_expr_snap_eq!("let _ = 1.call::<T>(0, 1);", "method_generic");
     }
 
     #[test]

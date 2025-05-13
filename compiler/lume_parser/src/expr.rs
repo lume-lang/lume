@@ -267,7 +267,7 @@ impl Parser {
         let name = self.consume(TokenKind::Identifier)?;
 
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenKind::LeftParen)? || self.peek(TokenKind::Less)? {
+        if self.peek(TokenKind::LeftParen)? || self.consume_if(IDENTIFIER_SEPARATOR)?.is_some() {
             let identifier = Identifier {
                 name: name.value.unwrap(),
                 location: name.index.into(),
