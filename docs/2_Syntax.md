@@ -24,16 +24,16 @@ LineTerminator ::
 ## Comments
 
 Comments ::
-  - LineComment
-  - BlockComment
+  - Comment
+  - DocComment
 
 CommentChar :: SourceCharacter but not LineTerminator
 
-LineComment ::
-  - "#" CommentChar*
+Comment ::
+  - "//" CommentChar*
 
-BlockComment ::
-  - "/*" SourceCharacter* "*/"
+DocComment ::
+  - "///" CommentChar*
 
 ## Tokens
 
@@ -93,7 +93,7 @@ Literal :: one of
 - IntegerLiteral
 - RealLiteral
 - StringLiteral
-- NullLiteral
+- ArrayLiteral
 
 ### Boolean values
 
@@ -145,66 +145,58 @@ StringLiteral :: one of `"` StringCharacter+ `"`
 
 StringCharacter :: SourceCharacter but not `"`
 
-### Null values
+### Array values
 
-NullLiteral :: `null`
+ArrayLiteral :: `[` Expression* `]`
 
 ## Statements
 
 Statement :: one of
-- Expression
-- ClassDefinition
-- FunctionDefinition
 - VariableDeclaration
-- Conditional
+- Loop
+- Break
+- Continue
 - Return
+- Conditional
+- Expression
 
-## Expressions
+StatementDelimiter :: `;`
 
-Expression :: one of
-- Literal
-- Invocation
-- OperatorExpression
-- Variable
-
-### Invocations
-
-Invocation :: one of
-- FunctionInvocation
-- MethodInvocation
-
-FunctionInvocation ::
-- Name `(` Arguments `)`
-
-MethodInvocation ::
-- Variable `.` Name `(` Arguments `)`
-
-Arguments ::
-- `(` Argument* `)`
-
-Argument ::
-- Name `:` Expression
-
-### Operators
-
-OperatorExpression :: Expression Operator Expression
-
-### Variables
-
-Variable :: Name
+### Variable declarations
 
 VariableDeclaration ::
 - MutableVariableDeclaration
 - ImmutableVariableDeclaration
 
 MutableVariableDeclaration ::
-- `let` Name `=` Expression
-- `let` Name `:` Type
-- `let` Name `:` Type `=` Expression
+- `let` Name `=` Expression StatementDelimiter
+- `let` Name `:` Type StatementDelimiter
+- `let` Name `:` Type `=` Expression StatementDelimiter
 
 ImmutableVariableDeclaration ::
-- `const` Name `=` Expression
-- `const` Name `:` Type `=` Expression
+- `const` Name `=` Expression StatementDelimiter
+- `const` Name `:` Type `=` Expression StatementDelimiter
+
+### Loops
+
+Loop :: one of
+- InfiniteLoop
+- IteratorLoop
+- PredicateLoop
+
+InfiniteLoop :: `loop` Block
+
+IteratorLoop :: `for` Name `in` Expression Block
+
+PredicateLoop :: `while` Expression Block
+
+Break :: `break` StatementDelimiter
+
+Continue :: `continue` StatementDelimiter
+
+### Returns
+
+Return :: `return` Expression? StatementDelimiter
 
 ### Conditionals
 
@@ -222,17 +214,141 @@ ElseIfConditional :: `} else if` Expression `{` Expression
 
 ElseConditional :: `} else {` Expression
 
-#### Inline Conditionals
+## Expressions
 
-InlineConditional ::
-- InlineIfConditional
-- InlineUnlessConditional
+Expression :: one of
+- Literal
+- Invocation
+- OperatorExpression
+- Variable
+- Assignment
+- SelfReference
 
-InlineIfConditional :: `if` Expression
+### Invocations
 
-InlineUnlessConditional :: `unless` Expression
+Invocation :: one of
+- StaticInvocation
+- InstanceInvocation
 
-### Returns
+StaticInvocation ::
+- Name `(` Arguments `)`
 
-Return ::
-- `return` Expression
+InstanceInvocation ::
+- Variable `.` Name `(` Arguments `)`
+
+Arguments ::
+- `(` Argument* `)`
+
+Argument ::
+- Name `:` Expression
+
+### Operators
+
+OperatorExpression :: Expression Operator Expression
+
+### Variables
+
+Variable :: Name
+
+### Assignment
+
+Assignment :: Expression `=` Expression
+
+### Self reference
+
+SelfReference :: `self`
+
+## Types
+
+NamespaceSeparator :: `::`
+
+NamespaceSegment :: TypeReference NamespaceSeparator
+
+Type :: NamespaceSeparator? NamespaceSegment* TypeReference
+
+TypeReference :: one of
+- ScalarType
+- ArrayType
+- GenericType
+
+ScalarType :: Name
+
+ArrayType :: `[` Type `]`
+
+GenericType :: Name `<` Name* `>`
+
+## Items
+
+Item :: one of
+- Import
+- Namespace
+- Function
+- Structure
+- Implementation
+- Enum
+- Alias
+- Trait
+- TraitUse
+
+### TypeParameters
+
+TypeParameter :: Name
+
+TypeParameters :: `<` TypeParameter* `>`
+
+### Visibility
+
+Visibility :: one of
+- `pub`
+
+### Imports
+
+Import :: `import` NamespacePath+ `(` Name+ `)`
+
+NamespacePath :: Name NamespaceSeparator
+
+### Namespaces
+
+Namespace :: `namespace` NamespacePath+
+
+### Functions
+
+Function :: one of
+- FunctionDefinition
+- ExternalFunctionDefinition
+
+FunctionDefinition :: Visibility? `fn` Name TypeParameters? Parameters? ReturnType? Block
+
+ExternalFunctionDefinition :: Visibility? `fn` `external` Name TypeParameters? Parameters? ReturnType?
+
+#### Parameters
+
+Parameters :: `(` Parameter* `)`
+
+Parameter :: one of
+- SelfParam
+- NamedParam
+
+SelfParam :: `self`
+
+NamedParam :: Name `:` Type
+
+#### Return types
+
+ReturnArrow :: `->`
+
+ReturnType :: ReturnArrow Type
+
+#### Blocks
+
+Block :: `{` Statement* `}`
+
+### Structures
+
+### Implementations
+
+### Enumerations
+
+### Type aliases
+
+### Traits
