@@ -153,6 +153,9 @@ pub struct LowerModule<'a> {
 
     /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
     local_id_counter: u64,
+
+    /// Defines the current counter for [`ItemId`] instances, which refer to implementation blocks.
+    impl_id_counter: u64,
 }
 
 impl<'a> LowerModule<'a> {
@@ -166,6 +169,7 @@ impl<'a> LowerModule<'a> {
             namespace: hir::NamespacePath::empty(),
             self_type: None,
             local_id_counter: 0,
+            impl_id_counter: 0,
         }
     }
 
@@ -195,6 +199,15 @@ impl<'a> LowerModule<'a> {
     /// Converts the given value into an [`hir::ItemId`].
     fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> hir::ItemId {
         let id = hash_id(&value);
+
+        hir::ItemId(self.map.package, id)
+    }
+
+    /// Converts the given value into an [`hir::ItemId`].
+    fn impl_id<T: std::hash::Hash + Sized>(&mut self, value: T) -> hir::ItemId {
+        let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
+
+        self.impl_id_counter += 1;
 
         hir::ItemId(self.map.package, id)
     }
@@ -333,7 +346,8 @@ impl<'a> LowerModule<'a> {
             ast::TopLevelExpression::Namespace(i) => return self.top_namespace(*i),
             ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
-            ast::TopLevelExpression::Use(f) => self.def_impl(*f)?,
+            ast::TopLevelExpression::Use(f) => self.def_use(*f)?,
+            ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
         };
 
         self.map.items.insert(hir_ast.id(), hir_ast.clone());
@@ -837,51 +851,44 @@ impl<'a> LowerModule<'a> {
 
     fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<hir::Symbol> {
         match expr {
-            ast::TypeDefinition::Class(t) => self.def_class(*t),
+            ast::TypeDefinition::Struct(t) => self.def_struct(*t),
             ast::TypeDefinition::Trait(t) => self.def_trait(*t),
             ast::TypeDefinition::Enum(t) => self.def_enum(*t),
             ast::TypeDefinition::Alias(t) => self.def_alias(*t),
         }
     }
 
-    fn def_class(&mut self, expr: ast::ClassDefinition) -> Result<hir::Symbol> {
+    fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<hir::Symbol> {
         let name = self.symbol_name(expr.name);
-        let builtin = expr.builtin;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
         self.self_type = Some(name.clone());
 
-        let members = expr
-            .members
+        let properties = expr
+            .properties
             .into_iter()
-            .map(|m| self.def_class_member(m))
-            .collect::<Result<Vec<hir::ClassMember>>>()?;
+            .map(|m| self.def_property(m))
+            .collect::<Result<Vec<hir::Property>>>()?;
 
         self.self_type = None;
 
-        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Class(Box::new(
-            hir::ClassDefinition {
+        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Struct(Box::new(
+            hir::StructDefinition {
                 id,
                 type_id: None,
                 name,
-                builtin,
+                builtin: expr.builtin,
                 type_parameters,
-                members,
+                properties,
+                methods: Vec::new(),
                 location,
             },
         )))))
     }
 
-    fn def_class_member(&mut self, expr: ast::ClassMember) -> Result<hir::ClassMember> {
-        match expr {
-            ast::ClassMember::Property(p) => self.def_class_property(*p),
-            ast::ClassMember::MethodDefinition(m) => self.def_class_method(*m),
-        }
-    }
-
-    fn def_class_property(&mut self, expr: ast::Property) -> Result<hir::ClassMember> {
+    fn def_property(&mut self, expr: ast::Property) -> Result<hir::Property> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.identifier(expr.name);
         let property_type = self.type_ref(expr.property_type)?;
@@ -893,17 +900,44 @@ impl<'a> LowerModule<'a> {
             None
         };
 
-        Ok(hir::ClassMember::Property(Box::new(hir::Property {
+        Ok(hir::Property {
             prop_id: None,
             name,
             visibility,
             property_type,
             default_value,
             location,
+        })
+    }
+
+    fn def_impl(&mut self, expr: ast::Implementation) -> Result<hir::Symbol> {
+        let target = self.type_ref(*expr.name)?;
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+        let location = self.location(expr.location);
+
+        let id = self.impl_id(&target);
+
+        self.self_type = Some(target.name.clone());
+
+        let methods = expr
+            .methods
+            .into_iter()
+            .map(|m| self.def_impl_method(m))
+            .collect::<Result<Vec<hir::MethodDefinition>>>()?;
+
+        self.self_type = None;
+
+        Ok(hir::Symbol::Impl(Box::new(hir::Implementation {
+            id,
+            impl_id: None,
+            target: Box::new(target),
+            methods,
+            type_parameters,
+            location,
         })))
     }
 
-    fn def_class_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::ClassMember> {
+    fn def_impl_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -911,23 +945,13 @@ impl<'a> LowerModule<'a> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
-        if expr.external {
-            return Ok(hir::ClassMember::ExternalMethod(Box::new(
-                hir::ExternalMethodDefinition {
-                    method_id: None,
-                    name,
-                    visibility,
-                    type_parameters,
-                    parameters,
-                    return_type,
-                    location,
-                },
-            )));
-        }
+        let block = if expr.external {
+            None
+        } else {
+            Some(self.isolated_block(expr.block)?)
+        };
 
-        let block = self.isolated_block(expr.block)?;
-
-        Ok(hir::ClassMember::Method(Box::new(hir::MethodDefinition {
+        Ok(hir::MethodDefinition {
             method_id: None,
             name,
             visibility,
@@ -936,7 +960,7 @@ impl<'a> LowerModule<'a> {
             return_type,
             block,
             location,
-        })))
+        })
     }
 
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<hir::Symbol> {
@@ -1062,22 +1086,11 @@ impl<'a> LowerModule<'a> {
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
-        if expr.external {
-            return Ok(hir::Symbol::ExternalFunction(Box::new(
-                hir::ExternalFunctionDefinition {
-                    id,
-                    func_id: None,
-                    visibility,
-                    name,
-                    type_parameters,
-                    parameters,
-                    return_type,
-                    location,
-                },
-            )));
-        }
-
-        let block = self.isolated_block(expr.block)?;
+        let block = if expr.external {
+            None
+        } else {
+            Some(self.isolated_block(expr.block)?)
+        };
 
         Ok(hir::Symbol::Function(Box::new(hir::FunctionDefinition {
             id,
@@ -1146,15 +1159,15 @@ impl<'a> LowerModule<'a> {
         })
     }
 
-    fn def_impl(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
+    fn def_use(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
-        let methods = self.def_impl_methods(expr.methods)?;
+        let methods = self.def_use_methods(expr.methods)?;
         let location = self.location(expr.location);
 
         let id = self.item_id(&name);
 
-        Ok(hir::Symbol::Impl(Box::new(hir::TraitImplementation {
+        Ok(hir::Symbol::Use(Box::new(hir::TraitImplementation {
             id,
             name: Box::new(name),
             target: Box::new(target),
@@ -1163,17 +1176,17 @@ impl<'a> LowerModule<'a> {
         })))
     }
 
-    fn def_impl_methods(
+    fn def_use_methods(
         &mut self,
         methods: Vec<ast::TraitMethodImplementation>,
     ) -> Result<Vec<hir::TraitMethodImplementation>> {
         methods
             .into_iter()
-            .map(|m| self.def_impl_method(m))
+            .map(|m| self.def_use_method(m))
             .collect::<Result<Vec<_>>>()
     }
 
-    fn def_impl_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
+    fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
         let visibility = self.visibility(expr.visibility)?;
         let name = self.symbol_name(expr.name);
         let parameters = self.parameters(expr.parameters, true)?;
@@ -1620,13 +1633,13 @@ mod tests {
     }
 
     #[test]
-    fn test_class_snapshots() {
-        assert_snap_eq!("class Int32 {}", "empty");
-        assert_snap_eq!("class builtin Int32 {}", "builtin");
+    fn test_struct_snapshots() {
+        assert_snap_eq!("struct Int32 {}", "empty_decl");
+        assert_snap_eq!("impl Int32 {}", "empty_impl");
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     fn bar() -> Int32 {
                         return 0;
                     }
@@ -1636,7 +1649,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     fn bar() { }
                 }"#,
             "method_no_ret"
@@ -1644,7 +1657,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     pub fn bar() -> Int32 {
                         return 0;
                     }
@@ -1654,7 +1667,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     fn external bar() -> Int32
                 }"#,
             "ext_method"
@@ -1662,7 +1675,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     pub fn ==() -> bool {
                         return true;
                     }
@@ -1672,7 +1685,7 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
+                impl Foo {
                     fn bar<T>() -> Int32 { }
                 }"#,
             "generic_method"
@@ -1680,48 +1693,48 @@ mod tests {
 
         assert_snap_eq!(
             r#"
-                class Foo {
-                    let x: Int32 = 0;
+                struct Foo {
+                    x: Int32 = 0;
                 }"#,
             "property"
         );
 
         assert_snap_eq!(
             r#"
-                class Foo {
-                    let x: Int32;
+                struct Foo {
+                    x: Int32;
                 }"#,
             "property_no_default"
         );
 
         assert_snap_eq!(
             r#"
-                class Foo {
-                    pub let x: Int32 = 1;
+                struct Foo {
+                    pub x: Int32 = 1;
                 }"#,
             "pub_property"
         );
     }
 
     #[test]
-    fn test_generic_class_snapshots() {
-        assert_snap_eq!("class Test {}", "no_generics");
-        assert_snap_eq!("class Test<> {}", "empty_generics");
-        assert_snap_eq!("class Test<T> {}", "single_generic");
-        assert_snap_eq!("class Test<T1, T2> {}", "multiple_generics");
-        assert_snap_eq!("class Test<T: Numeric> {}", "constrained_generic");
-        assert_snap_eq!("class Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
+    fn test_generic_struct_snapshots() {
+        assert_snap_eq!("struct Test {}", "no_generics");
+        assert_snap_eq!("struct Test<> {}", "empty_generics");
+        assert_snap_eq!("struct Test<T> {}", "single_generic");
+        assert_snap_eq!("struct Test<T1, T2> {}", "multiple_generics");
+        assert_snap_eq!("struct Test<T: Numeric> {}", "constrained_generic");
+        assert_snap_eq!("struct Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
     }
 
     #[test]
     fn test_generic_method_snapshots() {
-        assert_snap_eq!("class Test { fn test() -> void {} }", "no_generics");
-        assert_snap_eq!("class Test { fn test<>() -> void {} }", "empty_generics");
-        assert_snap_eq!("class Test { fn test<T>() -> void {} }", "single_generic");
-        assert_snap_eq!("class Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
-        assert_snap_eq!("class Test { fn test<T: Numeric>() -> void {} }", "constrained_generic");
+        assert_snap_eq!("impl Test { fn test() -> void {} }", "no_generics");
+        assert_snap_eq!("impl Test { fn test<>() -> void {} }", "empty_generics");
+        assert_snap_eq!("impl Test { fn test<T>() -> void {} }", "single_generic");
+        assert_snap_eq!("impl Test { fn test<T1, T2>() -> void {} }", "multiple_generics");
+        assert_snap_eq!("impl Test { fn test<T: Numeric>() -> void {} }", "constrained_generic");
         assert_snap_eq!(
-            "class Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
+            "impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
             "constrained_generics"
         );
     }
@@ -1853,65 +1866,65 @@ mod tests {
     fn test_doc_comments_snapshots() {
         assert_snap_eq!(
             r#"/// This is a doc comment
-                fn foo() -> void { }"#,
+            fn foo() -> void { }"#,
             "function"
         );
 
         assert_snap_eq!(
             r#"/// This is a doc comment
-                class Foo { }"#,
-            "class"
+            struct Foo { }"#,
+            "struct"
         );
 
         assert_snap_eq!(
-            r#"class Foo {
-                    /// This is a doc comment
-                    pub let bar: Int32 = 0;
-                }"#,
+            r#"struct Foo {
+                /// This is a doc comment
+                pub bar: Int32 = 0;
+            }"#,
             "property"
         );
 
         assert_snap_eq!(
-            r#"class Foo {
-                    /// This is a doc comment
-                    pub fn bar() -> void { }
-                }"#,
+            r#"impl Foo {
+                /// This is a doc comment
+                pub fn bar() -> void { }
+            }"#,
             "method"
         );
 
         assert_snap_eq!(
             r#"/// This is a doc comment
-                trait Foo { }"#,
+            trait Foo { }"#,
             "trait"
         );
 
         assert_snap_eq!(
             r#"trait Foo {
-                    /// This is a doc comment
-                    pub fn bar() -> void { }
-                }"#,
+                /// This is a doc comment
+                pub fn bar() -> void { }
+            }"#,
             "trait_method"
         );
 
         assert_snap_eq!(
             r#"/// This is a doc comment
-                enum Foo {
-                    Bar
-                }"#,
+            enum Foo {
+                Bar
+            }"#,
             "enum"
         );
 
         assert_snap_eq!(
             r#"enum Foo {
-                    /// This is a doc comment
-                    Bar
-                }"#,
+                /// This is a doc comment
+                Bar
+            }"#,
             "enum_case"
         );
 
         assert_snap_eq!(
             r#"/// This is a doc comment
-                type Foo = Bar"#,
+            type Foo = Bar"#,
             "type_alias"
         );
     }
@@ -1926,14 +1939,14 @@ mod tests {
     #[test]
     fn test_using_self_as_parameter() {
         assert_snap_eq!(
-            r#"class Foo {
+            r#"impl Foo {
             pub fn bar(self, a: Int32) -> void { }
         }"#,
             "valid"
         );
 
         assert_err_snap_eq!(
-            r#"class Foo {
+            r#"impl Foo {
             pub fn bar(a: Int32, self) -> void { }
         }"#,
             "invalid"

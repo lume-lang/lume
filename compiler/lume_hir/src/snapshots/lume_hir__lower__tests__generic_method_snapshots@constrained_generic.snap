@@ -1,66 +1,67 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"class Test { fn test<T: Numeric>() -> void {} }\").unwrap()"
+description: "impl Test { fn test<T: Numeric>() -> void {} }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        15340443703565705568: Type(
-            Class(
-                ClassDefinition {
-                    id: 15340443703565705568,
-                    type_id: None,
+        15340443703565705568: Impl(
+            Implementation {
+                id: 15340443703565705568,
+                type_id: None,
+                target: Type {
                     name: Test,
-                    builtin: false,
-                    members: [
-                        Method(
-                            MethodDefinition {
-                                method_id: None,
-                                visibility: Private,
+                    type_params: [],
+                    location: <internal>:5:9,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "test",
+                            location: <internal>:15:19,
+                        },
+                        parameters: [],
+                        type_parameters: [
+                            TypeParameter {
                                 name: Identifier {
-                                    name: "test",
-                                    location: <internal>:16:20,
+                                    name: "T",
+                                    location: <internal>:20:21,
                                 },
-                                parameters: [],
-                                type_parameters: [
-                                    TypeParameter {
-                                        name: Identifier {
-                                            name: "T",
-                                            location: <internal>:21:22,
-                                        },
-                                        type_id: None,
-                                        type_param_id: None,
-                                        constraints: [
-                                            Type {
-                                                name: Numeric,
-                                                type_params: [],
-                                                location: <internal>:24:31,
-                                            },
-                                        ],
-                                        location: <internal>:21:22,
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [
+                                    Type {
+                                        name: Numeric,
+                                        type_params: [],
+                                        location: <internal>:23:30,
                                     },
                                 ],
-                                return_type: Some(
-                                    Type {
-                                        name: void,
-                                        type_params: [],
-                                        location: <internal>:38:42,
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: <internal>:43:45,
-                                },
-                                location: <internal>:13:45,
+                                location: <internal>:20:21,
+                            },
+                        ],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:37:41,
                             },
                         ),
-                    ],
-                    type_parameters: [],
-                    location: <internal>:0:47,
-                },
-            ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:42:44,
+                            },
+                        ),
+                        location: <internal>:12:44,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:46,
+            },
         ),
     },
     statements: {},

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn main() {}\").unwrap()"
+description: "fn main() {}"
 ---
 Map {
     package: PackageId(
@@ -16,10 +16,12 @@ Map {
                 parameters: [],
                 type_parameters: [],
                 return_type: None,
-                block: Block {
-                    statements: [],
-                    location: <internal>:10:12,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:10:12,
+                    },
+                ),
                 location: <internal>:0:12,
             },
         ),

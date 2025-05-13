@@ -1,0 +1,63 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "\n                impl Foo {\n                    fn bar<T>() -> Int32 { }\n                }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Impl(
+            Implementation {
+                id: 18213876290066861800,
+                type_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:22:25,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:51:54,
+                        },
+                        parameters: [],
+                        type_parameters: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T",
+                                    location: <internal>:55:56,
+                                },
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
+                                location: <internal>:55:56,
+                            },
+                        ],
+                        return_type: Some(
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:63:68,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:69:72,
+                            },
+                        ),
+                        location: <internal>:48:72,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:17:90,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

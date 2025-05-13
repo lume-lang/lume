@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn foo() -> void { }\").unwrap()"
+description: "fn foo() -> void { }"
 ---
 Map {
     package: PackageId(
@@ -22,10 +22,12 @@ Map {
                         location: <internal>:12:16,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:17:20,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:17:20,
+                    },
+                ),
                 location: <internal>:0:20,
             },
         ),

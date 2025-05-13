@@ -1,0 +1,46 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "\n                impl Foo {\n                    fn bar() { }\n                }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Impl(
+            Implementation {
+                id: 18213876290066861800,
+                type_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:22:25,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:51:54,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: None,
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:57:60,
+                            },
+                        ),
+                        location: <internal>:48:60,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:17:78,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,14 +1,14 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn external main() -> void\").unwrap()"
+description: fn external main() -> void
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        15299231299772503292: ExternalFunction(
-            ExternalFunctionDefinition {
+        15299231299772503292: Function(
+            FunctionDefinition {
                 id: 15299231299772503292,
                 func_id: None,
                 visibility: Private,
@@ -22,6 +22,7 @@ Map {
                         location: <internal>:22:26,
                     },
                 ),
+                block: None,
                 location: <internal>:0:26,
             },
         ),

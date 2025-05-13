@@ -1,7 +1,8 @@
 use lume_macros::Node;
 use lume_span::{Location, PackageId, hash_id};
 use lume_types::{
-    FunctionId, Identifier, MethodId, NamespacePath, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility,
+    FunctionId, Identifier, ImplId, MethodId, NamespacePath, PropertyId, SymbolName, TypeId, TypeParameterId,
+    Visibility,
 };
 
 mod errors;
@@ -98,17 +99,17 @@ pub struct Block {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub enum Symbol {
     Function(Box<FunctionDefinition>),
-    ExternalFunction(Box<ExternalFunctionDefinition>),
     Type(Box<TypeDefinition>),
-    Impl(Box<TraitImplementation>),
+    Use(Box<TraitImplementation>),
+    Impl(Box<Implementation>),
 }
 
 impl Symbol {
     pub fn id(&self) -> ItemId {
         match self {
             Symbol::Function(symbol) => symbol.id,
-            Symbol::ExternalFunction(symbol) => symbol.id,
             Symbol::Type(symbol) => symbol.id(),
+            Symbol::Use(symbol) => symbol.id,
             Symbol::Impl(symbol) => symbol.id,
         }
     }
@@ -136,7 +137,7 @@ pub struct FunctionDefinition {
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Type>,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
 }
 
@@ -147,30 +148,6 @@ impl FunctionDefinition {
 }
 
 impl WithTypeParameters for FunctionDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
-        &self.type_parameters
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
-pub struct ExternalFunctionDefinition {
-    pub id: ItemId,
-    pub func_id: Option<FunctionId>,
-    pub visibility: Visibility,
-    pub name: SymbolName,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Type>,
-    pub location: Location,
-}
-
-impl ExternalFunctionDefinition {
-    pub fn ident(&self) -> &Identifier {
-        &self.name.name
-    }
-}
-
-impl WithTypeParameters for ExternalFunctionDefinition {
     fn type_params(&self) -> &Vec<TypeParameter> {
         &self.type_parameters
     }
@@ -188,7 +165,7 @@ pub struct Parameter {
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Alias(Box<AliasDefinition>),
-    Class(Box<ClassDefinition>),
+    Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
 }
 
@@ -197,7 +174,7 @@ impl TypeDefinition {
         match self {
             TypeDefinition::Enum(def) => def.id,
             TypeDefinition::Alias(def) => def.id,
-            TypeDefinition::Class(def) => def.id,
+            TypeDefinition::Struct(def) => def.id,
             TypeDefinition::Trait(def) => def.id,
         }
     }
@@ -206,7 +183,7 @@ impl TypeDefinition {
         match self {
             TypeDefinition::Enum(def) => def.name(),
             TypeDefinition::Alias(def) => def.name(),
-            TypeDefinition::Class(def) => def.name(),
+            TypeDefinition::Struct(def) => def.name(),
             TypeDefinition::Trait(def) => def.name(),
         }
     }
@@ -251,95 +228,65 @@ impl AliasDefinition {
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
-pub struct ClassDefinition {
+pub struct StructDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
     pub name: SymbolName,
     pub builtin: bool,
-    pub members: Vec<ClassMember>,
+    pub properties: Vec<Property>,
+    pub methods: Vec<MethodDefinition>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
 }
 
-impl ClassDefinition {
+impl StructDefinition {
     pub fn name(&self) -> &SymbolName {
         &self.name
     }
 
-    pub fn members_iter(&self) -> impl Iterator<Item = &ClassMember> {
-        self.members.iter()
+    pub fn properties(&self) -> impl Iterator<Item = &Property> {
+        self.properties.iter()
     }
 
-    pub fn members_iter_mut(&mut self) -> impl Iterator<Item = &mut ClassMember> {
-        self.members.iter_mut()
+    pub fn properties_mut(&mut self) -> impl Iterator<Item = &mut Property> {
+        self.properties.iter_mut()
     }
 
-    pub fn properties(&self) -> Vec<&Property> {
-        self.members_iter()
-            .filter_map(|member| match member {
-                ClassMember::Property(property) => Some(property.as_ref()),
-                _ => None,
-            })
-            .collect()
+    pub fn methods(&self) -> impl Iterator<Item = &MethodDefinition> {
+        self.methods.iter()
     }
 
-    pub fn properties_mut(&mut self) -> Vec<&mut Property> {
-        self.members_iter_mut()
-            .filter_map(|member| match member {
-                ClassMember::Property(property) => Some(property.as_mut()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn methods(&self) -> Vec<&MethodDefinition> {
-        self.members_iter()
-            .filter_map(|member| match member {
-                ClassMember::Method(method) => Some(method.as_ref()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn methods_mut(&mut self) -> Vec<&mut MethodDefinition> {
-        self.members_iter_mut()
-            .filter_map(|member| match member {
-                ClassMember::Method(method) => Some(method.as_mut()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn external_methods(&self) -> Vec<&ExternalMethodDefinition> {
-        self.members_iter()
-            .filter_map(|member| match member {
-                ClassMember::ExternalMethod(method) => Some(method.as_ref()),
-                _ => None,
-            })
-            .collect()
-    }
-
-    pub fn external_methods_mut(&mut self) -> Vec<&mut ExternalMethodDefinition> {
-        self.members_iter_mut()
-            .filter_map(|member| match member {
-                ClassMember::ExternalMethod(method) => Some(method.as_mut()),
-                _ => None,
-            })
-            .collect()
+    pub fn methods_mut(&mut self) -> impl Iterator<Item = &mut MethodDefinition> {
+        self.methods.iter_mut()
     }
 }
 
-impl WithTypeParameters for ClassDefinition {
+impl WithTypeParameters for StructDefinition {
     fn type_params(&self) -> &Vec<TypeParameter> {
         &self.type_parameters
     }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
-pub enum ClassMember {
+pub struct Implementation {
+    pub id: ItemId,
+    pub impl_id: Option<ImplId>,
+    pub target: Box<Type>,
+    pub methods: Vec<MethodDefinition>,
+    pub type_parameters: Vec<TypeParameter>,
+    pub location: Location,
+}
+
+impl WithTypeParameters for Implementation {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
+    }
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub enum StructMember {
     Property(Box<Property>),
     Method(Box<MethodDefinition>),
-    ExternalMethod(Box<ExternalMethodDefinition>),
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
@@ -360,28 +307,11 @@ pub struct MethodDefinition {
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Type>,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
 }
 
 impl WithTypeParameters for MethodDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
-        &self.type_parameters
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
-pub struct ExternalMethodDefinition {
-    pub method_id: Option<MethodId>,
-    pub visibility: Visibility,
-    pub name: Identifier,
-    pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub return_type: Option<Type>,
-    pub location: Location,
-}
-
-impl WithTypeParameters for ExternalMethodDefinition {
     fn type_params(&self) -> &Vec<TypeParameter> {
         &self.type_parameters
     }

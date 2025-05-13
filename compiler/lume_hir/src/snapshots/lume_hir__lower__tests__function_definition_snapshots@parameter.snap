@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn main(argc: u8) -> void { }\").unwrap()"
+description: "fn main(argc: u8) -> void { }"
 ---
 Map {
     package: PackageId(
@@ -36,10 +36,12 @@ Map {
                         location: <internal>:21:25,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:26:29,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:26:29,
+                    },
+                ),
                 location: <internal>:0:29,
             },
         ),

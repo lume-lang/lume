@@ -1,70 +1,71 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"class Test { fn test<T1, T2>() -> void {} }\").unwrap()"
+description: "impl Test { fn test<T1, T2>() -> void {} }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        15340443703565705568: Type(
-            Class(
-                ClassDefinition {
-                    id: 15340443703565705568,
-                    type_id: None,
+        15340443703565705568: Impl(
+            Implementation {
+                id: 15340443703565705568,
+                type_id: None,
+                target: Type {
                     name: Test,
-                    builtin: false,
-                    members: [
-                        Method(
-                            MethodDefinition {
-                                method_id: None,
-                                visibility: Private,
+                    type_params: [],
+                    location: <internal>:5:9,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "test",
+                            location: <internal>:15:19,
+                        },
+                        parameters: [],
+                        type_parameters: [
+                            TypeParameter {
                                 name: Identifier {
-                                    name: "test",
-                                    location: <internal>:16:20,
+                                    name: "T1",
+                                    location: <internal>:20:22,
                                 },
-                                parameters: [],
-                                type_parameters: [
-                                    TypeParameter {
-                                        name: Identifier {
-                                            name: "T1",
-                                            location: <internal>:21:23,
-                                        },
-                                        type_id: None,
-                                        type_param_id: None,
-                                        constraints: [],
-                                        location: <internal>:21:23,
-                                    },
-                                    TypeParameter {
-                                        name: Identifier {
-                                            name: "T2",
-                                            location: <internal>:25:27,
-                                        },
-                                        type_id: None,
-                                        type_param_id: None,
-                                        constraints: [],
-                                        location: <internal>:25:27,
-                                    },
-                                ],
-                                return_type: Some(
-                                    Type {
-                                        name: void,
-                                        type_params: [],
-                                        location: <internal>:34:38,
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: <internal>:39:41,
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
+                                location: <internal>:20:22,
+                            },
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T2",
+                                    location: <internal>:24:26,
                                 },
-                                location: <internal>:13:41,
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
+                                location: <internal>:24:26,
+                            },
+                        ],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:33:37,
                             },
                         ),
-                    ],
-                    type_parameters: [],
-                    location: <internal>:0:43,
-                },
-            ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:38:40,
+                            },
+                        ),
+                        location: <internal>:12:40,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:42,
+            },
         ),
     },
     statements: {},

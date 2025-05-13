@@ -1,0 +1,47 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "struct Test<T1, T2> {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15340443703565705568: Type(
+            Struct(
+                StructDefinition {
+                    id: 15340443703565705568,
+                    type_id: None,
+                    name: Test,
+                    properties: [],
+                    methods: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: <internal>:12:14,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:12:14,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: <internal>:16:18,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:16:18,
+                        },
+                    ],
+                    location: <internal>:0:22,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

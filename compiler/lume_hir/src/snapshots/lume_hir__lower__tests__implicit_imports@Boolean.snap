@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(&format!(\"fn foo() -> {} {{ }}\", ty)).unwrap()"
+description: "fn foo() -> Boolean { }"
 ---
 Map {
     package: PackageId(
@@ -22,10 +22,12 @@ Map {
                         location: <internal>:12:19,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:20:23,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:20:23,
+                    },
+                ),
                 location: <internal>:0:23,
             },
         ),

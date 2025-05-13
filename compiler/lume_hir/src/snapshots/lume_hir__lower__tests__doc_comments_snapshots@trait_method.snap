@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"trait Foo {\n                    /// This is a doc comment\n                    pub fn bar() -> void { }\n                }\"#).unwrap()"
+description: "trait Foo {\n                /// This is a doc comment\n                pub fn bar() -> void { }\n            }"
 ---
 Map {
     package: PackageId(
@@ -20,7 +20,7 @@ Map {
                             visibility: Public,
                             name: Identifier {
                                 name: "bar",
-                                location: <internal>:85:88,
+                                location: <internal>:77:80,
                             },
                             parameters: [],
                             type_parameters: [],
@@ -28,19 +28,19 @@ Map {
                                 Type {
                                     name: void,
                                     type_params: [],
-                                    location: <internal>:94:98,
+                                    location: <internal>:86:90,
                                 },
                             ),
                             block: Some(
                                 Block {
                                     statements: [],
-                                    location: <internal>:99:102,
+                                    location: <internal>:91:94,
                                 },
                             ),
-                            location: <internal>:82:102,
+                            location: <internal>:74:94,
                         },
                     ],
-                    location: <internal>:0:120,
+                    location: <internal>:0:108,
                 },
             ),
         ),

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"/// This is a doc comment\n                fn foo() -> void { }\"#).unwrap()"
+description: "/// This is a doc comment\n            fn foo() -> void { }"
 ---
 Map {
     package: PackageId(
@@ -19,14 +19,16 @@ Map {
                     Type {
                         name: void,
                         type_params: [],
-                        location: <internal>:54:58,
+                        location: <internal>:50:54,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:59:62,
-                },
-                location: <internal>:42:62,
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:55:58,
+                    },
+                ),
+                location: <internal>:38:58,
             },
         ),
     },

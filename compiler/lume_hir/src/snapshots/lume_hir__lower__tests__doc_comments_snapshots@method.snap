@@ -1,49 +1,50 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"class Foo {\n                    /// This is a doc comment\n                    pub fn bar() -> void { }\n                }\"#).unwrap()"
+description: "impl Foo {\n                /// This is a doc comment\n                pub fn bar() -> void { }\n            }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        18213876290066861800: Type(
-            Class(
-                ClassDefinition {
-                    id: 18213876290066861800,
-                    type_id: None,
+        18213876290066861800: Impl(
+            Implementation {
+                id: 18213876290066861800,
+                type_id: None,
+                target: Type {
                     name: Foo,
-                    builtin: false,
-                    members: [
-                        Method(
-                            MethodDefinition {
-                                method_id: None,
-                                visibility: Public,
-                                name: Identifier {
-                                    name: "bar",
-                                    location: <internal>:85:88,
-                                },
-                                parameters: [],
-                                type_parameters: [],
-                                return_type: Some(
-                                    Type {
-                                        name: void,
-                                        type_params: [],
-                                        location: <internal>:94:98,
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: <internal>:99:102,
-                                },
-                                location: <internal>:82:102,
+                    type_params: [],
+                    location: <internal>:5:8,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Public,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:76:79,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:85:89,
                             },
                         ),
-                    ],
-                    type_parameters: [],
-                    location: <internal>:0:120,
-                },
-            ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:90:93,
+                            },
+                        ),
+                        location: <internal>:69:93,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:107,
+            },
         ),
     },
     statements: {},

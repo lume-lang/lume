@@ -1,13 +1,13 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Enumerable<T> in Vector<T> {\n                    pub fn next() -> T {}\n                }\"#).unwrap()"
+description: "\n                use Enumerable<T> in Vector<T> {\n                    pub fn next() -> T {}\n                }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        15073684727517168745: Impl(
+        15073684727517168745: Use(
             TraitImplementation {
                 id: 15073684727517168745,
                 name: Type {

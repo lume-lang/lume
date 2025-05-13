@@ -1,13 +1,13 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Cast in Int32 {\n                    pub fn to_string() -> String {}\n\n                    pub fn to_int() -> Int32 {}\n                }\"#).unwrap()"
+description: "\n                use Cast in Int32 {\n                    pub fn to_string() -> String {}\n\n                    pub fn to_int() -> Int32 {}\n                }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        13914738179290843052: Impl(
+        13914738179290843052: Use(
             TraitImplementation {
                 id: 13914738179290843052,
                 name: Type {

@@ -1,0 +1,42 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "\n                struct Foo {\n                    x: Int32;\n                }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Struct(
+                StructDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    properties: [
+                        Property {
+                            prop_id: None,
+                            visibility: Private,
+                            name: Identifier {
+                                name: "x",
+                                location: <internal>:50:51,
+                            },
+                            property_type: Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:53:58,
+                            },
+                            default_value: None,
+                            location: <internal>:50:59,
+                        },
+                    ],
+                    methods: [],
+                    type_parameters: [],
+                    location: <internal>:17:77,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

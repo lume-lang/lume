@@ -1,0 +1,125 @@
+---
+source: compiler/lume_hir/src/lower.rs
+description: "\n                impl Foo {\n                    pub fn ==() -> bool {\n                        return true;\n                    }\n                }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Impl(
+            Implementation {
+                id: 18213876290066861800,
+                type_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:22:25,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Public,
+                        name: Identifier {
+                            name: "==",
+                            location: <internal>:55:57,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: bool,
+                                type_params: [],
+                                location: <internal>:63:67,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [
+                                    Statement {
+                                        id: 0,
+                                        kind: Return(
+                                            Return {
+                                                id: 0,
+                                                value: Some(
+                                                    Expression {
+                                                        id: 5871781006564002453,
+                                                        location: <internal>:101:105,
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: 5871781006564002453,
+                                                                location: <internal>:101:105,
+                                                                kind: Boolean(
+                                                                    BooleanLiteral {
+                                                                        id: 5871781006564002453,
+                                                                        value: true,
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                        location: <internal>:94:106,
+                                    },
+                                ],
+                                location: <internal>:68:128,
+                            },
+                        ),
+                        location: <internal>:48:128,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:17:146,
+            },
+        ),
+    },
+    statements: {
+        0: Statement {
+            id: 0,
+            kind: Return(
+                Return {
+                    id: 0,
+                    value: Some(
+                        Expression {
+                            id: 5871781006564002453,
+                            location: <internal>:101:105,
+                            kind: Literal(
+                                Literal {
+                                    id: 5871781006564002453,
+                                    location: <internal>:101:105,
+                                    kind: Boolean(
+                                        BooleanLiteral {
+                                            id: 5871781006564002453,
+                                            value: true,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+            location: <internal>:94:106,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:101:105,
+            kind: Literal(
+                Literal {
+                    id: 5871781006564002453,
+                    location: <internal>:101:105,
+                    kind: Boolean(
+                        BooleanLiteral {
+                            id: 5871781006564002453,
+                            value: true,
+                        },
+                    ),
+                },
+            ),
+        },
+    },
+}

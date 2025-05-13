@@ -1,13 +1,13 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"\n                use Add in Int32 {\n                    fn add(other: Int32) -> Int32 {}\n                }\"#).unwrap()"
+description: "\n                use Add in Int32 {\n                    fn add(other: Int32) -> Int32 {}\n                }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        1119898709443545213: Impl(
+        1119898709443545213: Use(
             TraitImplementation {
                 id: 1119898709443545213,
                 name: Type {

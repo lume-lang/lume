@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(&format!(\"fn foo() -> {} {{ }}\", ty)).unwrap()"
+description: "fn foo() -> RangeInclusive<Int32> { }"
 ---
 Map {
     package: PackageId(
@@ -28,10 +28,12 @@ Map {
                         location: <internal>:26:33,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:34:37,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:34:37,
+                    },
+                ),
                 location: <internal>:0:37,
             },
         ),

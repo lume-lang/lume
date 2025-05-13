@@ -1,76 +1,77 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"class Foo {\n            pub fn bar(self, a: Int32) -> void { }\n        }\"#).unwrap()"
+description: "impl Foo {\n            pub fn bar(self, a: Int32) -> void { }\n        }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        18213876290066861800: Type(
-            Class(
-                ClassDefinition {
-                    id: 18213876290066861800,
-                    type_id: None,
+        18213876290066861800: Impl(
+            Implementation {
+                id: 18213876290066861800,
+                type_id: None,
+                target: Type {
                     name: Foo,
-                    builtin: false,
-                    members: [
-                        Method(
-                            MethodDefinition {
-                                method_id: None,
-                                visibility: Public,
+                    type_params: [],
+                    location: <internal>:5:8,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Public,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:30:33,
+                        },
+                        parameters: [
+                            Parameter {
+                                id: 0,
                                 name: Identifier {
-                                    name: "bar",
-                                    location: <internal>:31:34,
+                                    name: "self",
+                                    location: <internal>:34:38,
                                 },
-                                parameters: [
-                                    Parameter {
-                                        id: 0,
-                                        name: Identifier {
-                                            name: "self",
-                                            location: <internal>:35:39,
-                                        },
-                                        param_type: Type {
-                                            name: Foo,
-                                            type_params: [],
-                                            location: <internal>:35:39,
-                                        },
-                                        location: <internal>:35:39,
-                                    },
-                                    Parameter {
-                                        id: 5871781006564002453,
-                                        name: Identifier {
-                                            name: "a",
-                                            location: <internal>:41:42,
-                                        },
-                                        param_type: Type {
-                                            name: std::Int32,
-                                            type_params: [],
-                                            location: <internal>:44:49,
-                                        },
-                                        location: <internal>:41:49,
-                                    },
-                                ],
-                                type_parameters: [],
-                                return_type: Some(
-                                    Type {
-                                        name: void,
-                                        type_params: [],
-                                        location: <internal>:54:58,
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: <internal>:59:62,
+                                param_type: Type {
+                                    name: Foo,
+                                    type_params: [],
+                                    location: <internal>:34:38,
                                 },
-                                location: <internal>:28:62,
+                                location: <internal>:34:38,
+                            },
+                            Parameter {
+                                id: 5871781006564002453,
+                                name: Identifier {
+                                    name: "a",
+                                    location: <internal>:40:41,
+                                },
+                                param_type: Type {
+                                    name: std::Int32,
+                                    type_params: [],
+                                    location: <internal>:43:48,
+                                },
+                                location: <internal>:40:48,
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:53:57,
                             },
                         ),
-                    ],
-                    type_parameters: [],
-                    location: <internal>:0:72,
-                },
-            ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:58:61,
+                            },
+                        ),
+                        location: <internal>:23:61,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:71,
+            },
         ),
     },
     statements: {},

@@ -1,49 +1,50 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"class Test { fn test() -> void {} }\").unwrap()"
+description: "impl Test { fn test() -> void {} }"
 ---
 Map {
     package: PackageId(
         0,
     ),
     items: {
-        15340443703565705568: Type(
-            Class(
-                ClassDefinition {
-                    id: 15340443703565705568,
-                    type_id: None,
+        15340443703565705568: Impl(
+            Implementation {
+                id: 15340443703565705568,
+                type_id: None,
+                target: Type {
                     name: Test,
-                    builtin: false,
-                    members: [
-                        Method(
-                            MethodDefinition {
-                                method_id: None,
-                                visibility: Private,
-                                name: Identifier {
-                                    name: "test",
-                                    location: <internal>:16:20,
-                                },
-                                parameters: [],
-                                type_parameters: [],
-                                return_type: Some(
-                                    Type {
-                                        name: void,
-                                        type_params: [],
-                                        location: <internal>:26:30,
-                                    },
-                                ),
-                                block: Block {
-                                    statements: [],
-                                    location: <internal>:31:33,
-                                },
-                                location: <internal>:13:33,
+                    type_params: [],
+                    location: <internal>:5:9,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "test",
+                            location: <internal>:15:19,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:25:29,
                             },
                         ),
-                    ],
-                    type_parameters: [],
-                    location: <internal>:0:35,
-                },
-            ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:30:32,
+                            },
+                        ),
+                        location: <internal>:12:32,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:34,
+            },
         ),
     },
     statements: {},

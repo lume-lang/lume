@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(\"fn test<T: Numeric>() -> void {}\").unwrap()"
+description: "fn test<T: Numeric>() -> void {}"
 ---
 Map {
     package: PackageId(
@@ -39,10 +39,12 @@ Map {
                         location: <internal>:25:29,
                     },
                 ),
-                block: Block {
-                    statements: [],
-                    location: <internal>:30:32,
-                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:30:32,
+                    },
+                ),
                 location: <internal>:0:32,
             },
         ),

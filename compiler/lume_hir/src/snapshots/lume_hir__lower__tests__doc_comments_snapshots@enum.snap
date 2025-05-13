@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir/src/lower.rs
-expression: "lower(r#\"/// This is a doc comment\n                enum Foo {\n                    Bar\n                }\"#).unwrap()"
+description: "/// This is a doc comment\n            enum Foo {\n                Bar\n            }"
 ---
 Map {
     package: PackageId(
@@ -18,10 +18,10 @@ Map {
                             id: 3235109210342419196,
                             name: Bar,
                             parameters: [],
-                            location: <internal>:73:76,
+                            location: <internal>:65:68,
                         },
                     ],
-                    location: <internal>:42:94,
+                    location: <internal>:38:82,
                 },
             ),
         ),

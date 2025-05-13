@@ -46,9 +46,9 @@ impl SymbolTableEntry {
 ///
 /// This table binds variable references to their declarations, so code such as this:
 ///
-/// ```ignore
-/// let a = 1
-/// let b = a
+/// ```lm
+/// let a = 1;
+/// let b = a;
 /// ```
 ///
 /// The expression `let a = 1` declares a new variable `a` and assigns it the value `1`. When the
@@ -58,20 +58,20 @@ impl SymbolTableEntry {
 /// variable is declared in. Because of this, this table also inherently handles invalid variable references,
 /// such as referencing a variable that has not been declared or variables which are out of scope. For example:
 ///
-/// ```ignore
-/// let a = b
+/// ```lm
+/// let a = b;
 /// ```
 ///
 /// Would fail because `b` has not been declared yet. Similarly:
 ///
-/// ```ignore
+/// ```lm
 /// fn test()
-///   b = 1
+///   b = 1;
 /// end
 ///
-/// test()
+/// test();
 ///
-/// let a = b
+/// let a = b;
 /// ```
 ///
 /// Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
