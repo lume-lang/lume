@@ -149,6 +149,7 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                     documentation: None,
                 },
             ],
+            type_parameters: [],
             location: Location(
                 0..60,
             ),

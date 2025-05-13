@@ -106,6 +106,7 @@ expression: "parse(r#\"\n            impl Foo {\n                pub fn ==() -> 
                     documentation: None,
                 },
             ],
+            type_parameters: [],
             location: Location(
                 13..126,
             ),

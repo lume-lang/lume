@@ -12,6 +12,7 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                         7..11,
                     ),
                 },
+                builtin: false,
                 properties: [],
                 type_parameters: [
                     TypeParameter {

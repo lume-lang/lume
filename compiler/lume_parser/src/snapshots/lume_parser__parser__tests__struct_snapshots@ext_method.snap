@@ -86,6 +86,7 @@ expression: "parse(r#\"\n            impl Foo {\n                fn external bar
                     documentation: None,
                 },
             ],
+            type_parameters: [],
             location: Location(
                 13..80,
             ),

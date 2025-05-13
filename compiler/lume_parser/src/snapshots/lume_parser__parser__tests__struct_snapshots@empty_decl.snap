@@ -12,6 +12,7 @@ expression: "parse(\"struct Int32 {}\")"
                         7..12,
                     ),
                 },
+                builtin: false,
                 properties: [],
                 type_parameters: [],
                 location: Location(

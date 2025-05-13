@@ -12,6 +12,7 @@ expression: "parse(r#\"\n            struct Foo {\n                pub x: Int32 
                         20..23,
                     ),
                 },
+                builtin: false,
                 properties: [
                     Property {
                         visibility: Public(

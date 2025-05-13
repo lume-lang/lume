@@ -64,6 +64,7 @@ expression: "parse(r#\"\n            impl Foo {\n                fn bar() { }\n 
                     documentation: None,
                 },
             ],
+            type_parameters: [],
             location: Location(
                 13..66,
             ),

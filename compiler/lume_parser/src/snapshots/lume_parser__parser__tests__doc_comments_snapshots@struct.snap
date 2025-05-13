@@ -12,6 +12,7 @@ expression: "parse(r#\"/// This is a doc comment\n            struct Foo { }\"#)
                         45..48,
                     ),
                 },
+                builtin: false,
                 properties: [],
                 type_parameters: [],
                 location: Location(

@@ -13,6 +13,7 @@ Map {
                     id: 18213876290066861800,
                     type_id: None,
                     name: Foo,
+                    builtin: false,
                     properties: [],
                     methods: [],
                     type_parameters: [],

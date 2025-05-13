@@ -86,6 +86,7 @@ expression: "parse(\"impl Test { fn test<>() -> void {} }\")"
                     documentation: None,
                 },
             ],
+            type_parameters: [],
             location: Location(
                 0..36,
             ),

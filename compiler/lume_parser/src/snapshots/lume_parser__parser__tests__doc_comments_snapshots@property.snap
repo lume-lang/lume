@@ -12,6 +12,7 @@ expression: "parse(r#\"struct Foo {\n                /// This is a doc comment\n
                         7..10,
                     ),
                 },
+                builtin: false,
                 properties: [
                     Property {
                         visibility: Public(

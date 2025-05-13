@@ -34,6 +34,7 @@ expression: "parse(\"impl Int32 {}\")"
                 },
             ),
             methods: [],
+            type_parameters: [],
             location: Location(
                 0..13,
             ),

@@ -88,6 +88,7 @@ expression: "parse(r#\"impl Foo {\n                /// This is a doc comment\n  
                     ),
                 },
             ],
+            type_parameters: [],
             location: Location(
                 0..107,
             ),

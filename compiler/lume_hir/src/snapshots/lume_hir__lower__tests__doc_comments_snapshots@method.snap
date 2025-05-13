@@ -7,10 +7,10 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Impl(
+        11075105501540449544: Impl(
             Implementation {
-                id: 18213876290066861800,
-                type_id: None,
+                id: 11075105501540449544,
+                impl_id: None,
                 target: Type {
                     name: Foo,
                     type_params: [],
