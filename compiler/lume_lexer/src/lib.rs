@@ -45,6 +45,9 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
 /// expression before a number expression, it'd mean "the negative of the following expression".
 pub const UNARY_PRECEDENCE: u8 = 3;
 
+/// Defines all the operators which are notated as postfix, as opposed to infix.
+pub const POSTFIX_OPERATORS: &[TokenKind] = &[TokenKind::Increment, TokenKind::Decrement];
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     Add,
@@ -340,6 +343,11 @@ impl Token {
             .iter()
             .find(|(k, _)| k == &self.kind)
             .map_or(0, |(_, p)| *p)
+    }
+
+    /// Determines whether the token is a postfix operator.
+    pub fn is_postfix(&self) -> bool {
+        POSTFIX_OPERATORS.iter().any(|k| k == &self.kind)
     }
 }
 

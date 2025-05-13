@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_ast::*;
-use lume_lexer::{IDENTIFIER_SEPARATOR, TokenKind, UNARY_PRECEDENCE};
+use lume_lexer::{IDENTIFIER_SEPARATOR, Token, TokenKind, UNARY_PRECEDENCE};
 
 use crate::{Parser, err, errors::*};
 
@@ -23,8 +23,13 @@ impl Parser {
     fn parse_expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
         let mut left = self.parse_prefix_expression()?;
 
+        // If a semicolon is present, consider the expression finished.
+        if self.peek(TokenKind::Semicolon)? {
+            return Ok(left);
+        }
+
         while precedence < self.token()?.precedence() {
-            left = self.parse_infix_expression(left)?;
+            left = self.parse_following_expression(left)?;
         }
 
         Ok(left)
@@ -50,11 +55,9 @@ impl Parser {
         }
     }
 
-    /// Parses a infix expression at the current cursor position.
-    ///
-    /// Infix expressions are expressions which appear in the middle of an expression,
-    /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
-    fn parse_infix_expression(&mut self, left: Expression) -> Result<Expression> {
+    /// Parses an expression at the current cursor position, which is followed by some other
+    /// expression.
+    fn parse_following_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
         //
         // In essence, this statement is handling cases where:
@@ -72,6 +75,19 @@ impl Parser {
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
+        if operator.is_postfix() {
+            self.parse_postfix_expression(left, operator)
+        } else {
+            self.parse_infix_expression(left, operator)
+        }
+    }
+
+    /// Parses a infix expression at the current cursor position.
+    ///
+    /// Infix expressions are expressions which appear in the middle of an expression,
+    /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
+    /// such as increment or decrement operators.
+    fn parse_infix_expression(&mut self, left: Expression, operator: Token) -> Result<Expression> {
         let operator_loc = operator.index.clone();
 
         let right = self.parse_expression_with_precedence(operator.precedence())?;
@@ -91,6 +107,32 @@ impl Parser {
                 location: operator_loc.into(),
             },
             arguments: vec![right],
+            type_arguments: vec![],
+            location: (start..end).into(),
+        })))
+    }
+
+    /// Parses a postfix expression at the current cursor position.
+    ///
+    /// Postfix expressions are expressions which appear at the end of an expression,
+    /// such as increment or decrement operators.
+    fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Result<Expression> {
+        let operator_loc = operator.index.clone();
+
+        let start = left.location().start();
+        let end = operator.end();
+
+        Ok(Expression::Call(Box::new(Call {
+            callee: Some(left),
+            name: Path {
+                name: Identifier {
+                    name: operator.into(),
+                    location: operator_loc.clone().into(),
+                },
+                root: NamespacePath::empty(),
+                location: operator_loc.into(),
+            },
+            arguments: vec![],
             type_arguments: vec![],
             location: (start..end).into(),
         })))
@@ -170,7 +212,7 @@ impl Parser {
 
         match self.token()?.kind {
             // If the next token is an opening parenthesis, it's a method invocation
-            TokenKind::LeftParen | TokenKind::Less => self.parse_call(None, identifier),
+            TokenKind::LeftParen => self.parse_call(None, identifier),
 
             // If the next token is a dot, it's some form of member access
             TokenKind::Dot => self.parse_member(expression),
@@ -272,6 +314,10 @@ impl Parser {
     /// Parses a path expression on the current cursor position.
     fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
         self.consume(IDENTIFIER_SEPARATOR)?;
+
+        if self.peek(TokenKind::Less)? {
+            return self.parse_call(None, name);
+        }
 
         let path = Path::rooted(name);
         let mut expression = self.parse_expression()?;
