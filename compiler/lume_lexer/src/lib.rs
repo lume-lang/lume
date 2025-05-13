@@ -630,8 +630,10 @@ impl Lexer {
                 ('-', '>') => return Ok((TokenKind::Arrow, 2)),
                 ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
+                ('-', '-') => return Ok((TokenKind::Decrement, 2)),
                 ('/', '=') => return Ok((TokenKind::DivAssign, 2)),
                 ('>', '=') => return Ok((TokenKind::GreaterEqual, 2)),
+                ('+', '+') => return Ok((TokenKind::Increment, 2)),
                 ('<', '=') => return Ok((TokenKind::LessEqual, 2)),
                 ('*', '=') => return Ok((TokenKind::MulAssign, 2)),
                 ('!', '=') => return Ok((TokenKind::NotEqual, 2)),
@@ -958,8 +960,10 @@ mod tests {
         assert_token!("+=", TokenKind::AddAssign, Some("+="), 0, 2);
         assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
         assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);
+        assert_token!("--", TokenKind::Decrement, Some("--"), 0, 2);
         assert_token!("/=", TokenKind::DivAssign, Some("/="), 0, 2);
         assert_token!(">=", TokenKind::GreaterEqual, Some(">="), 0, 2);
+        assert_token!("++", TokenKind::Increment, Some("++"), 0, 2);
         assert_token!("<=", TokenKind::LessEqual, Some("<="), 0, 2);
         assert_token!("*=", TokenKind::MulAssign, Some("*="), 0, 2);
         assert_token!("!=", TokenKind::NotEqual, Some("!="), 0, 2);
