@@ -1482,22 +1482,22 @@ mod tests {
 
     #[test]
     fn test_literal_snapshots() {
-        assert_expr_snap_eq!("\"\"", "string_empty");
-        assert_expr_snap_eq!("\"string\"", "string_content");
-        assert_expr_snap_eq!("true", "bool_true");
-        assert_expr_snap_eq!("false", "bool_false");
+        assert_expr_snap_eq!("\"\";", "string_empty");
+        assert_expr_snap_eq!("\"string\";", "string_content");
+        assert_expr_snap_eq!("true;", "bool_true");
+        assert_expr_snap_eq!("false;", "bool_false");
         assert_expr_snap_eq!("let ident = 0;", "ident");
         assert_expr_snap_eq!("let IDENT = 0;", "ident_case");
         assert_expr_snap_eq!("let __IDENT__ = 0;", "ident_underscore");
-        assert_expr_snap_eq!("0", "int");
-        assert_expr_snap_eq!("55", "int_positive");
-        assert_expr_snap_eq!("-55", "int_negative");
-        assert_expr_snap_eq!("0x55", "int_hex_positive");
-        assert_expr_snap_eq!("-0x55", "int_hex_negative");
-        assert_expr_snap_eq!("0b01010101", "int_bin_positive");
-        assert_expr_snap_eq!("-0b01010101", "int_bin_negative");
-        assert_expr_snap_eq!("0o125", "int_oct_positive");
-        assert_expr_snap_eq!("-0o125", "int_oct_negative");
+        assert_expr_snap_eq!("0;", "int");
+        assert_expr_snap_eq!("55;", "int_positive");
+        assert_expr_snap_eq!("-55;", "int_negative");
+        assert_expr_snap_eq!("0x55;", "int_hex_positive");
+        assert_expr_snap_eq!("-0x55;", "int_hex_negative");
+        assert_expr_snap_eq!("0b01010101;", "int_bin_positive");
+        assert_expr_snap_eq!("-0b01010101;", "int_bin_negative");
+        assert_expr_snap_eq!("0o125;", "int_oct_positive");
+        assert_expr_snap_eq!("-0o125;", "int_oct_negative");
     }
 
     #[test]
