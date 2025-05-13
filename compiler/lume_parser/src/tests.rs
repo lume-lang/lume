@@ -259,30 +259,30 @@ fn test_function_definition_snapshots() {
 
 #[test]
 fn test_literal_snapshots() {
-    assert_expr_snap_eq!("\"\"", "string_empty");
-    assert_expr_snap_eq!("\"string\"", "string_content");
-    assert_expr_snap_eq!("true", "bool_true");
-    assert_expr_snap_eq!("false", "bool_false");
-    assert_expr_snap_eq!("ident", "ident");
-    assert_expr_snap_eq!("IDENT", "ident_case");
-    assert_expr_snap_eq!("__IDENT__", "ident_underscore");
-    assert_expr_snap_eq!("0", "int");
-    assert_expr_snap_eq!("55", "int_positive");
-    assert_expr_snap_eq!("-55", "int_negative");
-    assert_expr_snap_eq!("0x55", "int_hex_positive");
-    assert_expr_snap_eq!("-0x55", "int_hex_negative");
-    assert_expr_snap_eq!("0b01010101", "int_bin_positive");
-    assert_expr_snap_eq!("-0b01010101", "int_bin_negative");
-    assert_expr_snap_eq!("0o125", "int_oct_positive");
-    assert_expr_snap_eq!("-0o125", "int_oct_negative");
+    assert_expr_snap_eq!("\"\";", "string_empty");
+    assert_expr_snap_eq!("\"string\";", "string_content");
+    assert_expr_snap_eq!("true;", "bool_true");
+    assert_expr_snap_eq!("false;", "bool_false");
+    assert_expr_snap_eq!("ident;", "ident");
+    assert_expr_snap_eq!("IDENT;", "ident_case");
+    assert_expr_snap_eq!("__IDENT__;", "ident_underscore");
+    assert_expr_snap_eq!("0;", "int");
+    assert_expr_snap_eq!("55;", "int_positive");
+    assert_expr_snap_eq!("-55;", "int_negative");
+    assert_expr_snap_eq!("0x55;", "int_hex_positive");
+    assert_expr_snap_eq!("-0x55;", "int_hex_negative");
+    assert_expr_snap_eq!("0b01010101;", "int_bin_positive");
+    assert_expr_snap_eq!("-0b01010101;", "int_bin_negative");
+    assert_expr_snap_eq!("0o125;", "int_oct_positive");
+    assert_expr_snap_eq!("-0o125;", "int_oct_negative");
 }
 
 #[test]
 fn test_self_snapshots() {
-    assert_expr_snap_eq!("self", "self");
-    assert_expr_snap_eq!("self + self", "self_binary_op");
-    assert_expr_snap_eq!("self.invoke()", "self_call");
-    assert_expr_snap_eq!("self::invoke()", "self_static_call");
+    assert_expr_snap_eq!("self;", "self");
+    assert_expr_snap_eq!("self + self;", "self_binary_op");
+    assert_expr_snap_eq!("self.invoke();", "self_call");
+    assert_expr_snap_eq!("self::invoke();", "self_static_call");
 }
 
 #[test]
@@ -351,14 +351,14 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = call();", "function_empty");
     assert_expr_snap_eq!("let _ = call(a);", "function_param_1");
     assert_expr_snap_eq!("let _ = call(a, b);", "function_param_2");
-    assert_expr_snap_eq!("let _ = call<T>(a, b);", "function_generic");
+    assert_expr_snap_eq!("let _ = call::<T>(a, b);", "function_generic");
 
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");
     assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
     assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
     assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
-    assert_expr_snap_eq!("let _ = Foo::call<T>(a, b);", "static_generic_method");
+    assert_expr_snap_eq!("let _ = Foo::call::<T>(a, b);", "static_generic_method");
 }
 
 #[test]
@@ -367,6 +367,27 @@ fn test_return_snapshots() {
     assert_expr_snap_eq!("return 1;", "scalar");
     assert_expr_snap_eq!("return a.b(c);", "call");
     assert_expr_err_snap_eq!("return;;", "extra_semi");
+}
+
+#[test]
+fn test_operator_snapshots() {
+    assert_expr_snap_eq!("a + b;", "plus");
+    assert_expr_snap_eq!("a - b;", "minus");
+    assert_expr_snap_eq!("a * b;", "multiply");
+    assert_expr_snap_eq!("a / b;", "divide");
+    assert_expr_snap_eq!("a += b;", "plus_assign");
+    assert_expr_snap_eq!("a -= b;", "minus_assign");
+    assert_expr_snap_eq!("a *= b;", "multiply_assign");
+    assert_expr_snap_eq!("a /= b;", "divide_assign");
+    assert_expr_snap_eq!("a < b;", "less");
+    assert_expr_snap_eq!("a <= b;", "less_equal");
+    assert_expr_snap_eq!("a > b;", "greater");
+    assert_expr_snap_eq!("a >= b;", "greater_equal");
+    assert_expr_snap_eq!("a++;", "increment");
+    assert_expr_snap_eq!("a--;", "decrement");
+    assert_expr_snap_eq!("a == b;", "equal");
+    assert_expr_snap_eq!("a != b;", "not_equal");
+    assert_expr_snap_eq!("!a;", "negation");
 }
 
 #[test]

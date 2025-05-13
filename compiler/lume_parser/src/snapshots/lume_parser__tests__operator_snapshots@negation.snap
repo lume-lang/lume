@@ -1,0 +1,18 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"!a;\")"
+---
+[
+    Expression(
+        Variable(
+            Variable {
+                name: Identifier {
+                    name: "a",
+                    location: Location(
+                        1..2,
+                    ),
+                },
+            },
+        ),
+    ),
+]
