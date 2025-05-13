@@ -8,7 +8,7 @@ use crate::{ThirBuildCtx, check::TypeCheckerPass};
 #[derive(Debug, Copy, Clone)]
 enum ScopeKind {
     Function(FunctionId),
-    Class(TypeId),
+    Ty(TypeId),
     Method(MethodId),
 }
 
@@ -37,9 +37,9 @@ impl<'a> ItemScope<'a> {
         }
     }
 
-    fn class(class: TypeId) -> Self {
+    fn ty(ty: TypeId) -> Self {
         Self {
-            kind: ScopeKind::Class(class),
+            kind: ScopeKind::Ty(ty),
             parent: None,
             type_parameters: Vec::new(),
         }
@@ -85,7 +85,7 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
     fn visit(&mut self, symbol: &lume_hir::Symbol) -> Result<()> {
         match symbol {
             lume_hir::Symbol::Type(ty) => match &**ty {
-                lume_hir::TypeDefinition::Class(class) => self.define_class_type(class),
+                lume_hir::TypeDefinition::Struct(struct_def) => self.define_struct_type(struct_def),
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
                 _ => Ok(()),
             },
@@ -94,13 +94,13 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
         }
     }
 
-    fn define_class_type(&mut self, class: &lume_hir::ClassDefinition) -> Result<()> {
-        let type_id = class.type_id.unwrap();
+    fn define_struct_type(&mut self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
+        let type_id = struct_def.type_id.unwrap();
 
-        let mut scope = ItemScope::class(type_id);
-        scope.type_parameters.extend(class.type_params().clone());
+        let mut scope = ItemScope::ty(type_id);
+        scope.type_parameters.extend(struct_def.type_params().clone());
 
-        for method in class.methods() {
+        for method in struct_def.methods() {
             self.define_method_scope(method, &scope)?;
         }
 
@@ -113,7 +113,9 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
         let mut scope = ItemScope::method(scope, method_id);
         scope.type_parameters.extend(method.type_params().clone());
 
-        self.define_block_scope(&method.block, &scope)?;
+        if let Some(block) = &method.block {
+            self.define_block_scope(block, &scope)?;
+        }
 
         Ok(())
     }
@@ -121,7 +123,7 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
     fn define_trait_type(&mut self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
         let type_id = trait_def.type_id.unwrap();
 
-        let mut scope = ItemScope::class(type_id);
+        let mut scope = ItemScope::ty(type_id);
         scope.type_parameters.extend(trait_def.type_params().clone());
 
         for method in &trait_def.methods {
@@ -150,7 +152,11 @@ impl<'a, 'b> ScopeVisitor<'a, 'b> {
         let mut scope = ItemScope::function(func_id);
         scope.type_parameters.extend(func.type_params().clone());
 
-        self.define_block_scope(&func.block, &scope)
+        if let Some(block) = &func.block {
+            self.define_block_scope(block, &scope)?;
+        }
+
+        Ok(())
     }
 
     fn define_block_scope(&mut self, block: &lume_hir::Block, scope: &ItemScope) -> Result<()> {

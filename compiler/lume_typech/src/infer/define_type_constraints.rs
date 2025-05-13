@@ -21,6 +21,7 @@ impl DefineTypeConstraints<'_, '_> {
         for (_, symbol) in &hir.items {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
                 lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 _ => (),
             }
@@ -31,20 +32,13 @@ impl DefineTypeConstraints<'_, '_> {
 
     fn define_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         match ty {
-            lume_hir::TypeDefinition::Class(class_def) => {
-                let type_id = class_def.type_id.unwrap();
+            lume_hir::TypeDefinition::Struct(struct_def) => {
+                let type_id = struct_def.type_id.unwrap();
                 let type_params = type_id.type_params(self.ctx.tcx()).clone();
 
-                self.define_type_constraints(&**class_def, &type_params)?;
+                self.define_type_constraints(&**struct_def, &type_params)?;
 
-                for method in class_def.methods() {
-                    let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
-
-                    self.define_type_constraints(method, &type_params)?;
-                }
-
-                for method in class_def.external_methods() {
+                for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
                     let type_params = method_id.type_params(self.ctx.tcx()).clone();
 
@@ -66,6 +60,15 @@ impl DefineTypeConstraints<'_, '_> {
             }
             _ => {}
         };
+
+        Ok(())
+    }
+
+    fn define_impl(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
+        let impl_id = implementation.impl_id.unwrap();
+        let type_params = impl_id.type_params(self.ctx.tcx()).clone();
+
+        self.define_type_constraints(implementation, &type_params)?;
 
         Ok(())
     }
