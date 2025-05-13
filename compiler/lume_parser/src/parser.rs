@@ -1,59 +1,14 @@
 use std::sync::Arc;
 
+use crate::parser::errors::*;
 use error_snippet::{Error, Result};
 use lume_ast::*;
+use lume_lexer::{IDENTIFIER_SEPARATOR, UNARY_PRECEDENCE};
+use lume_lexer::{Lexer, Token, TokenKind};
 use lume_span::SourceFile;
 use lume_span::SourceFileId;
 
-use crate::lexer::*;
-use crate::parser::errors::*;
-
 pub mod errors;
-
-const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
-
-const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
-    (TokenKind::Assign, 1),
-    (TokenKind::AddAssign, 1),
-    (TokenKind::SubAssign, 1),
-    (TokenKind::MulAssign, 1),
-    (TokenKind::DivAssign, 1),
-    (TokenKind::Equal, 3),
-    (TokenKind::NotEqual, 3),
-    (TokenKind::Greater, 4),
-    (TokenKind::Less, 4),
-    (TokenKind::GreaterEqual, 4),
-    (TokenKind::LessEqual, 4),
-    (TokenKind::Add, 5),
-    (TokenKind::Sub, 5),
-    (TokenKind::Mul, 6),
-    (TokenKind::Div, 6),
-    (TokenKind::Increment, 7),
-    (TokenKind::Decrement, 7),
-    (TokenKind::Dot, 9),
-    (IDENTIFIER_SEPARATOR, 10),
-];
-
-/// Defines the precedence for unary operators, such as `-` or `!`.
-///
-/// They cannot be defined within [`OPERATOR_PRECEDENCE`], as unary operators
-/// share the same operators as other operators, but have different meanings.
-///
-/// For example, `-` can mean both "minus some amount", but when it's within it's own
-/// expression before a number expression, it'd mean "the negative of the following expression".
-const UNARY_PRECEDENCE: u8 = 3;
-
-impl Token {
-    /// Gets the precedence of the token kind.
-    ///
-    /// Returns the precedence of the token kind, or 0 if the token kind is not an operator.
-    pub fn precedence(&self) -> u8 {
-        OPERATOR_PRECEDENCE
-            .iter()
-            .find(|(k, _)| k == &self.kind)
-            .map_or(0, |(_, p)| *p)
-    }
-}
 
 pub struct Parser {
     /// Defines the source code which is being parsed.

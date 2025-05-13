@@ -1,14 +1,49 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-use crate::parser::errors::*;
+use crate::errors::*;
 use error_snippet::Result;
 use lume_ast::Identifier;
 use lume_span::SourceFile;
 
+mod errors;
+
+pub const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
+
 const SYMBOLS: &[char] = &[
     '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
 ];
+
+pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
+    (TokenKind::Assign, 1),
+    (TokenKind::AddAssign, 1),
+    (TokenKind::SubAssign, 1),
+    (TokenKind::MulAssign, 1),
+    (TokenKind::DivAssign, 1),
+    (TokenKind::Equal, 3),
+    (TokenKind::NotEqual, 3),
+    (TokenKind::Greater, 4),
+    (TokenKind::Less, 4),
+    (TokenKind::GreaterEqual, 4),
+    (TokenKind::LessEqual, 4),
+    (TokenKind::Add, 5),
+    (TokenKind::Sub, 5),
+    (TokenKind::Mul, 6),
+    (TokenKind::Div, 6),
+    (TokenKind::Increment, 7),
+    (TokenKind::Decrement, 7),
+    (TokenKind::Dot, 9),
+    (IDENTIFIER_SEPARATOR, 10),
+];
+
+/// Defines the precedence for unary operators, such as `-` or `!`.
+///
+/// They cannot be defined within [`OPERATOR_PRECEDENCE`], as unary operators
+/// share the same operators as other operators, but have different meanings.
+///
+/// For example, `-` can mean both "minus some amount", but when it's within it's own
+/// expression before a number expression, it'd mean "the negative of the following expression".
+pub const UNARY_PRECEDENCE: u8 = 3;
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
@@ -295,6 +330,16 @@ impl Token {
 
     pub fn end(&self) -> usize {
         self.index.end
+    }
+
+    /// Gets the precedence of the token kind.
+    ///
+    /// Returns the precedence of the token kind, or 0 if the token kind is not an operator.
+    pub fn precedence(&self) -> u8 {
+        OPERATOR_PRECEDENCE
+            .iter()
+            .find(|(k, _)| k == &self.kind)
+            .map_or(0, |(_, p)| *p)
     }
 }
 
@@ -883,25 +928,6 @@ mod tests {
         };
     }
 
-    macro_rules! set_snapshot_suffix {
-        ($($expr:expr),*) => {
-            let mut settings = insta::Settings::clone_current();
-            settings.set_snapshot_suffix(format!($($expr,)*));
-            let _guard = settings.bind_to_scope();
-        }
-    }
-
-    macro_rules! assert_snap_eq {
-        (
-            $input: expr,
-            $($expr:expr),+
-        ) => {
-            set_snapshot_suffix!( $($expr),+ );
-
-            insta::assert_debug_snapshot!(lex_all($input));
-        };
-    }
-
     #[test]
     fn test_keywords_map() {
         assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
@@ -1106,6 +1132,10 @@ mod tests {
         assert_token!("\"hello world\"", TokenKind::String, Some("hello world"), 0, 13);
         assert_token!("\"hello\nworld\"", TokenKind::String, Some("hello\nworld"), 0, 13);
 
-        assert_snap_eq!("\"hello world", "unended_string");
+        lex_all("\"hello world")
+            .inspect_err(|err| {
+                assert_eq!(&err.message(), "expected ending quote");
+            })
+            .unwrap_err();
     }
 }

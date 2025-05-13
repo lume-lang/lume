@@ -2,45 +2,8 @@ use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
 use lume_ast::Type;
+use lume_lexer::TokenKind;
 use lume_span::SourceFile;
-
-use crate::lexer::TokenKind;
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected character", code = "LM1020", help = "Check your syntax")]
-pub struct UnexpectedCharacter {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("Unexpected character '{char}'")]
-    pub range: Range<usize>,
-
-    pub char: char,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "Expected ending quote",
-    code = "LM1021",
-    help = "Did you forget to end your string?"
-)]
-pub struct MissingEndingQuote {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("String literal was started, but has no matching end-quote")]
-    pub range: Range<usize>,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "End of file", code = "LM1023", help = "Has the file been fully written?")]
-pub struct UnexpectedEndOfFile {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("Unexpected end-of-file")]
-    pub range: Range<usize>,
-}
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unexpected token", code = "LM1050")]

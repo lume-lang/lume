@@ -334,6 +334,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_lexer"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "lume_ast",
+ "lume_span",
+]
+
+[[package]]
 name = "lume_macros"
 version = "0.1.0"
 dependencies = [
@@ -350,6 +360,7 @@ dependencies = [
  "error_snippet_derive",
  "insta",
  "lume_ast",
+ "lume_lexer",
  "lume_span",
  "lume_state",
  "serde",
