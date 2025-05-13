@@ -490,12 +490,12 @@ impl Method {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Class {
+pub struct Struct {
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
 }
 
-impl Class {
+impl Struct {
     pub fn new(name: SymbolName) -> Self {
         Self {
             name,
@@ -541,10 +541,56 @@ impl Alias {
     }
 }
 
+#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ImplId(pub u32);
+
+impl ImplId {
+    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Implementation {
+        &ctx.implementations[self.0 as usize]
+    }
+
+    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Implementation {
+        &mut ctx.implementations[self.0 as usize]
+    }
+
+    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
+        &self.get(ctx).type_parameters
+    }
+
+    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
+        let id = TypeParameter::alloc(ctx, name);
+
+        self.get_mut(ctx).type_parameters.push(id);
+
+        id
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Implementation {
+    pub id: ImplId,
+    pub target: SymbolName,
+    pub type_parameters: Vec<TypeParameterId>,
+}
+
+impl Implementation {
+    pub fn alloc(ctx: &mut TypeDatabaseContext, target: SymbolName) -> ImplId {
+        let id = ImplId(ctx.implementations.len() as u32);
+        let implementation = Implementation {
+            id,
+            target,
+            type_parameters: Vec::new(),
+        };
+
+        ctx.implementations.push(implementation);
+        id
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
-    /// The type is a regular user-defined class.
-    Class(Box<Class>),
+    /// The type is a regular user-defined struct.
+    Struct(Box<Struct>),
 
     /// The type is a regular user-defined trait.
     Trait(Box<Trait>),
@@ -633,8 +679,8 @@ impl TypeId {
         &self.get(ctx).kind
     }
 
-    pub fn is_class(&self, ctx: &TypeDatabaseContext) -> bool {
-        matches!(self.kind(ctx), TypeKind::Class(_))
+    pub fn is_struct(&self, ctx: &TypeDatabaseContext) -> bool {
+        matches!(self.kind(ctx), TypeKind::Struct(_))
     }
 
     pub fn is_trait(&self, ctx: &TypeDatabaseContext) -> bool {
@@ -652,9 +698,9 @@ impl TypeId {
     pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
         match self.get(ctx) {
             Type {
-                kind: TypeKind::Class(class),
+                kind: TypeKind::Struct(struct_def),
                 ..
-            } => &class.type_parameters,
+            } => &struct_def.type_parameters,
             Type {
                 kind: TypeKind::Trait(trait_def),
                 ..
@@ -670,10 +716,10 @@ impl TypeId {
 
         match self.get_mut(ctx) {
             Type {
-                kind: TypeKind::Class(class),
+                kind: TypeKind::Struct(struct_def),
                 ..
             } => {
-                class.type_parameters.push(id);
+                struct_def.type_parameters.push(id);
             }
             Type {
                 kind: TypeKind::Trait(trait_def),
@@ -760,6 +806,10 @@ impl TypeRef {
         self.instance_of.get(ctx)
     }
 
+    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Type {
+        self.instance_of.get_mut(ctx)
+    }
+
     pub fn push_type_argument(&mut self, type_argument: TypeRef) {
         self.type_arguments.push(type_argument);
     }
@@ -830,6 +880,7 @@ pub struct TypeDatabaseContext {
     pub methods: Vec<Method>,
     pub functions: Vec<Function>,
     pub type_parameters: Vec<TypeParameter>,
+    pub implementations: Vec<Implementation>,
 }
 
 impl TypeDatabaseContext {
