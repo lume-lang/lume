@@ -204,6 +204,18 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Converts the given value into an [`hir::ItemId`].
+    ///
+    /// Since implementations often use the parent type as the hash value,
+    /// there *will* be key collisions where an implementation will get the same [`hir::ItemId`]
+    /// as the parent type, which would override the original type. So, the given Lume file:
+    ///
+    /// ```lm
+    /// // uses `Foo` as it's hash value
+    /// struct Foo {}
+    ///
+    /// // also uses `Foo` as it's hash value (!!!)
+    /// impl Foo {}
+    /// ```
     fn impl_id<T: std::hash::Hash + Sized>(&mut self, value: T) -> hir::ItemId {
         let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
 
@@ -350,7 +362,12 @@ impl<'a> LowerModule<'a> {
             ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
         };
 
-        self.map.items.insert(hir_ast.id(), hir_ast.clone());
+        let id = hir_ast.id();
+
+        // Ensure that the ID doesn't overwrite an existing entry.
+        debug_assert!(!self.map.items.contains_key(&id));
+
+        self.map.items.insert(id, hir_ast.clone());
 
         Ok(())
     }
