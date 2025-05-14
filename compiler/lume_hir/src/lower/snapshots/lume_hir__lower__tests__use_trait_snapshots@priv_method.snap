@@ -1,0 +1,63 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            use Add in Int32 {\n                fn add(other: Int32) -> Int32 {}\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Use(
+            TraitImplementation {
+                id: 1119898709443545213,
+                name: Type {
+                    name: Add,
+                    type_params: [],
+                    location: <internal>:17:20,
+                },
+                target: Type {
+                    name: std::Int32,
+                    type_params: [],
+                    location: <internal>:24:29,
+                },
+                methods: [
+                    TraitMethodImplementation {
+                        visibility: Private,
+                        name: add,
+                        parameters: [
+                            Parameter {
+                                id: 0,
+                                name: Identifier {
+                                    name: "other",
+                                    location: <internal>:55:60,
+                                },
+                                param_type: Type {
+                                    name: std::Int32,
+                                    type_params: [],
+                                    location: <internal>:62:67,
+                                },
+                                location: <internal>:55:67,
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:72:77,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:78:80,
+                        },
+                        location: <internal>:48:80,
+                    },
+                ],
+                location: <internal>:13:94,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

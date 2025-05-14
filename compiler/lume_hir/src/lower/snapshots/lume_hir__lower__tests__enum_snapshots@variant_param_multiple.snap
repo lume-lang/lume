@@ -1,0 +1,42 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            enum Foo {\n                Bar(int, int)\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    cases: [
+                        EnumDefinitionCase {
+                            id: 3235109210342419196,
+                            name: Bar,
+                            parameters: [
+                                Type {
+                                    name: int,
+                                    type_params: [],
+                                    location: <internal>:44:47,
+                                },
+                                Type {
+                                    name: int,
+                                    type_params: [],
+                                    location: <internal>:49:52,
+                                },
+                            ],
+                            location: <internal>:40:53,
+                        },
+                    ],
+                    location: <internal>:13:67,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

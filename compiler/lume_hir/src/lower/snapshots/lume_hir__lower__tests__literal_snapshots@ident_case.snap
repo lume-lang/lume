@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: let IDENT = 0;
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "IDENT",
+                    location: <internal>:4:9,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:12:13,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:12:13,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 0,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:14,
+    },
+]

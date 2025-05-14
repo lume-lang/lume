@@ -1,0 +1,27 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "impl Int32 {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        6385919587687007582: Impl(
+            Implementation {
+                id: 6385919587687007582,
+                impl_id: None,
+                target: Type {
+                    name: std::Int32,
+                    type_params: [],
+                    location: <internal>:5:10,
+                },
+                methods: [],
+                type_parameters: [],
+                location: <internal>:0:13,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

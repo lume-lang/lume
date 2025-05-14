@@ -1,0 +1,21 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn foo(self) -> void { }"
+---
+SelfOutsideObjectContext {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "fn foo(self) -> void { }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 7..11,
+    ty: "self",
+}

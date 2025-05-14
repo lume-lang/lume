@@ -1,0 +1,34 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: type A = B<C>
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        10060190011017930945: Type(
+            Alias(
+                AliasDefinition {
+                    id: 10060190011017930945,
+                    type_id: None,
+                    name: A,
+                    definition: Type {
+                        name: B,
+                        type_params: [
+                            Type {
+                                name: C,
+                                type_params: [],
+                                location: <internal>:11:12,
+                            },
+                        ],
+                        location: <internal>:10:13,
+                    },
+                    location: <internal>:0:13,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

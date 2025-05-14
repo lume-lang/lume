@@ -1,0 +1,43 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn foo() -> RangeInclusive<Int32> { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: foo,
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: std::RangeInclusive,
+                        type_params: [
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:27:32,
+                            },
+                        ],
+                        location: <internal>:26:33,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:34:37,
+                    },
+                ),
+                location: <internal>:0:37,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

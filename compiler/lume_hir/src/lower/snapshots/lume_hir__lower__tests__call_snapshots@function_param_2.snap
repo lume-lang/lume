@@ -1,0 +1,67 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "let _ = call(0, 1);"
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:8:19,
+                    kind: StaticCall(
+                        StaticCall {
+                            id: 5871781006564002453,
+                            name: call,
+                            type_arguments: [],
+                            arguments: [
+                                Expression {
+                                    id: 11743562013128004906,
+                                    location: <internal>:13:14,
+                                    kind: Literal(
+                                        Literal {
+                                            id: 11743562013128004906,
+                                            location: <internal>:13:14,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: 11743562013128004906,
+                                                    value: 0,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: 17615343019692007359,
+                                    location: <internal>:16:17,
+                                    kind: Literal(
+                                        Literal {
+                                            id: 17615343019692007359,
+                                            location: <internal>:16:17,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: 17615343019692007359,
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:19,
+    },
+]

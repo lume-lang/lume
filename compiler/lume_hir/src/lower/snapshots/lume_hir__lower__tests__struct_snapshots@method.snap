@@ -1,0 +1,128 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            impl Foo {\n                fn bar() -> Int32 {\n                    return 0;\n                }\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        11075105501540449544: Impl(
+            Implementation {
+                id: 11075105501540449544,
+                impl_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:18:21,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:43:46,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:52:57,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [
+                                    Statement {
+                                        id: 0,
+                                        kind: Return(
+                                            Return {
+                                                id: 0,
+                                                value: Some(
+                                                    Expression {
+                                                        id: 5871781006564002453,
+                                                        location: <internal>:87:88,
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: 5871781006564002453,
+                                                                location: <internal>:87:88,
+                                                                kind: Int(
+                                                                    IntLiteral {
+                                                                        id: 5871781006564002453,
+                                                                        value: 0,
+                                                                        kind: I32,
+                                                                    },
+                                                                ),
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                        location: <internal>:80:89,
+                                    },
+                                ],
+                                location: <internal>:58:107,
+                            },
+                        ),
+                        location: <internal>:40:107,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:13:121,
+            },
+        ),
+    },
+    statements: {
+        0: Statement {
+            id: 0,
+            kind: Return(
+                Return {
+                    id: 0,
+                    value: Some(
+                        Expression {
+                            id: 5871781006564002453,
+                            location: <internal>:87:88,
+                            kind: Literal(
+                                Literal {
+                                    id: 5871781006564002453,
+                                    location: <internal>:87:88,
+                                    kind: Int(
+                                        IntLiteral {
+                                            id: 5871781006564002453,
+                                            value: 0,
+                                            kind: I32,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
+            location: <internal>:80:89,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:87:88,
+            kind: Literal(
+                Literal {
+                    id: 5871781006564002453,
+                    location: <internal>:87:88,
+                    kind: Int(
+                        IntLiteral {
+                            id: 5871781006564002453,
+                            value: 0,
+                            kind: I32,
+                        },
+                    ),
+                },
+            ),
+        },
+    },
+}

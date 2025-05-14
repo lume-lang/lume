@@ -1,0 +1,129 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..b);"
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "a",
+                    location: <internal>:13:14,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:17:18,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:17:18,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 0,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:9:19,
+    },
+    Statement {
+        id: 11743562013128004906,
+        kind: Variable(
+            VariableDeclaration {
+                id: 11743562013128004906,
+                name: Identifier {
+                    name: "b",
+                    location: <internal>:32:33,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 17615343019692007359,
+                    location: <internal>:36:37,
+                    kind: Literal(
+                        Literal {
+                            id: 17615343019692007359,
+                            location: <internal>:36:37,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 17615343019692007359,
+                                    value: 1,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:28:38,
+    },
+    Statement {
+        id: 5040379952546458196,
+        kind: Variable(
+            VariableDeclaration {
+                id: 5040379952546458196,
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:51:52,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 10912160959110460649,
+                    location: <internal>:56:60,
+                    kind: StaticCall(
+                        StaticCall {
+                            id: 10912160959110460649,
+                            name: std::new::Range,
+                            type_arguments: [
+                                Implicit {
+                                    location: <internal>:0:0,
+                                },
+                            ],
+                            arguments: [
+                                Expression {
+                                    id: 16783941965674463102,
+                                    location: <internal>:56:57,
+                                    kind: Variable(
+                                        Variable {
+                                            id: 16783941965674463102,
+                                            reference: 0,
+                                            name: Identifier {
+                                                name: "a",
+                                                location: <internal>:56:57,
+                                            },
+                                            location: <internal>:56:57,
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: 4208978898528913939,
+                                    location: <internal>:59:60,
+                                    kind: Variable(
+                                        Variable {
+                                            id: 4208978898528913939,
+                                            reference: 11743562013128004906,
+                                            name: Identifier {
+                                                name: "b",
+                                                location: <internal>:59:60,
+                                            },
+                                            location: <internal>:59:60,
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:47:62,
+    },
+]

@@ -1,0 +1,79 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "impl Foo {\n        pub fn bar(self, a: Int32) -> void { }\n    }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        11075105501540449544: Impl(
+            Implementation {
+                id: 11075105501540449544,
+                impl_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:5:8,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Public,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:26:29,
+                        },
+                        parameters: [
+                            Parameter {
+                                id: 0,
+                                name: Identifier {
+                                    name: "self",
+                                    location: <internal>:30:34,
+                                },
+                                param_type: Type {
+                                    name: Foo,
+                                    type_params: [],
+                                    location: <internal>:30:34,
+                                },
+                                location: <internal>:30:34,
+                            },
+                            Parameter {
+                                id: 5871781006564002453,
+                                name: Identifier {
+                                    name: "a",
+                                    location: <internal>:36:37,
+                                },
+                                param_type: Type {
+                                    name: std::Int32,
+                                    type_params: [],
+                                    location: <internal>:39:44,
+                                },
+                                location: <internal>:36:44,
+                            },
+                        ],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:49:53,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:54:57,
+                            },
+                        ),
+                        location: <internal>:19:57,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:63,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn loop() -> void {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        11875826716677531916: Function(
+            FunctionDefinition {
+                id: 11875826716677531916,
+                func_id: None,
+                visibility: Private,
+                name: loop,
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:13:17,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:18:20,
+                    },
+                ),
+                location: <internal>:0:20,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

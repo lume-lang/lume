@@ -1,0 +1,67 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            use Cast in Int32 {\n                pub fn to_string() -> String {}\n\n                pub fn to_int() -> Int32 {}\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        13914738179290843052: Use(
+            TraitImplementation {
+                id: 13914738179290843052,
+                name: Type {
+                    name: Cast,
+                    type_params: [],
+                    location: <internal>:17:21,
+                },
+                target: Type {
+                    name: std::Int32,
+                    type_params: [],
+                    location: <internal>:25:30,
+                },
+                methods: [
+                    TraitMethodImplementation {
+                        visibility: Public,
+                        name: to_string,
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: std::String,
+                                type_params: [],
+                                location: <internal>:71:77,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:78:80,
+                        },
+                        location: <internal>:49:80,
+                    },
+                    TraitMethodImplementation {
+                        visibility: Public,
+                        name: to_int,
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:117:122,
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:123:125,
+                        },
+                        location: <internal>:98:125,
+                    },
+                ],
+                location: <internal>:13:139,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

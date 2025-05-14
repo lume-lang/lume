@@ -1,0 +1,17 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "if true { } else if false { }"
+---
+[
+    Statement {
+        id: 0,
+        kind: If(
+            If {
+                id: 0,
+                cases: [],
+                location: <internal>:0:29,
+            },
+        ),
+        location: <internal>:0:29,
+    },
+]

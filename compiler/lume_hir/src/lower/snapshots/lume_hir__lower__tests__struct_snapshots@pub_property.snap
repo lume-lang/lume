@@ -1,0 +1,79 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            struct Foo {\n                pub x: Int32 = 1;\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Struct(
+                StructDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    builtin: false,
+                    properties: [
+                        Property {
+                            prop_id: None,
+                            visibility: Public,
+                            name: Identifier {
+                                name: "x",
+                                location: <internal>:46:47,
+                            },
+                            property_type: Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:49:54,
+                            },
+                            default_value: Some(
+                                Expression {
+                                    id: 0,
+                                    location: <internal>:57:58,
+                                    kind: Literal(
+                                        Literal {
+                                            id: 0,
+                                            location: <internal>:57:58,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: 0,
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                            ),
+                            location: <internal>:42:59,
+                        },
+                    ],
+                    methods: [],
+                    type_parameters: [],
+                    location: <internal>:13:73,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {
+        0: Expression {
+            id: 0,
+            location: <internal>:57:58,
+            kind: Literal(
+                Literal {
+                    id: 0,
+                    location: <internal>:57:58,
+                    kind: Int(
+                        IntLiteral {
+                            id: 0,
+                            value: 1,
+                            kind: I32,
+                        },
+                    ),
+                },
+            ),
+        },
+    },
+}

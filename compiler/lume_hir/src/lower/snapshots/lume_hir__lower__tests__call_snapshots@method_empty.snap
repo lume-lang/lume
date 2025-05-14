@@ -1,0 +1,52 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: let _ = 1.call();
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:10:17,
+                    kind: InstanceCall(
+                        InstanceCall {
+                            id: 5871781006564002453,
+                            callee: Expression {
+                                id: 11743562013128004906,
+                                location: <internal>:8:9,
+                                kind: Literal(
+                                    Literal {
+                                        id: 11743562013128004906,
+                                        location: <internal>:8:9,
+                                        kind: Int(
+                                            IntLiteral {
+                                                id: 11743562013128004906,
+                                                value: 1,
+                                                kind: I32,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                            name: Identifier {
+                                name: "call",
+                                location: <internal>:10:14,
+                            },
+                            type_arguments: [],
+                            arguments: [],
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:17,
+    },
+]

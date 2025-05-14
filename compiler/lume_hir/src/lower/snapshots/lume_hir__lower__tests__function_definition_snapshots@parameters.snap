@@ -1,0 +1,70 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn main(argc: u8, arcv: [String]) -> void { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15299231299772503292: Function(
+            FunctionDefinition {
+                id: 15299231299772503292,
+                func_id: None,
+                visibility: Private,
+                name: main,
+                parameters: [
+                    Parameter {
+                        id: 0,
+                        name: Identifier {
+                            name: "argc",
+                            location: <internal>:8:12,
+                        },
+                        param_type: Type {
+                            name: u8,
+                            type_params: [],
+                            location: <internal>:14:16,
+                        },
+                        location: <internal>:8:16,
+                    },
+                    Parameter {
+                        id: 5871781006564002453,
+                        name: Identifier {
+                            name: "arcv",
+                            location: <internal>:18:22,
+                        },
+                        param_type: Type {
+                            name: std::Array,
+                            type_params: [
+                                Type {
+                                    name: std::String,
+                                    type_params: [],
+                                    location: <internal>:25:31,
+                                },
+                            ],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:18:32,
+                    },
+                ],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:37:41,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:42:45,
+                    },
+                ),
+                location: <internal>:0:45,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

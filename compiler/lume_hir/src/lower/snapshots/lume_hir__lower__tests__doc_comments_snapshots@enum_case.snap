@@ -1,0 +1,31 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "enum Foo {\n            /// This is a doc comment\n            Bar\n        }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Enum(
+                EnumDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    cases: [
+                        EnumDefinitionCase {
+                            id: 3235109210342419196,
+                            name: Bar,
+                            parameters: [],
+                            location: <internal>:61:64,
+                        },
+                    ],
+                    location: <internal>:0:74,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

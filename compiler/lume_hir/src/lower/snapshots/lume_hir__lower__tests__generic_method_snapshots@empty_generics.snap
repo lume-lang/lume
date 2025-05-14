@@ -1,0 +1,52 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "impl Test { fn test<>() -> void {} }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15339411229389319392: Impl(
+            Implementation {
+                id: 15339411229389319392,
+                impl_id: None,
+                target: Type {
+                    name: Test,
+                    type_params: [],
+                    location: <internal>:5:9,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "test",
+                            location: <internal>:15:19,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:27:31,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:32:34,
+                            },
+                        ),
+                        location: <internal>:12:34,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:36,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

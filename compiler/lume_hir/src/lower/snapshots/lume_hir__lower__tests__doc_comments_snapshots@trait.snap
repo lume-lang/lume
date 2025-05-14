@@ -1,0 +1,25 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "/// This is a doc comment\n        trait Foo { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        18213876290066861800: Type(
+            Trait(
+                TraitDefinition {
+                    id: 18213876290066861800,
+                    type_id: None,
+                    name: Foo,
+                    type_parameters: [],
+                    methods: [],
+                    location: <internal>:34:47,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

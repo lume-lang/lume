@@ -1,0 +1,27 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "struct Int32 {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15249499769657949080: Type(
+            Struct(
+                StructDefinition {
+                    id: 15249499769657949080,
+                    type_id: None,
+                    name: Int32,
+                    builtin: false,
+                    properties: [],
+                    methods: [],
+                    type_parameters: [],
+                    location: <internal>:0:15,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

@@ -1,0 +1,46 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "trait Add<T1, T2> { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1119898709443545213: Type(
+            Trait(
+                TraitDefinition {
+                    id: 1119898709443545213,
+                    type_id: None,
+                    name: Add,
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: <internal>:10:12,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:10:12,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: <internal>:14:16,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:14:16,
+                        },
+                    ],
+                    methods: [],
+                    location: <internal>:0:21,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

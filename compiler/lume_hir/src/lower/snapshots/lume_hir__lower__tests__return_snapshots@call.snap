@@ -1,0 +1,156 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n        return a.b(c);"
+---
+[
+    Statement {
+        id: 0,
+        kind: Variable(
+            VariableDeclaration {
+                id: 0,
+                name: Identifier {
+                    name: "a",
+                    location: <internal>:13:14,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 5871781006564002453,
+                    location: <internal>:17:18,
+                    kind: Literal(
+                        Literal {
+                            id: 5871781006564002453,
+                            location: <internal>:17:18,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 5871781006564002453,
+                                    value: 1,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:9:19,
+    },
+    Statement {
+        id: 11743562013128004906,
+        kind: Variable(
+            VariableDeclaration {
+                id: 11743562013128004906,
+                name: Identifier {
+                    name: "b",
+                    location: <internal>:32:33,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 17615343019692007359,
+                    location: <internal>:36:37,
+                    kind: Literal(
+                        Literal {
+                            id: 17615343019692007359,
+                            location: <internal>:36:37,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 17615343019692007359,
+                                    value: 1,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:28:38,
+    },
+    Statement {
+        id: 5040379952546458196,
+        kind: Variable(
+            VariableDeclaration {
+                id: 5040379952546458196,
+                name: Identifier {
+                    name: "c",
+                    location: <internal>:51:52,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: 10912160959110460649,
+                    location: <internal>:55:56,
+                    kind: Literal(
+                        Literal {
+                            id: 10912160959110460649,
+                            location: <internal>:55:56,
+                            kind: Int(
+                                IntLiteral {
+                                    id: 10912160959110460649,
+                                    value: 1,
+                                    kind: I32,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:47:57,
+    },
+    Statement {
+        id: 16783941965674463102,
+        kind: Return(
+            Return {
+                id: 16783941965674463102,
+                value: Some(
+                    Expression {
+                        id: 4208978898528913939,
+                        location: <internal>:76:81,
+                        kind: InstanceCall(
+                            InstanceCall {
+                                id: 4208978898528913939,
+                                callee: Expression {
+                                    id: 15952540911656918845,
+                                    location: <internal>:74:75,
+                                    kind: Variable(
+                                        Variable {
+                                            id: 15952540911656918845,
+                                            reference: 0,
+                                            name: Identifier {
+                                                name: "a",
+                                                location: <internal>:74:75,
+                                            },
+                                            location: <internal>:74:75,
+                                        },
+                                    ),
+                                },
+                                name: Identifier {
+                                    name: "b",
+                                    location: <internal>:76:77,
+                                },
+                                type_arguments: [],
+                                arguments: [
+                                    Expression {
+                                        id: 10080759905092916392,
+                                        location: <internal>:78:79,
+                                        kind: Variable(
+                                            Variable {
+                                                id: 10080759905092916392,
+                                                reference: 5040379952546458196,
+                                                name: Identifier {
+                                                    name: "c",
+                                                    location: <internal>:78:79,
+                                                },
+                                                location: <internal>:78:79,
+                                            },
+                                        ),
+                                    },
+                                ],
+                            },
+                        ),
+                    },
+                ),
+            },
+        ),
+        location: <internal>:67:81,
+    },
+]

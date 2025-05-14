@@ -1,0 +1,48 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn test<T>() -> void {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        1608888409088296675: Function(
+            FunctionDefinition {
+                id: 1608888409088296675,
+                func_id: None,
+                visibility: Private,
+                name: test,
+                parameters: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: <internal>:8:9,
+                        },
+                        type_id: None,
+                        type_param_id: None,
+                        constraints: [],
+                        location: <internal>:8:9,
+                    },
+                ],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:16:20,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:21:23,
+                    },
+                ),
+                location: <internal>:0:23,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

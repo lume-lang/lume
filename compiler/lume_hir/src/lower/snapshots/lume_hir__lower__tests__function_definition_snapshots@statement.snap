@@ -1,0 +1,119 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "fn main() -> void { let a = 0; }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        15299231299772503292: Function(
+            FunctionDefinition {
+                id: 15299231299772503292,
+                func_id: None,
+                visibility: Private,
+                name: main,
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:13:17,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [
+                            Statement {
+                                id: 0,
+                                kind: Variable(
+                                    VariableDeclaration {
+                                        id: 0,
+                                        name: Identifier {
+                                            name: "a",
+                                            location: <internal>:24:25,
+                                        },
+                                        declared_type: None,
+                                        value: Expression {
+                                            id: 5871781006564002453,
+                                            location: <internal>:28:29,
+                                            kind: Literal(
+                                                Literal {
+                                                    id: 5871781006564002453,
+                                                    location: <internal>:28:29,
+                                                    kind: Int(
+                                                        IntLiteral {
+                                                            id: 5871781006564002453,
+                                                            value: 0,
+                                                            kind: I32,
+                                                        },
+                                                    ),
+                                                },
+                                            ),
+                                        },
+                                    },
+                                ),
+                                location: <internal>:20:30,
+                            },
+                        ],
+                        location: <internal>:18:32,
+                    },
+                ),
+                location: <internal>:0:32,
+            },
+        ),
+    },
+    statements: {
+        0: Statement {
+            id: 0,
+            kind: Variable(
+                VariableDeclaration {
+                    id: 0,
+                    name: Identifier {
+                        name: "a",
+                        location: <internal>:24:25,
+                    },
+                    declared_type: None,
+                    value: Expression {
+                        id: 5871781006564002453,
+                        location: <internal>:28:29,
+                        kind: Literal(
+                            Literal {
+                                id: 5871781006564002453,
+                                location: <internal>:28:29,
+                                kind: Int(
+                                    IntLiteral {
+                                        id: 5871781006564002453,
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                },
+            ),
+            location: <internal>:20:30,
+        },
+    },
+    expressions: {
+        5871781006564002453: Expression {
+            id: 5871781006564002453,
+            location: <internal>:28:29,
+            kind: Literal(
+                Literal {
+                    id: 5871781006564002453,
+                    location: <internal>:28:29,
+                    kind: Int(
+                        IntLiteral {
+                            id: 5871781006564002453,
+                            value: 0,
+                            kind: I32,
+                        },
+                    ),
+                },
+            ),
+        },
+    },
+}

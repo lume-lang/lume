@@ -1,0 +1,47 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "\n            impl Foo {\n                fn external bar() -> Int32\n            }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        11075105501540449544: Impl(
+            Implementation {
+                id: 11075105501540449544,
+                impl_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:18:21,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Private,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:52:55,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: std::Int32,
+                                type_params: [],
+                                location: <internal>:61:66,
+                            },
+                        ),
+                        block: None,
+                        location: <internal>:40:66,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:13:80,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

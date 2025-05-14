@@ -1,0 +1,52 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "impl Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        11075105501540449544: Impl(
+            Implementation {
+                id: 11075105501540449544,
+                impl_id: None,
+                target: Type {
+                    name: Foo,
+                    type_params: [],
+                    location: <internal>:5:8,
+                },
+                methods: [
+                    MethodDefinition {
+                        method_id: None,
+                        visibility: Public,
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:68:71,
+                        },
+                        parameters: [],
+                        type_parameters: [],
+                        return_type: Some(
+                            Type {
+                                name: void,
+                                type_params: [],
+                                location: <internal>:77:81,
+                            },
+                        ),
+                        block: Some(
+                            Block {
+                                statements: [],
+                                location: <internal>:82:85,
+                            },
+                        ),
+                        location: <internal>:61:85,
+                    },
+                ],
+                type_parameters: [],
+                location: <internal>:0:95,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

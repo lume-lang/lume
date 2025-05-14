@@ -1,0 +1,37 @@
+---
+source: compiler/lume_hir/src/lower/tests.rs
+description: "/// This is a doc comment\n        fn foo() -> void { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        8195533856448846917: Function(
+            FunctionDefinition {
+                id: 8195533856448846917,
+                func_id: None,
+                visibility: Private,
+                name: foo,
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        name: void,
+                        type_params: [],
+                        location: <internal>:46:50,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:51:54,
+                    },
+                ),
+                location: <internal>:34:54,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}
