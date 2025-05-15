@@ -1,14 +1,11 @@
 [package]
-name = "lume_state"
+name = "lume_errors"
 version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
-arc = { path = "../arc" }
-lume_errors = { path = "../lume_errors" }
 lume_span = { path = "../lume_span" }
-lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

@@ -1,3 +1,4 @@
+use lume_errors::{DiagCtx, DiagOutputFormat};
 use lume_parser::Parser;
 use lume_span::PackageId;
 
@@ -5,8 +6,9 @@ use super::*;
 
 #[track_caller]
 fn lower(input: &str) -> Result<hir::map::Map> {
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
-    let mut state = lume_state::State::default();
+    let mut state = lume_state::State::new(dcx);
 
     state.source_map.insert(source.clone());
 
@@ -22,8 +24,9 @@ fn lower(input: &str) -> Result<hir::map::Map> {
 
 #[track_caller]
 fn lower_expr(input: &str) -> Result<Vec<hir::Statement>> {
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
-    let mut state = lume_state::State::default();
+    let mut state = lume_state::State::new(dcx);
 
     state.source_map.insert(source.clone());
 

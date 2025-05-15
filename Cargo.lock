@@ -309,10 +309,20 @@ dependencies = [
  "arc",
  "error_snippet",
  "error_snippet_derive",
+ "lume_errors",
  "lume_hir",
  "lume_span",
  "lume_state",
  "lume_typech",
+]
+
+[[package]]
+name = "lume_errors"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "lume_span",
 ]
 
 [[package]]
@@ -325,6 +335,7 @@ dependencies = [
  "indexmap",
  "insta",
  "lume_ast",
+ "lume_errors",
  "lume_macros",
  "lume_parser",
  "lume_span",
@@ -360,6 +371,7 @@ dependencies = [
  "error_snippet_derive",
  "insta",
  "lume_ast",
+ "lume_errors",
  "lume_lexer",
  "lume_span",
  "lume_state",
@@ -383,6 +395,7 @@ dependencies = [
  "arc",
  "error_snippet",
  "error_snippet_derive",
+ "lume_errors",
  "lume_span",
  "lume_types",
 ]

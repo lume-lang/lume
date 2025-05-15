@@ -2,6 +2,8 @@ use std::path::Path;
 
 use arc::Project;
 use error_snippet::Result;
+use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_state::State;
 
 pub(crate) struct Options {
     /// Defines the structure of the Arcfile within the project.
@@ -18,12 +20,18 @@ impl Options {
 pub struct Driver {
     /// Defines the current stage of the compilation process.
     pub(crate) opts: Options,
+
+    /// Defines the current build context.
+    pub(crate) state: State,
 }
 
 #[allow(dead_code)]
 impl Driver {
     fn new(opts: Options) -> Self {
-        Driver { opts }
+        let dcx = DiagCtx::new(DiagOutputFormat::Graphical);
+        let state = State::new(dcx);
+
+        Driver { opts, state }
     }
 
     /// Builds the given project into an executable or library.
@@ -51,27 +59,20 @@ impl Driver {
 
     /// Builds the given compiler state into an executable or library.
     pub fn build(&mut self) -> Result<()> {
-        let mut state = lume_state::State::default();
-
-        let sources = self.parse(&mut state)?;
-
-        let _thir_ctx = self.type_check(&mut state, sources)?;
+        let sources = self.parse()?;
+        let _thir_ctx = self.type_check(sources)?;
 
         Ok(())
     }
 
     /// Parses all the modules within the given state object.
-    fn parse(&mut self, state: &mut lume_state::State) -> Result<lume_hir::map::Map> {
-        lume_hir::lower::LowerState::lower(&self.opts.project, state)
+    fn parse(&mut self) -> Result<lume_hir::map::Map> {
+        lume_hir::lower::LowerState::lower(&self.opts.project, &mut self.state)
     }
 
     /// Type checks all the given source files.
-    fn type_check<'a>(
-        &mut self,
-        state: &'a mut lume_state::State,
-        mut hir: lume_hir::map::Map,
-    ) -> Result<lume_typech::ThirBuildCtx<'a>> {
-        let mut thir_ctx = lume_typech::ThirBuildCtx::new(state);
+    fn type_check<'a>(&'a mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx<'a>> {
+        let mut thir_ctx = lume_typech::ThirBuildCtx::new(&mut self.state);
 
         // Defines the types of all nodes within the HIR maps.
         thir_ctx.define_types(&mut hir)?;

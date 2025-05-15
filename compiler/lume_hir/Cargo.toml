@@ -7,6 +7,7 @@ rust-version.workspace = true
 [dependencies]
 arc = { path = "../arc" }
 lume_ast = { path = "../lume_ast" }
+lume_errors = { path = "../lume_errors" }
 lume_macros = { path = "../lume_macros" }
 lume_parser = { path = "../lume_parser" }
 lume_span = { path = "../lume_span" }
