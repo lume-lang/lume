@@ -24,18 +24,58 @@ impl Parser {
             TokenKind::Break => self.parse_break(),
             TokenKind::Continue => self.parse_continue(),
             TokenKind::Return => self.parse_return(),
-            TokenKind::If | TokenKind::Unless => Ok(self.parse_conditional()?),
-            TokenKind::Loop => Ok(self.parse_infinite_loop()?),
-            TokenKind::For => Ok(self.parse_iterator_loop()?),
-            TokenKind::While => Ok(self.parse_predicate_loop()?),
-            _ => {
-                let expression = self.parse_expression()?;
+            TokenKind::If | TokenKind::Unless => self.parse_conditional(),
+            TokenKind::Loop => self.parse_infinite_loop(),
+            TokenKind::For => self.parse_iterator_loop(),
+            TokenKind::While => self.parse_predicate_loop(),
+            _ => self.parse_expression_stmt(),
+        }
+    }
 
-                self.consume(TokenKind::Semicolon)?;
+    /// Attempts to recover from a parsing error, whilst attempting to parse a statement.
+    ///
+    /// The recovery for statements is the move the cursor to the next semicolon. So, given the
+    /// following Lume statement:
+    ///
+    /// ```lm
+    /// let a: = 1;
+    ///        ^ error occurs here...
+    ///            ^ ...so we move the cursor to here
+    /// ```
+    pub(super) fn recover_statement(&mut self) -> Result<()> {
+        let mut brace_depth = 0;
+        let mut bracket_depth = 0;
 
-                Ok(Statement::Expression(Box::new(expression)))
+        loop {
+            match self.token()?.kind {
+                TokenKind::LeftCurly => {
+                    self.skip()?;
+                    brace_depth += 1;
+                }
+                TokenKind::LeftBracket => {
+                    self.skip()?;
+                    bracket_depth += 1;
+                }
+                TokenKind::RightCurly => {
+                    self.skip()?;
+                    brace_depth -= 1;
+                }
+                TokenKind::RightBracket => {
+                    self.skip()?;
+                    bracket_depth -= 1;
+                }
+                TokenKind::Semicolon => {
+                    self.skip()?;
+
+                    if brace_depth == 0 && bracket_depth == 0 {
+                        break;
+                    }
+                }
+                _ => self.skip()?,
             }
         }
+
+        Ok(())
     }
 
     /// Parses a variable declaration statement at the current cursor position.
@@ -224,6 +264,15 @@ impl Parser {
             block,
             location: location.into(),
         })))
+    }
+
+    /// Parses an expression statement at the current cursor position.
+    fn parse_expression_stmt(&mut self) -> Result<Statement> {
+        let expression = self.parse_expression()?;
+
+        self.consume(TokenKind::Semicolon)?;
+
+        Ok(Statement::Expression(Box::new(expression)))
     }
 
     /// Parses a `break` statement at the current cursor position.

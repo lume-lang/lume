@@ -12,7 +12,7 @@ fn lower(input: &str) -> Result<hir::map::Map> {
 
     state.source_map.insert(source.clone());
 
-    let expressions = Parser::parse_src(&state, source.id).unwrap();
+    let expressions = Parser::parse_src(&mut state, source.id).unwrap();
 
     let module_id = PackageId::empty();
     let mut map = hir::map::Map::empty(module_id);

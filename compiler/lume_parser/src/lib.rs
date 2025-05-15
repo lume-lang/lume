@@ -5,10 +5,10 @@ use std::sync::Arc;
 use crate::errors::*;
 use error_snippet::{Error, Result};
 use lume_ast::*;
+use lume_errors::DiagCtxHandle;
 use lume_lexer::IDENTIFIER_SEPARATOR;
 use lume_lexer::{Lexer, Token, TokenKind};
-use lume_span::SourceFile;
-use lume_span::SourceFileId;
+use lume_span::{SourceFile, SourceFileId};
 
 mod errors;
 pub mod expr;
@@ -23,6 +23,9 @@ mod tests;
 pub struct Parser {
     /// Defines the source code which is being parsed.
     source: Arc<SourceFile>,
+
+    /// Handle to the diagnostics context which will handle parsing errors.
+    dcx: DiagCtxHandle,
 
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
@@ -65,12 +68,13 @@ macro_rules! err {
 impl Parser {
     /// Creates a new [`Parser`] instance with the given source file as
     /// it's input to parse.
-    pub fn new(source: Arc<SourceFile>) -> Self {
+    pub fn new(source: Arc<SourceFile>, dcx: DiagCtxHandle) -> Self {
         let lexer = Lexer::new(source.clone());
 
         Parser {
             source,
             lexer,
+            dcx,
             index: 0,
             position: 0,
             tokens: Vec::new(),
@@ -84,8 +88,9 @@ impl Parser {
     /// a parser to interate over tokens from it's inner lexer.
     pub fn new_with_str(str: &str) -> Parser {
         let source = SourceFile::internal(str);
+        let dcx = DiagCtxHandle::shim();
 
-        Parser::new(Arc::new(source))
+        Parser::new(Arc::new(source), dcx)
     }
 
     /// Creates a new [`Parser`] for the given source code.
@@ -94,8 +99,9 @@ impl Parser {
     /// a parser to interate over tokens from it's inner lexer.
     pub fn new_with_src(state: &lume_state::State, file: SourceFileId) -> Result<Parser> {
         let source = state.source_of(file)?;
+        let dcx = DiagCtxHandle::shim();
 
-        Ok(Parser::new(source))
+        Ok(Parser::new(source, dcx))
     }
 
     /// Parses the given source.
@@ -112,8 +118,9 @@ impl Parser {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
-    pub fn parse_src(state: &lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
+    pub fn parse_src(state: &mut lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new_with_src(state, file)?;
+        parser.dcx = state.dcx_mut().handle();
 
         parser.parse()
     }
@@ -555,7 +562,24 @@ impl Parser {
 
     /// Returns a block for functions or methods.
     fn parse_block(&mut self) -> Result<Block> {
-        let (statements, location) = self.consume_with_loc(|p| p.consume_curly_seq(|p| p.parse_statement()))?;
+        let (statements, location) = self.consume_with_loc(|p| {
+            let mut stmts = Vec::new();
+
+            p.consume(TokenKind::LeftCurly)?;
+
+            while p.consume_if(TokenKind::RightCurly)?.is_none() {
+                match p.parse_statement() {
+                    Ok(stmt) => stmts.push(stmt),
+                    Err(err) => {
+                        p.dcx.emit(err);
+
+                        p.recover_statement()?;
+                    }
+                }
+            }
+
+            Ok(stmts)
+        })?;
 
         Ok(Block { statements, location })
     }

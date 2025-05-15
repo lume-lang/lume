@@ -34,7 +34,14 @@ impl DiagCtx {
             DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
         };
 
-        let handler = error_snippet::DiagnosticHandler::with_renderer(renderer);
+        let mut handler = error_snippet::DiagnosticHandler::with_renderer(renderer);
+
+        // Ensure that the program doesn't continue executing after
+        // we've reported errors to the user.
+        //
+        // TODO: should be maybe propogate errors upward instead
+        //       of terminating the entire application?
+        handler.exit_on_error();
 
         DiagCtx {
             handler: Arc::new(Mutex::new(handler)),
