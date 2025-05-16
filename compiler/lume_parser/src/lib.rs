@@ -97,6 +97,10 @@ impl Parser {
     ///
     /// This function doesn't perform any parsing itself - it simply readies
     /// a parser to interate over tokens from it's inner lexer.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if `file` is not found within `state`.
     pub fn new_with_src(state: &lume_state::State, file: SourceFileId) -> Result<Parser> {
         let source = state.source_of(file)?;
         let dcx = DiagCtxHandle::shim();
@@ -108,6 +112,11 @@ impl Parser {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if some part of the input is unexpected or if the
+    /// parser unexpectedly reaches end-of-file.
     pub fn parse_str(str: &str) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new_with_str(str);
 
@@ -118,6 +127,11 @@ impl Parser {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if some part of the input is unexpected or if the
+    /// parser unexpectedly reaches end-of-file.
     pub fn parse_src(state: &mut lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new_with_src(state, file)?;
 
@@ -132,6 +146,11 @@ impl Parser {
     ///
     /// This function iterates through the tokens of the module source code
     /// from the lexer and moves them into the parser.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if some part of the input source is unsupported
+    /// or unexpected.
     pub fn prepare(&mut self) -> Result<()> {
         // If we've already tokenized something, we shouldn't add any more.
         if !self.tokens.is_empty() {
@@ -146,7 +165,7 @@ impl Parser {
                 TokenKind::Comment => continue,
                 TokenKind::Eof => break,
                 _ => {}
-            };
+            }
 
             self.tokens.push(token);
         }
@@ -158,6 +177,11 @@ impl Parser {
     ///
     /// This function iterates through the tokens of the module source code,
     /// parsing each top-level expression and collecting them into a vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if some part of the input is unexpected or if the
+    /// parser unexpectedly reaches end-of-file.
     pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
         self.prepare()?;
 
@@ -168,7 +192,7 @@ impl Parser {
                 break;
             }
 
-            self.read_doc_comment()?;
+            self.read_doc_comment();
 
             expressions.push(self.parse_top_level_expression()?);
         }
@@ -184,21 +208,20 @@ impl Parser {
     /// Parses a single token from the lexer at the given index.
     ///
     /// Returns the parsed token or a parsing error.
-    fn token_at(&self, index: usize) -> Result<Token> {
-        match self.tokens.get(index) {
-            Some(token) => Ok(token.clone()),
-            None => {
-                let index = match self.tokens.last() {
-                    Some(t) => t.index.clone(),
-                    None => 0..1,
-                };
+    fn token_at(&self, index: usize) -> Token {
+        if let Some(token) = self.tokens.get(index) {
+            token.clone()
+        } else {
+            let index = match self.tokens.last() {
+                Some(t) => t.index.clone(),
+                None => 0..1,
+            };
 
-                Ok(Token {
-                    kind: TokenKind::Eof,
-                    index,
-                    ty: None,
-                    value: None,
-                })
+            Token {
+                kind: TokenKind::Eof,
+                index,
+                ty: None,
+                value: None,
             }
         }
     }
@@ -206,71 +229,63 @@ impl Parser {
     /// Parses a single token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
-    fn token(&self) -> Result<Token> {
+    fn token(&self) -> Token {
         self.token_at(self.index)
     }
 
     /// Parses the previous token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
-    fn previous_token(&self) -> Result<Token> {
+    fn previous_token(&self) -> Token {
         self.token_at(self.index - 1)
     }
 
     /// Parses the last token from the lexer.
     ///
     /// Returns the parsed token or a parsing error.
-    fn last_token(&self) -> Result<Token> {
+    fn last_token(&self) -> Token {
         self.token_at(self.tokens.len() - 1)
     }
 
     /// Peeks the token from the lexer at some offset and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
-    fn peek_offset(&self, kind: TokenKind, offset: isize) -> Result<bool> {
-        let token = match self.token_at(self.index.saturating_add_signed(offset)) {
-            Ok(token) => token,
-            Err(_) => return Ok(false),
-        };
+    fn peek_offset(&self, kind: TokenKind, offset: isize) -> bool {
+        let token = self.token_at(self.index.saturating_add_signed(offset));
 
-        if token.kind == kind {
-            return Ok(true);
-        }
-
-        Ok(false)
+        token.kind == kind
     }
 
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
-    fn peek_next(&self, kind: TokenKind) -> Result<bool> {
+    fn peek_next(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 1)
     }
 
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
-    fn peek(&self, kind: TokenKind) -> Result<bool> {
+    fn peek(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 0)
     }
 
     /// Advances the cursor position by a single token.
-    fn skip(&mut self) -> Result<()> {
-        self.position += self.token()?.len();
+    fn skip(&mut self) {
+        self.position += self.token().len();
         self.index += 1;
-
-        Ok(())
     }
 
     /// Consumes the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// If the token does not match the expected kind, an error is returned.
     fn expect(&mut self, kind: TokenKind) -> Result<Token> {
-        let current = self.token()?;
+        let current = self.token();
 
-        match current.kind == kind {
-            true => Ok(current),
-            false => Err(err!(self, UnexpectedToken, expected, kind, actual, current.kind)),
+        if current.kind == kind {
+            Ok(current)
+        } else {
+            Err(err!(self, UnexpectedToken, expected, kind, actual, current.kind))
         }
     }
 
@@ -281,7 +296,7 @@ impl Parser {
     fn consume(&mut self, kind: TokenKind) -> Result<Token> {
         match self.expect(kind) {
             Ok(token) => {
-                self.skip()?;
+                self.skip();
 
                 Ok(token)
             }
@@ -290,32 +305,31 @@ impl Parser {
     }
 
     /// Consumes the next token from the lexer and returns it, not matter what token it is.
-    fn consume_any(&mut self) -> Result<Token> {
-        let token = self.token()?;
+    fn consume_any(&mut self) -> Token {
+        let token = self.token();
 
-        self.skip()?;
+        self.skip();
 
-        Ok(token)
+        token
     }
 
     /// Consumes the next token from the lexer and returns it if it matches the expected kind. Additionally,
     /// it advances the cursor position by a single token.
     ///
     /// If the token does not match the expected kind, `None` is returned.
-    fn consume_if(&mut self, kind: TokenKind) -> Result<Option<Token>> {
+    fn consume_if(&mut self, kind: TokenKind) -> Option<Token> {
         if self.eof() {
-            return Ok(None);
+            return None;
         }
 
-        let current = self.token()?;
+        let current = self.token();
 
-        match current.kind == kind {
-            true => {
-                self.skip()?;
+        if current.kind == kind {
+            self.skip();
 
-                Ok(Some(current))
-            }
-            false => Ok(None),
+            Some(current)
+        } else {
+            None
         }
     }
 
@@ -324,11 +338,11 @@ impl Parser {
     /// result of the closure.
     fn consume_with_loc<T>(&mut self, mut f: impl FnMut(&mut Parser) -> Result<T>) -> Result<(T, Location)> {
         // Get the start-index of the current token, whatever it is.
-        let start = self.token()?.start();
+        let start = self.token().start();
 
         let result = f(self)?;
 
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.token_at(self.index - 1).end();
 
         Ok((result, (start..end).into()))
     }
@@ -345,7 +359,7 @@ impl Parser {
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
-        while self.consume_if(close)?.is_none() {
+        while self.consume_if(close).is_none() {
             v.push(f(self)?);
         }
 
@@ -362,7 +376,7 @@ impl Parser {
         loop {
             v.push(f(self)?);
 
-            if self.consume_if(delim)?.is_none() {
+            if self.consume_if(delim).is_none() {
                 break;
             }
         }
@@ -383,8 +397,8 @@ impl Parser {
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
-        while self.consume_if(close)?.is_none() {
-            if !v.is_empty() && !self.peek(close)? {
+        while self.consume_if(close).is_none() {
+            if !v.is_empty() && !self.peek(close) {
                 self.consume(delim)?;
             }
 
@@ -445,10 +459,7 @@ impl Parser {
 
     /// Checks whether the current token is of the given type. If so, the token is consumed.
     fn check(&mut self, kind: TokenKind) -> bool {
-        match self.consume_if(kind) {
-            Ok(t) => t.is_some(),
-            Err(_) => false,
-        }
+        self.consume_if(kind).is_some()
     }
 
     /// Checks whether the current token is an `External` token.
@@ -457,12 +468,10 @@ impl Parser {
     }
 
     /// Reads the current documentation comment into the parser's state, if any is present.
-    fn read_doc_comment(&mut self) -> Result<()> {
-        if let Some(doc_comment) = self.consume_if(TokenKind::DocComment)? {
+    fn read_doc_comment(&mut self) {
+        if let Some(doc_comment) = self.consume_if(TokenKind::DocComment) {
             self.doc_token = Some(doc_comment.value.unwrap_or_default());
         }
-
-        Ok(())
     }
 
     /// Asserts that the current token is an `fn` token.
@@ -484,12 +493,12 @@ impl Parser {
     fn parse_identifier(&mut self) -> Result<Identifier> {
         let identifier = match self.consume_any() {
             // Actual identifiers are obviously allowed, so they pass through.
-            Ok(ident) if ident.kind == TokenKind::Identifier => ident,
+            ident if ident.kind == TokenKind::Identifier => ident,
 
             // Keywords are also allowed, so reserved keywords can be used as identifiers.
-            Ok(ident) if ident.kind.is_keyword() => ident,
+            ident if ident.kind.is_keyword() => ident,
 
-            Ok(ident) => {
+            ident => {
                 return Err(ExpectedIdentifier {
                     source: self.source.clone(),
                     range: ident.index.clone(),
@@ -497,7 +506,6 @@ impl Parser {
                 }
                 .into());
             }
-            Err(err) => return Err(err),
         };
 
         let location = identifier.index.clone();
@@ -526,7 +534,7 @@ impl Parser {
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
     fn parse_namespace_path(&mut self) -> Result<NamespacePath> {
-        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, |p| p.parse_identifier())?;
+        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
 
         let start = segments.first().unwrap().location.0.start;
         let end = segments.last().unwrap().location.0.end;
@@ -541,7 +549,7 @@ impl Parser {
 
     /// Parses the next token as a symbol path.
     fn parse_path(&mut self) -> Result<Path> {
-        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, |p| p.parse_identifier())?;
+        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
         let (name, root) = segments.split_last().unwrap();
 
         let root = if root.is_empty() {
@@ -570,13 +578,13 @@ impl Parser {
 
             p.consume(TokenKind::LeftCurly)?;
 
-            while p.consume_if(TokenKind::RightCurly)?.is_none() {
+            while p.consume_if(TokenKind::RightCurly).is_none() {
                 match p.parse_statement() {
                     Ok(stmt) => stmts.push(stmt),
                     Err(err) => {
                         p.dcx.emit(err);
 
-                        p.recover_statement()?;
+                        p.recover_statement();
                     }
                 }
             }
@@ -591,24 +599,24 @@ impl Parser {
     ///
     /// Also functions as an extra layer to report errors, if a function body is declared.
     fn parse_external_block(&mut self) -> Result<Block> {
-        if self.peek(TokenKind::LeftCurly)? {
+        if self.peek(TokenKind::LeftCurly) {
             return Err(err!(self, ExternalFunctionBody));
         }
 
         if self.eof() {
-            let last_token_end = self.last_token()?.end();
+            let last_token_end = self.last_token().end();
 
             return Ok(Block::from_location(last_token_end..last_token_end));
         }
 
-        Ok(Block::from_location(self.token()?.index))
+        Ok(Block::from_location(self.token().index))
     }
 
     /// Returns a block, if the next token is a left curly bracket (`{`), as a `Some(block)`.
     ///
     /// Otherwise, returns `None`.
     fn parse_opt_block(&mut self) -> Result<Option<Block>> {
-        if self.peek(TokenKind::LeftCurly)? {
+        if self.peek(TokenKind::LeftCurly) {
             return Ok(Some(self.parse_block()?));
         }
 

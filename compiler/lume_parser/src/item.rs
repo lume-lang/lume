@@ -6,7 +6,7 @@ use crate::{Parser, err, errors::*};
 
 impl Parser {
     pub(super) fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
-        match self.token()?.kind {
+        match self.token().kind {
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
             TokenKind::Impl => self.parse_impl(),
@@ -24,7 +24,7 @@ impl Parser {
     fn parse_pub_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
-        match self.token()?.kind {
+        match self.token().kind {
             TokenKind::Fn => self.parse_fn_visibility(visibility),
             k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
         }
@@ -38,12 +38,12 @@ impl Parser {
             return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
         }
 
-        let names = match self.token()?.kind {
-            TokenKind::LeftParen => self.consume_paren_seq(|p| p.parse_identifier())?,
+        let names = match self.token().kind {
+            TokenKind::LeftParen => self.consume_paren_seq(Parser::parse_identifier)?,
             kind => return Err(err!(self, InvalidImportPath, found, kind)),
         };
 
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.token_at(self.index - 1).end();
 
         let import_def = Import {
             path,
@@ -77,9 +77,9 @@ impl Parser {
 
         let type_parameters = self.parse_type_parameters()?;
         let name = self.parse_type()?;
-        let methods = self.consume_curly_seq(|p| p.parse_method())?;
+        let methods = self.consume_curly_seq(Parser::parse_method)?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         Ok(TopLevelExpression::Impl(Box::new(Implementation {
             visibility,
@@ -108,7 +108,7 @@ impl Parser {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_opt_external_block(external)?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         let function_def = FunctionDefinition {
             visibility,
@@ -127,15 +127,15 @@ impl Parser {
 
     fn parse_fn_params(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
-        if !self.peek(TokenKind::LeftParen)? {
+        if !self.peek(TokenKind::LeftParen) {
             return Ok(Vec::new());
         }
 
-        self.consume_paren_seq(|p| p.parse_fn_param())
+        self.consume_paren_seq(Parser::parse_fn_param)
     }
 
     fn parse_fn_param(&mut self) -> Result<Parameter> {
-        if let Some(token) = self.consume_if(TokenKind::SelfRef)? {
+        if let Some(token) = self.consume_if(TokenKind::SelfRef) {
             let location = token.index;
 
             return Ok(Parameter {
@@ -168,7 +168,7 @@ impl Parser {
 
     /// Parses the return type of the current function definition.
     fn parse_fn_return_type(&mut self) -> Result<Option<Box<Type>>> {
-        if self.consume_if(TokenKind::Arrow)?.is_none() {
+        if self.consume_if(TokenKind::Arrow).is_none() {
             return Ok(None);
         }
 
@@ -178,13 +178,13 @@ impl Parser {
     fn parse_struct(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Struct)?.start();
 
-        let builtin = self.consume_if(TokenKind::Builtin)?.is_some();
+        let builtin = self.consume_if(TokenKind::Builtin).is_some();
 
         let name = self.parse_ident_or_err(err!(self, ExpectedStructName))?;
         let type_parameters = self.parse_type_parameters()?;
-        let properties = self.consume_curly_seq(|p| p.parse_struct_property())?;
+        let properties = self.consume_curly_seq(Parser::parse_struct_property)?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         let struct_def = StructDefinition {
             name,
@@ -201,40 +201,35 @@ impl Parser {
     }
 
     fn parse_visibility(&mut self) -> Result<Visibility> {
-        match self.token()?.kind {
-            // If the member is marked as public, make it so.
-            TokenKind::Pub => {
-                let location = self.consume(TokenKind::Pub)?.index;
+        // If the member is marked as public, make it so.
+        if let TokenKind::Pub = self.token().kind {
+            let location = self.consume(TokenKind::Pub)?.index;
 
-                Ok(Visibility::Public(Box::new(Public {
-                    location: location.into(),
-                })))
-            }
+            Ok(Visibility::Public(Box::new(Public {
+                location: location.into(),
+            })))
+        // By default, make it private.
+        } else {
+            let location = self.token().index;
 
-            // By default, make it private.
-            _ => {
-                let location = self.token()?.index;
-
-                Ok(Visibility::Private(Box::new(Private {
-                    location: location.into(),
-                })))
-            }
+            Ok(Visibility::Private(Box::new(Private {
+                location: location.into(),
+            })))
         }
     }
 
     fn parse_struct_property(&mut self) -> Result<Property> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
 
-        let name = match self.parse_identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedStructProperty)),
+        let Ok(name) = self.parse_identifier() else {
+            return Err(err!(self, ExpectedStructProperty));
         };
 
         // Report a special error if we found an identifier, such as
         // a method declaration, which isn't allowed within a `struct` block.
-        if self.consume_if(TokenKind::Colon)?.is_none() && self.peek(TokenKind::Identifier)? {
+        if self.consume_if(TokenKind::Colon).is_none() && self.peek(TokenKind::Identifier) {
             return Err(err!(self, MethodInStruct));
         }
 
@@ -255,14 +250,14 @@ impl Parser {
     }
 
     fn parse_method(&mut self) -> Result<MethodDefinition> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
         let start = visibility.location().start();
 
         // Report a special error if we found an identifier, such as
         // a property declaration, which isn't allowed within an `impl` block.
-        if self.consume_if(TokenKind::Fn)?.is_none() && self.peek(TokenKind::Identifier)? {
+        if self.consume_if(TokenKind::Fn).is_none() && self.peek(TokenKind::Identifier) {
             return Err(err!(self, PropertyInImpl));
         }
 
@@ -274,7 +269,7 @@ impl Parser {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_opt_external_block(external)?;
 
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.token_at(self.index - 1).end();
 
         Ok(MethodDefinition {
             visibility,
@@ -290,7 +285,7 @@ impl Parser {
     }
 
     fn parse_method_name(&mut self) -> Result<Identifier> {
-        match self.consume_any()? {
+        match self.consume_any() {
             // Allow actual identifiers.
             t if t.kind == TokenKind::Identifier => Ok(t.into()),
 
@@ -306,9 +301,9 @@ impl Parser {
 
         let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
         let type_parameters = self.parse_type_parameters()?;
-        let methods = self.consume_curly_seq(|p| p.parse_trait_method())?;
+        let methods = self.consume_curly_seq(Parser::parse_trait_method)?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         let trait_def = TraitDefinition {
             name,
@@ -324,14 +319,13 @@ impl Parser {
     }
 
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
         let start = self.expect_fn()?.start();
 
-        let name = match self.parse_identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        let Ok(name) = self.parse_identifier() else {
+            return Err(err!(self, ExpectedFunctionName));
         };
 
         let type_parameters = self.parse_type_parameters()?;
@@ -339,7 +333,7 @@ impl Parser {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_opt_block()?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         Ok(TraitMethodDefinition {
             visibility,
@@ -365,9 +359,9 @@ impl Parser {
         let start = self.consume(TokenKind::Enum)?.start();
 
         let name = self.parse_identifier()?;
-        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, |p| p.parse_enum_case())?;
+        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_enum_case)?;
 
-        let end = self.previous_token()?.end();
+        let end = self.previous_token().end();
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Enum(
             Box::new(EnumDefinition {
@@ -381,11 +375,11 @@ impl Parser {
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
-        self.read_doc_comment()?;
+        self.read_doc_comment();
 
         let name = self.parse_identifier()?;
 
-        let parameters = if self.peek(TokenKind::LeftParen)? {
+        let parameters = if self.peek(TokenKind::LeftParen) {
             self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, |p| {
                 Ok(Box::new(p.parse_type()?))
             })?
@@ -394,7 +388,7 @@ impl Parser {
         };
 
         let start = name.location.start();
-        let end = self.token_at(self.index - 1)?.end();
+        let end = self.token_at(self.index - 1).end();
 
         Ok(EnumDefinitionCase {
             name,
@@ -438,8 +432,8 @@ impl Parser {
         self.consume(TokenKind::In)?;
         let target = self.parse_type()?;
 
-        let methods = self.consume_curly_seq(|p| p.parse_use_impl())?;
-        let end = self.previous_token()?.end();
+        let methods = self.consume_curly_seq(Parser::parse_use_impl)?;
+        let end = self.previous_token().end();
 
         let use_trait = UseTrait {
             name: Box::new(name),
@@ -457,9 +451,8 @@ impl Parser {
 
         let start = visibility.location().start();
 
-        let name = match self.parse_identifier() {
-            Ok(name) => name,
-            Err(_) => return Err(err!(self, ExpectedFunctionName)),
+        let Ok(name) = self.parse_identifier() else {
+            return Err(err!(self, ExpectedFunctionName));
         };
 
         let type_parameters = self.parse_type_parameters()?;

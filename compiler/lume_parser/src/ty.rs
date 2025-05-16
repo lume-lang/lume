@@ -7,7 +7,7 @@ use crate::{Parser, err, errors::*};
 impl Parser {
     /// Parses some abstract type at the current cursor position.
     pub(super) fn parse_type(&mut self) -> Result<Type> {
-        let token = self.token()?;
+        let token = self.token();
 
         match token.kind {
             TokenKind::Identifier => self.parse_scalar_or_generic_type(),
@@ -20,7 +20,7 @@ impl Parser {
     fn parse_scalar_or_generic_type(&mut self) -> Result<Type> {
         let name = self.parse_path()?;
 
-        if self.peek(TokenKind::Less)? {
+        if self.peek(TokenKind::Less) {
             self.parse_generic_type_arguments(name)
         } else {
             Ok(Type::Scalar(Box::new(ScalarType { name })))
@@ -58,10 +58,10 @@ impl Parser {
 
     /// Parses some abstract type at the current cursor position.
     pub(super) fn parse_opt_type(&mut self) -> Result<Option<Type>> {
-        if self.consume_if(TokenKind::Colon)?.is_none() {
-            Ok(None)
-        } else {
+        if self.check(TokenKind::Colon) {
             Ok(Some(self.parse_type()?))
+        } else {
+            Ok(None)
         }
     }
 }

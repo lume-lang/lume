@@ -422,80 +422,80 @@ fn test_struct_snapshots() {
     assert_err_snap_eq!("struct Foo { pub fn bar() -> void { } }", "method_in_struct");
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             fn bar() -> Int32 {
                 return 0;
             }
-        }"#,
+        }",
         "method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             fn bar() { }
-        }"#,
+        }",
         "method_no_ret"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             pub fn bar() -> Int32 {
                 return 0;
             }
-        }"#,
+        }",
         "pub_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             fn external bar() -> Int32
-        }"#,
+        }",
         "ext_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             pub fn ==() -> bool {
                 return true;
             }
-        }"#,
+        }",
         "operator_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         impl Foo {
             fn bar<T>() -> Int32 { }
-        }"#,
+        }",
         "generic_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         struct Foo {
             x: Int32 = 0;
-        }"#,
+        }",
         "property"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         struct Foo {
             x: Int32;
-        }"#,
+        }",
         "property_no_default"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         struct Foo {
             pub x: Int32 = 1;
-        }"#,
+        }",
         "pub_property"
     );
 }
@@ -536,35 +536,35 @@ fn test_enum_snapshots() {
     assert_err_snap_eq!("enum Foo { Bar, Baz, }", "extra_comma");
 
     assert_snap_eq!(
-        r#"
+        "
         enum Foo {
             Bar()
-        }"#,
+        }",
         "variant_param_empty"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         enum Foo {
             Bar(int)
-        }"#,
+        }",
         "variant_param_single"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         enum Foo {
             Bar(int, int)
-        }"#,
+        }",
         "variant_param_multiple"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         enum Foo {
             Bar(int, int),
             Baz(int, int)
-        }"#,
+        }",
         "multiple_variants_multiple_params"
     );
 }
@@ -597,35 +597,35 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!("use Add in Int32 {}", "empty");
 
     assert_snap_eq!(
-        r#"
+        "
         use Add in Int32 {
             fn add(other: Int32) -> Int32 {
                 return self + other;
             }
-        }"#,
+        }",
         "priv_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Add in Int32 {
             pub fn add(other: Int32) -> Int32 {
                 return self + other;
             }
-        }"#,
+        }",
         "pub_method"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Add in Int32 {
             fn add(other: Int32) {}
-        }"#,
+        }",
         "method_no_ret"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Cast in Int32 {
             pub fn to_string() -> String {
                 return self;
@@ -634,35 +634,35 @@ fn test_use_trait_snapshots() {
             pub fn to_int() -> Int32 {
                 return self;
             }
-        }"#,
+        }",
         "methods"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Add<Int32> in Int32 {
             pub fn add(other: Int32) -> Int32 {
                 return self + other;
             }
-        }"#,
+        }",
         "generic"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Add<Int32, Int64> in Int32 {
             pub fn add(other: Int32) -> Int64 {
                 return self + other;
             }
-        }"#,
+        }",
         "generics"
     );
 
     assert_snap_eq!(
-        r#"
+        "
         use Enumerable<T> in Vector<T> {
             pub fn next() -> T { }
-        }"#,
+        }",
         "generic_type"
     );
 }
@@ -670,74 +670,74 @@ fn test_use_trait_snapshots() {
 #[test]
 fn test_doc_comments_snapshots() {
     assert_snap_eq!(
-        r#"/// This is a doc comment
-        fn foo() -> void { }"#,
+        "/// This is a doc comment
+        fn foo() -> void { }",
         "function"
     );
 
     assert_snap_eq!(
-        r#"/// This is a doc comment
+        "/// This is a doc comment
         ///
         /// Another line in the doc comment
-        fn foo() -> void { }"#,
+        fn foo() -> void { }",
         "multiline"
     );
 
     assert_snap_eq!(
-        r#"/// This is a doc comment
-        struct Foo { }"#,
+        "/// This is a doc comment
+        struct Foo { }",
         "struct"
     );
 
     assert_snap_eq!(
-        r#"struct Foo {
+        "struct Foo {
             /// This is a doc comment
             pub bar: Int32 = 0;
-        }"#,
+        }",
         "property"
     );
 
     assert_snap_eq!(
-        r#"impl Foo {
+        "impl Foo {
             /// This is a doc comment
             pub fn bar() -> void { }
-        }"#,
+        }",
         "method"
     );
 
     assert_snap_eq!(
-        r#"/// This is a doc comment
-        trait Foo { }"#,
+        "/// This is a doc comment
+        trait Foo { }",
         "trait"
     );
 
     assert_snap_eq!(
-        r#"trait Foo {
+        "trait Foo {
             /// This is a doc comment
             pub fn bar() -> void { }
-        }"#,
+        }",
         "trait_method"
     );
 
     assert_snap_eq!(
-        r#"/// This is a doc comment
+        "/// This is a doc comment
         enum Foo {
             Bar
-        }"#,
+        }",
         "enum"
     );
 
     assert_snap_eq!(
-        r#"enum Foo {
+        "enum Foo {
             /// This is a doc comment
             Bar
-        }"#,
+        }",
         "enum_case"
     );
 
     assert_snap_eq!(
-        r#"/// This is a doc comment
-        type Foo = Bar"#,
+        "/// This is a doc comment
+        type Foo = Bar",
         "type_alias"
     );
 }

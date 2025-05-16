@@ -6,6 +6,10 @@ use crate::{Parser, err, errors::*};
 
 impl Parser {
     /// Parses zero-or-more abstract statements at the current cursor position.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the parser hits an unexpected token.
     #[allow(dead_code)]
     pub fn parse_statements(&mut self) -> Result<Vec<Statement>> {
         let mut statements = Vec::new();
@@ -19,7 +23,7 @@ impl Parser {
 
     /// Parses some abstract statement at the current cursor position.
     pub(super) fn parse_statement(&mut self) -> Result<Statement> {
-        match self.token()?.kind {
+        match self.token().kind {
             TokenKind::Let => self.parse_variable_declaration(),
             TokenKind::Break => self.parse_break(),
             TokenKind::Continue => self.parse_continue(),
@@ -42,46 +46,44 @@ impl Parser {
     ///        ^ error occurs here...
     ///            ^ ...so we move the cursor to here
     /// ```
-    pub(super) fn recover_statement(&mut self) -> Result<()> {
+    pub(super) fn recover_statement(&mut self) {
         let mut brace_depth = 0;
         let mut bracket_depth = 0;
 
         loop {
-            match self.token()?.kind {
+            match self.token().kind {
                 TokenKind::LeftCurly => {
-                    self.skip()?;
+                    self.skip();
                     brace_depth += 1;
                 }
                 TokenKind::LeftBracket => {
-                    self.skip()?;
+                    self.skip();
                     bracket_depth += 1;
                 }
                 TokenKind::RightCurly => {
-                    self.skip()?;
+                    self.skip();
                     brace_depth -= 1;
                 }
                 TokenKind::RightBracket => {
-                    self.skip()?;
+                    self.skip();
                     bracket_depth -= 1;
                 }
                 TokenKind::Semicolon => {
-                    self.skip()?;
+                    self.skip();
 
                     if brace_depth == 0 && bracket_depth == 0 {
                         break;
                     }
                 }
-                _ => self.skip()?,
+                _ => self.skip(),
             }
         }
-
-        Ok(())
     }
 
     /// Parses a variable declaration statement at the current cursor position.
     fn parse_variable_declaration(&mut self) -> Result<Statement> {
         // Whatever the token is, consume it.
-        let start = self.consume_any()?.start();
+        let start = self.consume_any().start();
 
         let name = self.parse_identifier()?;
         let variable_type = self.parse_opt_type()?;
@@ -103,10 +105,10 @@ impl Parser {
 
     /// Parses a conditional statement at the current cursor position.
     fn parse_conditional(&mut self) -> Result<Statement> {
-        match self.token()?.kind {
+        match self.token().kind {
             TokenKind::If => self.parse_if_conditional(),
             TokenKind::Unless => self.parse_unless_conditional(),
-            k => panic!("invalid conditional token given: {}", k),
+            k => panic!("invalid conditional token given: {k}"),
         }
     }
 
@@ -143,7 +145,7 @@ impl Parser {
         self.parse_conditional_case(&mut cases)?;
 
         // Moan if any `else if` blocks are found
-        if self.peek(TokenKind::Else)? && self.peek_next(TokenKind::If)? {
+        if self.peek(TokenKind::Else) && self.peek_next(TokenKind::If) {
             return Err(err!(self, UnlessElseIfClause));
         }
 
@@ -182,7 +184,7 @@ impl Parser {
     /// Parses zero-or-more `else-if` cases within a conditional statement at the current cursor position.
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
-            if !self.peek(TokenKind::Else)? || !self.peek_next(TokenKind::If)? {
+            if !self.peek(TokenKind::Else) || !self.peek_next(TokenKind::If) {
                 break;
             }
 
@@ -195,9 +197,13 @@ impl Parser {
         Ok(())
     }
 
-    /// Parses zero-or-one `else` cases within a conditional statement at the current cursor position.
+    /// Parses zero-or-one `else` cases within a conditional statement at the current cursor position..
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the parser hits an unexpected token.
     pub fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
-        let start = match self.consume_if(TokenKind::Else)? {
+        let start = match self.consume_if(TokenKind::Else) {
             Some(t) => t.index.start,
             None => return Ok(()),
         };

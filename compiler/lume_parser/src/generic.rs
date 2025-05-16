@@ -7,7 +7,7 @@ use crate::Parser;
 impl Parser {
     /// Parses zero-or-more type parameters.
     pub(super) fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
-        if !self.peek(TokenKind::Less)? {
+        if !self.peek(TokenKind::Less) {
             return Ok(Vec::new());
         }
 
@@ -15,10 +15,10 @@ impl Parser {
             let name = p.parse_identifier()?;
             let mut constraints = Vec::new();
 
-            if p.consume_if(TokenKind::Colon)?.is_some() {
+            if p.check(TokenKind::Colon) {
                 constraints.push(Box::new(p.parse_type()?));
 
-                while p.consume_if(TokenKind::Add)?.is_some() {
+                while p.check(TokenKind::Add) {
                     constraints.push(Box::new(p.parse_type()?));
                 }
             }
@@ -29,7 +29,7 @@ impl Parser {
 
     /// Parses zero-or-more type arguments.
     pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<TypeArgument>> {
-        if !self.peek(TokenKind::Less)? {
+        if !self.peek(TokenKind::Less) {
             return Ok(Vec::new());
         }
 

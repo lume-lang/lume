@@ -12,7 +12,7 @@ impl Parser {
 
     /// Parses an expression on the current cursor position, if one is defined.
     pub(super) fn parse_opt_expression(&mut self) -> Result<Option<Expression>> {
-        if self.peek(TokenKind::Semicolon)? {
+        if self.peek(TokenKind::Semicolon) {
             Ok(None)
         } else {
             Ok(Some(self.parse_expression()?))
@@ -24,11 +24,11 @@ impl Parser {
         let mut left = self.parse_prefix_expression()?;
 
         // If a semicolon is present, consider the expression finished.
-        if self.peek(TokenKind::Semicolon)? {
+        if self.peek(TokenKind::Semicolon) {
             return Ok(left);
         }
 
-        while precedence < self.token()?.precedence() {
+        while precedence < self.token().precedence() {
             left = self.parse_following_expression(left)?;
         }
 
@@ -40,7 +40,7 @@ impl Parser {
     /// Prefix expressions are expressions which appear at the start of an expression,
     /// such as literals of prefix operators. In Pratt Parsing, this is also called "Nud" or "Null Denotation".
     fn parse_prefix_expression(&mut self) -> Result<Expression> {
-        let kind = self.token()?.kind;
+        let kind = self.token().kind;
 
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
@@ -66,17 +66,17 @@ impl Parser {
         //
         // would be parsed as an operator expression, such as `c = Call(New('Foo'), '.', [Call('bar')])`, where
         // it really should be something like `c = Member(New('Foo'), 'bar')`.
-        if self.peek(TokenKind::Dot)? {
+        if self.peek(TokenKind::Dot) {
             return self.parse_member(left);
         }
 
-        let operator = match self.consume_any()? {
+        let operator = match self.consume_any() {
             t if t.kind.is_operator() => t,
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
 
         if operator.is_postfix() {
-            self.parse_postfix_expression(left, operator)
+            Ok(self.parse_postfix_expression(left, operator))
         } else {
             self.parse_infix_expression(left, operator)
         }
@@ -116,13 +116,14 @@ impl Parser {
     ///
     /// Postfix expressions are expressions which appear at the end of an expression,
     /// such as increment or decrement operators.
-    fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Result<Expression> {
+    #[expect(clippy::unused_self)]
+    fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Expression {
         let operator_loc = operator.index.clone();
 
         let start = left.location().start();
         let end = operator.end();
 
-        Ok(Expression::Call(Box::new(Call {
+        Expression::Call(Box::new(Call {
             callee: Some(left),
             name: Path {
                 name: Identifier {
@@ -135,7 +136,7 @@ impl Parser {
             arguments: vec![],
             type_arguments: vec![],
             location: (start..end).into(),
-        })))
+        }))
     }
 
     /// Parses an expression on the current cursor position, which is nested within parentheses.
@@ -145,7 +146,7 @@ impl Parser {
         let expression = self.parse_expression_with_precedence(0)?;
 
         // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot)? {
+        if self.peek(TokenKind::Dot) && self.peek_next(TokenKind::Dot) {
             return self.parse_range_expression(expression);
         }
 
@@ -156,7 +157,7 @@ impl Parser {
 
     /// Parses an array expression on the current cursor position.
     fn parse_array_expression(&mut self) -> Result<Expression> {
-        let token = self.token()?;
+        let token = self.token();
         let location: Location = token.index.into();
 
         let values = self.consume_comma_seq(TokenKind::LeftBracket, TokenKind::RightBracket, |p| {
@@ -171,7 +172,7 @@ impl Parser {
         self.consume(TokenKind::Dot)?;
         self.consume(TokenKind::Dot)?;
 
-        let inclusive = self.consume_if(TokenKind::Assign)?.is_some();
+        let inclusive = self.check(TokenKind::Assign);
         let upper = self.parse_expression()?;
 
         let start = lower.location().start();
@@ -196,7 +197,7 @@ impl Parser {
             location: location.into(),
         };
 
-        if self.peek(IDENTIFIER_SEPARATOR)? {
+        if self.peek(IDENTIFIER_SEPARATOR) {
             return self.parse_path_expression(identifier);
         }
 
@@ -210,7 +211,7 @@ impl Parser {
             name: identifier.clone(),
         }));
 
-        match self.token()?.kind {
+        match self.token().kind {
             // If the next token is an opening parenthesis, it's a method invocation
             TokenKind::LeftParen => self.parse_call(None, identifier),
 
@@ -224,7 +225,7 @@ impl Parser {
             IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
 
             // If the name stands alone, it's likely a variable reference
-            _ => self.parse_variable(identifier),
+            _ => Ok(self.parse_variable(identifier)),
         }
     }
 
@@ -236,7 +237,7 @@ impl Parser {
         let arguments = self.parse_call_arguments()?;
 
         let start = name.location.start();
-        let end = self.token()?.end();
+        let end = self.token().end();
 
         let call = Call {
             callee,
@@ -251,13 +252,13 @@ impl Parser {
 
     /// Parses zero-or-more call arguments at the current cursor position.
     fn parse_call_arguments(&mut self) -> Result<Vec<Expression>> {
-        self.consume_paren_seq(|p| p.parse_expression())
+        self.consume_paren_seq(Parser::parse_expression)
     }
 
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot)? && self.peek_next(TokenKind::Dot)? {
+        if self.peek(TokenKind::Dot) && self.peek_next(TokenKind::Dot) {
             return self.parse_range_expression(target);
         }
 
@@ -267,7 +268,7 @@ impl Parser {
         let name = self.consume(TokenKind::Identifier)?;
 
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenKind::LeftParen)? || self.consume_if(IDENTIFIER_SEPARATOR)?.is_some() {
+        if self.peek(TokenKind::LeftParen) || self.check(IDENTIFIER_SEPARATOR) {
             let identifier = Identifier {
                 name: name.value.unwrap(),
                 location: name.index.into(),
@@ -286,7 +287,7 @@ impl Parser {
         }));
 
         // If there is yet another dot, it's part of a longer expression.
-        if self.peek(TokenKind::Dot)? {
+        if self.peek(TokenKind::Dot) {
             return self.parse_member(expression);
         }
 
@@ -315,7 +316,7 @@ impl Parser {
     fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
         self.consume(IDENTIFIER_SEPARATOR)?;
 
-        if self.peek(TokenKind::Less)? {
+        if self.peek(TokenKind::Less) {
             return self.parse_call(None, name);
         }
 
@@ -341,15 +342,16 @@ impl Parser {
     }
 
     /// Parses a variable reference expression on the current cursor position.
-    fn parse_variable(&mut self, target: Identifier) -> Result<Expression> {
+    #[expect(clippy::unused_self)]
+    fn parse_variable(&mut self, target: Identifier) -> Expression {
         let variable = Variable { name: target };
 
-        Ok(Expression::Variable(Box::new(variable)))
+        Expression::Variable(Box::new(variable))
     }
 
     /// Parses a literal value expression on the current cursor position.
     fn parse_literal(&mut self) -> Result<Expression> {
-        let token = self.token()?;
+        let token = self.token();
         let location: Location = token.index.into();
 
         let literal = match token.kind {
@@ -361,7 +363,7 @@ impl Parser {
 
                 // Remove radix prefixes, as `from_str_radix` does not support them
                 // being included.
-                if value.len() >= 2 && value.starts_with("0") {
+                if value.len() >= 2 && value.starts_with('0') {
                     let c = value.as_bytes()[1] as char;
 
                     if matches!(c.to_ascii_lowercase(), 'b' | 'o' | 'd' | 'x') {
@@ -374,9 +376,8 @@ impl Parser {
                     }
                 }
 
-                let int_value = match i64::from_str_radix(&value, radix) {
-                    Ok(v) => v,
-                    Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
+                let Ok(int_value) = i64::from_str_radix(&value, radix) else {
+                    return Err(err!(self, InvalidLiteral, value, value, target, token.kind));
                 };
 
                 let kind = if let Some(ty) = token.ty {
@@ -403,9 +404,8 @@ impl Parser {
             }
             TokenKind::Float => {
                 let value = token.value.unwrap();
-                let float_value = match value.parse::<f64>() {
-                    Ok(v) => v,
-                    Err(_) => return Err(err!(self, InvalidLiteral, value, value, target, token.kind)),
+                let Ok(float_value) = value.parse::<f64>() else {
+                    return Err(err!(self, InvalidLiteral, value, value, target, token.kind));
                 };
 
                 let kind = if let Some(ty) = token.ty {
@@ -434,14 +434,14 @@ impl Parser {
             k => return Err(err!(self, Unimplemented, desc, format!("{:?} literals", k))),
         };
 
-        self.skip()?;
+        self.skip();
 
         Ok(Expression::Literal(Box::new(literal)))
     }
 
     /// Parses a unary expression on the current cursor position.
     fn parse_unary(&mut self) -> Result<Expression> {
-        let operator = match self.consume_any()? {
+        let operator = match self.consume_any() {
             t if t.kind.is_unary() => t,
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
         };
@@ -485,10 +485,10 @@ impl Parser {
 
     /// Parses some expression, if an equal sign is consumed. Otherwise, returns `None`.
     pub(super) fn parse_opt_assignment(&mut self) -> Result<Option<Expression>> {
-        if self.consume_if(TokenKind::Assign)?.is_none() {
-            Ok(None)
-        } else {
+        if self.check(TokenKind::Assign) {
             Ok(Some(self.parse_expression()?))
+        } else {
+            Ok(None)
         }
     }
 }
