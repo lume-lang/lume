@@ -9,7 +9,7 @@ use std::sync::{
 
 /// Derived from the Rust compiler.
 ///
-/// https://github.com/rust-lang/rust/blob/c79bbfab78dcb0a72aa3b2bc35c00334b58bfe2e/compiler/rustc_span/src/fatal_error.rs
+/// [Original source](https://github.com/rust-lang/rust/blob/c79bbfab78dcb0a72aa3b2bc35c00334b58bfe2e/compiler/rustc_span/src/fatal_error.rs)
 #[derive(Debug, Clone, Copy)]
 pub struct FatalError;
 
@@ -35,6 +35,7 @@ impl std::error::Error for FatalError {}
 
 /// Defines the different options for outputting diagnostics,
 /// once they've been drained from the the diagnostic context ([`DiagCtx`]).
+#[derive(Clone, Copy)]
 pub enum DiagOutputFormat {
     /// The output should be graphical, i.e. should be forwarded
     /// to the user, so errors and warnings are easy to understand and read.
@@ -88,12 +89,12 @@ impl DiagCtxInner {
     /// For more information, read the documentation on [`DiagCtxHandle::drain()`].
     fn drain(&mut self) {
         let encountered_errors = match self.handler.drain() {
-            Ok(_) => return,
-            Err(error_snippet::DrainError::Fmt(e)) => panic!("{:?}", e),
+            Ok(()) => return,
+            Err(error_snippet::DrainError::Fmt(e)) => panic!("{e:?}"),
             Err(error_snippet::DrainError::CompoundError(cnt)) => cnt,
         };
 
-        let message = format!("aborting due to {} previous errors", encountered_errors);
+        let message = format!("aborting due to {encountered_errors} previous errors");
         let abort_diag = Box::new(SimpleDiagnostic::new(message));
 
         let _ = self.handler.report_and_drain(abort_diag);
