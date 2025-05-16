@@ -11,3 +11,6 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 indexmap = { version = "^2.9", features = ["serde"] }
 serde = { version = "1.0.219", features = ["serde_derive"] }
+
+[lints]
+workspace = true

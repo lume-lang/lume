@@ -2,7 +2,7 @@ use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_span::Location;
 
-const UNKNOWN_TYPE_ID: TypeId = TypeId(u32::MAX);
+const UNKNOWN_TYPE_ID: TypeId = TypeId(usize::MAX);
 
 #[derive(Debug, Clone, Eq)]
 pub struct Identifier {
@@ -189,7 +189,7 @@ impl std::fmt::Display for SymbolName {
 impl std::fmt::Debug for SymbolName {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for m in &self.namespace.path {
-            write!(f, "{}::", m)?;
+            write!(f, "{m}::")?;
         }
 
         write!(f, "{}", self.name.name)
@@ -254,22 +254,19 @@ pub struct FunctionSig<'a> {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub u32);
+pub struct FunctionId(pub usize);
 
 impl FunctionId {
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Function {
-        &ctx.functions[self.0 as usize]
+        &ctx.functions[self.0]
     }
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Function {
-        &mut ctx.functions[self.0 as usize]
+        &mut ctx.functions[self.0]
     }
 
     pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<FunctionId> {
-        ctx.functions
-            .iter()
-            .position(|f| f.name == *name)
-            .map(|idx| FunctionId(idx as u32))
+        ctx.functions.iter().position(|f| f.name == *name).map(FunctionId)
     }
 
     pub fn is_private(self, ctx: &TypeDatabaseContext) -> bool {
@@ -289,7 +286,7 @@ impl FunctionId {
     }
 
     pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
-        self.get_mut(ctx).parameters.push(name, ty)
+        self.get_mut(ctx).parameters.push(name, ty);
     }
 
     pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
@@ -316,7 +313,7 @@ pub struct Function {
 
 impl Function {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, visibility: Visibility) -> FunctionId {
-        let id = FunctionId(ctx.functions.len() as u32);
+        let id = FunctionId(ctx.functions.len());
         let function = Function {
             id,
             name,
@@ -335,7 +332,7 @@ impl Function {
     }
 
     /// Gets the signature of the function.
-    pub fn sig<'a>(&'a self) -> FunctionSig<'a> {
+    pub fn sig(&self) -> FunctionSig {
         FunctionSig {
             params: &self.parameters,
             type_params: &self.type_parameters,
@@ -345,15 +342,15 @@ impl Function {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct PropertyId(pub u32);
+pub struct PropertyId(pub usize);
 
 impl PropertyId {
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Property {
-        &ctx.properties[self.0 as usize]
+        &ctx.properties[self.0]
     }
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Property {
-        &mut ctx.properties[self.0 as usize]
+        &mut ctx.properties[self.0]
     }
 
     pub fn is_private(self, ctx: &TypeDatabaseContext) -> bool {
@@ -384,7 +381,7 @@ pub struct Property {
 
 impl Property {
     pub fn alloc(ctx: &mut TypeDatabaseContext, owner: TypeId, name: String, visibility: Visibility) -> PropertyId {
-        let id = PropertyId(ctx.properties.len() as u32);
+        let id = PropertyId(ctx.properties.len());
         let property = Property {
             id,
             visibility,
@@ -399,22 +396,19 @@ impl Property {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MethodId(pub u32);
+pub struct MethodId(pub usize);
 
 impl MethodId {
     pub fn get(self, ctx: &TypeDatabaseContext) -> &Method {
-        &ctx.methods[self.0 as usize]
+        &ctx.methods[self.0]
     }
 
     pub fn get_mut(self, ctx: &mut TypeDatabaseContext) -> &mut Method {
-        &mut ctx.methods[self.0 as usize]
+        &mut ctx.methods[self.0]
     }
 
     pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<MethodId> {
-        ctx.methods
-            .iter()
-            .position(|f| f.name == *name)
-            .map(|idx| MethodId(idx as u32))
+        ctx.methods.iter().position(|f| f.name == *name).map(MethodId)
     }
 
     pub fn is_private(&self, ctx: &TypeDatabaseContext) -> bool {
@@ -434,7 +428,7 @@ impl MethodId {
     }
 
     pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
-        self.get_mut(ctx).parameters.push(name, ty)
+        self.get_mut(ctx).parameters.push(name, ty);
     }
 
     pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
@@ -462,7 +456,7 @@ pub struct Method {
 
 impl Method {
     pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: Identifier, visibility: Visibility) -> MethodId {
-        let id = MethodId(ctx.methods.len() as u32);
+        let id = MethodId(ctx.methods.len());
         let qualified_name = SymbolName::with_root(class.name(ctx), name);
 
         let method = Method {
@@ -480,7 +474,7 @@ impl Method {
     }
 
     /// Gets the signature of the method.
-    pub fn sig<'a>(&'a self) -> FunctionSig<'a> {
+    pub fn sig(&self) -> FunctionSig {
         FunctionSig {
             params: &self.parameters,
             type_params: &self.type_parameters,
@@ -542,15 +536,15 @@ impl Alias {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ImplId(pub u32);
+pub struct ImplId(pub usize);
 
 impl ImplId {
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Implementation {
-        &ctx.implementations[self.0 as usize]
+        &ctx.implementations[self.0]
     }
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Implementation {
-        &mut ctx.implementations[self.0 as usize]
+        &mut ctx.implementations[self.0]
     }
 
     pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
@@ -575,7 +569,7 @@ pub struct Implementation {
 
 impl Implementation {
     pub fn alloc(ctx: &mut TypeDatabaseContext, target: SymbolName) -> ImplId {
-        let id = ImplId(ctx.implementations.len() as u32);
+        let id = ImplId(ctx.implementations.len());
         let implementation = Implementation {
             id,
             target,
@@ -618,15 +612,15 @@ pub enum TypeTransport {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct TypeId(pub u32);
+pub struct TypeId(pub usize);
 
 impl TypeId {
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Type {
-        &ctx.types[self.0 as usize]
+        &ctx.types[self.0]
     }
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Type {
-        &mut ctx.types[self.0 as usize]
+        &mut ctx.types[self.0]
     }
 
     pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<TypeId> {
@@ -637,13 +631,16 @@ impl TypeId {
         ctx.types
             .iter()
             .position(|t| t.name == *name && !matches!(t.kind, TypeKind::TypeParameter(_)))
-            .map(|idx| TypeId(idx as u32))
+            .map(TypeId)
     }
 
+    /// # Panics
+    ///
+    /// Will panic if no type with the name `name` was found in the database.
     pub fn find_or_err(ctx: &TypeDatabaseContext, name: &SymbolName) -> TypeId {
         match Self::find(ctx, name) {
             Some(id) => id,
-            None => panic!("no type of name {:?} was found", name),
+            None => panic!("no type of name {name:?} was found"),
         }
     }
 
@@ -695,6 +692,9 @@ impl TypeId {
         matches!(self.kind(ctx), TypeKind::Void)
     }
 
+    /// # Panics
+    ///
+    /// Will panic if attempting to get type parameters from any non-generic types.
     pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
         match self.get(ctx) {
             Type {
@@ -711,6 +711,9 @@ impl TypeId {
         }
     }
 
+    /// # Panics
+    ///
+    /// Will panic if attempting to add type parameters to any non-generic types.
     pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
         let id = TypeParameter::alloc(ctx, name);
 
@@ -730,7 +733,7 @@ impl TypeId {
             _ => {
                 panic!("Cannot add type parameter to non-generic type");
             }
-        };
+        }
 
         id
     }
@@ -749,7 +752,7 @@ pub struct Type {
 
 impl Type {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, kind: TypeKind) -> TypeId {
-        let id = TypeId(ctx.types.len() as u32);
+        let id = TypeId(ctx.types.len());
         let method = Type {
             id,
             kind,
@@ -819,15 +822,15 @@ impl TypeRef {
     }
 
     pub fn property(&self, ctx: &TypeDatabaseContext, name: &String) -> Option<PropertyId> {
-        self.get(ctx).properties.get(name).cloned()
+        self.get(ctx).properties.get(name).copied()
     }
 
     pub fn properties(&self, ctx: &TypeDatabaseContext) -> Vec<PropertyId> {
-        self.get(ctx).properties.values().cloned().collect()
+        self.get(ctx).properties.values().copied().collect()
     }
 
     pub fn methods(&self, ctx: &TypeDatabaseContext) -> Vec<MethodId> {
-        self.get(ctx).methods.values().cloned().collect()
+        self.get(ctx).methods.values().copied().collect()
     }
 
     pub fn unknown() -> Self {
@@ -836,15 +839,15 @@ impl TypeRef {
 }
 
 #[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeParameterId(pub u32);
+pub struct TypeParameterId(pub usize);
 
 impl TypeParameterId {
     pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeParameter {
-        &ctx.type_parameters[self.0 as usize]
+        &ctx.type_parameters[self.0]
     }
 
     pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut TypeParameter {
-        &mut ctx.type_parameters[self.0 as usize]
+        &mut ctx.type_parameters[self.0]
     }
 
     pub fn add_constraint(&self, ctx: &mut TypeDatabaseContext, constraint: TypeRef) {
@@ -861,7 +864,7 @@ pub struct TypeParameter {
 
 impl TypeParameter {
     pub fn alloc(ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameterId(ctx.type_parameters.len() as u32);
+        let id = TypeParameterId(ctx.type_parameters.len());
         let param = TypeParameter {
             id,
             name,
@@ -888,6 +891,11 @@ impl TypeDatabaseContext {
         Self::default()
     }
 
+    /// Checks whether `from` is compatible with `to`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the types are invalid or refer to invalid types.
     pub fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<()> {
         Ok(())
     }
