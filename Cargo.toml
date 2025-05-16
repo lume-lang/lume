@@ -13,4 +13,6 @@ error_snippet_derive = { version = "=0.1.2" }
 owo-colors = { version = "=4.2.0", features = ["supports-colors"] }
 
 [workspace.lints.clippy]
-pedantic = "warn"
+pedantic = { level = "warn", priority = -1 }
+must_use_candidate = "allow"
+wildcard_imports = "allow"

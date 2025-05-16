@@ -69,8 +69,8 @@ impl ProjectParser {
     pub fn locate(root: &Path) -> Result<Project> {
         let path = root.join(DEFAULT_ARCFILE);
         if !path.is_file() {
-            return Err(ArcfileIoError {
-                inner: vec![std::io::Error::new(std::io::ErrorKind::NotFound, "Arcfile not found").into()],
+            return Err(ArcfileMissing {
+                dir: root.to_path_buf(),
             }
             .into());
         }
@@ -85,21 +85,18 @@ impl ProjectParser {
         self.parse_package(&mut project)?;
 
         project.id = PackageId::new(project.name.as_str());
-        project.path = self.path.clone();
+        self.path.clone_into(&mut project.path);
 
         Ok(project)
     }
 
     /// Gets the section from the given table.
     fn parse_package(&self, project: &mut Project) -> Result<()> {
-        let section = match self.section(&self.document, "package")? {
-            Some(sec) => sec,
-            None => {
-                return Err(ArcfileMissingSection {
-                    name: "package".to_string(),
-                }
-                .into());
+        let Some(section) = self.section(&self.document, "package")? else {
+            return Err(ArcfileMissingSection {
+                name: "package".to_string(),
             }
+            .into());
         };
 
         project.name = match self.string(section, "name")? {
@@ -135,9 +132,8 @@ impl ProjectParser {
 
     /// Gets the section from the given table.
     fn section<'a>(&'a self, table: &'a toml_edit::Table, name: &str) -> Result<Option<&'a toml_edit::Table>> {
-        let property = match table.get(name) {
-            Some(property) => property,
-            None => return Ok(None),
+        let Some(property) = table.get(name) else {
+            return Ok(None);
         };
 
         match &property {
@@ -152,9 +148,8 @@ impl ProjectParser {
         table: &'a toml_edit::Table,
         name: &str,
     ) -> Result<Option<&'a toml_edit::Formatted<String>>> {
-        let property = match table.get(name) {
-            Some(property) => property,
-            None => return Ok(None),
+        let Some(property) = table.get(name) else {
+            return Ok(None);
         };
 
         match &property {
@@ -165,9 +160,8 @@ impl ProjectParser {
 
     /// Gets the SemVer-version requirement from the given table property.
     fn version_req(&self, table: &toml_edit::Table, name: &str) -> Result<Option<Spanned<VersionReq>>> {
-        let version_str = match self.string(table, name)? {
-            Some(prop) => prop,
-            None => return Ok(None),
+        let Some(version_str) = self.string(table, name)? else {
+            return Ok(None);
         };
 
         match VersionReq::parse(version_str.value()) {
@@ -182,9 +176,8 @@ impl ProjectParser {
 
     /// Gets the SemVer-version from the given table property.
     fn version(&self, table: &toml_edit::Table, name: &str) -> Result<Option<Spanned<Version>>> {
-        let version_str = match self.string(table, name)? {
-            Some(prop) => prop,
-            None => return Ok(None),
+        let Some(version_str) = self.string(table, name)? else {
+            return Ok(None);
         };
 
         match Version::parse(version_str.value()) {
@@ -241,7 +234,7 @@ impl ProjectParser {
 
         match Version::parse(version_str) {
             Ok(version) => version,
-            Err(_) => panic!("Invalid Lume compiler version: {}", version_str),
+            Err(err) => panic!("Invalid Lume compiler version `{version_str}`: {err}"),
         }
     }
 }
@@ -296,86 +289,86 @@ mod tests {
     #[test]
     fn test_without_name() {
         assert_err_snap_eq!(
-            r#"[package]
-            lume_version = '^0'"#
+            "[package]
+            lume_version = '^0'"
         );
     }
 
     #[test]
     fn test_without_lume_version() {
         assert_err_snap_eq!(
-            r#"[package]
-            name = 'sample'"#
+            "[package]
+            name = 'sample'"
         );
     }
 
     #[test]
     fn test_with_unexpected_package_type() {
-        assert_err_snap_eq!(r#"package = 'sample'"#);
+        assert_err_snap_eq!("package = 'sample'");
     }
 
     #[test]
     fn test_with_unexpected_name_type() {
         assert_err_snap_eq!(
-            r#"[package]
-            name = 1"#
+            "[package]
+            name = 1"
         );
     }
 
     #[test]
     fn test_with_unexpected_lume_version_type() {
         assert_err_snap_eq!(
-            r#"[package]
+            "[package]
             name = 'sample'
-            lume_version = 1"#
+            lume_version = 1"
         );
     }
 
     #[test]
     fn test_invalid_version_string() {
         assert_err_snap_eq!(
-            r#"[package]
+            "[package]
             name = 'sample'
-            lume_version = '^1-1'"#
+            lume_version = '^1-1'"
         );
     }
 
     #[test]
     fn test_name() {
         assert_snap_eq!(
-            r#"[package]
+            "[package]
             name = 'some-package'
-            lume_version = '^0'"#
+            lume_version = '^0'"
         );
     }
 
     #[test]
     fn test_description() {
         assert_snap_eq!(
-            r#"[package]
+            "[package]
             name = 'sample'
             lume_version = '^0'
-            description = 'Some description'"#
+            description = 'Some description'"
         );
     }
 
     #[test]
     fn test_version() {
         assert_snap_eq!(
-            r#"[package]
+            "[package]
             name = 'some-package'
             version = '1.0.0'
-            lume_version = '^0'"#
+            lume_version = '^0'"
         );
     }
 
     #[test]
     fn test_incompatible_version() {
         let mut parser = parser(
-            r#"[package]
+            "[package]
             name = 'some-package'
             version = '1.0.0'
-            lume_version = '^2'"#,
+            lume_version = '^2'",
         );
 
         parser.current_lume_version = Version::new(1, 0, 0);
@@ -386,10 +379,10 @@ mod tests {
     #[test]
     fn test_prerelease_lume_version_success() {
         let mut parser = parser(
-            r#"[package]
+            "[package]
             name = 'some-package'
             version = '1.0.0'
-            lume_version = '1.0.0-rc3'"#,
+            lume_version = '1.0.0-rc3'",
         );
 
         parser.current_lume_version = Version::parse("1.0.0-rc3").unwrap();
@@ -400,10 +393,10 @@ mod tests {
     #[test]
     fn test_prerelease_lume_version_stable() {
         let mut parser = parser(
-            r#"[package]
+            "[package]
             name = 'some-package'
             version = '1.0.0'
-            lume_version = '1.0.0-rc3'"#,
+            lume_version = '1.0.0-rc3'",
         );
 
         parser.current_lume_version = Version::parse("1.0.0").unwrap();
@@ -414,10 +407,10 @@ mod tests {
     #[test]
     fn test_prerelease_lume_version_failure() {
         let mut parser = parser(
-            r#"[package]
+            "[package]
             name = 'some-package'
             version = '1.0.0'
-            lume_version = '1.0.0-rc3'"#,
+            lume_version = '1.0.0-rc3'",
         );
 
         parser.current_lume_version = Version::parse("1.0.0-rc2").unwrap();

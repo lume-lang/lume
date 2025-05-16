@@ -1,8 +1,14 @@
-use std::{ops::Range, sync::Arc};
+use std::{ops::Range, path::PathBuf, sync::Arc};
 
 use error_snippet::Error;
 use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "missing Arcfile within {dir:?}", code = "ARC0101")]
+pub struct ArcfileMissing {
+    pub dir: PathBuf,
+}
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
