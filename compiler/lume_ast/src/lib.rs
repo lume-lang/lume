@@ -4,18 +4,26 @@ use lume_macros::Node;
 pub struct Location(pub std::ops::Range<usize>);
 
 impl Location {
+    #[inline]
+    #[must_use]
     pub fn start(&self) -> usize {
         self.0.start
     }
 
+    #[inline]
+    #[must_use]
     pub fn end(&self) -> usize {
         self.0.end
     }
 
+    #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.0.end - self.0.start
     }
 
+    #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -38,6 +46,7 @@ pub struct Identifier {
 }
 
 impl Identifier {
+    #[must_use]
     pub fn new(name: &str) -> Self {
         Identifier {
             name: name.to_string(),
@@ -71,6 +80,7 @@ pub struct NamespacePath {
 }
 
 impl NamespacePath {
+    #[must_use]
     pub fn empty() -> Self {
         NamespacePath {
             path: Vec::new(),
@@ -78,6 +88,7 @@ impl NamespacePath {
         }
     }
 
+    #[must_use]
     pub fn new(name: &[&str]) -> Self {
         let path = name.iter().map(|&s| Identifier::new(s)).collect();
 
@@ -87,6 +98,8 @@ impl NamespacePath {
         }
     }
 
+    #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.path.is_empty()
     }
@@ -125,6 +138,7 @@ pub struct Path {
 }
 
 impl Path {
+    #[must_use]
     pub fn rooted(name: Identifier) -> Self {
         let location = name.location.clone();
 
@@ -210,6 +224,7 @@ pub struct Import {
 }
 
 impl Import {
+    #[must_use]
     pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
         let path = NamespacePath::new(path);
         let names = names.iter().map(|p| Identifier::new(p)).collect();
@@ -221,10 +236,12 @@ impl Import {
         }
     }
 
+    #[must_use]
     pub fn std(names: &[&'static str]) -> Self {
         Self::from_names(&["std"], names)
     }
 
+    #[must_use]
     pub fn flatten(self) -> Vec<NamespacePath> {
         self.names
             .iter()
@@ -269,6 +286,7 @@ pub enum TypeDefinition {
 }
 
 impl TypeDefinition {
+    #[must_use]
     pub fn name(&self) -> &Identifier {
         match self {
             TypeDefinition::Struct(struct_def) => &struct_def.name,
@@ -625,6 +643,8 @@ pub enum Type {
 
 impl Type {
     /// Checks whether the current type is a `self` type.
+    #[inline]
+    #[must_use]
     pub fn is_self(&self) -> bool {
         matches!(self, Type::SelfType(_))
     }
@@ -633,10 +653,10 @@ impl Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::Scalar(t) => f.write_fmt(format_args!("{}", t)),
-            Type::Array(t) => f.write_fmt(format_args!("{}", t)),
-            Type::Generic(t) => f.write_fmt(format_args!("{}", t)),
-            Type::SelfType(t) => f.write_fmt(format_args!("{}", t)),
+            Type::Scalar(t) => f.write_fmt(format_args!("{t}")),
+            Type::Array(t) => f.write_fmt(format_args!("{t}")),
+            Type::Generic(t) => f.write_fmt(format_args!("{t}")),
+            Type::SelfType(t) => f.write_fmt(format_args!("{t}")),
         }
     }
 }
@@ -685,7 +705,7 @@ impl std::fmt::Display for GenericType {
             f.write_str("<")?;
 
             for type_param in &self.type_params {
-                f.write_fmt(format_args!("{}", type_param))?;
+                f.write_fmt(format_args!("{type_param}"))?;
             }
 
             f.write_str(">")?;
