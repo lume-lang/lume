@@ -273,7 +273,7 @@ impl std::fmt::Debug for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let desc: &'static str = (*self).into();
 
-        write!(f, "{}", desc)
+        write!(f, "{desc}")
     }
 }
 
@@ -281,7 +281,7 @@ impl std::fmt::Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let desc: &'static str = (*self).into();
 
-        write!(f, "{}", desc)
+        write!(f, "{desc}")
     }
 }
 
@@ -369,7 +369,7 @@ impl std::fmt::Debug for Token {
 
         if !self.kind.has_value() {
             if let Some(value) = &self.value {
-                write!(f, " ({})", value)?;
+                write!(f, " ({value})")?;
             }
         }
 
@@ -445,7 +445,7 @@ impl Lexer {
             match self.current_char() {
                 Some(c) if predicate(c) => self.next(),
                 _ => break,
-            };
+            }
         }
     }
 
@@ -471,6 +471,11 @@ impl Lexer {
     }
 
     /// Gets the token at the current cursor position. The cursor is advanced to the start of the next token.
+    ///
+    /// # Errors
+    ///
+    /// This method will return `Err` if the expected token was formatted incorrectly,
+    /// or if the lexer unexpectedly encountered end-of-file.
     pub fn next_token(&mut self) -> Result<Token> {
         let start_idx = self.position;
         let first_char = match self.current_char_or_eof() {
@@ -493,11 +498,12 @@ impl Lexer {
 
             // Whitespace
             ' ' | '\t' | '\n' | '\r' => {
-                self.eat_while(|c| c.is_whitespace());
+                self.eat_while(char::is_whitespace);
 
                 return self.next_token();
             }
             _ => {
+                #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
                 return Err(UnexpectedCharacter {
                     source: self.source.clone(),
                     range: self.position..self.position + 1,
@@ -523,7 +529,7 @@ impl Lexer {
 
     fn eat_comment_prefix(&mut self) -> TokenKind {
         // Skip over all the whitespace characters, before attempting to eat the comment prefix.
-        self.eat_while(|c| c.is_whitespace());
+        self.eat_while(char::is_whitespace);
 
         // Eat the comment prefix characters.
         match self.take_while(|c| c == '/').len() {
@@ -677,6 +683,7 @@ impl Lexer {
             }
         }
 
+        #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
         Err(UnexpectedCharacter {
             source: self.source.clone(),
             range: self.position..self.position + 1,
@@ -780,9 +787,6 @@ impl Lexer {
                 // Decimal
                 '0'..='9' => self.consume_digits(radix),
 
-                // Scientific notation - not a radix prefix
-                '.' | 'e' | 'E' => {}
-
                 // Otherwise, it's just a zero.
                 _ => {}
             }
@@ -831,6 +835,7 @@ impl Lexer {
             match c {
                 '"' => break,
                 '\0' => {
+                    #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
                     return Err(MissingEndingQuote {
                         source: self.source.clone(),
                         range: self.position..self.position + 1,
@@ -838,7 +843,7 @@ impl Lexer {
                     .into());
                 }
                 _ => {}
-            };
+            }
 
             content.push(c);
         }
@@ -1034,34 +1039,34 @@ mod tests {
         assert_token!("/// testing", TokenKind::DocComment, Some("testing"), 0, 11);
 
         assert_tokens!(
-            r#"// comment 1
-            // comment 2"#,
+            "// comment 1
+            // comment 2",
             token(TokenKind::Comment, Some("comment 1\ncomment 2".into()), 0, 37)
         );
 
         assert_tokens!(
-            r#"// comment 1
+            "// comment 1
             //
-            // comment 2"#,
+            // comment 2",
             token(TokenKind::Comment, Some("comment 1\n\ncomment 2".into()), 0, 52)
         );
 
         assert_tokens!(
-            r#"/// comment 1
-            /// comment 2"#,
+            "/// comment 1
+            /// comment 2",
             token(TokenKind::DocComment, Some("comment 1\ncomment 2".into()), 0, 39)
         );
 
         assert_tokens!(
-            r#"/// comment 1
+            "/// comment 1
             ///
-            /// comment 2"#,
+            /// comment 2",
             token(TokenKind::DocComment, Some("comment 1\n\ncomment 2".into()), 0, 55)
         );
 
         assert_tokens!(
-            r#"/// comment 1
-            // comment 2"#,
+            "/// comment 1
+            // comment 2",
             token(TokenKind::DocComment, Some("comment 1".into()), 0, 13),
             token(TokenKind::Comment, Some("comment 2".into()), 26, 38)
         );
