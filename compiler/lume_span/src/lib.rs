@@ -11,7 +11,7 @@ use std::sync::Arc;
 use fxhash::hash64;
 use indexmap::IndexMap;
 
-/// Hashes some ID using the FxHasher algorithm, which was extracted
+/// Hashes some ID using the `FxHasher` algorithm, which was extracted
 /// from the Rustc compiler.
 ///
 /// The reason for using this instead of the [`std::hash::DefaultHasher`] is that
@@ -32,6 +32,8 @@ pub struct PackageId(pub u64);
 
 impl PackageId {
     /// Creates a new empty [`PackageId`].
+    #[inline]
+    #[must_use]
     pub fn empty() -> Self {
         Self(0)
     }
@@ -69,6 +71,8 @@ pub struct SourceFileId(pub PackageId, pub u64);
 
 impl SourceFileId {
     /// Creates a new empty [`SourceFileId`].
+    #[inline]
+    #[must_use]
     pub fn empty() -> Self {
         Self(PackageId(0), 0)
     }
@@ -107,6 +111,8 @@ impl SourceFile {
     }
 
     /// Creates a new empty [`SourceFile`] with no content.
+    #[inline]
+    #[must_use]
     pub fn empty() -> Self {
         Self::internal("")
     }
@@ -150,6 +156,8 @@ pub struct Location {
 }
 
 impl Location {
+    #[inline]
+    #[must_use]
     pub fn empty() -> Self {
         Self {
             file: Arc::new(SourceFile::empty()),
@@ -157,18 +165,26 @@ impl Location {
         }
     }
 
+    #[inline]
+    #[must_use]
     pub fn start(&self) -> usize {
         self.index.start
     }
 
+    #[inline]
+    #[must_use]
     pub fn end(&self) -> usize {
         self.index.end
     }
 
+    #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.end() - self.start()
     }
 
+    #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -195,11 +211,15 @@ pub struct SourceMap {
 
 impl SourceMap {
     /// Creates a new empty [`SourceMap`].
+    #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Gets a source file from the mapping with the given ID, if any.
+    #[inline]
+    #[must_use]
     pub fn get(&self, idx: SourceFileId) -> Option<Arc<SourceFile>> {
         self.files.get(&idx).cloned()
     }
