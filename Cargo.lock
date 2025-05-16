@@ -128,9 +128,9 @@ dependencies = [
 
 [[package]]
 name = "error_snippet"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee9cd392ec16001b05ad695370993777aecd587e438203fdb058f1b7bf6e4a22"
+checksum = "bd1985e1a169a31dce797d13615c0c0c6afd0d1e4b3e98dfc193be1379e17b4d"
 dependencies = [
  "error_snippet_derive",
  "indexmap",
