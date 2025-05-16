@@ -19,7 +19,7 @@ Examples:
     lume build hello.lm    # Compile the file into an executable";
 
 fn print_usage() {
-    println!("{}", USAGE);
+    println!("{USAGE}");
 
     std::process::exit(0)
 }
@@ -51,7 +51,7 @@ fn run() -> Result<i32> {
         std::process::exit(0)
     }
 
-    match matches.free.first().map(|s| s.as_str()) {
+    match matches.free.first().map(String::as_str) {
         Some("run") => run::run(&matches.free[1..]),
         Some(cmd) => Err(UnknownCommandError { command: cmd.into() }.into()),
         None => {
