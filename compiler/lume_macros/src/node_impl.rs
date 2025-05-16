@@ -13,27 +13,25 @@ impl NodeImpl {
         let ident = input.ident;
 
         match &input.data {
-            syn::Data::Struct(_) => Self::from_struct(ident),
-            syn::Data::Enum(data) => Self::from_enum(ident, data),
-            _ => Err(syn::Error::new_spanned(
+            syn::Data::Struct(_) => Ok(Self::from_struct(ident)),
+            syn::Data::Enum(data) => Ok(Self::from_enum(ident, data)),
+            syn::Data::Union(_) => Err(syn::Error::new_spanned(
                 ident,
                 "`#[derive(Node)]` only supports structs and enums",
             )),
         }
     }
 
-    pub fn tokens(&self) -> syn::Result<TokenStream> {
+    pub fn tokens(&self) -> TokenStream {
         match self {
             NodeImpl::Struct(ident) => {
-                let tokens = quote! {
+                quote! {
                     impl Node for #ident {
                         fn location(&self) -> &Location {
                             &self.location
                         }
                     }
-                };
-
-                Ok(tokens)
+                }
             }
             NodeImpl::Enum(ident, variants) => {
                 let cases = variants
@@ -43,7 +41,7 @@ impl NodeImpl {
                     })
                     .collect::<Vec<TokenStream>>();
 
-                let tokens = quote! {
+                quote! {
                     impl Node for #ident {
                         fn location(&self) -> &Location {
                             match self {
@@ -51,20 +49,18 @@ impl NodeImpl {
                             }
                         }
                     }
-                };
-
-                Ok(tokens)
+                }
             }
         }
     }
 
-    fn from_struct(ident: Ident) -> syn::Result<Self> {
-        Ok(NodeImpl::Struct(ident))
+    fn from_struct(ident: Ident) -> Self {
+        NodeImpl::Struct(ident)
     }
 
-    fn from_enum(ident: Ident, data: &syn::DataEnum) -> syn::Result<Self> {
+    fn from_enum(ident: Ident, data: &syn::DataEnum) -> Self {
         let variants = data.variants.iter().map(|v| v.ident.clone()).collect::<Vec<Ident>>();
 
-        Ok(NodeImpl::Enum(ident, variants))
+        NodeImpl::Enum(ident, variants)
     }
 }
