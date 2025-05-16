@@ -1,10 +1,37 @@
 #![allow(clippy::arc_with_non_send_sync)]
+#![feature(negative_impls)]
 
 use error_snippet::{DiagnosticHandler, Handler, Renderer, SimpleDiagnostic};
 use std::sync::{
     Arc, Mutex, MutexGuard,
     atomic::{AtomicBool, Ordering},
 };
+
+/// Derived from the Rust compiler.
+///
+/// https://github.com/rust-lang/rust/blob/c79bbfab78dcb0a72aa3b2bc35c00334b58bfe2e/compiler/rustc_span/src/fatal_error.rs
+#[derive(Debug, Clone, Copy)]
+pub struct FatalError;
+
+pub struct FatalErrorMarker;
+
+// Don't implement Send on FatalError. This makes it impossible to `panic_any!(FatalError)`.
+// We don't want to invoke the panic handler and print a backtrace for fatal errors.
+impl !Send for FatalError {}
+
+impl FatalError {
+    pub fn raise() -> ! {
+        std::panic::resume_unwind(Box::new(FatalErrorMarker))
+    }
+}
+
+impl std::fmt::Display for FatalError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "fatal error occured, aborting...")
+    }
+}
+
+impl std::error::Error for FatalError {}
 
 /// Defines the different options for outputting diagnostics,
 /// once they've been drained from the the diagnostic context ([`DiagCtx`]).
@@ -29,6 +56,10 @@ struct DiagCtxInner {
     /// Defines whether the context has reported any errors upon draining
     /// and should exit at the soonest possible convenience.
     tainted: AtomicBool,
+
+    /// Defines whether to halt the application, if an error is encountered
+    /// during a drain.
+    exit_on_error: bool,
 }
 
 impl DiagCtxInner {
@@ -48,6 +79,7 @@ impl DiagCtxInner {
         DiagCtxInner {
             handler,
             tainted: AtomicBool::new(false),
+            exit_on_error: false,
         }
     }
 
@@ -66,8 +98,13 @@ impl DiagCtxInner {
 
         let _ = self.handler.report_and_drain(abort_diag);
 
-        // Mark the context as tainted.
-        self.tainted.store(true, Ordering::Release);
+        if self.exit_on_error {
+            // Raise a fatal error, without printing a backtrace.
+            FatalError::raise();
+        } else {
+            // Mark the context as tainted.
+            self.tainted.store(true, Ordering::Release);
+        }
     }
 }
 
@@ -97,6 +134,12 @@ impl DiagCtx {
     /// is contained within the context.
     fn handler(&self) -> MutexGuard<'_, DiagCtxInner> {
         self.inner.lock().unwrap()
+    }
+
+    /// Enables the context to halt the application, if an error is encountered
+    /// during a drain.
+    pub fn exit_on_error(&mut self) {
+        self.handler().exit_on_error = true;
     }
 
     /// Create a handle for the diagnostic context, which can be

@@ -120,9 +120,12 @@ impl Parser {
     /// parsing each top-level expression and collecting them into a vector.
     pub fn parse_src(state: &mut lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new_with_src(state, file)?;
-        parser.dcx = state.dcx_mut().handle();
 
-        parser.parse()
+        state.dcx_mut().with(|handle| {
+            parser.dcx = handle;
+
+            parser.parse()
+        })
     }
 
     /// Prepares the parser to being parsing.

@@ -28,10 +28,13 @@ pub struct Driver {
 #[allow(dead_code)]
 impl Driver {
     fn new(opts: Options) -> Self {
-        let dcx = DiagCtx::new(DiagOutputFormat::Graphical);
-        let state = State::new(dcx);
+        let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
+        dcx.exit_on_error();
 
-        Driver { opts, state }
+        Driver {
+            opts,
+            state: State::new(dcx),
+        }
     }
 
     /// Builds the given project into an executable or library.
