@@ -150,8 +150,6 @@ impl<'tcx> ThirBuildCtx<'tcx> {
                         def: method,
                         reason: MethodDisqualificationReason::ArgumentType,
                     });
-
-                    continue;
                 }
             }
 

@@ -1,4 +1,3 @@
-use error_snippet::Result;
 use lume_hir::{self};
 use lume_types::*;
 
@@ -9,25 +8,21 @@ pub(super) struct DefineFields<'a, 'b> {
 }
 
 impl DefineFields<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
         let mut define = DefineFields { ctx };
 
-        define.run(hir)?;
-
-        Ok(())
+        define.run(hir);
     }
 
-    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        for (_, symbol) in hir.items.iter_mut() {
+    fn run(&mut self, hir: &mut lume_hir::map::Map) {
+        for (_, symbol) in &mut hir.items {
             if let lume_hir::Symbol::Type(t) = symbol {
-                self.define_type(t)?;
+                self.define_type(t);
             }
         }
-
-        Ok(())
     }
 
-    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
@@ -75,8 +70,6 @@ impl DefineFields<'_, '_> {
                 }
             }
             _ => {}
-        };
-
-        Ok(())
+        }
     }
 }

@@ -9,7 +9,7 @@ pub(super) struct DefineImpl<'a, 'b> {
 }
 
 impl DefineImpl<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &lume_hir::map::Map) -> Result<()> {
         let mut define = DefineImpl { ctx };
 
         for (_, symbol) in hir.items() {

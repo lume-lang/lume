@@ -1,4 +1,3 @@
-use error_snippet::Result;
 use lume_hir::{self};
 use lume_types::*;
 
@@ -9,28 +8,24 @@ pub(super) struct DefineTypeParameters<'a, 'b> {
 }
 
 impl DefineTypeParameters<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
         let mut define = DefineTypeParameters { ctx };
 
-        define.run(hir)?;
-
-        Ok(())
+        define.run(hir);
     }
 
-    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        for (_, symbol) in hir.items.iter_mut() {
+    fn run(&mut self, hir: &mut lume_hir::map::Map) {
+        for (_, symbol) in &mut hir.items {
             match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(t)?,
-                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
-                lume_hir::Symbol::Function(f) => self.define_function(f)?,
-                _ => (),
+                lume_hir::Symbol::Type(t) => self.define_type(t),
+                lume_hir::Symbol::Impl(i) => self.define_impl(i),
+                lume_hir::Symbol::Function(f) => self.define_function(f),
+                lume_hir::Symbol::Use(_) => (),
             }
         }
-
-        Ok(())
     }
 
-    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
@@ -91,12 +86,10 @@ impl DefineTypeParameters<'_, '_> {
                 }
             }
             _ => {}
-        };
-
-        Ok(())
+        }
     }
 
-    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
+    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) {
         let impl_id = implementation.impl_id.unwrap();
 
         for type_param in &mut implementation.type_parameters {
@@ -109,11 +102,9 @@ impl DefineTypeParameters<'_, '_> {
                 type_param.name.clone(),
             ));
         }
-
-        Ok(())
     }
 
-    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
+    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) {
         let func_id = func.func_id.unwrap();
 
         for type_param in &mut func.type_parameters {
@@ -126,7 +117,5 @@ impl DefineTypeParameters<'_, '_> {
                 type_param.name.clone(),
             ));
         }
-
-        Ok(())
     }
 }

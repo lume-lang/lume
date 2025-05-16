@@ -9,7 +9,7 @@ pub(super) struct DefineTypeConstraints<'a, 'b> {
 }
 
 impl DefineTypeConstraints<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypeConstraints { ctx };
 
         define.run(hir)?;
@@ -23,7 +23,7 @@ impl DefineTypeConstraints<'_, '_> {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
                 lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
                 lume_hir::Symbol::Function(f) => self.define_function(f)?,
-                _ => (),
+                lume_hir::Symbol::Use(_) => (),
             }
         }
 
@@ -59,7 +59,7 @@ impl DefineTypeConstraints<'_, '_> {
                 }
             }
             _ => {}
-        };
+        }
 
         Ok(())
     }

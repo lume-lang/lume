@@ -73,16 +73,13 @@ impl ThirBuildCtx<'_> {
         expr: &lume_hir::StaticCall,
         loc: lume_span::Location,
     ) -> Result<CallReference> {
-        let symbol = match self.lookup_symbol(&expr.name) {
-            Some(symbol) => symbol,
-            None => {
-                return Err(crate::errors::MissingSymbol {
-                    source: loc.file.clone(),
-                    range: loc.index.clone(),
-                    name: expr.name.clone(),
-                }
-                .into());
+        let Some(symbol) = self.lookup_symbol(&expr.name) else {
+            return Err(crate::errors::MissingSymbol {
+                source: loc.file,
+                range: loc.index,
+                name: expr.name.clone(),
             }
+            .into());
         };
 
         match symbol {
@@ -90,8 +87,8 @@ impl ThirBuildCtx<'_> {
                 let ty = type_id.get(self.tcx());
 
                 Err(crate::errors::AttemptedTypeInvocation {
-                    source: loc.file.clone(),
-                    range: loc.index.clone(),
+                    source: loc.file,
+                    range: loc.index,
                     name: ty.name.clone(),
                 }
                 .into())

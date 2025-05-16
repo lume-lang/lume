@@ -41,10 +41,15 @@ impl ThirBuildCtx<'_> {
     ///
     /// The defined types are stored within the `ThirBuildCtx` struct, which can be
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
+    /// etc, or when expected items cannot be found within the context.
     pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        infer::define_types::DefineTypes::run_all(self, hir)?;
-        infer::define_fields::DefineFields::run_all(self, hir)?;
-        infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
+        infer::define_types::DefineTypes::run_all(self, hir);
+        infer::define_fields::DefineFields::run_all(self, hir);
+        infer::define_type_params::DefineTypeParameters::run_all(self, hir);
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_impl::DefineImpl::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
@@ -107,7 +112,7 @@ impl ThirBuildCtx<'_> {
             let type_args = match &mut hir.expressions_mut().get_mut(id).unwrap().kind {
                 lume_hir::ExpressionKind::InstanceCall(call) => &mut call.type_arguments,
                 lume_hir::ExpressionKind::StaticCall(call) => &mut call.type_arguments,
-                kind => panic!("BUG: unexpected expression kind: {:?}", kind),
+                kind => panic!("BUG: unexpected expression kind: {kind:?}"),
             };
 
             // If no type arguments are provided, we are expected to infer all the of them.
@@ -148,7 +153,7 @@ impl ThirBuildCtx<'_> {
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(decl) => decl,
-            t => panic!("invalid variable reference type: {:?}", t),
+            t => panic!("invalid variable reference type: {t:?}"),
         }
     }
 
@@ -188,23 +193,20 @@ impl ThirBuildCtx<'_> {
 
                 Ok(method.return_type.clone())
             }
-            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
+            lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(hir, expr.callee.id)?;
-                let property_id = match callee_type.property(self.tcx(), &expr.name) {
-                    Some(property_id) => property_id,
-                    None => {
-                        return Err(errors::MissingProperty {
-                            source: expr.location.file.clone(),
-                            range: expr.location.index.clone(),
-                            type_name: callee_type.name(self.tcx()),
-                            property_name: Identifier {
-                                name: expr.name.clone(),
-                                location: expr.location.clone(),
-                            },
-                        }
-                        .into());
+                let Some(property_id) = callee_type.property(self.tcx(), &expr.name) else {
+                    return Err(errors::MissingProperty {
+                        source: expr.location.file.clone(),
+                        range: expr.location.index.clone(),
+                        type_name: callee_type.name(self.tcx()),
+                        property_name: Identifier {
+                            name: expr.name.clone(),
+                            location: expr.location.clone(),
+                        },
                     }
+                    .into());
                 };
 
                 Ok(property_id.get(self.tcx()).property_type.clone())
@@ -218,7 +220,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Attempts to get the type of a literal expression.
-    fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
+    fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
         let type_id = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
                 lume_hir::IntKind::I8 => TypeId::find_or_err(self.tcx(), &SymbolName::i8()),
@@ -240,7 +242,7 @@ impl ThirBuildCtx<'_> {
             lume_hir::LiteralKind::Boolean(_) => TypeId::find_or_err(self.tcx(), &SymbolName::boolean()),
         };
 
-        Ok(TypeRef::new(type_id))
+        TypeRef::new(type_id)
     }
 
     /// Lowers the given HIR type into a type reference.
@@ -251,9 +253,8 @@ impl ThirBuildCtx<'_> {
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
     pub(crate) fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> Result<TypeRef> {
-        let found_type = match self.find_type_ref_ctx(&ty.name, type_params) {
-            Some(id) => id,
-            None => return Err(self.missing_type_err(ty)),
+        let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
+            return Err(self.missing_type_err(ty));
         };
 
         let mut type_ref = TypeRef::new(found_type);
@@ -307,6 +308,7 @@ impl ThirBuildCtx<'_> {
     }
 
     /// Returns an error indicating that the given type was not found.
+    #[allow(clippy::unused_self)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             let ty_name = &ty.name.name.name;

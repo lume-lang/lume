@@ -71,7 +71,7 @@ pub(super) struct ScopeVisitor<'a, 'b> {
     tcx: &'a mut ThirBuildCtx<'b>,
 }
 
-impl<'a, 'b> TypeCheckerPass<'a> for ScopeVisitor<'a, 'b> {
+impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a, '_> {
     fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in hir.items() {
             ScopeVisitor { hir, tcx }.visit(symbol)?;
@@ -81,7 +81,7 @@ impl<'a, 'b> TypeCheckerPass<'a> for ScopeVisitor<'a, 'b> {
     }
 }
 
-impl<'a, 'b> ScopeVisitor<'a, 'b> {
+impl ScopeVisitor<'_, '_> {
     fn visit(&mut self, symbol: &lume_hir::Symbol) -> Result<()> {
         match symbol {
             lume_hir::Symbol::Type(ty) => match &**ty {

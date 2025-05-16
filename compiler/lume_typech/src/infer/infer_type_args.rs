@@ -30,7 +30,7 @@ pub(super) struct InferTypeArgs<'a, 'b> {
 }
 
 impl InferTypeArgs<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut infer = InferTypeArgs { ctx, hir };
 
         infer.run()?;
@@ -43,8 +43,7 @@ impl InferTypeArgs<'_, '_> {
 
         for (id, expr) in self.hir.expressions() {
             let expr = match &expr.kind {
-                lume_hir::ExpressionKind::InstanceCall(_) => expr,
-                lume_hir::ExpressionKind::StaticCall(_) => expr,
+                lume_hir::ExpressionKind::StaticCall(_) | lume_hir::ExpressionKind::InstanceCall(_) => expr,
                 _ => continue,
             };
 
@@ -55,7 +54,7 @@ impl InferTypeArgs<'_, '_> {
                 .unwrap_or_else(|| panic!("reference for call expression {:?} is not set", expr.id));
 
             let signature = reference.sig(self.ctx.tcx());
-            let type_args = self.infer_type_args_in_sig(expr, signature)?;
+            let type_args = self.infer_type_args_in_sig(expr, &signature)?;
 
             if type_args.is_empty() {
                 continue;
@@ -78,12 +77,12 @@ impl InferTypeArgs<'_, '_> {
     fn infer_type_args_in_sig(
         &self,
         expr: &lume_hir::Expression,
-        sig: lume_types::FunctionSig,
+        sig: &lume_types::FunctionSig,
     ) -> Result<Vec<lume_hir::TypeArgument>> {
         let (args, type_args) = match &expr.kind {
             lume_hir::ExpressionKind::InstanceCall(call) => (&call.arguments, &call.type_arguments),
             lume_hir::ExpressionKind::StaticCall(call) => (&call.arguments, &call.type_arguments),
-            k => panic!("BUG: invalid expression kind in infer_type_args_in_sig: {:?}", k),
+            k => panic!("BUG: invalid expression kind in infer_type_args_in_sig: {k:?}"),
         };
 
         if type_args.is_empty() {

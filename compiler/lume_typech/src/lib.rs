@@ -30,7 +30,7 @@ pub struct ThirBuildCtx<'a> {
 #[allow(dead_code)]
 impl<'a> ThirBuildCtx<'a> {
     /// Creates a new empty THIR build context.
-    pub fn new<'tcx>(state: &'tcx mut lume_state::State) -> ThirBuildCtx<'tcx> {
+    pub fn new(state: &mut lume_state::State) -> ThirBuildCtx<'_> {
         ThirBuildCtx {
             state,
             dcx: DiagnosticHandler::with_renderer(Box::new(GraphicalRenderer::new())),
@@ -56,6 +56,7 @@ impl<'a> ThirBuildCtx<'a> {
     }
 
     /// Gets the HIR expression with the given ID within the source file.
+    #[allow(clippy::unused_self)]
     pub(crate) fn hir_stmt(
         &'a self,
         hir: &'a lume_hir::map::Map,
@@ -63,15 +64,16 @@ impl<'a> ThirBuildCtx<'a> {
     ) -> &'a lume_hir::Statement {
         match hir.statements().get(&id) {
             Some(expr) => expr,
-            None => panic!("no statement with given ID found: {:?}", id),
+            None => panic!("no statement with given ID found: {id:?}"),
         }
     }
 
     /// Gets the HIR expression with the given ID within the source file.
+    #[allow(clippy::unused_self)]
     pub(crate) fn hir_expr(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
         match hir.expressions().get(&id) {
             Some(expr) => expr,
-            None => panic!("no expression with given ID found: {:?}", id),
+            None => panic!("no expression with given ID found: {id:?}"),
         }
     }
 }

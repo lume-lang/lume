@@ -8,7 +8,7 @@ pub(super) struct DefineMethodBodies<'a, 'b> {
 }
 
 impl DefineMethodBodies<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineMethodBodies { ctx };
 
         define.run(hir)?;
@@ -89,7 +89,7 @@ impl DefineMethodBodies<'_, '_> {
                 }
             }
             _ => (),
-        };
+        }
 
         Ok(())
     }

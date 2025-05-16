@@ -1,4 +1,3 @@
-use error_snippet::Result;
 use lume_hir::{self};
 use lume_types::*;
 
@@ -9,28 +8,24 @@ pub(super) struct DefineTypes<'a, 'b> {
 }
 
 impl DefineTypes<'_, '_> {
-    pub(super) fn run_all<'a>(ctx: &mut ThirBuildCtx<'a>, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
         let mut define = DefineTypes { ctx };
 
-        define.run(hir)?;
-
-        Ok(())
+        define.run(hir);
     }
 
-    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        for (_, symbol) in hir.items.iter_mut() {
+    fn run(&mut self, hir: &mut lume_hir::map::Map) {
+        for (_, symbol) in &mut hir.items {
             match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(t)?,
-                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
-                lume_hir::Symbol::Function(f) => self.define_function(f)?,
-                _ => (),
+                lume_hir::Symbol::Type(t) => self.define_type(t),
+                lume_hir::Symbol::Impl(i) => self.define_impl(i),
+                lume_hir::Symbol::Function(f) => self.define_function(f),
+                lume_hir::Symbol::Use(_) => (),
             }
         }
-
-        Ok(())
     }
 
-    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
@@ -64,27 +59,21 @@ impl DefineTypes<'_, '_> {
 
                 enum_def.type_id = Some(type_id);
             }
-        };
-
-        Ok(())
+        }
     }
 
-    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
+    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) {
         let target = implementation.target.name.clone();
         let impl_id = Implementation::alloc(self.ctx.tcx_mut(), target);
 
         implementation.impl_id = Some(impl_id);
-
-        Ok(())
     }
 
-    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
+    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) {
         let name = func.name.clone();
         let visibility = func.visibility;
         let type_id = Function::alloc(self.ctx.tcx_mut(), name, visibility);
 
         func.func_id = Some(type_id);
-
-        Ok(())
     }
 }
