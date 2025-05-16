@@ -9,7 +9,16 @@ use lume_ast::{self as ast, Node};
 
 impl<'a> LowerModule<'a> {
     pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Result<Vec<hir::Expression>> {
-        expressions.into_iter().map(|expr| self.expression(expr)).collect()
+        Ok(expressions
+            .into_iter()
+            .filter_map(|expr| match self.expression(expr) {
+                Ok(e) => Some(e),
+                Err(err) => {
+                    self.dcx.emit(err);
+                    None
+                }
+            })
+            .collect::<Vec<_>>())
     }
 
     pub(super) fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {

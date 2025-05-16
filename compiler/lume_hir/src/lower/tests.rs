@@ -17,7 +17,7 @@ fn lower(input: &str) -> Result<hir::map::Map> {
     let module_id = PackageId::empty();
     let mut map = hir::map::Map::empty(module_id);
 
-    LowerModule::lower(&mut map, source, expressions)?;
+    LowerModule::lower(&mut map, source, state.dcx_mut().handle(), expressions)?;
 
     Ok(map)
 }
@@ -37,7 +37,7 @@ fn lower_expr(input: &str) -> Result<Vec<hir::Statement>> {
 
     let module_id = PackageId::empty();
     let mut map = hir::map::Map::empty(module_id);
-    let mut lower = LowerModule::new(&mut map, source);
+    let mut lower = LowerModule::new(&mut map, source, state.dcx_mut().handle());
 
     lower.statements(statements)
 }

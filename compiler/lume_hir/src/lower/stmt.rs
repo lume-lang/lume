@@ -32,10 +32,16 @@ impl<'a> LowerModule<'a> {
     }
 
     pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Result<Vec<hir::Statement>> {
-        statements
+        Ok(statements
             .into_iter()
-            .map(|s| self.statement(s))
-            .collect::<Result<Vec<_>>>()
+            .filter_map(|expr| match self.statement(expr) {
+                Ok(e) => Some(e),
+                Err(err) => {
+                    self.dcx.emit(err);
+                    None
+                }
+            })
+            .collect::<Vec<_>>())
     }
 
     fn statement(&mut self, expr: ast::Statement) -> Result<hir::Statement> {

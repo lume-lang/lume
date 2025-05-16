@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use arc::Project;
 use error_snippet::Result;
+use lume_errors::DiagCtxHandle;
 use lume_parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
 use lume_types::SymbolName;
@@ -107,7 +108,9 @@ impl<'a> LowerState<'a> {
             let expressions = Parser::parse_src(self.state, source_file.id)?;
 
             // Lowers the parsed module expressions down to HIR.
-            LowerModule::lower(&mut hir, source_file, expressions)?;
+            self.state
+                .dcx_mut()
+                .with(|handle| LowerModule::lower(&mut hir, source_file, handle, expressions))?;
         }
 
         Ok(hir)
@@ -146,6 +149,9 @@ pub struct LowerModule<'a> {
     /// Defines the file is being lowered.
     file: Arc<SourceFile>,
 
+    /// Handle to the diagnostics context which will handle parsing errors.
+    dcx: DiagCtxHandle,
+
     /// Defines the type map to register types to.
     map: &'a mut hir::map::Map,
 
@@ -170,10 +176,11 @@ pub struct LowerModule<'a> {
 
 impl<'a> LowerModule<'a> {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &mut hir::map::Map, file: Arc<SourceFile>) -> LowerModule {
+    pub fn new(map: &mut hir::map::Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule {
         LowerModule {
             file,
             map,
+            dcx,
             locals: hir::symbols::SymbolTable::new(),
             imports: HashMap::new(),
             namespace: hir::NamespacePath::empty(),
@@ -187,9 +194,10 @@ impl<'a> LowerModule<'a> {
     pub fn lower(
         map: &'a mut hir::map::Map,
         file: Arc<SourceFile>,
+        dcx: DiagCtxHandle,
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
-        let mut lower = LowerModule::new(map, file);
+        let mut lower = LowerModule::new(map, file, dcx);
         lower.insert_implicit_imports()?;
 
         for expr in expressions {

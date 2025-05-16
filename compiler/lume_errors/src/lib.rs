@@ -153,7 +153,7 @@ impl DiagCtx {
     /// Creates a new handle, which is only valid within the given closure,
     /// which is executed immedietly. Upon finishing the closure, the handle is dropped
     /// and all diagnostics reporting within it are immedietly drained to the inner handler.
-    pub fn with<TReturn>(&mut self, mut f: impl FnMut(DiagCtxHandle) -> TReturn) -> TReturn {
+    pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
         let handle = self.handle();
 
         f(handle)
