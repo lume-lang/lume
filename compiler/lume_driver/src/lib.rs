@@ -41,6 +41,14 @@ impl Driver {
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - the given path has no `Arcfile` within it,
+    /// - an error occured while compiling the project,
+    /// - an error occured while linking the project
+    /// - or some unexpected error occured which hasn't been handled gracefully.
     pub fn build_project(root: &Path) -> Result<Self> {
         let mut driver = Driver::from_root(root)?;
 
@@ -53,6 +61,10 @@ impl Driver {
     ///
     /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the given path has no `Arcfile` within it.
     pub fn from_root(root: &Path) -> Result<Self> {
         let project = Project::locate(root)?;
         let opts = Options::from_project(project);
@@ -61,6 +73,14 @@ impl Driver {
     }
 
     /// Builds the given compiler state into an executable or library.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - the given path has no `Arcfile` within it,
+    /// - an error occured while compiling the project,
+    /// - an error occured while linking the project
+    /// - or some unexpected error occured which hasn't been handled gracefully.
     pub fn build(&mut self) -> Result<()> {
         let sources = self.parse()?;
         let _thir_ctx = self.type_check(sources)?;
@@ -74,7 +94,7 @@ impl Driver {
     }
 
     /// Type checks all the given source files.
-    fn type_check<'a>(&'a mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx<'a>> {
+    fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx<'_>> {
         let mut thir_ctx = lume_typech::ThirBuildCtx::new(&mut self.state);
 
         // Defines the types of all nodes within the HIR maps.
@@ -89,16 +109,19 @@ impl Driver {
     }
 
     /// Analyzes all the modules within the given state object.
+    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
     fn analyze(&mut self) -> Result<()> {
         Ok(())
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
+    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
     fn codegen(&mut self) -> Result<()> {
         Ok(())
     }
 
     /// Links all the modules within the given state object into a single executable or library.
+    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
     fn link(&mut self) -> Result<()> {
         Ok(())
     }

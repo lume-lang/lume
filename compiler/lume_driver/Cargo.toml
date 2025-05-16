@@ -14,3 +14,6 @@ lume_typech = { path = "../lume_typech" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+
+[lints]
+workspace = true
