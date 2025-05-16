@@ -3,36 +3,36 @@ use error_snippet::Result;
 use crate::{self as hir, lower::LowerModule};
 use lume_ast::{self as ast};
 
-impl<'a> LowerModule<'a> {
+impl LowerModule<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
-    pub(super) fn block(&mut self, expr: ast::Block) -> Result<hir::Block> {
+    pub(super) fn block(&mut self, expr: ast::Block) -> hir::Block {
         self.locals.push_frame();
 
-        let statements = self.statements(expr.statements)?;
+        let statements = self.statements(expr.statements);
         let location = self.location(expr.location);
 
         self.locals.pop_frame();
 
-        Ok(hir::Block { statements, location })
+        hir::Block { statements, location }
     }
 
     /// Lowers the given AST block into a HIR block, within an isolated scope.
     ///
     /// This functions much like [`block`], but pushes a boundary into the symbol table,
     /// separating local variables within the block from the parent scope.
-    pub(super) fn isolated_block(&mut self, expr: ast::Block) -> Result<hir::Block> {
+    pub(super) fn isolated_block(&mut self, expr: ast::Block) -> hir::Block {
         self.locals.push_boundary();
 
-        let statements = self.statements(expr.statements)?;
+        let statements = self.statements(expr.statements);
         let location = self.location(expr.location);
 
         self.locals.pop_boundary();
 
-        Ok(hir::Block { statements, location })
+        hir::Block { statements, location }
     }
 
-    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Result<Vec<hir::Statement>> {
-        Ok(statements
+    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<hir::Statement> {
+        statements
             .into_iter()
             .filter_map(|expr| match self.statement(expr) {
                 Ok(e) => Some(e),
@@ -41,18 +41,18 @@ impl<'a> LowerModule<'a> {
                     None
                 }
             })
-            .collect::<Vec<_>>())
+            .collect::<Vec<_>>()
     }
 
     fn statement(&mut self, expr: ast::Statement) -> Result<hir::Statement> {
         let stmt = match expr {
             ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
-            ast::Statement::Break(s) => self.stmt_break(*s)?,
-            ast::Statement::Continue(s) => self.stmt_continue(*s)?,
+            ast::Statement::Break(s) => self.stmt_break(*s),
+            ast::Statement::Continue(s) => self.stmt_continue(*s),
             ast::Statement::Return(s) => self.stmt_return(*s)?,
             ast::Statement::If(e) => self.stmt_if(*e)?,
             ast::Statement::Unless(e) => self.stmt_unless(*e)?,
-            ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e)?,
+            ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
             ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
             ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
             ast::Statement::Expression(s) => {
@@ -101,26 +101,26 @@ impl<'a> LowerModule<'a> {
         Ok(statement)
     }
 
-    fn stmt_break(&mut self, statement: ast::Break) -> Result<hir::Statement> {
+    fn stmt_break(&mut self, statement: ast::Break) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(statement.location);
 
-        Ok(hir::Statement {
+        hir::Statement {
             id,
             location,
             kind: hir::StatementKind::Break(Box::new(hir::Break { id })),
-        })
+        }
     }
 
-    fn stmt_continue(&mut self, statement: ast::Continue) -> Result<hir::Statement> {
+    fn stmt_continue(&mut self, statement: ast::Continue) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(statement.location);
 
-        Ok(hir::Statement {
+        hir::Statement {
             id,
             location,
             kind: hir::StatementKind::Continue(Box::new(hir::Continue { id })),
-        })
+        }
     }
 
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
@@ -179,33 +179,33 @@ impl<'a> LowerModule<'a> {
             None
         };
 
-        let block = self.block(expr.block)?;
+        let block = self.block(expr.block);
 
         Ok(hir::Condition {
             id,
-            location,
             condition,
             block,
+            location,
         })
     }
 
-    fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> Result<hir::Statement> {
+    fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
-        let block = self.block(expr.block)?;
+        let block = self.block(expr.block);
 
-        Ok(hir::Statement {
+        hir::Statement {
             id,
             location: location.clone(),
             kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
-        })
+        }
     }
 
     fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
         let collection = self.expression(expr.collection)?;
-        let block = self.block(expr.block)?;
+        let block = self.block(expr.block);
 
         Ok(hir::Statement {
             id,
@@ -223,7 +223,7 @@ impl<'a> LowerModule<'a> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
         let condition = self.expression(expr.condition)?;
-        let block = self.block(expr.block)?;
+        let block = self.block(expr.block);
 
         Ok(hir::Statement {
             id,

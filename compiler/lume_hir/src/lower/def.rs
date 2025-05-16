@@ -4,7 +4,7 @@ use crate::{self as hir, lower::LowerModule};
 use crate::{SELF_TYPE_NAME, errors::*};
 use lume_ast::{self as ast};
 
-impl<'a> LowerModule<'a> {
+impl LowerModule<'_> {
     pub(super) fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<hir::Symbol> {
         match expr {
             ast::TypeDefinition::Struct(t) => self.def_struct(*t),
@@ -45,7 +45,7 @@ impl<'a> LowerModule<'a> {
     }
 
     fn def_property(&mut self, expr: ast::Property) -> Result<hir::Property> {
-        let visibility = self.visibility(expr.visibility)?;
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let property_type = self.type_ref(expr.property_type)?;
         let location = self.location(expr.location);
@@ -94,7 +94,7 @@ impl<'a> LowerModule<'a> {
     }
 
     fn def_impl_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
-        let visibility = self.visibility(expr.visibility)?;
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, true)?;
@@ -104,7 +104,7 @@ impl<'a> LowerModule<'a> {
         let block = if expr.external {
             None
         } else {
-            Some(self.isolated_block(expr.block)?)
+            Some(self.isolated_block(expr.block))
         };
 
         Ok(hir::MethodDefinition {
@@ -148,18 +148,14 @@ impl<'a> LowerModule<'a> {
     }
 
     fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
-        let visibility = self.visibility(expr.visibility)?;
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, true)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
-        let block = if let Some(block) = expr.block {
-            Some(self.isolated_block(block)?)
-        } else {
-            None
-        };
+        let block = expr.block.map(|b| self.isolated_block(b));
 
         Ok(hir::TraitMethodDefinition {
             method_id: None,
@@ -234,7 +230,7 @@ impl<'a> LowerModule<'a> {
     }
 
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<hir::Symbol> {
-        let visibility = self.visibility(expr.visibility)?;
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.symbol_name(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, false)?;
@@ -245,7 +241,7 @@ impl<'a> LowerModule<'a> {
         let block = if expr.external {
             None
         } else {
-            Some(self.isolated_block(expr.block)?)
+            Some(self.isolated_block(expr.block))
         };
 
         Ok(hir::Symbol::Function(Box::new(hir::FunctionDefinition {
@@ -259,13 +255,6 @@ impl<'a> LowerModule<'a> {
             block,
             location,
         })))
-    }
-
-    fn visibility(&self, expr: ast::Visibility) -> Result<hir::Visibility> {
-        match expr {
-            ast::Visibility::Public { .. } => Ok(hir::Visibility::Public),
-            ast::Visibility::Private { .. } => Ok(hir::Visibility::Private),
-        }
     }
 
     fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
@@ -343,12 +332,12 @@ impl<'a> LowerModule<'a> {
     }
 
     fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
-        let visibility = self.visibility(expr.visibility)?;
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.symbol_name(expr.name);
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
-        let block = self.isolated_block(expr.block)?;
+        let block = self.isolated_block(expr.block);
         let location = self.location(expr.location);
 
         Ok(hir::TraitMethodImplementation {
@@ -360,5 +349,12 @@ impl<'a> LowerModule<'a> {
             block,
             location,
         })
+    }
+}
+
+fn lower_visibility(expr: &ast::Visibility) -> hir::Visibility {
+    match expr {
+        ast::Visibility::Public { .. } => hir::Visibility::Public,
+        ast::Visibility::Private { .. } => hir::Visibility::Private,
     }
 }

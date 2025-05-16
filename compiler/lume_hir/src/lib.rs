@@ -684,9 +684,9 @@ impl TypeArgument {
 impl Node for TypeArgument {
     fn location(&self) -> &Location {
         match self {
-            TypeArgument::Named { location, .. } => location,
-            TypeArgument::Resolved { location, .. } => location,
-            TypeArgument::Implicit { location } => location,
+            TypeArgument::Named { location, .. }
+            | TypeArgument::Resolved { location, .. }
+            | TypeArgument::Implicit { location } => location,
         }
     }
 }

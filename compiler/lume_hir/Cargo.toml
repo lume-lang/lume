@@ -22,3 +22,6 @@ rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }
 [dev-dependencies]
 lume_parser = { path = "../lume_parser" }
 insta = { version = "1.42.2", features = ["yaml"] }
+
+[lints]
+workspace = true

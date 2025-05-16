@@ -171,10 +171,11 @@ impl SymbolTable {
     fn retrieve_scoped(&self, name: &str) -> Option<&VariableDeclaration> {
         for entry in self.symbols.iter().rev() {
             match entry {
-                SymbolTableEntry::Frame(f) => match f.entries.get(name) {
-                    Some(v) => return Some(v),
-                    None => continue,
-                },
+                SymbolTableEntry::Frame(f) => {
+                    if let Some(v) = f.entries.get(name) {
+                        return Some(v);
+                    }
+                }
                 SymbolTableEntry::Boundary => break,
             }
         }

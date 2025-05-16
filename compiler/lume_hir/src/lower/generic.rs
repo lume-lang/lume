@@ -3,7 +3,7 @@ use error_snippet::Result;
 use crate::{self as hir, lower::LowerModule};
 use lume_ast::{self as ast, Node};
 
-impl<'a> LowerModule<'a> {
+impl LowerModule<'_> {
     pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<Vec<hir::TypeParameter>> {
         params
             .into_iter()

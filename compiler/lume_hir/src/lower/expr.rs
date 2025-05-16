@@ -7,9 +7,9 @@ use crate::lower::{
 use crate::{self as hir, err, lower::LowerModule};
 use lume_ast::{self as ast, Node};
 
-impl<'a> LowerModule<'a> {
-    pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Result<Vec<hir::Expression>> {
-        Ok(expressions
+impl LowerModule<'_> {
+    pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Vec<hir::Expression> {
+        expressions
             .into_iter()
             .filter_map(|expr| match self.expression(expr) {
                 Ok(e) => Some(e),
@@ -18,15 +18,15 @@ impl<'a> LowerModule<'a> {
                     None
                 }
             })
-            .collect::<Vec<_>>())
+            .collect::<Vec<_>>()
     }
 
     pub(super) fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
         let expr = match statement {
-            ast::Expression::Array(e) => self.expr_array(*e)?,
+            ast::Expression::Array(e) => self.expr_array(*e),
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
-            ast::Expression::Literal(e) => self.expr_literal(*e)?,
+            ast::Expression::Literal(e) => self.expr_literal(*e),
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
@@ -44,7 +44,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
+    fn expr_array(&mut self, expr: ast::Array) -> hir::Expression {
         // TODO: Implement proper array expression lowering
         let array_path = lume_ast::Path {
             name: lume_ast::Identifier {
@@ -58,7 +58,7 @@ impl<'a> LowerModule<'a> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
 
-        Ok(hir::Expression {
+        hir::Expression {
             id,
             location: location.clone(),
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
@@ -81,7 +81,7 @@ impl<'a> LowerModule<'a> {
                     location: hir::Location::empty(),
                 }],
             })),
-        })
+        }
     }
 
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {
@@ -101,7 +101,7 @@ impl<'a> LowerModule<'a> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name);
         let type_arguments = self.type_arguments(expr.type_arguments)?;
-        let arguments = self.expressions(expr.arguments)?;
+        let arguments = self.expressions(expr.arguments);
         let location = self.location(expr.location);
 
         let kind = if let Some(callee) = expr.callee {
@@ -126,14 +126,14 @@ impl<'a> LowerModule<'a> {
         Ok(hir::Expression { id, location, kind })
     }
 
-    fn expr_literal(&mut self, expr: ast::Literal) -> Result<hir::Expression> {
-        let literal = self.literal(expr)?;
+    fn expr_literal(&mut self, expr: ast::Literal) -> hir::Expression {
+        let literal = self.literal(expr);
 
-        Ok(hir::Expression {
+        hir::Expression {
             id: literal.id,
             location: literal.location.clone(),
             kind: hir::ExpressionKind::Literal(Box::new(literal)),
-        })
+        }
     }
 
     fn expr_member(&mut self, expr: ast::Member) -> Result<hir::Expression> {
@@ -192,9 +192,8 @@ impl<'a> LowerModule<'a> {
         let id = self.next_expr_id();
 
         let location = self.location(expr.location().clone());
-        let local_id = match self.locals.retrieve(&expr.name.name) {
-            Some(id) => id,
-            None => return Err(err!(self, location, UndeclaredVariable, name, expr.name.name)),
+        let Some(local_id) = self.locals.retrieve(&expr.name.name) else {
+            return Err(err!(self, location, UndeclaredVariable, name, expr.name.name));
         };
 
         Ok(hir::Expression {

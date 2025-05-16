@@ -6,10 +6,10 @@ use crate::lower::{ARRAY_STD_TYPE, LowerModule};
 use crate::{self as hir, SELF_TYPE_NAME};
 use lume_ast::{self as ast};
 
-impl<'a> LowerModule<'a> {
+impl LowerModule<'_> {
     pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
         match expr {
-            ast::Type::Scalar(t) => self.type_scalar(*t),
+            ast::Type::Scalar(t) => Ok(self.type_scalar(*t)),
             ast::Type::Array(t) => self.type_array(*t),
             ast::Type::Generic(t) => self.type_generic(*t),
             ast::Type::SelfType(t) => self.type_self(*t),
@@ -23,15 +23,15 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn type_scalar(&self, expr: ast::ScalarType) -> Result<hir::Type> {
+    fn type_scalar(&self, expr: ast::ScalarType) -> hir::Type {
         let name = self.resolve_symbol_name(&expr.name);
         let location = self.location(expr.name.location);
 
-        Ok(hir::Type {
+        hir::Type {
             name,
             type_params: Vec::new(),
             location,
-        })
+        }
     }
 
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {

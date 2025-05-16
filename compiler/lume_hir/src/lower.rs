@@ -85,6 +85,10 @@ impl<'a> LowerState<'a> {
     }
 
     /// Lowers the given project and state into a HIR map.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
     pub fn lower(project: &'a Project, state: &'a mut lume_state::State) -> Result<hir::map::Map> {
         let mut lower = LowerState::new(project, state);
 
@@ -92,6 +96,10 @@ impl<'a> LowerState<'a> {
     }
 
     /// Lowers the current project and state into a HIR map.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
     pub fn lower_into(&mut self) -> Result<hir::map::Map> {
         // Create a new HIR map for the module.
         let mut hir = hir::map::Map::empty(self.project.id);
@@ -191,6 +199,10 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Lowers the single given source module into HIR.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
     pub fn lower(
         map: &'a mut hir::map::Map,
         file: Arc<SourceFile>,
@@ -198,7 +210,7 @@ impl<'a> LowerModule<'a> {
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
         let mut lower = LowerModule::new(map, file, dcx);
-        lower.insert_implicit_imports()?;
+        lower.insert_implicit_imports();
 
         for expr in expressions {
             lower.top_level_expression(expr)?;
@@ -208,10 +220,10 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Adds implicit imports to the module.
-    fn insert_implicit_imports(&mut self) -> Result<()> {
+    fn insert_implicit_imports(&mut self) {
         let import_item = ast::Import::std(DEFAULT_STD_IMPORTS);
 
-        self.top_import(import_item)
+        self.top_import(import_item);
     }
 
     /// Converts the given value into an [`hir::ItemId`].
@@ -364,16 +376,22 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn top_namespace(&mut self, expr: ast::Namespace) -> Result<()> {
+    fn top_namespace(&mut self, expr: ast::Namespace) {
         self.namespace = self.identifier_path(expr.path);
-
-        Ok(())
     }
 
     fn top_level_expression(&mut self, expr: ast::TopLevelExpression) -> Result<()> {
         let hir_ast = match expr {
-            ast::TopLevelExpression::Import(i) => return self.top_import(*i),
-            ast::TopLevelExpression::Namespace(i) => return self.top_namespace(*i),
+            ast::TopLevelExpression::Import(i) => {
+                self.top_import(*i);
+
+                return Ok(());
+            }
+            ast::TopLevelExpression::Namespace(i) => {
+                self.top_namespace(*i);
+
+                return Ok(());
+            }
             ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
             ast::TopLevelExpression::Use(f) => self.def_use(*f)?,
@@ -390,8 +408,8 @@ impl<'a> LowerModule<'a> {
         Ok(())
     }
 
-    fn top_import(&mut self, expr: ast::Import) -> Result<()> {
-        for imported_name in &expr.names {
+    fn top_import(&mut self, expr: ast::Import) {
+        for imported_name in expr.names {
             let location = self.location(imported_name.location.clone());
 
             let imported_symbol_name = hir::SymbolName {
@@ -402,7 +420,5 @@ impl<'a> LowerModule<'a> {
 
             self.imports.insert(imported_name.name.clone(), imported_symbol_name);
         }
-
-        Ok(())
     }
 }
