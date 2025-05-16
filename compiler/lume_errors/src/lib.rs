@@ -1,7 +1,10 @@
 #![allow(clippy::arc_with_non_send_sync)]
 
-use error_snippet::{DiagnosticHandler, Handler, Renderer};
-use std::sync::{Arc, Mutex, MutexGuard};
+use error_snippet::{DiagnosticHandler, Handler, Renderer, SimpleDiagnostic};
+use std::sync::{
+    Arc, Mutex, MutexGuard,
+    atomic::{AtomicBool, Ordering},
+};
 
 /// Defines the different options for outputting diagnostics,
 /// once they've been drained from the the diagnostic context ([`DiagCtx`]).
@@ -14,6 +17,60 @@ pub enum DiagOutputFormat {
     Stubbed,
 }
 
+/// A struct for handling diagnostics.
+///
+/// The struct is only defined on [`DiagCtx`]-instances, and is only meant to
+/// be shared with handles created by them (via the [`DiagCtx::handle()`] and [`DiagCtx::with()`] methods).
+struct DiagCtxInner {
+    /// The inner handler for diagnostics, which holds all the
+    /// reporting diagnostics.
+    handler: DiagnosticHandler,
+
+    /// Defines whether the context has reported any errors upon draining
+    /// and should exit at the soonest possible convenience.
+    tainted: AtomicBool,
+}
+
+impl DiagCtxInner {
+    /// Creates a new [`DiagCtxInner`] instance using the given output format.
+    fn new(fmt: DiagOutputFormat) -> Self {
+        let renderer: Box<dyn Renderer + Send + Sync> = match fmt {
+            DiagOutputFormat::Graphical => Box::new(error_snippet::GraphicalRenderer::new()),
+            DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
+        };
+
+        let mut handler = error_snippet::DiagnosticHandler::with_renderer(renderer);
+
+        // If we drain an error to the handler, propagate the error count upwards, so
+        // we can handle it at a higher level, instead of exiting the application.
+        handler.exit_on_error();
+
+        DiagCtxInner {
+            handler,
+            tainted: AtomicBool::new(false),
+        }
+    }
+
+    /// Drains the currently reported errors in the context to the output buffer.
+    ///
+    /// For more information, read the documentation on [`DiagCtxHandle::drain()`].
+    fn drain(&mut self) {
+        let encountered_errors = match self.handler.drain() {
+            Ok(_) => return,
+            Err(error_snippet::DrainError::Fmt(e)) => panic!("{:?}", e),
+            Err(error_snippet::DrainError::CompoundError(cnt)) => cnt,
+        };
+
+        let message = format!("aborting due to {} previous errors", encountered_errors);
+        let abort_diag = Box::new(SimpleDiagnostic::new(message));
+
+        let _ = self.handler.report_and_drain(abort_diag);
+
+        // Mark the context as tainted.
+        self.tainted.store(true, Ordering::Release);
+    }
+}
+
 /// A context to deal with diagnostics, which is meant to
 /// be used throughout the entire lifespan of the compiler / driver
 /// process.
@@ -23,36 +80,30 @@ pub enum DiagOutputFormat {
 pub struct DiagCtx {
     /// The inner handler for diagnostics, which holds all the
     /// reporting diagnostics.
-    handler: Arc<Mutex<DiagnosticHandler>>,
+    inner: Arc<Mutex<DiagCtxInner>>,
 }
 
 impl DiagCtx {
     /// Creates a new [`DiagCtx`] instance using the given output format.
     pub fn new(fmt: DiagOutputFormat) -> Self {
-        let renderer: Box<dyn Renderer + Send + Sync> = match fmt {
-            DiagOutputFormat::Graphical => Box::new(error_snippet::GraphicalRenderer::new()),
-            DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
-        };
-
-        let mut handler = error_snippet::DiagnosticHandler::with_renderer(renderer);
-
-        // Ensure that the program doesn't continue executing after
-        // we've reported errors to the user.
-        //
-        // TODO: should be maybe propogate errors upward instead
-        //       of terminating the entire application?
-        handler.exit_on_error();
+        let inner = DiagCtxInner::new(fmt);
 
         DiagCtx {
-            handler: Arc::new(Mutex::new(handler)),
+            inner: Arc::new(Mutex::new(inner)),
         }
+    }
+
+    /// Retrives the instance of the parent [`DiagCtxInner`], which
+    /// is contained within the context.
+    fn handler(&self) -> MutexGuard<'_, DiagCtxInner> {
+        self.inner.lock().unwrap()
     }
 
     /// Create a handle for the diagnostic context, which can be
     /// used to emit diagnositcs to the inner context.
     pub fn handle(&mut self) -> DiagCtxHandle {
         DiagCtxHandle {
-            inner: Arc::clone(&self.handler),
+            inner: Arc::clone(&self.inner),
         }
     }
 
@@ -64,6 +115,54 @@ impl DiagCtx {
 
         f(handle)
     }
+
+    /// Determines whether the diagnostic context is tainted.
+    ///
+    /// The context can become tainted if one-or-more errors are reporting
+    /// during a drain to the parent handler. This does not include warnings or
+    /// sub-diagnostics.
+    ///
+    /// # Examples
+    ///
+    /// Using [`DiagCtx::with()`]:
+    /// ```
+    /// use error_snippet::SimpleDiagnostic;
+    /// use lume_errors::{DiagCtx, DiagOutputFormat};
+    ///
+    /// let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    ///
+    /// dcx.with(|mut handle| {
+    ///     let error = SimpleDiagnostic::new("An error occurred");
+    ///     handle.emit(error.into());
+    /// });
+    ///
+    /// assert_eq!(dcx.tainted(), true);
+    /// ```
+    ///
+    /// Errors emitted to the [`DiagCtxHandle`] handle are only drained when
+    /// calling the [`DiagCtxHandle::drain()`] method manually, or when the handle
+    /// is dropped. So, the following example will *not* taint the context:
+    /// ```
+    /// use error_snippet::SimpleDiagnostic;
+    /// use lume_errors::{DiagCtx, DiagOutputFormat};
+    ///
+    /// let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    /// let mut handle = dcx.handle();
+    ///
+    /// let error = SimpleDiagnostic::new("An error occurred");
+    /// handle.emit(error.into());
+    ///
+    /// // `handle` is not dropped, so no errors are drained!
+    /// assert_eq!(dcx.tainted(), false);
+    ///
+    /// // we can manually drain using [`DiagCtxHandle::drain()`] or
+    /// // simply drop the handle.
+    /// drop(handle);
+    /// assert_eq!(dcx.tainted(), true);
+    /// ```
+    pub fn tainted(&self) -> bool {
+        self.handler().tainted.load(Ordering::Acquire)
+    }
 }
 
 /// A handle to a parent [`DiagCtx`], which can be used in
@@ -74,8 +173,8 @@ impl DiagCtx {
 /// The handle acts as a mutable reference to it's parent [`DiagCtx`] instance,
 /// but will drain all errors to the output, once it's been dropped or manually drained.
 pub struct DiagCtxHandle {
-    /// Contains the parent [`DiagCtx`] handler.
-    inner: Arc<Mutex<DiagnosticHandler>>,
+    /// Contains the parent [`DiagCtxInner`] handler.
+    inner: Arc<Mutex<DiagCtxInner>>,
 }
 
 impl DiagCtxHandle {
@@ -85,9 +184,9 @@ impl DiagCtxHandle {
         DiagCtx::new(DiagOutputFormat::Stubbed).handle()
     }
 
-    /// Retrives the instance of the parent [`DiagnosticHandler`], which
+    /// Retrives the instance of the parent [`DiagCtxInner`], which
     /// is contained within the handle.
-    fn handler(&mut self) -> MutexGuard<'_, DiagnosticHandler> {
+    fn handler(&self) -> MutexGuard<'_, DiagCtxInner> {
         self.inner.lock().unwrap()
     }
 
@@ -96,8 +195,25 @@ impl DiagCtxHandle {
     /// Depending on the severity of the error, it might cause the
     /// execution of the program to halt (e.g. fatal errors, bugs, etc.), but
     /// most would simply be reporting until drained from the context.
+    #[track_caller]
     pub fn emit(&mut self, diagnostic: error_snippet::Error) {
-        self.handler().report(diagnostic);
+        self.handler().handler.report(diagnostic);
+    }
+
+    /// Drains the currently reported errors in the context to the output buffer.
+    ///
+    /// If any reported diagnostics have a severity at or above [`error_snippet::Severity::Error`],
+    /// they will be counted towards a [`error_snippet::DrainError::CompoundError`], which will be
+    /// raised when draining has finished.
+    pub fn drain(&mut self) {
+        self.handler().drain();
+    }
+
+    /// Determines whether the diagnostic context is tainted.
+    ///
+    /// For more information, read the documentation on [`DiagCtx::tainted()`].
+    pub fn tainted(&self) -> bool {
+        self.handler().tainted.load(Ordering::Acquire)
     }
 }
 
@@ -106,7 +222,7 @@ unsafe impl Sync for DiagCtxHandle {}
 
 impl Drop for DiagCtxHandle {
     fn drop(&mut self) {
-        self.handler().drain().unwrap()
+        self.drain();
     }
 }
 
