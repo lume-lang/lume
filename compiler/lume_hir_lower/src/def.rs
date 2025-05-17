@@ -1,8 +1,10 @@
 use error_snippet::Result;
 
-use crate::{self as hir, lower::LowerModule};
-use crate::{SELF_TYPE_NAME, errors::*};
+use crate::LowerModule;
+use crate::errors::*;
+
 use lume_ast::{self as ast};
+use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
     pub(super) fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<hir::Symbol> {
@@ -352,9 +354,9 @@ impl LowerModule<'_> {
     }
 }
 
-fn lower_visibility(expr: &ast::Visibility) -> hir::Visibility {
+fn lower_visibility(expr: &ast::Visibility) -> lume_types::Visibility {
     match expr {
-        ast::Visibility::Public { .. } => hir::Visibility::Public,
-        ast::Visibility::Private { .. } => hir::Visibility::Private,
+        ast::Visibility::Public { .. } => lume_types::Visibility::Public,
+        ast::Visibility::Private { .. } => lume_types::Visibility::Private,
     }
 }

@@ -1,7 +1,8 @@
+use crate::LowerModule;
 use error_snippet::Result;
 
-use crate::{self as hir, lower::LowerModule};
 use lume_ast::{self as ast};
+use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.

@@ -76,8 +76,8 @@ impl SymbolTableEntry {
 ///
 /// Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
 /// which was called before `a` was declared.
-#[derive(Debug, Clone, PartialEq)]
-pub(crate) struct SymbolTable {
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct SymbolTable {
     /// Defines all the entries within the table, ordered by the declaration order.
     symbols: Vec<SymbolTableEntry>,
 }
@@ -85,7 +85,7 @@ pub(crate) struct SymbolTable {
 impl SymbolTable {
     /// Creates a new symbol table, without any content.
     pub fn new() -> Self {
-        let mut table = Self { symbols: Vec::new() };
+        let mut table = Self::default();
 
         // The first frame functions as a global scope, so it should always be present.
         table.push_frame();
@@ -107,14 +107,14 @@ impl SymbolTable {
     /// Appends a new frame to the current symbol scope.
     ///
     /// This is usually called when a function is invoked or block scope starts.
-    pub(crate) fn push_frame(&mut self) {
+    pub fn push_frame(&mut self) {
         self.symbols.push(SymbolTableEntry::symbol());
     }
 
     /// Pops the current symbol scope from the symbol table.
     ///
     /// This is usually called when a function or block scope ends.
-    pub(crate) fn pop_frame(&mut self) {
+    pub fn pop_frame(&mut self) {
         // The last frame is the global scope and cannot be popped.
         if self.symbols.len() == 1 {
             return;
@@ -126,7 +126,8 @@ impl SymbolTable {
     /// Appends a new named symbol to the current symbol scope.
     ///
     /// This is usually called when a new variable is introduced within an existing block scope.
-    pub(crate) fn define(&mut self, decl: VariableDeclaration) {
+    #[expect(clippy::missing_panics_doc, reason = "infallible")]
+    pub fn define(&mut self, decl: VariableDeclaration) {
         if let SymbolTableEntry::Frame(frame) = self.symbols.last_mut().unwrap() {
             frame.entries.insert(decl.name.name.clone(), decl);
         }
@@ -138,7 +139,7 @@ impl SymbolTable {
     /// To retrieve the symbol, the table will iterate, in reverse order, up until a symbol with the same
     /// name is found, inside of the current scope. If the iterator reaches a boundary, it will stop searching
     /// for local symbols and continue searching in the global scope.
-    pub(crate) fn retrieve(&self, name: &str) -> Option<&VariableDeclaration> {
+    pub fn retrieve(&self, name: &str) -> Option<&VariableDeclaration> {
         if let Some(symbol) = self.retrieve_scoped(name) {
             return Some(symbol);
         }
@@ -151,7 +152,7 @@ impl SymbolTable {
     }
 
     /// Push a new boundary onto the symbol table, scoping it to only newly added symbols.
-    pub(crate) fn push_boundary(&mut self) {
+    pub fn push_boundary(&mut self) {
         self.symbols.push(SymbolTableEntry::boundary());
 
         // Push a new frame onto the stack, so new symbols can be registered.
@@ -159,7 +160,7 @@ impl SymbolTable {
     }
 
     /// Pops a boundary off the symbol table, removing all symbols added since the last boundary.
-    pub(crate) fn pop_boundary(&mut self) {
+    pub fn pop_boundary(&mut self) {
         // Pops the symbol frame off the stack.
         self.pop_frame();
 

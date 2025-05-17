@@ -5,16 +5,16 @@ use crate::*;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Map {
     /// Defines which package this map belongs to.
-    pub(crate) package: PackageId,
+    pub package: PackageId,
 
     /// Defines all the top-level items within the module.
     pub items: IndexMap<ItemId, Symbol>,
 
     /// Defines all the local statements within the current scope.
-    pub(crate) statements: IndexMap<StatementId, Statement>,
+    pub statements: IndexMap<StatementId, Statement>,
 
     /// Defines all the local expressions within the current scope.
-    pub(crate) expressions: IndexMap<ExpressionId, Expression>,
+    pub expressions: IndexMap<ExpressionId, Expression>,
 }
 
 impl Map {

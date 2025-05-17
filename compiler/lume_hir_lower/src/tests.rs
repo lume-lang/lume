@@ -5,7 +5,7 @@ use lume_span::PackageId;
 use super::*;
 
 #[track_caller]
-fn lower(input: &str) -> Result<hir::map::Map> {
+fn lower(input: &str) -> Result<Map> {
     let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
     let mut state = lume_state::State::new(dcx);
@@ -15,7 +15,7 @@ fn lower(input: &str) -> Result<hir::map::Map> {
     let expressions = Parser::parse_src(&mut state, source.id).unwrap();
 
     let module_id = PackageId::empty();
-    let mut map = hir::map::Map::empty(module_id);
+    let mut map = Map::empty(module_id);
 
     LowerModule::lower(&mut map, source, state.dcx_mut().handle(), expressions)?;
 
@@ -23,7 +23,7 @@ fn lower(input: &str) -> Result<hir::map::Map> {
 }
 
 #[track_caller]
-fn lower_expr(input: &str) -> Result<Vec<hir::Statement>> {
+fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
     let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
     let mut state = lume_state::State::new(dcx);
@@ -36,7 +36,7 @@ fn lower_expr(input: &str) -> Result<Vec<hir::Statement>> {
     let statements = parser.parse_statements()?;
 
     let module_id = PackageId::empty();
-    let mut map = hir::map::Map::empty(module_id);
+    let mut map = Map::empty(module_id);
     let mut lower = LowerModule::new(&mut map, source, state.dcx_mut().handle());
 
     Ok(lower.statements(statements))

@@ -1,5 +1,7 @@
-use crate::{self as hir, lower::LowerModule};
+use crate::LowerModule;
+
 use lume_ast::{self as ast};
+use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     pub(super) fn literal(&mut self, expr: ast::Literal) -> hir::Literal {
