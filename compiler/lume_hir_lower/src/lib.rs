@@ -3,14 +3,16 @@ use std::sync::Arc;
 
 use arc::Project;
 use error_snippet::Result;
+use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
+use lume_hir::map::Map;
+use lume_hir::stdlib::Assets;
+use lume_hir::symbols::*;
 use lume_parser::Parser;
 use lume_span::{Location, SourceFile, hash_id};
-use lume_types::SymbolName;
+use lume_types::{Identifier, SymbolName};
 
-use crate::stdlib::Assets;
-use crate::{self as hir};
-use lume_ast::{self as ast};
+mod errors;
 
 mod def;
 mod expr;
@@ -89,7 +91,7 @@ impl<'a> LowerState<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
-    pub fn lower(project: &'a Project, state: &'a mut lume_state::State) -> Result<hir::map::Map> {
+    pub fn lower(project: &'a Project, state: &'a mut lume_state::State) -> Result<Map> {
         let mut lower = LowerState::new(project, state);
 
         lower.lower_into()
@@ -100,9 +102,9 @@ impl<'a> LowerState<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
-    pub fn lower_into(&mut self) -> Result<hir::map::Map> {
+    pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
-        let mut hir = hir::map::Map::empty(self.project.id);
+        let mut lume_hir = Map::empty(self.project.id);
 
         // Read all the sources files before parsing, so if any of them
         // are inaccessible, we don't waste effort parsing them.
@@ -118,10 +120,10 @@ impl<'a> LowerState<'a> {
             // Lowers the parsed module expressions down to HIR.
             self.state
                 .dcx_mut()
-                .with(|handle| LowerModule::lower(&mut hir, source_file, handle, expressions))?;
+                .with(|handle| LowerModule::lower(&mut lume_hir, source_file, handle, expressions))?;
         }
 
-        Ok(hir)
+        Ok(lume_hir)
     }
 
     /// Gets all the source files to include in the compilation.
@@ -129,7 +131,7 @@ impl<'a> LowerState<'a> {
         let package_id = self.project.id;
 
         // Add all the source files within the standard library.
-        let mut sources_files = Assets::as_sources(package_id)?;
+        let mut sources_files = Assets::as_sources(package_id);
 
         // As well as all the files within the project itself
         let project_file_names = self.project.files()?;
@@ -161,16 +163,16 @@ pub struct LowerModule<'a> {
     dcx: DiagCtxHandle,
 
     /// Defines the type map to register types to.
-    map: &'a mut hir::map::Map,
+    map: &'a mut Map,
 
     /// Defines all the local symbols within the current scope.
-    locals: hir::symbols::SymbolTable,
+    locals: SymbolTable,
 
     /// Mapping between all imported items and their corresponding item IDs.
-    imports: HashMap<String, hir::SymbolName>,
+    imports: HashMap<String, SymbolName>,
 
     /// Defines the currently containing namespace expressions exist within, if any.
-    namespace: hir::NamespacePath,
+    namespace: lume_types::NamespacePath,
 
     /// Defines the currently containing class expressions exist within, if any.
     self_type: Option<SymbolName>,
@@ -184,14 +186,14 @@ pub struct LowerModule<'a> {
 
 impl<'a> LowerModule<'a> {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &mut hir::map::Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule {
+    pub fn new(map: &mut Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule {
         LowerModule {
             file,
             map,
             dcx,
-            locals: hir::symbols::SymbolTable::new(),
+            locals: SymbolTable::new(),
             imports: HashMap::new(),
-            namespace: hir::NamespacePath::empty(),
+            namespace: lume_types::NamespacePath::empty(),
             self_type: None,
             local_id_counter: 0,
             impl_id_counter: 0,
@@ -204,7 +206,7 @@ impl<'a> LowerModule<'a> {
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
     pub fn lower(
-        map: &'a mut hir::map::Map,
+        map: &'a mut Map,
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<ast::TopLevelExpression>,
@@ -226,17 +228,17 @@ impl<'a> LowerModule<'a> {
         self.top_import(import_item);
     }
 
-    /// Converts the given value into an [`hir::ItemId`].
-    fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> hir::ItemId {
+    /// Converts the given value into an [`lume_hir::ItemId`].
+    fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> lume_hir::ItemId {
         let id = hash_id(&value);
 
-        hir::ItemId(self.map.package, id)
+        lume_hir::ItemId(self.map.package, id)
     }
 
-    /// Converts the given value into an [`hir::ItemId`].
+    /// Converts the given value into an [`lume_hir::ItemId`].
     ///
     /// Since implementations often use the parent type as the hash value,
-    /// there *will* be key collisions where an implementation will get the same [`hir::ItemId`]
+    /// there *will* be key collisions where an implementation will get the same [`lume_hir::ItemId`]
     /// as the parent type, which would override the original type. So, the given Lume file:
     ///
     /// ```lm
@@ -246,51 +248,51 @@ impl<'a> LowerModule<'a> {
     /// // also uses `Foo` as it's hash value (!!!)
     /// impl Foo {}
     /// ```
-    fn impl_id<T: std::hash::Hash + Sized>(&mut self, value: T) -> hir::ItemId {
+    fn impl_id<T: std::hash::Hash + Sized>(&mut self, value: T) -> lume_hir::ItemId {
         let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
 
         self.impl_id_counter += 1;
 
-        hir::ItemId(self.map.package, id)
+        lume_hir::ItemId(self.map.package, id)
     }
 
-    /// Generates the next [`hir::NodeId`] instance in the chain.
+    /// Generates the next [`lume_hir::NodeId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
-    fn next_expr_id(&mut self) -> hir::ExpressionId {
+    fn next_expr_id(&mut self) -> lume_hir::ExpressionId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::ExpressionId(self.map.package, hir::LocalId(id))
+        lume_hir::ExpressionId(self.map.package, lume_hir::LocalId(id))
     }
 
-    /// Generates the next [`hir::NodeId`] instance in the chain.
+    /// Generates the next [`lume_hir::NodeId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
-    fn next_stmt_id(&mut self) -> hir::StatementId {
+    fn next_stmt_id(&mut self) -> lume_hir::StatementId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
 
-        hir::StatementId(self.map.package, hir::LocalId(id))
+        lume_hir::StatementId(self.map.package, lume_hir::LocalId(id))
     }
 
-    /// Gets the [`hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, path: &ast::Path) -> hir::SymbolName {
+    /// Gets the [`lume_hir::SymbolName`] for the item with the given name.
+    fn resolve_symbol_name(&self, path: &ast::Path) -> SymbolName {
         if let Some(symbol) = self.resolve_imported_symbol(path) {
             return symbol.clone();
         }
 
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
-        hir::SymbolName {
+        SymbolName {
             namespace: self.identifier_path(path.root.clone()),
             name: self.identifier(path.name.clone()),
             location: self.location(path.location.clone()),
         }
     }
 
-    /// Attemps to resolve a [`hir::SymbolName`] for an imported symbol.
-    fn resolve_imported_symbol(&self, path: &ast::Path) -> Option<hir::SymbolName> {
+    /// Attemps to resolve a [`lume_hir::SymbolName`] for an imported symbol.
+    fn resolve_imported_symbol(&self, path: &ast::Path) -> Option<SymbolName> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported path.
             //
@@ -343,30 +345,30 @@ impl<'a> LowerModule<'a> {
         None
     }
 
-    fn symbol_name(&self, name: ast::Identifier) -> hir::SymbolName {
+    fn symbol_name(&self, name: ast::Identifier) -> SymbolName {
         let location = self.location(name.location.clone());
 
-        hir::SymbolName {
+        SymbolName {
             name: self.identifier(name),
             namespace: self.namespace.clone(),
             location,
         }
     }
 
-    fn identifier(&self, expr: ast::Identifier) -> hir::Identifier {
+    fn identifier(&self, expr: ast::Identifier) -> Identifier {
         let location = self.location(expr.location.clone());
 
-        hir::Identifier {
+        lume_types::Identifier {
             name: expr.name,
             location,
         }
     }
 
-    fn identifier_path(&self, expr: ast::NamespacePath) -> hir::NamespacePath {
+    fn identifier_path(&self, expr: ast::NamespacePath) -> lume_types::NamespacePath {
         let location = self.location(expr.location.clone());
         let path = expr.path.into_iter().map(|p| self.identifier(p)).collect::<Vec<_>>();
 
-        hir::NamespacePath { path, location }
+        lume_types::NamespacePath { path, location }
     }
 
     fn location(&self, expr: ast::Location) -> Location {
@@ -412,7 +414,7 @@ impl<'a> LowerModule<'a> {
         for imported_name in expr.names {
             let location = self.location(imported_name.location.clone());
 
-            let imported_symbol_name = hir::SymbolName {
+            let imported_symbol_name = SymbolName {
                 name: self.identifier(imported_name.clone()),
                 namespace: self.identifier_path(expr.path.clone()),
                 location,

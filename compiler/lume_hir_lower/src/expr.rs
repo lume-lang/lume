@@ -1,11 +1,12 @@
 use error_snippet::Result;
 
+use crate::LowerModule;
+use crate::err;
 use crate::errors::*;
-use crate::lower::{
-    ARRAY_STD_TYPE, ARRAY_WITH_CAPACITY_FUNC, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE,
-};
-use crate::{self as hir, err, lower::LowerModule};
+use crate::{ARRAY_STD_TYPE, ARRAY_WITH_CAPACITY_FUNC, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE};
+
 use lume_ast::{self as ast, Node};
+use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Vec<hir::Expression> {
@@ -65,7 +66,7 @@ impl LowerModule<'_> {
                 id,
                 name: self.resolve_symbol_name(&array_path),
                 type_arguments: vec![hir::TypeArgument::Implicit {
-                    location: hir::Location::empty(),
+                    location: lume_span::Location::empty(),
                 }],
                 arguments: vec![hir::Expression {
                     id: self.next_expr_id(),
@@ -76,9 +77,9 @@ impl LowerModule<'_> {
                             value: usize::cast_signed(expr.values.len()) as i64,
                             kind: hir::IntKind::U64,
                         })),
-                        location: hir::Location::empty(),
+                        location: lume_span::Location::empty(),
                     })),
-                    location: hir::Location::empty(),
+                    location: lume_span::Location::empty(),
                 }],
             })),
         }
@@ -181,7 +182,7 @@ impl LowerModule<'_> {
                 id,
                 name: self.resolve_symbol_name(&range_type),
                 type_arguments: vec![hir::TypeArgument::Implicit {
-                    location: hir::Location::empty(),
+                    location: lume_span::Location::empty(),
                 }],
                 arguments: vec![lower, upper],
             })),

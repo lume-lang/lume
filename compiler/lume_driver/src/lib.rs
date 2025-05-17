@@ -90,7 +90,7 @@ impl Driver {
 
     /// Parses all the modules within the given state object.
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        lume_hir::lower::LowerState::lower(&self.opts.project, &mut self.state)
+        lume_hir_lower::LowerState::lower(&self.opts.project, &mut self.state)
     }
 
     /// Type checks all the given source files.

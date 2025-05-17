@@ -311,6 +311,7 @@ dependencies = [
  "error_snippet_derive",
  "lume_errors",
  "lume_hir",
+ "lume_hir_lower",
  "lume_span",
  "lume_state",
  "lume_typech",
@@ -342,6 +343,23 @@ dependencies = [
  "lume_state",
  "lume_types",
  "rust-embed",
+]
+
+[[package]]
+name = "lume_hir_lower"
+version = "0.1.0"
+dependencies = [
+ "arc",
+ "error_snippet",
+ "error_snippet_derive",
+ "insta",
+ "lume_ast",
+ "lume_errors",
+ "lume_hir",
+ "lume_parser",
+ "lume_span",
+ "lume_state",
+ "lume_types",
 ]
 
 [[package]]

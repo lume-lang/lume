@@ -1,10 +1,12 @@
 use error_snippet::Result;
 use lume_types::SymbolName;
 
+use crate::ARRAY_STD_TYPE;
+use crate::LowerModule;
 use crate::errors::*;
-use crate::lower::{ARRAY_STD_TYPE, LowerModule};
-use crate::{self as hir, SELF_TYPE_NAME};
+
 use lume_ast::{self as ast};
+use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
     pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
@@ -85,7 +87,7 @@ impl LowerModule<'_> {
         Ok(hir::Type {
             name: SymbolName::from_parts(["std"], name),
             type_params,
-            location: hir::Location::empty(),
+            location: lume_span::Location::empty(),
         })
     }
 }

@@ -1,7 +1,9 @@
 use error_snippet::Result;
 
-use crate::{self as hir, lower::LowerModule};
+use crate::LowerModule;
+
 use lume_ast::{self as ast, Node};
+use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<Vec<hir::TypeParameter>> {

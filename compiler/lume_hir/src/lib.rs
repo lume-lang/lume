@@ -1,15 +1,12 @@
 use lume_macros::Node;
 use lume_span::{Location, PackageId, hash_id};
 use lume_types::{
-    FunctionId, Identifier, ImplId, MethodId, NamespacePath, PropertyId, SymbolName, TypeId, TypeParameterId,
-    Visibility,
+    FunctionId, Identifier, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility,
 };
 
-mod errors;
-pub mod lower;
 pub mod map;
-mod stdlib;
-pub(crate) mod symbols;
+pub mod stdlib;
+pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
 
