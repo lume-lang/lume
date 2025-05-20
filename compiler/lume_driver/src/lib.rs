@@ -3,7 +3,7 @@ use std::path::Path;
 use arc::Project;
 use error_snippet::Result;
 use lume_errors::{DiagCtx, DiagOutputFormat};
-use lume_state::State;
+use lume_span::SourceMap;
 
 pub(crate) struct Options {
     /// Defines the structure of the Arcfile within the project.
@@ -21,8 +21,11 @@ pub struct Driver {
     /// Defines the current stage of the compilation process.
     pub(crate) opts: Options,
 
-    /// Defines the current build context.
-    pub(crate) state: State,
+    /// Defines the diagnostics handler context.
+    pub(crate) dcx: DiagCtx,
+
+    /// Defines the global source map for all source files.
+    pub(crate) source_map: SourceMap,
 }
 
 #[allow(dead_code)]
@@ -33,7 +36,8 @@ impl Driver {
 
         Driver {
             opts,
-            state: State::new(dcx),
+            dcx,
+            source_map: SourceMap::default(),
         }
     }
 
@@ -90,12 +94,14 @@ impl Driver {
 
     /// Parses all the modules within the given state object.
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        lume_hir_lower::LowerState::lower(&self.opts.project, &mut self.state)
+        let dcx = self.dcx.handle();
+        lume_hir_lower::LowerState::lower(&self.opts.project, &mut self.source_map, dcx)
     }
 
     /// Type checks all the given source files.
-    fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx<'_>> {
-        let mut thir_ctx = lume_typech::ThirBuildCtx::new(&mut self.state);
+    fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
+        let dcx = self.dcx.handle();
+        let mut thir_ctx = lume_typech::ThirBuildCtx::new(dcx);
 
         // Defines the types of all nodes within the HIR maps.
         thir_ctx.define_types(&mut hir)?;
