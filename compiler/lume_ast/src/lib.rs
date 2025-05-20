@@ -1,6 +1,6 @@
 use lume_macros::Node;
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Location(pub std::ops::Range<usize>);
 
 impl Location {
@@ -39,7 +39,7 @@ pub trait Node {
     fn location(&self) -> &Location;
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, Eq)]
+#[derive(Node, Debug, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
@@ -130,7 +130,7 @@ impl PartialEq for NamespacePath {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub struct Path {
     pub name: Identifier,
     pub root: NamespacePath,
@@ -168,7 +168,7 @@ impl std::fmt::Display for Path {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
     pub location: Location,
@@ -183,30 +183,30 @@ impl Block {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Visibility {
     Public(Box<Public>),
     Private(Box<Private>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Public {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Private {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum TopLevelExpression {
     Import(Box<Import>),
     Namespace(Box<Namespace>),
@@ -216,7 +216,7 @@ pub enum TopLevelExpression {
     Use(Box<UseTrait>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Import {
     pub path: NamespacePath,
     pub names: Vec<Identifier>,
@@ -258,13 +258,13 @@ impl Import {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Namespace {
     pub path: NamespacePath,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -277,7 +277,7 @@ pub struct FunctionDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
@@ -297,7 +297,7 @@ impl TypeDefinition {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub name: Identifier,
     pub builtin: bool,
@@ -307,7 +307,7 @@ pub struct StructDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Property {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -317,7 +317,7 @@ pub struct Property {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -330,7 +330,7 @@ pub struct MethodDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,
@@ -339,7 +339,7 @@ pub struct TraitDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -351,7 +351,7 @@ pub struct TraitMethodDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
@@ -365,7 +365,7 @@ impl std::fmt::Display for EnumDefinition {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub name: Identifier,
     pub parameters: Vec<Box<Type>>,
@@ -379,7 +379,7 @@ impl std::fmt::Display for EnumDefinitionCase {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct AliasDefinition {
     pub name: Identifier,
     pub definition: Box<Type>,
@@ -393,7 +393,7 @@ impl std::fmt::Display for AliasDefinition {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub visibility: Visibility,
     pub name: Box<Type>,
@@ -402,7 +402,7 @@ pub struct Implementation {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct UseTrait {
     pub name: Box<Type>,
     pub target: Box<Type>,
@@ -410,7 +410,7 @@ pub struct UseTrait {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -421,7 +421,7 @@ pub struct TraitMethodImplementation {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
     Break(Box<Break>),
@@ -435,7 +435,7 @@ pub enum Statement {
     Expression(Box<Expression>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
@@ -443,48 +443,48 @@ pub struct VariableDeclaration {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Break {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Return {
     pub value: Option<Expression>,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct IfCondition {
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct UnlessCondition {
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Condition {
     pub condition: Option<Expression>,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub pattern: Identifier,
     pub collection: Expression,
@@ -492,14 +492,14 @@ pub struct IteratorLoop {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct PredicateLoop {
     pub condition: Expression,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
@@ -510,20 +510,20 @@ pub enum Expression {
     Variable(Box<Variable>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Array {
     pub values: Vec<Expression>,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub target: Expression,
     pub value: Expression,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Call {
     pub callee: Option<Expression>,
     pub name: Path,
@@ -532,7 +532,7 @@ pub struct Call {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Literal {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -540,14 +540,14 @@ pub enum Literal {
     Boolean(Box<BooleanLiteral>),
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub value: i64,
     pub location: Location,
     pub kind: IntKind,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum IntKind {
     I8,
     U8,
@@ -559,39 +559,39 @@ pub enum IntKind {
     U64,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
     pub value: f64,
     pub location: Location,
     pub kind: FloatKind,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum FloatKind {
     F32,
     F64,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
     pub value: String,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub value: bool,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Member {
     pub callee: Expression,
     pub name: String,
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct Range {
     pub lower: Expression,
     pub upper: Expression,
@@ -599,7 +599,7 @@ pub struct Range {
     pub location: Location,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Variable {
     pub name: Identifier,
 }
@@ -610,7 +610,7 @@ impl Node for Variable {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub constraints: Vec<Box<Type>>,
@@ -622,7 +622,7 @@ impl Node for TypeParameter {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TypeArgument {
     pub ty: Type,
 }
@@ -633,7 +633,7 @@ impl Node for TypeArgument {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
@@ -661,7 +661,7 @@ impl std::fmt::Display for Type {
     }
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ScalarType {
     pub name: Path,
 }
@@ -678,7 +678,7 @@ impl std::fmt::Display for ScalarType {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
     pub location: Location,
@@ -690,7 +690,7 @@ impl std::fmt::Display for ArrayType {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct GenericType {
     pub name: Path,
     pub type_params: Vec<Box<Type>>,
@@ -715,7 +715,7 @@ impl std::fmt::Display for GenericType {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq)]
 pub struct SelfType {
     pub location: Location,
 }

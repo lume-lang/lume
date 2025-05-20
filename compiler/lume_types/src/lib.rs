@@ -204,14 +204,14 @@ pub enum Visibility {
     Public,
 }
 
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
     pub idx: usize,
     pub name: String,
     pub ty: TypeRef,
 }
 
-#[derive(serde::Serialize, Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Parameters {
     pub params: Vec<Parameter>,
 }
@@ -246,7 +246,7 @@ impl Parameters {
 ///
 /// While the type infers that it's only applicable for functions, this structure
 /// is also used for methods.
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
     pub type_params: &'a [TypeParameterId],
@@ -602,7 +602,7 @@ pub enum TypeKind {
     Void,
 }
 
-#[derive(serde::Serialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeTransport {
     /// The type is fully copied when passed as an argument or returned from a function.
     Copy,

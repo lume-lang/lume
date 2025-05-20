@@ -13,7 +13,6 @@ lume_state = { path = "../lume_state" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-serde = { version = "1.0.219", features = ["serde_derive"] }
 
 [dev-dependencies]
 insta = { version = "1.42.2", features = ["yaml"] }
