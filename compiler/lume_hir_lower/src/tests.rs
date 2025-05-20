@@ -6,29 +6,23 @@ use super::*;
 
 #[track_caller]
 fn lower(input: &str) -> Result<Map> {
-    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
-    let mut state = lume_state::State::new(dcx);
 
-    state.source_map.insert(source.clone());
-
-    let expressions = Parser::parse_src(&mut state, source.id).unwrap();
+    let expressions = dcx.with(|handle| Parser::new(source.clone(), handle)).parse().unwrap();
 
     let module_id = PackageId::empty();
     let mut map = Map::empty(module_id);
 
-    LowerModule::lower(&mut map, source, state.dcx_mut().handle(), expressions)?;
+    LowerModule::lower(&mut map, source, dcx.handle(), expressions)?;
 
     Ok(map)
 }
 
 #[track_caller]
 fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
-    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
-    let mut state = lume_state::State::new(dcx);
-
-    state.source_map.insert(source.clone());
 
     let mut parser = Parser::new_with_str(input);
     parser.prepare()?;
@@ -37,7 +31,7 @@ fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
 
     let module_id = PackageId::empty();
     let mut map = Map::empty(module_id);
-    let mut lower = LowerModule::new(&mut map, source, state.dcx_mut().handle());
+    let mut lower = LowerModule::new(&mut map, source, dcx.handle());
 
     Ok(lower.statements(statements))
 }

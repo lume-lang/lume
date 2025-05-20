@@ -11,8 +11,6 @@ lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
 lume_parser = { path = "../lume_parser" }
 lume_span = { path = "../lume_span" }
-lume_state = { path = "../lume_state" }
-lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

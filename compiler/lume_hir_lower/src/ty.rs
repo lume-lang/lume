@@ -1,12 +1,11 @@
 use error_snippet::Result;
-use lume_types::SymbolName;
 
 use crate::ARRAY_STD_TYPE;
 use crate::LowerModule;
 use crate::errors::*;
 
 use lume_ast::{self as ast};
-use lume_hir::{self as hir, SELF_TYPE_NAME};
+use lume_hir::{self as hir, SELF_TYPE_NAME, SymbolName};
 
 impl LowerModule<'_> {
     pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
@@ -28,8 +27,10 @@ impl LowerModule<'_> {
     fn type_scalar(&self, expr: ast::ScalarType) -> hir::Type {
         let name = self.resolve_symbol_name(&expr.name);
         let location = self.location(expr.name.location);
+        let id = self.item_id(&name);
 
         hir::Type {
+            id,
             name,
             type_params: Vec::new(),
             location,
@@ -43,6 +44,7 @@ impl LowerModule<'_> {
     fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
         let location = self.location(expr.location);
         let name = self.resolve_symbol_name(&expr.name);
+        let id = self.item_id(&name);
 
         let type_params = expr
             .type_params
@@ -51,6 +53,7 @@ impl LowerModule<'_> {
             .collect::<Result<Vec<hir::Type>>>()?;
 
         Ok(hir::Type {
+            id,
             name,
             type_params: type_params.into_iter().map(Box::new).collect(),
             location,
@@ -71,7 +74,10 @@ impl LowerModule<'_> {
             }
         };
 
+        let id = self.item_id(&name);
+
         Ok(hir::Type {
+            id,
             name,
             type_params: Vec::new(),
             location,
@@ -79,13 +85,16 @@ impl LowerModule<'_> {
     }
 
     fn type_std(&self, name: &str, type_params: Vec<ast::Type>) -> Result<hir::Type> {
+        let id = self.item_id(name);
+
         let type_params = type_params
             .into_iter()
             .map(|ty| Ok(Box::new(self.type_ref(ty)?)))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(hir::Type {
-            name: SymbolName::from_parts(["std"], name),
+            id,
+            name: SymbolName::from_parts(Some(["std"]), name),
             type_params,
             location: lume_span::Location::empty(),
         })

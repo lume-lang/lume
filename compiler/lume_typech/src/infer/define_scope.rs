@@ -1,6 +1,5 @@
 use error_snippet::Result;
-use lume_hir::{TypeParameter, WithTypeParameters};
-use lume_types::{FunctionId, MethodId, TypeId};
+use lume_hir::{FunctionId, MethodId, TypeId, TypeParameter, WithTypeParameters};
 
 use crate::{ThirBuildCtx, check::TypeCheckerPass};
 
@@ -66,12 +65,12 @@ impl<'a> ItemScope<'a> {
     }
 }
 
-pub(super) struct ScopeVisitor<'a, 'b> {
+pub(super) struct ScopeVisitor<'a> {
     hir: &'a lume_hir::map::Map,
-    tcx: &'a mut ThirBuildCtx<'b>,
+    tcx: &'a mut ThirBuildCtx,
 }
 
-impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a, '_> {
+impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a> {
     fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in hir.items() {
             ScopeVisitor { hir, tcx }.visit(symbol)?;
@@ -81,7 +80,7 @@ impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a, '_> {
     }
 }
 
-impl ScopeVisitor<'_, '_> {
+impl ScopeVisitor<'_> {
     fn visit(&mut self, symbol: &lume_hir::Symbol) -> Result<()> {
         match symbol {
             lume_hir::Symbol::Type(ty) => match &**ty {

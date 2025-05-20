@@ -3,12 +3,12 @@ use lume_types::*;
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineTypes<'a, 'b> {
-    ctx: &'a mut ThirBuildCtx<'b>,
+pub(super) struct DefineTypes<'a> {
+    ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineTypes<'_, '_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
+impl DefineTypes<'_> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) {
         let mut define = DefineTypes { ctx };
 
         define.run(hir);
@@ -29,33 +29,33 @@ impl DefineTypes<'_, '_> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
-                let kind = TypeKind::Struct(Box::new(Struct::new(name.clone())));
-                let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
+                let kind = TypeKind::Struct(Box::new(Struct::new(struct_def.as_ref())));
+                let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 struct_def.type_id = Some(type_id);
 
                 if struct_def.builtin {
-                    type_id.set_copied(self.ctx.tcx_mut());
+                    self.ctx.tcx_mut().type_mut(type_id).unwrap().transport = TypeTransport::Copy;
                 }
             }
             lume_hir::TypeDefinition::Alias(alias) => {
                 let name = alias.name.clone();
-                let kind = TypeKind::Alias(Box::new(Alias::new(name.clone())));
-                let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
+                let kind = TypeKind::Alias(Box::new(Alias::new(alias.as_ref())));
+                let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 alias.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
-                let kind = TypeKind::Trait(Box::new(Trait::new(name.clone())));
-                let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
+                let kind = TypeKind::Trait(Box::new(Trait::new(trait_def.as_ref())));
+                let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
-                let kind = TypeKind::Enum(Box::new(Enum::new(name.clone())));
-                let type_id = Type::alloc(self.ctx.tcx_mut(), name, kind);
+                let kind = TypeKind::Enum(Box::new(Enum::new(enum_def.as_ref())));
+                let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 enum_def.type_id = Some(type_id);
             }
@@ -64,7 +64,7 @@ impl DefineTypes<'_, '_> {
 
     fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) {
         let target = implementation.target.name.clone();
-        let impl_id = Implementation::alloc(self.ctx.tcx_mut(), target);
+        let impl_id = self.ctx.tcx_mut().impl_alloc(target);
 
         implementation.impl_id = Some(impl_id);
     }
@@ -72,8 +72,8 @@ impl DefineTypes<'_, '_> {
     fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) {
         let name = func.name.clone();
         let visibility = func.visibility;
-        let type_id = Function::alloc(self.ctx.tcx_mut(), name, visibility);
+        let func_id = self.ctx.tcx_mut().func_alloc(name, visibility);
 
-        func.func_id = Some(type_id);
+        func.func_id = Some(func_id);
     }
 }

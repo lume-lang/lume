@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 error_snippet = { workspace = true }
+error_snippet_derive = { workspace = true }
 fxhash = "^0.2"
 indexmap = { version = "^2.9" }
 

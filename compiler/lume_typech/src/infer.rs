@@ -1,8 +1,8 @@
 use error_snippet::Result;
-use lume_hir::{self};
-use lume_types::Identifier;
+use lume_hir::{self, Identifier, TypeId};
+use lume_span::StatementId;
 
-use crate::{check::TypeCheckerPass, *};
+use crate::{check::TypeCheckerPass, symbol::CallReference, *};
 
 mod define_fields;
 mod define_impl;
@@ -11,7 +11,6 @@ mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
-mod infer_type_args;
 
 /// Defines a list of types which are often used in other languages,
 /// but have a different name in Lume.
@@ -35,7 +34,7 @@ const NEWCOMER_TYPE_NAMES: &[(&str, &str)] = &[
     ("boolean", "Boolean"),
 ];
 
-impl ThirBuildCtx<'_> {
+impl ThirBuildCtx {
     /// Defines all the different types, type parameters and type constraints within
     /// the HIR maps into the type database.
     ///
@@ -48,15 +47,14 @@ impl ThirBuildCtx<'_> {
     /// etc, or when expected items cannot be found within the context.
     pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self, hir);
-        infer::define_fields::DefineFields::run_all(self, hir);
-        infer::define_type_params::DefineTypeParameters::run_all(self, hir);
+        infer::define_fields::DefineFields::run_all(self, hir)?;
+        infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_impl::DefineImpl::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
 
         self.infer_calls(hir)?;
 
-        infer::infer_type_args::InferTypeArgs::run_all(self, hir)?;
         infer::define_scope::ScopeVisitor::run(self, hir)?;
 
         self.infer_exprs(hir)?;
@@ -104,9 +102,9 @@ impl ThirBuildCtx<'_> {
         for (id, reference) in &mut self.resolved_calls {
             let location = hir.expression(*id).unwrap().location.clone();
 
-            let type_params = match reference {
-                CallReference::Method(id) => &id.get(self.state.tcx()).type_parameters,
-                CallReference::Function(id) => &id.get(self.state.tcx()).type_parameters,
+            let type_params = match *reference {
+                CallReference::Method(id) => &self.tcx.method(id).unwrap().type_parameters,
+                CallReference::Function(id) => &self.tcx.function(id).unwrap().type_parameters,
             };
 
             let type_args = match &mut hir.expressions_mut().get_mut(id).unwrap().kind {
@@ -147,7 +145,7 @@ impl ThirBuildCtx<'_> {
     pub(crate) fn hir_expect_var_stmt<'a>(
         &'a self,
         hir: &'a lume_hir::map::Map,
-        id: lume_hir::StatementId,
+        id: StatementId,
     ) -> &'a lume_hir::VariableDeclaration {
         let stmt = self.hir_stmt(hir, id);
 
@@ -159,7 +157,7 @@ impl ThirBuildCtx<'_> {
 
     /// Returns the *type* of the expression with the given [`ExpressionId`].
     ///
-    /// ### Panics
+    /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
@@ -177,12 +175,12 @@ impl ThirBuildCtx<'_> {
             lume_hir::ExpressionKind::StaticCall(call) => {
                 match self.lookup_static_method(call, expr.location.clone())? {
                     CallReference::Method(method_id) => {
-                        let method = method_id.get(self.tcx());
+                        let method = self.tcx().method(method_id).unwrap();
 
                         Ok(method.return_type.clone())
                     }
                     CallReference::Function(func_id) => {
-                        let func = func_id.get(self.tcx());
+                        let func = self.tcx().function(func_id).unwrap();
 
                         Ok(func.return_type.clone())
                     }
@@ -196,11 +194,14 @@ impl ThirBuildCtx<'_> {
             lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(hir, expr.callee.id)?;
-                let Some(property_id) = callee_type.property(self.tcx(), &expr.name) else {
+
+                let Some(property) = self.tcx().find_property(callee_type.instance_of, &expr.name) else {
+                    let ty = self.tcx().type_(callee_type.instance_of).unwrap();
+
                     return Err(errors::MissingProperty {
                         source: expr.location.file.clone(),
                         range: expr.location.index.clone(),
-                        type_name: callee_type.name(self.tcx()),
+                        type_name: ty.name.clone(),
                         property_name: Identifier {
                             name: expr.name.clone(),
                             location: expr.location.clone(),
@@ -209,7 +210,7 @@ impl ThirBuildCtx<'_> {
                     .into());
                 };
 
-                Ok(property_id.get(self.tcx()).property_type.clone())
+                Ok(property.property_type.clone())
             }
             lume_hir::ExpressionKind::Variable(var) => {
                 let decl = self.hir_expect_var_stmt(hir, var.reference);
@@ -221,28 +222,28 @@ impl ThirBuildCtx<'_> {
 
     /// Attempts to get the type of a literal expression.
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
-        let type_id = match &lit.kind {
+        let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => TypeId::find_or_err(self.tcx(), &SymbolName::i8()),
-                lume_hir::IntKind::U8 => TypeId::find_or_err(self.tcx(), &SymbolName::u8()),
-                lume_hir::IntKind::I16 => TypeId::find_or_err(self.tcx(), &SymbolName::i16()),
-                lume_hir::IntKind::U16 => TypeId::find_or_err(self.tcx(), &SymbolName::u16()),
-                lume_hir::IntKind::I32 => TypeId::find_or_err(self.tcx(), &SymbolName::i32()),
-                lume_hir::IntKind::U32 => TypeId::find_or_err(self.tcx(), &SymbolName::u32()),
-                lume_hir::IntKind::I64 => TypeId::find_or_err(self.tcx(), &SymbolName::i64()),
-                lume_hir::IntKind::U64 => TypeId::find_or_err(self.tcx(), &SymbolName::u64()),
-                lume_hir::IntKind::IPtr => TypeId::find_or_err(self.tcx(), &SymbolName::iptr()),
-                lume_hir::IntKind::UPtr => TypeId::find_or_err(self.tcx(), &SymbolName::uptr()),
+                lume_hir::IntKind::I8 => self.tcx().find_type(&SymbolName::i8()).unwrap(),
+                lume_hir::IntKind::U8 => self.tcx().find_type(&SymbolName::u8()).unwrap(),
+                lume_hir::IntKind::I16 => self.tcx().find_type(&SymbolName::i16()).unwrap(),
+                lume_hir::IntKind::U16 => self.tcx().find_type(&SymbolName::u16()).unwrap(),
+                lume_hir::IntKind::I32 => self.tcx().find_type(&SymbolName::i32()).unwrap(),
+                lume_hir::IntKind::U32 => self.tcx().find_type(&SymbolName::u32()).unwrap(),
+                lume_hir::IntKind::I64 => self.tcx().find_type(&SymbolName::i64()).unwrap(),
+                lume_hir::IntKind::U64 => self.tcx().find_type(&SymbolName::u64()).unwrap(),
+                lume_hir::IntKind::IPtr => self.tcx().find_type(&SymbolName::iptr()).unwrap(),
+                lume_hir::IntKind::UPtr => self.tcx().find_type(&SymbolName::uptr()).unwrap(),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => TypeId::find_or_err(self.tcx(), &SymbolName::float()),
-                lume_hir::FloatKind::F64 => TypeId::find_or_err(self.tcx(), &SymbolName::double()),
+                lume_hir::FloatKind::F32 => self.tcx().find_type(&SymbolName::float()).unwrap(),
+                lume_hir::FloatKind::F64 => self.tcx().find_type(&SymbolName::double()).unwrap(),
             },
-            lume_hir::LiteralKind::String(_) => TypeId::find_or_err(self.tcx(), &SymbolName::string()),
-            lume_hir::LiteralKind::Boolean(_) => TypeId::find_or_err(self.tcx(), &SymbolName::boolean()),
+            lume_hir::LiteralKind::String(_) => self.tcx().find_type(&SymbolName::string()).unwrap(),
+            lume_hir::LiteralKind::Boolean(_) => self.tcx().find_type(&SymbolName::boolean()).unwrap(),
         };
 
-        TypeRef::new(type_id)
+        TypeRef::new(ty.id)
     }
 
     /// Lowers the given HIR type into a type reference.
@@ -261,7 +262,7 @@ impl ThirBuildCtx<'_> {
 
         for type_param in &ty.type_params {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
-            type_ref.push_type_argument(type_param_ref);
+            type_ref.type_arguments.push(type_param_ref);
         }
 
         Ok(type_ref)
@@ -276,35 +277,7 @@ impl ThirBuildCtx<'_> {
         }
 
         // Afterwards, attempt to find the type name within the type context.
-        TypeId::find(self.tcx(), name)
-    }
-
-    /// Attempts to evaluate the type of the given type argument within a call expression.
-    ///
-    /// A type can container another type, either directly through a generic parameter or a
-    /// nested type, which contains the type. This method does *not* check whether the type
-    /// is used as a property type, method parameter, return type or any other member within classes,
-    /// traits or otherwise.
-    ///
-    /// ### Panics
-    ///
-    /// This method will panic if any of the given types, or any nested types, are invalid
-    /// or unregistered within the HIR or the type context.
-    pub(crate) fn type_arg_evaluate<'a>(
-        &'a self,
-        parent: &lume_types::TypeRef,
-        child: &lume_types::TypeRef,
-        arg: &'a lume_types::TypeRef,
-    ) -> Option<&'a lume_types::TypeRef> {
-        // Before anything more taxing, just check if the types are equal.
-        if parent == child {
-            return Some(arg);
-        }
-
-        match &child.get(self.tcx()).kind {
-            lume_types::TypeKind::TypeParameter(_) | lume_types::TypeKind::Void => None,
-            kind => todo!("implement type_contains for {:?}", kind),
-        }
+        self.tcx().find_type(name).map(|ty| ty.id)
     }
 
     /// Returns an error indicating that the given type was not found.

@@ -1,207 +1,111 @@
 use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_span::Location;
 
-const UNKNOWN_TYPE_ID: TypeId = TypeId(usize::MAX);
+use crate::errors::*;
+use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility};
+use lume_span::ItemId;
 
-#[derive(Debug, Clone, Eq)]
-pub struct Identifier {
-    pub name: String,
-    pub location: Location,
+mod errors;
+
+pub trait WithTypeParameters {
+    /// Gets the type parameters of the current instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the instance was not found within the type context.
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>>;
+
+    /// Gets the type parameters of the current instance.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the instance was not found within the type context.
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>>;
 }
 
-impl std::hash::Hash for Identifier {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
+impl WithTypeParameters for FunctionId {
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        match tcx.function(self) {
+            Some(m) => Ok(&m.type_parameters),
+            None => Err(FunctionNotFound { id: self }.into()),
+        }
     }
-}
 
-impl std::fmt::Display for Identifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name)
-    }
-}
-
-impl<T: Into<String>> From<T> for Identifier {
-    fn from(name: T) -> Self {
-        Self {
-            name: name.into(),
-            location: Location::empty(),
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
+        match tcx.function_mut(self) {
+            Some(m) => Ok(&mut m.type_parameters),
+            None => Err(FunctionNotFound { id: self }.into()),
         }
     }
 }
 
-impl PartialEq for Identifier {
-    fn eq(&self, other: &Identifier) -> bool {
-        self.name == other.name
+impl WithTypeParameters for ImplId {
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        match tcx.implementation(self) {
+            Some(m) => Ok(&m.type_parameters),
+            None => Err(ImplNotFound { id: self }.into()),
+        }
     }
-}
 
-#[derive(Debug, Clone, Eq)]
-pub struct NamespacePath {
-    pub path: Vec<Identifier>,
-    pub location: Location,
-}
-
-impl NamespacePath {
-    pub fn empty() -> Self {
-        Self {
-            path: Vec::new(),
-            location: Location::empty(),
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
+        match tcx.implementation_mut(self) {
+            Some(m) => Ok(&mut m.type_parameters),
+            None => Err(ImplNotFound { id: self }.into()),
         }
     }
 }
 
-impl std::hash::Hash for NamespacePath {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.path.hash(state);
+impl WithTypeParameters for MethodId {
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        match tcx.method(self) {
+            Some(m) => Ok(&m.type_parameters),
+            None => Err(MethodNotFound { id: self }.into()),
+        }
     }
-}
 
-impl<T: IntoIterator<Item = impl Into<String>>> From<T> for NamespacePath {
-    fn from(path: T) -> Self {
-        Self {
-            path: path
-                .into_iter()
-                .map(|name| Identifier::from(Into::<String>::into(name)))
-                .collect(),
-            location: Location::empty(),
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
+        match tcx.method_mut(self) {
+            Some(m) => Ok(&mut m.type_parameters),
+            None => Err(MethodNotFound { id: self }.into()),
         }
     }
 }
 
-impl PartialEq for NamespacePath {
-    fn eq(&self, other: &NamespacePath) -> bool {
-        self.path == other.path
-    }
-}
+impl WithTypeParameters for TypeId {
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        let Some(ty) = tcx.type_(self) else {
+            return Err(TypeNotFound { id: self }.into());
+        };
 
-#[derive(Clone, Eq)]
-pub struct SymbolName {
-    /// Defines the namespace which the symbol was defined in.
-    pub namespace: NamespacePath,
-
-    /// Defines the relative name of the symbol within it's namespace.
-    pub name: Identifier,
-
-    pub location: Location,
-}
-
-impl PartialEq for SymbolName {
-    fn eq(&self, other: &SymbolName) -> bool {
-        self.namespace == other.namespace && self.name == other.name
-    }
-}
-
-impl std::hash::Hash for SymbolName {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.namespace.hash(state);
-        self.name.hash(state);
-    }
-}
-
-impl SymbolName {
-    pub fn from_parts(namespace: impl IntoIterator<Item = impl Into<String>>, name: impl Into<String>) -> Self {
-        let namespace = NamespacePath::from(namespace);
-        let name = Identifier::from(name);
-
-        Self {
-            namespace,
-            name,
-            location: Location::empty(),
+        match &ty.kind {
+            TypeKind::Struct(k) => Ok(&k.type_parameters),
+            TypeKind::Trait(k) => Ok(&k.type_parameters),
+            kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
         }
     }
 
-    pub fn with_root(base: SymbolName, name: Identifier) -> Self {
-        let mut namespace = base.namespace.clone();
-        namespace.path.push(base.name);
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
+        let Some(ty) = tcx.type_mut(self) else {
+            return Err(TypeNotFound { id: self }.into());
+        };
 
-        Self {
-            namespace,
-            name,
-            location: base.location.clone(),
+        match &mut ty.kind {
+            TypeKind::Struct(k) => Ok(&mut k.type_parameters),
+            TypeKind::Trait(k) => Ok(&mut k.type_parameters),
+            kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
         }
     }
-
-    pub fn i8() -> Self {
-        Self::from_parts(["std"], "Int8")
-    }
-
-    pub fn u8() -> Self {
-        Self::from_parts(["std"], "UInt8")
-    }
-
-    pub fn i16() -> Self {
-        Self::from_parts(["std"], "Int8")
-    }
-
-    pub fn u16() -> Self {
-        Self::from_parts(["std"], "UInt16")
-    }
-
-    pub fn i32() -> Self {
-        Self::from_parts(["std"], "Int32")
-    }
-
-    pub fn u32() -> Self {
-        Self::from_parts(["std"], "UInt32")
-    }
-
-    pub fn i64() -> Self {
-        Self::from_parts(["std"], "Int64")
-    }
-
-    pub fn u64() -> Self {
-        Self::from_parts(["std"], "UInt64")
-    }
-
-    pub fn iptr() -> Self {
-        Self::from_parts(["std"], "IPtr")
-    }
-
-    pub fn uptr() -> Self {
-        Self::from_parts(["std"], "UPtr")
-    }
-
-    pub fn float() -> Self {
-        Self::from_parts(["std"], "Float")
-    }
-
-    pub fn double() -> Self {
-        Self::from_parts(["std"], "Double")
-    }
-
-    pub fn string() -> Self {
-        Self::from_parts(["std"], "String")
-    }
-
-    pub fn boolean() -> Self {
-        Self::from_parts(["std"], "Boolean")
-    }
 }
 
-impl std::fmt::Display for SymbolName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name.name)
-    }
-}
+const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
 
-impl std::fmt::Debug for SymbolName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for m in &self.namespace.path {
-            write!(f, "{m}::")?;
-        }
-
-        write!(f, "{}", self.name.name)
-    }
-}
-
-#[derive(serde::Serialize, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Visibility {
-    // Order matters here, since `Ord` and `PartialOrd` determines
-    // the order of enums by the order of their variants!
-    Private,
-    Public,
+#[derive(Debug, Clone, PartialEq)]
+pub enum Item {
+    Type(Box<Type>),
+    Function(Box<Function>),
+    Property(Box<Property>),
+    Method(Box<Method>),
+    Implementation(Box<Implementation>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -253,54 +157,6 @@ pub struct FunctionSig<'a> {
     pub ret_ty: &'a TypeRef,
 }
 
-#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
-
-impl FunctionId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Function {
-        &ctx.functions[self.0]
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Function {
-        &mut ctx.functions[self.0]
-    }
-
-    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<FunctionId> {
-        ctx.functions.iter().position(|f| f.name == *name).map(FunctionId)
-    }
-
-    pub fn is_private(self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Private
-    }
-
-    pub fn is_public(self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Public
-    }
-
-    pub fn return_type<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeRef {
-        &self.get(ctx).return_type
-    }
-
-    pub fn set_return_type(&self, ctx: &mut TypeDatabaseContext, ty: TypeRef) {
-        self.get_mut(ctx).return_type = ty;
-    }
-
-    pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
-        self.get_mut(ctx).parameters.push(name, ty);
-    }
-
-    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
-        &self.get(ctx).type_parameters
-    }
-
-    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameter::alloc(ctx, name);
-        self.get_mut(ctx).type_parameters.push(id);
-
-        id
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub id: FunctionId,
@@ -312,25 +168,6 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, visibility: Visibility) -> FunctionId {
-        let id = FunctionId(ctx.functions.len());
-        let function = Function {
-            id,
-            name,
-            visibility,
-            type_parameters: Vec::new(),
-            parameters: Parameters::new(),
-            return_type: TypeRef::unknown(),
-        };
-
-        ctx.functions.push(function);
-        id
-    }
-
-    pub fn find<'a>(ctx: &'a TypeDatabaseContext, name: &SymbolName) -> Option<&'a Function> {
-        ctx.functions.iter().find(|f| &f.name == name)
-    }
-
     /// Gets the signature of the function.
     pub fn sig(&self) -> FunctionSig {
         FunctionSig {
@@ -341,106 +178,13 @@ impl Function {
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct PropertyId(pub usize);
-
-impl PropertyId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Property {
-        &ctx.properties[self.0]
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Property {
-        &mut ctx.properties[self.0]
-    }
-
-    pub fn is_private(self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Private
-    }
-
-    pub fn is_public(self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Public
-    }
-
-    pub fn property_type<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeRef {
-        &self.get(ctx).property_type
-    }
-
-    pub fn set_property_type(&self, ctx: &mut TypeDatabaseContext, ty: TypeRef) {
-        self.get_mut(ctx).property_type = ty;
-    }
-}
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Property {
     pub id: PropertyId,
     pub visibility: Visibility,
     pub owner: TypeId,
     pub name: String,
     pub property_type: TypeRef,
-}
-
-impl Property {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, owner: TypeId, name: String, visibility: Visibility) -> PropertyId {
-        let id = PropertyId(ctx.properties.len());
-        let property = Property {
-            id,
-            visibility,
-            owner,
-            name,
-            property_type: TypeRef::unknown(),
-        };
-
-        ctx.properties.push(property);
-        id
-    }
-}
-
-#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MethodId(pub usize);
-
-impl MethodId {
-    pub fn get(self, ctx: &TypeDatabaseContext) -> &Method {
-        &ctx.methods[self.0]
-    }
-
-    pub fn get_mut(self, ctx: &mut TypeDatabaseContext) -> &mut Method {
-        &mut ctx.methods[self.0]
-    }
-
-    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<MethodId> {
-        ctx.methods.iter().position(|f| f.name == *name).map(MethodId)
-    }
-
-    pub fn is_private(&self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Private
-    }
-
-    pub fn is_public(&self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).visibility == Visibility::Public
-    }
-
-    pub fn return_type<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeRef {
-        &self.get(ctx).return_type
-    }
-
-    pub fn set_return_type(&self, ctx: &mut TypeDatabaseContext, ty: TypeRef) {
-        self.get_mut(ctx).return_type = ty;
-    }
-
-    pub fn add_parameter(&self, ctx: &mut TypeDatabaseContext, name: String, ty: TypeRef) {
-        self.get_mut(ctx).parameters.push(name, ty);
-    }
-
-    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
-        &self.get(ctx).type_parameters
-    }
-
-    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameter::alloc(ctx, name);
-        self.get_mut(ctx).type_parameters.push(id);
-
-        id
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -455,24 +199,6 @@ pub struct Method {
 }
 
 impl Method {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, class: TypeId, name: Identifier, visibility: Visibility) -> MethodId {
-        let id = MethodId(ctx.methods.len());
-        let qualified_name = SymbolName::with_root(class.name(ctx), name);
-
-        let method = Method {
-            id,
-            visibility,
-            callee: TypeRef::new(class),
-            name: qualified_name,
-            type_parameters: Vec::new(),
-            parameters: Parameters::new(),
-            return_type: TypeRef::unknown(),
-        };
-
-        ctx.methods.push(method);
-        id
-    }
-
     /// Gets the signature of the method.
     pub fn sig(&self) -> FunctionSig {
         FunctionSig {
@@ -485,14 +211,16 @@ impl Method {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Struct {
+    pub id: ItemId,
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
 }
 
 impl Struct {
-    pub fn new(name: SymbolName) -> Self {
+    pub fn new(reference: &lume_hir::StructDefinition) -> Self {
         Self {
-            name,
+            id: reference.id,
+            name: reference.name.clone(),
             type_parameters: Vec::new(),
         }
     }
@@ -505,9 +233,9 @@ pub struct Trait {
 }
 
 impl Trait {
-    pub fn new(name: SymbolName) -> Self {
+    pub fn new(reference: &lume_hir::TraitDefinition) -> Self {
         Self {
-            name,
+            name: reference.name.clone(),
             type_parameters: Vec::new(),
         }
     }
@@ -519,9 +247,17 @@ pub struct Enum {
 }
 
 impl Enum {
-    pub fn new(name: SymbolName) -> Self {
-        Self { name }
+    pub fn new(reference: &lume_hir::EnumDefinition) -> Self {
+        Self {
+            name: reference.name.clone(),
+        }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct EnumCase {
+    pub parent: ItemId,
+    pub name: SymbolName,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -530,33 +266,10 @@ pub struct Alias {
 }
 
 impl Alias {
-    pub fn new(name: SymbolName) -> Self {
-        Self { name }
-    }
-}
-
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct ImplId(pub usize);
-
-impl ImplId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Implementation {
-        &ctx.implementations[self.0]
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Implementation {
-        &mut ctx.implementations[self.0]
-    }
-
-    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
-        &self.get(ctx).type_parameters
-    }
-
-    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameter::alloc(ctx, name);
-
-        self.get_mut(ctx).type_parameters.push(id);
-
-        id
+    pub fn new(reference: &lume_hir::AliasDefinition) -> Self {
+        Self {
+            name: reference.name.clone(),
+        }
     }
 }
 
@@ -565,20 +278,6 @@ pub struct Implementation {
     pub id: ImplId,
     pub target: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
-}
-
-impl Implementation {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, target: SymbolName) -> ImplId {
-        let id = ImplId(ctx.implementations.len());
-        let implementation = Implementation {
-            id,
-            target,
-            type_parameters: Vec::new(),
-        };
-
-        ctx.implementations.push(implementation);
-        id
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -611,134 +310,6 @@ pub enum TypeTransport {
     Reference,
 }
 
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct TypeId(pub usize);
-
-impl TypeId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Type {
-        &ctx.types[self.0]
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Type {
-        &mut ctx.types[self.0]
-    }
-
-    pub fn find(ctx: &TypeDatabaseContext, name: &SymbolName) -> Option<TypeId> {
-        // We intentionally ignore type parameters when finding types by name,
-        // since they might not refer to a type parameter which is valid under the
-        // current scope. Type parameters are only added as a type so they can be
-        // referenced by other types.
-        ctx.types
-            .iter()
-            .position(|t| t.name == *name && !matches!(t.kind, TypeKind::TypeParameter(_)))
-            .map(TypeId)
-    }
-
-    /// # Panics
-    ///
-    /// Will panic if no type with the name `name` was found in the database.
-    pub fn find_or_err(ctx: &TypeDatabaseContext, name: &SymbolName) -> TypeId {
-        match Self::find(ctx, name) {
-            Some(id) => id,
-            None => panic!("no type of name {name:?} was found"),
-        }
-    }
-
-    pub fn name(&self, ctx: &TypeDatabaseContext) -> SymbolName {
-        self.get(ctx).name.clone()
-    }
-
-    pub fn transport(&self, ctx: &TypeDatabaseContext) -> TypeTransport {
-        self.get(ctx).transport
-    }
-
-    pub fn is_copied(&self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).transport == TypeTransport::Copy
-    }
-
-    pub fn is_referenced(&self, ctx: &TypeDatabaseContext) -> bool {
-        self.get(ctx).transport == TypeTransport::Reference
-    }
-
-    pub fn set_transport(&self, ctx: &mut TypeDatabaseContext, transport: TypeTransport) {
-        self.get_mut(ctx).transport = transport;
-    }
-
-    pub fn set_copied(&self, ctx: &mut TypeDatabaseContext) {
-        self.set_transport(ctx, TypeTransport::Copy);
-    }
-
-    pub fn set_referenced(&self, ctx: &mut TypeDatabaseContext) {
-        self.set_transport(ctx, TypeTransport::Reference);
-    }
-
-    pub fn kind<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeKind {
-        &self.get(ctx).kind
-    }
-
-    pub fn is_struct(&self, ctx: &TypeDatabaseContext) -> bool {
-        matches!(self.kind(ctx), TypeKind::Struct(_))
-    }
-
-    pub fn is_trait(&self, ctx: &TypeDatabaseContext) -> bool {
-        matches!(self.kind(ctx), TypeKind::Trait(_))
-    }
-
-    pub fn is_enum(&self, ctx: &TypeDatabaseContext) -> bool {
-        matches!(self.kind(ctx), TypeKind::Enum(_))
-    }
-
-    pub fn is_void(&self, ctx: &TypeDatabaseContext) -> bool {
-        matches!(self.kind(ctx), TypeKind::Void)
-    }
-
-    /// # Panics
-    ///
-    /// Will panic if attempting to get type parameters from any non-generic types.
-    pub fn type_params<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Vec<TypeParameterId> {
-        match self.get(ctx) {
-            Type {
-                kind: TypeKind::Struct(struct_def),
-                ..
-            } => &struct_def.type_parameters,
-            Type {
-                kind: TypeKind::Trait(trait_def),
-                ..
-            } => &trait_def.type_parameters,
-            _ => {
-                panic!("Cannot add type parameter to non-generic type");
-            }
-        }
-    }
-
-    /// # Panics
-    ///
-    /// Will panic if attempting to add type parameters to any non-generic types.
-    pub fn add_type_param(&self, ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameter::alloc(ctx, name);
-
-        match self.get_mut(ctx) {
-            Type {
-                kind: TypeKind::Struct(struct_def),
-                ..
-            } => {
-                struct_def.type_parameters.push(id);
-            }
-            Type {
-                kind: TypeKind::Trait(trait_def),
-                ..
-            } => {
-                trait_def.type_parameters.push(id);
-            }
-            _ => {
-                panic!("Cannot add type parameter to non-generic type");
-            }
-        }
-
-        id
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
     pub id: TypeId,
@@ -750,130 +321,36 @@ pub struct Type {
     pub methods: IndexMap<String, MethodId>,
 }
 
-impl Type {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, name: SymbolName, kind: TypeKind) -> TypeId {
-        let id = TypeId(ctx.types.len());
-        let method = Type {
-            id,
-            kind,
-            transport: TypeTransport::Reference,
-            name,
-            properties: IndexMap::new(),
-            methods: IndexMap::new(),
-        };
-
-        ctx.types.push(method);
-        id
-    }
-
-    pub fn type_parameter(ctx: &mut TypeDatabaseContext, id: TypeParameterId, name: Identifier) -> TypeId {
-        Type::alloc(
-            ctx,
-            SymbolName {
-                namespace: NamespacePath::empty(),
-                location: name.location.clone(),
-                name,
-            },
-            TypeKind::TypeParameter(id),
-        )
-    }
-
-    pub fn find(ctx: &TypeDatabaseContext, predicate: impl FnMut(&&Type) -> bool) -> Option<&Type> {
-        ctx.types.iter().find(predicate)
-    }
-
-    pub fn find_type_param(ctx: &TypeDatabaseContext, type_param: TypeParameterId) -> Option<&Type> {
-        Self::find(ctx, |ty| ty.kind == TypeKind::TypeParameter(type_param))
-    }
-}
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeRef {
-    instance_of: TypeId,
-    type_arguments: Vec<TypeRef>,
+    pub instance_of: TypeId,
+    pub type_arguments: Vec<TypeRef>,
 }
 
 impl TypeRef {
-    pub fn new(instance_of: TypeId) -> Self {
+    /// Creates a new [`TypeRef`] with the given instance.
+    pub fn new(instance: TypeId) -> Self {
         Self {
-            instance_of,
-            type_arguments: Vec::new(),
+            instance_of: instance,
+            type_arguments: vec![],
         }
     }
 
-    pub fn instance_of(&self) -> TypeId {
-        self.instance_of
-    }
-
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a Type {
-        self.instance_of.get(ctx)
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut Type {
-        self.instance_of.get_mut(ctx)
-    }
-
-    pub fn push_type_argument(&mut self, type_argument: TypeRef) {
-        self.type_arguments.push(type_argument);
-    }
-
-    pub fn name(&self, ctx: &TypeDatabaseContext) -> SymbolName {
-        self.get(ctx).name.clone()
-    }
-
-    pub fn property(&self, ctx: &TypeDatabaseContext, name: &String) -> Option<PropertyId> {
-        self.get(ctx).properties.get(name).copied()
-    }
-
-    pub fn properties(&self, ctx: &TypeDatabaseContext) -> Vec<PropertyId> {
-        self.get(ctx).properties.values().copied().collect()
-    }
-
-    pub fn methods(&self, ctx: &TypeDatabaseContext) -> Vec<MethodId> {
-        self.get(ctx).methods.values().copied().collect()
-    }
-
-    pub fn unknown() -> Self {
-        Self::new(UNKNOWN_TYPE_ID)
+    /// Creates a new [`TypeRef`] with an invalid inner type, meant to
+    /// be used before any types are actually resolved.
+    pub const fn unknown() -> Self {
+        Self {
+            instance_of: TYPEREF_UNKNOWN_ID,
+            type_arguments: vec![],
+        }
     }
 }
 
-#[derive(serde::Serialize, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeParameterId(pub usize);
-
-impl TypeParameterId {
-    pub fn get<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> &'a TypeParameter {
-        &ctx.type_parameters[self.0]
-    }
-
-    pub fn get_mut<'a>(&'a self, ctx: &'a mut TypeDatabaseContext) -> &'a mut TypeParameter {
-        &mut ctx.type_parameters[self.0]
-    }
-
-    pub fn add_constraint(&self, ctx: &mut TypeDatabaseContext, constraint: TypeRef) {
-        self.get_mut(ctx).constraints.push(constraint);
-    }
-}
-
-#[derive(serde::Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
     pub id: TypeParameterId,
     pub name: String,
     pub constraints: Vec<TypeRef>,
-}
-
-impl TypeParameter {
-    pub fn alloc(ctx: &mut TypeDatabaseContext, name: String) -> TypeParameterId {
-        let id = TypeParameterId(ctx.type_parameters.len());
-        let param = TypeParameter {
-            id,
-            name,
-            constraints: Vec::new(),
-        };
-
-        ctx.type_parameters.push(param);
-        id
-    }
 }
 
 #[derive(Default, Debug)]
@@ -886,17 +363,312 @@ pub struct TypeDatabaseContext {
     pub implementations: Vec<Implementation>,
 }
 
+#[allow(clippy::cast_possible_truncation)]
 impl TypeDatabaseContext {
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Checks whether `from` is compatible with `to`.
+    /// Gets an iterator which iterates all [`Type`]-instances within
+    /// the database context.
+    pub fn types(&self) -> impl Iterator<Item = &Type> {
+        self.types.iter()
+    }
+
+    /// Gets an iterator which iterates all [`Type`]-instances within
+    /// the database context.
+    pub fn types_mut(&mut self) -> impl Iterator<Item = &mut Type> {
+        self.types.iter_mut()
+    }
+
+    /// Gets the [`Type`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn type_(&self, id: TypeId) -> Option<&Type> {
+        self.types.get(id.0 as usize)
+    }
+
+    /// Gets the [`Type`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn type_mut(&mut self, id: TypeId) -> Option<&mut Type> {
+        self.types.get_mut(id.0 as usize)
+    }
+
+    /// Gets an iterator which iterates all [`Property`]-instances within
+    /// the database context.
+    pub fn properties(&self) -> impl Iterator<Item = &Property> {
+        self.properties.iter()
+    }
+
+    /// Gets an iterator which iterates all [`Property`]-instances within
+    /// the database context.
+    pub fn properties_mut(&mut self) -> impl Iterator<Item = &mut Property> {
+        self.properties.iter_mut()
+    }
+
+    /// Gets the [`Property`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Property`] is not found.
+    pub fn property(&self, id: PropertyId) -> Option<&Property> {
+        self.properties.get(id.0 as usize)
+    }
+
+    /// Gets the [`Property`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Property`] is not found.
+    pub fn property_mut(&mut self, id: PropertyId) -> Option<&mut Property> {
+        self.properties.get_mut(id.0 as usize)
+    }
+
+    /// Gets an iterator which iterates all [`Method`]-instances within
+    /// the database context.
+    pub fn methods(&self) -> impl Iterator<Item = &Method> {
+        self.methods.iter()
+    }
+
+    /// Gets an iterator which iterates all [`Method`]-instances within
+    /// the database context.
+    pub fn methods_mut(&mut self) -> impl Iterator<Item = &mut Method> {
+        self.methods.iter_mut()
+    }
+
+    /// Gets the [`Method`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Method`] is not found.
+    pub fn method(&self, id: MethodId) -> Option<&Method> {
+        self.methods.get(id.0 as usize)
+    }
+
+    /// Gets the [`Method`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Method`] is not found.
+    pub fn method_mut(&mut self, id: MethodId) -> Option<&mut Method> {
+        self.methods.get_mut(id.0 as usize)
+    }
+
+    /// Gets an iterator which iterates all [`Function`]-instances within
+    /// the database context.
+    pub fn functions(&self) -> impl Iterator<Item = &Function> {
+        self.functions.iter()
+    }
+
+    /// Gets an iterator which iterates all [`Function`]-instances within
+    /// the database context.
+    pub fn functions_mut(&mut self) -> impl Iterator<Item = &mut Function> {
+        self.functions.iter_mut()
+    }
+
+    /// Gets the [`Function`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Function`] is not found.
+    pub fn function(&self, id: FunctionId) -> Option<&Function> {
+        self.functions.get(id.0 as usize)
+    }
+
+    /// Gets the [`Function`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Function`] is not found.
+    pub fn function_mut(&mut self, id: FunctionId) -> Option<&mut Function> {
+        self.functions.get_mut(id.0 as usize)
+    }
+
+    /// Gets the [`TypeParameter`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`TypeParameter`] is not found.
+    pub fn type_parameter(&self, id: TypeParameterId) -> Option<&TypeParameter> {
+        self.type_parameters.get(id.0 as usize)
+    }
+
+    /// Gets the [`TypeParameter`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`TypeParameter`] is not found.
+    pub fn type_parameter_mut(&mut self, id: TypeParameterId) -> Option<&mut TypeParameter> {
+        self.type_parameters.get_mut(id.0 as usize)
+    }
+
+    /// Gets the [`Implementation`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Implementation`] is not found.
+    pub fn implementation(&self, id: ImplId) -> Option<&Implementation> {
+        self.implementations.get(id.0 as usize)
+    }
+
+    /// Gets the [`Implementation`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Implementation`] is not found.
+    pub fn implementation_mut(&mut self, id: ImplId) -> Option<&mut Implementation> {
+        self.implementations.get_mut(id.0 as usize)
+    }
+
+    /// Gets an iterator which iterates all [`Item`]-instances where
+    /// the item refers to a [`Method`], which are defined on the givem [`Item`].
+    pub fn methods_on(&self, id: TypeId) -> impl Iterator<Item = &Method> {
+        self.methods().filter(move |m| m.callee.instance_of == id)
+    }
+
+    /// Attempts to find a [`Type`] with the given name, if any.
+    pub fn find_type(&self, name: &SymbolName) -> Option<&Type> {
+        self.types().find(|ty| ty.name == *name)
+    }
+
+    /// Attempts to find a [`Function`] with the given name, if any.
+    pub fn find_function(&self, name: &SymbolName) -> Option<&Function> {
+        self.functions().find(|func| func.name == *name)
+    }
+
+    /// Attempts to find a [`Property`] with the given name on the given parent type, if any.
+    pub fn find_property(&self, owner: TypeId, name: &String) -> Option<&Property> {
+        self.properties().find(|prop| prop.owner == owner && prop.name == *name)
+    }
+
+    /// Attempts to find a [`Method`] with the given name, if any.
+    pub fn find_method(&self, name: &SymbolName) -> Option<&Method> {
+        self.methods().find(|met| met.name == *name)
+    }
+
+    /// Allocates a new [`Function`] with the given name and kind.
+    #[inline]
+    pub fn func_alloc(&mut self, name: SymbolName, visibility: Visibility) -> FunctionId {
+        let id = FunctionId(self.functions.len() as u64);
+
+        let func = Function {
+            id,
+            name,
+            visibility,
+            type_parameters: Vec::new(),
+            parameters: Parameters::new(),
+            return_type: TypeRef::unknown(),
+        };
+
+        self.functions.push(func);
+        id
+    }
+
+    /// Allocates a new [`Type`] with the given name and kind.
+    #[inline]
+    pub fn type_alloc(&mut self, name: SymbolName, kind: TypeKind) -> TypeId {
+        let id = TypeId(self.types.len() as u64);
+
+        let ty = Type {
+            id,
+            kind,
+            name,
+            transport: TypeTransport::Reference,
+            properties: IndexMap::new(),
+            methods: IndexMap::new(),
+        };
+
+        self.types.push(ty);
+        id
+    }
+
+    /// Allocates a new [`Implementation`] with the target.
+    #[inline]
+    pub fn impl_alloc(&mut self, target: SymbolName) -> ImplId {
+        let id = ImplId(self.implementations.len() as u64);
+
+        let implementation = Implementation {
+            id,
+            target,
+            type_parameters: Vec::new(),
+        };
+
+        self.implementations.push(implementation);
+        id
+    }
+
+    /// Allocates a new [`Property`] on the given [`Item`].
     ///
     /// # Errors
     ///
-    /// Returns `Err` if the types are invalid or refer to invalid types.
-    pub fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<()> {
+    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
+    /// is not a type.
+    #[inline]
+    pub fn property_alloc(&mut self, owner: TypeId, name: String, visibility: Visibility) -> Result<PropertyId> {
+        let id = PropertyId(self.properties.len() as u64);
+        let prop = Property {
+            id,
+            owner,
+            name: name.clone(),
+            visibility,
+            property_type: TypeRef::unknown(),
+        };
+
+        self.properties.push(prop);
+
+        match self.type_mut(owner) {
+            Some(ty) => ty.properties.insert(name, id),
+            None => return Err(TypeNotFound { id: owner }.into()),
+        };
+
+        Ok(id)
+    }
+
+    /// Allocates a new [`Method`] on the given [`Item`].
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
+    /// is not a type.
+    #[inline]
+    pub fn method_alloc(&mut self, owner: TypeRef, name: SymbolName, visibility: Visibility) -> Result<MethodId> {
+        let id = MethodId(self.methods.len() as u64);
+        let instance = owner.instance_of;
+
+        let method = Method {
+            id,
+            callee: owner,
+            name: name.clone(),
+            visibility,
+            parameters: Parameters::new(),
+            type_parameters: Vec::new(),
+            return_type: TypeRef::unknown(),
+        };
+
+        self.methods.push(method);
+
+        match self.type_mut(instance) {
+            Some(ty) => ty.methods.insert(name.name.name, id),
+            None => return Err(TypeNotFound { id: instance }.into()),
+        };
+
+        Ok(id)
+    }
+
+    /// Allocates a new [`TypeParameter`] with the given name and kind.
+    #[inline]
+    pub fn type_param_alloc(&mut self, name: String) -> TypeParameterId {
+        let id = TypeParameterId(self.type_parameters.len() as u64);
+        let param = TypeParameter {
+            id,
+            name,
+            constraints: Vec::new(),
+        };
+
+        self.type_parameters.push(param);
+        id
+    }
+
+    /// Gets the type parameters defined on the [`Type`] with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no type with the given ID was found in the context,
+    /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
+    pub fn type_params_of(&self, id: impl WithTypeParameters) -> Result<&Vec<TypeParameterId>> {
+        id.type_params(self)
+    }
+
+    /// Pushes a new type parameter to the [`Type`] with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no type with the given ID was found in the context,
+    /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
+    pub fn push_type_param(&mut self, id: impl WithTypeParameters, type_id: TypeParameterId) -> Result<()> {
+        id.type_params_mut(self)?.push(type_id);
+
         Ok(())
     }
 }

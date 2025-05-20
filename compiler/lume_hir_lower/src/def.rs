@@ -1,4 +1,5 @@
 use error_snippet::Result;
+use lume_span::ItemId;
 
 use crate::LowerModule;
 use crate::errors::*;
@@ -18,6 +19,8 @@ impl LowerModule<'_> {
 
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<hir::Symbol> {
         let name = self.symbol_name(expr.name);
+        self.current_item = ItemId::from_name(&name);
+
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -73,6 +76,7 @@ impl LowerModule<'_> {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
+        self.current_item = ItemId::from_name(&target.name);
         let id = self.impl_id(&target);
 
         self.self_type = Some(target.name.clone());
@@ -196,7 +200,6 @@ impl LowerModule<'_> {
     fn def_enum_case(&self, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
         let name = self.symbol_name(expr.name);
         let location = self.location(expr.location);
-        let id = self.item_id(&name);
 
         let parameters = expr
             .parameters
@@ -205,7 +208,6 @@ impl LowerModule<'_> {
             .collect::<Result<Vec<hir::Type>>>()?;
 
         let symbol = hir::EnumDefinitionCase {
-            id,
             name,
             parameters: parameters.into_iter().map(Box::new).collect(),
             location,
@@ -238,6 +240,8 @@ impl LowerModule<'_> {
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
+
+        self.current_item = ItemId::from_name(&name);
         let id = self.item_id(&name);
 
         let block = if expr.external {
@@ -299,7 +303,6 @@ impl LowerModule<'_> {
         let location = self.location(param.location);
 
         Ok(hir::Parameter {
-            id: self.next_expr_id(),
             name,
             param_type,
             location,
@@ -312,6 +315,7 @@ impl LowerModule<'_> {
         let methods = self.def_use_methods(expr.methods)?;
         let location = self.location(expr.location);
 
+        self.current_item = ItemId::from_name(&[&name.name, &target.name]);
         let id = self.item_id(&name);
 
         Ok(hir::Symbol::Use(Box::new(hir::TraitImplementation {
@@ -354,9 +358,9 @@ impl LowerModule<'_> {
     }
 }
 
-fn lower_visibility(expr: &ast::Visibility) -> lume_types::Visibility {
+fn lower_visibility(expr: &ast::Visibility) -> lume_hir::Visibility {
     match expr {
-        ast::Visibility::Public { .. } => lume_types::Visibility::Public,
-        ast::Visibility::Private { .. } => lume_types::Visibility::Private,
+        ast::Visibility::Public { .. } => lume_hir::Visibility::Public,
+        ast::Visibility::Private { .. } => lume_hir::Visibility::Private,
     }
 }

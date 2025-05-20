@@ -1,20 +1,18 @@
 use error_snippet::Result;
-use lume_hir::{self, WithTypeParameters};
-use lume_types::*;
+use lume_hir::{self, TypeParameterId};
+use lume_types::WithTypeParameters;
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineTypeConstraints<'a, 'b> {
-    ctx: &'a mut ThirBuildCtx<'b>,
+pub(super) struct DefineTypeConstraints<'a> {
+    ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineTypeConstraints<'_, '_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) -> Result<()> {
+impl DefineTypeConstraints<'_> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypeConstraints { ctx };
 
-        define.run(hir)?;
-
-        Ok(())
+        define.run(hir)
     }
 
     fn run(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
@@ -34,28 +32,28 @@ impl DefineTypeConstraints<'_, '_> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
-                let type_params = type_id.type_params(self.ctx.tcx()).clone();
+                let type_params = self.ctx.tcx().type_params_of(type_id)?.to_owned();
 
-                self.define_type_constraints(&**struct_def, &type_params)?;
+                self.define_type_constraints(&struct_def.type_parameters, &type_params)?;
 
                 for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
+                    let type_params = method_id.type_params(self.ctx.tcx())?.to_owned();
 
-                    self.define_type_constraints(method, &type_params)?;
+                    self.define_type_constraints(&method.type_parameters, &type_params)?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
-                let type_params = type_id.type_params(self.ctx.tcx()).clone();
+                let type_params = type_id.type_params(self.ctx.tcx())?.to_owned();
 
-                self.define_type_constraints(&**trait_def, &type_params)?;
+                self.define_type_constraints(&trait_def.type_parameters, &type_params)?;
 
                 for method in &trait_def.methods {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(self.ctx.tcx()).clone();
+                    let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
 
-                    self.define_type_constraints(method, &type_params)?;
+                    self.define_type_constraints(&method.type_parameters, &type_params)?;
                 }
             }
             _ => {}
@@ -66,36 +64,33 @@ impl DefineTypeConstraints<'_, '_> {
 
     fn define_impl(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.impl_id.unwrap();
-        let type_params = impl_id.type_params(self.ctx.tcx()).clone();
+        let type_params = self.ctx.tcx().type_params_of(impl_id)?.to_owned();
 
-        self.define_type_constraints(implementation, &type_params)?;
+        self.define_type_constraints(&implementation.type_parameters, &type_params)?;
 
         Ok(())
     }
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
-        let type_params = func_id.type_params(self.ctx.tcx()).clone();
+        let type_params = self.ctx.tcx().function(func_id).unwrap().type_parameters.clone();
 
-        self.define_type_constraints(func, &type_params)?;
+        self.define_type_constraints(&func.type_parameters, &type_params)?;
 
         Ok(())
     }
 
-    fn define_type_constraints(&mut self, ty: &impl WithTypeParameters, params: &[TypeParameterId]) -> Result<()> {
-        let type_param_ids = params
-            .iter()
-            .enumerate()
-            .map(|(idx, id)| (idx, *id))
-            .collect::<Vec<(usize, TypeParameterId)>>();
+    fn define_type_constraints(&mut self, hir: &[lume_hir::TypeParameter], ids: &[TypeParameterId]) -> Result<()> {
+        for (param_id, hir_param) in ids.iter().zip(hir.iter()) {
+            for type_constraint in &hir_param.constraints {
+                let lowered_constraint = self.ctx.mk_type_ref(type_constraint)?;
 
-        for (idx, type_param_id) in type_param_ids {
-            let type_param = &ty.type_params()[idx];
-
-            for type_constraint in &type_param.constraints {
-                let lowered_type_constraint = self.ctx.mk_type_ref(type_constraint)?;
-
-                type_param_id.add_constraint(self.ctx.tcx_mut(), lowered_type_constraint);
+                self.ctx
+                    .tcx_mut()
+                    .type_parameter_mut(*param_id)
+                    .unwrap()
+                    .constraints
+                    .push(lowered_constraint);
             }
         }
 

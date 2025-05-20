@@ -1,8 +1,5 @@
 use lume_macros::Node;
-use lume_span::{Location, PackageId, hash_id};
-use lume_types::{
-    FunctionId, Identifier, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility,
-};
+use lume_span::{ExpressionId, ItemId, Location, PackageId, StatementId};
 
 pub mod map;
 pub mod stdlib;
@@ -10,76 +7,267 @@ pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
 
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct FunctionId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct TypeId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct ImplId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct PropertyId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct MethodId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct TypeParameterId(pub u64);
+
+#[derive(Debug, Clone, Eq)]
+pub struct Identifier {
+    pub name: String,
+    pub location: Location,
+}
+
+impl std::hash::Hash for Identifier {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+
+impl std::fmt::Display for Identifier {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name)
+    }
+}
+
+impl<T: Into<String>> From<T> for Identifier {
+    fn from(name: T) -> Self {
+        Self {
+            name: name.into(),
+            location: Location::empty(),
+        }
+    }
+}
+
+impl PartialEq for Identifier {
+    fn eq(&self, other: &Identifier) -> bool {
+        self.name == other.name
+    }
+}
+
+#[derive(Debug, Clone, Eq)]
+pub struct SymbolName {
+    /// Defines the namespace which the symbol was defined in.
+    pub namespace: Option<PathRoot>,
+
+    /// Defines the relative name of the symbol within it's namespace.
+    pub name: Identifier,
+
+    pub location: Location,
+}
+
+impl PartialEq for SymbolName {
+    fn eq(&self, other: &SymbolName) -> bool {
+        self.namespace == other.namespace && self.name == other.name
+    }
+}
+
+impl std::hash::Hash for SymbolName {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.namespace.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl SymbolName {
+    pub fn from_parts(
+        namespace: Option<impl IntoIterator<Item = impl Into<PathSegment>>>,
+        name: impl Into<String>,
+    ) -> Self {
+        let namespace = namespace.map(|ns| PathRoot::from(ns));
+        let name = Identifier::from(name);
+
+        Self {
+            namespace,
+            name,
+            location: Location::empty(),
+        }
+    }
+
+    pub fn with_root(base: SymbolName, name: Identifier) -> Self {
+        let mut namespace = base.namespace.unwrap_or_default();
+        namespace.segments.push(PathSegment::Named(base.name));
+
+        Self {
+            namespace: Some(namespace),
+            name,
+            location: base.location.clone(),
+        }
+    }
+
+    pub fn i8() -> Self {
+        Self::from_parts(Some(["std"]), "Int8")
+    }
+
+    pub fn u8() -> Self {
+        Self::from_parts(Some(["std"]), "UInt8")
+    }
+
+    pub fn i16() -> Self {
+        Self::from_parts(Some(["std"]), "Int8")
+    }
+
+    pub fn u16() -> Self {
+        Self::from_parts(Some(["std"]), "UInt16")
+    }
+
+    pub fn i32() -> Self {
+        Self::from_parts(Some(["std"]), "Int32")
+    }
+
+    pub fn u32() -> Self {
+        Self::from_parts(Some(["std"]), "UInt32")
+    }
+
+    pub fn i64() -> Self {
+        Self::from_parts(Some(["std"]), "Int64")
+    }
+
+    pub fn u64() -> Self {
+        Self::from_parts(Some(["std"]), "UInt64")
+    }
+
+    pub fn iptr() -> Self {
+        Self::from_parts(Some(["std"]), "IPtr")
+    }
+
+    pub fn uptr() -> Self {
+        Self::from_parts(Some(["std"]), "UPtr")
+    }
+
+    pub fn float() -> Self {
+        Self::from_parts(Some(["std"]), "Float")
+    }
+
+    pub fn double() -> Self {
+        Self::from_parts(Some(["std"]), "Double")
+    }
+
+    pub fn string() -> Self {
+        Self::from_parts(Some(["std"]), "String")
+    }
+
+    pub fn boolean() -> Self {
+        Self::from_parts(Some(["std"]), "Boolean")
+    }
+}
+
+impl std::fmt::Display for SymbolName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(ns) = &self.namespace {
+            write!(f, "{ns}::")?;
+        }
+
+        write!(f, "{}", self.name.name)
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub enum PathSegment {
+    Named(Identifier),
+    Typed(Identifier, Vec<Box<Type>>),
+}
+
+impl PathSegment {
+    #[inline]
+    pub fn identifier(&self) -> &Identifier {
+        match self {
+            Self::Named(i) | Self::Typed(i, _) => i,
+        }
+    }
+
+    #[inline]
+    pub fn location(&self) -> &Location {
+        &self.identifier().location
+    }
+}
+
+impl From<Identifier> for PathSegment {
+    fn from(value: Identifier) -> Self {
+        Self::Named(value)
+    }
+}
+
+impl From<String> for PathSegment {
+    fn from(value: String) -> Self {
+        Self::Named(Identifier::from(value))
+    }
+}
+
+impl From<&str> for PathSegment {
+    fn from(value: &str) -> Self {
+        Self::Named(Identifier::from(value))
+    }
+}
+
+impl std::fmt::Display for PathSegment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.identifier())
+    }
+}
+
+#[derive(Hash, Default, Debug, Clone, PartialEq, Eq)]
+pub struct PathRoot {
+    pub segments: Vec<PathSegment>,
+}
+
+impl std::fmt::Display for PathRoot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for (idx, segment) in self.segments.iter().enumerate() {
+            write!(f, "{segment}")?;
+
+            if idx < self.segments.len() - 1 {
+                write!(f, "::")?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl<T: IntoIterator<Item = impl Into<PathSegment>>> From<T> for PathRoot {
+    fn from(value: T) -> Self {
+        let segments = value
+            .into_iter()
+            .map(Into::<PathSegment>::into)
+            .collect::<Vec<PathSegment>>();
+
+        Self { segments }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Path {
+    pub root: Vec<PathSegment>,
+    pub name: PathSegment,
+}
+
+impl Path {
+    pub fn to_pathroot(self) -> PathRoot {
+        let mut segments = self.root;
+        segments.push(self.name);
+
+        PathRoot { segments }
+    }
+}
+
 /// Trait for HIR nodes which can contain some amount of type parameters.
 pub trait WithTypeParameters {
     /// Gets all the type parameters of this node.
     fn type_params(&self) -> &Vec<TypeParameter>;
-}
-
-/// Uniquely identifies a definition within a module, such as a type, function or class.
-#[derive(Hash, Clone, Copy, PartialEq, Eq)]
-pub struct ItemId(pub PackageId, pub u64);
-
-impl std::fmt::Debug for ItemId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", hash_id(self))
-    }
-}
-
-/// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
-#[derive(Hash, Clone, Copy, PartialEq, Eq)]
-pub struct LocalId(pub u64);
-
-impl LocalId {
-    pub fn empty() -> Self {
-        Self(0)
-    }
-}
-
-impl std::fmt::Debug for LocalId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-/// Uniquely identifies any local statement.
-#[derive(Hash, Clone, Copy, PartialEq, Eq)]
-pub struct StatementId(pub PackageId, pub LocalId);
-
-impl StatementId {
-    pub fn empty() -> Self {
-        Self(PackageId::empty(), LocalId::empty())
-    }
-
-    pub fn local(&self) -> LocalId {
-        self.1
-    }
-}
-
-impl std::fmt::Debug for StatementId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", hash_id(self))
-    }
-}
-
-/// Uniquely identifies any local expression, such as variables, literals, calls or otherwise.
-#[derive(Hash, Clone, Copy, PartialEq, Eq)]
-pub struct ExpressionId(pub PackageId, pub LocalId);
-
-impl ExpressionId {
-    pub fn empty() -> Self {
-        Self(PackageId::empty(), LocalId::empty())
-    }
-
-    pub fn local(&self) -> LocalId {
-        self.1
-    }
-}
-
-impl std::fmt::Debug for ExpressionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", hash_id(self))
-    }
 }
 
 /// Trait for HIR nodes which have some location attached.
@@ -114,7 +302,6 @@ impl Symbol {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct ExternalSymbol {
-    pub id: ItemId,
     pub name: SymbolName,
     pub location: Location,
 }
@@ -123,6 +310,14 @@ impl ExternalSymbol {
     pub fn ident(&self) -> &Identifier {
         &self.name.name
     }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Visibility {
+    // Order matters here, since `Ord` and `PartialOrd` determines
+    // the order of enums by the order of their variants!
+    Private,
+    Public,
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
@@ -152,7 +347,6 @@ impl WithTypeParameters for FunctionDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Parameter {
-    pub id: ExpressionId,
     pub name: Identifier,
     pub param_type: Type,
     pub location: Location,
@@ -203,7 +397,6 @@ impl EnumDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
-    pub id: ItemId,
     pub name: SymbolName,
     pub parameters: Vec<Box<Type>>,
     pub location: Location,
@@ -651,12 +844,6 @@ pub enum TypeArgument {
     /// Defines a named type argument, which was specified by the user, but not yet resolved.
     Named { ty: Type, location: Location },
 
-    /// Defines a named type argument, which has been resolved.
-    Resolved {
-        ty: lume_types::TypeRef,
-        location: Location,
-    },
-
     /// Defines an implicit type argument, which is up to the compiler to infer.
     Implicit { location: Location },
 }
@@ -665,11 +852,6 @@ impl TypeArgument {
     /// Determines whether this type argument is named.
     pub fn is_named(&self) -> bool {
         matches!(self, TypeArgument::Named { .. })
-    }
-
-    /// Determines whether this type argument is resolved.
-    pub fn is_resolved(&self) -> bool {
-        matches!(self, TypeArgument::Resolved { .. })
     }
 
     /// Determines whether this type argument is implicit.
@@ -681,15 +863,14 @@ impl TypeArgument {
 impl Node for TypeArgument {
     fn location(&self) -> &Location {
         match self {
-            TypeArgument::Named { location, .. }
-            | TypeArgument::Resolved { location, .. }
-            | TypeArgument::Implicit { location } => location,
+            TypeArgument::Named { location, .. } | TypeArgument::Implicit { location } => location,
         }
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub struct Type {
+    pub id: ItemId,
     pub name: SymbolName,
     pub type_params: Vec<Box<Type>>,
     pub location: Location,

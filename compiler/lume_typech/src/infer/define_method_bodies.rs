@@ -3,12 +3,12 @@ use lume_hir::{self};
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineMethodBodies<'a, 'b> {
-    ctx: &'a mut ThirBuildCtx<'b>,
+pub(super) struct DefineMethodBodies<'a> {
+    ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineMethodBodies<'_, '_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) -> Result<()> {
+impl DefineMethodBodies<'_> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineMethodBodies { ctx };
 
         define.run(hir)?;
@@ -38,7 +38,7 @@ impl DefineMethodBodies<'_, '_> {
                         .ctx
                         .mk_type_ref_generic(&property.property_type, &struct_def.type_parameters)?;
 
-                    property_id.set_property_type(self.ctx.tcx_mut(), type_ref);
+                    self.ctx.tcx_mut().property_mut(property_id).unwrap().property_type = type_ref;
                 }
 
                 for method in struct_def.methods() {
@@ -51,7 +51,12 @@ impl DefineMethodBodies<'_, '_> {
                             &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
-                        method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
+                        self.ctx
+                            .tcx_mut()
+                            .method_mut(method_id)
+                            .unwrap()
+                            .parameters
+                            .push(name, type_ref);
                     }
 
                     if let Some(ret) = &method.return_type {
@@ -60,7 +65,7 @@ impl DefineMethodBodies<'_, '_> {
                             &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
-                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                        self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
                     }
                 }
             }
@@ -75,7 +80,12 @@ impl DefineMethodBodies<'_, '_> {
                             &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
-                        method_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
+                        self.ctx
+                            .tcx_mut()
+                            .method_mut(method_id)
+                            .unwrap()
+                            .parameters
+                            .push(name, type_ref);
                     }
 
                     if let Some(ret) = &method.return_type {
@@ -84,7 +94,7 @@ impl DefineMethodBodies<'_, '_> {
                             &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
                         )?;
 
-                        method_id.set_return_type(self.ctx.tcx_mut(), return_type);
+                        self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
                     }
                 }
             }
@@ -95,18 +105,24 @@ impl DefineMethodBodies<'_, '_> {
     }
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
-        let function_id = func.func_id.unwrap();
+        let func_id = func.func_id.unwrap();
 
         for param in &func.parameters {
             let name = param.name.name.clone();
             let type_ref = self.ctx.mk_type_ref_generic(&param.param_type, &func.type_parameters)?;
 
-            function_id.add_parameter(self.ctx.tcx_mut(), name, type_ref);
+            self.ctx
+                .tcx_mut()
+                .function_mut(func_id)
+                .unwrap()
+                .parameters
+                .push(name, type_ref);
         }
 
         if let Some(ret) = &func.return_type {
             let return_type = self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?;
-            function_id.set_return_type(self.ctx.tcx_mut(), return_type);
+
+            self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = return_type;
         }
 
         Ok(())

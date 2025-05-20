@@ -8,7 +8,7 @@ use lume_ast::*;
 use lume_errors::DiagCtxHandle;
 use lume_lexer::IDENTIFIER_SEPARATOR;
 use lume_lexer::{Lexer, Token, TokenKind};
-use lume_span::{SourceFile, SourceFileId};
+use lume_span::{SourceFile, SourceFileId, SourceMap};
 
 mod errors;
 pub mod expr;
@@ -101,11 +101,11 @@ impl Parser {
     /// # Errors
     ///
     /// Returns `Err` if `file` is not found within `state`.
-    pub fn new_with_src(state: &lume_state::State, file: SourceFileId) -> Result<Parser> {
-        let source = state.source_of(file)?;
+    pub fn new_with_src(sources: &SourceMap, file: SourceFileId) -> Result<Parser> {
+        let source_file = sources.get_or_err(file)?;
         let dcx = DiagCtxHandle::shim();
 
-        Ok(Parser::new(source, dcx))
+        Ok(Parser::new(source_file, dcx))
     }
 
     /// Parses the given source.
@@ -132,14 +132,11 @@ impl Parser {
     ///
     /// Returns `Err` if some part of the input is unexpected or if the
     /// parser unexpectedly reaches end-of-file.
-    pub fn parse_src(state: &mut lume_state::State, file: SourceFileId) -> Result<Vec<TopLevelExpression>> {
-        let mut parser = Parser::new_with_src(state, file)?;
+    pub fn parse_src(sources: &SourceMap, file: SourceFileId, dcx: DiagCtxHandle) -> Result<Vec<TopLevelExpression>> {
+        let source_file = sources.get_or_err(file)?;
+        let mut parser = Parser::new(source_file, dcx);
 
-        state.dcx_mut().with(|handle| {
-            parser.dcx = handle;
-
-            parser.parse()
-        })
+        parser.parse()
     }
 
     /// Prepares the parser to being parsing.
@@ -533,13 +530,13 @@ impl Parser {
     /// Identifier paths are much like regular identifiers, but can be joined together
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
-    fn parse_namespace_path(&mut self) -> Result<NamespacePath> {
+    fn parse_import_path(&mut self) -> Result<ImportPath> {
         let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
 
         let start = segments.first().unwrap().location.0.start;
         let end = segments.last().unwrap().location.0.end;
 
-        let path = NamespacePath {
+        let path = ImportPath {
             path: segments,
             location: (start..end).into(),
         };

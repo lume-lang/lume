@@ -20,9 +20,9 @@ impl LowerModule<'_> {
                     .collect::<Result<Vec<_>>>()?;
 
                 Ok(hir::TypeParameter {
-                    name,
                     type_id: None,
                     type_param_id: None,
+                    name,
                     constraints,
                     location,
                 })

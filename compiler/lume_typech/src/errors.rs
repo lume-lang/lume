@@ -1,8 +1,8 @@
 use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
+use lume_hir::{Identifier, SymbolName};
 use lume_span::SourceFile;
-use lume_types::{Identifier, SymbolName};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Could not find type {name} in this scope", code = "LM4100")]
