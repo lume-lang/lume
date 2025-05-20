@@ -32,7 +32,7 @@ impl Parser {
 
     fn parse_import(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Import)?.start();
-        let path = self.parse_namespace_path()?;
+        let path = self.parse_import_path()?;
 
         if self.eof() {
             return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
@@ -58,7 +58,7 @@ impl Parser {
         let (path, location) = self.consume_with_loc(|p| {
             p.consume(TokenKind::Namespace)?;
 
-            p.parse_namespace_path()
+            p.parse_import_path()
         })?;
 
         Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
