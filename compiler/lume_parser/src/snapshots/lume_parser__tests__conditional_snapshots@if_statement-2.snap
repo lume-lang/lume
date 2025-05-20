@@ -5,7 +5,57 @@ expression: "parse_expr(\"if true { let a = 0; }\")"
 [
     If(
         IfCondition {
-            cases: [],
+            cases: [
+                Condition {
+                    condition: Some(
+                        Literal(
+                            Boolean(
+                                BooleanLiteral {
+                                    value: true,
+                                    location: Location(
+                                        3..7,
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                    block: Block {
+                        statements: [
+                            VariableDeclaration(
+                                VariableDeclaration {
+                                    name: Identifier {
+                                        name: "a",
+                                        location: Location(
+                                            14..15,
+                                        ),
+                                    },
+                                    variable_type: None,
+                                    value: Literal(
+                                        Int(
+                                            IntLiteral {
+                                                value: 0,
+                                                location: Location(
+                                                    18..19,
+                                                ),
+                                                kind: I32,
+                                            },
+                                        ),
+                                    ),
+                                    location: Location(
+                                        10..20,
+                                    ),
+                                },
+                            ),
+                        ],
+                        location: Location(
+                            8..22,
+                        ),
+                    },
+                    location: Location(
+                        3..22,
+                    ),
+                },
+            ],
             location: Location(
                 0..22,
             ),
