@@ -5,7 +5,43 @@ expression: "parse_expr(\"if true { } else { }\")"
 [
     If(
         IfCondition {
-            cases: [],
+            cases: [
+                Condition {
+                    condition: Some(
+                        Literal(
+                            Boolean(
+                                BooleanLiteral {
+                                    value: true,
+                                    location: Location(
+                                        3..7,
+                                    ),
+                                },
+                            ),
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            8..11,
+                        ),
+                    },
+                    location: Location(
+                        3..11,
+                    ),
+                },
+                Condition {
+                    condition: None,
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            17..20,
+                        ),
+                    },
+                    location: Location(
+                        12..20,
+                    ),
+                },
+            ],
             location: Location(
                 0..20,
             ),
