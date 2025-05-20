@@ -201,7 +201,7 @@ mod tests {
     use super::*;
 
     fn var(name: &str) -> VariableDeclaration {
-        let statement_id = StatementId::empty();
+        let statement_id = StatementId::default();
 
         VariableDeclaration {
             id: statement_id,
@@ -211,11 +211,11 @@ mod tests {
             },
             declared_type: None,
             value: Expression {
-                id: ExpressionId::empty(),
+                id: ExpressionId::default(),
                 kind: ExpressionKind::Literal(Box::new(Literal {
-                    id: ExpressionId::empty(),
+                    id: ExpressionId::default(),
                     kind: LiteralKind::Int(Box::new(IntLiteral {
-                        id: ExpressionId::empty(),
+                        id: ExpressionId::default(),
                         value: 0,
                         kind: IntKind::I32,
                     })),

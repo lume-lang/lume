@@ -1,7 +1,8 @@
 use error_snippet::Result;
 use levenshtein::levenshtein;
+use lume_hir::{Identifier, SymbolName};
 use lume_span::Location;
-use lume_types::{Identifier, Method, MethodId, SymbolName};
+use lume_types::Method;
 
 use crate::ThirBuildCtx;
 
@@ -98,7 +99,7 @@ impl MethodLookupError<'_> {
     }
 }
 
-impl<'tcx> ThirBuildCtx<'tcx> {
+impl<'tcx> ThirBuildCtx {
     pub(crate) fn method_lookup<'a>(
         &'tcx self,
         hir: &lume_hir::map::Map,
@@ -111,9 +112,7 @@ impl<'tcx> ThirBuildCtx<'tcx> {
         // case no matching method was found.
         let mut suggestions = Vec::new();
 
-        for method_id in self.methods_defined_on(self_ty) {
-            let method = method_id.get(self.tcx());
-
+        for method in self.methods_defined_on(self_ty) {
             // No matter if all the other checks pass, if the method name does not match, we should
             // only suggest it.
             let is_qualified = &method.name.name == method_name;
@@ -165,15 +164,17 @@ impl<'tcx> ThirBuildCtx<'tcx> {
             return Ok(MethodLookupResult::Success(method));
         }
 
+        let ty_inst = self.tcx().type_(self_ty.instance_of).unwrap();
+
         Ok(MethodLookupResult::Failure(MethodLookupError {
-            type_name: self_ty.name(self.tcx()),
+            type_name: ty_inst.name.clone(),
             method_name: method_name.clone(),
             suggestions,
         }))
     }
 
     /// Returns all the methods defined directly within the given type.
-    fn methods_defined_on(&self, self_ty: &'tcx lume_types::TypeRef) -> Vec<MethodId> {
-        self_ty.methods(self.tcx())
+    fn methods_defined_on(&'tcx self, self_ty: &lume_types::TypeRef) -> Vec<&'tcx Method> {
+        self.tcx().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
     }
 }

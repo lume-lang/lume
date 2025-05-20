@@ -2,8 +2,9 @@ use std::{ops::Range, sync::Arc};
 
 use error_snippet::Result;
 use error_snippet_derive::Diagnostic;
+use lume_hir::{FunctionId, MethodId, SymbolName};
 use lume_span::SourceFile;
-use lume_types::{FunctionId, FunctionSig, Method, MethodId, SymbolName, TypeDatabaseContext, TypeId};
+use lume_types::{Function, Method, Type};
 
 use crate::ThirBuildCtx;
 
@@ -28,30 +29,20 @@ pub enum CallReference {
     Method(MethodId),
 }
 
-impl CallReference {
-    /// Gets the signature of the inner function / method reference.
-    pub fn sig<'a>(&'a self, ctx: &'a TypeDatabaseContext) -> FunctionSig<'a> {
-        match self {
-            CallReference::Function(id) => id.get(ctx).sig(),
-            CallReference::Method(id) => id.get(ctx).sig(),
-        }
-    }
-}
-
 /// Represents the kind of a symbol in the type inference system.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum SymbolKind {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) enum SymbolKind<'a> {
     /// Represents a symbol, which points to some type.
-    Type(TypeId),
+    Type(&'a Type),
 
     /// Represents a symbol, which points to some method.
-    Method(MethodId),
+    Method(&'a Method),
 
     /// Represents a symbol, which points to a function definition.
-    Function(FunctionId),
+    Function(&'a Function),
 }
 
-impl ThirBuildCtx<'_> {
+impl ThirBuildCtx {
     /// Attempts to look up an instance method, which matches the given call expression.
     pub(crate) fn lookup_instance_method(
         &self,
@@ -83,50 +74,31 @@ impl ThirBuildCtx<'_> {
         };
 
         match symbol {
-            SymbolKind::Type(type_id) => {
-                let ty = type_id.get(self.tcx());
-
-                Err(crate::errors::AttemptedTypeInvocation {
-                    source: loc.file,
-                    range: loc.index,
-                    name: ty.name.clone(),
-                }
-                .into())
+            SymbolKind::Type(ty) => Err(crate::errors::AttemptedTypeInvocation {
+                source: loc.file,
+                range: loc.index,
+                name: ty.name.clone(),
             }
-            SymbolKind::Method(method_id) => Ok(CallReference::Method(method_id)),
-            SymbolKind::Function(func_id) => Ok(CallReference::Function(func_id)),
+            .into()),
+            SymbolKind::Method(method) => Ok(CallReference::Method(method.id)),
+            SymbolKind::Function(func) => Ok(CallReference::Function(func.id)),
         }
     }
 
     /// Attempts to look up a symbol by it's path within the current package.
     pub(crate) fn lookup_symbol(&self, name: &SymbolName) -> Option<SymbolKind> {
-        if let Some(symbol) = self.lookup_type_symbol(name) {
+        if let Some(symbol) = self.tcx().find_type(name) {
             return Some(SymbolKind::Type(symbol));
         }
 
-        if let Some(symbol) = self.lookup_method_symbol(name) {
+        if let Some(symbol) = self.tcx().find_method(name) {
             return Some(SymbolKind::Method(symbol));
         }
 
-        if let Some(symbol) = self.lookup_function_symbol(name) {
+        if let Some(symbol) = self.tcx().find_function(name) {
             return Some(SymbolKind::Function(symbol));
         }
 
         None
-    }
-
-    /// Attempts to look up a type symbol by it's path within the current package.
-    fn lookup_type_symbol(&self, name: &SymbolName) -> Option<TypeId> {
-        lume_types::TypeId::find(self.tcx(), name)
-    }
-
-    /// Attempts to look up a method symbol by it's path within the current package.
-    fn lookup_method_symbol(&self, name: &SymbolName) -> Option<MethodId> {
-        lume_types::MethodId::find(self.tcx(), name)
-    }
-
-    /// Attempts to look up a function symbol by it's path within the current package.
-    fn lookup_function_symbol(&self, name: &SymbolName) -> Option<FunctionId> {
-        lume_types::FunctionId::find(self.tcx(), name)
     }
 }

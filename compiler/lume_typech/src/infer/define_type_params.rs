@@ -1,58 +1,57 @@
-use lume_hir::{self};
+use error_snippet::Result;
+use lume_hir::{self, SymbolName, TypeId, TypeParameterId};
 use lume_types::*;
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineTypeParameters<'a, 'b> {
-    ctx: &'a mut ThirBuildCtx<'b>,
+pub(super) struct DefineTypeParameters<'a> {
+    ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineTypeParameters<'_, '_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
+impl DefineTypeParameters<'_> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineTypeParameters { ctx };
 
-        define.run(hir);
+        define.run(hir)
     }
 
-    fn run(&mut self, hir: &mut lume_hir::map::Map) {
+    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in &mut hir.items {
             match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(t),
-                lume_hir::Symbol::Impl(i) => self.define_impl(i),
-                lume_hir::Symbol::Function(f) => self.define_function(f),
+                lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
+                lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 lume_hir::Symbol::Use(_) => (),
             }
         }
+
+        Ok(())
     }
 
-    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
 
                 for type_param in &mut struct_def.type_parameters {
-                    let type_param_id = type_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+                    let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(Type::type_parameter(
-                        self.ctx.tcx_mut(),
-                        type_param_id,
-                        type_param.name.clone(),
-                    ));
+                    type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+                    self.ctx.tcx_mut().push_type_param(type_id, type_param_id)?;
                 }
 
                 for method in &mut struct_def.methods_mut() {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = method_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+                        let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
-                        type_param.type_id = Some(Type::type_parameter(
-                            self.ctx.tcx_mut(),
-                            type_param_id,
-                            type_param.name.clone(),
-                        ));
+                        type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+                        self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
                     }
                 }
             }
@@ -60,62 +59,73 @@ impl DefineTypeParameters<'_, '_> {
                 let type_id = trait_def.type_id.unwrap();
 
                 for type_param in &mut trait_def.type_parameters {
-                    let type_param_id = type_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+                    let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(Type::type_parameter(
-                        self.ctx.tcx_mut(),
-                        type_param_id,
-                        type_param.name.clone(),
-                    ));
+                    type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+                    self.ctx.tcx_mut().push_type_param(type_id, type_param_id)?;
                 }
 
                 for method in &mut trait_def.methods {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = method_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+                        let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
-                        type_param.type_id = Some(Type::type_parameter(
-                            self.ctx.tcx_mut(),
-                            type_param_id,
-                            type_param.name.clone(),
-                        ));
+                        type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+                        self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
                     }
                 }
             }
             _ => {}
         }
+
+        Ok(())
     }
 
-    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) {
+    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.impl_id.unwrap();
 
         for type_param in &mut implementation.type_parameters {
-            let type_param_id = impl_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(Type::type_parameter(
-                self.ctx.tcx_mut(),
-                type_param_id,
-                type_param.name.clone(),
-            ));
+            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+            self.ctx.tcx_mut().push_type_param(impl_id, type_param_id)?;
         }
+
+        Ok(())
     }
 
-    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) {
+    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
 
         for type_param in &mut func.type_parameters {
-            let type_param_id = func_id.add_type_param(self.ctx.tcx_mut(), type_param.name.name.clone());
+            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(Type::type_parameter(
-                self.ctx.tcx_mut(),
-                type_param_id,
-                type_param.name.clone(),
-            ));
+            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+            self.ctx.tcx_mut().push_type_param(func_id, type_param_id)?;
         }
+
+        Ok(())
+    }
+
+    fn wrap_type_param(&mut self, type_param_id: TypeParameterId) -> TypeId {
+        let name = self.ctx.tcx().type_parameter(type_param_id).unwrap().name.clone();
+        let symbol_name = SymbolName {
+            name: lume_hir::Identifier::from(name),
+            namespace: None,
+            location: lume_span::Location::empty(),
+        };
+
+        self.ctx
+            .tcx_mut()
+            .type_alloc(symbol_name, TypeKind::TypeParameter(type_param_id))
     }
 }

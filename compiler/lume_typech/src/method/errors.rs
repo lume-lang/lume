@@ -1,8 +1,8 @@
 use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
+use lume_hir::{Identifier, SymbolName};
 use lume_span::SourceFile;
-use lume_types::{Identifier, SymbolName};
 
 use super::MethodDisqualificationReason;
 

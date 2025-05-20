@@ -136,7 +136,7 @@ fn test_imports() {
     assert_eq!(
         Parser::parse_str("import std (Int)").unwrap(),
         vec![TopLevelExpression::Import(Box::new(Import {
-            path: NamespacePath {
+            path: ImportPath {
                 path: vec![Identifier {
                     name: "std".into(),
                     location: Location(7..10)
@@ -154,7 +154,7 @@ fn test_imports() {
     assert_eq!(
         Parser::parse_str("import std::io (File)").unwrap(),
         vec![TopLevelExpression::Import(Box::new(Import {
-            path: NamespacePath {
+            path: ImportPath {
                 path: vec![
                     Identifier {
                         name: "std".into(),
@@ -178,7 +178,7 @@ fn test_imports() {
     assert_eq!(
         Parser::parse_str("import std::io (File, Buffer)").unwrap(),
         vec![TopLevelExpression::Import(Box::new(Import {
-            path: NamespacePath {
+            path: ImportPath {
                 path: vec![
                     Identifier {
                         name: "std".into(),
@@ -208,7 +208,7 @@ fn test_imports() {
     assert_eq!(
         Parser::parse_str("import std::io ()").unwrap(),
         vec![TopLevelExpression::Import(Box::new(Import {
-            path: NamespacePath {
+            path: ImportPath {
                 path: vec![
                     Identifier {
                         name: "std".into(),

@@ -4,6 +4,18 @@ use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "invalid namespace path", code = "LM3005")]
+pub struct InvalidNamespacePath {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("namespace path is not valid: {path:?}")]
+    pub range: Range<usize>,
+
+    pub path: Box<dyn std::fmt::Debug + Send + Sync>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Undeclared function", code = "LM3012")]
 pub struct MissingFunction {
     #[span]

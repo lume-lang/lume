@@ -129,7 +129,7 @@ impl Parser {
         let end = cases.last().unwrap().location.end();
 
         let conditional = IfCondition {
-            cases: Vec::new(),
+            cases,
             location: (start..end).into(),
         };
 
@@ -155,7 +155,7 @@ impl Parser {
         let end = cases.last().unwrap().location.end();
 
         let conditional = UnlessCondition {
-            cases: Vec::new(),
+            cases,
             location: (start..end).into(),
         };
 

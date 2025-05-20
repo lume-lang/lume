@@ -3,13 +3,19 @@
 //! This module is used by most other packages within the Lume compiler, since spans
 //! are required to print useful diagnostics to the user - at least if source code is needed.
 
+pub mod id;
+
 use std::hash::Hash;
 use std::ops::Range;
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use error_snippet::Result;
+use error_snippet_derive::Diagnostic;
 use fxhash::hash64;
 use indexmap::IndexMap;
+
+pub use id::*;
 
 /// Hashes some ID using the `FxHasher` algorithm, which was extracted
 /// from the Rustc compiler.
@@ -23,28 +29,7 @@ pub fn hash_id<T: Hash + ?Sized>(id: &T) -> u64 {
     hash64(id)
 }
 
-/// Uniquely identifies a package.
-///
-/// Packages are identified by a unique ID, which is used to locate the package's source files.
-/// The ID is generated from the name of the package using a hash function.
-#[derive(serde::Serialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct PackageId(pub u64);
-
-impl PackageId {
-    /// Creates a new empty [`PackageId`].
-    #[inline]
-    #[must_use]
-    pub fn empty() -> Self {
-        Self(0)
-    }
-
-    /// Creates a new [`PackageId`] with the given name.
-    pub fn new<'a>(name: impl Into<&'a str>) -> Self {
-        Self(hash_id(name.into()))
-    }
-}
-
-#[derive(serde::Serialize, Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
     /// A file name which is defined by some internal process,
     /// such as in testing or defined on the command line.
@@ -66,7 +51,7 @@ impl std::fmt::Display for FileName {
 /// Uniquely identifies a source file.
 ///
 /// Each source file has a parent [`PackageId`], which defines which package it belongs to.
-#[derive(serde::Serialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceFileId(pub PackageId, pub u64);
 
 impl SourceFileId {
@@ -74,7 +59,7 @@ impl SourceFileId {
     #[inline]
     #[must_use]
     pub fn empty() -> Self {
-        Self(PackageId(0), 0)
+        Self(PackageId::empty(), 0)
     }
 
     /// Creates a new [`SourceFileId`] with the given parent package ID and name.
@@ -84,7 +69,7 @@ impl SourceFileId {
 }
 
 /// A single source file within a package.
-#[derive(serde::Serialize, Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct SourceFile {
     /// Defines the unique identifier of the source file.
     pub id: SourceFileId,
@@ -202,6 +187,12 @@ impl std::fmt::Display for Location {
     }
 }
 
+#[derive(Debug, Diagnostic)]
+#[diagnostic(message = "could not find source file with ID {id:?}")]
+pub struct InvalidSourceFile {
+    pub id: SourceFileId,
+}
+
 /// Defines a source map, which maps source file IDs to their corresponding source files.
 #[derive(Default, Debug)]
 pub struct SourceMap {
@@ -222,6 +213,20 @@ impl SourceMap {
     #[must_use]
     pub fn get(&self, idx: SourceFileId) -> Option<Arc<SourceFile>> {
         self.files.get(&idx).cloned()
+    }
+
+    /// Gets a source file from the mapping with the given ID, if any.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the given ID was not found within the source map.
+    /// For a non-failing method, see [`SourceMap::get()`].
+    #[inline]
+    pub fn get_or_err(&self, idx: SourceFileId) -> Result<Arc<SourceFile>> {
+        match self.get(idx) {
+            Some(v) => Ok(v),
+            None => Err(InvalidSourceFile { id: idx }.into()),
+        }
     }
 
     /// Inserts a new source file into the mapping.

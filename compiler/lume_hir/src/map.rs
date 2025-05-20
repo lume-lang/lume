@@ -1,6 +1,7 @@
 use indexmap::IndexMap;
 
 use crate::*;
+use lume_span::{ExpressionId, ItemId, StatementId};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Map {

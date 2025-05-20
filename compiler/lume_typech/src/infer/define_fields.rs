@@ -1,75 +1,104 @@
-use lume_hir::{self};
+use error_snippet::Result;
+use lume_hir::{self, SymbolName};
 use lume_types::*;
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineFields<'a, 'b> {
-    ctx: &'a mut ThirBuildCtx<'b>,
+pub(super) struct DefineFields<'a> {
+    ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineFields<'_, '_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx<'_>, hir: &mut lume_hir::map::Map) {
+impl DefineFields<'_> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
         let mut define = DefineFields { ctx };
 
-        define.run(hir);
+        define.run(hir)
     }
 
-    fn run(&mut self, hir: &mut lume_hir::map::Map) {
+    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in &mut hir.items {
             if let lume_hir::Symbol::Type(t) = symbol {
-                self.define_type(t);
+                self.define_type(t)?;
             }
         }
+
+        Ok(())
     }
 
-    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
+    fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
+                let type_ref = TypeRef::new(type_id);
+
+                let struct_name = struct_def.name().clone();
 
                 for property in &mut struct_def.properties_mut() {
                     let property_name = property.name.name.clone();
                     let visibility = property.visibility;
-                    let property_id = Property::alloc(self.ctx.tcx_mut(), type_id, property_name.clone(), visibility);
 
-                    property.prop_id = Some(property_id);
+                    let property_id = self
+                        .ctx
+                        .tcx_mut()
+                        .property_alloc(type_id, property_name.clone(), visibility)?;
 
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
+                    self.ctx
+                        .tcx_mut()
+                        .type_mut(type_id)
+                        .unwrap()
                         .properties
                         .insert(property_name, property_id);
+
+                    property.prop_id = Some(property_id);
                 }
 
                 for method in &mut struct_def.methods_mut() {
                     let method_name = &method.name;
                     let visibility = method.visibility;
-                    let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
+                    let qualified_name = SymbolName::with_root(struct_name.clone(), method_name.clone());
 
-                    method.method_id = Some(method_id);
+                    let method_id = self
+                        .ctx
+                        .tcx_mut()
+                        .method_alloc(type_ref.clone(), qualified_name, visibility)?;
 
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
+                    self.ctx
+                        .tcx_mut()
+                        .type_mut(type_id)
+                        .unwrap()
                         .methods
                         .insert(method_name.name.clone(), method_id);
+
+                    method.method_id = Some(method_id);
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
+                let type_ref = TypeRef::new(type_id);
 
                 for method in &mut trait_def.methods {
                     let method_name = &method.name;
                     let visibility = method.visibility;
-                    let method_id = Method::alloc(self.ctx.tcx_mut(), type_id, method_name.clone(), visibility);
+                    let qualified_name = SymbolName::with_root(trait_def.name.clone(), method_name.clone());
 
-                    method.method_id = Some(method_id);
+                    let method_id = self
+                        .ctx
+                        .tcx_mut()
+                        .method_alloc(type_ref.clone(), qualified_name, visibility)?;
 
-                    type_id
-                        .get_mut(self.ctx.tcx_mut())
+                    self.ctx
+                        .tcx_mut()
+                        .type_mut(type_id)
+                        .unwrap()
                         .methods
                         .insert(method_name.name.clone(), method_id);
+
+                    method.method_id = Some(method_id);
                 }
             }
             _ => {}
         }
+
+        Ok(())
     }
 }

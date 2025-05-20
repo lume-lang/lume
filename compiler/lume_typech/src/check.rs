@@ -11,7 +11,7 @@ pub trait TypeCheckerPass<'a> {
         Self: Sized;
 }
 
-impl ThirBuildCtx<'_> {
+impl ThirBuildCtx {
     /// Performs type-checking on all the items in the context, after they've
     /// been inferred in a previous stage.
     ///

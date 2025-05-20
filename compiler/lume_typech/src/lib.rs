@@ -1,7 +1,8 @@
-use error_snippet::{GraphicalRenderer, handler::DiagnosticHandler};
 use indexmap::IndexMap;
-use lume_hir::{ExpressionId, StatementId, TypeParameter};
-use lume_types::{SymbolName, TypeDatabaseContext, TypeId, TypeRef};
+use lume_errors::DiagCtxHandle;
+use lume_hir::{SymbolName, TypeParameter};
+use lume_span::{ExpressionId, StatementId};
+use lume_types::{TypeDatabaseContext, TypeRef};
 use symbol::CallReference;
 
 mod check;
@@ -10,12 +11,12 @@ mod infer;
 mod method;
 mod symbol;
 
-pub struct ThirBuildCtx<'a> {
-    /// Defines the parent state.
-    state: &'a mut lume_state::State,
+pub struct ThirBuildCtx {
+    /// Defines the type context from the build context.
+    tcx: TypeDatabaseContext,
 
     /// Defines the diagnostics handler.
-    dcx: DiagnosticHandler,
+    dcx: DiagCtxHandle,
 
     /// Defines a mapping between expressions and their resolved types.
     pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
@@ -28,12 +29,12 @@ pub struct ThirBuildCtx<'a> {
 }
 
 #[allow(dead_code)]
-impl<'a> ThirBuildCtx<'a> {
+impl ThirBuildCtx {
     /// Creates a new empty THIR build context.
-    pub fn new(state: &mut lume_state::State) -> ThirBuildCtx<'_> {
+    pub fn new(dcx: DiagCtxHandle) -> ThirBuildCtx {
         ThirBuildCtx {
-            state,
-            dcx: DiagnosticHandler::with_renderer(Box::new(GraphicalRenderer::new())),
+            tcx: TypeDatabaseContext::default(),
+            dcx,
             resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
             resolved_calls: IndexMap::new(),
@@ -42,26 +43,22 @@ impl<'a> ThirBuildCtx<'a> {
 
     /// Retrieves the type context from the build context.
     pub fn tcx(&self) -> &TypeDatabaseContext {
-        self.state.tcx()
+        &self.tcx
     }
 
     /// Retrieves the type context from the build context.
     pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
-        self.state.tcx_mut()
+        &mut self.tcx
     }
 
     /// Retrieves the diagnostics handler from the build context.
-    pub fn dcx(&'a mut self) -> &'a mut DiagnosticHandler {
+    pub fn dcx(&mut self) -> &mut DiagCtxHandle {
         &mut self.dcx
     }
 
     /// Gets the HIR expression with the given ID within the source file.
     #[allow(clippy::unused_self)]
-    pub(crate) fn hir_stmt(
-        &'a self,
-        hir: &'a lume_hir::map::Map,
-        id: lume_hir::StatementId,
-    ) -> &'a lume_hir::Statement {
+    pub(crate) fn hir_stmt<'a>(&self, hir: &'a lume_hir::map::Map, id: StatementId) -> &'a lume_hir::Statement {
         match hir.statements().get(&id) {
             Some(expr) => expr,
             None => panic!("no statement with given ID found: {id:?}"),
@@ -70,7 +67,7 @@ impl<'a> ThirBuildCtx<'a> {
 
     /// Gets the HIR expression with the given ID within the source file.
     #[allow(clippy::unused_self)]
-    pub(crate) fn hir_expr(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
+    pub(crate) fn hir_expr<'a>(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
         match hir.expressions().get(&id) {
             Some(expr) => expr,
             None => panic!("no expression with given ID found: {id:?}"),
