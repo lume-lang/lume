@@ -1,20 +1,72 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "for pattern in [1, 2, 3] { continue; }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: IteratorLoop(
             IteratorLoop {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 collection: Expression {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:15:16,
                     kind: StaticCall(
                         StaticCall {
-                            id: 5871781006564002453,
-                            name: std::Array::with_capacity,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                            Named(
+                                                Identifier {
+                                                    name: "Array",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Identifier {
+                                    name: "with_capacity",
+                                    location: <internal>:15:16,
+                                },
+                                location: <internal>:15:16,
+                            },
                             type_arguments: [
                                 Implicit {
                                     location: <internal>:0:0,
@@ -22,15 +74,36 @@ description: "for pattern in [1, 2, 3] { continue; }"
                             ],
                             arguments: [
                                 Expression {
-                                    id: 11743562013128004906,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
                                     location: <internal>:0:0,
                                     kind: Literal(
                                         Literal {
-                                            id: 17615343019692007359,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
                                             location: <internal>:0:0,
                                             kind: Int(
                                                 IntLiteral {
-                                                    id: 5040379952546458196,
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            4,
+                                                        ),
+                                                    },
                                                     value: 3,
                                                     kind: U64,
                                                 },
@@ -45,10 +118,24 @@ description: "for pattern in [1, 2, 3] { continue; }"
                 block: Block {
                     statements: [
                         Statement {
-                            id: 10912160959110460649,
+                            id: StatementId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    5,
+                                ),
+                            },
                             kind: Continue(
                                 Continue {
-                                    id: 10912160959110460649,
+                                    id: StatementId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            5,
+                                        ),
+                                    },
                                 },
                             ),
                             location: <internal>:27:36,

@@ -1,25 +1,77 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n        let collection = [1, 2, 3];\n        for pattern in collection { break; }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 name: Identifier {
                     name: "collection",
                     location: <internal>:13:23,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:26:27,
                     kind: StaticCall(
                         StaticCall {
-                            id: 5871781006564002453,
-                            name: std::Array::with_capacity,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                            Named(
+                                                Identifier {
+                                                    name: "Array",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Identifier {
+                                    name: "with_capacity",
+                                    location: <internal>:26:27,
+                                },
+                                location: <internal>:26:27,
+                            },
                             type_arguments: [
                                 Implicit {
                                     location: <internal>:0:0,
@@ -27,15 +79,36 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                             ],
                             arguments: [
                                 Expression {
-                                    id: 11743562013128004906,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
                                     location: <internal>:0:0,
                                     kind: Literal(
                                         Literal {
-                                            id: 17615343019692007359,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
                                             location: <internal>:0:0,
                                             kind: Int(
                                                 IntLiteral {
-                                                    id: 5040379952546458196,
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            4,
+                                                        ),
+                                                    },
                                                     value: 3,
                                                     kind: U64,
                                                 },
@@ -52,17 +125,52 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
         location: <internal>:9:36,
     },
     Statement {
-        id: 10912160959110460649,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                5,
+            ),
+        },
         kind: IteratorLoop(
             IteratorLoop {
-                id: 10912160959110460649,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        5,
+                    ),
+                },
                 collection: Expression {
-                    id: 16783941965674463102,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            6,
+                        ),
+                    },
                     location: <internal>:60:70,
                     kind: Variable(
                         Variable {
-                            id: 16783941965674463102,
-                            reference: 0,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    6,
+                                ),
+                            },
+                            reference: StatementId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             name: Identifier {
                                 name: "collection",
                                 location: <internal>:60:70,
@@ -74,10 +182,24 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                 block: Block {
                     statements: [
                         Statement {
-                            id: 4208978898528913939,
+                            id: StatementId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    7,
+                                ),
+                            },
                             kind: Break(
                                 Break {
-                                    id: 4208978898528913939,
+                                    id: StatementId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7,
+                                        ),
+                                    },
                                 },
                             ),
                             location: <internal>:73:79,

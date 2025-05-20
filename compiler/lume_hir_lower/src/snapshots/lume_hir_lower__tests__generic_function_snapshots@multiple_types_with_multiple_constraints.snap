@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -> void {}"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        1608888409088296675: Function(
+        ItemId(
+            14825577416135075223,
+        ): Function(
             FunctionDefinition {
-                id: 1608888409088296675,
+                id: ItemId(
+                    14825577416135075223,
+                ),
                 func_id: None,
                 visibility: Private,
-                name: test,
+                name: SymbolName {
+                    namespace: None,
+                    name: Identifier {
+                        name: "test",
+                        location: <internal>:3:7,
+                    },
+                    location: <internal>:3:7,
+                },
                 parameters: [],
                 type_parameters: [
                     TypeParameter {
@@ -24,12 +35,40 @@ Map {
                         type_param_id: None,
                         constraints: [
                             Type {
-                                name: Numeric,
+                                id: ItemId(
+                                    6129574414018423941,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: <internal>:12:19,
+                                    },
+                                    location: <internal>:12:19,
+                                },
                                 type_params: [],
                                 location: <internal>:12:19,
                             },
                             Type {
-                                name: Floating,
+                                id: ItemId(
+                                    11032658524003341115,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Floating",
+                                        location: <internal>:22:30,
+                                    },
+                                    location: <internal>:22:30,
+                                },
                                 type_params: [],
                                 location: <internal>:22:30,
                             },
@@ -45,12 +84,40 @@ Map {
                         type_param_id: None,
                         constraints: [
                             Type {
-                                name: Numeric,
+                                id: ItemId(
+                                    6129574414018423941,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: <internal>:36:43,
+                                    },
+                                    location: <internal>:36:43,
+                                },
                                 type_params: [],
                                 location: <internal>:36:43,
                             },
                             Type {
-                                name: Floating,
+                                id: ItemId(
+                                    11032658524003341115,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Floating",
+                                        location: <internal>:46:54,
+                                    },
+                                    location: <internal>:46:54,
+                                },
                                 type_params: [],
                                 location: <internal>:46:54,
                             },
@@ -60,7 +127,21 @@ Map {
                 ],
                 return_type: Some(
                     Type {
-                        name: void,
+                        id: ItemId(
+                            9344623788042179276,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:61:65,
+                            },
+                            location: <internal>:61:65,
+                        },
                         type_params: [],
                         location: <internal>:61:65,
                     },

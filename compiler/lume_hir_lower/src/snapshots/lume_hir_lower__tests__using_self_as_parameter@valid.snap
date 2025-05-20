@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "impl Foo {\n        pub fn bar(self, a: Int32) -> void { }\n    }"
 ---
 Map {
@@ -7,12 +7,30 @@ Map {
         0,
     ),
     items: {
-        11075105501540449544: Impl(
+        ItemId(
+            13138428697284688615,
+        ): Impl(
             Implementation {
-                id: 11075105501540449544,
+                id: ItemId(
+                    13138428697284688615,
+                ),
                 impl_id: None,
                 target: Type {
-                    name: Foo,
+                    id: ItemId(
+                        7990845552190622859,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:5:8,
+                        },
+                        location: <internal>:5:8,
+                    },
                     type_params: [],
                     location: <internal>:5:8,
                 },
@@ -26,26 +44,59 @@ Map {
                         },
                         parameters: [
                             Parameter {
-                                id: 0,
                                 name: Identifier {
                                     name: "self",
                                     location: <internal>:30:34,
                                 },
                                 param_type: Type {
-                                    name: Foo,
+                                    id: ItemId(
+                                        7990845552190622859,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "Foo",
+                                            location: <internal>:5:8,
+                                        },
+                                        location: <internal>:5:8,
+                                    },
                                     type_params: [],
                                     location: <internal>:30:34,
                                 },
                                 location: <internal>:30:34,
                             },
                             Parameter {
-                                id: 5871781006564002453,
                                 name: Identifier {
                                     name: "a",
                                     location: <internal>:36:37,
                                 },
                                 param_type: Type {
-                                    name: std::Int32,
+                                    id: ItemId(
+                                        11582867247635641484,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [
+                                                    Named(
+                                                        Identifier {
+                                                            name: "std",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: <internal>:0:0,
+                                        },
+                                        location: <internal>:0:0,
+                                    },
                                     type_params: [],
                                     location: <internal>:39:44,
                                 },
@@ -55,7 +106,21 @@ Map {
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: void,
+                                id: ItemId(
+                                    9344623788042179276,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "void",
+                                        location: <internal>:49:53,
+                                    },
+                                    location: <internal>:49:53,
+                                },
                                 type_params: [],
                                 location: <internal>:49:53,
                             },

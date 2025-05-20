@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: fn external main() -> void
 ---
 Map {
@@ -7,17 +7,42 @@ Map {
         0,
     ),
     items: {
-        15299231299772503292: Function(
+        ItemId(
+            8095934718272011788,
+        ): Function(
             FunctionDefinition {
-                id: 15299231299772503292,
+                id: ItemId(
+                    8095934718272011788,
+                ),
                 func_id: None,
                 visibility: Private,
-                name: main,
+                name: SymbolName {
+                    namespace: None,
+                    name: Identifier {
+                        name: "main",
+                        location: <internal>:12:16,
+                    },
+                    location: <internal>:12:16,
+                },
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: void,
+                        id: ItemId(
+                            9344623788042179276,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:22:26,
+                            },
+                            location: <internal>:22:26,
+                        },
                         type_params: [],
                         location: <internal>:22:26,
                     },

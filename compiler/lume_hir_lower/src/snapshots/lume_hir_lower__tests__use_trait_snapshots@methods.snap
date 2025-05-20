@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            use Cast in Int32 {\n                pub fn to_string() -> String {}\n\n                pub fn to_int() -> Int32 {}\n            }"
 ---
 Map {
@@ -7,28 +7,95 @@ Map {
         0,
     ),
     items: {
-        13914738179290843052: Use(
+        ItemId(
+            9938665916635595670,
+        ): Use(
             TraitImplementation {
-                id: 13914738179290843052,
+                id: ItemId(
+                    9938665916635595670,
+                ),
                 name: Type {
-                    name: Cast,
+                    id: ItemId(
+                        9938665916635595670,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Cast",
+                            location: <internal>:17:21,
+                        },
+                        location: <internal>:17:21,
+                    },
                     type_params: [],
                     location: <internal>:17:21,
                 },
                 target: Type {
-                    name: std::Int32,
+                    id: ItemId(
+                        11582867247635641484,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Int32",
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
                     type_params: [],
                     location: <internal>:25:30,
                 },
                 methods: [
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: to_string,
+                        name: SymbolName {
+                            namespace: None,
+                            name: Identifier {
+                                name: "to_string",
+                                location: <internal>:56:65,
+                            },
+                            location: <internal>:56:65,
+                        },
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: std::String,
+                                id: ItemId(
+                                    9062208321437966898,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [
+                                                Named(
+                                                    Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "String",
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:0:0,
+                                },
                                 type_params: [],
                                 location: <internal>:71:77,
                             },
@@ -41,12 +108,40 @@ Map {
                     },
                     TraitMethodImplementation {
                         visibility: Public,
-                        name: to_int,
+                        name: SymbolName {
+                            namespace: None,
+                            name: Identifier {
+                                name: "to_int",
+                                location: <internal>:105:111,
+                            },
+                            location: <internal>:105:111,
+                        },
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: std::Int32,
+                                id: ItemId(
+                                    11582867247635641484,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [
+                                                Named(
+                                                    Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:0:0,
+                                },
                                 type_params: [],
                                 location: <internal>:117:122,
                             },

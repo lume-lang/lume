@@ -1,28 +1,63 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: let ident = 0;
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 name: Identifier {
                     name: "ident",
                     location: <internal>:4:9,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:12:13,
                     kind: Literal(
                         Literal {
-                            id: 5871781006564002453,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             location: <internal>:12:13,
                             kind: Int(
                                 IntLiteral {
-                                    id: 5871781006564002453,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     value: 0,
                                     kind: I32,
                                 },

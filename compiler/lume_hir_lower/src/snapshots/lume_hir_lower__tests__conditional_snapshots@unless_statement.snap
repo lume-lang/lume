@@ -1,14 +1,150 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "unless true { let a = 0; }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Unless(
             Unless {
-                id: 0,
-                cases: [],
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
+                cases: [
+                    Condition {
+                        id: StatementId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
+                        condition: Some(
+                            Expression {
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        2,
+                                    ),
+                                },
+                                location: <internal>:7:11,
+                                kind: Literal(
+                                    Literal {
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                2,
+                                            ),
+                                        },
+                                        location: <internal>:7:11,
+                                        kind: Boolean(
+                                            BooleanLiteral {
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        2,
+                                                    ),
+                                                },
+                                                value: true,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                        block: Block {
+                            statements: [
+                                Statement {
+                                    id: StatementId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                    kind: Variable(
+                                        VariableDeclaration {
+                                            id: StatementId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
+                                            name: Identifier {
+                                                name: "a",
+                                                location: <internal>:18:19,
+                                            },
+                                            declared_type: None,
+                                            value: Expression {
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        4,
+                                                    ),
+                                                },
+                                                location: <internal>:22:23,
+                                                kind: Literal(
+                                                    Literal {
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                4,
+                                                            ),
+                                                        },
+                                                        location: <internal>:22:23,
+                                                        kind: Int(
+                                                            IntLiteral {
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        4,
+                                                                    ),
+                                                                },
+                                                                value: 0,
+                                                                kind: I32,
+                                                            },
+                                                        ),
+                                                    },
+                                                ),
+                                            },
+                                        },
+                                    ),
+                                    location: <internal>:14:24,
+                                },
+                            ],
+                            location: <internal>:12:26,
+                        },
+                        location: <internal>:7:26,
+                    },
+                ],
                 location: <internal>:0:26,
             },
         ),

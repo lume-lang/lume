@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "fn main() -> void { let a = 0; }"
 ---
 Map {
@@ -7,17 +7,42 @@ Map {
         0,
     ),
     items: {
-        15299231299772503292: Function(
+        ItemId(
+            8095934718272011788,
+        ): Function(
             FunctionDefinition {
-                id: 15299231299772503292,
+                id: ItemId(
+                    8095934718272011788,
+                ),
                 func_id: None,
                 visibility: Private,
-                name: main,
+                name: SymbolName {
+                    namespace: None,
+                    name: Identifier {
+                        name: "main",
+                        location: <internal>:3:7,
+                    },
+                    location: <internal>:3:7,
+                },
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: void,
+                        id: ItemId(
+                            9344623788042179276,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:13:17,
+                            },
+                            location: <internal>:13:17,
+                        },
                         type_params: [],
                         location: <internal>:13:17,
                     },
@@ -26,25 +51,60 @@ Map {
                     Block {
                         statements: [
                             Statement {
-                                id: 0,
+                                id: StatementId {
+                                    def: ItemId(
+                                        8095934718272011788,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 kind: Variable(
                                     VariableDeclaration {
-                                        id: 0,
+                                        id: StatementId {
+                                            def: ItemId(
+                                                8095934718272011788,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         name: Identifier {
                                             name: "a",
                                             location: <internal>:24:25,
                                         },
                                         declared_type: None,
                                         value: Expression {
-                                            id: 5871781006564002453,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    8095934718272011788,
+                                                ),
+                                                index: Idx(
+                                                    1,
+                                                ),
+                                            },
                                             location: <internal>:28:29,
                                             kind: Literal(
                                                 Literal {
-                                                    id: 5871781006564002453,
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            8095934718272011788,
+                                                        ),
+                                                        index: Idx(
+                                                            1,
+                                                        ),
+                                                    },
                                                     location: <internal>:28:29,
                                                     kind: Int(
                                                         IntLiteral {
-                                                            id: 5871781006564002453,
+                                                            id: ExpressionId {
+                                                                def: ItemId(
+                                                                    8095934718272011788,
+                                                                ),
+                                                                index: Idx(
+                                                                    1,
+                                                                ),
+                                                            },
                                                             value: 0,
                                                             kind: I32,
                                                         },
@@ -65,26 +125,68 @@ Map {
         ),
     },
     statements: {
-        0: Statement {
-            id: 0,
+        StatementId {
+            def: ItemId(
+                8095934718272011788,
+            ),
+            index: Idx(
+                0,
+            ),
+        }: Statement {
+            id: StatementId {
+                def: ItemId(
+                    8095934718272011788,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             kind: Variable(
                 VariableDeclaration {
-                    id: 0,
+                    id: StatementId {
+                        def: ItemId(
+                            8095934718272011788,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     name: Identifier {
                         name: "a",
                         location: <internal>:24:25,
                     },
                     declared_type: None,
                     value: Expression {
-                        id: 5871781006564002453,
+                        id: ExpressionId {
+                            def: ItemId(
+                                8095934718272011788,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
                         location: <internal>:28:29,
                         kind: Literal(
                             Literal {
-                                id: 5871781006564002453,
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        8095934718272011788,
+                                    ),
+                                    index: Idx(
+                                        1,
+                                    ),
+                                },
                                 location: <internal>:28:29,
                                 kind: Int(
                                     IntLiteral {
-                                        id: 5871781006564002453,
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                8095934718272011788,
+                                            ),
+                                            index: Idx(
+                                                1,
+                                            ),
+                                        },
                                         value: 0,
                                         kind: I32,
                                     },
@@ -98,16 +200,44 @@ Map {
         },
     },
     expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
+        ExpressionId {
+            def: ItemId(
+                8095934718272011788,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Expression {
+            id: ExpressionId {
+                def: ItemId(
+                    8095934718272011788,
+                ),
+                index: Idx(
+                    1,
+                ),
+            },
             location: <internal>:28:29,
             kind: Literal(
                 Literal {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            8095934718272011788,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:28:29,
                     kind: Int(
                         IntLiteral {
-                            id: 5871781006564002453,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    8095934718272011788,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             value: 0,
                             kind: I32,
                         },

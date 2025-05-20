@@ -1,28 +1,63 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 name: Identifier {
                     name: "a",
                     location: <internal>:13:14,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:17:18,
                     kind: Literal(
                         Literal {
-                            id: 5871781006564002453,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             location: <internal>:17:18,
                             kind: Int(
                                 IntLiteral {
-                                    id: 5871781006564002453,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     value: 0,
                                     kind: I32,
                                 },
@@ -35,25 +70,60 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
         location: <internal>:9:19,
     },
     Statement {
-        id: 11743562013128004906,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                2,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 11743562013128004906,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        2,
+                    ),
+                },
                 name: Identifier {
                     name: "b",
                     location: <internal>:32:33,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 17615343019692007359,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            3,
+                        ),
+                    },
                     location: <internal>:36:37,
                     kind: Literal(
                         Literal {
-                            id: 17615343019692007359,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    3,
+                                ),
+                            },
                             location: <internal>:36:37,
                             kind: Int(
                                 IntLiteral {
-                                    id: 17615343019692007359,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
                                     value: 1,
                                     kind: I32,
                                 },
@@ -66,22 +136,74 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
         location: <internal>:28:38,
     },
     Statement {
-        id: 5040379952546458196,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                4,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 5040379952546458196,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        4,
+                    ),
+                },
                 name: Identifier {
                     name: "_",
                     location: <internal>:51:52,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 10912160959110460649,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            5,
+                        ),
+                    },
                     location: <internal>:56:61,
                     kind: StaticCall(
                         StaticCall {
-                            id: 10912160959110460649,
-                            name: std::new::RangeInclusive,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    5,
+                                ),
+                            },
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                            Named(
+                                                Identifier {
+                                                    name: "new",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Identifier {
+                                    name: "RangeInclusive",
+                                    location: <internal>:56:61,
+                                },
+                                location: <internal>:56:61,
+                            },
                             type_arguments: [
                                 Implicit {
                                     location: <internal>:0:0,
@@ -89,12 +211,33 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                             ],
                             arguments: [
                                 Expression {
-                                    id: 16783941965674463102,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            6,
+                                        ),
+                                    },
                                     location: <internal>:56:57,
                                     kind: Variable(
                                         Variable {
-                                            id: 16783941965674463102,
-                                            reference: 0,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    6,
+                                                ),
+                                            },
+                                            reference: StatementId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             name: Identifier {
                                                 name: "a",
                                                 location: <internal>:56:57,
@@ -104,12 +247,33 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                     ),
                                 },
                                 Expression {
-                                    id: 4208978898528913939,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7,
+                                        ),
+                                    },
                                     location: <internal>:60:61,
                                     kind: Variable(
                                         Variable {
-                                            id: 4208978898528913939,
-                                            reference: 11743562013128004906,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    7,
+                                                ),
+                                            },
+                                            reference: StatementId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
                                             name: Identifier {
                                                 name: "b",
                                                 location: <internal>:60:61,

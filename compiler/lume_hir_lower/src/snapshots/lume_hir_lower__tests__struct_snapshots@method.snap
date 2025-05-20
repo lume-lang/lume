@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            impl Foo {\n                fn bar() -> Int32 {\n                    return 0;\n                }\n            }"
 ---
 Map {
@@ -7,12 +7,30 @@ Map {
         0,
     ),
     items: {
-        11075105501540449544: Impl(
+        ItemId(
+            13138428697284688615,
+        ): Impl(
             Implementation {
-                id: 11075105501540449544,
+                id: ItemId(
+                    13138428697284688615,
+                ),
                 impl_id: None,
                 target: Type {
-                    name: Foo,
+                    id: ItemId(
+                        7990845552190622859,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:18:21,
+                        },
+                        location: <internal>:18:21,
+                    },
                     type_params: [],
                     location: <internal>:18:21,
                 },
@@ -28,7 +46,28 @@ Map {
                         type_parameters: [],
                         return_type: Some(
                             Type {
-                                name: std::Int32,
+                                id: ItemId(
+                                    11582867247635641484,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [
+                                                Named(
+                                                    Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:0:0,
+                                },
                                 type_params: [],
                                 location: <internal>:52:57,
                             },
@@ -37,21 +76,56 @@ Map {
                             Block {
                                 statements: [
                                     Statement {
-                                        id: 0,
+                                        id: StatementId {
+                                            def: ItemId(
+                                                7990845552190622859,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         kind: Return(
                                             Return {
-                                                id: 0,
+                                                id: StatementId {
+                                                    def: ItemId(
+                                                        7990845552190622859,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 value: Some(
                                                     Expression {
-                                                        id: 5871781006564002453,
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                7990845552190622859,
+                                                            ),
+                                                            index: Idx(
+                                                                1,
+                                                            ),
+                                                        },
                                                         location: <internal>:87:88,
                                                         kind: Literal(
                                                             Literal {
-                                                                id: 5871781006564002453,
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        7990845552190622859,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        1,
+                                                                    ),
+                                                                },
                                                                 location: <internal>:87:88,
                                                                 kind: Int(
                                                                     IntLiteral {
-                                                                        id: 5871781006564002453,
+                                                                        id: ExpressionId {
+                                                                            def: ItemId(
+                                                                                7990845552190622859,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                1,
+                                                                            ),
+                                                                        },
                                                                         value: 0,
                                                                         kind: I32,
                                                                     },
@@ -77,22 +151,64 @@ Map {
         ),
     },
     statements: {
-        0: Statement {
-            id: 0,
+        StatementId {
+            def: ItemId(
+                7990845552190622859,
+            ),
+            index: Idx(
+                0,
+            ),
+        }: Statement {
+            id: StatementId {
+                def: ItemId(
+                    7990845552190622859,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             kind: Return(
                 Return {
-                    id: 0,
+                    id: StatementId {
+                        def: ItemId(
+                            7990845552190622859,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     value: Some(
                         Expression {
-                            id: 5871781006564002453,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    7990845552190622859,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             location: <internal>:87:88,
                             kind: Literal(
                                 Literal {
-                                    id: 5871781006564002453,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            7990845552190622859,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     location: <internal>:87:88,
                                     kind: Int(
                                         IntLiteral {
-                                            id: 5871781006564002453,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    7990845552190622859,
+                                                ),
+                                                index: Idx(
+                                                    1,
+                                                ),
+                                            },
                                             value: 0,
                                             kind: I32,
                                         },
@@ -107,16 +223,44 @@ Map {
         },
     },
     expressions: {
-        5871781006564002453: Expression {
-            id: 5871781006564002453,
+        ExpressionId {
+            def: ItemId(
+                7990845552190622859,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Expression {
+            id: ExpressionId {
+                def: ItemId(
+                    7990845552190622859,
+                ),
+                index: Idx(
+                    1,
+                ),
+            },
             location: <internal>:87:88,
             kind: Literal(
                 Literal {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            7990845552190622859,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:87:88,
                     kind: Int(
                         IntLiteral {
-                            id: 5871781006564002453,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    7990845552190622859,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             value: 0,
                             kind: I32,
                         },

@@ -1,20 +1,48 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "loop { continue; }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: InfiniteLoop(
             InfiniteLoop {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 block: Block {
                     statements: [
                         Statement {
-                            id: 5871781006564002453,
+                            id: StatementId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             kind: Continue(
                                 Continue {
-                                    id: 5871781006564002453,
+                                    id: StatementId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                 },
                             ),
                             location: <internal>:7:16,

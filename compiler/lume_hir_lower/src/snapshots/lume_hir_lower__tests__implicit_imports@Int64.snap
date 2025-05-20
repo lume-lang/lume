@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "fn foo() -> Int64 { }"
 ---
 Map {
@@ -7,17 +7,49 @@ Map {
         0,
     ),
     items: {
-        8195533856448846917: Function(
+        ItemId(
+            17561646994490527473,
+        ): Function(
             FunctionDefinition {
-                id: 8195533856448846917,
+                id: ItemId(
+                    17561646994490527473,
+                ),
                 func_id: None,
                 visibility: Private,
-                name: foo,
+                name: SymbolName {
+                    namespace: None,
+                    name: Identifier {
+                        name: "foo",
+                        location: <internal>:3:6,
+                    },
+                    location: <internal>:3:6,
+                },
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: std::Int64,
+                        id: ItemId(
+                            3407981406265970223,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [
+                                        Named(
+                                            Identifier {
+                                                name: "std",
+                                                location: <internal>:0:0,
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "Int64",
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:0:0,
+                        },
                         type_params: [],
                         location: <internal>:12:17,
                     },

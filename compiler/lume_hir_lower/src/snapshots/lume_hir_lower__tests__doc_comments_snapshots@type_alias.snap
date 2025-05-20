@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "/// This is a doc comment\n        type Foo = Bar"
 ---
 Map {
@@ -7,14 +7,39 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Type(
+        ItemId(
+            12314200219861369160,
+        ): Type(
             Alias(
                 AliasDefinition {
-                    id: 18213876290066861800,
+                    id: ItemId(
+                        12314200219861369160,
+                    ),
                     type_id: None,
-                    name: Foo,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:39:42,
+                        },
+                        location: <internal>:39:42,
+                    },
                     definition: Type {
-                        name: Bar,
+                        id: ItemId(
+                            4596565343203938484,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "Bar",
+                                location: <internal>:45:48,
+                            },
+                            location: <internal>:45:48,
+                        },
                         type_params: [],
                         location: <internal>:45:48,
                     },

@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            impl Foo {\n                fn bar() { }\n            }"
 ---
 Map {
@@ -7,12 +7,30 @@ Map {
         0,
     ),
     items: {
-        11075105501540449544: Impl(
+        ItemId(
+            13138428697284688615,
+        ): Impl(
             Implementation {
-                id: 11075105501540449544,
+                id: ItemId(
+                    13138428697284688615,
+                ),
                 impl_id: None,
                 target: Type {
-                    name: Foo,
+                    id: ItemId(
+                        7990845552190622859,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:18:21,
+                        },
+                        location: <internal>:18:21,
+                    },
                     type_params: [],
                     location: <internal>:18:21,
                 },

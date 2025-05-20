@@ -1,14 +1,137 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "if true { } else if false { }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: If(
             If {
-                id: 0,
-                cases: [],
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
+                cases: [
+                    Condition {
+                        id: StatementId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
+                        condition: Some(
+                            Expression {
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        2,
+                                    ),
+                                },
+                                location: <internal>:3:7,
+                                kind: Literal(
+                                    Literal {
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                2,
+                                            ),
+                                        },
+                                        location: <internal>:3:7,
+                                        kind: Boolean(
+                                            BooleanLiteral {
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        2,
+                                                    ),
+                                                },
+                                                value: true,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:8:11,
+                        },
+                        location: <internal>:3:11,
+                    },
+                    Condition {
+                        id: StatementId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                3,
+                            ),
+                        },
+                        condition: Some(
+                            Expression {
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        4,
+                                    ),
+                                },
+                                location: <internal>:20:25,
+                                kind: Literal(
+                                    Literal {
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                4,
+                                            ),
+                                        },
+                                        location: <internal>:20:25,
+                                        kind: Boolean(
+                                            BooleanLiteral {
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        4,
+                                                    ),
+                                                },
+                                                value: false,
+                                            },
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                        block: Block {
+                            statements: [],
+                            location: <internal>:26:29,
+                        },
+                        location: <internal>:20:29,
+                    },
+                ],
                 location: <internal>:0:29,
             },
         ),
