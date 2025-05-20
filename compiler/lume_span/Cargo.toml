@@ -7,8 +7,7 @@ rust-version.workspace = true
 [dependencies]
 error_snippet = { workspace = true }
 fxhash = "^0.2"
-indexmap = { version = "^2.9", features = ["serde"] }
-serde = { version = "1.0.219", features = ["serde_derive"] }
+indexmap = { version = "^2.9" }
 
 [lints]
 workspace = true

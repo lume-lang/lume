@@ -16,7 +16,7 @@ lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-indexmap = { version = "^2.9", features = ["serde"] }
+indexmap = { version = "^2.9" }
 rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }
 
 [dev-dependencies]

@@ -10,7 +10,7 @@ lume_span = { path = "../lume_span" }
 glob = "^0"
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-semver = { version = "^1", features = ["serde"] }
+semver = { version = "^1" }
 toml_edit = "^0.22"
 
 [dev-dependencies]
