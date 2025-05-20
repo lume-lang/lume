@@ -73,7 +73,64 @@ impl PartialEq for Identifier {
     }
 }
 
-#[derive(serde::Serialize, Node, Debug, Clone, Eq)]
+#[derive(Node, Debug, Clone, Eq)]
+pub struct ImportPath {
+    pub path: Vec<Identifier>,
+    pub location: Location,
+}
+
+impl ImportPath {
+    #[must_use]
+    pub fn empty() -> Self {
+        ImportPath {
+            path: Vec::new(),
+            location: Location(0..0),
+        }
+    }
+
+    #[must_use]
+    pub fn new(name: &[&str]) -> Self {
+        let path = name.iter().map(|&s| Identifier::new(s)).collect();
+
+        ImportPath {
+            path,
+            location: Location(0..0),
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.path.is_empty()
+    }
+}
+
+impl std::fmt::Display for ImportPath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let joined = self
+            .path
+            .iter()
+            .map(|i| i.name.as_str())
+            .collect::<Vec<&str>>()
+            .join("::");
+
+        f.write_str(&joined)
+    }
+}
+
+impl std::hash::Hash for ImportPath {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_string().hash(state);
+    }
+}
+
+impl PartialEq for ImportPath {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
+}
+
+#[derive(Node, Debug, Clone, Eq)]
 pub struct NamespacePath {
     pub path: Vec<Identifier>,
     pub location: Location,
@@ -218,7 +275,7 @@ pub enum TopLevelExpression {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Import {
-    pub path: NamespacePath,
+    pub path: ImportPath,
     pub names: Vec<Identifier>,
     pub location: Location,
 }
@@ -226,7 +283,7 @@ pub struct Import {
 impl Import {
     #[must_use]
     pub fn from_names(path: &[&'static str], names: &[&'static str]) -> Self {
-        let path = NamespacePath::new(path);
+        let path = ImportPath::new(path);
         let names = names.iter().map(|p| Identifier::new(p)).collect();
 
         Self {
@@ -242,14 +299,14 @@ impl Import {
     }
 
     #[must_use]
-    pub fn flatten(self) -> Vec<NamespacePath> {
+    pub fn flatten(self) -> Vec<ImportPath> {
         self.names
             .iter()
             .map(|n| {
                 let mut path = self.path.path.clone();
                 path.push(n.clone());
 
-                NamespacePath {
+                ImportPath {
                     path,
                     location: self.location.clone(),
                 }
@@ -260,7 +317,7 @@ impl Import {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Namespace {
-    pub path: NamespacePath,
+    pub path: ImportPath,
     pub location: Location,
 }
 
