@@ -5,7 +5,7 @@ expression: "parse(\"namespace System::IO\")"
 [
     Namespace(
         Namespace {
-            path: NamespacePath {
+            path: ImportPath {
                 path: [
                     Identifier {
                         name: "System",

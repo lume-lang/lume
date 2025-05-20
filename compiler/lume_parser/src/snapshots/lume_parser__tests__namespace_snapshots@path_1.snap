@@ -5,7 +5,7 @@ expression: "parse(\"namespace std\")"
 [
     Namespace(
         Namespace {
-            path: NamespacePath {
+            path: ImportPath {
                 path: [
                     Identifier {
                         name: "std",
