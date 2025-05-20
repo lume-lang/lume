@@ -259,6 +259,24 @@ impl DiagCtxHandle {
     pub fn tainted(&self) -> bool {
         self.handler().tainted.load(Ordering::Acquire)
     }
+
+    /// Create a handle for the diagnostic context, which can be
+    /// used to emit diagnositcs to the inner context.
+    #[must_use]
+    pub fn handle(&mut self) -> DiagCtxHandle {
+        DiagCtxHandle {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+
+    /// Creates a new handle, which is only valid within the given closure,
+    /// which is executed immedietly. Upon finishing the closure, the handle is dropped
+    /// and all diagnostics reporting within it are immedietly drained to the inner handler.
+    pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
+        let handle = self.handle();
+
+        f(handle)
+    }
 }
 
 unsafe impl Send for DiagCtxHandle {}
