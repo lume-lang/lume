@@ -214,7 +214,6 @@ checksum = "cea70ddb795996207ad57735b50c5982d8844f38ba9ee5f1aedcfb708a2aa11e"
 dependencies = [
  "equivalent",
  "hashbrown",
- "serde",
 ]
 
 [[package]]
@@ -288,7 +287,6 @@ version = "0.1.0"
 dependencies = [
  "insta",
  "lume_macros",
- "serde",
 ]
 
 [[package]]
@@ -313,7 +311,6 @@ dependencies = [
  "lume_hir",
  "lume_hir_lower",
  "lume_span",
- "lume_state",
  "lume_typech",
 ]
 
@@ -330,7 +327,6 @@ dependencies = [
 name = "lume_hir"
 version = "0.1.0"
 dependencies = [
- "arc",
  "error_snippet",
  "error_snippet_derive",
  "indexmap",
@@ -340,8 +336,6 @@ dependencies = [
  "lume_macros",
  "lume_parser",
  "lume_span",
- "lume_state",
- "lume_types",
  "rust-embed",
 ]
 
@@ -358,8 +352,6 @@ dependencies = [
  "lume_hir",
  "lume_parser",
  "lume_span",
- "lume_state",
- "lume_types",
 ]
 
 [[package]]
@@ -392,8 +384,6 @@ dependencies = [
  "lume_errors",
  "lume_lexer",
  "lume_span",
- "lume_state",
- "serde",
 ]
 
 [[package]]
@@ -401,21 +391,9 @@ name = "lume_span"
 version = "0.1.0"
 dependencies = [
  "error_snippet",
+ "error_snippet_derive",
  "fxhash",
  "indexmap",
- "serde",
-]
-
-[[package]]
-name = "lume_state"
-version = "0.1.0"
-dependencies = [
- "arc",
- "error_snippet",
- "error_snippet_derive",
- "lume_errors",
- "lume_span",
- "lume_types",
 ]
 
 [[package]]
@@ -426,11 +404,10 @@ dependencies = [
  "error_snippet_derive",
  "indexmap",
  "levenshtein",
+ "lume_errors",
  "lume_hir",
  "lume_span",
- "lume_state",
  "lume_types",
- "serde",
 ]
 
 [[package]]
@@ -440,6 +417,7 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "indexmap",
+ "lume_hir",
  "lume_span",
 ]
 
