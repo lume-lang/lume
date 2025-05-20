@@ -1,21 +1,49 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "-55;"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Expression(
             Expression {
-                id: 5871781006564002453,
+                id: ExpressionId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 location: <internal>:1:3,
                 kind: Literal(
                     Literal {
-                        id: 5871781006564002453,
+                        id: ExpressionId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
                         location: <internal>:1:3,
                         kind: Int(
                             IntLiteral {
-                                id: 5871781006564002453,
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        1,
+                                    ),
+                                },
                                 value: -55,
                                 kind: I32,
                             },

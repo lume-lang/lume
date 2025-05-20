@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "struct Test<T1, T2> {}"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        15340443703565705568: Type(
+        ItemId(
+            7555774581651727328,
+        ): Type(
             Struct(
                 StructDefinition {
-                    id: 15340443703565705568,
+                    id: ItemId(
+                        7555774581651727328,
+                    ),
                     type_id: None,
-                    name: Test,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Test",
+                            location: <internal>:7:11,
+                        },
+                        location: <internal>:7:11,
+                    },
                     builtin: false,
                     properties: [],
                     methods: [],

@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            enum Foo {\n                Bar(int, int)\n            }"
 ---
 Map {
@@ -7,24 +7,69 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Type(
+        ItemId(
+            12314200219861369160,
+        ): Type(
             Enum(
                 EnumDefinition {
-                    id: 18213876290066861800,
+                    id: ItemId(
+                        12314200219861369160,
+                    ),
                     type_id: None,
-                    name: Foo,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:18:21,
+                        },
+                        location: <internal>:18:21,
+                    },
                     cases: [
                         EnumDefinitionCase {
-                            id: 3235109210342419196,
-                            name: Bar,
+                            name: SymbolName {
+                                namespace: None,
+                                name: Identifier {
+                                    name: "Bar",
+                                    location: <internal>:40:43,
+                                },
+                                location: <internal>:40:43,
+                            },
                             parameters: [
                                 Type {
-                                    name: int,
+                                    id: ItemId(
+                                        8802535191565915315,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "int",
+                                            location: <internal>:44:47,
+                                        },
+                                        location: <internal>:44:47,
+                                    },
                                     type_params: [],
                                     location: <internal>:44:47,
                                 },
                                 Type {
-                                    name: int,
+                                    id: ItemId(
+                                        8802535191565915315,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "int",
+                                            location: <internal>:49:52,
+                                        },
+                                        location: <internal>:49:52,
+                                    },
                                     type_params: [],
                                     location: <internal>:49:52,
                                 },

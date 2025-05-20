@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "/// This is a doc comment\n        struct Foo { }"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Type(
+        ItemId(
+            12314200219861369160,
+        ): Type(
             Struct(
                 StructDefinition {
-                    id: 18213876290066861800,
+                    id: ItemId(
+                        12314200219861369160,
+                    ),
                     type_id: None,
-                    name: Foo,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:41:44,
+                        },
+                        location: <internal>:41:44,
+                    },
                     builtin: false,
                     properties: [],
                     methods: [],

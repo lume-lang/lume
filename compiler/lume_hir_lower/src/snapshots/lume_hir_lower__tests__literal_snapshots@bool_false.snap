@@ -1,21 +1,49 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: false;
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Expression(
             Expression {
-                id: 5871781006564002453,
+                id: ExpressionId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 location: <internal>:0:5,
                 kind: Literal(
                     Literal {
-                        id: 5871781006564002453,
+                        id: ExpressionId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
                         location: <internal>:0:5,
                         kind: Boolean(
                             BooleanLiteral {
-                                id: 5871781006564002453,
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        1,
+                                    ),
+                                },
                                 value: false,
                             },
                         ),

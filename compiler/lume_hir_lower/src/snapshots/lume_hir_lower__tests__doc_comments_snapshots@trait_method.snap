@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "trait Foo {\n            /// This is a doc comment\n            pub fn bar() -> void { }\n        }"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Type(
+        ItemId(
+            12314200219861369160,
+        ): Type(
             Trait(
                 TraitDefinition {
-                    id: 18213876290066861800,
+                    id: ItemId(
+                        12314200219861369160,
+                    ),
                     type_id: None,
-                    name: Foo,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:6:9,
+                        },
+                        location: <internal>:6:9,
+                    },
                     type_parameters: [],
                     methods: [
                         TraitMethodDefinition {
@@ -26,7 +37,21 @@ Map {
                             type_parameters: [],
                             return_type: Some(
                                 Type {
-                                    name: void,
+                                    id: ItemId(
+                                        9344623788042179276,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "void",
+                                            location: <internal>:78:82,
+                                        },
+                                        location: <internal>:78:82,
+                                    },
                                     type_params: [],
                                     location: <internal>:78:82,
                                 },

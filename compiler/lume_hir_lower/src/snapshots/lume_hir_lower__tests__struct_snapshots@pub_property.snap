@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            struct Foo {\n                pub x: Int32 = 1;\n            }"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        18213876290066861800: Type(
+        ItemId(
+            12314200219861369160,
+        ): Type(
             Struct(
                 StructDefinition {
-                    id: 18213876290066861800,
+                    id: ItemId(
+                        12314200219861369160,
+                    ),
                     type_id: None,
-                    name: Foo,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:20:23,
+                        },
+                        location: <internal>:20:23,
+                    },
                     builtin: false,
                     properties: [
                         Property {
@@ -23,21 +34,63 @@ Map {
                                 location: <internal>:46:47,
                             },
                             property_type: Type {
-                                name: std::Int32,
+                                id: ItemId(
+                                    11582867247635641484,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [
+                                                Named(
+                                                    Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                ),
+                                            ],
+                                        },
+                                    ),
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:0:0,
+                                },
                                 type_params: [],
                                 location: <internal>:49:54,
                             },
                             default_value: Some(
                                 Expression {
-                                    id: 0,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            12314200219861369160,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     location: <internal>:57:58,
                                     kind: Literal(
                                         Literal {
-                                            id: 0,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    12314200219861369160,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             location: <internal>:57:58,
                                             kind: Int(
                                                 IntLiteral {
-                                                    id: 0,
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            12314200219861369160,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     value: 1,
                                                     kind: I32,
                                                 },
@@ -58,16 +111,44 @@ Map {
     },
     statements: {},
     expressions: {
-        0: Expression {
-            id: 0,
+        ExpressionId {
+            def: ItemId(
+                12314200219861369160,
+            ),
+            index: Idx(
+                0,
+            ),
+        }: Expression {
+            id: ExpressionId {
+                def: ItemId(
+                    12314200219861369160,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             location: <internal>:57:58,
             kind: Literal(
                 Literal {
-                    id: 0,
+                    id: ExpressionId {
+                        def: ItemId(
+                            12314200219861369160,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     location: <internal>:57:58,
                     kind: Int(
                         IntLiteral {
-                            id: 0,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    12314200219861369160,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             value: 1,
                             kind: I32,
                         },

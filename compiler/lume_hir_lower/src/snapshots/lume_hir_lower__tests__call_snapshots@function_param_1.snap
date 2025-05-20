@@ -1,37 +1,97 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: let _ = call(0);
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: Variable(
             VariableDeclaration {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 name: Identifier {
                     name: "_",
                     location: <internal>:4:5,
                 },
                 declared_type: None,
                 value: Expression {
-                    id: 5871781006564002453,
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     location: <internal>:8:16,
                     kind: StaticCall(
                         StaticCall {
-                            id: 5871781006564002453,
-                            name: call,
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [],
+                                    },
+                                ),
+                                name: Identifier {
+                                    name: "call",
+                                    location: <internal>:8:12,
+                                },
+                                location: <internal>:8:12,
+                            },
                             type_arguments: [],
                             arguments: [
                                 Expression {
-                                    id: 11743562013128004906,
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
                                     location: <internal>:13:14,
                                     kind: Literal(
                                         Literal {
-                                            id: 11743562013128004906,
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
                                             location: <internal>:13:14,
                                             kind: Int(
                                                 IntLiteral {
-                                                    id: 11743562013128004906,
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            2,
+                                                        ),
+                                                    },
                                                     value: 0,
                                                     kind: I32,
                                                 },

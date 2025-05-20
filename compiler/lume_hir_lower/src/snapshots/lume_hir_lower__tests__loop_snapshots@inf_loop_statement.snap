@@ -1,35 +1,84 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "loop { let a = 0; }"
 ---
 [
     Statement {
-        id: 0,
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
         kind: InfiniteLoop(
             InfiniteLoop {
-                id: 0,
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
                 block: Block {
                     statements: [
                         Statement {
-                            id: 5871781006564002453,
+                            id: StatementId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             kind: Variable(
                                 VariableDeclaration {
-                                    id: 5871781006564002453,
+                                    id: StatementId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     name: Identifier {
                                         name: "a",
                                         location: <internal>:11:12,
                                     },
                                     declared_type: None,
                                     value: Expression {
-                                        id: 11743562013128004906,
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                2,
+                                            ),
+                                        },
                                         location: <internal>:15:16,
                                         kind: Literal(
                                             Literal {
-                                                id: 11743562013128004906,
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        2,
+                                                    ),
+                                                },
                                                 location: <internal>:15:16,
                                                 kind: Int(
                                                     IntLiteral {
-                                                        id: 11743562013128004906,
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                2,
+                                                            ),
+                                                        },
                                                         value: 0,
                                                         kind: I32,
                                                     },

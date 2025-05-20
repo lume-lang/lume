@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "fn loop() -> void {}"
 ---
 Map {
@@ -7,17 +7,42 @@ Map {
         0,
     ),
     items: {
-        11875826716677531916: Function(
+        ItemId(
+            10420111648834899420,
+        ): Function(
             FunctionDefinition {
-                id: 11875826716677531916,
+                id: ItemId(
+                    10420111648834899420,
+                ),
                 func_id: None,
                 visibility: Private,
-                name: loop,
+                name: SymbolName {
+                    namespace: None,
+                    name: Identifier {
+                        name: "loop",
+                        location: <internal>:3:7,
+                    },
+                    location: <internal>:3:7,
+                },
                 parameters: [],
                 type_parameters: [],
                 return_type: Some(
                     Type {
-                        name: void,
+                        id: ItemId(
+                            9344623788042179276,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [],
+                                },
+                            ),
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:13:17,
+                            },
+                            location: <internal>:13:17,
+                        },
                         type_params: [],
                         location: <internal>:13:17,
                     },

@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "struct Int32 {}"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        15249499769657949080: Type(
+        ItemId(
+            16861767705937592120,
+        ): Type(
             Struct(
                 StructDefinition {
-                    id: 15249499769657949080,
+                    id: ItemId(
+                        16861767705937592120,
+                    ),
                     type_id: None,
-                    name: Int32,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Int32",
+                            location: <internal>:7:12,
+                        },
+                        location: <internal>:7:12,
+                    },
                     builtin: false,
                     properties: [],
                     methods: [],

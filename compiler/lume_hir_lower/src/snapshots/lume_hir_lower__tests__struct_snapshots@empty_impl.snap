@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "impl Int32 {}"
 ---
 Map {
@@ -7,12 +7,37 @@ Map {
         0,
     ),
     items: {
-        6385919587687007582: Impl(
+        ItemId(
+            1649055320194420092,
+        ): Impl(
             Implementation {
-                id: 6385919587687007582,
+                id: ItemId(
+                    1649055320194420092,
+                ),
                 impl_id: None,
                 target: Type {
-                    name: std::Int32,
+                    id: ItemId(
+                        11582867247635641484,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Int32",
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
                     type_params: [],
                     location: <internal>:5:10,
                 },

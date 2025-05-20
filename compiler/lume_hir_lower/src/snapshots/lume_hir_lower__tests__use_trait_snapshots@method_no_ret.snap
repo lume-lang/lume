@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "\n            use Add in Int32 {\n                fn add(other: Int32) {}\n            }"
 ---
 Map {
@@ -7,32 +7,98 @@ Map {
         0,
     ),
     items: {
-        1119898709443545213: Use(
+        ItemId(
+            3729622771921818476,
+        ): Use(
             TraitImplementation {
-                id: 1119898709443545213,
+                id: ItemId(
+                    3729622771921818476,
+                ),
                 name: Type {
-                    name: Add,
+                    id: ItemId(
+                        3729622771921818476,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Add",
+                            location: <internal>:17:20,
+                        },
+                        location: <internal>:17:20,
+                    },
                     type_params: [],
                     location: <internal>:17:20,
                 },
                 target: Type {
-                    name: std::Int32,
+                    id: ItemId(
+                        11582867247635641484,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
+                        ),
+                        name: Identifier {
+                            name: "Int32",
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
                     type_params: [],
                     location: <internal>:24:29,
                 },
                 methods: [
                     TraitMethodImplementation {
                         visibility: Private,
-                        name: add,
+                        name: SymbolName {
+                            namespace: None,
+                            name: Identifier {
+                                name: "add",
+                                location: <internal>:51:54,
+                            },
+                            location: <internal>:51:54,
+                        },
                         parameters: [
                             Parameter {
-                                id: 0,
                                 name: Identifier {
                                     name: "other",
                                     location: <internal>:55:60,
                                 },
                                 param_type: Type {
-                                    name: std::Int32,
+                                    id: ItemId(
+                                        11582867247635641484,
+                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [
+                                                    Named(
+                                                        Identifier {
+                                                            name: "std",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ),
+                                                ],
+                                            },
+                                        ),
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: <internal>:0:0,
+                                        },
+                                        location: <internal>:0:0,
+                                    },
                                     type_params: [],
                                     location: <internal>:62:67,
                                 },

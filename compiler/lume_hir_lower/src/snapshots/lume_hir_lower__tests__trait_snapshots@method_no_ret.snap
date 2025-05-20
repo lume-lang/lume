@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "trait Add { pub fn add(other: int) { } }"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        1119898709443545213: Type(
+        ItemId(
+            5526834839950128201,
+        ): Type(
             Trait(
                 TraitDefinition {
-                    id: 1119898709443545213,
+                    id: ItemId(
+                        5526834839950128201,
+                    ),
                     type_id: None,
-                    name: Add,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Add",
+                            location: <internal>:6:9,
+                        },
+                        location: <internal>:6:9,
+                    },
                     type_parameters: [],
                     methods: [
                         TraitMethodDefinition {
@@ -24,13 +35,26 @@ Map {
                             },
                             parameters: [
                                 Parameter {
-                                    id: 0,
                                     name: Identifier {
                                         name: "other",
                                         location: <internal>:23:28,
                                     },
                                     param_type: Type {
-                                        name: int,
+                                        id: ItemId(
+                                            8802535191565915315,
+                                        ),
+                                        name: SymbolName {
+                                            namespace: Some(
+                                                PathRoot {
+                                                    segments: [],
+                                                },
+                                            ),
+                                            name: Identifier {
+                                                name: "int",
+                                                location: <internal>:30:33,
+                                            },
+                                            location: <internal>:30:33,
+                                        },
                                         type_params: [],
                                         location: <internal>:30:33,
                                     },

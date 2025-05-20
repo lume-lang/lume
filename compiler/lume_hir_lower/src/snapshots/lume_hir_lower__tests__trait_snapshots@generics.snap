@@ -1,5 +1,5 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "trait Add<T1, T2> { }"
 ---
 Map {
@@ -7,12 +7,23 @@ Map {
         0,
     ),
     items: {
-        1119898709443545213: Type(
+        ItemId(
+            5526834839950128201,
+        ): Type(
             Trait(
                 TraitDefinition {
-                    id: 1119898709443545213,
+                    id: ItemId(
+                        5526834839950128201,
+                    ),
                     type_id: None,
-                    name: Add,
+                    name: SymbolName {
+                        namespace: None,
+                        name: Identifier {
+                            name: "Add",
+                            location: <internal>:6:9,
+                        },
+                        location: <internal>:6:9,
+                    },
                     type_parameters: [
                         TypeParameter {
                             name: Identifier {
