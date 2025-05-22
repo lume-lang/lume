@@ -1,50 +1,31 @@
 pub mod errors;
 pub(crate) mod parser;
+pub(crate) mod serializer;
 
 use crate::errors::*;
-use crate::parser::ProjectParser;
+use crate::parser::Spanned;
+use crate::serializer::ProjectParser;
 
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
+use lume_errors::DiagCtxHandle;
 use lume_span::PackageId;
 use semver::{Version, VersionReq};
 use std::path::{Path, PathBuf};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Spanned<T> {
-    value: T,
-    span: std::ops::Range<usize>,
-}
+pub struct Project {
+    /// Defines the path to the Arcfile.
+    pub path: PathBuf,
 
-impl<T> Spanned<T> {
-    /// Creates a new spanned value.
-    pub fn new(value: T, span: std::ops::Range<usize>) -> Spanned<T> {
-        Self { value, span }
-    }
-
-    /// Gets a reference to the value held by the span.
-    pub fn value(&self) -> &T {
-        &self.value
-    }
-
-    /// Moves the span into the held value.
-    pub fn into_value(self) -> T {
-        self.value
-    }
-
-    /// Gets a reference to the value held by the span.
-    pub fn span(&self) -> &std::ops::Range<usize> {
-        &self.span
-    }
+    /// Defines the packages within the project.
+    pub packages: Vec<Package>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Project {
-    /// Uniquely identifies the project.
+pub struct Package {
+    /// Uniquely identifies the package.
     pub id: PackageId,
-
-    /// Defines the path to the Arcfile.
-    pub path: PathBuf,
 
     /// Defines the name of the package.
     pub name: String,
@@ -67,8 +48,8 @@ impl Project {
     /// This method may fail if:
     /// - the given path has no `Arcfile` stored within it
     /// - or the located `Arcfile` doesn't refer to a file.
-    pub fn locate(root: &Path) -> Result<Project> {
-        ProjectParser::locate(root)
+    pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Project> {
+        ProjectParser::locate(root, dcx)
     }
 
     /// Gets the absolute path to the project directory.

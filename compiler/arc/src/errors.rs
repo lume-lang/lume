@@ -25,39 +25,47 @@ pub struct ArcfileGlobError {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "failed to parse Arcfile", code = "ARC0104")]
-pub struct ArcfileTomlError {
-    #[related]
-    pub inner: Vec<Error>,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unexpected type", code = "ARC0108")]
 pub struct ArcfileUnexpectedType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected `{name}` to be of type '{expected}', but found '{found}'")]
+    #[label("expected type {expected}, but found {found}")]
+    pub range: Range<usize>,
+
+    pub expected: String,
+    pub found: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unknown item", code = "ARC0202")]
+pub struct ArcfileUnknownItem {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("unknown item {name} found")]
     pub range: Range<usize>,
 
     pub name: String,
-    pub expected: String,
-    pub found: &'static str,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no `{name}` section was found in the Arcfile", code = "ARC0203")]
-pub struct ArcfileMissingSection {
+#[diagnostic(message = "no `{name}` item was found in the Arcfile", code = "ARC0203")]
+pub struct ArcfileMissingItem {
     pub name: String,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "missing `name` attribute", code = "ARC0210")]
+#[diagnostic(
+    message = "missing package name argument",
+    code = "ARC0210",
+    help = "define the package name using `Package \"package-name\" {{ ... }}`"
+)]
 pub struct ArcfileMissingName {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Package table is missing a `name` field.")]
+    #[label("`Package` package has no named argument")]
     pub range: Range<usize>,
 }
 
@@ -100,4 +108,14 @@ pub struct ArcfileIncompatibleLumeVersion {
 
     pub current: semver::Version,
     pub required: semver::VersionReq,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "no packages defined in {path}",
+    code = "ARC0215",
+    help = "define a package using the `Package \"name\" {{ ... }}` syntax"
+)]
+pub struct ArcfileNoPackages {
+    pub path: String,
 }

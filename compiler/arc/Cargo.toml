@@ -5,13 +5,13 @@ edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
+lume_errors = { path = "../lume_errors" }
 lume_span = { path = "../lume_span" }
 
 glob = "^0"
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 semver = { version = "^1" }
-toml_edit = "^0.22"
 
 [dev-dependencies]
 insta = { version = "1.42.2" }

@@ -1,6 +1,6 @@
 ---
-source: compiler/arc/src/parser.rs
-expression: "parse_err(r#\"package = 'sample'\"#)"
+source: compiler/arc/src/serializer.rs
+description: "Package 123 {}"
 ---
 ArcfileUnexpectedType {
     source: SourceFile {
@@ -11,13 +11,12 @@ ArcfileUnexpectedType {
             0,
         ),
         name: Internal,
-        content: "package = 'sample'",
+        content: "Package 123 {}",
         package: PackageId(
             0,
         ),
     },
-    range: 10..18,
-    name: "package",
-    expected: "table",
-    found: "string",
+    range: 8..11,
+    expected: "String",
+    found: "Integer",
 }

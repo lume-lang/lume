@@ -1,7 +1,0 @@
----
-source: compiler/arc/src/parser.rs
-expression: "parse_err(\"\")"
----
-ArcfileMissingSection {
-    name: "package",
-}
