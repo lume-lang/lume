@@ -1,0 +1,22 @@
+---
+source: compiler/arc/src/serializer.rs
+description: "Package \"sample\" {\n                lume_version = 1\n            }"
+---
+ArcfileUnexpectedType {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "Package \"sample\" {\n                lume_version = 1\n            }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 35..51,
+    expected: "String",
+    found: "Integer",
+}

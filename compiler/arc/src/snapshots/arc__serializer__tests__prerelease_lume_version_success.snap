@@ -1,0 +1,44 @@
+---
+source: compiler/arc/src/serializer.rs
+expression: parser.parse().unwrap()
+---
+Project {
+    path: "<test>",
+    packages: [
+        Package {
+            id: PackageId(
+                12880147300572693285,
+            ),
+            name: "sample",
+            lume_version: Spanned {
+                value: VersionReq {
+                    comparators: [
+                        Comparator {
+                            op: Caret,
+                            major: 1,
+                            minor: Some(
+                                0,
+                            ),
+                            patch: Some(
+                                0,
+                            ),
+                            pre: Prerelease("rc3"),
+                        },
+                    ],
+                },
+                span: 84..95,
+            },
+            version: Some(
+                Spanned {
+                    value: Version {
+                        major: 1,
+                        minor: 0,
+                        patch: 0,
+                    },
+                    span: 45..52,
+                },
+            ),
+            description: None,
+        },
+    ],
+}

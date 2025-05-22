@@ -1,6 +1,6 @@
 ---
-source: compiler/arc/src/parser.rs
-expression: "parse_err(r#\"[package]\n            lume_version = '^0'\"#)"
+source: compiler/arc/src/serializer.rs
+description: "Package {}"
 ---
 ArcfileMissingName {
     source: SourceFile {
@@ -11,10 +11,10 @@ ArcfileMissingName {
             0,
         ),
         name: Internal,
-        content: "[package]\n            lume_version = '^0'",
+        content: "Package {}",
         package: PackageId(
             0,
         ),
     },
-    range: 0..41,
+    range: 0..10,
 }

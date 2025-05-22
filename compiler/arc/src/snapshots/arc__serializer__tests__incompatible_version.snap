@@ -1,5 +1,5 @@
 ---
-source: compiler/arc/src/parser.rs
+source: compiler/arc/src/serializer.rs
 expression: parser.parse().unwrap_err()
 ---
 ArcfileIncompatibleLumeVersion {
@@ -11,12 +11,12 @@ ArcfileIncompatibleLumeVersion {
             0,
         ),
         name: Internal,
-        content: "[package]\n            name = 'some-package'\n            version = '1.0.0'\n            lume_version = '^2'",
+        content: "Package \"sample\" {\n                version = \"1.0.0\"\n                lume_version = \"^2\"\n            }",
         package: PackageId(
             0,
         ),
     },
-    range: 101..105,
+    range: 84..88,
     current: Version {
         major: 1,
         minor: 0,

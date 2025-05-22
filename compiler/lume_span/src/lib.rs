@@ -39,6 +39,18 @@ pub enum FileName {
     Real(PathBuf),
 }
 
+impl FileName {
+    /// Attempts to convert the [`FileName`] to a [`PathBuf`] instance.
+    pub fn to_pathbuf(&self) -> &PathBuf {
+        static EMPTY_BUF: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(PathBuf::new);
+
+        match self {
+            FileName::Real(buf) => buf,
+            FileName::Internal => &EMPTY_BUF,
+        }
+    }
+}
+
 impl std::fmt::Display for FileName {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
