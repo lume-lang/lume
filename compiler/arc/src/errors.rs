@@ -25,6 +25,18 @@ pub struct ArcfileGlobError {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "property missing in block", code = "ARC0107")]
+pub struct ArcfileMissingProperty {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected block to have property `name`")]
+    pub range: Range<usize>,
+
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unexpected type", code = "ARC0108")]
 pub struct ArcfileUnexpectedType {
     #[span]

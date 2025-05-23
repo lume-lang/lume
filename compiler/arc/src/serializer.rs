@@ -7,7 +7,7 @@ use crate::parser::{Block, Parser, Property, Value};
 use crate::{Package, Project, Spanned, errors::*};
 
 use error_snippet::Result;
-use lume_errors::{DiagCtx, DiagCtxHandle, DiagOutputFormat};
+use lume_errors::DiagCtxHandle;
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
@@ -31,7 +31,13 @@ pub(crate) struct ProjectParser {
 }
 
 impl ProjectParser {
-    pub fn new(path: &Path, dcx: DiagCtxHandle) -> Result<Self> {
+    /// Creates a new [`ProjectParser`] instance using the given `Arcfile` source file path.
+    ///
+    /// # Errors
+    ///
+    /// This method may fail if the given path is unreadable or
+    /// otherwise inaccessible.
+    fn new(path: &Path, dcx: DiagCtxHandle) -> Result<Self> {
         let content = match std::fs::read_to_string(path) {
             Ok(content) => content,
             Err(err) => {
@@ -52,9 +58,14 @@ impl ProjectParser {
         Self::from_source(path, Arc::new(source), dcx)
     }
 
-    pub fn from_source(path: &Path, source: Arc<SourceFile>, dcx: DiagCtxHandle) -> Result<Self> {
-        let mut parser = Parser::new(source.clone(), DiagCtx::new(DiagOutputFormat::Graphical).handle());
-        let blocks = parser.parse()?;
+    /// Creates a new [`ProjectParser`] instance using the given `Arcfile` source file.
+    ///
+    /// # Errors
+    ///
+    /// This method may fail if the given `Arcfile` is improperly formatted or
+    /// otherwise invalid.
+    pub fn from_source(path: &Path, source: Arc<SourceFile>, mut dcx: DiagCtxHandle) -> Result<Self> {
+        let blocks = dcx.with(|handle| Parser::new(source.clone(), handle).parse())?;
 
         Ok(Self {
             path: path.to_path_buf(),
@@ -65,7 +76,14 @@ impl ProjectParser {
         })
     }
 
-    /// Creates a new `ProjectParser` instance by locating the Arcfile in the given root directory.
+    /// Creates a new [`ProjectParser`] instance by locating the `Arcfile` in the given root directory.
+    ///
+    /// # Errors
+    ///
+    /// This method may fail if:
+    /// - the given path has no `Arcfile` stored within it,
+    /// - the located `Arcfile` doesn't refer to a file
+    /// - or if the given `Arcfile` is otherwise invalid
     pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Project> {
         let path = root.join(DEFAULT_ARCFILE);
         if !path.is_file() {
@@ -159,7 +177,9 @@ impl ProjectParser {
             }
         };
 
-        let description = block.find_prop("description").map(|prop| prop.name.value().clone());
+        let description = self.opt_string_prop(block, "description")?;
+        let license = self.opt_string_prop(block, "license")?;
+        let repository = self.opt_string_prop(block, "repository")?;
 
         let package = Package {
             id: PackageId::from_name(&name),
@@ -168,6 +188,8 @@ impl ProjectParser {
             lume_version,
             version,
             description,
+            license,
+            repository,
         };
 
         self.verify_lume_version(&package)?;
@@ -177,18 +199,8 @@ impl ProjectParser {
 
     /// Gets the SemVer-version requirement from the given [`Property`].
     fn version_req(&self, prop: &Property) -> Result<Spanned<VersionReq>> {
-        let (version_str, location) = match &prop.value {
-            Value::String(str, loc) => (str.clone(), loc.clone()),
-            kind => {
-                return Err(ArcfileUnexpectedType {
-                    source: prop.location.source.clone(),
-                    range: prop.location.range.clone(),
-                    expected: String::from("String"),
-                    found: kind.to_string(),
-                }
-                .into());
-            }
-        };
+        let version_str = self.expect_string(&prop.value)?;
+        let location = prop.value.location().clone();
 
         match VersionReq::parse(&version_str) {
             Ok(version) => Ok(Spanned::new(version, location.range)),
@@ -204,18 +216,8 @@ impl ProjectParser {
 
     /// Gets the SemVer-version from the given [`Property`].
     fn version(&self, prop: &Property) -> Result<Spanned<Version>> {
-        let (version_str, location) = match &prop.value {
-            Value::String(str, loc) => (str.clone(), loc.clone()),
-            kind => {
-                return Err(ArcfileUnexpectedType {
-                    source: prop.location.source.clone(),
-                    range: prop.location.range.clone(),
-                    expected: String::from("String"),
-                    found: kind.to_string(),
-                }
-                .into());
-            }
-        };
+        let version_str = self.expect_string(&prop.value)?;
+        let location = prop.value.location().clone();
 
         match Version::parse(&version_str) {
             Ok(version) => Ok(Spanned::new(version, location.range)),
@@ -255,6 +257,42 @@ impl ProjectParser {
         match Version::parse(version_str) {
             Ok(version) => version,
             Err(err) => panic!("Invalid Lume compiler version `{version_str}`: {err}"),
+        }
+    }
+
+    /// Expects the given [`Block`] to have a [`Property`] with the given name.
+    fn opt_string_prop(&self, block: &Block, name: &'static str) -> Result<Option<String>> {
+        match block.find_prop(name) {
+            Some(prop) => Ok(Some(self.expect_prop_string(prop)?)),
+            None => Ok(None),
+        }
+    }
+
+    /// Expects the value of the given [`Property`] to be of type [`Value::String`].
+    fn expect_prop_string(&self, prop: &Property) -> Result<String> {
+        match &prop.value {
+            Value::String(str, _) => Ok(str.clone()),
+            kind => Err(ArcfileUnexpectedType {
+                source: self.source.clone(),
+                range: prop.location.range.clone(),
+                expected: String::from("String"),
+                found: kind.to_string(),
+            }
+            .into()),
+        }
+    }
+
+    /// Expects the given [`Value`] to be of type [`Value::String`].
+    fn expect_string(&self, value: &Value) -> Result<String> {
+        match &value {
+            Value::String(str, _) => Ok(str.clone()),
+            kind => Err(ArcfileUnexpectedType {
+                source: self.source.clone(),
+                range: value.location().range.clone(),
+                expected: String::from("String"),
+                found: kind.to_string(),
+            }
+            .into()),
         }
     }
 }
