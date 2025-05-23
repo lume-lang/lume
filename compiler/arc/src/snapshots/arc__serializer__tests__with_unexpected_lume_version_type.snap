@@ -16,7 +16,7 @@ ArcfileUnexpectedType {
             0,
         ),
     },
-    range: 35..51,
+    range: 50..51,
     expected: "String",
     found: "Integer",
 }

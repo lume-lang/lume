@@ -411,6 +411,26 @@ mod tests {
     }
 
     #[test]
+    fn test_license() {
+        assert_snap_eq!(
+            "Package \"sample\" {
+                lume_version = \"^0\"
+                license = \"MIT\"
+            }"
+        );
+    }
+
+    #[test]
+    fn test_repository() {
+        assert_snap_eq!(
+            "Package \"sample\" {
+                lume_version = \"^0\"
+                repository = \"http://github.com/lume-lang/lume\"
+            }"
+        );
+    }
+
+    #[test]
     fn test_version() {
         assert_snap_eq!(
             "Package \"sample\" {
