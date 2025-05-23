@@ -9,6 +9,7 @@ Project {
             id: PackageId(
                 12880147300572693285,
             ),
+            path: "",
             name: "sample",
             lume_version: Spanned {
                 value: VersionReq {
@@ -26,8 +27,10 @@ Project {
             },
             version: None,
             description: Some(
-                "description",
+                "Some description",
             ),
+            license: None,
+            repository: None,
         },
     ],
 }

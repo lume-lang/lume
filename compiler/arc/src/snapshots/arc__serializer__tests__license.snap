@@ -1,6 +1,6 @@
 ---
 source: compiler/arc/src/serializer.rs
-description: "Package \"sample\" {\n                lume_version = \"^0\"\n            }"
+description: "Package \"sample\" {\n                lume_version = \"^0\"\n                license = \"MIT\"\n            }"
 ---
 Project {
     path: "<test>",
@@ -27,7 +27,9 @@ Project {
             },
             version: None,
             description: None,
-            license: None,
+            license: Some(
+                "MIT",
+            ),
             repository: None,
         },
     ],

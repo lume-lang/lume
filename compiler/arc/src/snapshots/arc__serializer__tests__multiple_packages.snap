@@ -9,6 +9,7 @@ Project {
             id: PackageId(
                 15206054269443803754,
             ),
+            path: "",
             name: "package01",
             lume_version: Spanned {
                 value: VersionReq {
@@ -26,11 +27,14 @@ Project {
             },
             version: None,
             description: None,
+            license: None,
+            repository: None,
         },
         Package {
             id: PackageId(
                 9095520778829737859,
             ),
+            path: "",
             name: "package02",
             lume_version: Spanned {
                 value: VersionReq {
@@ -48,11 +52,14 @@ Project {
             },
             version: None,
             description: None,
+            license: None,
+            repository: None,
         },
         Package {
             id: PackageId(
                 5894625475714769553,
             ),
+            path: "",
             name: "package03",
             lume_version: Spanned {
                 value: VersionReq {
@@ -70,6 +77,8 @@ Project {
             },
             version: None,
             description: None,
+            license: None,
+            repository: None,
         },
     ],
 }
