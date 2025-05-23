@@ -50,12 +50,6 @@ pub struct ArcfileUnknownItem {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no `{name}` item was found in the Arcfile", code = "ARC0203")]
-pub struct ArcfileMissingItem {
-    pub name: String,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "missing package name argument",
     code = "ARC0210",
