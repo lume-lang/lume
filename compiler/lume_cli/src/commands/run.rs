@@ -5,7 +5,7 @@ use error_snippet::{IntoDiagnostic, Result};
 use getopts::Options;
 use lume_driver::Driver;
 
-pub(crate) fn run(args: &[String]) -> Result<i32> {
+pub(crate) fn run(args: &[String]) -> Result<()> {
     let options = Options::new();
 
     let matches = match options.parse(args) {
@@ -26,5 +26,5 @@ pub(crate) fn run(args: &[String]) -> Result<i32> {
 
     Driver::build_project(&std::path::PathBuf::from(input))?;
 
-    Ok(0)
+    Ok(())
 }

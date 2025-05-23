@@ -16,28 +16,10 @@ use std::path::{Path, PathBuf};
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Project {
     /// Defines the path to the Arcfile.
-    pub path: PathBuf,
+    path: PathBuf,
 
     /// Defines the packages within the project.
-    pub packages: Vec<Package>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Package {
-    /// Uniquely identifies the package.
-    pub id: PackageId,
-
-    /// Defines the name of the package.
-    pub name: String,
-
-    /// Defines the minimum required version of Lume.
-    pub lume_version: Spanned<VersionReq>,
-
-    /// Defines the current version of the package.
-    pub version: Option<Spanned<Version>>,
-
-    /// Defines an optional description of the package.
-    pub description: Option<String>,
+    packages: Vec<Package>,
 }
 
 impl Project {
@@ -52,6 +34,39 @@ impl Project {
         ProjectParser::locate(root, dcx)
     }
 
+    /// Gets all the [`Package`]s from the [`Project`] instance.
+    pub fn packages(&self) -> &[Package] {
+        &self.packages
+    }
+
+    /// Finds the [`Package`] from the [`Project`] with the given ID.
+    pub fn find_package(&self, id: PackageId) -> Option<&Package> {
+        self.packages.iter().find(|pkg| pkg.id == id)
+    }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Package {
+    /// Uniquely identifies the package.
+    pub id: PackageId,
+
+    /// Defines the root directory which defines this package.
+    pub path: PathBuf,
+
+    /// Defines the name of the package.
+    pub name: String,
+
+    /// Defines the minimum required version of Lume.
+    pub lume_version: Spanned<VersionReq>,
+
+    /// Defines the current version of the package.
+    pub version: Option<Spanned<Version>>,
+
+    /// Defines an optional description of the package.
+    pub description: Option<String>,
+}
+
+impl Package {
     /// Gets the absolute path to the project directory.
     ///
     /// The project directory is the parent directory of the `Arcfile`.

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use arc::Project;
+use arc::Package;
 use error_snippet::Result;
 use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
@@ -73,8 +73,8 @@ macro_rules! err {
 }
 
 pub struct LowerState<'a> {
-    /// Defines the project of the current package project.
-    project: &'a Project,
+    /// Defines the package of the current project.
+    package: &'a Package,
 
     /// Defines the global source map for all source files.
     source_map: &'a mut SourceMap,
@@ -85,9 +85,9 @@ pub struct LowerState<'a> {
 
 impl<'a> LowerState<'a> {
     /// Creates a new [`LowerState`] instance.
-    pub fn new(project: &'a Project, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Self {
+    pub fn new(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Self {
         Self {
-            project,
+            package,
             source_map,
             dcx,
         }
@@ -98,8 +98,8 @@ impl<'a> LowerState<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
-    pub fn lower(project: &'a Project, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
-        let mut lower = LowerState::new(project, source_map, dcx);
+    pub fn lower(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
+        let mut lower = LowerState::new(package, source_map, dcx);
 
         lower.lower_into()
     }
@@ -111,7 +111,7 @@ impl<'a> LowerState<'a> {
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
     pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
-        let mut lume_hir = Map::empty(self.project.id);
+        let mut lume_hir = Map::empty(self.package.id);
 
         // Read all the sources files before parsing, so if any of them
         // are inaccessible, we don't waste effort parsing them.
@@ -136,13 +136,13 @@ impl<'a> LowerState<'a> {
 
     /// Gets all the source files to include in the compilation.
     fn source_files(&self) -> Result<Vec<Arc<SourceFile>>> {
-        let package_id = self.project.id;
+        let package_id = self.package.id;
 
         // Add all the source files within the standard library.
         let mut sources_files = Assets::as_sources(package_id);
 
         // As well as all the files within the project itself
-        let project_file_names = self.project.files()?;
+        let project_file_names = self.package.files()?;
 
         sources_files.extend(
             project_file_names
@@ -150,7 +150,7 @@ impl<'a> LowerState<'a> {
                 .map(|path| {
                     // We get the relative path of the file within the project,
                     // so error messages don't use the full path to a file.
-                    let relative_path = self.project.relative_source_path(&path).to_string_lossy().to_string();
+                    let relative_path = self.package.relative_source_path(&path).to_string_lossy().to_string();
 
                     let content = std::fs::read_to_string(path)?;
 

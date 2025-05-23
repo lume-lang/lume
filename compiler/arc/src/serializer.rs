@@ -163,6 +163,7 @@ impl ProjectParser {
 
         let package = Package {
             id: PackageId::from_name(&name),
+            path: self.path.parent().unwrap().to_path_buf(),
             name,
             lume_version,
             version,
