@@ -76,7 +76,7 @@ impl Package {
     /// This method may panic, if the current path of the project's `Arcfile`
     /// exists outside of any directory.
     pub fn root(&self) -> &Path {
-        self.path.parent().unwrap()
+        self.path.as_path()
     }
 
     /// Gets the relative path to a file within the project directory.
@@ -101,13 +101,7 @@ impl Package {
     /// This method will return `Err` if the current path to the `Arcfile` exists
     /// outside of any directory.
     pub fn files(&self) -> Result<Vec<PathBuf>> {
-        let Some(root_directory) = self.path.parent() else {
-            return Err(ArcfileIoError {
-                inner: vec![std::io::Error::other("Arcfile must be located within a directory").into()],
-            }
-            .into());
-        };
-
+        let root_directory = self.root();
         let glob_pattern = format!("{}/**/*.lm", root_directory.display());
         let mut matched_files = Vec::new();
 
