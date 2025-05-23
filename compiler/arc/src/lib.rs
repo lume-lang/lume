@@ -64,6 +64,12 @@ pub struct Package {
 
     /// Defines an optional description of the package.
     pub description: Option<String>,
+
+    /// Defines the license of the source code within the package. Optional.
+    pub license: Option<String>,
+
+    /// Defines the URL of the source code repository for the package.
+    pub repository: Option<String>,
 }
 
 impl Package {
