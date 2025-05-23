@@ -24,7 +24,7 @@ fn print_usage() {
     std::process::exit(0)
 }
 
-fn run() -> Result<i32> {
+fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
 
@@ -56,20 +56,27 @@ fn run() -> Result<i32> {
         Some(cmd) => Err(UnknownCommandError { command: cmd.into() }.into()),
         None => {
             print_usage();
-            Ok(0)
+            Ok(())
         }
     }
 }
 
 fn main() {
     match run() {
-        Ok(status) => std::process::exit(status),
+        Ok(()) => {}
         Err(err) => {
             let renderer = Box::new(GraphicalRenderer::new());
             let mut handler = error_snippet::handler::DiagnosticHandler::with_renderer(renderer);
-
             handler.exit_on_error();
-            handler.report_and_drain(err).unwrap();
+
+            // We're expecting an error here, since the handler will *always* return
+            // a [`error_snippet::handler::DrainError::CompoundError`], which we also need to print.
+            //
+            // We could also get an error of [`std::fmt::Error`], which we should also report.
+            if let Err(drain_err) = handler.report_and_drain(err) {
+                let compound_diag = error_snippet::SimpleDiagnostic::new(drain_err.to_string());
+                let _ = handler.report_and_drain(compound_diag.into());
+            }
         }
     }
 }
