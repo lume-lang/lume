@@ -386,9 +386,11 @@ impl Parser {
 
     /// Parses a value ([`Value`]) at the current cursor position.
     fn parse_value(&mut self) -> Result<Value> {
+        let pos = self.position();
+
         Ok(match &self.consume_any().kind {
-            TokenKind::String(str) => Value::String(Spanned::new(str.clone(), self.position())),
-            TokenKind::Integer(int) => Value::Integer(Spanned::new(*int, self.position())),
+            TokenKind::String(str) => Value::String(Spanned::new(str.clone(), pos)),
+            TokenKind::Integer(int) => Value::Integer(Spanned::new(*int, pos)),
             TokenKind::Identifier(_) => Value::Block(Box::new(self.parse_block()?)),
             kind => {
                 return Err(ExpectedValue {
