@@ -64,18 +64,19 @@ pub(crate) struct Property {
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Value {
-    String(String, Location),
-    Integer(i64, Location),
+    String(Spanned<String>),
+    Integer(Spanned<i64>),
     Block(Box<Block>),
 }
 
 impl Value {
-    pub fn location(&self) -> &Location {
+    pub fn location(&self) -> &Range<usize> {
         match self {
-            Self::String(_, loc) | Self::Integer(_, loc) => loc,
-            Self::Block(block) => &block.location,
+            Self::String(val) => &val.span,
+            Self::Integer(val) => &val.span,
+            Self::Block(block) => &block.location.range,
         }
     }
 }
@@ -83,9 +84,24 @@ impl Value {
 impl std::fmt::Display for Value {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::String(_, _) => write!(f, "String"),
-            Self::Integer(_, _) => write!(f, "Integer"),
+            Self::String(_) => write!(f, "String"),
+            Self::Integer(_) => write!(f, "Integer"),
             Self::Block(_) => write!(f, "Block"),
+        }
+    }
+}
+
+impl std::fmt::Debug for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::String(val) => write!(f, "String(\"{}\")", val.value),
+            Self::Integer(val) => write!(f, "Integer({})", val.value),
+            Self::Block(val) => f
+                .debug_struct("Block")
+                .field("type", &val.ty.value)
+                .field("arguments", &val.arguments)
+                .field("properties", &val.properties)
+                .finish(),
         }
     }
 }
@@ -370,14 +386,9 @@ impl Parser {
 
     /// Parses a value ([`Value`]) at the current cursor position.
     fn parse_value(&mut self) -> Result<Value> {
-        let location = Location {
-            source: self.source.clone(),
-            range: self.position(),
-        };
-
         Ok(match &self.consume_any().kind {
-            TokenKind::String(str) => Value::String(str.clone(), location),
-            TokenKind::Integer(int) => Value::Integer(*int, location),
+            TokenKind::String(str) => Value::String(Spanned::new(str.clone(), self.position())),
+            TokenKind::Integer(int) => Value::Integer(Spanned::new(*int, self.position())),
             TokenKind::Identifier(_) => Value::Block(Box::new(self.parse_block()?)),
             kind => {
                 return Err(ExpectedValue {

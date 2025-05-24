@@ -141,11 +141,11 @@ impl ProjectParser {
     fn parse_package(&self, block: &Block) -> Result<Package> {
         let name = match block.arguments.first() {
             Some(name) => match name {
-                Value::String(str, _) => str.clone(),
+                Value::String(str) => str.value().clone(),
                 value => {
                     return Err(ArcfileUnexpectedType {
                         source: block.location.source.clone(),
-                        range: value.location().range.clone(),
+                        range: value.location().clone(),
                         expected: String::from("String"),
                         found: value.to_string(),
                     }
@@ -203,10 +203,10 @@ impl ProjectParser {
         let location = prop.value.location().clone();
 
         match VersionReq::parse(&version_str) {
-            Ok(version) => Ok(Spanned::new(version, location.range)),
+            Ok(version) => Ok(Spanned::new(version, location)),
             Err(_) => Err(ArcfileInvalidVersion {
                 source: self.source.clone(),
-                range: location.range,
+                range: location,
                 field: prop.name.value().clone(),
                 version: version_str.to_string(),
             }
@@ -220,10 +220,10 @@ impl ProjectParser {
         let location = prop.value.location().clone();
 
         match Version::parse(&version_str) {
-            Ok(version) => Ok(Spanned::new(version, location.range)),
+            Ok(version) => Ok(Spanned::new(version, location)),
             Err(_) => Err(ArcfileInvalidVersion {
                 source: self.source.clone(),
-                range: location.range,
+                range: location,
                 field: prop.name.value().clone(),
                 version: version_str.to_string(),
             }
@@ -271,7 +271,7 @@ impl ProjectParser {
     /// Expects the value of the given [`Property`] to be of type [`Value::String`].
     fn expect_prop_string(&self, prop: &Property) -> Result<String> {
         match &prop.value {
-            Value::String(str, _) => Ok(str.clone()),
+            Value::String(str) => Ok(str.value().clone()),
             kind => Err(ArcfileUnexpectedType {
                 source: self.source.clone(),
                 range: prop.location.range.clone(),
@@ -285,10 +285,10 @@ impl ProjectParser {
     /// Expects the given [`Value`] to be of type [`Value::String`].
     fn expect_string(&self, value: &Value) -> Result<String> {
         match &value {
-            Value::String(str, _) => Ok(str.clone()),
+            Value::String(str) => Ok(str.value().clone()),
             kind => Err(ArcfileUnexpectedType {
                 source: self.source.clone(),
-                range: value.location().range.clone(),
+                range: value.location().clone(),
                 expected: String::from("String"),
                 found: kind.to_string(),
             }
