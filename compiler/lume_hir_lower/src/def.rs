@@ -312,9 +312,12 @@ impl LowerModule<'_> {
     pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
+
+        self.self_type = Some(name.name.clone());
         let methods = self.def_use_methods(expr.methods)?;
         let location = self.location(expr.location);
 
+        self.self_type = None;
         self.current_item = ItemId::from_name(&[&name.name, &target.name]);
         let id = self.item_id(&name);
 
