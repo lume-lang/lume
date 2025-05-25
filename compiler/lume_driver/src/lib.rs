@@ -31,7 +31,7 @@ impl Driver {
         let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
         dcx.exit_on_error();
 
-        let project = Project::locate(root, dcx.handle())?;
+        let project = dcx.with(|handle| Project::locate(root, handle))?;
 
         Ok(Driver::from_project(project))
     }
@@ -124,15 +124,13 @@ impl<'a> Compiler<'a> {
 
     /// Parses all the source files within the current [`Package`] into HIR.
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        let dcx = self.dcx.handle();
-
-        lume_hir_lower::LowerState::lower(self.package, &mut self.source_map, dcx)
+        self.dcx
+            .with(|dcx| lume_hir_lower::LowerState::lower(self.package, &mut self.source_map, dcx))
     }
 
     /// Type checks all the given source files.
     fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let dcx = self.dcx.handle();
-        let mut thir_ctx = lume_typech::ThirBuildCtx::new(dcx);
+        let mut thir_ctx = self.dcx.with(lume_typech::ThirBuildCtx::new);
 
         // Defines the types of all nodes within the HIR maps.
         thir_ctx.define_types(&mut hir)?;

@@ -99,13 +99,8 @@ impl DiagCtxInner {
 
         let _ = self.handler.report_and_drain(abort_diag);
 
-        if self.exit_on_error {
-            // Raise a fatal error, without printing a backtrace.
-            FatalError::raise();
-        } else {
-            // Mark the context as tainted.
-            self.tainted.store(true, Ordering::Release);
-        }
+        // Mark the context as tainted.
+        self.tainted.store(true, Ordering::Release);
     }
 }
 
@@ -145,9 +140,17 @@ impl DiagCtx {
 
     /// Create a handle for the diagnostic context, which can be
     /// used to emit diagnositcs to the inner context.
-    pub fn handle(&mut self) -> DiagCtxHandle {
+    fn handle(&mut self) -> DiagCtxHandle {
         DiagCtxHandle {
             inner: Arc::clone(&self.inner),
+        }
+    }
+
+    /// Raises a panic if the diagnostics context is tainted with errors.
+    fn abort_if_errors(&self) {
+        if self.tainted() {
+            // Raise a fatal error, without printing a backtrace.
+            FatalError::raise();
         }
     }
 
@@ -155,9 +158,16 @@ impl DiagCtx {
     /// which is executed immedietly. Upon finishing the closure, the handle is dropped
     /// and all diagnostics reporting within it are immedietly drained to the inner handler.
     pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
-        let handle = self.handle();
+        // Create local scope so we ensure the handle is dropped, draining
+        // all reported diagnostics to the handler.
+        let res = {
+            let handle = self.handle();
+            f(handle)
+        };
 
-        f(handle)
+        self.abort_if_errors();
+
+        res
     }
 
     /// Determines whether the diagnostic context is tainted.
@@ -262,10 +272,17 @@ impl DiagCtxHandle {
 
     /// Create a handle for the diagnostic context, which can be
     /// used to emit diagnositcs to the inner context.
-    #[must_use]
-    pub fn handle(&mut self) -> DiagCtxHandle {
+    fn handle(&mut self) -> DiagCtxHandle {
         DiagCtxHandle {
             inner: Arc::clone(&self.inner),
+        }
+    }
+
+    /// Raises a panic if the diagnostics context is tainted with errors.
+    fn abort_if_errors(&self) {
+        if self.tainted() {
+            // Raise a fatal error, without printing a backtrace.
+            FatalError::raise();
         }
     }
 
@@ -273,9 +290,16 @@ impl DiagCtxHandle {
     /// which is executed immedietly. Upon finishing the closure, the handle is dropped
     /// and all diagnostics reporting within it are immedietly drained to the inner handler.
     pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
-        let handle = self.handle();
+        // Create local scope so we ensure the handle is dropped, draining
+        // all reported diagnostics to the handler.
+        let res = {
+            let handle = self.handle();
+            f(handle)
+        };
 
-        f(handle)
+        self.abort_if_errors();
+
+        res
     }
 }
 
