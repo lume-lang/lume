@@ -17,6 +17,9 @@ pub struct TypeId(pub u64);
 pub struct ImplId(pub u64);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+pub struct UseId(pub u64);
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct PropertyId(pub u64);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
@@ -71,7 +74,14 @@ pub struct SymbolName {
 
 impl PartialEq for SymbolName {
     fn eq(&self, other: &SymbolName) -> bool {
-        self.namespace == other.namespace && self.name == other.name
+        let namespace_equal = match (&self.namespace, &other.namespace) {
+            (Some(s), Some(o)) => s == o,
+            (None, Some(o)) => o.segments.is_empty(),
+            (Some(s), None) => s.segments.is_empty(),
+            (None, None) => true,
+        };
+
+        namespace_equal && self.name == other.name
     }
 }
 
@@ -83,6 +93,16 @@ impl std::hash::Hash for SymbolName {
 }
 
 impl SymbolName {
+    pub fn rooted(name: impl Into<String>) -> Self {
+        let name = Identifier::from(name);
+
+        Self {
+            namespace: None,
+            name,
+            location: Location::empty(),
+        }
+    }
+
     pub fn from_parts(
         namespace: Option<impl IntoIterator<Item = impl Into<PathSegment>>>,
         name: impl Into<String>,
@@ -106,6 +126,10 @@ impl SymbolName {
             name,
             location: base.location.clone(),
         }
+    }
+
+    pub fn void() -> Self {
+        Self::rooted("Void")
     }
 
     pub fn i8() -> Self {
@@ -550,6 +574,7 @@ impl WithTypeParameters for TraitMethodDefinition {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
     pub id: ItemId,
+    pub use_id: Option<UseId>,
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,

@@ -126,6 +126,6 @@ impl DefineTypeParameters<'_> {
 
         self.ctx
             .tcx_mut()
-            .type_alloc(symbol_name, TypeKind::TypeParameter(type_param_id))
+            .type_alloc(symbol_name, TypeKindRef::TypeParameter(type_param_id))
     }
 }

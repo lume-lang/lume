@@ -11,8 +11,11 @@ pub struct MismatchedTypes {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected type {expected:?}, but found type {found:?}")]
-    pub range: Range<usize>,
+    #[label("expected type {expected:?}, but found type {found:?}...")]
+    pub expect_range: Range<usize>,
+
+    #[label("...because of type defined here")]
+    pub reason_range: Range<usize>,
 
     pub expected: TypeRef,
     pub found: TypeRef,

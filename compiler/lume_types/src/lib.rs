@@ -2,7 +2,7 @@ use error_snippet::Result;
 use indexmap::IndexMap;
 
 use crate::errors::*;
-use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, Visibility};
+use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, UseId, Visibility};
 use lume_span::ItemId;
 
 mod errors;
@@ -78,8 +78,8 @@ impl WithTypeParameters for TypeId {
         };
 
         match &ty.kind {
-            TypeKind::Struct(k) => Ok(&k.type_parameters),
-            TypeKind::Trait(k) => Ok(&k.type_parameters),
+            TypeKindRef::Struct(k) => Ok(&k.type_parameters),
+            TypeKindRef::Trait(k) => Ok(&k.type_parameters),
             kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
         }
     }
@@ -90,13 +90,14 @@ impl WithTypeParameters for TypeId {
         };
 
         match &mut ty.kind {
-            TypeKind::Struct(k) => Ok(&mut k.type_parameters),
-            TypeKind::Trait(k) => Ok(&mut k.type_parameters),
+            TypeKindRef::Struct(k) => Ok(&mut k.type_parameters),
+            TypeKindRef::Trait(k) => Ok(&mut k.type_parameters),
             kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
         }
     }
 }
 
+const TYPEREF_VOID_ID: TypeId = TypeId(0x0000_00000);
 const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq)]
@@ -281,7 +282,35 @@ pub struct Implementation {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Use {
+    pub id: UseId,
+    pub trait_: TypeRef,
+    pub target: TypeRef,
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeKind {
+    /// The type is a regular user-defined struct.
+    Struct,
+
+    /// The type is a regular user-defined trait.
+    Trait,
+
+    /// The type is a regular user-defined enumeration.
+    Enum,
+
+    /// The type is an alias to some other type.
+    Alias,
+
+    /// The type is a reference to a type parameter in the current scope.
+    TypeParameter,
+
+    /// Represents a non-value.
+    Void,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypeKindRef {
     /// The type is a regular user-defined struct.
     Struct(Box<Struct>),
 
@@ -301,6 +330,19 @@ pub enum TypeKind {
     Void,
 }
 
+impl TypeKindRef {
+    fn as_kind(&self) -> TypeKind {
+        match self {
+            TypeKindRef::Struct(_) => TypeKind::Struct,
+            TypeKindRef::Trait(_) => TypeKind::Trait,
+            TypeKindRef::Enum(_) => TypeKind::Enum,
+            TypeKindRef::Alias(_) => TypeKind::Alias,
+            TypeKindRef::TypeParameter(_) => TypeKind::TypeParameter,
+            TypeKindRef::Void => TypeKind::Void,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeTransport {
     /// The type is fully copied when passed as an argument or returned from a function.
@@ -313,12 +355,26 @@ pub enum TypeTransport {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
     pub id: TypeId,
-    pub kind: TypeKind,
+    pub kind: TypeKindRef,
     pub transport: TypeTransport,
     pub name: SymbolName,
 
     pub properties: IndexMap<String, PropertyId>,
     pub methods: IndexMap<String, MethodId>,
+}
+
+impl Type {
+    /// Creates a new [`Type`] with an inner type of [`TypeKindRef::Void`].
+    pub fn void() -> Self {
+        Self {
+            id: TYPEREF_VOID_ID,
+            kind: TypeKindRef::Void,
+            transport: TypeTransport::Copy,
+            name: SymbolName::void(),
+            properties: IndexMap::new(),
+            methods: IndexMap::new(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -332,6 +388,14 @@ impl TypeRef {
     pub fn new(instance: TypeId) -> Self {
         Self {
             instance_of: instance,
+            type_arguments: vec![],
+        }
+    }
+
+    /// Creates a new [`TypeRef`] with an inner type of [`TypeKindRef::Void`].
+    pub const fn void() -> Self {
+        Self {
+            instance_of: TYPEREF_VOID_ID,
             type_arguments: vec![],
         }
     }
@@ -361,12 +425,16 @@ pub struct TypeDatabaseContext {
     pub functions: Vec<Function>,
     pub type_parameters: Vec<TypeParameter>,
     pub implementations: Vec<Implementation>,
+    pub uses: Vec<Use>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
 impl TypeDatabaseContext {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            types: vec![Type::void()],
+            ..Self::default()
+        }
     }
 
     /// Gets an iterator which iterates all [`Type`]-instances within
@@ -393,6 +461,38 @@ impl TypeDatabaseContext {
     /// Returns `None` if the [`Type`] is not found.
     pub fn type_mut(&mut self, id: TypeId) -> Option<&mut Type> {
         self.types.get_mut(id.0 as usize)
+    }
+
+    /// Expects the [`Type`] with the given ID, if it exists.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the type wasn't found.
+    pub fn ty_expect(&self, id: TypeId) -> Result<&Type> {
+        match self.type_(id) {
+            Some(ty) => Ok(ty),
+            None => Err(TypeNotFound { id }.into()),
+        }
+    }
+
+    /// Expects the [`Type`] with the given ID to be a [`Trait`] kind.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the type wasn't found or if the found type did not
+    /// have a [`TypeKindRef`] of [`TypeKindRef::Trait`].
+    pub fn ty_expect_trait(&self, id: TypeId) -> Result<&Trait> {
+        let ty = self.ty_expect(id)?;
+
+        if let TypeKindRef::Trait(tr) = &ty.kind {
+            Ok(tr.as_ref())
+        } else {
+            Err(UnexpectedTypeKind {
+                expected: TypeKind::Trait,
+                found: ty.kind.as_kind(),
+            }
+            .into())
+        }
     }
 
     /// Gets an iterator which iterates all [`Property`]-instances within
@@ -431,6 +531,18 @@ impl TypeDatabaseContext {
     /// the database context.
     pub fn methods_mut(&mut self) -> impl Iterator<Item = &mut Method> {
         self.methods.iter_mut()
+    }
+
+    /// Gets an iterator which iterates all [`Use`]-instances within
+    /// the database context.
+    pub fn uses(&self) -> impl Iterator<Item = &Use> {
+        self.uses.iter()
+    }
+
+    /// Gets an iterator which iterates all [`Use`]-instances within
+    /// the database context.
+    pub fn uses_mut(&mut self) -> impl Iterator<Item = &mut Use> {
+        self.uses.iter_mut()
     }
 
     /// Gets the [`Method`] with the given ID, if any.
@@ -502,9 +614,15 @@ impl TypeDatabaseContext {
     }
 
     /// Gets an iterator which iterates all [`Item`]-instances where
-    /// the item refers to a [`Method`], which are defined on the givem [`Item`].
+    /// the item refers to a [`Method`], which are defined on the given [`Item`].
     pub fn methods_on(&self, id: TypeId) -> impl Iterator<Item = &Method> {
         self.methods().filter(move |m| m.callee.instance_of == id)
+    }
+
+    /// Gets an iterator which iterates all [`Item`]-instances where
+    /// the item refers to a [`Use`], which are implementation on the given [`Item`].
+    pub fn uses_on(&self, on: &TypeRef) -> impl Iterator<Item = &Use> {
+        self.uses().filter(move |u| &u.target == on)
     }
 
     /// Attempts to find a [`Type`] with the given name, if any.
@@ -547,7 +665,7 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, name: SymbolName, kind: TypeKind) -> TypeId {
+    pub fn type_alloc(&mut self, name: SymbolName, kind: TypeKindRef) -> TypeId {
         let id = TypeId(self.types.len() as u64);
 
         let ty = Type {
@@ -575,6 +693,16 @@ impl TypeDatabaseContext {
         };
 
         self.implementations.push(implementation);
+        id
+    }
+
+    /// Allocates a new [`Use`] with the target.
+    #[inline]
+    pub fn use_alloc(&mut self, trait_: TypeRef, target: TypeRef) -> UseId {
+        let id = UseId(self.uses.len() as u64);
+
+        self.uses.push(Use { id, trait_, target });
+
         id
     }
 

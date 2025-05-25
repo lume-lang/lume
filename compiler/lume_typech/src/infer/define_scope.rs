@@ -1,7 +1,10 @@
 use error_snippet::Result;
 use lume_hir::{FunctionId, MethodId, TypeId, TypeParameter, WithTypeParameters};
 
-use crate::{ThirBuildCtx, check::TypeCheckerPass};
+use crate::{
+    ThirBuildCtx,
+    check::{TypeCheckerPass, errors::MismatchedTypes},
+};
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
@@ -180,7 +183,16 @@ impl ScopeVisitor<'_> {
             let type_params = scope.flat_type_params();
             let declared_type_ref = self.tcx.mk_type_ref_generic(declared_type, &type_params)?;
 
-            self.tcx.check_type_compatibility(&value_expr, &declared_type_ref)?;
+            if !self.tcx.check_type_compatibility(&value_expr, &declared_type_ref)? {
+                return Err(MismatchedTypes {
+                    source: stmt.value.location.file.clone(),
+                    expect_range: stmt.value.location.index.clone(),
+                    reason_range: declared_type.location.index.clone(),
+                    expected: declared_type_ref.clone(),
+                    found: value_expr.clone(),
+                }
+                .into());
+            }
 
             declared_type_ref
         } else {

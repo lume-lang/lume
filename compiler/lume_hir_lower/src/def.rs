@@ -320,6 +320,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Symbol::Use(Box::new(hir::TraitImplementation {
             id,
+            use_id: None,
             name: Box::new(name),
             target: Box::new(target),
             methods,

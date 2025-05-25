@@ -4,6 +4,7 @@ use lume_types::TypeRef;
 use crate::ThirBuildCtx;
 
 pub(crate) mod errors;
+mod lookup;
 
 pub trait TypeCheckerPass<'a> {
     fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()>
@@ -28,8 +29,27 @@ impl ThirBuildCtx {
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
-    #[expect(clippy::unused_self, clippy::unnecessary_wraps, reason = "unimplemented")]
-    pub(crate) fn check_type_compatibility(&self, _from: &TypeRef, _to: &TypeRef) -> Result<bool> {
-        Ok(true)
+    pub(crate) fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<bool> {
+        // If the two given types are exactly the same, both underlying instance and type arguments,
+        // we can be sure they're compatible.
+        if from == to {
+            return Ok(true);
+        }
+
+        // Special case for `void` types, since they are always identical, no matter
+        // whether they have different underlying IDs.
+        if self.is_void(from)? && self.is_void(to)? {
+            return Ok(true);
+        }
+
+        // If `to` refers to a trait where `from` implements `to`, they can
+        // be downcast correctly.
+        if self.is_trait(to)? && self.trait_impl_by(to, from)? {
+            return Ok(true);
+        }
+
+        println!("typech: {from:#?} {to:#?}");
+
+        Ok(false)
     }
 }

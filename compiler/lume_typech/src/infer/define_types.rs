@@ -29,7 +29,7 @@ impl DefineTypes<'_> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
-                let kind = TypeKind::Struct(Box::new(Struct::new(struct_def.as_ref())));
+                let kind = TypeKindRef::Struct(Box::new(Struct::new(struct_def.as_ref())));
                 let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 struct_def.type_id = Some(type_id);
@@ -40,21 +40,21 @@ impl DefineTypes<'_> {
             }
             lume_hir::TypeDefinition::Alias(alias) => {
                 let name = alias.name.clone();
-                let kind = TypeKind::Alias(Box::new(Alias::new(alias.as_ref())));
+                let kind = TypeKindRef::Alias(Box::new(Alias::new(alias.as_ref())));
                 let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 alias.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
-                let kind = TypeKind::Trait(Box::new(Trait::new(trait_def.as_ref())));
+                let kind = TypeKindRef::Trait(Box::new(Trait::new(trait_def.as_ref())));
                 let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
-                let kind = TypeKind::Enum(Box::new(Enum::new(enum_def.as_ref())));
+                let kind = TypeKindRef::Enum(Box::new(Enum::new(enum_def.as_ref())));
                 let type_id = self.ctx.tcx_mut().type_alloc(name, kind);
 
                 enum_def.type_id = Some(type_id);
