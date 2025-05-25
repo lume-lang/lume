@@ -48,8 +48,8 @@ impl ThirBuildCtx {
     /// etc, or when expected items cannot be found within the context.
     pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self, hir);
-        infer::define_fields::DefineFields::run_all(self, hir)?;
         infer::define_use::DefineUse::run_all(self, hir)?;
+        infer::define_fields::DefineFields::run_all(self, hir)?;
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_impl::DefineImpl::run_all(self, hir)?;

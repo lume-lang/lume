@@ -589,6 +589,7 @@ impl TraitImplementation {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
+    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,

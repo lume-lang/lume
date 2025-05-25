@@ -27,7 +27,7 @@ pub struct MissingMethod {
     message = "similar method found",
     code = "LM4118",
     severity = Help,
-    help = "incompatible because: {reason}")]
+    help = "incompatible because of {reason}")]
 pub struct SuggestedMethod {
     #[span]
     pub source: Arc<SourceFile>,

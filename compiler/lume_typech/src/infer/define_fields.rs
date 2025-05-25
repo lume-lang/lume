@@ -17,8 +17,10 @@ impl DefineFields<'_> {
 
     fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in &mut hir.items {
-            if let lume_hir::Symbol::Type(t) = symbol {
-                self.define_type(t)?;
+            match symbol {
+                lume_hir::Symbol::Type(t) => self.define_type(t)?,
+                lume_hir::Symbol::Use(t) => self.define_use(t)?,
+                _ => (),
             }
         }
 
@@ -97,6 +99,36 @@ impl DefineFields<'_> {
                 }
             }
             _ => {}
+        }
+
+        Ok(())
+    }
+
+    fn define_use(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
+        let type_id = self.ctx.tcx().find_type(&trait_impl.target.name).unwrap().id;
+        let type_ref = TypeRef::new(type_id);
+
+        let target_name = trait_impl.target.name.clone();
+
+        for method in &mut trait_impl.methods {
+            let method_name = &method.name.name;
+
+            let visibility = method.visibility;
+            let qualified_name = SymbolName::with_root(target_name.clone(), method_name.clone());
+
+            let method_id = self
+                .ctx
+                .tcx_mut()
+                .method_alloc(type_ref.clone(), qualified_name, visibility)?;
+
+            self.ctx
+                .tcx_mut()
+                .type_mut(type_id)
+                .unwrap()
+                .methods
+                .insert(method_name.name.clone(), method_id);
+
+            method.method_id = Some(method_id);
         }
 
         Ok(())

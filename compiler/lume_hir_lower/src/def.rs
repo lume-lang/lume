@@ -351,6 +351,7 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         Ok(hir::TraitMethodImplementation {
+            method_id: None,
             visibility,
             name,
             parameters,

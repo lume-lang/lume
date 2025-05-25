@@ -21,7 +21,8 @@ impl DefineMethodBodies<'_> {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
                 lume_hir::Symbol::Function(f) => self.define_function(f)?,
-                _ => (),
+                lume_hir::Symbol::Use(u) => self.define_use(u)?,
+                lume_hir::Symbol::Impl(_) => (),
             }
         }
 
@@ -123,6 +124,32 @@ impl DefineMethodBodies<'_> {
             let return_type = self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?;
 
             self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = return_type;
+        }
+
+        Ok(())
+    }
+
+    fn define_use(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
+        for method in &trait_impl.methods {
+            let method_id = method.method_id.unwrap();
+
+            for param in &method.parameters {
+                let name = param.name.name.clone();
+                let type_ref = self.ctx.mk_type_ref(&param.param_type)?;
+
+                self.ctx
+                    .tcx_mut()
+                    .method_mut(method_id)
+                    .unwrap()
+                    .parameters
+                    .push(name, type_ref);
+            }
+
+            if let Some(ret) = &method.return_type {
+                let return_type = self.ctx.mk_type_ref(ret)?;
+
+                self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
+            }
         }
 
         Ok(())
