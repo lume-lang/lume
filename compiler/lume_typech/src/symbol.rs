@@ -52,7 +52,14 @@ impl ThirBuildCtx {
     ) -> Result<&Method> {
         let callee_type = self.type_of(hir, expr.callee.id)?;
 
-        match self.method_lookup(hir, &callee_type, &expr.name, &expr.arguments, &expr.type_arguments)? {
+        match self.method_lookup(
+            hir,
+            &callee_type,
+            &expr.name,
+            &expr.arguments,
+            &expr.type_arguments,
+            true,
+        )? {
             crate::method::MethodLookupResult::Success(method) => Ok(method),
             crate::method::MethodLookupResult::Failure(err) => Err(err.compound_err(loc)),
         }

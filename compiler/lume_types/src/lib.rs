@@ -208,6 +208,15 @@ impl Method {
             ret_ty: &self.return_type,
         }
     }
+
+    // /// Determines whether the method is instanced, as opposed to static.
+    pub fn is_instanced(&self) -> bool {
+        if let Some(param) = self.parameters.params.first() {
+            &param.name == "self"
+        } else {
+            false
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

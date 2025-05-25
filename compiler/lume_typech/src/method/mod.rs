@@ -107,6 +107,7 @@ impl<'tcx> ThirBuildCtx {
         method_name: &'a Identifier,
         args: &'a [lume_hir::Expression],
         type_args: &'a [lume_hir::TypeArgument],
+        instanced: bool,
     ) -> Result<MethodLookupResult<'tcx>> {
         // Contains a list of suggestions for the method lookup, in
         // case no matching method was found.
@@ -123,7 +124,13 @@ impl<'tcx> ThirBuildCtx {
                 continue;
             }
 
-            if method.parameters.len() != args.len() {
+            let expected_param_count = if instanced == method.is_instanced() {
+                method.parameters.len() - 1
+            } else {
+                method.parameters.len()
+            };
+
+            if expected_param_count != args.len() {
                 suggestions.push(MethodLookupSuggestion {
                     def: method,
                     reason: MethodDisqualificationReason::ArgumentCount,
