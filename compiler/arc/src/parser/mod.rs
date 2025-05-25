@@ -162,7 +162,10 @@ impl Parser {
         } else {
             Token {
                 kind: TokenKind::Eof,
-                index: self.position(),
+                index: match self.tokens.last() {
+                    Some(t) => t.index.clone(),
+                    None => 0..0,
+                },
             }
         }
     }
@@ -303,6 +306,7 @@ impl Parser {
 
         loop {
             match self.token().kind {
+                TokenKind::Eof => break,
                 TokenKind::CurlyLeft => {
                     self.skip();
                     brace_depth += 1;
