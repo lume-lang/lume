@@ -575,7 +575,11 @@ impl Lexer {
 
     /// Parses an identifier token at the current cursor position.
     fn identifier(&mut self) -> Token {
-        let content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
+        let mut content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
+
+        if self.current_char() == Some('?') {
+            content.push(self.consume());
+        }
 
         match content.as_str() {
             "break" => Token::empty(TokenKind::Break),
@@ -1091,6 +1095,8 @@ mod tests {
         assert_token!("_", TokenKind::Identifier, Some("_"), 0, 1);
         assert_token!("_1", TokenKind::Identifier, Some("_1"), 0, 2);
         assert_token!("_test1", TokenKind::Identifier, Some("_test1"), 0, 6);
+        assert_token!("foo?", TokenKind::Identifier, Some("foo?"), 0, 4);
+        assert_token!("_?", TokenKind::Identifier, Some("_?"), 0, 2);
     }
 
     #[test]
