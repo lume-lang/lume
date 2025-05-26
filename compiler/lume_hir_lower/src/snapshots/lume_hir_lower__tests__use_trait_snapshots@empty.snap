@@ -14,6 +14,7 @@ Map {
                 id: ItemId(
                     3729622771921818476,
                 ),
+                use_id: None,
                 name: Type {
                     id: ItemId(
                         3729622771921818476,

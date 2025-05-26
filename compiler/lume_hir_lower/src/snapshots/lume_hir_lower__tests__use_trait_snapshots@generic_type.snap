@@ -14,6 +14,7 @@ Map {
                 id: ItemId(
                     4863703123816121347,
                 ),
+                use_id: None,
                 name: Type {
                     id: ItemId(
                         4863703123816121347,
@@ -94,6 +95,7 @@ Map {
                 },
                 methods: [
                     TraitMethodImplementation {
+                        method_id: None,
                         visibility: Public,
                         name: SymbolName {
                             namespace: None,
