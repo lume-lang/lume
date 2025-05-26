@@ -165,7 +165,9 @@ impl DiagCtx {
             f(handle)
         };
 
-        self.abort_if_errors();
+        if self.handler().exit_on_error {
+            self.abort_if_errors();
+        }
 
         res
     }
@@ -195,25 +197,7 @@ impl DiagCtx {
     ///
     /// Errors emitted to the [`DiagCtxHandle`] handle are only drained when
     /// calling the [`DiagCtxHandle::drain()`] method manually, or when the handle
-    /// is dropped. So, the following example will *not* taint the context:
-    /// ```
-    /// use error_snippet::SimpleDiagnostic;
-    /// use lume_errors::{DiagCtx, DiagOutputFormat};
-    ///
-    /// let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
-    /// let mut handle = dcx.handle();
-    ///
-    /// let error = SimpleDiagnostic::new("An error occurred");
-    /// handle.emit(error.into());
-    ///
-    /// // `handle` is not dropped, so no errors are drained!
-    /// assert_eq!(dcx.tainted(), false);
-    ///
-    /// // we can manually drain using [`DiagCtxHandle::drain()`] or
-    /// // simply drop the handle.
-    /// drop(handle);
-    /// assert_eq!(dcx.tainted(), true);
-    /// ```
+    /// is dropped.
     pub fn tainted(&self) -> bool {
         self.handler().tainted.load(Ordering::Acquire)
     }
@@ -297,7 +281,9 @@ impl DiagCtxHandle {
             f(handle)
         };
 
-        self.abort_if_errors();
+        if self.handler().exit_on_error {
+            self.abort_if_errors();
+        }
 
         res
     }
