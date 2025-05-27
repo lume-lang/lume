@@ -38,7 +38,7 @@ pub struct InvalidInteger {
 
     pub value: String,
 
-    #[related]
+    #[cause]
     pub reason: Vec<error_snippet::Error>,
 }
 

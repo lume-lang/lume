@@ -7,10 +7,8 @@ version = "0.1.0"
 rust-version = "1.86.0"
 
 [workspace.dependencies]
-error_snippet = { version = "=0.1.7", features = ["derive", "termsize"] }
-error_snippet_derive = { version = "=0.1.2" }
-"ariadne" = { version = "=0.5.1", features = ["auto-color"] }
-owo-colors = { version = "=4.2.0", features = ["supports-colors"] }
+error_snippet = { version = "=0.1.8", features = ["derive", "termsize"] }
+error_snippet_derive = { version = "=0.1.3" }
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
