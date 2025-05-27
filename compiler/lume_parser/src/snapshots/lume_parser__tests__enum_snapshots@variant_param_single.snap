@@ -21,8 +21,8 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int)\n        }\")"
                             ),
                         },
                         parameters: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

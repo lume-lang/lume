@@ -12,8 +12,8 @@ expression: "parse(\"/// This is a doc comment\n        type Foo = Bar\")"
                         39..42,
                     ),
                 },
-                definition: Scalar(
-                    ScalarType {
+                definition: Named(
+                    NamedType {
                         name: Path {
                             root: [],
                             name: PathSegment {

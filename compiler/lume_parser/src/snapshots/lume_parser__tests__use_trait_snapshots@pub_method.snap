@@ -5,8 +5,8 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
 [
     Use(
         UseTrait {
-            name: Scalar(
-                ScalarType {
+            name: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -27,8 +27,8 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
                     },
                 },
             ),
-            target: Scalar(
-                ScalarType {
+            target: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -72,8 +72,8 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
                                     51..56,
                                 ),
                             },
-                            param_type: Scalar(
-                                ScalarType {
+                            param_type: Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -101,8 +101,8 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
                     ],
                     type_parameters: [],
                     return_type: Some(
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {

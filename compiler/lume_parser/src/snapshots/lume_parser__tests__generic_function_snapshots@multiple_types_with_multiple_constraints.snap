@@ -29,8 +29,8 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                         ),
                     },
                     constraints: [
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -51,8 +51,8 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                 },
                             },
                         ),
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -83,8 +83,8 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                         ),
                     },
                     constraints: [
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -105,8 +105,8 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                 },
                             },
                         ),
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -131,8 +131,8 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                 },
             ],
             return_type: Some(
-                Scalar(
-                    ScalarType {
+                Named(
+                    NamedType {
                         name: Path {
                             root: [],
                             name: PathSegment {

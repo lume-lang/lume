@@ -41,8 +41,8 @@ expression: "parse_expr(\"self::invoke::<T>();\")"
                 arguments: [],
                 type_arguments: [
                     TypeArgument {
-                        ty: Scalar(
-                            ScalarType {
+                        ty: Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {

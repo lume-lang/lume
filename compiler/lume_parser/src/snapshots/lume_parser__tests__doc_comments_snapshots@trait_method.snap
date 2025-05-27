@@ -31,8 +31,8 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
                         parameters: [],
                         type_parameters: [],
                         return_type: Some(
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

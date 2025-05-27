@@ -27,8 +27,8 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                             8..12,
                         ),
                     },
-                    param_type: Scalar(
-                        ScalarType {
+                    param_type: Named(
+                        NamedType {
                             name: Path {
                                 root: [],
                                 name: PathSegment {
@@ -62,8 +62,8 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                     },
                     param_type: Array(
                         ArrayType {
-                            element_type: Scalar(
-                                ScalarType {
+                            element_type: Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -96,8 +96,8 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
             ],
             type_parameters: [],
             return_type: Some(
-                Scalar(
-                    ScalarType {
+                Named(
+                    NamedType {
                         name: Path {
                             root: [],
                             name: PathSegment {

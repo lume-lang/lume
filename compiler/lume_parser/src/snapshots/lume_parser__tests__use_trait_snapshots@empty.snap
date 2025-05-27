@@ -5,8 +5,8 @@ expression: "parse(\"use Add in Int32 {}\")"
 [
     Use(
         UseTrait {
-            name: Scalar(
-                ScalarType {
+            name: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -27,8 +27,8 @@ expression: "parse(\"use Add in Int32 {}\")"
                     },
                 },
             ),
-            target: Scalar(
-                ScalarType {
+            target: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {

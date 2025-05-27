@@ -23,8 +23,8 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                             ),
                         },
                         constraints: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -55,8 +55,8 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                             ),
                         },
                         constraints: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

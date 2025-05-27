@@ -22,8 +22,8 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
             parameters: [],
             type_parameters: [],
             return_type: Some(
-                Scalar(
-                    ScalarType {
+                Named(
+                    NamedType {
                         name: Path {
                             root: [
                                 PathSegment {

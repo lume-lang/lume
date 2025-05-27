@@ -14,8 +14,8 @@ expression: "parse(\"type A = [B]\")"
                 },
                 definition: Array(
                     ArrayType {
-                        element_type: Scalar(
-                            ScalarType {
+                        element_type: Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {

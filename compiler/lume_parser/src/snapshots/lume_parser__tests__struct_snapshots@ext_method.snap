@@ -12,8 +12,8 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
                     ),
                 },
             ),
-            name: Scalar(
-                ScalarType {
+            name: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -53,8 +53,8 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
                     parameters: [],
                     type_parameters: [],
                     return_type: Some(
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {

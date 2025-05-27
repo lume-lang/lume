@@ -25,8 +25,8 @@ expression: "parse_expr(\"let _ = Foo::<T>::call(a, b);\")"
                                     ),
                                 },
                                 type_arguments: [
-                                    Scalar(
-                                        ScalarType {
+                                    Named(
+                                        NamedType {
                                             name: Path {
                                                 root: [],
                                                 name: PathSegment {

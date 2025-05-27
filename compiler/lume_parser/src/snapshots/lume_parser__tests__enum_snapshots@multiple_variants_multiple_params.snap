@@ -21,8 +21,8 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                             ),
                         },
                         parameters: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -43,8 +43,8 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                     },
                                 },
                             ),
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -79,8 +79,8 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                             ),
                         },
                         parameters: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {
@@ -101,8 +101,8 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                     },
                                 },
                             ),
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

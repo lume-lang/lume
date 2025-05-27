@@ -61,6 +61,24 @@ impl Identifier {
     }
 }
 
+impl From<String> for Identifier {
+    fn from(value: String) -> Self {
+        Self {
+            name: value,
+            location: Location(0..0),
+        }
+    }
+}
+
+impl From<&str> for Identifier {
+    fn from(value: &str) -> Self {
+        Self {
+            name: value.to_owned(),
+            location: Location(0..0),
+        }
+    }
+}
+
 impl std::fmt::Display for Identifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name)
@@ -200,11 +218,13 @@ pub struct PathSegment {
     pub location: Location,
 }
 
-impl From<Identifier> for PathSegment {
-    fn from(identifier: Identifier) -> PathSegment {
+impl<T: Into<Identifier>> From<T> for PathSegment {
+    fn from(name: T) -> PathSegment {
+        let name = name.into();
+
         PathSegment {
-            location: identifier.location.clone(),
-            name: identifier,
+            location: name.location.clone(),
+            name,
             type_arguments: Vec::new(),
         }
     }
@@ -232,6 +252,17 @@ impl Path {
             name,
             root: Vec::new(),
             location,
+        }
+    }
+
+    #[must_use]
+    pub fn with_root(namespace: Vec<impl Into<PathSegment>>, name: impl Into<PathSegment>) -> Self {
+        let root = namespace.into_iter().map(Into::<PathSegment>::into).collect();
+
+        Self {
+            root,
+            name: name.into(),
+            location: Location(0..0),
         }
     }
 
@@ -721,9 +752,8 @@ impl Node for TypeArgument {
 
 #[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
-    Scalar(Box<ScalarType>),
+    Named(Box<NamedType>),
     Array(Box<ArrayType>),
-    Generic(Box<GenericType>),
     SelfType(Box<SelfType>),
 }
 
@@ -739,28 +769,39 @@ impl Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::Scalar(t) => f.write_fmt(format_args!("{t}")),
+            Type::Named(t) => f.write_fmt(format_args!("{t}")),
             Type::Array(t) => f.write_fmt(format_args!("{t}")),
-            Type::Generic(t) => f.write_fmt(format_args!("{t}")),
             Type::SelfType(t) => f.write_fmt(format_args!("{t}")),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ScalarType {
+pub struct NamedType {
     pub name: Path,
 }
 
-impl Node for ScalarType {
+impl Node for NamedType {
     fn location(&self) -> &Location {
         &self.name.location
     }
 }
 
-impl std::fmt::Display for ScalarType {
+impl std::fmt::Display for NamedType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self.name))
+        f.write_fmt(format_args!("{}", self.name))?;
+
+        if !self.name.name.type_arguments.is_empty() {
+            f.write_str("<")?;
+
+            for type_param in &self.name.name.type_arguments {
+                f.write_fmt(format_args!("{type_param}"))?;
+            }
+
+            f.write_str(">")?;
+        }
+
+        Ok(())
     }
 }
 
@@ -773,31 +814,6 @@ pub struct ArrayType {
 impl std::fmt::Display for ArrayType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("[{}]", self.element_type))
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
-pub struct GenericType {
-    pub name: Path,
-    pub type_params: Vec<Type>,
-    pub location: Location,
-}
-
-impl std::fmt::Display for GenericType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}", self.name))?;
-
-        if !self.type_params.is_empty() {
-            f.write_str("<")?;
-
-            for type_param in &self.type_params {
-                f.write_fmt(format_args!("{type_param}"))?;
-            }
-
-            f.write_str(">")?;
-        }
-
-        Ok(())
     }
 }
 

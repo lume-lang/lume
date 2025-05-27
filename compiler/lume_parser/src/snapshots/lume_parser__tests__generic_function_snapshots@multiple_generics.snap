@@ -41,8 +41,8 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                 },
             ],
             return_type: Some(
-                Scalar(
-                    ScalarType {
+                Named(
+                    NamedType {
                         name: Path {
                             root: [],
                             name: PathSegment {

@@ -5,8 +5,8 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
 [
     Use(
         UseTrait {
-            name: Scalar(
-                ScalarType {
+            name: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -27,8 +27,8 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                     },
                 },
             ),
-            target: Scalar(
-                ScalarType {
+            target: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {
@@ -67,8 +67,8 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                     parameters: [],
                     type_parameters: [],
                     return_type: Some(
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -137,8 +137,8 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                     parameters: [],
                     type_parameters: [],
                     return_type: Some(
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {

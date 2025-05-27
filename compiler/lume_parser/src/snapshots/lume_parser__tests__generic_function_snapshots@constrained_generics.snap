@@ -29,8 +29,8 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                         ),
                     },
                     constraints: [
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -61,8 +61,8 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                         ),
                     },
                     constraints: [
-                        Scalar(
-                            ScalarType {
+                        Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
@@ -87,8 +87,8 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                 },
             ],
             return_type: Some(
-                Scalar(
-                    ScalarType {
+                Named(
+                    NamedType {
                         name: Path {
                             root: [],
                             name: PathSegment {

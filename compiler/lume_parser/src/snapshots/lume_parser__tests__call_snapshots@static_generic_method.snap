@@ -70,8 +70,8 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                     ],
                     type_arguments: [
                         TypeArgument {
-                            ty: Scalar(
-                                ScalarType {
+                            ty: Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

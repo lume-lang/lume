@@ -36,8 +36,8 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                                         19..24,
                                     ),
                                 },
-                                param_type: Scalar(
-                                    ScalarType {
+                                param_type: Named(
+                                    NamedType {
                                         name: Path {
                                             root: [],
                                             name: PathSegment {
@@ -65,8 +65,8 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                         ],
                         type_parameters: [],
                         return_type: Some(
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

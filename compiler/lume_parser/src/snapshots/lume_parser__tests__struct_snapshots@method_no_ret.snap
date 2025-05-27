@@ -12,8 +12,8 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                     ),
                 },
             ),
-            name: Scalar(
-                ScalarType {
+            name: Named(
+                NamedType {
                     name: Path {
                         root: [],
                         name: PathSegment {

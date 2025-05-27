@@ -21,8 +21,8 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                             ),
                         },
                         constraints: [
-                            Scalar(
-                                ScalarType {
+                            Named(
+                                NamedType {
                                     name: Path {
                                         root: [],
                                         name: PathSegment {

@@ -28,8 +28,8 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                                 34..35,
                             ),
                         },
-                        property_type: Scalar(
-                            ScalarType {
+                        property_type: Named(
+                            NamedType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
