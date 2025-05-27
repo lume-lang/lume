@@ -18,10 +18,12 @@ Map {
                 visibility: Private,
                 name: SymbolName {
                     namespace: None,
-                    name: Identifier {
-                        name: "foo",
-                        location: <internal>:3:6,
-                    },
+                    name: Named(
+                        Identifier {
+                            name: "foo",
+                            location: <internal>:3:6,
+                        },
+                    ),
                     location: <internal>:3:6,
                 },
                 parameters: [],
@@ -29,7 +31,7 @@ Map {
                 return_type: Some(
                     Type {
                         id: ItemId(
-                            2412383293024014923,
+                            4419390998716990390,
                         ),
                         name: SymbolName {
                             namespace: Some(
@@ -44,10 +46,12 @@ Map {
                                     ],
                                 },
                             ),
-                            name: Identifier {
-                                name: "Pointer",
-                                location: <internal>:0:0,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "Pointer",
+                                    location: <internal>:0:0,
+                                },
+                            ),
                             location: <internal>:0:0,
                         },
                         type_params: [],

@@ -24,7 +24,7 @@ impl LowerModule<'_> {
 
     pub(super) fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
         let expr = match statement {
-            ast::Expression::Array(e) => self.expr_array(*e),
+            ast::Expression::Array(e) => self.expr_array(*e)?,
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
@@ -45,26 +45,19 @@ impl LowerModule<'_> {
         }
     }
 
-    fn expr_array(&mut self, expr: ast::Array) -> hir::Expression {
+    fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
         // TODO: Implement proper array expression lowering
-        let array_path = lume_ast::Path {
-            name: lume_ast::Identifier {
-                name: String::from(ARRAY_WITH_CAPACITY_FUNC),
-                location: expr.location.clone(),
-            },
-            root: lume_ast::NamespacePath::new(&["std", ARRAY_STD_TYPE]),
-            location: expr.location.clone(),
-        };
+        let array_path = lume_ast::Path::with_root(vec!["std", ARRAY_STD_TYPE], ARRAY_WITH_CAPACITY_FUNC);
 
         let id = self.next_expr_id();
         let location = self.location(expr.location);
 
-        hir::Expression {
+        Ok(hir::Expression {
             id,
             location: location.clone(),
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
-                name: self.resolve_symbol_name(&array_path),
+                name: self.resolve_symbol_name(&array_path)?,
                 type_arguments: vec![hir::TypeArgument::Implicit {
                     location: lume_span::Location::empty(),
                 }],
@@ -82,7 +75,7 @@ impl LowerModule<'_> {
                     location: lume_span::Location::empty(),
                 }],
             })),
-        }
+        })
     }
 
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {
@@ -100,7 +93,7 @@ impl LowerModule<'_> {
 
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
-        let name = self.resolve_symbol_name(&expr.name);
+        let name = self.resolve_symbol_name(&expr.name)?;
         let type_arguments = self.type_arguments(expr.type_arguments)?;
         let arguments = self.expressions(expr.arguments);
         let location = self.location(expr.location);
@@ -161,14 +154,7 @@ impl LowerModule<'_> {
             RANGE_STD_TYPE
         };
 
-        let range_type = lume_ast::Path {
-            name: lume_ast::Identifier {
-                name: String::from(range_type_name),
-                location: expr.location.clone(),
-            },
-            root: lume_ast::NamespacePath::new(&["std", RANGE_NEW_FUNC]),
-            location: expr.location.clone(),
-        };
+        let range_type = lume_ast::Path::with_root(vec!["std", range_type_name], RANGE_NEW_FUNC);
 
         let id = self.next_expr_id();
         let location = self.location(expr.location);
@@ -180,7 +166,7 @@ impl LowerModule<'_> {
             location,
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
-                name: self.resolve_symbol_name(&range_type),
+                name: self.resolve_symbol_name(&range_type)?,
                 type_arguments: vec![hir::TypeArgument::Implicit {
                     location: lume_span::Location::empty(),
                 }],

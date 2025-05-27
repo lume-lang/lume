@@ -18,10 +18,12 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Test",
-                            location: <internal>:7:11,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Test",
+                                location: <internal>:7:11,
+                            },
+                        ),
                         location: <internal>:7:11,
                     },
                     builtin: false,
@@ -38,7 +40,7 @@ Map {
                             constraints: [
                                 Type {
                                     id: ItemId(
-                                        6129574414018423941,
+                                        9613957012452617865,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -46,10 +48,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "Numeric",
-                                            location: <internal>:16:23,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "Numeric",
+                                                location: <internal>:16:23,
+                                            },
+                                        ),
                                         location: <internal>:16:23,
                                     },
                                     type_params: [],
@@ -68,7 +72,7 @@ Map {
                             constraints: [
                                 Type {
                                     id: ItemId(
-                                        6129574414018423941,
+                                        9613957012452617865,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -76,10 +80,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "Numeric",
-                                            location: <internal>:29:36,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "Numeric",
+                                                location: <internal>:29:36,
+                                            },
+                                        ),
                                         location: <internal>:29:36,
                                     },
                                     type_params: [],

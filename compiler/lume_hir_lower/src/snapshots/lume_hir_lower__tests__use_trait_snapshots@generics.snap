@@ -8,16 +8,16 @@ Map {
     ),
     items: {
         ItemId(
-            3729622771921818476,
+            12506335137184408543,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    3729622771921818476,
+                    12506335137184408543,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        3729622771921818476,
+                        12506335137184408543,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -25,16 +25,18 @@ Map {
                                 segments: [],
                             },
                         ),
-                        name: Identifier {
-                            name: "Add",
-                            location: <internal>:17:20,
-                        },
-                        location: <internal>:17:20,
+                        name: Named(
+                            Identifier {
+                                name: "Add",
+                                location: <internal>:17:20,
+                            },
+                        ),
+                        location: <internal>:17:34,
                     },
                     type_params: [
                         Type {
                             id: ItemId(
-                                11582867247635641484,
+                                9261998375256972311,
                             ),
                             name: SymbolName {
                                 namespace: Some(
@@ -49,10 +51,12 @@ Map {
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "Int32",
-                                    location: <internal>:0:0,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
                                 location: <internal>:0:0,
                             },
                             type_params: [],
@@ -60,7 +64,7 @@ Map {
                         },
                         Type {
                             id: ItemId(
-                                3407981406265970223,
+                                10389471113714924922,
                             ),
                             name: SymbolName {
                                 namespace: Some(
@@ -75,21 +79,23 @@ Map {
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "Int64",
-                                    location: <internal>:0:0,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Int64",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
                                 location: <internal>:0:0,
                             },
                             type_params: [],
                             location: <internal>:28:33,
                         },
                     ],
-                    location: <internal>:20:34,
+                    location: <internal>:17:34,
                 },
                 target: Type {
                     id: ItemId(
-                        11582867247635641484,
+                        9261998375256972311,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -104,10 +110,12 @@ Map {
                                 ],
                             },
                         ),
-                        name: Identifier {
-                            name: "Int32",
-                            location: <internal>:0:0,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Int32",
+                                location: <internal>:0:0,
+                            },
+                        ),
                         location: <internal>:0:0,
                     },
                     type_params: [],
@@ -119,10 +127,12 @@ Map {
                         visibility: Public,
                         name: SymbolName {
                             namespace: None,
-                            name: Identifier {
-                                name: "add",
-                                location: <internal>:69:72,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "add",
+                                    location: <internal>:69:72,
+                                },
+                            ),
                             location: <internal>:69:72,
                         },
                         parameters: [
@@ -133,7 +143,7 @@ Map {
                                 },
                                 param_type: Type {
                                     id: ItemId(
-                                        11582867247635641484,
+                                        9261998375256972311,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -148,10 +158,12 @@ Map {
                                                 ],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "Int32",
-                                            location: <internal>:0:0,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "Int32",
+                                                location: <internal>:0:0,
+                                            },
+                                        ),
                                         location: <internal>:0:0,
                                     },
                                     type_params: [],
@@ -164,7 +176,7 @@ Map {
                         return_type: Some(
                             Type {
                                 id: ItemId(
-                                    3407981406265970223,
+                                    10389471113714924922,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -179,10 +191,12 @@ Map {
                                             ],
                                         },
                                     ),
-                                    name: Identifier {
-                                        name: "Int64",
-                                        location: <internal>:0:0,
-                                    },
+                                    name: Named(
+                                        Identifier {
+                                            name: "Int64",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
                                     location: <internal>:0:0,
                                 },
                                 type_params: [],

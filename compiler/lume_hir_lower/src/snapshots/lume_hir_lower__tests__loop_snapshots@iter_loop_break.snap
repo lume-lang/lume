@@ -61,11 +61,13 @@ description: "for pattern in [1, 2, 3] { break; }"
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "with_capacity",
-                                    location: <internal>:15:16,
-                                },
-                                location: <internal>:15:16,
+                                name: Named(
+                                    Identifier {
+                                        name: "with_capacity",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
                             type_arguments: [
                                 Implicit {

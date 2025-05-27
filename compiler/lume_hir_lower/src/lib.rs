@@ -289,22 +289,22 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`lume_hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, path: &ast::Path) -> SymbolName {
-        if let Some(symbol) = self.resolve_imported_symbol(path) {
-            return symbol.clone();
+    fn resolve_symbol_name(&self, path: &ast::Path) -> Result<SymbolName> {
+        if let Some(symbol) = self.resolve_imported_symbol(path)? {
+            return Ok(symbol.clone());
         }
 
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
-        SymbolName {
-            namespace: Some(self.identifier_path(path.root.clone())),
-            name: self.identifier(path.name.clone()),
+        Ok(SymbolName {
+            namespace: Some(self.path_root(path.root.clone())?),
+            name: self.path_segment(path.name.clone())?,
             location: self.location(path.location.clone()),
-        }
+        })
     }
 
     /// Attemps to resolve a [`lume_hir::SymbolName`] for an imported symbol.
-    fn resolve_imported_symbol(&self, path: &ast::Path) -> Option<SymbolName> {
+    fn resolve_imported_symbol(&self, path: &ast::Path) -> Result<Option<SymbolName>> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported path.
             //
@@ -315,8 +315,8 @@ impl<'a> LowerModule<'a> {
             //
             //     io::File::from_path("foo.txt");
             // ```
-            if let Some(name) = path.root.path.first() {
-                if name.name == *import {
+            if let Some(name) = path.root.first() {
+                if name.name.name == *import {
                     // Since we only matched a subset of the imported symbol,
                     // we need to merge the two paths together, so it forms a fully-qualified path.
                     let mut namespace = PathRoot::default();
@@ -327,17 +327,15 @@ impl<'a> LowerModule<'a> {
                         }
                     }
 
-                    for segment in &path.root.path {
-                        let ident = self.identifier(segment.clone());
-
-                        namespace.segments.push(PathSegment::Named(ident));
+                    for segment in &path.root {
+                        namespace.segments.push(self.path_segment(segment.clone())?);
                     }
 
-                    return Some(SymbolName {
+                    return Ok(Some(SymbolName {
                         namespace: Some(namespace),
-                        name: Identifier::from(&path.name.name),
+                        name: self.path_segment(path.name.clone())?,
                         location: self.location(path.location.clone()),
-                    });
+                    }));
                 }
             }
             // Match against the the imported symbol directly, such as:
@@ -347,23 +345,23 @@ impl<'a> LowerModule<'a> {
             //
             //     File::from_path("foo.txt");
             // ```
-            else if path.name.name == *import {
-                return Some(symbol.clone());
+            else if path.name.name.name == *import {
+                return Ok(Some(symbol.clone()));
             }
         }
 
-        None
+        Ok(None)
     }
 
-    fn symbol_name(&self, name: ast::Identifier) -> SymbolName {
+    fn symbol_name(&self, name: ast::Identifier) -> Result<SymbolName> {
         let namespace = self.namespace.clone().map(Path::to_pathroot);
         let location = self.location(name.location.clone());
 
-        SymbolName {
+        Ok(SymbolName {
             namespace,
-            name: self.identifier(name),
+            name: self.path_segment(ast::PathSegment::from(name))?,
             location,
-        }
+        })
     }
 
     fn identifier(&self, expr: ast::Identifier) -> Identifier {
@@ -375,14 +373,27 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn identifier_path(&self, expr: ast::NamespacePath) -> PathRoot {
+    fn path_root(&self, expr: Vec<ast::PathSegment>) -> Result<PathRoot> {
         let segments = expr
-            .path
             .into_iter()
-            .map(|p| PathSegment::Named(self.identifier(p)))
-            .collect::<Vec<_>>();
+            .map(|seg| self.path_segment(seg))
+            .collect::<Result<Vec<_>>>()?;
 
-        PathRoot { segments }
+        Ok(PathRoot { segments })
+    }
+
+    fn path_segment(&self, expr: ast::PathSegment) -> Result<PathSegment> {
+        if expr.type_arguments.is_empty() {
+            Ok(PathSegment::Named(self.identifier(expr.name)))
+        } else {
+            let type_args = expr
+                .type_arguments
+                .into_iter()
+                .map(|arg| self.type_ref(arg))
+                .collect::<Result<Vec<_>>>()?;
+
+            Ok(PathSegment::Typed(self.identifier(expr.name), type_args))
+        }
     }
 
     fn location(&self, expr: ast::Location) -> Location {
@@ -432,12 +443,12 @@ impl<'a> LowerModule<'a> {
             let location = self.location(imported_name.location.clone());
 
             let imported_symbol_name = SymbolName {
-                name: self.identifier(imported_name.clone()),
+                name: self.path_segment(ast::PathSegment::from(imported_name.clone()))?,
                 namespace: Some(namespace.to_pathroot()),
                 location,
             };
 
-            self.imports.insert(imported_name.name.clone(), imported_symbol_name);
+            self.imports.insert(imported_name.name, imported_symbol_name);
         }
 
         Ok(())

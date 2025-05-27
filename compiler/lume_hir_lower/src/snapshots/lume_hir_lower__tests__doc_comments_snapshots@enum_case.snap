@@ -18,20 +18,24 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Foo",
-                            location: <internal>:5:8,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Foo",
+                                location: <internal>:5:8,
+                            },
+                        ),
                         location: <internal>:5:8,
                     },
                     cases: [
                         EnumDefinitionCase {
                             name: SymbolName {
                                 namespace: None,
-                                name: Identifier {
-                                    name: "Bar",
-                                    location: <internal>:61:64,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Bar",
+                                        location: <internal>:61:64,
+                                    },
+                                ),
                                 location: <internal>:61:64,
                             },
                             parameters: [],

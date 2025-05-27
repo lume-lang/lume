@@ -18,10 +18,12 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "A",
-                            location: <internal>:5:6,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "A",
+                                location: <internal>:5:6,
+                            },
+                        ),
                         location: <internal>:5:6,
                     },
                     definition: Type {
@@ -41,16 +43,18 @@ Map {
                                     ],
                                 },
                             ),
-                            name: Identifier {
-                                name: "Array",
-                                location: <internal>:0:0,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "Array",
+                                    location: <internal>:0:0,
+                                },
+                            ),
                             location: <internal>:0:0,
                         },
                         type_params: [
                             Type {
                                 id: ItemId(
-                                    15305381369542258004,
+                                    3994735493679760258,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -58,10 +62,12 @@ Map {
                                             segments: [],
                                         },
                                     ),
-                                    name: Identifier {
-                                        name: "B",
-                                        location: <internal>:10:11,
-                                    },
+                                    name: Named(
+                                        Identifier {
+                                            name: "B",
+                                            location: <internal>:10:11,
+                                        },
+                                    ),
                                     location: <internal>:10:11,
                                 },
                                 type_params: [],

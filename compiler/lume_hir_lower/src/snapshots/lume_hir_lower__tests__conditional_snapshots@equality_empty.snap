@@ -155,10 +155,12 @@ description: "let a = 0; if a == 1 { }"
                                                 },
                                             ),
                                         },
-                                        name: Identifier {
-                                            name: "==",
-                                            location: <internal>:16:18,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "==",
+                                                location: <internal>:16:18,
+                                            },
+                                        ),
                                         type_arguments: [],
                                         arguments: [
                                             Expression {

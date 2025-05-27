@@ -59,18 +59,20 @@ description: let _ = (0..1);
                                             ),
                                             Named(
                                                 Identifier {
-                                                    name: "new",
+                                                    name: "Range",
                                                     location: <internal>:0:0,
                                                 },
                                             ),
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "Range",
-                                    location: <internal>:9:13,
-                                },
-                                location: <internal>:9:13,
+                                name: Named(
+                                    Identifier {
+                                        name: "new",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
                             type_arguments: [
                                 Implicit {

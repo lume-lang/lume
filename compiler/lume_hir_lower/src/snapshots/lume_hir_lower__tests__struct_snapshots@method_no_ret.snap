@@ -8,16 +8,16 @@ Map {
     ),
     items: {
         ItemId(
-            13138428697284688615,
+            2656278562799560035,
         ): Impl(
             Implementation {
                 id: ItemId(
-                    13138428697284688615,
+                    2656278562799560035,
                 ),
                 impl_id: None,
                 target: Type {
                     id: ItemId(
-                        7990845552190622859,
+                        11998015298247387671,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -25,10 +25,12 @@ Map {
                                 segments: [],
                             },
                         ),
-                        name: Identifier {
-                            name: "Foo",
-                            location: <internal>:18:21,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Foo",
+                                location: <internal>:18:21,
+                            },
+                        ),
                         location: <internal>:18:21,
                     },
                     type_params: [],

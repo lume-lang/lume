@@ -18,10 +18,12 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Int32",
-                            location: <internal>:7:12,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Int32",
+                                location: <internal>:7:12,
+                            },
+                        ),
                         location: <internal>:7:12,
                     },
                     builtin: false,

@@ -53,10 +53,12 @@ description: let _ = call(0);
                                         segments: [],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "call",
-                                    location: <internal>:8:12,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "call",
+                                        location: <internal>:8:12,
+                                    },
+                                ),
                                 location: <internal>:8:12,
                             },
                             type_arguments: [],

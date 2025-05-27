@@ -18,10 +18,12 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Add",
-                            location: <internal>:6:9,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Add",
+                                location: <internal>:6:9,
+                            },
+                        ),
                         location: <internal>:6:9,
                     },
                     type_parameters: [],
@@ -41,7 +43,7 @@ Map {
                                     },
                                     param_type: Type {
                                         id: ItemId(
-                                            8802535191565915315,
+                                            4873327510373585985,
                                         ),
                                         name: SymbolName {
                                             namespace: Some(
@@ -49,10 +51,12 @@ Map {
                                                     segments: [],
                                                 },
                                             ),
-                                            name: Identifier {
-                                                name: "int",
-                                                location: <internal>:30:33,
-                                            },
+                                            name: Named(
+                                                Identifier {
+                                                    name: "int",
+                                                    location: <internal>:30:33,
+                                                },
+                                            ),
                                             location: <internal>:30:33,
                                         },
                                         type_params: [],

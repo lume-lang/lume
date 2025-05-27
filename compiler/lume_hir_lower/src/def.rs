@@ -18,7 +18,7 @@ impl LowerModule<'_> {
     }
 
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<hir::Symbol> {
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         self.current_item = ItemId::from_name(&name);
 
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -126,7 +126,7 @@ impl LowerModule<'_> {
     }
 
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<hir::Symbol> {
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -176,7 +176,7 @@ impl LowerModule<'_> {
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<hir::Symbol> {
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -198,7 +198,7 @@ impl LowerModule<'_> {
     }
 
     fn def_enum_case(&self, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let location = self.location(expr.location);
 
         let parameters = expr
@@ -217,7 +217,7 @@ impl LowerModule<'_> {
     }
 
     fn def_alias(&self, expr: ast::AliasDefinition) -> Result<hir::Symbol> {
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let definition = self.type_ref(*expr.definition)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -235,7 +235,7 @@ impl LowerModule<'_> {
 
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<hir::Symbol> {
         let visibility = lower_visibility(&expr.visibility);
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
@@ -343,7 +343,7 @@ impl LowerModule<'_> {
 
     fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
         let visibility = lower_visibility(&expr.visibility);
-        let name = self.symbol_name(expr.name);
+        let name = self.symbol_name(expr.name)?;
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;

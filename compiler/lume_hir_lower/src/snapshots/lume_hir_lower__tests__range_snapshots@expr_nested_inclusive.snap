@@ -191,18 +191,20 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                             ),
                                             Named(
                                                 Identifier {
-                                                    name: "new",
+                                                    name: "RangeInclusive",
                                                     location: <internal>:0:0,
                                                 },
                                             ),
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "RangeInclusive",
-                                    location: <internal>:57:75,
-                                },
-                                location: <internal>:57:75,
+                                name: Named(
+                                    Identifier {
+                                        name: "new",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
                             type_arguments: [
                                 Implicit {
@@ -266,10 +268,12 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     },
                                                 ),
                                             },
-                                            name: Identifier {
-                                                name: "+",
-                                                location: <internal>:59:60,
-                                            },
+                                            name: Named(
+                                                Identifier {
+                                                    name: "+",
+                                                    location: <internal>:59:60,
+                                                },
+                                            ),
                                             type_arguments: [],
                                             arguments: [
                                                 Expression {
@@ -388,10 +392,12 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                 },
                                                             ),
                                                         },
-                                                        name: Identifier {
-                                                            name: "+",
-                                                            location: <internal>:69:70,
-                                                        },
+                                                        name: Named(
+                                                            Identifier {
+                                                                name: "+",
+                                                                location: <internal>:69:70,
+                                                            },
+                                                        ),
                                                         type_arguments: [],
                                                         arguments: [
                                                             Expression {
@@ -434,10 +440,12 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     },
                                                 ),
                                             },
-                                            name: Identifier {
-                                                name: "+",
-                                                location: <internal>:73:74,
-                                            },
+                                            name: Named(
+                                                Identifier {
+                                                    name: "+",
+                                                    location: <internal>:73:74,
+                                                },
+                                            ),
                                             type_arguments: [],
                                             arguments: [
                                                 Expression {

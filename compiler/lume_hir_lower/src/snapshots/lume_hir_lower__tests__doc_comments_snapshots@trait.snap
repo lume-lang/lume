@@ -18,10 +18,12 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Foo",
-                            location: <internal>:40:43,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Foo",
+                                location: <internal>:40:43,
+                            },
+                        ),
                         location: <internal>:40:43,
                     },
                     type_parameters: [],

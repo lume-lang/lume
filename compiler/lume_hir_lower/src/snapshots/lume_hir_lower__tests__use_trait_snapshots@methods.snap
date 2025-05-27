@@ -8,16 +8,16 @@ Map {
     ),
     items: {
         ItemId(
-            9938665916635595670,
+            18220724335406912908,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    9938665916635595670,
+                    18220724335406912908,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        9938665916635595670,
+                        18220724335406912908,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -25,10 +25,12 @@ Map {
                                 segments: [],
                             },
                         ),
-                        name: Identifier {
-                            name: "Cast",
-                            location: <internal>:17:21,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Cast",
+                                location: <internal>:17:21,
+                            },
+                        ),
                         location: <internal>:17:21,
                     },
                     type_params: [],
@@ -36,7 +38,7 @@ Map {
                 },
                 target: Type {
                     id: ItemId(
-                        11582867247635641484,
+                        9261998375256972311,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -51,10 +53,12 @@ Map {
                                 ],
                             },
                         ),
-                        name: Identifier {
-                            name: "Int32",
-                            location: <internal>:0:0,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Int32",
+                                location: <internal>:0:0,
+                            },
+                        ),
                         location: <internal>:0:0,
                     },
                     type_params: [],
@@ -66,10 +70,12 @@ Map {
                         visibility: Public,
                         name: SymbolName {
                             namespace: None,
-                            name: Identifier {
-                                name: "to_string",
-                                location: <internal>:56:65,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "to_string",
+                                    location: <internal>:56:65,
+                                },
+                            ),
                             location: <internal>:56:65,
                         },
                         parameters: [],
@@ -77,7 +83,7 @@ Map {
                         return_type: Some(
                             Type {
                                 id: ItemId(
-                                    9062208321437966898,
+                                    6878914491779363853,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -92,10 +98,12 @@ Map {
                                             ],
                                         },
                                     ),
-                                    name: Identifier {
-                                        name: "String",
-                                        location: <internal>:0:0,
-                                    },
+                                    name: Named(
+                                        Identifier {
+                                            name: "String",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
                                     location: <internal>:0:0,
                                 },
                                 type_params: [],
@@ -113,10 +121,12 @@ Map {
                         visibility: Public,
                         name: SymbolName {
                             namespace: None,
-                            name: Identifier {
-                                name: "to_int",
-                                location: <internal>:105:111,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "to_int",
+                                    location: <internal>:105:111,
+                                },
+                            ),
                             location: <internal>:105:111,
                         },
                         parameters: [],
@@ -124,7 +134,7 @@ Map {
                         return_type: Some(
                             Type {
                                 id: ItemId(
-                                    11582867247635641484,
+                                    9261998375256972311,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -139,10 +149,12 @@ Map {
                                             ],
                                         },
                                     ),
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: <internal>:0:0,
-                                    },
+                                    name: Named(
+                                        Identifier {
+                                            name: "Int32",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
                                     location: <internal>:0:0,
                                 },
                                 type_params: [],

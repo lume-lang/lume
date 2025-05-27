@@ -10,9 +10,8 @@ use lume_hir::{self as hir, SELF_TYPE_NAME, SymbolName};
 impl LowerModule<'_> {
     pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
         match expr {
-            ast::Type::Scalar(t) => Ok(self.type_scalar(*t)),
+            ast::Type::Named(t) => self.type_named(*t),
             ast::Type::Array(t) => self.type_array(*t),
-            ast::Type::Generic(t) => self.type_generic(*t),
             ast::Type::SelfType(t) => self.type_self(*t),
         }
     }
@@ -24,40 +23,29 @@ impl LowerModule<'_> {
         }
     }
 
-    fn type_scalar(&self, expr: ast::ScalarType) -> hir::Type {
-        let name = self.resolve_symbol_name(&expr.name);
+    fn type_named(&self, mut expr: ast::NamedType) -> Result<hir::Type> {
+        let type_params = expr
+            .name
+            .name
+            .type_arguments
+            .drain(..)
+            .map(|ty| Ok(Box::new(self.type_ref(ty)?)))
+            .collect::<Result<Vec<_>>>()?;
+
+        let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.name.location);
         let id = self.item_id(&name);
-
-        hir::Type {
-            id,
-            name,
-            type_params: Vec::new(),
-            location,
-        }
-    }
-
-    fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
-        self.type_std(ARRAY_STD_TYPE, vec![*expr.element_type])
-    }
-
-    fn type_generic(&self, expr: ast::GenericType) -> Result<hir::Type> {
-        let location = self.location(expr.location);
-        let name = self.resolve_symbol_name(&expr.name);
-        let id = self.item_id(&name);
-
-        let type_params = expr
-            .type_params
-            .into_iter()
-            .map(|c| self.type_ref(*c))
-            .collect::<Result<Vec<hir::Type>>>()?;
 
         Ok(hir::Type {
             id,
             name,
-            type_params: type_params.into_iter().map(Box::new).collect(),
+            type_params,
             location,
         })
+    }
+
+    fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
+        self.type_std(ARRAY_STD_TYPE, vec![*expr.element_type])
     }
 
     fn type_self(&self, expr: ast::SelfType) -> Result<hir::Type> {

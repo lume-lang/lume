@@ -67,7 +67,7 @@ pub struct SymbolName {
     pub namespace: Option<PathRoot>,
 
     /// Defines the relative name of the symbol within it's namespace.
-    pub name: Identifier,
+    pub name: PathSegment,
 
     pub location: Location,
 }
@@ -94,7 +94,7 @@ impl std::hash::Hash for SymbolName {
 
 impl SymbolName {
     pub fn rooted(name: impl Into<String>) -> Self {
-        let name = Identifier::from(name);
+        let name = PathSegment::from(name.into());
 
         Self {
             namespace: None,
@@ -108,7 +108,7 @@ impl SymbolName {
         name: impl Into<String>,
     ) -> Self {
         let namespace = namespace.map(|ns| PathRoot::from(ns));
-        let name = Identifier::from(name);
+        let name = PathSegment::from(name.into());
 
         Self {
             namespace,
@@ -117,9 +117,9 @@ impl SymbolName {
         }
     }
 
-    pub fn with_root(base: SymbolName, name: Identifier) -> Self {
+    pub fn with_root(base: SymbolName, name: PathSegment) -> Self {
         let mut namespace = base.namespace.unwrap_or_default();
-        namespace.segments.push(PathSegment::Named(base.name));
+        namespace.segments.push(base.name);
 
         Self {
             namespace: Some(namespace),
@@ -195,14 +195,14 @@ impl std::fmt::Display for SymbolName {
             write!(f, "{ns}::")?;
         }
 
-        write!(f, "{}", self.name.name)
+        write!(f, "{}", self.name)
     }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum PathSegment {
     Named(Identifier),
-    Typed(Identifier, Vec<Box<Type>>),
+    Typed(Identifier, Vec<Type>),
 }
 
 impl PathSegment {
@@ -331,7 +331,7 @@ pub struct ExternalSymbol {
 }
 
 impl ExternalSymbol {
-    pub fn ident(&self) -> &Identifier {
+    pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }
 }
@@ -358,7 +358,7 @@ pub struct FunctionDefinition {
 }
 
 impl FunctionDefinition {
-    pub fn ident(&self) -> &Identifier {
+    pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }
 }
@@ -582,7 +582,7 @@ pub struct TraitImplementation {
 }
 
 impl TraitImplementation {
-    pub fn ident(&self) -> &Identifier {
+    pub fn ident(&self) -> &PathSegment {
         self.name.ident()
     }
 }
@@ -600,7 +600,7 @@ pub struct TraitMethodImplementation {
 }
 
 impl TraitMethodImplementation {
-    pub fn ident(&self) -> &Identifier {
+    pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }
 }
@@ -732,6 +732,42 @@ pub enum ExpressionKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub enum CallExpression {
+    /// Defines a call which was invoked without any callee or receiver.
+    ///
+    /// These are either invoked from:
+    /// - a path (`std::Int32::new()`),
+    /// - or as a function call (`foo()`),
+    Static(Box<StaticCall>),
+
+    /// Defines a call which was invoked within the context of a receiver
+    ///
+    /// ```lume
+    /// let a = foo();
+    /// a.bar();
+    /// ```
+    Instanced(Box<InstanceCall>),
+}
+
+impl CallExpression {
+    #[inline]
+    pub fn arguments(&self) -> &[Expression] {
+        match self {
+            Self::Instanced(call) => &call.arguments,
+            Self::Static(call) => &call.arguments,
+        }
+    }
+
+    #[inline]
+    pub fn type_arguments(&self) -> &[TypeArgument] {
+        match self {
+            Self::Instanced(call) => &call.type_arguments,
+            Self::Static(call) => &call.type_arguments,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
@@ -750,7 +786,7 @@ pub struct StaticCall {
 pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
-    pub name: Identifier,
+    pub name: PathSegment,
     pub type_arguments: Vec<TypeArgument>,
     pub arguments: Vec<Expression>,
 }
@@ -903,7 +939,7 @@ pub struct Type {
 }
 
 impl Type {
-    pub fn ident(&self) -> &Identifier {
+    pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }
 }

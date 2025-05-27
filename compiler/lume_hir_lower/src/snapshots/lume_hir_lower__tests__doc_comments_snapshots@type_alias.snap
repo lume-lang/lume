@@ -18,15 +18,17 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Foo",
-                            location: <internal>:39:42,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Foo",
+                                location: <internal>:39:42,
+                            },
+                        ),
                         location: <internal>:39:42,
                     },
                     definition: Type {
                         id: ItemId(
-                            4596565343203938484,
+                            5303750863679952767,
                         ),
                         name: SymbolName {
                             namespace: Some(
@@ -34,10 +36,12 @@ Map {
                                     segments: [],
                                 },
                             ),
-                            name: Identifier {
-                                name: "Bar",
-                                location: <internal>:45:48,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "Bar",
+                                    location: <internal>:45:48,
+                                },
+                            ),
                             location: <internal>:45:48,
                         },
                         type_params: [],

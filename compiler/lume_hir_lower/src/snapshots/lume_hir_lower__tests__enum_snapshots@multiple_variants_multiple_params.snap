@@ -18,26 +18,30 @@ Map {
                     type_id: None,
                     name: SymbolName {
                         namespace: None,
-                        name: Identifier {
-                            name: "Foo",
-                            location: <internal>:18:21,
-                        },
+                        name: Named(
+                            Identifier {
+                                name: "Foo",
+                                location: <internal>:18:21,
+                            },
+                        ),
                         location: <internal>:18:21,
                     },
                     cases: [
                         EnumDefinitionCase {
                             name: SymbolName {
                                 namespace: None,
-                                name: Identifier {
-                                    name: "Bar",
-                                    location: <internal>:40:43,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Bar",
+                                        location: <internal>:40:43,
+                                    },
+                                ),
                                 location: <internal>:40:43,
                             },
                             parameters: [
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        4873327510373585985,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -45,10 +49,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "int",
-                                            location: <internal>:44:47,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "int",
+                                                location: <internal>:44:47,
+                                            },
+                                        ),
                                         location: <internal>:44:47,
                                     },
                                     type_params: [],
@@ -56,7 +62,7 @@ Map {
                                 },
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        4873327510373585985,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -64,10 +70,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "int",
-                                            location: <internal>:49:52,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "int",
+                                                location: <internal>:49:52,
+                                            },
+                                        ),
                                         location: <internal>:49:52,
                                     },
                                     type_params: [],
@@ -79,16 +87,18 @@ Map {
                         EnumDefinitionCase {
                             name: SymbolName {
                                 namespace: None,
-                                name: Identifier {
-                                    name: "Baz",
-                                    location: <internal>:71:74,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Baz",
+                                        location: <internal>:71:74,
+                                    },
+                                ),
                                 location: <internal>:71:74,
                             },
                             parameters: [
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        4873327510373585985,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -96,10 +106,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "int",
-                                            location: <internal>:75:78,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "int",
+                                                location: <internal>:75:78,
+                                            },
+                                        ),
                                         location: <internal>:75:78,
                                     },
                                     type_params: [],
@@ -107,7 +119,7 @@ Map {
                                 },
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        4873327510373585985,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -115,10 +127,12 @@ Map {
                                                 segments: [],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "int",
-                                            location: <internal>:80:83,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "int",
+                                                location: <internal>:80:83,
+                                            },
+                                        ),
                                         location: <internal>:80:83,
                                     },
                                     type_params: [],

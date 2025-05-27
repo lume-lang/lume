@@ -66,11 +66,13 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "with_capacity",
-                                    location: <internal>:26:27,
-                                },
-                                location: <internal>:26:27,
+                                name: Named(
+                                    Identifier {
+                                        name: "with_capacity",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
                             type_arguments: [
                                 Implicit {

@@ -85,15 +85,17 @@ description: "let _ = 1.call::<T>(0, 1);"
                                     },
                                 ),
                             },
-                            name: Identifier {
-                                name: "call",
-                                location: <internal>:10:14,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "call",
+                                    location: <internal>:10:14,
+                                },
+                            ),
                             type_arguments: [
                                 Named {
                                     ty: Type {
                                         id: ItemId(
-                                            10382560105972960337,
+                                            16411931616039809451,
                                         ),
                                         name: SymbolName {
                                             namespace: Some(
@@ -101,10 +103,12 @@ description: "let _ = 1.call::<T>(0, 1);"
                                                     segments: [],
                                                 },
                                             ),
-                                            name: Identifier {
-                                                name: "T",
-                                                location: <internal>:17:18,
-                                            },
+                                            name: Named(
+                                                Identifier {
+                                                    name: "T",
+                                                    location: <internal>:17:18,
+                                                },
+                                            ),
                                             location: <internal>:17:18,
                                         },
                                         type_params: [],

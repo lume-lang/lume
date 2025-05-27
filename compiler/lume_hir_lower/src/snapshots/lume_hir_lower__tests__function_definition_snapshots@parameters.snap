@@ -18,10 +18,12 @@ Map {
                 visibility: Private,
                 name: SymbolName {
                     namespace: None,
-                    name: Identifier {
-                        name: "main",
-                        location: <internal>:3:7,
-                    },
+                    name: Named(
+                        Identifier {
+                            name: "main",
+                            location: <internal>:3:7,
+                        },
+                    ),
                     location: <internal>:3:7,
                 },
                 parameters: [
@@ -32,7 +34,7 @@ Map {
                         },
                         param_type: Type {
                             id: ItemId(
-                                6189014434875363996,
+                                2541140017791078792,
                             ),
                             name: SymbolName {
                                 namespace: Some(
@@ -40,10 +42,12 @@ Map {
                                         segments: [],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "u8",
-                                    location: <internal>:14:16,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "u8",
+                                        location: <internal>:14:16,
+                                    },
+                                ),
                                 location: <internal>:14:16,
                             },
                             type_params: [],
@@ -73,16 +77,18 @@ Map {
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "Array",
-                                    location: <internal>:0:0,
-                                },
+                                name: Named(
+                                    Identifier {
+                                        name: "Array",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
                                 location: <internal>:0:0,
                             },
                             type_params: [
                                 Type {
                                     id: ItemId(
-                                        9062208321437966898,
+                                        6878914491779363853,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -97,10 +103,12 @@ Map {
                                                 ],
                                             },
                                         ),
-                                        name: Identifier {
-                                            name: "String",
-                                            location: <internal>:0:0,
-                                        },
+                                        name: Named(
+                                            Identifier {
+                                                name: "String",
+                                                location: <internal>:0:0,
+                                            },
+                                        ),
                                         location: <internal>:0:0,
                                     },
                                     type_params: [],
@@ -116,7 +124,7 @@ Map {
                 return_type: Some(
                     Type {
                         id: ItemId(
-                            9344623788042179276,
+                            2745571829241957363,
                         ),
                         name: SymbolName {
                             namespace: Some(
@@ -124,10 +132,12 @@ Map {
                                     segments: [],
                                 },
                             ),
-                            name: Identifier {
-                                name: "void",
-                                location: <internal>:37:41,
-                            },
+                            name: Named(
+                                Identifier {
+                                    name: "void",
+                                    location: <internal>:37:41,
+                                },
+                            ),
                             location: <internal>:37:41,
                         },
                         type_params: [],

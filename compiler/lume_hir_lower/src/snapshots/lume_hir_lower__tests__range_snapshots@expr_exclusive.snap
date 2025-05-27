@@ -191,18 +191,20 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..b);"
                                             ),
                                             Named(
                                                 Identifier {
-                                                    name: "new",
+                                                    name: "Range",
                                                     location: <internal>:0:0,
                                                 },
                                             ),
                                         ],
                                     },
                                 ),
-                                name: Identifier {
-                                    name: "Range",
-                                    location: <internal>:56:60,
-                                },
-                                location: <internal>:56:60,
+                                name: Named(
+                                    Identifier {
+                                        name: "new",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
                             type_arguments: [
                                 Implicit {

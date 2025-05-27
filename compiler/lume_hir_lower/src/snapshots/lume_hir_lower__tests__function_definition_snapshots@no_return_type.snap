@@ -18,10 +18,12 @@ Map {
                 visibility: Private,
                 name: SymbolName {
                     namespace: None,
-                    name: Identifier {
-                        name: "main",
-                        location: <internal>:3:7,
-                    },
+                    name: Named(
+                        Identifier {
+                            name: "main",
+                            location: <internal>:3:7,
+                        },
+                    ),
                     location: <internal>:3:7,
                 },
                 parameters: [],
