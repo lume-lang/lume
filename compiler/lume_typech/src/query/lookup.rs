@@ -1,12 +1,11 @@
+use crate::{ThirBuildCtx, *};
 use error_snippet::Result;
 use levenshtein::levenshtein;
-use lume_hir::{Identifier, SymbolName};
+use lume_hir::{self, Identifier};
 use lume_span::Location;
 use lume_types::Method;
 
-use crate::ThirBuildCtx;
-
-mod errors;
+use super::diagnostics::{self};
 
 /// Defines the maximum Levenshtein distance allowed for method name suggestions.
 pub const MAX_LEVENSHTEIN_DISTANCE: usize = 3;
@@ -77,7 +76,7 @@ impl MethodLookupError<'_> {
             .map(|suggestion| {
                 let method_name = suggestion.def.name.clone();
 
-                errors::SuggestedMethod {
+                diagnostics::SuggestedMethod {
                     source: method_name.location.file.clone(),
                     range: method_name.location.index.clone(),
                     type_name: self.type_name.clone(),
@@ -88,7 +87,7 @@ impl MethodLookupError<'_> {
             })
             .collect::<Vec<error_snippet::Error>>();
 
-        errors::MissingMethod {
+        diagnostics::MissingMethod {
             source: location.file,
             range: location.index,
             type_name: self.type_name,

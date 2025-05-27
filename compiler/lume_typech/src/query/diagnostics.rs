@@ -4,7 +4,7 @@ use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, SymbolName};
 use lume_span::SourceFile;
 
-use super::MethodDisqualificationReason;
+use crate::query::lookup::MethodDisqualificationReason;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no such method was found", code = "LM4113")]

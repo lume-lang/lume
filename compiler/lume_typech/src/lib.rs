@@ -8,7 +8,7 @@ use symbol::CallReference;
 mod check;
 mod errors;
 mod infer;
-mod method;
+pub(crate) mod query;
 mod symbol;
 
 pub struct ThirBuildCtx {

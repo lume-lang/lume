@@ -6,7 +6,7 @@ use lume_hir::{FunctionId, MethodId, SymbolName};
 use lume_span::SourceFile;
 use lume_types::{Function, Method, Type};
 
-use crate::ThirBuildCtx;
+use crate::{ThirBuildCtx, query::lookup::MethodLookupResult};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "ambiguous symbol", code = "LM4129")]
@@ -60,8 +60,8 @@ impl ThirBuildCtx {
             &expr.type_arguments,
             true,
         )? {
-            crate::method::MethodLookupResult::Success(method) => Ok(method),
-            crate::method::MethodLookupResult::Failure(err) => Err(err.compound_err(loc)),
+            MethodLookupResult::Success(method) => Ok(method),
+            MethodLookupResult::Failure(err) => Err(err.compound_err(loc)),
         }
     }
 
