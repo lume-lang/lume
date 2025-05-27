@@ -30,16 +30,17 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                     param_type: Scalar(
                         ScalarType {
                             name: Path {
-                                name: Identifier {
-                                    name: "u8",
+                                root: [],
+                                name: PathSegment {
+                                    name: Identifier {
+                                        name: "u8",
+                                        location: Location(
+                                            14..16,
+                                        ),
+                                    },
+                                    type_arguments: [],
                                     location: Location(
                                         14..16,
-                                    ),
-                                },
-                                root: NamespacePath {
-                                    path: [],
-                                    location: Location(
-                                        0..0,
                                     ),
                                 },
                                 location: Location(
@@ -64,16 +65,17 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                             element_type: Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "String",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "String",
+                                                location: Location(
+                                                    25..31,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 25..31,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(
@@ -97,16 +99,17 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "void",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        37..41,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     37..41,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

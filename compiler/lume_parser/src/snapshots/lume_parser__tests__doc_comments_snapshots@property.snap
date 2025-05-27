@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\"#)"
+expression: "parse(\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
 ---
 [
     TypeDefinition(
@@ -31,16 +31,17 @@ expression: "parse(r#\"struct Foo {\n            /// This is a doc comment\n    
                         property_type: Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "Int32",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                72..77,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             72..77,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

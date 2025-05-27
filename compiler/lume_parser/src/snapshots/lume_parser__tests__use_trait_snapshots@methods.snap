@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_string() -> String {\n                return self;\n            }\n\n            pub fn to_int() -> Int32 {\n                return self;\n            }\n        }\"#)"
+expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string() -> String {\n                return self;\n            }\n\n            pub fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
 [
     Use(
@@ -8,16 +8,17 @@ expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_stri
             name: Scalar(
                 ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Cast",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Cast",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 13..17,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(
@@ -29,16 +30,17 @@ expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_stri
             target: Scalar(
                 ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Int32",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Int32",
+                                location: Location(
+                                    21..26,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 21..26,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(
@@ -68,16 +70,17 @@ expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_stri
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "String",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "String",
+                                            location: Location(
+                                                63..69,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             63..69,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(
@@ -137,16 +140,17 @@ expression: "parse(r#\"\n        use Cast in Int32 {\n            pub fn to_stri
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "Int32",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                147..152,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             147..152,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

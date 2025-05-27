@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"/// This is a doc comment\n        type Foo = Bar\"#)"
+expression: "parse(\"/// This is a doc comment\n        type Foo = Bar\")"
 ---
 [
     TypeDefinition(
@@ -15,16 +15,17 @@ expression: "parse(r#\"/// This is a doc comment\n        type Foo = Bar\"#)"
                 definition: Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "Bar",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "Bar",
+                                    location: Location(
+                                        45..48,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     45..48,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

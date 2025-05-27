@@ -23,16 +23,17 @@ expression: "parse_expr(\"if a == 1 { }\")"
                                     ),
                                 ),
                                 name: Path {
-                                    name: Identifier {
-                                        name: "==",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "==",
+                                            location: Location(
+                                                5..7,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             5..7,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

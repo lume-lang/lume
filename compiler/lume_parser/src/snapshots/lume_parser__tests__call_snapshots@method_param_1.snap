@@ -27,16 +27,17 @@ expression: "parse_expr(\"let _ = a.call(a);\")"
                         ),
                     ),
                     name: Path {
-                        name: Identifier {
-                            name: "call",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "call",
+                                location: Location(
+                                    10..14,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 10..14,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(

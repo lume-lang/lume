@@ -1,102 +1,98 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        use Enumerable<T> in Vector<T> {\n            pub fn next() -> T { }\n        }\"#)"
+expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            pub fn next() -> T { }\n        }\")"
 ---
 [
     Use(
         UseTrait {
-            name: Generic(
-                GenericType {
+            name: Scalar(
+                ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Enumerable",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Enumerable",
+                                location: Location(
+                                    13..23,
+                                ),
+                            },
+                            type_arguments: [
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: Location(
+                                                        24..25,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    24..25,
+                                                ),
+                                            },
+                                            location: Location(
+                                                24..25,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                             location: Location(
-                                13..23,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
+                                13..26,
                             ),
                         },
                         location: Location(
-                            13..23,
+                            13..26,
                         ),
                     },
-                    type_params: [
-                        Scalar(
-                            ScalarType {
-                                name: Path {
-                                    name: Identifier {
-                                        name: "T",
-                                        location: Location(
-                                            24..25,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
-                                        ),
-                                    },
-                                    location: Location(
-                                        24..25,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        23..26,
-                    ),
                 },
             ),
-            target: Generic(
-                GenericType {
+            target: Scalar(
+                ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Vector",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Vector",
+                                location: Location(
+                                    30..36,
+                                ),
+                            },
+                            type_arguments: [
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: Location(
+                                                        37..38,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    37..38,
+                                                ),
+                                            },
+                                            location: Location(
+                                                37..38,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                             location: Location(
-                                30..36,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
+                                30..39,
                             ),
                         },
                         location: Location(
-                            30..36,
+                            30..39,
                         ),
                     },
-                    type_params: [
-                        Scalar(
-                            ScalarType {
-                                name: Path {
-                                    name: Identifier {
-                                        name: "T",
-                                        location: Location(
-                                            37..38,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
-                                        ),
-                                    },
-                                    location: Location(
-                                        37..38,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        36..39,
-                    ),
                 },
             ),
             methods: [
@@ -120,16 +116,17 @@ expression: "parse(r#\"\n        use Enumerable<T> in Vector<T> {\n            p
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "T",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "T",
+                                            location: Location(
+                                                71..72,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             71..72,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

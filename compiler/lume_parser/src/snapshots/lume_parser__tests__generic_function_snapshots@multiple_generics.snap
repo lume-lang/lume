@@ -44,16 +44,17 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "void",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        21..25,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     21..25,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

@@ -269,8 +269,14 @@ impl Parser {
 
     /// Advances the cursor position by a single token.
     fn skip(&mut self) {
-        self.position += self.token().len();
         self.index += 1;
+        self.position = self.token().start();
+    }
+
+    /// Moves the current cursor position to the given index.
+    fn move_to(&mut self, index: usize) {
+        self.index = index;
+        self.position = self.token().start();
     }
 
     /// Consumes the next token from the lexer and returns it if it matches the expected kind.
@@ -546,25 +552,29 @@ impl Parser {
 
     /// Parses the next token as a symbol path.
     fn parse_path(&mut self) -> Result<Path> {
-        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
+        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_path_segment)?;
         let (name, root) = segments.split_last().unwrap();
-
-        let root = if root.is_empty() {
-            NamespacePath::empty()
-        } else {
-            let root_loc_start = root.first().unwrap().location.start();
-            let root_loc_end = root.last().unwrap().location.end();
-
-            NamespacePath {
-                path: root.to_vec(),
-                location: (root_loc_start..root_loc_end).into(),
-            }
-        };
 
         Ok(Path {
             name: name.to_owned(),
-            root,
+            root: root.to_owned(),
             location: name.location.clone(),
+        })
+    }
+
+    /// Parses the next token as a single segment of a symbol path.
+    fn parse_path_segment(&mut self) -> Result<PathSegment> {
+        let ((name, type_arguments), location) = self.consume_with_loc(|p| {
+            let name = p.parse_identifier()?;
+            let params = p.parse_type_arguments_boxed()?;
+
+            Ok((name, params))
+        })?;
+
+        Ok(PathSegment {
+            name,
+            type_arguments,
+            location,
         })
     }
 

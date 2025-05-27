@@ -39,4 +39,13 @@ impl Parser {
             Ok(TypeArgument { ty })
         })
     }
+
+    /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
+    pub(super) fn parse_type_arguments_boxed(&mut self) -> Result<Vec<Type>> {
+        if !self.peek(TokenKind::Less) {
+            return Ok(Vec::new());
+        }
+
+        self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, Parser::parse_type)
+    }
 }

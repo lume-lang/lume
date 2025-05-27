@@ -1,91 +1,91 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        use Add<Int32, Int64> in Int32 {\n            pub fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\"#)"
+expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub fn add(other: Int32) -> Int64 {\n                return self + other;\n            }\n        }\")"
 ---
 [
     Use(
         UseTrait {
-            name: Generic(
-                GenericType {
+            name: Scalar(
+                ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Add",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Add",
+                                location: Location(
+                                    13..16,
+                                ),
+                            },
+                            type_arguments: [
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "Int32",
+                                                    location: Location(
+                                                        17..22,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    17..22,
+                                                ),
+                                            },
+                                            location: Location(
+                                                17..22,
+                                            ),
+                                        },
+                                    },
+                                ),
+                                Scalar(
+                                    ScalarType {
+                                        name: Path {
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "Int64",
+                                                    location: Location(
+                                                        24..29,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    24..29,
+                                                ),
+                                            },
+                                            location: Location(
+                                                24..29,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                             location: Location(
-                                13..16,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
+                                13..30,
                             ),
                         },
                         location: Location(
-                            13..16,
+                            13..30,
                         ),
                     },
-                    type_params: [
-                        Scalar(
-                            ScalarType {
-                                name: Path {
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: Location(
-                                            17..22,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
-                                        ),
-                                    },
-                                    location: Location(
-                                        17..22,
-                                    ),
-                                },
-                            },
-                        ),
-                        Scalar(
-                            ScalarType {
-                                name: Path {
-                                    name: Identifier {
-                                        name: "Int64",
-                                        location: Location(
-                                            24..29,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
-                                        ),
-                                    },
-                                    location: Location(
-                                        24..29,
-                                    ),
-                                },
-                            },
-                        ),
-                    ],
-                    location: Location(
-                        16..30,
-                    ),
                 },
             ),
             target: Scalar(
                 ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Int32",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Int32",
+                                location: Location(
+                                    34..39,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 34..39,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(
@@ -120,16 +120,17 @@ expression: "parse(r#\"\n        use Add<Int32, Int64> in Int32 {\n            p
                             param_type: Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "Int32",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: Location(
+                                                    72..77,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 72..77,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(
@@ -148,16 +149,17 @@ expression: "parse(r#\"\n        use Add<Int32, Int64> in Int32 {\n            p
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "Int64",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Int64",
+                                            location: Location(
+                                                82..87,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             82..87,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(
@@ -187,16 +189,17 @@ expression: "parse(r#\"\n        use Add<Int32, Int64> in Int32 {\n            p
                                                     ),
                                                 ),
                                                 name: Path {
-                                                    name: Identifier {
-                                                        name: "+",
+                                                    root: [],
+                                                    name: PathSegment {
+                                                        name: Identifier {
+                                                            name: "+",
+                                                            location: Location(
+                                                                118..119,
+                                                            ),
+                                                        },
+                                                        type_arguments: [],
                                                         location: Location(
                                                             118..119,
-                                                        ),
-                                                    },
-                                                    root: NamespacePath {
-                                                        path: [],
-                                                        location: Location(
-                                                            0..0,
                                                         ),
                                                     },
                                                     location: Location(

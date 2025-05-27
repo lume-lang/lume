@@ -26,16 +26,17 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "Numeric",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    16..23,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 16..23,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(
@@ -57,16 +58,17 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "Numeric",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    29..36,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 29..36,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        enum Foo {\n            Bar(int)\n        }\"#)"
+expression: "parse(\"\n        enum Foo {\n            Bar(int)\n        }\")"
 ---
 [
     TypeDefinition(
@@ -24,16 +24,17 @@ expression: "parse(r#\"\n        enum Foo {\n            Bar(int)\n        }\"#)
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "int",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    36..39,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 36..39,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(

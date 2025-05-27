@@ -53,6 +53,12 @@ impl Identifier {
             location: Location(0..0),
         }
     }
+
+    #[must_use]
+    #[inline]
+    pub fn as_var(self) -> Expression {
+        Expression::Variable(Box::new(Variable { name: self }))
+    }
 }
 
 impl std::fmt::Display for Identifier {
@@ -188,40 +194,63 @@ impl PartialEq for NamespacePath {
 }
 
 #[derive(Node, Debug, Clone, PartialEq, Eq)]
-pub struct Path {
+pub struct PathSegment {
     pub name: Identifier,
-    pub root: NamespacePath,
+    pub type_arguments: Vec<Type>,
+    pub location: Location,
+}
+
+impl From<Identifier> for PathSegment {
+    fn from(identifier: Identifier) -> PathSegment {
+        PathSegment {
+            location: identifier.location.clone(),
+            name: identifier,
+            type_arguments: Vec::new(),
+        }
+    }
+}
+
+impl std::fmt::Display for PathSegment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}<{:?}>", self.name, self.type_arguments))
+    }
+}
+
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
+pub struct Path {
+    pub root: Vec<PathSegment>,
+    pub name: PathSegment,
     pub location: Location,
 }
 
 impl Path {
     #[must_use]
-    pub fn rooted(name: Identifier) -> Self {
+    pub fn rooted(name: PathSegment) -> Self {
         let location = name.location.clone();
 
         Path {
             name,
-            root: NamespacePath::empty(),
+            root: Vec::new(),
             location,
         }
     }
 
     pub fn merge(&mut self, other: Path) {
-        self.root.path.extend(other.root.path);
-        self.root.path.insert(0, other.name);
-        self.location = (self.location.start()..other.location.end()).into();
+        self.root.extend(other.root);
+        self.root.insert(0, other.name);
+        self.location = (other.location.start()..self.location.end()).into();
     }
 }
 
 impl From<Identifier> for Path {
     fn from(identifier: Identifier) -> Path {
-        Path::rooted(identifier)
+        Path::rooted(identifier.into())
     }
 }
 
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}::{}", self.root, self.name))
+        f.write_fmt(format_args!("{:?}::{}", self.root, self.name))
     }
 }
 
@@ -667,7 +696,7 @@ impl Node for Variable {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub constraints: Vec<Box<Type>>,
@@ -690,7 +719,7 @@ impl Node for TypeArgument {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Scalar(Box<ScalarType>),
     Array(Box<ArrayType>),
@@ -718,7 +747,7 @@ impl std::fmt::Display for Type {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ScalarType {
     pub name: Path,
 }
@@ -735,7 +764,7 @@ impl std::fmt::Display for ScalarType {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
     pub location: Location,
@@ -747,10 +776,10 @@ impl std::fmt::Display for ArrayType {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub struct GenericType {
     pub name: Path,
-    pub type_params: Vec<Box<Type>>,
+    pub type_params: Vec<Type>,
     pub location: Location,
 }
 
@@ -772,7 +801,7 @@ impl std::fmt::Display for GenericType {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, PartialEq, Eq)]
 pub struct SelfType {
     pub location: Location,
 }

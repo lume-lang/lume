@@ -1,67 +1,71 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")"
+expression: "parse_expr(\"self.invoke::<T>();\")"
 ---
 [
-    TypeDefinition(
-        Struct(
-            StructDefinition {
-                name: Identifier {
-                    name: "Foo",
-                    location: Location(
-                        16..19,
-                    ),
-                },
-                builtin: false,
-                properties: [
-                    Property {
-                        visibility: Private(
-                            Private {
+    Expression(
+        Call(
+            Call {
+                callee: Some(
+                    Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "self",
                                 location: Location(
-                                    34..35,
+                                    0..4,
                                 ),
                             },
-                        ),
+                        },
+                    ),
+                ),
+                name: Path {
+                    root: [],
+                    name: PathSegment {
                         name: Identifier {
-                            name: "x",
+                            name: "invoke",
                             location: Location(
-                                34..35,
+                                5..11,
                             ),
                         },
-                        property_type: Scalar(
+                        type_arguments: [],
+                        location: Location(
+                            5..11,
+                        ),
+                    },
+                    location: Location(
+                        5..11,
+                    ),
+                },
+                arguments: [],
+                type_arguments: [
+                    TypeArgument {
+                        ty: Scalar(
                             ScalarType {
                                 name: Path {
                                     root: [],
                                     name: PathSegment {
                                         name: Identifier {
-                                            name: "Int32",
+                                            name: "T",
                                             location: Location(
-                                                37..42,
+                                                14..15,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            37..42,
+                                            14..15,
                                         ),
                                     },
                                     location: Location(
-                                        37..42,
+                                        14..15,
                                     ),
                                 },
                             },
                         ),
-                        default_value: None,
-                        location: Location(
-                            34..43,
-                        ),
-                        documentation: None,
                     },
                 ],
-                type_parameters: [],
                 location: Location(
-                    9..53,
+                    5..19,
                 ),
-                documentation: None,
             },
         ),
     ),

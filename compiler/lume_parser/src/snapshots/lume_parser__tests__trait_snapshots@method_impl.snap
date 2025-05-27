@@ -39,16 +39,17 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                 param_type: Scalar(
                                     ScalarType {
                                         name: Path {
-                                            name: Identifier {
-                                                name: "int",
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "int",
+                                                    location: Location(
+                                                        30..33,
+                                                    ),
+                                                },
+                                                type_arguments: [],
                                                 location: Location(
                                                     30..33,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
                                                 ),
                                             },
                                             location: Location(
@@ -67,16 +68,17 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "int",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    38..41,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 38..41,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(
@@ -107,16 +109,17 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                                             ),
                                                         ),
                                                         name: Path {
-                                                            name: Identifier {
-                                                                name: "+",
+                                                            root: [],
+                                                            name: PathSegment {
+                                                                name: Identifier {
+                                                                    name: "+",
+                                                                    location: Location(
+                                                                        56..57,
+                                                                    ),
+                                                                },
+                                                                type_arguments: [],
                                                                 location: Location(
                                                                     56..57,
-                                                                ),
-                                                            },
-                                                            root: NamespacePath {
-                                                                path: [],
-                                                                location: Location(
-                                                                    0..0,
                                                                 ),
                                                             },
                                                             location: Location(

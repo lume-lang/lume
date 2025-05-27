@@ -29,16 +29,17 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                 ),
                             ),
                             name: Path {
-                                name: Identifier {
-                                    name: "+",
+                                root: [],
+                                name: PathSegment {
+                                    name: Identifier {
+                                        name: "+",
+                                        location: Location(
+                                            12..13,
+                                        ),
+                                    },
+                                    type_arguments: [],
                                     location: Location(
                                         12..13,
-                                    ),
-                                },
-                                root: NamespacePath {
-                                    path: [],
-                                    location: Location(
-                                        0..0,
                                     ),
                                 },
                                 location: Location(
@@ -81,16 +82,17 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                             ),
                                         ),
                                         name: Path {
-                                            name: Identifier {
-                                                name: "+",
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        22..23,
+                                                    ),
+                                                },
+                                                type_arguments: [],
                                                 location: Location(
                                                     22..23,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
                                                 ),
                                             },
                                             location: Location(
@@ -117,16 +119,17 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                 ),
                             ),
                             name: Path {
-                                name: Identifier {
-                                    name: "+",
+                                root: [],
+                                name: PathSegment {
+                                    name: Identifier {
+                                        name: "+",
+                                        location: Location(
+                                            26..27,
+                                        ),
+                                    },
+                                    type_arguments: [],
                                     location: Location(
                                         26..27,
-                                    ),
-                                },
-                                root: NamespacePath {
-                                    path: [],
-                                    location: Location(
-                                        0..0,
                                     ),
                                 },
                                 location: Location(

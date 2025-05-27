@@ -282,7 +282,9 @@ fn test_self_snapshots() {
     assert_expr_snap_eq!("self;", "self");
     assert_expr_snap_eq!("self + self;", "self_binary_op");
     assert_expr_snap_eq!("self.invoke();", "self_call");
+    assert_expr_snap_eq!("self.invoke::<T>();", "self_generic_call");
     assert_expr_snap_eq!("self::invoke();", "self_static_call");
+    assert_expr_snap_eq!("self::invoke::<T>();", "self_static_generic_call");
 }
 
 #[test]
@@ -359,6 +361,7 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = a.call::<T>(a, b);", "method_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
     assert_expr_snap_eq!("let _ = Foo::call::<T>(a, b);", "static_generic_method");
+    assert_expr_snap_eq!("let _ = Foo::<T>::call(a, b);", "generic_static_method");
 }
 
 #[test]

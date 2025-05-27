@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        impl Foo {\n            pub fn ==() -> bool {\n                return true;\n            }\n        }\"#)"
+expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n                return true;\n            }\n        }\")"
 ---
 [
     Impl(
@@ -15,16 +15,17 @@ expression: "parse(r#\"\n        impl Foo {\n            pub fn ==() -> bool {\n
             name: Scalar(
                 ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Foo",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Foo",
+                                location: Location(
+                                    14..17,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 14..17,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(
@@ -55,16 +56,17 @@ expression: "parse(r#\"\n        impl Foo {\n            pub fn ==() -> bool {\n
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "bool",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "bool",
+                                            location: Location(
+                                                47..51,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             47..51,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

@@ -32,16 +32,17 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "Numeric",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Numeric",
+                                            location: Location(
+                                                11..18,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             11..18,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(
@@ -57,16 +58,17 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "void",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        25..29,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     25..29,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

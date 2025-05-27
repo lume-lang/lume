@@ -25,23 +25,30 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "Int32",
-                                location: Location(
-                                    18..23,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [
-                                    Identifier {
+                            root: [
+                                PathSegment {
+                                    name: Identifier {
                                         name: "std",
                                         location: Location(
                                             13..16,
                                         ),
                                     },
-                                ],
+                                    type_arguments: [],
+                                    location: Location(
+                                        13..16,
+                                    ),
+                                },
+                            ],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: Location(
+                                        18..23,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
-                                    13..16,
+                                    18..23,
                                 ),
                             },
                             location: Location(

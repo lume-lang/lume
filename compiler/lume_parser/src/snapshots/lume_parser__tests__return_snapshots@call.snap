@@ -21,16 +21,17 @@ expression: "parse_expr(\"return a.b(c);\")"
                             ),
                         ),
                         name: Path {
-                            name: Identifier {
-                                name: "b",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "b",
+                                    location: Location(
+                                        9..10,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     9..10,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

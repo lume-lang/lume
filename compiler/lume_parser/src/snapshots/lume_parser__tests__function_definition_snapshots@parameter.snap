@@ -30,16 +30,17 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                     param_type: Scalar(
                         ScalarType {
                             name: Path {
-                                name: Identifier {
-                                    name: "u8",
+                                root: [],
+                                name: PathSegment {
+                                    name: Identifier {
+                                        name: "u8",
+                                        location: Location(
+                                            14..16,
+                                        ),
+                                    },
+                                    type_arguments: [],
                                     location: Location(
                                         14..16,
-                                    ),
-                                },
-                                root: NamespacePath {
-                                    path: [],
-                                    location: Location(
-                                        0..0,
                                     ),
                                 },
                                 location: Location(
@@ -58,16 +59,17 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "void",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        21..25,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     21..25,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

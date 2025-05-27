@@ -16,16 +16,17 @@ expression: "parse_expr(\"let _ = call(a, b);\")"
                 Call {
                     callee: None,
                     name: Path {
-                        name: Identifier {
-                            name: "call",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "call",
+                                location: Location(
+                                    8..12,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 8..12,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(

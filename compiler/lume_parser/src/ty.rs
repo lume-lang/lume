@@ -45,9 +45,7 @@ impl Parser {
 
     /// Parses a generic type, with zero-or-more type parameters at the current cursor position.
     fn parse_generic_type_arguments(&mut self, name: Path) -> Result<Type> {
-        let (type_params, location) = self.consume_with_loc(|p| {
-            p.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| Ok(Box::new(p.parse_type()?)))
-        })?;
+        let (type_params, location) = self.consume_with_loc(Parser::parse_type_arguments_boxed)?;
 
         Ok(Type::Generic(Box::new(GenericType {
             name,

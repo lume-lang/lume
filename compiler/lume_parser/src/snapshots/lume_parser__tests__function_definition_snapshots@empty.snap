@@ -25,16 +25,17 @@ expression: "parse(\"fn main() -> void {}\")"
                 Scalar(
                     ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "void",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        13..17,
+                                    ),
+                                },
+                                type_arguments: [],
                                 location: Location(
                                     13..17,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
                                 ),
                             },
                             location: Location(

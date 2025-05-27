@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"\n        struct Foo {\n            pub x: Int32 = 1;\n        }\"#)"
+expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n        }\")"
 ---
 [
     TypeDefinition(
@@ -31,16 +31,17 @@ expression: "parse(r#\"\n        struct Foo {\n            pub x: Int32 = 1;\n  
                         property_type: Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "Int32",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: Location(
+                                                41..46,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             41..46,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
+expression: "parse_expr(\"let _ = Foo::<T>::call(a, b);\")"
 ---
 [
     VariableDeclaration(
@@ -24,9 +24,32 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                                         8..11,
                                     ),
                                 },
-                                type_arguments: [],
+                                type_arguments: [
+                                    Scalar(
+                                        ScalarType {
+                                            name: Path {
+                                                root: [],
+                                                name: PathSegment {
+                                                    name: Identifier {
+                                                        name: "T",
+                                                        location: Location(
+                                                            14..15,
+                                                        ),
+                                                    },
+                                                    type_arguments: [],
+                                                    location: Location(
+                                                        14..15,
+                                                    ),
+                                                },
+                                                location: Location(
+                                                    14..15,
+                                                ),
+                                            },
+                                        },
+                                    ),
+                                ],
                                 location: Location(
-                                    8..11,
+                                    8..16,
                                 ),
                             },
                         ],
@@ -34,16 +57,16 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                             name: Identifier {
                                 name: "call",
                                 location: Location(
-                                    13..17,
+                                    18..22,
                                 ),
                             },
                             type_arguments: [],
                             location: Location(
-                                13..17,
+                                18..22,
                             ),
                         },
                         location: Location(
-                            8..17,
+                            8..22,
                         ),
                     },
                     arguments: [
@@ -68,34 +91,9 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                             },
                         ),
                     ],
-                    type_arguments: [
-                        TypeArgument {
-                            ty: Scalar(
-                                ScalarType {
-                                    name: Path {
-                                        root: [],
-                                        name: PathSegment {
-                                            name: Identifier {
-                                                name: "T",
-                                                location: Location(
-                                                    20..21,
-                                                ),
-                                            },
-                                            type_arguments: [],
-                                            location: Location(
-                                                20..21,
-                                            ),
-                                        },
-                                        location: Location(
-                                            20..21,
-                                        ),
-                                    },
-                                },
-                            ),
-                        },
-                    ],
+                    type_arguments: [],
                     location: Location(
-                        13..29,
+                        18..29,
                     ),
                 },
             ),

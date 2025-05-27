@@ -102,8 +102,9 @@ impl Parser {
                 name: Identifier {
                     name,
                     location: operator_loc.clone().into(),
-                },
-                root: NamespacePath::empty(),
+                }
+                .into(),
+                root: Vec::new(),
                 location: operator_loc.into(),
             },
             arguments: vec![right],
@@ -129,8 +130,9 @@ impl Parser {
                 name: Identifier {
                     name: operator.into(),
                     location: operator_loc.clone().into(),
-                },
-                root: NamespacePath::empty(),
+                }
+                .into(),
+                root: Vec::new(),
                 location: operator_loc.into(),
             },
             arguments: vec![],
@@ -207,19 +209,16 @@ impl Parser {
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
     fn parse_named_expression(&mut self) -> Result<Expression> {
         let identifier = self.parse_identifier()?;
-        let expression = Expression::Variable(Box::new(Variable {
-            name: identifier.clone(),
-        }));
 
         match self.token().kind {
             // If the next token is an opening parenthesis, it's a method invocation
             TokenKind::LeftParen => self.parse_call(None, identifier),
 
             // If the next token is a dot, it's some form of member access
-            TokenKind::Dot => self.parse_member(expression),
+            TokenKind::Dot => self.parse_member(identifier.as_var()),
 
             // If the next token is an equal sign, it's an assignment expression
-            TokenKind::Assign => self.parse_assignment(expression),
+            TokenKind::Assign => self.parse_assignment(identifier.as_var()),
 
             // If the identifier is following by a separator, it's refering to a namespaced identifier
             IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
@@ -314,13 +313,73 @@ impl Parser {
 
     /// Parses a path expression on the current cursor position.
     fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
+        let mut location_end = self.position;
+
         self.consume(IDENTIFIER_SEPARATOR)?;
 
+        // We cannot know from our current position whether
+        // the current expression refers to a call expression or a path expression.
+        //
+        // Consider the expression:
+        // ```lm (illustrative)
+        // let _ = foo::<T>();
+        //              ^ cursor is here
+        // ```
+        //
+        // At the current position, it could also be a typed path segment, much like:
+        // ```lm (illustrative)
+        // let _ = foo::<T>::call();
+        //              ^ cursor is here
+        // ```
+        //
+        // So, we need to see if any parenthesis are present AFTER the type arguments. And since
+        // type arguments can be of any length, we need to parse them, rewind and check what we found.
         if self.peek(TokenKind::Less) {
-            return self.parse_call(None, name);
+            let position = self.index;
+            let _ = self.parse_type_arguments()?;
+
+            // ```lm (illustrative)
+            // let _ = foo::<T>();
+            //                 ^ cursor is here...
+            //              ^ ...move back here
+            // ```
+            if self.peek(TokenKind::LeftParen) {
+                // We have to rewind, since `parse_call` parses
+                // the type arguments for the call expression.
+                self.move_to(position);
+
+                return self.parse_call(None, name);
+            }
+
+            location_end = self.position;
+
+            // ```lm (illustrative)
+            // let _ = foo::<T>::call();
+            //                   ^ cursor is here...
+            //              ^ ...move back here
+            // ```
+            self.move_to(position);
         }
 
-        let path = Path::rooted(name);
+        // If any type arguments are defined, we need to parse them now.
+        let type_arguments = if self.peek(TokenKind::Less) {
+            let args = self.parse_type_arguments_boxed()?;
+            location_end = self.position;
+
+            self.consume(IDENTIFIER_SEPARATOR)?;
+
+            args
+        } else {
+            Vec::new()
+        };
+
+        let location = (name.location.start()..location_end).into();
+
+        let path = Path::rooted(PathSegment {
+            name,
+            type_arguments,
+            location,
+        });
         let mut expression = self.parse_expression()?;
 
         Self::merge_expression_with_path(&mut expression, path);

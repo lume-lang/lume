@@ -17,16 +17,17 @@ expression: "parse(\"type A = [B]\")"
                         element_type: Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "B",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "B",
+                                            location: Location(
+                                                10..11,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             10..11,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

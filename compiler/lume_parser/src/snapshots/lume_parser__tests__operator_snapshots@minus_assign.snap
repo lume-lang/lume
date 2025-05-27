@@ -19,16 +19,17 @@ expression: "parse_expr(\"a -= b;\")"
                     ),
                 ),
                 name: Path {
-                    name: Identifier {
-                        name: "-=",
+                    root: [],
+                    name: PathSegment {
+                        name: Identifier {
+                            name: "-=",
+                            location: Location(
+                                2..4,
+                            ),
+                        },
+                        type_arguments: [],
                         location: Location(
                             2..4,
-                        ),
-                    },
-                    root: NamespacePath {
-                        path: [],
-                        location: Location(
-                            0..0,
                         ),
                     },
                     location: Location(

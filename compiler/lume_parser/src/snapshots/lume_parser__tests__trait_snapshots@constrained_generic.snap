@@ -24,16 +24,17 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "Numeric",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    13..20,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 13..20,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(

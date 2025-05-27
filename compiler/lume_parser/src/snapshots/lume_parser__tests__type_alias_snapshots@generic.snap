@@ -12,51 +12,49 @@ expression: "parse(\"type A = B<C>\")"
                         5..6,
                     ),
                 },
-                definition: Generic(
-                    GenericType {
+                definition: Scalar(
+                    ScalarType {
                         name: Path {
-                            name: Identifier {
-                                name: "B",
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "B",
+                                    location: Location(
+                                        9..10,
+                                    ),
+                                },
+                                type_arguments: [
+                                    Scalar(
+                                        ScalarType {
+                                            name: Path {
+                                                root: [],
+                                                name: PathSegment {
+                                                    name: Identifier {
+                                                        name: "C",
+                                                        location: Location(
+                                                            11..12,
+                                                        ),
+                                                    },
+                                                    type_arguments: [],
+                                                    location: Location(
+                                                        11..12,
+                                                    ),
+                                                },
+                                                location: Location(
+                                                    11..12,
+                                                ),
+                                            },
+                                        },
+                                    ),
+                                ],
                                 location: Location(
-                                    9..10,
-                                ),
-                            },
-                            root: NamespacePath {
-                                path: [],
-                                location: Location(
-                                    0..0,
+                                    9..13,
                                 ),
                             },
                             location: Location(
-                                9..10,
+                                9..13,
                             ),
                         },
-                        type_params: [
-                            Scalar(
-                                ScalarType {
-                                    name: Path {
-                                        name: Identifier {
-                                            name: "C",
-                                            location: Location(
-                                                11..12,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
-                                            ),
-                                        },
-                                        location: Location(
-                                            11..12,
-                                        ),
-                                    },
-                                },
-                            ),
-                        ],
-                        location: Location(
-                            10..13,
-                        ),
                     },
                 ),
                 location: Location(

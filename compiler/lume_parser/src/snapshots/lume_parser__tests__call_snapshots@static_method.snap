@@ -16,27 +16,34 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                 Call {
                     callee: None,
                     name: Path {
-                        name: Identifier {
-                            name: "call",
-                            location: Location(
-                                13..17,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [
-                                Identifier {
+                        root: [
+                            PathSegment {
+                                name: Identifier {
                                     name: "Foo",
                                     location: Location(
                                         8..11,
                                     ),
                                 },
-                            ],
+                                type_arguments: [],
+                                location: Location(
+                                    8..11,
+                                ),
+                            },
+                        ],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "call",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
-                                0..0,
+                                13..17,
                             ),
                         },
                         location: Location(
-                            13..11,
+                            8..17,
                         ),
                     },
                     arguments: [

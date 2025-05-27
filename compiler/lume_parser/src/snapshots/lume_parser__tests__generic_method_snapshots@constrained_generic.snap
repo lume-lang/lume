@@ -15,16 +15,17 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
             name: Scalar(
                 ScalarType {
                     name: Path {
-                        name: Identifier {
-                            name: "Test",
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Test",
+                                location: Location(
+                                    5..9,
+                                ),
+                            },
+                            type_arguments: [],
                             location: Location(
                                 5..9,
-                            ),
-                        },
-                        root: NamespacePath {
-                            path: [],
-                            location: Location(
-                                0..0,
                             ),
                         },
                         location: Location(
@@ -62,16 +63,17 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
                                 Scalar(
                                     ScalarType {
                                         name: Path {
-                                            name: Identifier {
-                                                name: "Numeric",
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "Numeric",
+                                                    location: Location(
+                                                        23..30,
+                                                    ),
+                                                },
+                                                type_arguments: [],
                                                 location: Location(
                                                     23..30,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
                                                 ),
                                             },
                                             location: Location(
@@ -87,16 +89,17 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
                         Scalar(
                             ScalarType {
                                 name: Path {
-                                    name: Identifier {
-                                        name: "void",
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "void",
+                                            location: Location(
+                                                37..41,
+                                            ),
+                                        },
+                                        type_arguments: [],
                                         location: Location(
                                             37..41,
-                                        ),
-                                    },
-                                    root: NamespacePath {
-                                        path: [],
-                                        location: Location(
-                                            0..0,
                                         ),
                                     },
                                     location: Location(

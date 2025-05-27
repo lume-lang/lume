@@ -39,16 +39,17 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                                 param_type: Scalar(
                                     ScalarType {
                                         name: Path {
-                                            name: Identifier {
-                                                name: "int",
+                                            root: [],
+                                            name: PathSegment {
+                                                name: Identifier {
+                                                    name: "int",
+                                                    location: Location(
+                                                        26..29,
+                                                    ),
+                                                },
+                                                type_arguments: [],
                                                 location: Location(
                                                     26..29,
-                                                ),
-                                            },
-                                            root: NamespacePath {
-                                                path: [],
-                                                location: Location(
-                                                    0..0,
                                                 ),
                                             },
                                             location: Location(
@@ -67,16 +68,17 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                             Scalar(
                                 ScalarType {
                                     name: Path {
-                                        name: Identifier {
-                                            name: "int",
+                                        root: [],
+                                        name: PathSegment {
+                                            name: Identifier {
+                                                name: "int",
+                                                location: Location(
+                                                    34..37,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 34..37,
-                                            ),
-                                        },
-                                        root: NamespacePath {
-                                            path: [],
-                                            location: Location(
-                                                0..0,
                                             ),
                                         },
                                         location: Location(

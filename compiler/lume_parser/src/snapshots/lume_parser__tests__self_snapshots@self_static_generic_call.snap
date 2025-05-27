@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"self::invoke();\")"
+expression: "parse_expr(\"self::invoke::<T>();\")"
 ---
 [
     Expression(
@@ -39,9 +39,34 @@ expression: "parse_expr(\"self::invoke();\")"
                     ),
                 },
                 arguments: [],
-                type_arguments: [],
+                type_arguments: [
+                    TypeArgument {
+                        ty: Scalar(
+                            ScalarType {
+                                name: Path {
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "T",
+                                            location: Location(
+                                                15..16,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            15..16,
+                                        ),
+                                    },
+                                    location: Location(
+                                        15..16,
+                                    ),
+                                },
+                            },
+                        ),
+                    },
+                ],
                 location: Location(
-                    6..15,
+                    6..20,
                 ),
             },
         ),
