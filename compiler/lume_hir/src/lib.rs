@@ -72,6 +72,16 @@ pub struct SymbolName {
     pub location: Location,
 }
 
+impl SymbolName {
+    pub fn as_ident(&self) -> &Identifier {
+        self.name.identifier()
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.as_ident().name
+    }
+}
+
 impl PartialEq for SymbolName {
     fn eq(&self, other: &SymbolName) -> bool {
         let namespace_equal = match (&self.namespace, &other.namespace) {

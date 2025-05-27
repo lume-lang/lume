@@ -1,0 +1,180 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "let _ = Int32::<T>::call(0, 1);"
+---
+[
+    Statement {
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
+        kind: Variable(
+            VariableDeclaration {
+                id: StatementId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        0,
+                    ),
+                },
+                name: Identifier {
+                    name: "_",
+                    location: <internal>:4:5,
+                },
+                declared_type: None,
+                value: Expression {
+                    id: ExpressionId {
+                        def: ItemId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
+                    location: <internal>:20:31,
+                    kind: StaticCall(
+                        StaticCall {
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Typed(
+                                                Identifier {
+                                                    name: "Int32",
+                                                    location: <internal>:8:13,
+                                                },
+                                                [
+                                                    Type {
+                                                        id: ItemId(
+                                                            16411931616039809451,
+                                                        ),
+                                                        name: SymbolName {
+                                                            namespace: Some(
+                                                                PathRoot {
+                                                                    segments: [],
+                                                                },
+                                                            ),
+                                                            name: Named(
+                                                                Identifier {
+                                                                    name: "T",
+                                                                    location: <internal>:16:17,
+                                                                },
+                                                            ),
+                                                            location: <internal>:16:17,
+                                                        },
+                                                        type_params: [],
+                                                        location: <internal>:16:17,
+                                                    },
+                                                ],
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Named(
+                                    Identifier {
+                                        name: "call",
+                                        location: <internal>:20:24,
+                                    },
+                                ),
+                                location: <internal>:8:24,
+                            },
+                            type_arguments: [],
+                            arguments: [
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
+                                    location: <internal>:25:26,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
+                                            location: <internal>:25:26,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            2,
+                                                        ),
+                                                    },
+                                                    value: 0,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                    location: <internal>:28:29,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
+                                            location: <internal>:28:29,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            3,
+                                                        ),
+                                                    },
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                },
+            },
+        ),
+        location: <internal>:0:31,
+    },
+]
