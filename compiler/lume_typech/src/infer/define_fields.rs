@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_hir::{self, SymbolName};
+use lume_hir::{self, PathSegment, SymbolName};
 use lume_types::*;
 
 use crate::ThirBuildCtx;
@@ -57,7 +57,8 @@ impl DefineFields<'_> {
                 for method in &mut struct_def.methods_mut() {
                     let method_name = &method.name;
                     let visibility = method.visibility;
-                    let qualified_name = SymbolName::with_root(struct_name.clone(), method_name.clone());
+                    let qualified_name =
+                        SymbolName::with_root(struct_name.clone(), PathSegment::Named(method_name.clone()));
 
                     let method_id = self
                         .ctx
@@ -69,7 +70,7 @@ impl DefineFields<'_> {
                         .type_mut(type_id)
                         .unwrap()
                         .methods
-                        .insert(method_name.name.clone(), method_id);
+                        .insert(PathSegment::Named(method_name.clone()), method_id);
 
                     method.method_id = Some(method_id);
                 }
@@ -81,7 +82,8 @@ impl DefineFields<'_> {
                 for method in &mut trait_def.methods {
                     let method_name = &method.name;
                     let visibility = method.visibility;
-                    let qualified_name = SymbolName::with_root(trait_def.name.clone(), method_name.clone());
+                    let qualified_name =
+                        SymbolName::with_root(trait_def.name.clone(), PathSegment::Named(method_name.clone()));
 
                     let method_id = self
                         .ctx
@@ -93,7 +95,7 @@ impl DefineFields<'_> {
                         .type_mut(type_id)
                         .unwrap()
                         .methods
-                        .insert(method_name.name.clone(), method_id);
+                        .insert(PathSegment::Named(method_name.clone()), method_id);
 
                     method.method_id = Some(method_id);
                 }
@@ -126,7 +128,7 @@ impl DefineFields<'_> {
                 .type_mut(type_id)
                 .unwrap()
                 .methods
-                .insert(method_name.name.clone(), method_id);
+                .insert(method_name.clone(), method_id);
 
             method.method_id = Some(method_id);
         }

@@ -80,18 +80,42 @@ impl SymbolName {
     pub fn as_str(&self) -> &str {
         &self.as_ident().name
     }
-}
 
-impl PartialEq for SymbolName {
-    fn eq(&self, other: &SymbolName) -> bool {
-        let namespace_equal = match (&self.namespace, &other.namespace) {
+    /// Gets the parent symbol, which contains the current symbol instance.
+    ///
+    /// For example, given a [`SymbolName`] of `std::io::File::open()`, returns
+    /// `Some(std::io::File)`. If no namespace is defined, returns `None`.
+    pub fn parent(self) -> Option<Self> {
+        if let Some(root) = self.namespace {
+            let (name, root) = root.segments.split_last()?;
+
+            Some(Self {
+                name: name.to_owned(),
+                namespace: Some(PathRoot {
+                    segments: root.to_vec(),
+                }),
+                location: self.location,
+            })
+        } else {
+            None
+        }
+    }
+
+    /// Determines whether the roots (or namespaces) of the two
+    /// given symbol names are equal.
+    pub fn roots_eq(&self, other: &SymbolName) -> bool {
+        match (&self.namespace, &other.namespace) {
             (Some(s), Some(o)) => s == o,
             (None, Some(o)) => o.segments.is_empty(),
             (Some(s), None) => s.segments.is_empty(),
             (None, None) => true,
-        };
+        }
+    }
+}
 
-        namespace_equal && self.name == other.name
+impl PartialEq for SymbolName {
+    fn eq(&self, other: &SymbolName) -> bool {
+        self.name == other.name && self.roots_eq(other)
     }
 }
 
@@ -742,13 +766,13 @@ pub enum ExpressionKind {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CallExpression {
+pub enum CallExpression<'a> {
     /// Defines a call which was invoked without any callee or receiver.
     ///
     /// These are either invoked from:
     /// - a path (`std::Int32::new()`),
     /// - or as a function call (`foo()`),
-    Static(Box<StaticCall>),
+    Static(&'a StaticCall),
 
     /// Defines a call which was invoked within the context of a receiver
     ///
@@ -756,10 +780,10 @@ pub enum CallExpression {
     /// let a = foo();
     /// a.bar();
     /// ```
-    Instanced(Box<InstanceCall>),
+    Instanced(&'a InstanceCall),
 }
 
-impl CallExpression {
+impl CallExpression<'_> {
     #[inline]
     pub fn arguments(&self) -> &[Expression] {
         match self {

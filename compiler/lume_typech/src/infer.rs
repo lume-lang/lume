@@ -1,8 +1,8 @@
 use error_snippet::Result;
-use lume_hir::{self, TypeId};
+use lume_hir::{self, PathSegment, TypeId};
 use lume_span::StatementId;
 
-use crate::{check::TypeCheckerPass, symbol::CallReference, *};
+use crate::{check::TypeCheckerPass, query::CallReference, *};
 
 mod define_fields;
 mod define_impl;
@@ -84,15 +84,9 @@ impl ThirBuildCtx {
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
     fn infer_calls(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         for (id, expr) in hir.expressions() {
-            let location = expr.location.clone();
-
-            let reference = match &expr.kind {
-                lume_hir::ExpressionKind::InstanceCall(call) => {
-                    let method = self.lookup_instance_method(hir, call, location)?;
-
-                    CallReference::Method(method.id)
-                }
-                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_static_method(call, location)?,
+            let reference: CallReference = match &expr.kind {
+                lume_hir::ExpressionKind::InstanceCall(call) => self.lookup_callable_instance(hir, call)?.into(),
+                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_callable_static(hir, call)?.into(),
                 _ => continue,
             };
 
@@ -182,7 +176,11 @@ impl ThirBuildCtx {
     fn find_type_ref_ctx(&self, name: &SymbolName, type_params: &[TypeParameter]) -> Option<TypeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
-            if type_param.name == name.name {
+            let lume_hir::PathSegment::Named(type_name) = &name.name else {
+                break;
+            };
+
+            if &type_param.name == type_name {
                 return Some(type_param.type_id.unwrap());
             }
         }
@@ -191,13 +189,36 @@ impl ThirBuildCtx {
         self.tcx().find_type(name).map(|ty| ty.id)
     }
 
+    /// Attempts to find a [`TypeRef`] with the given name, if any.
+    pub(crate) fn find_type_ref(&self, name: &SymbolName) -> Result<Option<TypeRef>> {
+        let Some(ty) = self.tcx().find_type(name) else {
+            return Ok(None);
+        };
+
+        if let PathSegment::Typed(_, args) = &name.name {
+            let args = args
+                .iter()
+                .map(|arg| self.mk_type_ref(arg))
+                .collect::<Result<Vec<_>>>()?;
+
+            Ok(Some(TypeRef {
+                instance_of: ty.id,
+                type_arguments: args,
+            }))
+        } else {
+            Ok(Some(TypeRef::new(ty.id)))
+        }
+    }
+
     /// Returns an error indicating that the given type was not found.
     #[allow(clippy::unused_self)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
-            let ty_name = &ty.name.name.name;
+            let lume_hir::PathSegment::Named(ty_name) = &ty.name.name else {
+                continue;
+            };
 
-            if newcomer_name == ty_name {
+            if newcomer_name == &ty_name.name {
                 return check::errors::UnavailableScalarType {
                     source: ty.location.file.clone(),
                     range: ty.location.index.clone(),

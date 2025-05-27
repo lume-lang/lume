@@ -1,9 +1,53 @@
-use crate::{ThirBuildCtx, symbol::CallReference, *};
+use crate::{ThirBuildCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, Identifier};
+use lume_hir::{self, FunctionId, Identifier, MethodId};
+use lume_types::{Function, Method};
 
 mod diagnostics;
 pub(crate) mod lookup;
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum CallReference {
+    /// The call refers to a function.
+    Function(FunctionId),
+
+    /// The call refers to a method.
+    Method(MethodId),
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Callable<'a> {
+    /// The call refers to a function.
+    Function(&'a Function),
+
+    /// The call refers to a method.
+    Method(&'a Method),
+}
+
+impl Callable<'_> {
+    pub fn name(&self) -> &SymbolName {
+        match self {
+            Self::Method(method) => &method.name,
+            Self::Function(function) => &function.name,
+        }
+    }
+
+    pub fn return_type(&self) -> &lume_types::TypeRef {
+        match self {
+            Self::Method(method) => &method.return_type,
+            Self::Function(function) => &function.return_type,
+        }
+    }
+}
+
+impl From<Callable<'_>> for CallReference {
+    fn from(value: Callable<'_>) -> Self {
+        match value {
+            Callable::Method(method) => Self::Method(method.id),
+            Callable::Function(function) => Self::Function(function.id),
+        }
+    }
+}
 
 impl ThirBuildCtx {
     /// Returns the *type* of the expression with the given [`ExpressionId`].
@@ -24,23 +68,12 @@ impl ThirBuildCtx {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
             lume_hir::ExpressionKind::StaticCall(call) => {
-                match self.lookup_static_method(call, expr.location.clone())? {
-                    CallReference::Method(method_id) => {
-                        let method = self.tcx().method(method_id).unwrap();
-
-                        Ok(method.return_type.clone())
-                    }
-                    CallReference::Function(func_id) => {
-                        let func = self.tcx().function(func_id).unwrap();
-
-                        Ok(func.return_type.clone())
-                    }
-                }
+                Ok(self.lookup_callable_static(hir, call)?.return_type().clone())
             }
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                let method = self.lookup_instance_method(hir, call, expr.location.clone())?;
+                let callable = self.lookup_callable_instance(hir, call)?;
 
-                Ok(method.return_type.clone())
+                Ok(callable.return_type().clone())
             }
             lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
             lume_hir::ExpressionKind::Member(expr) => {
@@ -95,5 +128,10 @@ impl ThirBuildCtx {
         };
 
         TypeRef::new(ty.id)
+    }
+
+    /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].
+    pub(crate) fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&SymbolName> {
+        Ok(&self.tcx.ty_expect(type_ref.instance_of)?.name)
     }
 }

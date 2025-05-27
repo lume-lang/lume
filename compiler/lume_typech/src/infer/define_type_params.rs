@@ -119,7 +119,7 @@ impl DefineTypeParameters<'_> {
     fn wrap_type_param(&mut self, type_param_id: TypeParameterId) -> TypeId {
         let name = self.ctx.tcx().type_parameter(type_param_id).unwrap().name.clone();
         let symbol_name = SymbolName {
-            name: lume_hir::Identifier::from(name),
+            name: lume_hir::PathSegment::from(name),
             namespace: None,
             location: lume_span::Location::empty(),
         };

@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_hir::{self, SymbolName};
+use lume_hir::{self, PathSegment, SymbolName};
 
 use crate::ThirBuildCtx;
 
@@ -27,7 +27,12 @@ impl DefineImpl<'_> {
 
         for method in &mut implementation.methods {
             let method_name = method.name.clone();
-            let qualified_name = SymbolName::with_root(implementation.target.name.clone(), method_name.clone());
+            let mut qualified_name = SymbolName::with_root(
+                implementation.target.name.clone(),
+                PathSegment::Named(method_name.clone()),
+            );
+
+            qualified_name.location = method_name.location.clone();
 
             let method_id = self
                 .ctx

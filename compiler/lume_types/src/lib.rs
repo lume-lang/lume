@@ -2,7 +2,9 @@ use error_snippet::Result;
 use indexmap::IndexMap;
 
 use crate::errors::*;
-use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, SymbolName, TypeId, TypeParameterId, UseId, Visibility};
+use lume_hir::{
+    FunctionId, ImplId, MethodId, PathSegment, PropertyId, SymbolName, TypeId, TypeParameterId, UseId, Visibility,
+};
 use lume_span::ItemId;
 
 mod errors;
@@ -212,7 +214,7 @@ impl Method {
     // /// Determines whether the method is instanced, as opposed to static.
     pub fn is_instanced(&self) -> bool {
         if let Some(param) = self.parameters.params.first() {
-            &param.name == "self"
+            &param.name == "self" && param.ty == self.callee
         } else {
             false
         }
@@ -369,7 +371,7 @@ pub struct Type {
     pub name: SymbolName,
 
     pub properties: IndexMap<String, PropertyId>,
-    pub methods: IndexMap<String, MethodId>,
+    pub methods: IndexMap<PathSegment, MethodId>,
 }
 
 impl Type {
@@ -766,7 +768,7 @@ impl TypeDatabaseContext {
         self.methods.push(method);
 
         match self.type_mut(instance) {
-            Some(ty) => ty.methods.insert(name.name.name, id),
+            Some(ty) => ty.methods.insert(name.name, id),
             None => return Err(TypeNotFound { id: instance }.into()),
         };
 

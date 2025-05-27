@@ -1,15 +1,14 @@
+use crate::query::CallReference;
 use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
 use lume_hir::{SymbolName, TypeParameter};
 use lume_span::{ExpressionId, StatementId};
 use lume_types::{TypeDatabaseContext, TypeRef};
-use symbol::CallReference;
 
 mod check;
 mod errors;
 mod infer;
 pub(crate) mod query;
-mod symbol;
 
 pub struct ThirBuildCtx {
     /// Defines the type context from the build context.
