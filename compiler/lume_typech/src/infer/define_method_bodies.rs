@@ -1,5 +1,6 @@
 use error_snippet::Result;
 use lume_hir::{self};
+use lume_types::TypeRef;
 
 use crate::ThirBuildCtx;
 
@@ -60,14 +61,15 @@ impl DefineMethodBodies<'_> {
                             .push(name, type_ref);
                     }
 
-                    if let Some(ret) = &method.return_type {
-                        let return_type = self.ctx.mk_type_ref_generic(
-                            ret,
-                            &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
-                        )?;
-
-                        self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
-                    }
+                    self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
+                        if let Some(ret) = &method.return_type {
+                            self.ctx.mk_type_ref_generic(
+                                ret,
+                                &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            )?
+                        } else {
+                            TypeRef::void()
+                        }
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
@@ -89,14 +91,15 @@ impl DefineMethodBodies<'_> {
                             .push(name, type_ref);
                     }
 
-                    if let Some(ret) = &method.return_type {
-                        let return_type = self.ctx.mk_type_ref_generic(
-                            ret,
-                            &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
-                        )?;
-
-                        self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
-                    }
+                    self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
+                        if let Some(ret) = &method.return_type {
+                            self.ctx.mk_type_ref_generic(
+                                ret,
+                                &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            )?
+                        } else {
+                            TypeRef::void()
+                        }
                 }
             }
             _ => (),
@@ -120,11 +123,11 @@ impl DefineMethodBodies<'_> {
                 .push(name, type_ref);
         }
 
-        if let Some(ret) = &func.return_type {
-            let return_type = self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?;
-
-            self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = return_type;
-        }
+        self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
+            self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?
+        } else {
+            TypeRef::void()
+        };
 
         Ok(())
     }
@@ -145,11 +148,11 @@ impl DefineMethodBodies<'_> {
                     .push(name, type_ref);
             }
 
-            if let Some(ret) = &method.return_type {
-                let return_type = self.ctx.mk_type_ref(ret)?;
-
-                self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
-            }
+            self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
+                self.ctx.mk_type_ref_generic(ret, &method.type_parameters)?
+            } else {
+                TypeRef::void()
+            };
         }
 
         Ok(())

@@ -1,5 +1,6 @@
 use error_snippet::Result;
 use lume_hir::{self, PathSegment, SymbolName};
+use lume_types::TypeRef;
 
 use crate::ThirBuildCtx;
 
@@ -54,14 +55,14 @@ impl DefineImpl<'_> {
                     .push(name, type_ref);
             }
 
-            if let Some(ret) = &method.return_type {
-                let return_type = self.ctx.mk_type_ref_generic(
+            self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
+                self.ctx.mk_type_ref_generic(
                     ret,
                     &[&implementation.type_parameters[..], &method.type_parameters[..]].concat(),
-                )?;
-
-                self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = return_type;
-            }
+                )?
+            } else {
+                TypeRef::void()
+            };
 
             method.method_id = Some(method_id);
         }
