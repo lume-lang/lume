@@ -15,5 +15,10 @@ error_snippet_derive = { workspace = true }
 levenshtein = { version = "=1.0.5" }
 indexmap = { version = "^2.9" }
 
+[dev-dependencies]
+arc = { path = "../arc" }
+lume_hir_lower = { path = "../lume_hir_lower" }
+lume_parser = { path = "../lume_parser" }
+
 [lints]
 workspace = true

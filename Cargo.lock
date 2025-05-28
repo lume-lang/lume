@@ -400,12 +400,15 @@ dependencies = [
 name = "lume_typech"
 version = "0.1.0"
 dependencies = [
+ "arc",
  "error_snippet",
  "error_snippet_derive",
  "indexmap",
  "levenshtein",
  "lume_errors",
  "lume_hir",
+ "lume_hir_lower",
+ "lume_parser",
  "lume_span",
  "lume_types",
 ]

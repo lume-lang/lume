@@ -9,6 +9,8 @@ mod check;
 mod errors;
 mod infer;
 pub(crate) mod query;
+#[cfg(test)]
+mod tests;
 
 pub struct ThirBuildCtx {
     /// Defines the type context from the build context.
