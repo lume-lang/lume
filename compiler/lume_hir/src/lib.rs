@@ -2,7 +2,6 @@ use lume_macros::Node;
 use lume_span::{ExpressionId, ItemId, Location, PackageId, StatementId};
 
 pub mod map;
-pub mod stdlib;
 pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";

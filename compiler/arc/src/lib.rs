@@ -1,6 +1,7 @@
 pub mod errors;
 pub(crate) mod parser;
 pub(crate) mod serializer;
+pub mod stdlib;
 
 use crate::errors::*;
 use crate::parser::Spanned;
@@ -9,9 +10,12 @@ use crate::serializer::ProjectParser;
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
 use lume_errors::DiagCtxHandle;
-use lume_span::PackageId;
+use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Project {
@@ -37,6 +41,11 @@ impl Project {
     /// Gets all the [`Package`]s from the [`Project`] instance.
     pub fn packages(&self) -> &[Package] {
         &self.packages
+    }
+
+    /// Gets all the [`Package`]s from the [`Project`] instance.
+    pub fn packages_mut(&mut self) -> &mut [Package] {
+        &mut self.packages
     }
 
     /// Finds the [`Package`] from the [`Project`] with the given ID.
@@ -70,6 +79,9 @@ pub struct Package {
 
     /// Defines the URL of the source code repository for the package.
     pub repository: Option<String>,
+
+    /// Defines the source files defined within the [`Project`].
+    pub files: Vec<Arc<SourceFile>>,
 }
 
 impl Package {
@@ -97,6 +109,51 @@ impl Package {
         }
     }
 
+    /// Pushes the given source file to the [`Project`]s files.
+    pub fn add_source(&mut self, file: Arc<SourceFile>) {
+        self.files.push(file);
+    }
+
+    /// Appends all the given source files to the [`Project`]s files.
+    pub fn append_sources(&mut self, files: impl IntoIterator<Item = Arc<SourceFile>>) {
+        self.files.extend(files);
+    }
+
+    /// Adds all the files within the standard library to the [`Project`]s files.
+    ///
+    /// # Errors
+    ///
+    /// This method will return `Err` if the current path to the `Arcfile` exists
+    /// outside of any directory.
+    pub fn add_std_sources(&mut self) {
+        self.append_sources(stdlib::Assets::as_sources(self.id));
+    }
+
+    /// Adds all the discovered source files from the project root to
+    /// the projects files.
+    ///
+    /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
+    /// excluded from within the Arcfile, they will be ignored.
+    ///
+    /// # Errors
+    ///
+    /// This method will return `Err` if the current path to the `Arcfile` exists
+    /// outside of any directory.
+    pub fn add_project_sources(&mut self) -> Result<()> {
+        for source_file in self.locate_source_files()? {
+            // We get the relative path of the file within the project,
+            // so error messages don't use the full path to a file.
+            let relative_path = self.relative_source_path(&source_file).to_string_lossy().to_string();
+
+            let content = std::fs::read_to_string(source_file)?;
+            let source_file = Arc::new(SourceFile::new(self.id, relative_path, content));
+
+            self.add_source(source_file);
+        }
+
+        Ok(())
+    }
+
     /// Attempts to find all the Lume source files within the project.
     ///
     /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
@@ -106,7 +163,7 @@ impl Package {
     ///
     /// This method will return `Err` if the current path to the `Arcfile` exists
     /// outside of any directory.
-    pub fn files(&self) -> Result<Vec<PathBuf>> {
+    pub fn locate_source_files(&self) -> Result<Vec<PathBuf>> {
         let root_directory = self.root();
         let glob_pattern = format!("{}/**/*.lm", root_directory.display());
         let mut matched_files = Vec::new();

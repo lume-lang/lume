@@ -190,6 +190,7 @@ impl ProjectParser {
             description,
             license,
             repository,
+            files: Vec::new(),
         };
 
         self.verify_lume_version(&package)?;

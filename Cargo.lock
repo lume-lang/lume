@@ -12,6 +12,7 @@ dependencies = [
  "insta",
  "lume_errors",
  "lume_span",
+ "rust-embed",
  "semver",
 ]
 
@@ -336,7 +337,6 @@ dependencies = [
  "lume_macros",
  "lume_parser",
  "lume_span",
- "rust-embed",
 ]
 
 [[package]]

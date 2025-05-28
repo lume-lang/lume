@@ -5,7 +5,6 @@ use arc::Package;
 use error_snippet::Result;
 use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
-use lume_hir::stdlib::Assets;
 use lume_hir::{Identifier, PathRoot, SymbolName, map::Map};
 use lume_hir::{Path, PathSegment, symbols::*};
 use lume_parser::Parser;
@@ -113,11 +112,7 @@ impl<'a> LowerState<'a> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
 
-        // Read all the sources files before parsing, so if any of them
-        // are inaccessible, we don't waste effort parsing them.
-        let source_files = self.source_files()?;
-
-        for source_file in source_files {
+        for source_file in self.package.files.clone() {
             // Register source file in the state.
             self.source_map.insert(source_file.clone());
 
@@ -132,34 +127,6 @@ impl<'a> LowerState<'a> {
         }
 
         Ok(lume_hir)
-    }
-
-    /// Gets all the source files to include in the compilation.
-    fn source_files(&self) -> Result<Vec<Arc<SourceFile>>> {
-        let package_id = self.package.id;
-
-        // Add all the source files within the standard library.
-        let mut sources_files = Assets::as_sources(package_id);
-
-        // As well as all the files within the project itself
-        let project_file_names = self.package.files()?;
-
-        sources_files.extend(
-            project_file_names
-                .into_iter()
-                .map(|path| {
-                    // We get the relative path of the file within the project,
-                    // so error messages don't use the full path to a file.
-                    let relative_path = self.package.relative_source_path(&path).to_string_lossy().to_string();
-
-                    let content = std::fs::read_to_string(path)?;
-
-                    Ok(Arc::new(SourceFile::new(package_id, relative_path, content)))
-                })
-                .collect::<Result<Vec<_>>>()?,
-        );
-
-        Ok(sources_files)
     }
 }
 

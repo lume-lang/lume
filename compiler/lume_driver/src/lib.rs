@@ -69,9 +69,12 @@ impl Driver {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     pub fn build(&mut self) -> Result<()> {
-        for package in self.project.packages() {
+        for package in self.project.packages_mut() {
             let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
             dcx.exit_on_error();
+
+            package.add_std_sources();
+            package.add_project_sources()?;
 
             Compiler::build_package(package, &self.options, dcx)?;
         }
