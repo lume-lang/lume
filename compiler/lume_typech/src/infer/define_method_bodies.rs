@@ -23,7 +23,7 @@ impl DefineMethodBodies<'_> {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,
                 lume_hir::Symbol::Function(f) => self.define_function(f)?,
                 lume_hir::Symbol::Use(u) => self.define_use(u)?,
-                lume_hir::Symbol::Impl(_) => (),
+                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
             }
         }
 
@@ -134,6 +134,32 @@ impl DefineMethodBodies<'_> {
 
     fn define_use(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         for method in &trait_impl.methods {
+            let method_id = method.method_id.unwrap();
+
+            for param in &method.parameters {
+                let name = param.name.name.clone();
+                let type_ref = self.ctx.mk_type_ref(&param.param_type)?;
+
+                self.ctx
+                    .tcx_mut()
+                    .method_mut(method_id)
+                    .unwrap()
+                    .parameters
+                    .push(name, type_ref);
+            }
+
+            self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
+                self.ctx.mk_type_ref_generic(ret, &method.type_parameters)?
+            } else {
+                TypeRef::void()
+            };
+        }
+
+        Ok(())
+    }
+
+    fn define_impl(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
+        for method in &implementation.methods {
             let method_id = method.method_id.unwrap();
 
             for param in &method.parameters {

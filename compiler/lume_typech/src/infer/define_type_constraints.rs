@@ -68,6 +68,13 @@ impl DefineTypeConstraints<'_> {
 
         self.define_type_constraints(&implementation.type_parameters, &type_params)?;
 
+        for method in &implementation.methods {
+            let method_id = method.method_id.unwrap();
+            let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
+
+            self.define_type_constraints(&method.type_parameters, &type_params)?;
+        }
+
         Ok(())
     }
 

@@ -51,8 +51,8 @@ impl ThirBuildCtx {
         infer::define_use::DefineUse::run_all(self, hir)?;
         infer::define_fields::DefineFields::run_all(self, hir)?;
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
-        infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_impl::DefineImpl::run_all(self, hir)?;
+        infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
 
         self.infer_calls(hir)?;
