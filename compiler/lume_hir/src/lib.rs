@@ -741,6 +741,38 @@ pub struct Expression {
     pub kind: ExpressionKind,
 }
 
+impl Expression {
+    /// Creates a new [`Expression`] with the given [`LiteralKind`] value.
+    pub fn lit(kind: LiteralKind) -> Self {
+        Self {
+            id: ExpressionId::default(),
+            location: Location::empty(),
+            kind: ExpressionKind::Literal(Box::new(Literal {
+                id: ExpressionId::default(),
+                location: Location::empty(),
+                kind,
+            })),
+        }
+    }
+
+    /// Creates a new [`Expression`] with a [`LiteralKind::Boolean`] value.
+    pub fn lit_bool(value: bool) -> Self {
+        Self::lit(LiteralKind::Boolean(Box::new(BooleanLiteral {
+            id: ExpressionId::default(),
+            value,
+        })))
+    }
+
+    /// Creates a new [`Expression`] with a [`LiteralKind::I32`] value.
+    pub fn lit_i32(value: i32) -> Self {
+        Self::lit(LiteralKind::Int(Box::new(IntLiteral {
+            id: ExpressionId::default(),
+            value: value.into(),
+            kind: IntKind::I32,
+        })))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
