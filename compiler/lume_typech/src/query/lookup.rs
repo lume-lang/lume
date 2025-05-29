@@ -41,7 +41,7 @@ impl std::fmt::Display for CallableCheckError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) enum CallableCheckResult {
     /// The [`Callable`] is valid within the context and
     /// is a suitable candiate for the given expression.
@@ -214,7 +214,7 @@ impl<'tcx> ThirBuildCtx {
         // Verify that all the parameters are compatible with the arguments
         // passed to the method.
         for (param, arg) in method.parameters.inner().iter().zip(arguments.iter()) {
-            let arg_type = self.type_of(hir, arg.id)?;
+            let arg_type = self.type_of_expr(hir, arg)?;
 
             if !self.check_type_compatibility(&arg_type, &param.ty)? {
                 failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
@@ -258,7 +258,7 @@ impl<'tcx> ThirBuildCtx {
         // Verify that all the parameters are compatible with the arguments
         // passed to the method.
         for (param, arg) in function.parameters.inner().iter().zip(expr.arguments.iter()) {
-            let arg_type = self.type_of(hir, arg.id)?;
+            let arg_type = self.type_of_expr(hir, arg)?;
 
             if !self.check_type_compatibility(&arg_type, &param.ty)? {
                 failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
@@ -563,7 +563,11 @@ impl<'tcx> ThirBuildCtx {
     }
 
     /// Returns all the methods defined directly within the given type.
-    fn methods_defined_on(&'tcx self, self_ty: &lume_types::TypeRef) -> Vec<&'tcx Method> {
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    pub(crate) fn methods_defined_on(&'tcx self, self_ty: &lume_types::TypeRef) -> Vec<&'tcx Method> {
         self.tcx().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
     }
 }
