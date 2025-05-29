@@ -42,6 +42,7 @@ Project {
             description: None,
             license: None,
             repository: None,
+            files: [],
         },
     ],
 }

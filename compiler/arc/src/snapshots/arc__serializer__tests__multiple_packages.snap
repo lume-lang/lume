@@ -29,6 +29,7 @@ Project {
             description: None,
             license: None,
             repository: None,
+            files: [],
         },
         Package {
             id: PackageId(
@@ -54,6 +55,7 @@ Project {
             description: None,
             license: None,
             repository: None,
+            files: [],
         },
         Package {
             id: PackageId(
@@ -79,6 +81,7 @@ Project {
             description: None,
             license: None,
             repository: None,
+            files: [],
         },
     ],
 }
