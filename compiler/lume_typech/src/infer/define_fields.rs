@@ -44,13 +44,6 @@ impl DefineFields<'_> {
                         .tcx_mut()
                         .property_alloc(type_id, property_name.clone(), visibility)?;
 
-                    self.ctx
-                        .tcx_mut()
-                        .type_mut(type_id)
-                        .unwrap()
-                        .properties
-                        .insert(property_name, property_id);
-
                     property.prop_id = Some(property_id);
                 }
 
@@ -64,13 +57,6 @@ impl DefineFields<'_> {
                         .ctx
                         .tcx_mut()
                         .method_alloc(type_ref.clone(), qualified_name, visibility)?;
-
-                    self.ctx
-                        .tcx_mut()
-                        .type_mut(type_id)
-                        .unwrap()
-                        .methods
-                        .insert(PathSegment::Named(method_name.clone()), method_id);
 
                     method.method_id = Some(method_id);
                 }
@@ -89,13 +75,6 @@ impl DefineFields<'_> {
                         .ctx
                         .tcx_mut()
                         .method_alloc(type_ref.clone(), qualified_name, visibility)?;
-
-                    self.ctx
-                        .tcx_mut()
-                        .type_mut(type_id)
-                        .unwrap()
-                        .methods
-                        .insert(PathSegment::Named(method_name.clone()), method_id);
 
                     method.method_id = Some(method_id);
                 }
@@ -122,13 +101,6 @@ impl DefineFields<'_> {
                 .ctx
                 .tcx_mut()
                 .method_alloc(type_ref.clone(), qualified_name, visibility)?;
-
-            self.ctx
-                .tcx_mut()
-                .type_mut(type_id)
-                .unwrap()
-                .methods
-                .insert(method_name.clone(), method_id);
 
             method.method_id = Some(method_id);
         }
