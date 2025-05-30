@@ -401,3 +401,126 @@ fn query_check_method_type_arg_valid() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn query_lookup_functions_single() -> Result<()> {
+    let (tcx, hir) = type_infer("fn foo() { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: Vec::new(),
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_ok());
+
+    let func = func.unwrap();
+    assert_eq!(func.name, SymbolName::rooted("foo"));
+    assert_eq!(func.parameters.len(), 0);
+    assert_eq!(func.type_parameters.len(), 0);
+    assert_eq!(func.return_type, TypeRef::void());
+
+    Ok(())
+}
+
+#[test]
+fn query_lookup_functions_missing() -> Result<()> {
+    let (tcx, hir) = type_infer("fn bar() { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: Vec::new(),
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_err());
+
+    let err = func.unwrap_err();
+    insta::assert_debug_snapshot!(err);
+
+    Ok(())
+}
+
+#[test]
+fn query_lookup_functions_suggestion_name_mismatch() -> Result<()> {
+    let (tcx, hir) = type_infer("fn foo_() { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: Vec::new(),
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_err());
+
+    let err = func.unwrap_err();
+    insta::assert_debug_snapshot!(err);
+
+    Ok(())
+}
+
+#[test]
+fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
+    let (tcx, hir) = type_infer("fn foo(x: Int32) { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: Vec::new(),
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_err());
+
+    let err = func.unwrap_err();
+    insta::assert_debug_snapshot!(err);
+
+    Ok(())
+}
+
+#[test]
+fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
+    let (tcx, hir) = type_infer("fn foo(x: Int32) { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: vec![lume_hir::Expression::lit_bool(false)],
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_err());
+
+    let err = func.unwrap_err();
+    insta::assert_debug_snapshot!(err);
+
+    Ok(())
+}
+
+#[test]
+fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
+    let (tcx, hir) = type_infer("fn foo<T>() { }")?;
+
+    let expr = lume_hir::StaticCall {
+        id: lume_span::ExpressionId::default(),
+        name: SymbolName::rooted("foo"),
+        arguments: Vec::new(),
+        type_arguments: Vec::new(),
+    };
+
+    let func = tcx.lookup_functions(&hir, &expr);
+    assert!(func.is_err());
+
+    let err = func.unwrap_err();
+    insta::assert_debug_snapshot!(err);
+
+    Ok(())
+}

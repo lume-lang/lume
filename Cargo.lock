@@ -404,6 +404,7 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "indexmap",
+ "insta",
  "levenshtein",
  "lume_errors",
  "lume_hir",

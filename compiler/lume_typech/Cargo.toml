@@ -20,5 +20,7 @@ arc = { path = "../arc" }
 lume_hir_lower = { path = "../lume_hir_lower" }
 lume_parser = { path = "../lume_parser" }
 
+insta = { version = "1.42.2", features = ["yaml"] }
+
 [lints]
 workspace = true
