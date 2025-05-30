@@ -4,13 +4,13 @@ use lume_types::*;
 
 use crate::ThirBuildCtx;
 
-pub(super) struct DefineFields<'a> {
+pub(super) struct DefineMethods<'a> {
     ctx: &'a mut ThirBuildCtx,
 }
 
-impl DefineFields<'_> {
+impl DefineMethods<'_> {
     pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
-        let mut define = DefineFields { ctx };
+        let mut define = DefineMethods { ctx };
 
         define.run(hir)
     }
@@ -34,18 +34,6 @@ impl DefineFields<'_> {
                 let type_ref = TypeRef::new(type_id);
 
                 let struct_name = struct_def.name().clone();
-
-                for property in &mut struct_def.properties_mut() {
-                    let property_name = property.name.name.clone();
-                    let visibility = property.visibility;
-
-                    let property_id = self
-                        .ctx
-                        .tcx_mut()
-                        .property_alloc(type_id, property_name.clone(), visibility)?;
-
-                    property.prop_id = Some(property_id);
-                }
 
                 for method in &mut struct_def.methods_mut() {
                     let method_name = &method.name;

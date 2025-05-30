@@ -33,16 +33,6 @@ impl DefineMethodBodies<'_> {
     fn define_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         match &ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
-                for property in struct_def.properties() {
-                    let property_id = property.prop_id.unwrap();
-
-                    let type_ref = self
-                        .ctx
-                        .mk_type_ref_generic(&property.property_type, &struct_def.type_parameters)?;
-
-                    self.ctx.tcx_mut().property_mut(property_id).unwrap().property_type = type_ref;
-                }
-
                 for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
 

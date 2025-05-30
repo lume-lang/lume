@@ -4,9 +4,12 @@ use lume_span::StatementId;
 
 use crate::{check::TypeCheckerPass, query::CallReference, *};
 
-mod define_fields;
+mod define_functions;
 mod define_impl;
+mod define_impl_methods;
 mod define_method_bodies;
+mod define_properties;
+mod define_property_types;
 mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
@@ -48,11 +51,14 @@ impl ThirBuildCtx {
     /// etc, or when expected items cannot be found within the context.
     pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self, hir);
-        infer::define_use::DefineUse::run_all(self, hir)?;
-        infer::define_fields::DefineFields::run_all(self, hir)?;
+        infer::define_functions::DefineFunctions::run_all(self, hir);
+        infer::define_impl::define_impl(self, hir);
+        infer::define_use::define_trait_impl(self, hir)?;
+        infer::define_properties::DefineProperties::run_all(self, hir)?;
         infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
-        infer::define_impl::DefineImpl::run_all(self, hir)?;
+        infer::define_impl_methods::DefineImplementationMethods::run_all(self, hir)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
+        infer::define_property_types::DefinePropertyTypes::run_all(self, hir)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
 
         self.infer_calls(hir)?;

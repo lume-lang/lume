@@ -16,11 +16,8 @@ impl DefineTypes<'_> {
 
     fn run(&mut self, hir: &mut lume_hir::map::Map) {
         for (_, symbol) in &mut hir.items {
-            match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(t),
-                lume_hir::Symbol::Impl(i) => self.define_impl(i),
-                lume_hir::Symbol::Function(f) => self.define_function(f),
-                lume_hir::Symbol::Use(_) => (),
+            if let lume_hir::Symbol::Type(ty) = symbol {
+                self.define_type(ty);
             }
         }
     }
@@ -60,20 +57,5 @@ impl DefineTypes<'_> {
                 enum_def.type_id = Some(type_id);
             }
         }
-    }
-
-    fn define_impl(&mut self, implementation: &mut lume_hir::Implementation) {
-        let target = implementation.target.name.clone();
-        let impl_id = self.ctx.tcx_mut().impl_alloc(target);
-
-        implementation.impl_id = Some(impl_id);
-    }
-
-    fn define_function(&mut self, func: &mut lume_hir::FunctionDefinition) {
-        let name = func.name.clone();
-        let visibility = func.visibility;
-        let func_id = self.ctx.tcx_mut().func_alloc(name, visibility);
-
-        func.func_id = Some(func_id);
     }
 }
