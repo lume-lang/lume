@@ -38,8 +38,15 @@ impl ThirBuildCtx {
 
         // Special case for `void` types, since they are always identical, no matter
         // whether they have different underlying IDs.
-        if self.is_void(from)? && self.is_void(to)? {
-            return Ok(true);
+        match (self.is_void(from)?, self.is_void(to)?) {
+            // void => value OR value => void
+            (false, true) | (true, false) => return Ok(false),
+
+            // void == void
+            (true, true) => return Ok(true),
+
+            // value => value
+            (false, false) => (),
         }
 
         // If `to` refers to a trait where `from` implements `to`, they can
