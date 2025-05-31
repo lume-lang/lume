@@ -8,18 +8,17 @@ pub(super) struct DefineTypes<'a> {
 }
 
 impl DefineTypes<'_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) {
+        let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineTypes { ctx };
 
-        define.run(hir);
-    }
-
-    fn run(&mut self, hir: &mut lume_hir::map::Map) {
         for (_, symbol) in &mut hir.items {
             if let lume_hir::Symbol::Type(ty) = symbol {
-                self.define_type(ty);
+                define.define_type(ty);
             }
         }
+
+        ctx.hir = hir;
     }
 
     fn define_type(&mut self, ty: &mut lume_hir::TypeDefinition) {

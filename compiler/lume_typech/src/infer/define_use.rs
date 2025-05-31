@@ -3,7 +3,9 @@ use lume_hir::{self};
 
 use crate::ThirBuildCtx;
 
-pub(super) fn define_trait_impl(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
+pub(super) fn define_trait_impl(ctx: &mut ThirBuildCtx) -> Result<()> {
+    let mut hir = std::mem::take(&mut ctx.hir);
+
     for (_, symbol) in &mut hir.items {
         if let lume_hir::Symbol::Use(trait_impl) = symbol {
             let trait_ref = ctx.mk_type_ref(trait_impl.name.as_ref())?;
@@ -12,6 +14,8 @@ pub(super) fn define_trait_impl(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map:
             trait_impl.use_id = Some(ctx.tcx_mut().use_alloc(trait_ref, target_ref));
         }
     }
+
+    ctx.hir = hir;
 
     Ok(())
 }

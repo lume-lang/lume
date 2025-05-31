@@ -9,21 +9,20 @@ pub(super) struct DefineTypeConstraints<'a> {
 }
 
 impl DefineTypeConstraints<'_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
+        let hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineTypeConstraints { ctx };
 
-        define.run(hir)
-    }
-
-    fn run(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
         for (_, symbol) in &hir.items {
             match symbol {
-                lume_hir::Symbol::Type(t) => self.define_type(t)?,
-                lume_hir::Symbol::Impl(i) => self.define_impl(i)?,
-                lume_hir::Symbol::Function(f) => self.define_function(f)?,
+                lume_hir::Symbol::Type(t) => define.define_type(t)?,
+                lume_hir::Symbol::Impl(i) => define.define_impl(i)?,
+                lume_hir::Symbol::Function(f) => define.define_function(f)?,
                 lume_hir::Symbol::Use(_) => (),
             }
         }
+
+        ctx.hir = hir;
 
         Ok(())
     }

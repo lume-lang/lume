@@ -69,15 +69,18 @@ impl<'a> ItemScope<'a> {
 }
 
 pub(super) struct ScopeVisitor<'a> {
-    hir: &'a lume_hir::map::Map,
     tcx: &'a mut ThirBuildCtx,
 }
 
 impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a> {
-    fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()> {
-        for (_, symbol) in hir.items() {
-            ScopeVisitor { hir, tcx }.visit(symbol)?;
+    fn run(tcx: &'a mut ThirBuildCtx) -> Result<()> {
+        let hir = std::mem::take(&mut tcx.hir);
+
+        for (_, symbol) in &hir.items {
+            ScopeVisitor { tcx }.visit(symbol)?;
         }
+
+        tcx.hir = hir;
 
         Ok(())
     }
@@ -177,7 +180,7 @@ impl ScopeVisitor<'_> {
     }
 
     fn variable_declaration(&mut self, stmt: &lume_hir::VariableDeclaration, scope: &ItemScope) -> Result<()> {
-        let value_expr = self.tcx.type_of(self.hir, stmt.value.id)?;
+        let value_expr = self.tcx.type_of_expr(&stmt.value)?;
 
         let resolved_type = if let Some(declared_type) = &stmt.declared_type {
             let type_params = scope.flat_type_params();
