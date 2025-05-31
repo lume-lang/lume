@@ -1,6 +1,7 @@
 use crate::{ThirBuildCtx, *};
 use error_snippet::Result;
 use lume_hir::{self, FunctionId, Identifier, MethodId};
+use lume_query::cached_query;
 use lume_types::{Function, Method};
 
 mod diagnostics;
@@ -57,6 +58,7 @@ impl ThirBuildCtx {
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result, key = "(def)")]
     pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
         // If the expression has been memorized, return it instead.
         if let Some(existing) = self.resolved_exprs.get(&def) {
@@ -75,6 +77,7 @@ impl ThirBuildCtx {
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result, key = "(expr)")]
     pub(crate) fn type_of_expr(&self, hir: &lume_hir::map::Map, expr: &lume_hir::Expression) -> Result<TypeRef> {
         // If the expression has been memorized, return it instead.
         if let Some(existing) = self.resolved_exprs.get(&expr.id) {
@@ -121,6 +124,7 @@ impl ThirBuildCtx {
     }
 
     /// Attempts to get the type of a literal expression.
+    #[cached_query(key = "(lit)")]
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
         let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {

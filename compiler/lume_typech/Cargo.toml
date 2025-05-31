@@ -7,6 +7,7 @@ rust-version.workspace = true
 [dependencies]
 lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
+lume_query = { path = "../lume_query" }
 lume_span = { path = "../lume_span" }
 lume_types = { path = "../lume_types" }
 
