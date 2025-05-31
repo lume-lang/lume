@@ -166,7 +166,6 @@ impl<'tcx> ThirBuildCtx {
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
     pub(crate) fn check_method<'a>(
         &'tcx self,
-        hir: &lume_hir::map::Map,
         method: &'a Method,
         expr: &'a lume_hir::CallExpression,
     ) -> Result<CallableCheckResult> {
@@ -214,7 +213,7 @@ impl<'tcx> ThirBuildCtx {
         // Verify that all the parameters are compatible with the arguments
         // passed to the method.
         for (param, arg) in method.parameters.inner().iter().zip(arguments.iter()) {
-            let arg_type = self.type_of_expr(hir, arg)?;
+            let arg_type = self.type_of_expr(arg)?;
 
             if !self.check_type_compatibility(&arg_type, &param.ty)? {
                 failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
@@ -235,7 +234,6 @@ impl<'tcx> ThirBuildCtx {
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
     pub(crate) fn check_function<'a>(
         &'tcx self,
-        hir: &lume_hir::map::Map,
         function: &'a Function,
         expr: &'a lume_hir::StaticCall,
     ) -> Result<CallableCheckResult> {
@@ -258,7 +256,7 @@ impl<'tcx> ThirBuildCtx {
         // Verify that all the parameters are compatible with the arguments
         // passed to the method.
         for (param, arg) in function.parameters.inner().iter().zip(expr.arguments.iter()) {
-            let arg_type = self.type_of_expr(hir, arg)?;
+            let arg_type = self.type_of_expr(arg)?;
 
             if !self.check_type_compatibility(&arg_type, &param.ty)? {
                 failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
@@ -327,26 +325,22 @@ impl<'tcx> ThirBuildCtx {
     /// Callables returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
-    pub(crate) fn lookup_callable(
-        &'tcx self,
-        hir: &lume_hir::map::Map,
-        expr: &lume_hir::CallExpression,
-    ) -> Result<Callable<'tcx>> {
+    pub(crate) fn lookup_callable(&'tcx self, expr: &lume_hir::CallExpression) -> Result<Callable<'tcx>> {
         match &expr {
             lume_hir::CallExpression::Instanced(call) => {
-                let callee_type = self.type_of(hir, call.callee.id)?;
-                let method = self.lookup_methods(hir, expr, &callee_type)?;
+                let callee_type = self.type_of(call.callee.id)?;
+                let method = self.lookup_methods(expr, &callee_type)?;
 
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.name.clone().parent() {
                     let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
-                    let method = self.lookup_methods(hir, expr, &callee_type)?;
+                    let method = self.lookup_methods(expr, &callee_type)?;
 
                     Ok(Callable::Method(method))
                 } else {
-                    let function = self.lookup_functions(hir, call)?;
+                    let function = self.lookup_functions(call)?;
 
                     Ok(Callable::Function(function))
                 }
@@ -362,7 +356,6 @@ impl<'tcx> ThirBuildCtx {
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     pub(crate) fn lookup_methods(
         &'tcx self,
-        hir: &lume_hir::map::Map,
         expr: &lume_hir::CallExpression,
         callee_type: &lume_types::TypeRef,
     ) -> Result<&'tcx Method> {
@@ -374,7 +367,7 @@ impl<'tcx> ThirBuildCtx {
         let mut suggestions = Vec::new();
 
         for method in self.lookup_methods_on(callee_type, method_name) {
-            if let CallableCheckResult::Failure(failures) = self.check_method(hir, method, expr)? {
+            if let CallableCheckResult::Failure(failures) = self.check_method(method, expr)? {
                 suggestions.push((CallReference::Method(method.id), failures));
 
                 continue;
@@ -384,7 +377,7 @@ impl<'tcx> ThirBuildCtx {
         }
 
         for suggestion in self.lookup_method_suggestions(callee_type, method_name) {
-            let failures = if let CallableCheckResult::Failure(failures) = self.check_method(hir, suggestion, expr)? {
+            let failures = if let CallableCheckResult::Failure(failures) = self.check_method(suggestion, expr)? {
                 // We're explicitly removing name mismatches, as they should
                 // not have matching names in suggested methods.
                 failures
@@ -430,16 +423,12 @@ impl<'tcx> ThirBuildCtx {
     /// Functions returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up functions
     /// which only match function name, see [`ThirBuildCtx::lookup_functions_unchecked()`].
-    pub(crate) fn lookup_functions(
-        &'tcx self,
-        hir: &lume_hir::map::Map,
-        expr: &lume_hir::StaticCall,
-    ) -> Result<&'tcx Function> {
+    pub(crate) fn lookup_functions(&'tcx self, expr: &lume_hir::StaticCall) -> Result<&'tcx Function> {
         let function_name = &expr.name;
         let mut suggestions = Vec::new();
 
         for function in self.lookup_functions_unchecked(function_name) {
-            if let CallableCheckResult::Failure(failures) = self.check_function(hir, function, expr)? {
+            if let CallableCheckResult::Failure(failures) = self.check_function(function, expr)? {
                 suggestions.push((CallReference::Function(function.id), failures));
 
                 continue;
@@ -449,7 +438,7 @@ impl<'tcx> ThirBuildCtx {
         }
 
         for suggestion in self.lookup_function_suggestions(function_name) {
-            let failures = if let CallableCheckResult::Failure(failures) = self.check_function(hir, suggestion, expr)? {
+            let failures = if let CallableCheckResult::Failure(failures) = self.check_function(suggestion, expr)? {
                 // We're explicitly removing name mismatches, as they should
                 // not have matching names in suggested methods.
                 failures
@@ -537,12 +526,8 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For a static callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_static()`].
-    pub(crate) fn lookup_callable_instance(
-        &self,
-        hir: &lume_hir::map::Map,
-        call: &lume_hir::InstanceCall,
-    ) -> Result<Callable<'_>> {
-        self.lookup_callable(hir, &lume_hir::CallExpression::Instanced(call))
+    pub(crate) fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
+        self.lookup_callable(&lume_hir::CallExpression::Instanced(call))
     }
 
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
@@ -554,12 +539,8 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For an instance callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_instance()`].
-    pub(crate) fn lookup_callable_static(
-        &self,
-        hir: &lume_hir::map::Map,
-        call: &lume_hir::StaticCall,
-    ) -> Result<Callable<'_>> {
-        self.lookup_callable(hir, &lume_hir::CallExpression::Static(call))
+    pub(crate) fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
+        self.lookup_callable(&lume_hir::CallExpression::Static(call))
     }
 
     /// Returns all the methods defined directly within the given type.

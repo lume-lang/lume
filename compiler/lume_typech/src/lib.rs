@@ -16,6 +16,9 @@ pub struct ThirBuildCtx {
     /// Defines the type context from the build context.
     tcx: TypeDatabaseContext,
 
+    /// Defines the HIR map which contains the input expressions.
+    hir: lume_hir::map::Map,
+
     /// Defines the diagnostics handler.
     dcx: DiagCtxHandle,
 
@@ -29,9 +32,10 @@ pub struct ThirBuildCtx {
 #[allow(dead_code)]
 impl ThirBuildCtx {
     /// Creates a new empty THIR build context.
-    pub fn new(dcx: DiagCtxHandle) -> ThirBuildCtx {
+    pub fn new(hir: lume_hir::map::Map, dcx: DiagCtxHandle) -> ThirBuildCtx {
         ThirBuildCtx {
             tcx: TypeDatabaseContext::default(),
+            hir,
             dcx,
             resolved_stmts: IndexMap::new(),
             resolved_calls: IndexMap::new(),
@@ -55,8 +59,8 @@ impl ThirBuildCtx {
 
     /// Gets the HIR expression with the given ID within the source file.
     #[allow(clippy::unused_self)]
-    pub(crate) fn hir_stmt<'a>(&self, hir: &'a lume_hir::map::Map, id: StatementId) -> &'a lume_hir::Statement {
-        match hir.statements().get(&id) {
+    pub(crate) fn hir_stmt(&self, id: StatementId) -> &lume_hir::Statement {
+        match self.hir.statements().get(&id) {
             Some(expr) => expr,
             None => panic!("no statement with given ID found: {id:?}"),
         }
@@ -64,8 +68,8 @@ impl ThirBuildCtx {
 
     /// Gets the HIR expression with the given ID within the source file.
     #[allow(clippy::unused_self)]
-    pub(crate) fn hir_expr<'a>(&self, hir: &'a lume_hir::map::Map, id: ExpressionId) -> &'a lume_hir::Expression {
-        match hir.expressions().get(&id) {
+    pub(crate) fn hir_expr(&self, id: ExpressionId) -> &lume_hir::Expression {
+        match self.hir.expressions().get(&id) {
             Some(expr) => expr,
             None => panic!("no expression with given ID found: {id:?}"),
         }

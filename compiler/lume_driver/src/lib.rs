@@ -17,7 +17,6 @@ pub struct Driver {
     pub options: Options,
 }
 
-#[allow(dead_code)]
 impl Driver {
     /// Creates a new compilation driver from the given project root.
     ///
@@ -132,14 +131,14 @@ impl<'a> Compiler<'a> {
     }
 
     /// Type checks all the given source files.
-    fn type_check(&mut self, mut hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let mut thir_ctx = self.dcx.with(lume_typech::ThirBuildCtx::new);
+    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
+        let mut thir_ctx = self.dcx.with(|handle| lume_typech::ThirBuildCtx::new(hir, handle));
 
         // Defines the types of all nodes within the HIR maps.
-        thir_ctx.define_types(&mut hir)?;
+        thir_ctx.define_types()?;
 
         // Then, make sure they're all valid.
-        thir_ctx.typecheck(&hir)?;
+        thir_ctx.typecheck()?;
 
         Ok(thir_ctx)
     }

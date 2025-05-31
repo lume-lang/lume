@@ -3,7 +3,7 @@ use indexmap::IndexMap;
 use crate::*;
 use lume_span::{ExpressionId, ItemId, StatementId};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct Map {
     /// Defines which package this map belongs to.
     pub package: PackageId,

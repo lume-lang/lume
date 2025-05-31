@@ -59,8 +59,8 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result, key = "(def)")]
-    pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
-        self.type_of_expr(hir, self.hir_expr(hir, def))
+    pub(crate) fn type_of(&self, def: ExpressionId) -> Result<TypeRef> {
+        self.type_of_expr(self.hir_expr(def))
     }
 
     /// Returns the *type* of the given [`Expression`].
@@ -71,20 +71,18 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result, key = "(expr)")]
-    pub(crate) fn type_of_expr(&self, hir: &lume_hir::map::Map, expr: &lume_hir::Expression) -> Result<TypeRef> {
+    pub(crate) fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
-            lume_hir::ExpressionKind::StaticCall(call) => {
-                Ok(self.lookup_callable_static(hir, call)?.return_type().clone())
-            }
+            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
+            lume_hir::ExpressionKind::StaticCall(call) => Ok(self.lookup_callable_static(call)?.return_type().clone()),
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                let callable = self.lookup_callable_instance(hir, call)?;
+                let callable = self.lookup_callable_instance(call)?;
 
                 Ok(callable.return_type().clone())
             }
             lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
             lume_hir::ExpressionKind::Member(expr) => {
-                let callee_type = self.type_of(hir, expr.callee.id)?;
+                let callee_type = self.type_of(expr.callee.id)?;
 
                 let Some(property) = self.tcx().find_property(callee_type.instance_of, &expr.name) else {
                     let ty = self.tcx().type_(callee_type.instance_of).unwrap();
@@ -104,9 +102,9 @@ impl ThirBuildCtx {
                 Ok(property.property_type.clone())
             }
             lume_hir::ExpressionKind::Variable(var) => {
-                let decl = self.hir_expect_var_stmt(hir, var.reference);
+                let decl = self.hir_expect_var_stmt(var.reference);
 
-                Ok(self.type_of(hir, decl.value.id)?)
+                Ok(self.type_of(decl.value.id)?)
             }
         }
     }

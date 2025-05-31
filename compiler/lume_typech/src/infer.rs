@@ -49,21 +49,21 @@ impl ThirBuildCtx {
     ///
     /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
     /// etc, or when expected items cannot be found within the context.
-    pub fn define_types(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        infer::define_types::DefineTypes::run_all(self, hir);
-        infer::define_functions::DefineFunctions::run_all(self, hir);
-        infer::define_impl::define_impl(self, hir);
-        infer::define_use::define_trait_impl(self, hir)?;
-        infer::define_properties::DefineProperties::run_all(self, hir)?;
-        infer::define_type_params::DefineTypeParameters::run_all(self, hir)?;
-        infer::define_impl_methods::DefineImplementationMethods::run_all(self, hir)?;
-        infer::define_type_constraints::DefineTypeConstraints::run_all(self, hir)?;
-        infer::define_property_types::DefinePropertyTypes::run_all(self, hir)?;
-        infer::define_method_bodies::DefineMethodBodies::run_all(self, hir)?;
+    pub fn define_types(&mut self) -> Result<()> {
+        infer::define_types::DefineTypes::run_all(self);
+        infer::define_functions::DefineFunctions::run_all(self);
+        infer::define_impl::define_impl(self);
+        infer::define_use::define_trait_impl(self)?;
+        infer::define_properties::DefineProperties::run_all(self)?;
+        infer::define_type_params::DefineTypeParameters::run_all(self)?;
+        infer::define_impl_methods::DefineImplementationMethods::run_all(self)?;
+        infer::define_type_constraints::DefineTypeConstraints::run_all(self)?;
+        infer::define_property_types::DefinePropertyTypes::run_all(self)?;
+        infer::define_method_bodies::DefineMethodBodies::run_all(self)?;
 
-        self.infer_calls(hir)?;
+        self.infer_calls()?;
 
-        infer::define_scope::ScopeVisitor::run(self, hir)?;
+        infer::define_scope::ScopeVisitor::run(self)?;
 
         Ok(())
     }
@@ -72,11 +72,11 @@ impl ThirBuildCtx {
     ///
     /// The resolved references are stored in the `resolved_calls` field of the `ThirBuildCtx`, which can be
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
-    fn infer_calls(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        for (id, expr) in hir.expressions() {
+    fn infer_calls(&mut self) -> Result<()> {
+        for (id, expr) in self.hir.expressions() {
             let reference: CallReference = match &expr.kind {
-                lume_hir::ExpressionKind::InstanceCall(call) => self.lookup_callable_instance(hir, call)?.into(),
-                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_callable_static(hir, call)?.into(),
+                lume_hir::ExpressionKind::InstanceCall(call) => self.lookup_callable_instance(call)?.into(),
+                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_callable_static(call)?.into(),
                 _ => continue,
             };
 
@@ -86,14 +86,14 @@ impl ThirBuildCtx {
         // After all calls have been resolved, we'll update the amount type parameters
         // in the call expressions, so
         for (id, reference) in &mut self.resolved_calls {
-            let location = hir.expression(*id).unwrap().location.clone();
+            let location = self.hir.expression(*id).unwrap().location.clone();
 
             let type_params = match *reference {
                 CallReference::Method(id) => &self.tcx.method(id).unwrap().type_parameters,
                 CallReference::Function(id) => &self.tcx.function(id).unwrap().type_parameters,
             };
 
-            let type_args = match &mut hir.expressions_mut().get_mut(id).unwrap().kind {
+            let type_args = match &mut self.hir.expressions_mut().get_mut(id).unwrap().kind {
                 lume_hir::ExpressionKind::InstanceCall(call) => &mut call.type_arguments,
                 lume_hir::ExpressionKind::StaticCall(call) => &mut call.type_arguments,
                 kind => panic!("BUG: unexpected expression kind: {kind:?}"),
@@ -128,12 +128,8 @@ impl ThirBuildCtx {
     }
 
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
-    pub(crate) fn hir_expect_var_stmt<'a>(
-        &'a self,
-        hir: &'a lume_hir::map::Map,
-        id: StatementId,
-    ) -> &'a lume_hir::VariableDeclaration {
-        let stmt = self.hir_stmt(hir, id);
+    pub(crate) fn hir_expect_var_stmt(&self, id: StatementId) -> &lume_hir::VariableDeclaration {
+        let stmt = self.hir_stmt(id);
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(decl) => decl,
