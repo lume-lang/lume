@@ -7,7 +7,7 @@ pub(crate) mod errors;
 mod lookup;
 
 pub trait TypeCheckerPass<'a> {
-    fn run(tcx: &'a mut ThirBuildCtx, hir: &'a lume_hir::map::Map) -> Result<()>
+    fn run(tcx: &'a mut ThirBuildCtx) -> Result<()>
     where
         Self: Sized;
 }
@@ -20,7 +20,7 @@ impl ThirBuildCtx {
     ///
     /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
     /// etc, or when expected items cannot be found within the context.
-    pub fn typecheck(&mut self, _hir: &lume_hir::map::Map) -> Result<()> {
+    pub fn typecheck(&mut self) -> Result<()> {
         Ok(())
     }
 
