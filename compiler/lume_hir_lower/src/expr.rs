@@ -27,6 +27,7 @@ impl LowerModule<'_> {
             ast::Expression::Array(e) => self.expr_array(*e)?,
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
+            ast::Expression::Cast(e) => self.expr_cast(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
@@ -118,6 +119,19 @@ impl LowerModule<'_> {
         };
 
         Ok(hir::Expression { id, location, kind })
+    }
+
+    fn expr_cast(&mut self, expr: ast::Cast) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let source = self.expression(expr.source)?;
+        let target = self.type_ref(expr.target_type)?;
+        let location = self.location(expr.location);
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::Cast(Box::new(hir::Cast { id, source, target })),
+        })
     }
 
     fn expr_literal(&mut self, expr: ast::Literal) -> hir::Expression {

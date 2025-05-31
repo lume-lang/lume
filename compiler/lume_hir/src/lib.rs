@@ -776,6 +776,7 @@ impl Expression {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
+    Cast(Box<Cast>),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -837,6 +838,13 @@ pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
     pub value: Expression,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Cast {
+    pub id: ExpressionId,
+    pub source: Expression,
+    pub target: Type,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

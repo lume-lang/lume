@@ -1,0 +1,102 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: call() as u64;
+---
+[
+    Statement {
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
+        kind: Expression(
+            Expression {
+                id: ExpressionId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                location: <internal>:0:13,
+                kind: Cast(
+                    Cast {
+                        id: ExpressionId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
+                        source: Expression {
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    2,
+                                ),
+                            },
+                            location: <internal>:0:9,
+                            kind: StaticCall(
+                                StaticCall {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Named(
+                                            Identifier {
+                                                name: "call",
+                                                location: <internal>:0:4,
+                                            },
+                                        ),
+                                        location: <internal>:0:4,
+                                    },
+                                    type_arguments: [],
+                                    arguments: [],
+                                },
+                            ),
+                        },
+                        target: Type {
+                            id: ItemId(
+                                8592730076283604162,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [],
+                                    },
+                                ),
+                                name: Named(
+                                    Identifier {
+                                        name: "u64",
+                                        location: <internal>:10:13,
+                                    },
+                                ),
+                                location: <internal>:10:13,
+                            },
+                            type_params: [],
+                            location: <internal>:10:13,
+                        },
+                    },
+                ),
+            },
+        ),
+        location: <internal>:0:13,
+    },
+]
