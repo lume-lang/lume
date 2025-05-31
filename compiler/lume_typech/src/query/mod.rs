@@ -74,6 +74,7 @@ impl ThirBuildCtx {
     pub(crate) fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
+            lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
             lume_hir::ExpressionKind::StaticCall(call) => Ok(self.lookup_callable_static(call)?.return_type().clone()),
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callable = self.lookup_callable_instance(call)?;
