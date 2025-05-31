@@ -34,12 +34,12 @@ fn lower_into_hir(input: &str) -> Result<Map> {
 }
 
 #[track_caller]
-fn type_infer(input: &str) -> Result<(ThirBuildCtx, Map)> {
+fn type_infer(input: &str) -> Result<ThirBuildCtx> {
     let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
-    let mut hir = lower_into_hir(input)?;
+    let hir = lower_into_hir(input)?;
 
-    let mut tcx = dcx.with(ThirBuildCtx::new);
-    tcx.define_types(&mut hir)?;
+    let mut tcx = dcx.with(|handle| ThirBuildCtx::new(hir, handle));
+    tcx.define_types()?;
 
-    Ok((tcx, hir))
+    Ok(tcx)
 }
