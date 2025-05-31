@@ -29,7 +29,7 @@ pub fn hash_id<T: Hash + ?Sized>(id: &T) -> u64 {
     hash64(id)
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Hash, Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
     /// A file name which is defined by some internal process,
     /// such as in testing or defined on the command line.
@@ -196,6 +196,13 @@ impl std::fmt::Debug for Location {
 impl std::fmt::Display for Location {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}:{}:{}", self.file.name, self.start(), self.end())
+    }
+}
+
+impl std::hash::Hash for Location {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.file.name.hash(state);
+        self.index.hash(state);
     }
 }
 
