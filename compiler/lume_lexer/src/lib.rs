@@ -20,6 +20,7 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::SubAssign, 1),
     (TokenKind::MulAssign, 1),
     (TokenKind::DivAssign, 1),
+    (TokenKind::As, 2),
     (TokenKind::Equal, 3),
     (TokenKind::NotEqual, 3),
     (TokenKind::Greater, 4),
@@ -50,6 +51,7 @@ pub const POSTFIX_OPERATORS: &[TokenKind] = &[TokenKind::Increment, TokenKind::D
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
+    As,
     Add,
     AddAssign,
     And,
@@ -121,7 +123,8 @@ impl TokenKind {
     pub fn is_keyword(&self) -> bool {
         matches!(
             self,
-            TokenKind::Break
+            TokenKind::As
+                | TokenKind::Break
                 | TokenKind::Builtin
                 | TokenKind::Continue
                 | TokenKind::Else
@@ -194,6 +197,7 @@ impl TokenKind {
 impl From<TokenKind> for &'static str {
     fn from(val: TokenKind) -> &'static str {
         match val {
+            TokenKind::As => "as",
             TokenKind::Add => "+",
             TokenKind::AddAssign => "+=",
             TokenKind::And => "&",
@@ -582,6 +586,7 @@ impl Lexer {
         }
 
         match content.as_str() {
+            "as" => Token::empty(TokenKind::As),
             "break" => Token::empty(TokenKind::Break),
             "builtin" => Token::empty(TokenKind::Builtin),
             "continue" => Token::empty(TokenKind::Continue),
@@ -949,6 +954,7 @@ mod tests {
 
     #[test]
     fn test_keywords_map() {
+        assert_token!("as", TokenKind::As, None::<String>, 0, 2);
         assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
         assert_token!("builtin", TokenKind::Builtin, None::<String>, 0, 7);
         assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);

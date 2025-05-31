@@ -621,6 +621,7 @@ pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
     Call(Box<Call>),
+    Cast(Box<Cast>),
     Literal(Box<Literal>),
     Member(Box<Member>),
     Range(Box<Range>),
@@ -646,6 +647,13 @@ pub struct Call {
     pub name: Path,
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeArgument>,
+    pub location: Location,
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub struct Cast {
+    pub source: Expression,
+    pub target_type: Type,
     pub location: Location,
 }
 

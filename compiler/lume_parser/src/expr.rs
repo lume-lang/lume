@@ -70,6 +70,10 @@ impl Parser {
             return self.parse_member(left);
         }
 
+        if self.peek(TokenKind::As) {
+            return self.parse_cast(left);
+        }
+
         let operator = match self.consume_any() {
             t if t.kind.is_operator() => t,
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
@@ -292,6 +296,23 @@ impl Parser {
 
         // Otherwise, return the expression, as-is.
         Ok(expression)
+    }
+
+    /// Parses a cast expression on the current cursor position, which is preceded by some identifier.
+    fn parse_cast(&mut self, source: Expression) -> Result<Expression> {
+        // Consume the `as` token
+        self.consume(TokenKind::As)?;
+
+        let ty = self.parse_type()?;
+
+        let start = source.location().start();
+        let end = ty.location().end();
+
+        Ok(Expression::Cast(Box::new(Cast {
+            source,
+            target_type: ty,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses an assignment expression on the current cursor position.

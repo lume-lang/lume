@@ -1,0 +1,60 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"let _ = 0 as u64;\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Cast(
+                Cast {
+                    source: Literal(
+                        Int(
+                            IntLiteral {
+                                value: 0,
+                                location: Location(
+                                    8..9,
+                                ),
+                                kind: I32,
+                            },
+                        ),
+                    ),
+                    target_type: Named(
+                        NamedType {
+                            name: Path {
+                                root: [],
+                                name: PathSegment {
+                                    name: Identifier {
+                                        name: "u64",
+                                        location: Location(
+                                            13..16,
+                                        ),
+                                    },
+                                    type_arguments: [],
+                                    location: Location(
+                                        13..16,
+                                    ),
+                                },
+                                location: Location(
+                                    13..16,
+                                ),
+                            },
+                        },
+                    ),
+                    location: Location(
+                        8..16,
+                    ),
+                },
+            ),
+            location: Location(
+                0..17,
+            ),
+        },
+    ),
+]

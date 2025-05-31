@@ -1,0 +1,65 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"a() as u64;\")"
+---
+[
+    Expression(
+        Cast(
+            Cast {
+                source: Call(
+                    Call {
+                        callee: None,
+                        name: Path {
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        0..1,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    0..1,
+                                ),
+                            },
+                            location: Location(
+                                0..1,
+                            ),
+                        },
+                        arguments: [],
+                        type_arguments: [],
+                        location: Location(
+                            0..6,
+                        ),
+                    },
+                ),
+                target_type: Named(
+                    NamedType {
+                        name: Path {
+                            root: [],
+                            name: PathSegment {
+                                name: Identifier {
+                                    name: "u64",
+                                    location: Location(
+                                        7..10,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    7..10,
+                                ),
+                            },
+                            location: Location(
+                                7..10,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    0..10,
+                ),
+            },
+        ),
+    ),
+]

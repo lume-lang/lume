@@ -258,6 +258,14 @@ fn test_function_definition_snapshots() {
 }
 
 #[test]
+fn test_cast_snapshots() {
+    assert_expr_snap_eq!("0 as u64;", "literal_single");
+    assert_expr_snap_eq!("let _ = 0 as u64;", "precedence_assign");
+    assert_expr_snap_eq!("0 as u64 == 0;", "precedence_equal");
+    assert_expr_snap_eq!("a() as u64;", "invocation");
+}
+
+#[test]
 fn test_literal_snapshots() {
     assert_expr_snap_eq!("\"\";", "string_empty");
     assert_expr_snap_eq!("\"string\";", "string_content");
