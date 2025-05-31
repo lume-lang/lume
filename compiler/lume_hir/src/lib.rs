@@ -734,7 +734,7 @@ pub struct PredicateLoop {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Expression {
     pub id: ExpressionId,
     pub location: Location,
@@ -773,7 +773,7 @@ impl Expression {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
 
@@ -832,14 +832,14 @@ impl CallExpression<'_> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
     pub value: Expression,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct StaticCall {
     pub id: ExpressionId,
     pub name: SymbolName,
@@ -847,7 +847,7 @@ pub struct StaticCall {
     pub arguments: Vec<Expression>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
@@ -856,14 +856,14 @@ pub struct InstanceCall {
     pub arguments: Vec<Expression>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Literal {
     pub id: ExpressionId,
     pub location: Location,
     pub kind: LiteralKind,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum LiteralKind {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -871,14 +871,14 @@ pub enum LiteralKind {
     Boolean(Box<BooleanLiteral>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub id: ExpressionId,
     pub value: i64,
     pub kind: IntKind,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Hash, Debug, Copy, Clone, PartialEq)]
 pub enum IntKind {
     I8,
     U8,
@@ -914,7 +914,15 @@ pub struct FloatLiteral {
     pub kind: FloatKind,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+impl std::hash::Hash for FloatLiteral {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        self.value.to_bits().hash(state);
+        self.kind.hash(state);
+    }
+}
+
+#[derive(Hash, Debug, Copy, Clone, PartialEq)]
 pub enum FloatKind {
     F32,
     F64,
@@ -929,19 +937,19 @@ impl From<lume_ast::FloatKind> for FloatKind {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
     pub id: ExpressionId,
     pub value: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub id: ExpressionId,
     pub value: bool,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Member {
     pub id: ExpressionId,
     pub callee: Expression,
@@ -949,7 +957,7 @@ pub struct Member {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub id: ExpressionId,
     pub reference: StatementId,
@@ -957,7 +965,7 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub type_id: Option<TypeId>,
@@ -966,7 +974,7 @@ pub struct TypeParameter {
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum TypeArgument {
     /// Defines a named type argument, which was specified by the user, but not yet resolved.
     Named { ty: Type, location: Location },

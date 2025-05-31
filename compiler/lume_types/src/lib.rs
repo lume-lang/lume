@@ -388,7 +388,7 @@ impl Type {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct TypeRef {
     pub instance_of: TypeId,
     pub type_arguments: Vec<TypeRef>,
