@@ -65,22 +65,6 @@ impl ThirBuildCtx {
 
         infer::define_scope::ScopeVisitor::run(self, hir)?;
 
-        self.infer_exprs(hir)?;
-
-        Ok(())
-    }
-
-    /// Attempt to infer the types of all expressions in the current module.
-    ///
-    /// The resolved types are stored in the `resolved_exprs` field of the `ThirBuildCtx`, which can be
-    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
-    fn infer_exprs(&mut self, hir: &lume_hir::map::Map) -> Result<()> {
-        for (id, expr) in hir.expressions() {
-            let type_ref = self.type_of(hir, expr.id)?;
-
-            self.resolved_exprs.insert(*id, type_ref);
-        }
-
         Ok(())
     }
 

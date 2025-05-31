@@ -19,9 +19,6 @@ pub struct ThirBuildCtx {
     /// Defines the diagnostics handler.
     dcx: DiagCtxHandle,
 
-    /// Defines a mapping between expressions and their resolved types.
-    pub resolved_exprs: IndexMap<ExpressionId, TypeRef>,
-
     /// Defines a mapping between statements and their resolved types.
     pub resolved_stmts: IndexMap<StatementId, TypeRef>,
 
@@ -36,7 +33,6 @@ impl ThirBuildCtx {
         ThirBuildCtx {
             tcx: TypeDatabaseContext::default(),
             dcx,
-            resolved_exprs: IndexMap::new(),
             resolved_stmts: IndexMap::new(),
             resolved_calls: IndexMap::new(),
         }

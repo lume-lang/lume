@@ -60,14 +60,7 @@ impl ThirBuildCtx {
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result, key = "(def)")]
     pub(crate) fn type_of(&self, hir: &lume_hir::map::Map, def: ExpressionId) -> Result<TypeRef> {
-        // If the expression has been memorized, return it instead.
-        if let Some(existing) = self.resolved_exprs.get(&def) {
-            return Ok(existing.clone());
-        }
-
-        let expr = self.hir_expr(hir, def);
-
-        self.type_of_expr(hir, expr)
+        self.type_of_expr(hir, self.hir_expr(hir, def))
     }
 
     /// Returns the *type* of the given [`Expression`].
@@ -79,11 +72,6 @@ impl ThirBuildCtx {
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result, key = "(expr)")]
     pub(crate) fn type_of_expr(&self, hir: &lume_hir::map::Map, expr: &lume_hir::Expression) -> Result<TypeRef> {
-        // If the expression has been memorized, return it instead.
-        if let Some(existing) = self.resolved_exprs.get(&expr.id) {
-            return Ok(existing.clone());
-        }
-
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(hir, e.value.id),
             lume_hir::ExpressionKind::StaticCall(call) => {
