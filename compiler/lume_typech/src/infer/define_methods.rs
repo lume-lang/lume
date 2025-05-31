@@ -9,13 +9,26 @@ pub(super) struct DefineMethods<'a> {
 }
 
 impl DefineMethods<'_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
+        let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineMethods { ctx };
 
-        define.run(hir)
+        for (_, symbol) in &mut hir.items {
+            match symbol {
+                lume_hir::Symbol::Type(t) => define.define_type(t)?,
+                lume_hir::Symbol::Use(t) => define.define_use(t)?,
+                _ => (),
+            }
+        }
+
+        ctx.hir = hir;
+
+        Ok(())
     }
 
     fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
+        let hir = std::mem::take(&mut ctx.hir);
+
         for (_, symbol) in &mut hir.items {
             match symbol {
                 lume_hir::Symbol::Type(t) => self.define_type(t)?,

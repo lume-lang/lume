@@ -8,20 +8,17 @@ pub(super) struct DefinePropertyTypes<'a> {
 }
 
 impl DefinePropertyTypes<'_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
+        let hir = std::mem::take(&mut ctx.hir);
         let mut define = DefinePropertyTypes { ctx };
 
-        define.run(hir)?;
-
-        Ok(())
-    }
-
-    fn run(&mut self, hir: &mut lume_hir::map::Map) -> Result<()> {
-        for (_, symbol) in hir.items() {
+        for (_, symbol) in &hir.items {
             if let lume_hir::Symbol::Type(ty) = symbol {
-                self.define_type(ty)?;
+                define.define_type(ty)?;
             }
         }
+
+        ctx.hir = hir;
 
         Ok(())
     }

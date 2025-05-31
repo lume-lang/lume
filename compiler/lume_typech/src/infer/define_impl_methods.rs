@@ -9,7 +9,8 @@ pub(super) struct DefineImplementationMethods<'a> {
 }
 
 impl DefineImplementationMethods<'_> {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) -> Result<()> {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
+        let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineImplementationMethods { ctx };
 
         for (_, symbol) in &mut hir.items {
@@ -17,6 +18,8 @@ impl DefineImplementationMethods<'_> {
                 define.define_impl(t)?;
             }
         }
+
+        ctx.hir = hir;
 
         Ok(())
     }

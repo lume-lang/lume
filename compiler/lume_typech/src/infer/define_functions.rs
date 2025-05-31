@@ -5,7 +5,9 @@ use crate::ThirBuildCtx;
 pub(super) struct DefineFunctions;
 
 impl DefineFunctions {
-    pub(super) fn run_all(ctx: &mut ThirBuildCtx, hir: &mut lume_hir::map::Map) {
+    pub(super) fn run_all(ctx: &mut ThirBuildCtx) {
+        let mut hir = std::mem::take(&mut ctx.hir);
+
         for (_, symbol) in &mut hir.items {
             if let lume_hir::Symbol::Function(func) = symbol {
                 let name = func.name.clone();
@@ -15,5 +17,7 @@ impl DefineFunctions {
                 func.func_id = Some(func_id);
             }
         }
+
+        ctx.hir = hir;
     }
 }
