@@ -332,7 +332,7 @@ pub trait Node {
     fn location(&self) -> &Location;
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
     pub location: Location,
@@ -644,14 +644,14 @@ impl WithTypeParameters for TraitMethodImplementation {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Statement {
     pub id: StatementId,
     pub kind: StatementKind,
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum StatementKind {
     Variable(Box<VariableDeclaration>),
     Break(Box<Break>),
@@ -665,7 +665,7 @@ pub enum StatementKind {
     Expression(Box<Expression>),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub id: StatementId,
     pub name: Identifier,
@@ -673,37 +673,37 @@ pub struct VariableDeclaration {
     pub value: Expression,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Break {
     pub id: StatementId,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub id: StatementId,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: StatementId,
     pub value: Option<Expression>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct If {
     pub id: StatementId,
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Unless {
     pub id: StatementId,
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Condition {
     pub id: StatementId,
     pub condition: Option<Expression>,
@@ -711,14 +711,14 @@ pub struct Condition {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub id: StatementId,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub id: StatementId,
     pub collection: Expression,
@@ -726,7 +726,7 @@ pub struct IteratorLoop {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct PredicateLoop {
     pub id: StatementId,
     pub condition: Expression,
