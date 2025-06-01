@@ -121,7 +121,7 @@ impl Expressions<'_> {
         let value_expr = self.tcx.type_of_expr(&stmt.value)?;
 
         let resolved_type = if let Some(declared_type) = &stmt.declared_type {
-            let type_params = scope.flat_type_params();
+            let type_params = scope.flattened_type_params();
             let declared_type_ref = self.tcx.mk_type_ref_generic(declared_type, &type_params)?;
 
             if !self.tcx.check_type_compatibility(&value_expr, &declared_type_ref)? {

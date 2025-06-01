@@ -65,12 +65,19 @@ impl<'a> ItemScope<'a> {
 
     /// Get a flattened array of all [`TypeParameter`]s defined within
     /// the current scope and all parent scopes.
-    fn flat_type_params(&self) -> Vec<TypeParameter> {
+    fn flattened_type_params(&self) -> Vec<&TypeParameter> {
         let mut current = self;
-        let mut type_params = self.type_parameters.clone();
+        let mut type_params: Vec<&TypeParameter> = Vec::new();
+
+        for type_param in &self.type_parameters {
+            type_params.push(type_param);
+        }
 
         while let Some(parent) = current.parent {
-            type_params.extend(parent.type_parameters.clone());
+            for type_param in &parent.type_parameters {
+                type_params.push(type_param);
+            }
+
             current = parent;
         }
 

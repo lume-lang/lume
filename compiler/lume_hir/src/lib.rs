@@ -982,6 +982,12 @@ pub struct TypeParameter {
     pub location: Location,
 }
 
+impl AsRef<TypeParameter> for TypeParameter {
+    fn as_ref(&self) -> &TypeParameter {
+        self
+    }
+}
+
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum TypeArgument {
     /// Defines a named type argument, which was specified by the user, but not yet resolved.

@@ -136,12 +136,18 @@ impl ThirBuildCtx {
 
     /// Lowers the given HIR type into a type reference.
     pub(crate) fn mk_type_ref(&self, ty: &lume_hir::Type) -> Result<TypeRef> {
-        self.mk_type_ref_generic(ty, &[])
+        let params: &[&TypeParameter] = &[];
+
+        self.mk_type_ref_generic(ty, params)
     }
 
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
-    pub(crate) fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[TypeParameter]) -> Result<TypeRef> {
+    pub(crate) fn mk_type_ref_generic<T: AsRef<TypeParameter>>(
+        &self,
+        ty: &lume_hir::Type,
+        type_params: &[T],
+    ) -> Result<TypeRef> {
         let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
             return Err(self.missing_type_err(ty));
         };
@@ -156,15 +162,15 @@ impl ThirBuildCtx {
         Ok(type_ref)
     }
 
-    fn find_type_ref_ctx(&self, name: &SymbolName, type_params: &[TypeParameter]) -> Option<TypeId> {
+    fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &SymbolName, type_params: &[T]) -> Option<TypeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
             let lume_hir::PathSegment::Named(type_name) = &name.name else {
                 break;
             };
 
-            if &type_param.name == type_name {
-                return Some(type_param.type_id.unwrap());
+            if &type_param.as_ref().name == type_name {
+                return Some(type_param.as_ref().type_id.unwrap());
             }
         }
 
