@@ -2,7 +2,7 @@ use error_snippet::Result;
 use lume_hir::{self, PathSegment, TypeId};
 use lume_span::StatementId;
 
-use crate::{check::TypeCheckerPass, query::CallReference, *};
+use crate::{query::CallReference, *};
 
 mod define_functions;
 mod define_impl;
@@ -10,7 +10,6 @@ mod define_impl_methods;
 mod define_method_bodies;
 mod define_properties;
 mod define_property_types;
-mod define_scope;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
@@ -62,8 +61,6 @@ impl ThirBuildCtx {
         infer::define_method_bodies::DefineMethodBodies::run_all(self)?;
 
         self.infer_calls()?;
-
-        infer::define_scope::ScopeVisitor::run(self)?;
 
         Ok(())
     }

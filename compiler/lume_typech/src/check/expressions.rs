@@ -1,83 +1,21 @@
 use error_snippet::Result;
-use lume_hir::{FunctionId, MethodId, TypeId, TypeParameter, WithTypeParameters};
+use lume_hir::WithTypeParameters;
 
-use crate::{
-    ThirBuildCtx,
-    check::{TypeCheckerPass, errors::MismatchedTypes},
-};
+use crate::ThirBuildCtx;
+use crate::check::{ItemScope, TypeCheckerPass, errors::MismatchedTypes};
 
-#[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
-enum ScopeKind {
-    Function(FunctionId),
-    Ty(TypeId),
-    Method(MethodId),
-}
-
-/// Represents some form of scope, which hold variables, type parameters, etc.
-///
-/// Each scope contains a reference to it's parent scope, so a graph can be
-/// constructed from a single Scope instance.
-#[allow(dead_code)]
-#[derive(Debug)]
-struct ItemScope<'a> {
-    kind: ScopeKind,
-
-    /// Defines the parent scope, if any.
-    parent: Option<&'a ItemScope<'a>>,
-
-    /// Defines the type parameters defined in the scope.
-    type_parameters: Vec<TypeParameter>,
-}
-
-impl<'a> ItemScope<'a> {
-    fn function(function: FunctionId) -> Self {
-        Self {
-            kind: ScopeKind::Function(function),
-            parent: None,
-            type_parameters: Vec::new(),
-        }
-    }
-
-    fn ty(ty: TypeId) -> Self {
-        Self {
-            kind: ScopeKind::Ty(ty),
-            parent: None,
-            type_parameters: Vec::new(),
-        }
-    }
-
-    fn method(parent: &'a ItemScope, method: MethodId) -> Self {
-        Self {
-            kind: ScopeKind::Method(method),
-            parent: Some(parent),
-            type_parameters: Vec::new(),
-        }
-    }
-
-    fn flat_type_params(&self) -> Vec<TypeParameter> {
-        let mut current = self;
-        let mut type_params = self.type_parameters.clone();
-
-        while let Some(parent) = current.parent {
-            type_params.extend(parent.type_parameters.clone());
-            current = parent;
-        }
-
-        type_params
-    }
-}
-
-pub(super) struct ScopeVisitor<'a> {
+/// Type checker pass to check whether expressions yield
+/// their expected type, depending on the surrounding context.
+pub(super) struct Expressions<'a> {
     tcx: &'a mut ThirBuildCtx,
 }
 
-impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a> {
-    fn run(tcx: &'a mut ThirBuildCtx) -> Result<()> {
+impl TypeCheckerPass for Expressions<'_> {
+    fn run(tcx: &mut ThirBuildCtx) -> Result<()> {
         let hir = std::mem::take(&mut tcx.hir);
 
         for (_, symbol) in &hir.items {
-            ScopeVisitor { tcx }.visit(symbol)?;
+            Expressions { tcx }.visit(symbol)?;
         }
 
         tcx.hir = hir;
@@ -86,7 +24,7 @@ impl<'a> TypeCheckerPass<'a> for ScopeVisitor<'a> {
     }
 }
 
-impl ScopeVisitor<'_> {
+impl Expressions<'_> {
     fn visit(&mut self, symbol: &lume_hir::Symbol) -> Result<()> {
         match symbol {
             lume_hir::Symbol::Type(ty) => match &**ty {
