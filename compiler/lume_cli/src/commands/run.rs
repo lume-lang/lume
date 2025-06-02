@@ -6,7 +6,9 @@ use getopts::Options;
 use lume_driver::Driver;
 
 pub(crate) fn run(args: &[String]) -> Result<()> {
-    let options = Options::new();
+    let mut options = Options::new();
+
+    options.optflag("", "print-type-ctx", "print the type context before analyzing");
 
     let matches = match options.parse(args) {
         Ok(matches) => matches,
@@ -24,7 +26,10 @@ pub(crate) fn run(args: &[String]) -> Result<()> {
         project_or_cwd(None)?
     };
 
-    Driver::build_project(&std::path::PathBuf::from(input))?;
+    let mut driver = Driver::from_root(&std::path::PathBuf::from(input))?;
+    driver.options.print_type_context = matches.opt_present("print-type-ctx");
+
+    driver.build()?;
 
     Ok(())
 }

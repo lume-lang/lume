@@ -7,7 +7,11 @@ use lume_span::SourceMap;
 use lume_typech::ThirBuildCtx;
 
 #[derive(Default)]
-pub struct Options {}
+pub struct Options {
+    /// Defines whether the [`ThirBuildCtx`] should be printed to `stdio`, after
+    /// it's been inferred and type checked.
+    pub print_type_context: bool,
+}
 
 pub struct Driver {
     /// Defines the structure of the Arcfile within the project.
@@ -144,9 +148,11 @@ impl<'a> Compiler<'a> {
     }
 
     /// Analyzes all the modules within the given state object.
-    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
+    #[expect(clippy::unnecessary_wraps, reason = "unimplemented")]
     fn analyze(&mut self, thir: &ThirBuildCtx) -> Result<()> {
-        println!("{:#?}", thir.tcx());
+        if self.options.print_type_context {
+            println!("{:#?}", thir.tcx());
+        }
 
         Ok(())
     }
