@@ -103,6 +103,9 @@ Map {
                 },
                 methods: [
                     TraitMethodImplementation {
+                        id: ItemId(
+                            17893834130320319815,
+                        ),
                         method_id: None,
                         visibility: Public,
                         name: SymbolName {

@@ -29,6 +29,9 @@ Map {
                     builtin: false,
                     properties: [
                         Property {
+                            id: ItemId(
+                                15708085824599763736,
+                            ),
                             prop_id: None,
                             visibility: Public,
                             name: Identifier {

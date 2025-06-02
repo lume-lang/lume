@@ -29,6 +29,9 @@ Map {
                     type_parameters: [],
                     methods: [
                         TraitMethodDefinition {
+                            id: ItemId(
+                                4915573846357939171,
+                            ),
                             method_id: None,
                             visibility: Public,
                             name: Identifier {

@@ -66,6 +66,9 @@ Map {
                 },
                 methods: [
                     TraitMethodImplementation {
+                        id: ItemId(
+                            4915573846357939171,
+                        ),
                         method_id: None,
                         visibility: Private,
                         name: SymbolName {

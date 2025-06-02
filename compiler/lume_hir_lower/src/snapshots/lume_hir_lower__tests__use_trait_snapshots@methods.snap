@@ -66,6 +66,9 @@ Map {
                 },
                 methods: [
                     TraitMethodImplementation {
+                        id: ItemId(
+                            17562429064548613062,
+                        ),
                         method_id: None,
                         visibility: Public,
                         name: SymbolName {
@@ -117,6 +120,9 @@ Map {
                         location: <internal>:49:80,
                     },
                     TraitMethodImplementation {
+                        id: ItemId(
+                            2127391008029776,
+                        ),
                         method_id: None,
                         visibility: Public,
                         name: SymbolName {

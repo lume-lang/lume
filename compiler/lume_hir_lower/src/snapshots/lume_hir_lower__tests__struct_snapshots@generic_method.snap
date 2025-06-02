@@ -38,6 +38,9 @@ Map {
                 },
                 methods: [
                     MethodDefinition {
+                        id: ItemId(
+                            18255359402714770757,
+                        ),
                         method_id: None,
                         visibility: Private,
                         name: Identifier {
