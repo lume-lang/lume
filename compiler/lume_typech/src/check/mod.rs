@@ -1,5 +1,4 @@
 use error_snippet::Result;
-use lume_hir::{FunctionId, MethodId, TypeId, TypeParameter};
 use lume_types::TypeRef;
 
 use crate::ThirBuildCtx;
@@ -7,83 +6,6 @@ use crate::ThirBuildCtx;
 pub(crate) mod errors;
 pub(crate) mod expressions;
 mod lookup;
-
-#[allow(dead_code)]
-#[derive(Debug, Copy, Clone)]
-enum ScopeKind {
-    Function(FunctionId),
-    Ty(TypeId),
-    Method(MethodId),
-}
-
-/// Represents some form of scope, which hold variables, type parameters, etc.
-///
-/// Each scope contains a reference to it's parent scope, so a graph can be
-/// constructed from a single Scope instance.
-#[allow(dead_code)]
-#[derive(Debug)]
-struct ItemScope<'a> {
-    kind: ScopeKind,
-
-    /// Defines the parent scope, if any.
-    parent: Option<&'a ItemScope<'a>>,
-
-    /// Defines the type parameters defined in the scope.
-    type_parameters: Vec<TypeParameter>,
-}
-
-impl<'a> ItemScope<'a> {
-    /// Creates a new [`ItemScope`], of kind [`ScopeKind::Function`] with
-    /// the given reference.
-    fn function(function: FunctionId) -> Self {
-        Self {
-            kind: ScopeKind::Function(function),
-            parent: None,
-            type_parameters: Vec::new(),
-        }
-    }
-
-    /// Creates a new [`ItemScope`], of kind [`ScopeKind::Ty`] with
-    /// the given reference.
-    fn ty(ty: TypeId) -> Self {
-        Self {
-            kind: ScopeKind::Ty(ty),
-            parent: None,
-            type_parameters: Vec::new(),
-        }
-    }
-
-    /// Creates a new [`ItemScope`], of kind [`ScopeKind::Method`] with
-    /// the given reference and parent scope.
-    fn method(parent: &'a ItemScope, method: MethodId) -> Self {
-        Self {
-            kind: ScopeKind::Method(method),
-            parent: Some(parent),
-            type_parameters: Vec::new(),
-        }
-    }
-
-    /// Get a flattened array of all [`TypeParameter`]s defined within
-    /// the current scope and all parent scopes.
-    fn flattened_type_params(&self) -> Vec<&TypeParameter> {
-        let mut current = self;
-        let mut type_params: Vec<&TypeParameter> = Vec::new();
-
-        for type_param in &self.type_parameters {
-            type_params.push(type_param);
-        }
-
-        while let Some(parent) = current.parent {
-            for type_param in &parent.type_parameters {
-                type_params.push(type_param);
-            }
-
-            current = parent;
-        }
-
-        type_params
-    }
-}
 
 /// Represents a single pass which will be executed when invoking
 /// the type checker on a given [`ThirBuildCtx`]-instance.

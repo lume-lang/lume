@@ -71,3 +71,13 @@ pub struct SuggestedFunction {
     pub function_name: PathSegment,
     pub reason: CallableCheckError,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find returning ancestor", code = "LM4216")]
+pub struct NoReturningAncestor {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected returning ancestor, found None")]
+    pub range: Range<usize>,
+}

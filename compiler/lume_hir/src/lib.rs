@@ -396,6 +396,14 @@ impl Def<'_> {
             Def::Expression(def) => DefId::Expression(def.id),
         }
     }
+
+    pub fn location(&self) -> &Location {
+        match self {
+            Def::Item(def) => def.location(),
+            Def::Statement(def) => &def.location,
+            Def::Expression(def) => &def.location,
+        }
+    }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]

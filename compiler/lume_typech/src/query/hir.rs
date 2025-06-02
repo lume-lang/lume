@@ -1,7 +1,10 @@
+use error_snippet::Result;
 use lume_query::cached_query;
 use lume_span::{DefId, ItemId};
 
 use crate::ThirBuildCtx;
+
+use super::diagnostics;
 
 /// An iterator over the elements of a linked [`DefId`]s.
 ///
@@ -134,5 +137,43 @@ impl ThirBuildCtx {
         }
 
         acc
+    }
+
+    /// Returns the expected return type within the context where the given [`DefId`] is
+    /// defined. Walks the ancestor tree until a function or method is found and returns it's
+    /// return type.
+    ///
+    /// # Errors
+    ///
+    /// If no matching ancestor is found, returns [`Err`].
+    pub(crate) fn hir_ctx_return_type(&self, def: DefId) -> Result<lume_types::TypeRef> {
+        for parent in self.hir_parent_iter(def) {
+            let lume_hir::Def::Item(item) = parent else {
+                continue;
+            };
+
+            let return_type = match &item {
+                lume_hir::Item::Method(method) => method.return_type.as_ref(),
+                lume_hir::Item::Function(func) => func.return_type.as_ref(),
+                _ => continue,
+            };
+
+            if let Some(ty) = &return_type {
+                let type_params = self.hir_avail_type_params(def);
+                let type_ref = self.mk_type_ref_generic(ty, &type_params)?;
+
+                return Ok(type_ref);
+            }
+
+            return Ok(lume_types::TypeRef::void());
+        }
+
+        let location = self.hir_expect_def(def).location().clone();
+
+        Err(diagnostics::NoReturningAncestor {
+            source: location.file,
+            range: location.index,
+        }
+        .into())
     }
 }
