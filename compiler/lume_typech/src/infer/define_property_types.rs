@@ -13,7 +13,7 @@ impl DefinePropertyTypes<'_> {
         let mut define = DefinePropertyTypes { ctx };
 
         for (_, symbol) in &hir.items {
-            if let lume_hir::Symbol::Type(ty) = symbol {
+            if let lume_hir::Item::Type(ty) = symbol {
                 define.define_type(ty)?;
             }
         }

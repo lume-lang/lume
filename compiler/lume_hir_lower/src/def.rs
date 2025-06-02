@@ -8,7 +8,7 @@ use lume_ast::{self as ast};
 use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
-    pub(super) fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<hir::Symbol> {
+    pub(super) fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<lume_hir::Item> {
         match expr {
             ast::TypeDefinition::Struct(t) => self.def_struct(*t),
             ast::TypeDefinition::Trait(t) => self.def_trait(*t),
@@ -17,7 +17,7 @@ impl LowerModule<'_> {
         }
     }
 
-    fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<hir::Symbol> {
+    fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         self.current_item = ItemId::from_name(&name);
 
@@ -35,7 +35,7 @@ impl LowerModule<'_> {
 
         self.self_type = None;
 
-        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Struct(Box::new(
+        Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Struct(Box::new(
             hir::StructDefinition {
                 id,
                 type_id: None,
@@ -55,6 +55,8 @@ impl LowerModule<'_> {
         let property_type = self.type_ref(expr.property_type)?;
         let location = self.location(expr.location);
 
+        let id = self.item_id(("__PROP", &name, &self.current_item));
+
         let default_value = if let Some(def) = expr.default_value {
             Some(self.expression(def)?)
         } else {
@@ -62,6 +64,7 @@ impl LowerModule<'_> {
         };
 
         Ok(hir::Property {
+            id,
             prop_id: None,
             name,
             visibility,
@@ -71,7 +74,7 @@ impl LowerModule<'_> {
         })
     }
 
-    pub(super) fn def_impl(&mut self, expr: ast::Implementation) -> Result<hir::Symbol> {
+    pub(super) fn def_impl(&mut self, expr: ast::Implementation) -> Result<lume_hir::Item> {
         let target = self.type_ref(*expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
@@ -89,7 +92,7 @@ impl LowerModule<'_> {
 
         self.self_type = None;
 
-        Ok(hir::Symbol::Impl(Box::new(hir::Implementation {
+        Ok(lume_hir::Item::Impl(Box::new(hir::Implementation {
             id,
             impl_id: None,
             target: Box::new(target),
@@ -107,6 +110,8 @@ impl LowerModule<'_> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
+        let id = self.item_id((&name, &self.current_item));
+
         let block = if expr.external {
             None
         } else {
@@ -114,6 +119,7 @@ impl LowerModule<'_> {
         };
 
         Ok(hir::MethodDefinition {
+            id,
             method_id: None,
             name,
             visibility,
@@ -125,7 +131,7 @@ impl LowerModule<'_> {
         })
     }
 
-    fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<hir::Symbol> {
+    fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
@@ -141,7 +147,7 @@ impl LowerModule<'_> {
 
         self.self_type = None;
 
-        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
+        Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
                 id,
                 type_id: None,
@@ -161,9 +167,11 @@ impl LowerModule<'_> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
+        let id = self.item_id((&name, &self.current_item));
         let block = expr.block.map(|b| self.isolated_block(b));
 
         Ok(hir::TraitMethodDefinition {
+            id,
             method_id: None,
             name,
             visibility,
@@ -175,7 +183,7 @@ impl LowerModule<'_> {
         })
     }
 
-    fn def_enum(&self, expr: ast::EnumDefinition) -> Result<hir::Symbol> {
+    fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -186,7 +194,7 @@ impl LowerModule<'_> {
             .map(|c| self.def_enum_case(c))
             .collect::<Result<Vec<hir::EnumDefinitionCase>>>()?;
 
-        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
+        Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
             hir::EnumDefinition {
                 id,
                 type_id: None,
@@ -216,13 +224,13 @@ impl LowerModule<'_> {
         Ok(symbol)
     }
 
-    fn def_alias(&self, expr: ast::AliasDefinition) -> Result<hir::Symbol> {
+    fn def_alias(&self, expr: ast::AliasDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         let definition = self.type_ref(*expr.definition)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
-        Ok(hir::Symbol::Type(Box::new(hir::TypeDefinition::Alias(Box::new(
+        Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Alias(Box::new(
             hir::AliasDefinition {
                 id,
                 type_id: None,
@@ -233,7 +241,7 @@ impl LowerModule<'_> {
         )))))
     }
 
-    pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<hir::Symbol> {
+    pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<lume_hir::Item> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.symbol_name(expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -250,7 +258,7 @@ impl LowerModule<'_> {
             Some(self.isolated_block(expr.block))
         };
 
-        Ok(hir::Symbol::Function(Box::new(hir::FunctionDefinition {
+        Ok(lume_hir::Item::Function(Box::new(hir::FunctionDefinition {
             id,
             func_id: None,
             visibility,
@@ -309,7 +317,7 @@ impl LowerModule<'_> {
         })
     }
 
-    pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<hir::Symbol> {
+    pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
 
@@ -321,7 +329,7 @@ impl LowerModule<'_> {
         self.current_item = ItemId::from_name(&[&name.name, &target.name]);
         let id = self.item_id(&name);
 
-        Ok(hir::Symbol::Use(Box::new(hir::TraitImplementation {
+        Ok(lume_hir::Item::Use(Box::new(hir::TraitImplementation {
             id,
             use_id: None,
             name: Box::new(name),
@@ -348,9 +356,12 @@ impl LowerModule<'_> {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let block = self.isolated_block(expr.block);
+
+        let id = self.item_id((&name, &self.current_item));
         let location = self.location(expr.location);
 
         Ok(hir::TraitMethodImplementation {
+            id,
             method_id: None,
             visibility,
             name,

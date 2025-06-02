@@ -14,7 +14,7 @@ impl DefineImplementationMethods<'_> {
         let mut define = DefineImplementationMethods { ctx };
 
         for (_, symbol) in &mut hir.items {
-            if let lume_hir::Symbol::Impl(t) = symbol {
+            if let lume_hir::Item::Impl(t) = symbol {
                 define.define_impl(t)?;
             }
         }

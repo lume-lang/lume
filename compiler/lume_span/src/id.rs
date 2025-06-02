@@ -178,7 +178,7 @@ impl LocalId {
 ///
 /// [`StatementId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`StatementId::def`].
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StatementId {
     pub def: ItemId,
     pub index: Idx,
@@ -217,7 +217,7 @@ impl StatementId {
 ///
 /// [`ExpressionId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`ExpressionId::def`].
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ExpressionId {
     pub def: ItemId,
     pub index: Idx,
@@ -250,4 +250,11 @@ impl ExpressionId {
             index: index.into(),
         }
     }
+}
+
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DefId {
+    Item(ItemId),
+    Statement(StatementId),
+    Expression(ExpressionId),
 }

@@ -1,8 +1,12 @@
+#![feature(map_try_insert)]
+
+use std::collections::BTreeMap;
+
 use crate::query::CallReference;
 use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
 use lume_hir::{SymbolName, TypeParameter};
-use lume_span::{ExpressionId, StatementId};
+use lume_span::{DefId, ExpressionId};
 use lume_types::{TypeDatabaseContext, TypeRef};
 
 mod check;
@@ -22,8 +26,8 @@ pub struct ThirBuildCtx {
     /// Defines the diagnostics handler.
     dcx: DiagCtxHandle,
 
-    /// Defines a mapping between statements and their resolved types.
-    pub resolved_stmts: IndexMap<StatementId, TypeRef>,
+    /// Defines a mapping any single node and their parent node.
+    pub ancestry: BTreeMap<DefId, DefId>,
 
     /// Defines a mapping between calls and the corresponding symbol being called.
     pub resolved_calls: IndexMap<ExpressionId, CallReference>,
@@ -37,7 +41,7 @@ impl ThirBuildCtx {
             tcx: TypeDatabaseContext::default(),
             hir,
             dcx,
-            resolved_stmts: IndexMap::new(),
+            ancestry: BTreeMap::new(),
             resolved_calls: IndexMap::new(),
         }
     }
@@ -55,23 +59,5 @@ impl ThirBuildCtx {
     /// Retrieves the diagnostics handler from the build context.
     pub fn dcx(&mut self) -> &mut DiagCtxHandle {
         &mut self.dcx
-    }
-
-    /// Gets the HIR expression with the given ID within the source file.
-    #[allow(clippy::unused_self)]
-    pub(crate) fn hir_stmt(&self, id: StatementId) -> &lume_hir::Statement {
-        match self.hir.statements().get(&id) {
-            Some(expr) => expr,
-            None => panic!("no statement with given ID found: {id:?}"),
-        }
-    }
-
-    /// Gets the HIR expression with the given ID within the source file.
-    #[allow(clippy::unused_self)]
-    pub(crate) fn hir_expr(&self, id: ExpressionId) -> &lume_hir::Expression {
-        match self.hir.expressions().get(&id) {
-            Some(expr) => expr,
-            None => panic!("no expression with given ID found: {id:?}"),
-        }
     }
 }

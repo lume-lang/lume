@@ -5,8 +5,8 @@ use crate::ThirBuildCtx;
 pub(super) fn define_impl(ctx: &mut ThirBuildCtx) {
     let mut hir = std::mem::take(&mut ctx.hir);
 
-    for (_, symbol) in &mut hir.items {
-        if let lume_hir::Symbol::Impl(implementation) = symbol {
+    for (_, item) in &mut hir.items {
+        if let lume_hir::Item::Impl(implementation) = item {
             let target = implementation.target.name.clone();
             let impl_id = ctx.tcx_mut().impl_alloc(target);
 

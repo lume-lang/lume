@@ -5,6 +5,7 @@ use lume_query::cached_query;
 use lume_types::{Function, Method};
 
 mod diagnostics;
+pub(crate) mod hir;
 pub(crate) mod lookup;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -58,9 +59,9 @@ impl ThirBuildCtx {
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
-    #[cached_query(result, key = "(def)")]
+    #[cached_query(result)]
     pub(crate) fn type_of(&self, def: ExpressionId) -> Result<TypeRef> {
-        self.type_of_expr(self.hir_expr(def))
+        self.type_of_expr(self.hir_expect_expr(def))
     }
 
     /// Returns the *type* of the given [`Expression`].
@@ -70,7 +71,7 @@ impl ThirBuildCtx {
     /// This method will panic if no definition with the given ID exists
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
-    #[cached_query(result, key = "(expr)")]
+    #[cached_query(result)]
     pub(crate) fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
@@ -111,7 +112,7 @@ impl ThirBuildCtx {
     }
 
     /// Attempts to get the type of a literal expression.
-    #[cached_query(key = "(lit)")]
+    #[cached_query]
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
         let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
@@ -135,6 +136,39 @@ impl ThirBuildCtx {
         };
 
         TypeRef::new(ty.id)
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Statement`].
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result)]
+    pub(crate) fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
+        match &stmt.kind {
+            lume_hir::StatementKind::Variable(var) => self.type_of_vardecl(var),
+            _ => Ok(TypeRef::void()),
+        }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::VariableDeclaration`].
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result)]
+    pub(crate) fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
+        let type_params = self.hir_avail_type_params(DefId::Statement(stmt.id));
+
+        if let Some(declared_type) = &stmt.declared_type {
+            self.mk_type_ref_generic(declared_type, &type_params)
+        } else {
+            self.type_of_expr(&stmt.value)
+        }
     }
 
     /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].

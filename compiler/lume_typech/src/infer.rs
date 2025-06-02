@@ -10,6 +10,7 @@ mod define_impl_methods;
 mod define_method_bodies;
 mod define_properties;
 mod define_property_types;
+mod define_scopes;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
@@ -59,6 +60,7 @@ impl ThirBuildCtx {
         infer::define_type_constraints::DefineTypeConstraints::run_all(self)?;
         infer::define_property_types::DefinePropertyTypes::run_all(self)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self)?;
+        infer::define_scopes::DefineScopes::run_all(self)?;
 
         self.infer_calls()?;
 
@@ -126,7 +128,7 @@ impl ThirBuildCtx {
 
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
     pub(crate) fn hir_expect_var_stmt(&self, id: StatementId) -> &lume_hir::VariableDeclaration {
-        let stmt = self.hir_stmt(id);
+        let stmt = self.hir_expect_stmt(id);
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(decl) => decl,

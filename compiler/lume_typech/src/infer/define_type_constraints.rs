@@ -15,10 +15,10 @@ impl DefineTypeConstraints<'_> {
 
         for (_, symbol) in &hir.items {
             match symbol {
-                lume_hir::Symbol::Type(t) => define.define_type(t)?,
-                lume_hir::Symbol::Impl(i) => define.define_impl(i)?,
-                lume_hir::Symbol::Function(f) => define.define_function(f)?,
-                lume_hir::Symbol::Use(_) => (),
+                lume_hir::Item::Type(t) => define.define_type(t)?,
+                lume_hir::Item::Impl(i) => define.define_impl(i)?,
+                lume_hir::Item::Function(f) => define.define_function(f)?,
+                _ => (),
             }
         }
 

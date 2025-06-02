@@ -399,7 +399,7 @@ impl<'a> LowerModule<'a> {
         // Ensure that the ID doesn't overwrite an existing entry.
         debug_assert!(!self.map.items.contains_key(&id));
 
-        self.map.items.insert(id, hir_ast.clone());
+        self.map.items.insert(id, hir_ast);
 
         Ok(())
     }

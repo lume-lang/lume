@@ -1,5 +1,5 @@
 use lume_macros::Node;
-use lume_span::{ExpressionId, ItemId, Location, PackageId, StatementId};
+use lume_span::{DefId, ExpressionId, ItemId, Location, PackageId, StatementId};
 
 pub mod map;
 pub mod symbols;
@@ -339,6 +339,66 @@ pub struct Block {
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
+pub enum Item {
+    Function(Box<FunctionDefinition>),
+    Type(Box<TypeDefinition>),
+    Use(Box<TraitImplementation>),
+    Impl(Box<Implementation>),
+    Property(Box<Property>),
+    Method(Box<MethodDefinition>),
+    TraitMethodDef(Box<TraitMethodDefinition>),
+    TraitMethodImpl(Box<TraitMethodImplementation>),
+}
+
+impl Item {
+    pub fn id(&self) -> ItemId {
+        match self {
+            Item::Function(symbol) => symbol.id,
+            Item::Type(symbol) => symbol.id(),
+            Item::Use(symbol) => symbol.id,
+            Item::Impl(symbol) => symbol.id,
+            Item::Property(symbol) => symbol.id,
+            Item::Method(symbol) => symbol.id,
+            Item::TraitMethodDef(symbol) => symbol.id,
+            Item::TraitMethodImpl(symbol) => symbol.id,
+        }
+    }
+
+    pub fn type_parameters(&self) -> &[TypeParameter] {
+        match self {
+            Item::Function(symbol) => &symbol.type_parameters,
+            Item::Type(symbol) => match &**symbol {
+                TypeDefinition::Struct(s) => &s.type_parameters,
+                TypeDefinition::Trait(t) => &t.type_parameters,
+                _ => &[],
+            },
+            Item::Impl(symbol) => &symbol.type_parameters,
+            Item::Method(symbol) => &symbol.type_parameters,
+            Item::TraitMethodDef(symbol) => &symbol.type_parameters,
+            Item::TraitMethodImpl(symbol) => &symbol.type_parameters,
+            _ => &[],
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Def<'a> {
+    Item(&'a Item),
+    Statement(&'a Statement),
+    Expression(&'a Expression),
+}
+
+impl Def<'_> {
+    pub fn id(&self) -> DefId {
+        match self {
+            Def::Item(def) => DefId::Item(def.id()),
+            Def::Statement(def) => DefId::Statement(def.id),
+            Def::Expression(def) => DefId::Expression(def.id),
+        }
+    }
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
 pub enum Symbol {
     Function(Box<FunctionDefinition>),
     Type(Box<TypeDefinition>),
@@ -538,6 +598,7 @@ pub enum StructMember {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Property {
+    pub id: ItemId,
     pub prop_id: Option<PropertyId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -548,6 +609,7 @@ pub struct Property {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
+    pub id: ItemId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -588,6 +650,7 @@ impl WithTypeParameters for TraitDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
+    pub id: ItemId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -622,6 +685,7 @@ impl TraitImplementation {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
+    pub id: ItemId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: SymbolName,
