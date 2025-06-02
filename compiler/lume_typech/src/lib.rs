@@ -3,11 +3,12 @@
 use std::collections::BTreeMap;
 
 use crate::query::CallReference;
+use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
 use lume_hir::{SymbolName, TypeParameter};
 use lume_span::{DefId, ExpressionId};
-use lume_types::{TypeDatabaseContext, TypeRef};
+use lume_types::{NamedTypeRef, TypeDatabaseContext, TypeRef};
 
 mod check;
 mod errors;
@@ -59,5 +60,22 @@ impl ThirBuildCtx {
     /// Retrieves the diagnostics handler from the build context.
     pub fn dcx(&mut self) -> &mut DiagCtxHandle {
         &mut self.dcx
+    }
+
+    /// Creates a new [`NamedTypeRef`] from the given [`TypeRef`].
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any types referenced by the given [`TypeRef`], or any child
+    /// instances, are missing from the type context.
+    pub fn new_named_type(&self, type_ref: &TypeRef) -> Result<NamedTypeRef> {
+        let name = self.type_ref_name(type_ref)?.as_str().to_string();
+        let type_arguments = type_ref
+            .type_arguments
+            .iter()
+            .map(|arg| self.new_named_type(arg))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(NamedTypeRef { name, type_arguments })
     }
 }
