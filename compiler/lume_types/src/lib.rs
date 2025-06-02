@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use error_snippet::Result;
 use indexmap::IndexMap;
 
@@ -5,7 +7,7 @@ use crate::errors::*;
 use lume_hir::{
     FunctionId, ImplId, MethodId, PathSegment, PropertyId, SymbolName, TypeId, TypeParameterId, UseId, Visibility,
 };
-use lume_span::ItemId;
+use lume_span::{ItemId, Location};
 
 mod errors;
 
@@ -388,36 +390,93 @@ impl Type {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct TypeRef {
     pub instance_of: TypeId,
     pub type_arguments: Vec<TypeRef>,
+    pub location: Location,
 }
 
 impl TypeRef {
     /// Creates a new [`TypeRef`] with the given instance.
-    pub fn new(instance: TypeId) -> Self {
+    pub fn new(instance: TypeId, location: Location) -> Self {
         Self {
             instance_of: instance,
             type_arguments: vec![],
+            location,
         }
     }
 
     /// Creates a new [`TypeRef`] with an inner type of [`TypeKindRef::Void`].
-    pub const fn void() -> Self {
+    pub fn void() -> Self {
         Self {
             instance_of: TYPEREF_VOID_ID,
             type_arguments: vec![],
+            location: Location::empty(),
         }
     }
 
     /// Creates a new [`TypeRef`] with an invalid inner type, meant to
     /// be used before any types are actually resolved.
-    pub const fn unknown() -> Self {
+    pub fn unknown() -> Self {
         Self {
             instance_of: TYPEREF_UNKNOWN_ID,
             type_arguments: vec![],
+            location: Location::empty(),
         }
+    }
+}
+
+impl PartialEq for TypeRef {
+    fn eq(&self, other: &Self) -> bool {
+        self.instance_of == other.instance_of && self.type_arguments == other.type_arguments
+    }
+}
+
+impl Eq for TypeRef {}
+
+impl std::hash::Hash for TypeRef {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.instance_of.hash(state);
+        self.type_arguments.hash(state);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct NamedTypeRef {
+    pub name: String,
+    pub type_arguments: Vec<NamedTypeRef>,
+}
+
+impl NamedTypeRef {
+    /// Creates a new [`NamedTypeRef`] with the given name.
+    pub fn new(name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            type_arguments: vec![],
+        }
+    }
+}
+
+impl std::fmt::Display for NamedTypeRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.name)?;
+
+        if !self.type_arguments.is_empty() {
+            f.write_char('<')?;
+
+            for (index, type_arg) in self.type_arguments.iter().enumerate() {
+                type_arg.fmt(f)?;
+
+                if index < self.type_arguments.len() - 1 {
+                    f.write_str(", ")?;
+                }
+            }
+
+            f.write_char('>')?;
+        }
+
+        Ok(())
     }
 }
 

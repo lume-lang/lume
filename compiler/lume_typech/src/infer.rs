@@ -154,7 +154,7 @@ impl ThirBuildCtx {
             return Err(self.missing_type_err(ty));
         };
 
-        let mut type_ref = TypeRef::new(found_type);
+        let mut type_ref = TypeRef::new(found_type, ty.location.clone());
 
         for type_param in &ty.type_params {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
@@ -186,6 +186,8 @@ impl ThirBuildCtx {
             return Ok(None);
         };
 
+        let location = name.location.clone();
+
         if let PathSegment::Typed(_, args) = &name.name {
             let args = args
                 .iter()
@@ -195,9 +197,10 @@ impl ThirBuildCtx {
             Ok(Some(TypeRef {
                 instance_of: ty.id,
                 type_arguments: args,
+                location,
             }))
         } else {
-            Ok(Some(TypeRef::new(ty.id)))
+            Ok(Some(TypeRef::new(ty.id, location)))
         }
     }
 

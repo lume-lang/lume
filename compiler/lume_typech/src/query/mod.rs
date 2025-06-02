@@ -135,7 +135,7 @@ impl ThirBuildCtx {
             lume_hir::LiteralKind::Boolean(_) => self.tcx().find_type(&SymbolName::boolean()).unwrap(),
         };
 
-        TypeRef::new(ty.id)
+        TypeRef::new(ty.id, lit.location.clone())
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
