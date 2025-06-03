@@ -1,5 +1,6 @@
 pub(crate) mod commands;
 pub(crate) mod error;
+mod tracing;
 
 use std::env;
 
@@ -31,6 +32,7 @@ fn run() -> Result<()> {
     opts.parsing_style(ParsingStyle::StopAtFirstFree);
     opts.optflag("h", "help", "Shows this help screen");
     opts.optflag("v", "version", "Prints the current compiler version");
+    opts.optflag("", "trace", "Enables tracing of the compiler");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(matches) => matches,
@@ -49,6 +51,10 @@ fn run() -> Result<()> {
     if matches.opt_present("v") {
         println!("{}", env!("CARGO_PKG_VERSION"));
         std::process::exit(0)
+    }
+
+    if matches.opt_present("trace") {
+        tracing::register_default_tracer();
     }
 
     match matches.free.first().map(String::as_str) {
