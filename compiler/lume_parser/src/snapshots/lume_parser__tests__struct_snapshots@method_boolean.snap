@@ -1,0 +1,97 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"\n        impl Foo {\n            fn empty?() -> Boolean { }\n        }\")"
+---
+[
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        9..13,
+                    ),
+                },
+            ),
+            name: Named(
+                NamedType {
+                    name: Path {
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Foo",
+                                location: Location(
+                                    14..17,
+                                ),
+                            },
+                            type_arguments: [],
+                            location: Location(
+                                14..17,
+                            ),
+                        },
+                        location: Location(
+                            14..17,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Private(
+                        Private {
+                            location: Location(
+                                32..34,
+                            ),
+                        },
+                    ),
+                    external: false,
+                    name: Identifier {
+                        name: "empty?",
+                        location: Location(
+                            35..41,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Boolean",
+                                            location: Location(
+                                                47..54,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            47..54,
+                                        ),
+                                    },
+                                    location: Location(
+                                        47..54,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            55..58,
+                        ),
+                    },
+                    location: Location(
+                        32..58,
+                    ),
+                    documentation: None,
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                9..68,
+            ),
+        },
+    ),
+]

@@ -229,7 +229,7 @@ impl Parser {
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_named_expression(&mut self) -> Result<Expression> {
-        let identifier = self.parse_identifier()?;
+        let identifier = self.parse_callable_name()?;
 
         match self.token().kind {
             // If the next token is an opening parenthesis, it's a method invocation
@@ -290,26 +290,26 @@ impl Parser {
         // Consume the dot token
         self.consume(TokenKind::Dot)?;
 
-        let name = self.consume(TokenKind::Identifier)?;
+        let name = self.parse_callable_name()?;
 
         // If the next token is an opening parenthesis, it's a method invocation
         if self.peek(TokenKind::LeftParen) || self.check(IDENTIFIER_SEPARATOR) {
             tracing::trace!("member expr is method invocation");
 
             let identifier = Identifier {
-                name: name.value.unwrap(),
-                location: name.index.into(),
+                name: name.name,
+                location: name.location,
             };
 
             return self.parse_call(Some(target), identifier);
         }
 
         let start = target.location().start();
-        let end = name.index.end;
+        let end = name.location.end();
 
         let expression = Expression::Member(Box::new(Member {
             callee: target,
-            name: name.value.unwrap(),
+            name: name.name,
             location: (start..end).into(),
         }));
 

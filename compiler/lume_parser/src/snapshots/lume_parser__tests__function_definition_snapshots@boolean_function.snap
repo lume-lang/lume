@@ -1,0 +1,37 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"fn empty?() {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "empty?",
+                location: Location(
+                    3..9,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: None,
+            block: Block {
+                statements: [],
+                location: Location(
+                    12..14,
+                ),
+            },
+            location: Location(
+                0..14,
+            ),
+            documentation: None,
+        },
+    ),
+]

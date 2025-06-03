@@ -558,10 +558,34 @@ impl Parser {
         })
     }
 
+    /// Parses the next token as an identifier, optionally with an suffixed question mark.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    fn parse_callable_name(&mut self) -> Result<Identifier> {
+        let mut identifier = self.parse_identifier()?;
+
+        if self.check(TokenKind::Question) {
+            identifier.name.push('?');
+            identifier.location.0.end += 1;
+        }
+
+        Ok(identifier)
+    }
+
     /// Parses the next token as an identifier. If the parsing fails, return `Err(err)`.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
         match self.parse_identifier() {
+            Ok(name) => Ok(name),
+            Err(_) => Err(err),
+        }
+    }
+
+    /// Parses the next token as an identifier, optionally with an suffixed question mark.
+    ///
+    /// If the parsing fails, return `Err(err)`.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn parse_callable_name_or_err(&mut self, err: Error) -> Result<Identifier> {
+        match self.parse_callable_name() {
             Ok(name) => Ok(name),
             Err(_) => Err(err),
         }

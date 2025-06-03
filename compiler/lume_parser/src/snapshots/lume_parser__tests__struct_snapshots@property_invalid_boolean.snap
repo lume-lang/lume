@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"\n        struct Foo {\n            x?: Int32 = 0;\n        }\")"
+---
+UnexpectedType {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "\n        struct Foo {\n            x?: Int32 = 0;\n        }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 35..36,
+    actual: ?,
+}

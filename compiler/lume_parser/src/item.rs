@@ -110,7 +110,7 @@ impl Parser {
         self.expect_fn()?;
 
         let external = self.check_external();
-        let name = self.parse_ident_or_err(err!(self, ExpectedFunctionName))?;
+        let name = self.parse_callable_name_or_err(err!(self, ExpectedFunctionName))?;
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
@@ -301,12 +301,12 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_method_name(&mut self) -> Result<Identifier> {
-        match self.consume_any() {
+        match self.token() {
             // Allow actual identifiers.
-            t if t.kind == TokenKind::Identifier => Ok(t.into()),
+            t if t.kind == TokenKind::Identifier => self.parse_callable_name_or_err(err!(self, ExpectedFunctionName)),
 
             // As well as operator tokens, so we can do operator overloading.
-            t if t.kind.is_operator() => Ok(t.into()),
+            t if t.kind.is_operator() => Ok(self.consume_any().into()),
 
             _ => Err(err!(self, ExpectedFunctionName)),
         }
@@ -342,7 +342,7 @@ impl Parser {
         let visibility = self.parse_visibility()?;
         let start = self.expect_fn()?.start();
 
-        let Ok(name) = self.parse_identifier() else {
+        let Ok(name) = self.parse_callable_name() else {
             return Err(err!(self, ExpectedFunctionName));
         };
 
@@ -474,7 +474,7 @@ impl Parser {
 
         let start = visibility.location().start();
 
-        let Ok(name) = self.parse_identifier() else {
+        let Ok(name) = self.parse_callable_name() else {
             return Err(err!(self, ExpectedFunctionName));
         };
 

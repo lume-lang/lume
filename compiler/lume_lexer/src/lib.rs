@@ -11,7 +11,7 @@ mod errors;
 pub const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
 
 const SYMBOLS: &[char] = &[
-    '+', '-', '*', '/', '=', '!', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
+    '+', '-', '*', '/', '=', '!', '?', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
 ];
 
 pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
@@ -101,6 +101,7 @@ pub enum TokenKind {
     PathSeparator,
     Pipe,
     Pub,
+    Question,
     Return,
     RightBracket,
     RightCurly,
@@ -254,6 +255,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::PathSeparator => "::",
             TokenKind::Pipe => "|",
             TokenKind::Pub => "pub",
+            TokenKind::Question => "?",
             TokenKind::Return => "return",
             TokenKind::RightBracket => "]",
             TokenKind::RightCurly => "}",
@@ -640,11 +642,7 @@ impl Lexer {
     /// Parses an identifier token at the current cursor position.
     #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn identifier(&mut self) -> Token {
-        let mut content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
-
-        if self.current_char() == Some('?') {
-            content.push(self.consume());
-        }
+        let content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
 
         match content.as_str() {
             "as" => Token::empty(TokenKind::As),
@@ -746,6 +744,7 @@ impl Lexer {
                 '<' => return Ok((TokenKind::Less, 1)),
                 '*' => return Ok((TokenKind::Mul, 1)),
                 '|' => return Ok((TokenKind::Pipe, 1)),
+                '?' => return Ok((TokenKind::Question, 1)),
                 ']' => return Ok((TokenKind::RightBracket, 1)),
                 '}' => return Ok((TokenKind::RightCurly, 1)),
                 ')' => return Ok((TokenKind::RightParen, 1)),
@@ -1169,8 +1168,6 @@ mod tests {
         assert_token!("_", TokenKind::Identifier, Some("_"), 0, 1);
         assert_token!("_1", TokenKind::Identifier, Some("_1"), 0, 2);
         assert_token!("_test1", TokenKind::Identifier, Some("_test1"), 0, 6);
-        assert_token!("foo?", TokenKind::Identifier, Some("foo?"), 0, 4);
-        assert_token!("_?", TokenKind::Identifier, Some("_?"), 0, 2);
     }
 
     #[test]

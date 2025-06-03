@@ -1,0 +1,109 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -> Boolean { }\n        }\")"
+---
+[
+    Use(
+        UseTrait {
+            name: Named(
+                NamedType {
+                    name: Path {
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Zero",
+                                location: Location(
+                                    13..17,
+                                ),
+                            },
+                            type_arguments: [],
+                            location: Location(
+                                13..17,
+                            ),
+                        },
+                        location: Location(
+                            13..17,
+                        ),
+                    },
+                },
+            ),
+            target: Named(
+                NamedType {
+                    name: Path {
+                        root: [],
+                        name: PathSegment {
+                            name: Identifier {
+                                name: "Int32",
+                                location: Location(
+                                    21..26,
+                                ),
+                            },
+                            type_arguments: [],
+                            location: Location(
+                                21..26,
+                            ),
+                        },
+                        location: Location(
+                            21..26,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public(
+                        Public {
+                            location: Location(
+                                41..44,
+                            ),
+                        },
+                    ),
+                    name: Identifier {
+                        name: "zero?",
+                        location: Location(
+                            48..53,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Some(
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: PathSegment {
+                                        name: Identifier {
+                                            name: "Boolean",
+                                            location: Location(
+                                                59..66,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            59..66,
+                                        ),
+                                    },
+                                    location: Location(
+                                        59..66,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            67..70,
+                        ),
+                    },
+                    location: Location(
+                        41..70,
+                    ),
+                },
+            ],
+            location: Location(
+                9..80,
+            ),
+        },
+    ),
+]
