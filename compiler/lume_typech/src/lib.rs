@@ -4,7 +4,6 @@ use std::collections::BTreeMap;
 
 use crate::query::CallReference;
 use error_snippet::Result;
-use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
 use lume_hir::{SymbolName, TypeParameter};
 use lume_span::{DefId, ExpressionId};
@@ -29,9 +28,6 @@ pub struct ThirBuildCtx {
 
     /// Defines a mapping any single node and their parent node.
     pub ancestry: BTreeMap<DefId, DefId>,
-
-    /// Defines a mapping between calls and the corresponding symbol being called.
-    pub resolved_calls: IndexMap<ExpressionId, CallReference>,
 }
 
 #[allow(dead_code)]
@@ -43,7 +39,6 @@ impl ThirBuildCtx {
             hir,
             dcx,
             ancestry: BTreeMap::new(),
-            resolved_calls: IndexMap::new(),
         }
     }
 

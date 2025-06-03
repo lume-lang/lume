@@ -1,8 +1,7 @@
+use crate::*;
 use error_snippet::Result;
 use lume_hir::{self, PathSegment, TypeId};
 use lume_span::StatementId;
-
-use crate::{query::CallReference, *};
 
 mod define_functions;
 mod define_impl;
@@ -68,68 +67,6 @@ impl ThirBuildCtx {
         infer::define_property_types::DefinePropertyTypes::run_all(self)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self)?;
         infer::define_scopes::DefineScopes::run_all(self)?;
-
-        self.infer_calls()?;
-
-        Ok(())
-    }
-
-    /// Attempt to infer the referenced callable of all call expressions in the current module.
-    ///
-    /// The resolved references are stored in the `resolved_calls` field of the `ThirBuildCtx`, which can be
-    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn infer_calls(&mut self) -> Result<()> {
-        for (id, expr) in self.hir.expressions() {
-            let reference: CallReference = match &expr.kind {
-                lume_hir::ExpressionKind::InstanceCall(call) => self.lookup_callable_instance(call)?.into(),
-                lume_hir::ExpressionKind::StaticCall(call) => self.lookup_callable_static(call)?.into(),
-                _ => continue,
-            };
-
-            self.resolved_calls.insert(*id, reference);
-        }
-
-        // After all calls have been resolved, we'll update the amount type parameters
-        // in the call expressions, so
-        for (id, reference) in &mut self.resolved_calls {
-            let location = self.hir.expression(*id).unwrap().location.clone();
-
-            let type_params = match *reference {
-                CallReference::Method(id) => &self.tcx.method(id).unwrap().type_parameters,
-                CallReference::Function(id) => &self.tcx.function(id).unwrap().type_parameters,
-            };
-
-            let type_args = match &mut self.hir.expressions_mut().get_mut(id).unwrap().kind {
-                lume_hir::ExpressionKind::InstanceCall(call) => &mut call.type_arguments,
-                lume_hir::ExpressionKind::StaticCall(call) => &mut call.type_arguments,
-                kind => panic!("BUG: unexpected expression kind: {kind:?}"),
-            };
-
-            // If no type arguments are provided, we are expected to infer all the of them.
-            //
-            // However, if at least one is provided, but it doesn't match the number of type parameters,
-            // we raise an error, so the user doesn't invoke the wrong function / method.
-            if !type_args.is_empty() && type_args.len() != type_params.len() {
-                return Err(crate::errors::TypeArgumentMismatch {
-                    source: location.file.clone(),
-                    range: location.index.clone(),
-                    expected: type_params.len(),
-                    found: type_args.len(),
-                }
-                .into());
-            }
-
-            // If the type arguments are meant to be inferred, match the number of type arguments
-            // with the number of type parameters, using `Implicit` type arguments.
-            if type_args.is_empty() {
-                for _ in 0..type_params.len() {
-                    type_args.push(lume_hir::TypeArgument::Implicit {
-                        location: lume_span::Location::empty(),
-                    });
-                }
-            }
-        }
 
         Ok(())
     }
