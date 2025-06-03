@@ -71,6 +71,7 @@ impl Driver {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[tracing::instrument(skip_all, fields(project = %self.project.path().display()), err)]
     pub fn build(&mut self) -> Result<()> {
         for package in self.project.packages_mut() {
             let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
@@ -110,6 +111,7 @@ impl<'a> Compiler<'a> {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[tracing::instrument(skip_all, fields(package = %package.name), err)]
     pub fn build_package(package: &'a Package, options: &'a Options, dcx: DiagCtx) -> Result<()> {
         let mut compiler = Self {
             package,
@@ -129,12 +131,14 @@ impl<'a> Compiler<'a> {
     }
 
     /// Parses all the source files within the current [`Package`] into HIR.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
         self.dcx
             .with(|dcx| lume_hir_lower::LowerState::lower(self.package, &mut self.source_map, dcx))
     }
 
     /// Type checks all the given source files.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
         let mut thir_ctx = self.dcx.with(|handle| lume_typech::ThirBuildCtx::new(hir, handle));
 
@@ -148,7 +152,7 @@ impl<'a> Compiler<'a> {
     }
 
     /// Analyzes all the modules within the given state object.
-    #[expect(clippy::unnecessary_wraps, reason = "unimplemented")]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn analyze(&mut self, thir: &ThirBuildCtx) -> Result<()> {
         if self.options.print_type_context {
             println!("{:#?}", thir.tcx());
@@ -158,13 +162,13 @@ impl<'a> Compiler<'a> {
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
-    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self) -> Result<()> {
         Ok(())
     }
 
     /// Links all the modules within the given state object into a single executable or library.
-    #[expect(clippy::unnecessary_wraps, clippy::unused_self, reason = "unimplemented")]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn link(&mut self) -> Result<()> {
         Ok(())
     }

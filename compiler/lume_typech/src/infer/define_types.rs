@@ -8,6 +8,7 @@ pub(super) struct DefineTypes<'a> {
 }
 
 impl DefineTypes<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineTypes::run_all", skip_all)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) {
         let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineTypes { ctx };

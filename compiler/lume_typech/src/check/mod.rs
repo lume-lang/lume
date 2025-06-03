@@ -23,6 +23,13 @@ impl ThirBuildCtx {
     ///
     /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
     /// etc, or when expected items cannot be found within the context.
+    #[tracing::instrument(
+        level = "INFO",
+        name = "lume_typech::ThirBuildCtx::typecheck",
+        parent = None,
+        skip(self),
+        err
+    )]
     pub fn typecheck(&mut self) -> Result<()> {
         expressions::Expressions::run(self)?;
 
@@ -34,6 +41,7 @@ impl ThirBuildCtx {
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<bool> {
         // If the two given types are exactly the same, both underlying instance and type arguments,
         // we can be sure they're compatible.

@@ -375,6 +375,7 @@ dependencies = [
  "lume_hir_lower",
  "lume_span",
  "lume_typech",
+ "tracing",
 ]
 
 [[package]]
@@ -414,6 +415,7 @@ dependencies = [
  "lume_hir",
  "lume_parser",
  "lume_span",
+ "tracing",
 ]
 
 [[package]]
@@ -496,6 +498,7 @@ dependencies = [
  "lume_query",
  "lume_span",
  "lume_types",
+ "tracing",
 ]
 
 [[package]]

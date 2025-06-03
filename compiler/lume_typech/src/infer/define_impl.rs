@@ -2,6 +2,7 @@ use lume_hir::{self};
 
 use crate::ThirBuildCtx;
 
+#[tracing::instrument(level = "DEBUG", name = "define_impl", skip_all)]
 pub(super) fn define_impl(ctx: &mut ThirBuildCtx) {
     let mut hir = std::mem::take(&mut ctx.hir);
 

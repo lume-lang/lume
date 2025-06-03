@@ -11,6 +11,7 @@ impl Parser {
     ///
     /// Returns `Err` if the parser hits an unexpected token.
     #[allow(dead_code)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn parse_statements(&mut self) -> Result<Vec<Statement>> {
         let mut statements = Vec::new();
 
@@ -22,6 +23,7 @@ impl Parser {
     }
 
     /// Parses some abstract statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_statement(&mut self) -> Result<Statement> {
         match self.token().kind {
             TokenKind::Let => self.parse_variable_declaration(),
@@ -46,6 +48,7 @@ impl Parser {
     ///        ^ error occurs here...
     ///            ^ ...so we move the cursor to here
     /// ```
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(super) fn recover_statement(&mut self) {
         let mut brace_depth = 0;
         let mut bracket_depth = 0;
@@ -81,6 +84,7 @@ impl Parser {
     }
 
     /// Parses a variable declaration statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_variable_declaration(&mut self) -> Result<Statement> {
         // Whatever the token is, consume it.
         let start = self.consume_any().start();
@@ -104,6 +108,7 @@ impl Parser {
     }
 
     /// Parses a conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_conditional(&mut self) -> Result<Statement> {
         match self.token().kind {
             TokenKind::If => self.parse_if_conditional(),
@@ -113,6 +118,7 @@ impl Parser {
     }
 
     /// Parses an "if" conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_if_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::If)?.start();
         let mut cases = Vec::new();
@@ -137,6 +143,7 @@ impl Parser {
     }
 
     /// Parses an "unless" conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_unless_conditional(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Unless)?.start();
         let mut cases = Vec::new();
@@ -163,6 +170,7 @@ impl Parser {
     }
 
     /// Parses a case within a conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let condition = self.parse_expression()?;
         let block = self.parse_block()?;
@@ -182,6 +190,7 @@ impl Parser {
     }
 
     /// Parses zero-or-more `else-if` cases within a conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
             if !self.peek(TokenKind::Else) || !self.peek_next(TokenKind::If) {
@@ -202,6 +211,7 @@ impl Parser {
     /// # Errors
     ///
     /// Returns `Err` if the parser hits an unexpected token.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let start = match self.consume_if(TokenKind::Else) {
             Some(t) => t.index.start,
@@ -223,6 +233,7 @@ impl Parser {
     }
 
     /// Parses an infinite loop statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_infinite_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Loop)?.start();
         let block = self.parse_block()?;
@@ -236,6 +247,7 @@ impl Parser {
     }
 
     /// Parses an iterator loop statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_iterator_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::For)?.start();
 
@@ -257,6 +269,7 @@ impl Parser {
     }
 
     /// Parses a predicate loop statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_predicate_loop(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::While)?.start();
 
@@ -273,6 +286,7 @@ impl Parser {
     }
 
     /// Parses an expression statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_expression_stmt(&mut self) -> Result<Statement> {
         let expression = self.parse_expression()?;
 
@@ -282,6 +296,7 @@ impl Parser {
     }
 
     /// Parses a `break` statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_break(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Break)?.start();
         let end = self.expect_semi()?.end();
@@ -292,6 +307,7 @@ impl Parser {
     }
 
     /// Parses a `continue` statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_continue(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Continue)?.start();
         let end = self.expect_semi()?.end();
@@ -302,6 +318,7 @@ impl Parser {
     }
 
     /// Parses a return statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_return(&mut self) -> Result<Statement> {
         let start = self.consume(TokenKind::Return)?.start();
 

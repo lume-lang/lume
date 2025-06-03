@@ -5,6 +5,7 @@ use crate::ThirBuildCtx;
 pub(super) struct DefineFunctions;
 
 impl DefineFunctions {
+    #[tracing::instrument(level = "DEBUG", name = "DefineFunctions:run_all", skip_all)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) {
         let mut hir = std::mem::take(&mut ctx.hir);
 

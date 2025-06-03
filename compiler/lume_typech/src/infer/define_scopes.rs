@@ -11,6 +11,7 @@ pub(super) struct DefineScopes<'a> {
 }
 
 impl DefineScopes<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineScopes::run_all", skip_all, err)]
     pub(super) fn run_all(tcx: &mut ThirBuildCtx) -> Result<()> {
         let mut define = DefineScopes {
             ancestry: &mut tcx.ancestry,

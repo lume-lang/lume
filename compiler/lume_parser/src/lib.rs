@@ -148,9 +148,11 @@ impl Parser {
     ///
     /// Returns `Err` if some part of the input source is unsupported
     /// or unexpected.
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     pub fn prepare(&mut self) -> Result<()> {
         // If we've already tokenized something, we shouldn't add any more.
         if !self.tokens.is_empty() {
+            tracing::debug!("all tokens pre-lexed ({})", self.tokens.len());
             return Ok(());
         }
 
@@ -167,6 +169,8 @@ impl Parser {
             self.tokens.push(token);
         }
 
+        tracing::debug!("lexed {} tokens", self.tokens.len());
+
         Ok(())
     }
 
@@ -179,6 +183,14 @@ impl Parser {
     ///
     /// Returns `Err` if some part of the input is unexpected or if the
     /// parser unexpectedly reaches end-of-file.
+    #[tracing::instrument(
+        level = "INFO",
+        name = "lume_parser::parser::parse",
+        parent = None,
+        skip(self),
+        fields(file = %self.source.name)
+        err
+    )]
     pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
         self.prepare()?;
 
@@ -198,6 +210,7 @@ impl Parser {
     }
 
     /// Determines whether the parser has reached the end-of-file.
+    #[inline]
     fn eof(&self) -> bool {
         self.index + 1 > self.tokens.len()
     }
@@ -256,6 +269,7 @@ impl Parser {
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn peek_next(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 1)
     }
@@ -263,17 +277,20 @@ impl Parser {
     /// Peeks the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// Returns a boolean indicating whether the token matches the expected kind.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn peek(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 0)
     }
 
     /// Advances the cursor position by a single token.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn skip(&mut self) {
         self.index += 1;
         self.position = self.token().start();
     }
 
     /// Moves the current cursor position to the given index.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn move_to(&mut self, index: usize) {
         self.index = index;
         self.position = self.token().start();
@@ -282,6 +299,7 @@ impl Parser {
     /// Consumes the next token from the lexer and returns it if it matches the expected kind.
     ///
     /// If the token does not match the expected kind, an error is returned.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn expect(&mut self, kind: TokenKind) -> Result<Token> {
         let current = self.token();
 
@@ -296,6 +314,7 @@ impl Parser {
     /// it advances the cursor position by a single token.
     ///
     /// If the token does not match the expected kind, an error is returned.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume(&mut self, kind: TokenKind) -> Result<Token> {
         match self.expect(kind) {
             Ok(token) => {
@@ -308,6 +327,7 @@ impl Parser {
     }
 
     /// Consumes the next token from the lexer and returns it, not matter what token it is.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume_any(&mut self) -> Token {
         let token = self.token();
 
@@ -320,6 +340,7 @@ impl Parser {
     /// it advances the cursor position by a single token.
     ///
     /// If the token does not match the expected kind, `None` is returned.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume_if(&mut self, kind: TokenKind) -> Option<Token> {
         if self.eof() {
             return None;
@@ -355,6 +376,7 @@ impl Parser {
     ///
     /// This is useful for any sequence of expressions or statements, such as blocks.
     /// Upon returning, the `close` token will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_seq_to_end<T>(
         &mut self,
         close: TokenKind,
@@ -373,6 +395,7 @@ impl Parser {
     /// is invoked between each delimiter, until no more delimiters are found.
     ///
     /// This is useful for any sequence of identifiers, such as namespace paths.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_delim<T>(&mut self, delim: TokenKind, mut f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
@@ -392,6 +415,7 @@ impl Parser {
     ///
     /// This is useful for any sequence of expressions or statements, such as arrays,
     /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_delim_seq_to_end<T>(
         &mut self,
         close: TokenKind,
@@ -416,6 +440,7 @@ impl Parser {
     ///
     /// This is useful for any sequence of expressions or statements, such as arrays,
     /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_enclosed_delim_seq<T>(
         &mut self,
         open: TokenKind,
@@ -432,6 +457,7 @@ impl Parser {
     ///
     /// This is useful for any sequence of expressions or statements, such as arrays,
     /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_comma_seq<T>(
         &mut self,
         open: TokenKind,
@@ -446,6 +472,7 @@ impl Parser {
     ///
     /// This is useful for any sequence of expressions or statements, such as arrays,
     /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
         self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, f)
     }
@@ -455,17 +482,20 @@ impl Parser {
     ///
     /// This is useful for any sequence of statements within a block.
     /// Upon returning, both the `open` and `close` tokens will have been consumed.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
         self.consume(TokenKind::LeftCurly)?;
         self.consume_seq_to_end(TokenKind::RightCurly, f)
     }
 
     /// Checks whether the current token is of the given type. If so, the token is consumed.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn check(&mut self, kind: TokenKind) -> bool {
         self.consume_if(kind).is_some()
     }
 
     /// Checks whether the current token is an `External` token.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn check_external(&mut self) -> bool {
         self.check(TokenKind::External)
     }
@@ -473,7 +503,11 @@ impl Parser {
     /// Reads the current documentation comment into the parser's state, if any is present.
     fn read_doc_comment(&mut self) {
         if let Some(doc_comment) = self.consume_if(TokenKind::DocComment) {
+            tracing::trace!("found doc comment ({:?})", doc_comment.index);
+
             self.doc_token = Some(doc_comment.value.unwrap_or_default());
+        } else {
+            tracing::trace!("no doc comment found");
         }
     }
 
@@ -493,6 +527,7 @@ impl Parser {
     }
 
     /// Parses the next token as an identifier.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_identifier(&mut self) -> Result<Identifier> {
         let identifier = match self.consume_any() {
             // Actual identifiers are obviously allowed, so they pass through.
@@ -524,6 +559,7 @@ impl Parser {
     }
 
     /// Parses the next token as an identifier. If the parsing fails, return `Err(err)`.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
         match self.parse_identifier() {
             Ok(name) => Ok(name),
@@ -536,6 +572,7 @@ impl Parser {
     /// Identifier paths are much like regular identifiers, but can be joined together
     /// with periods, to form longer chains of them. They can be as short as a single
     /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_import_path(&mut self) -> Result<ImportPath> {
         let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
 
@@ -551,6 +588,7 @@ impl Parser {
     }
 
     /// Parses the next token as a symbol path.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_path(&mut self) -> Result<Path> {
         let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_path_segment)?;
         let (name, root) = segments.split_last().unwrap();
@@ -563,6 +601,7 @@ impl Parser {
     }
 
     /// Parses the next token as a single segment of a symbol path.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_path_segment(&mut self) -> Result<PathSegment> {
         let ((name, type_arguments), location) = self.consume_with_loc(|p| {
             let name = p.parse_identifier()?;
@@ -579,6 +618,7 @@ impl Parser {
     }
 
     /// Returns a block for functions or methods.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_block(&mut self) -> Result<Block> {
         let (statements, location) = self.consume_with_loc(|p| {
             let mut stmts = Vec::new();
@@ -605,6 +645,7 @@ impl Parser {
     /// Returns an empty block for external functions.
     ///
     /// Also functions as an extra layer to report errors, if a function body is declared.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_external_block(&mut self) -> Result<Block> {
         if self.peek(TokenKind::LeftCurly) {
             return Err(err!(self, ExternalFunctionBody));
@@ -622,6 +663,7 @@ impl Parser {
     /// Returns a block, if the next token is a left curly bracket (`{`), as a `Some(block)`.
     ///
     /// Otherwise, returns `None`.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_opt_block(&mut self) -> Result<Option<Block>> {
         if self.peek(TokenKind::LeftCurly) {
             return Ok(Some(self.parse_block()?));
@@ -631,6 +673,7 @@ impl Parser {
     }
 
     /// Returns an empty block for external functions and an actual block for non-external functions.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_opt_external_block(&mut self, external: bool) -> Result<Block> {
         if external {
             self.parse_external_block()

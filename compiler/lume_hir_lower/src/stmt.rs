@@ -6,6 +6,7 @@ use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn block(&mut self, expr: ast::Block) -> hir::Block {
         self.locals.push_frame();
 
@@ -21,6 +22,7 @@ impl LowerModule<'_> {
     ///
     /// This functions much like [`block`], but pushes a boundary into the symbol table,
     /// separating local variables within the block from the parent scope.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn isolated_block(&mut self, expr: ast::Block) -> hir::Block {
         self.locals.push_boundary();
 
@@ -32,6 +34,7 @@ impl LowerModule<'_> {
         hir::Block { statements, location }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<hir::Statement> {
         statements
             .into_iter()
@@ -45,6 +48,7 @@ impl LowerModule<'_> {
             .collect::<Vec<_>>()
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn statement(&mut self, expr: ast::Statement) -> Result<hir::Statement> {
         let stmt = match expr {
             ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
@@ -73,6 +77,7 @@ impl LowerModule<'_> {
         Ok(stmt)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let name = self.identifier(statement.name);
@@ -102,6 +107,7 @@ impl LowerModule<'_> {
         Ok(statement)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_break(&mut self, statement: ast::Break) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(statement.location);
@@ -113,6 +119,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_continue(&mut self, statement: ast::Continue) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(statement.location);
@@ -124,6 +131,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let value = self.opt_expression(statement.value)?;
@@ -136,6 +144,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_if(&mut self, expr: ast::IfCondition) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
@@ -153,6 +162,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
@@ -170,6 +180,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
@@ -190,6 +201,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> hir::Statement {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
@@ -202,6 +214,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
@@ -220,6 +233,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);

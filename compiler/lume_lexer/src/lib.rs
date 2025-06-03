@@ -120,6 +120,7 @@ pub enum TokenKind {
 }
 
 impl TokenKind {
+    #[inline]
     pub fn is_keyword(&self) -> bool {
         matches!(
             self,
@@ -151,6 +152,7 @@ impl TokenKind {
         )
     }
 
+    #[inline]
     pub fn is_literal(&self) -> bool {
         matches!(
             self,
@@ -158,14 +160,17 @@ impl TokenKind {
         )
     }
 
+    #[inline]
     pub fn is_unary(&self) -> bool {
         matches!(self, TokenKind::Exclamation | TokenKind::Sub)
     }
 
+    #[inline]
     pub fn is_comment(&self) -> bool {
         matches!(self, TokenKind::Comment | TokenKind::DocComment)
     }
 
+    #[inline]
     pub fn is_operator(&self) -> bool {
         matches!(
             self,
@@ -189,12 +194,14 @@ impl TokenKind {
         )
     }
 
+    #[inline]
     pub fn has_value(&self) -> bool {
         self.is_keyword() || self.is_operator() || self.is_comment()
     }
 }
 
 impl From<TokenKind> for &'static str {
+    #[inline]
     fn from(val: TokenKind) -> &'static str {
         match val {
             TokenKind::As => "as",
@@ -305,6 +312,7 @@ pub struct Token {
 }
 
 impl Token {
+    #[inline]
     pub fn new(kind: TokenKind, value: String) -> Self {
         Token {
             kind,
@@ -314,6 +322,7 @@ impl Token {
         }
     }
 
+    #[inline]
     pub fn empty(kind: TokenKind) -> Self {
         Token {
             kind,
@@ -323,18 +332,22 @@ impl Token {
         }
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.index.end - self.index.start
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    #[inline]
     pub fn start(&self) -> usize {
         self.index.start
     }
 
+    #[inline]
     pub fn end(&self) -> usize {
         self.index.end
     }
@@ -342,6 +355,7 @@ impl Token {
     /// Gets the precedence of the token kind.
     ///
     /// Returns the precedence of the token kind, or 0 if the token kind is not an operator.
+    #[inline]
     pub fn precedence(&self) -> u8 {
         OPERATOR_PRECEDENCE
             .iter()
@@ -350,6 +364,7 @@ impl Token {
     }
 
     /// Determines whether the token is a postfix operator.
+    #[inline]
     pub fn is_postfix(&self) -> bool {
         POSTFIX_OPERATORS.iter().any(|k| k == &self.kind)
     }
@@ -405,6 +420,7 @@ impl Lexer {
         Lexer { source, position: 0 }
     }
 
+    #[inline]
     pub fn is_eof(&self) -> bool {
         self.position >= self.source.content.len()
     }
@@ -412,6 +428,8 @@ impl Lexer {
     /// Tries to get the character at the current cursor position.
     ///
     /// Returns `None` if the cursor is at the end of the source.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn current_char(&self) -> Option<char> {
         self.source.content.chars().nth(self.position)
     }
@@ -419,6 +437,8 @@ impl Lexer {
     /// Tries to get the character at the current cursor position.
     ///
     /// Returns `\0` if the cursor is at the end of the source.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn current_char_or_eof(&self) -> char {
         self.source.content.chars().nth(self.position).unwrap_or('\0')
     }
@@ -426,16 +446,22 @@ impl Lexer {
     /// Tries to get the character which is at the current cursor position, offset by `offset`.
     ///
     /// Returns `\0` if the cursor is at the end of the source.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn at_offset(&self, offset: usize) -> char {
         self.source.content.chars().nth(self.position + offset).unwrap_or('\0')
     }
 
     /// Advances the cursor position of the lexer to the next line.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn next(&mut self) {
         self.position += 1;
     }
 
     /// Gets the character at the current cursor position and advances the cursor position to the next position.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn consume(&mut self) -> char {
         let c = self.current_char_or_eof();
 
@@ -444,16 +470,28 @@ impl Lexer {
     }
 
     /// Consumes characters while the predicate returns `true`.
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn eat_while(&mut self, predicate: impl Fn(char) -> bool) {
         loop {
             match self.current_char() {
-                Some(c) if predicate(c) => self.next(),
-                _ => break,
+                Some(c) if predicate(c) => {
+                    tracing::trace!("char matched: {c:?}");
+                    self.next();
+                }
+                Some(c) => {
+                    tracing::trace!("char not matched: {c:?}");
+                    break;
+                }
+                _ => {
+                    tracing::trace!("reached EOF");
+                    break;
+                }
             }
         }
     }
 
     /// Gets characters while the predicate returns `true`.
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
         let start = self.position;
 
@@ -463,13 +501,16 @@ impl Lexer {
     }
 
     /// Skips characters while the predicate returns `true`.
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn skip_while(&mut self, predicate: impl Fn(char) -> bool) {
         loop {
             let c = self.current_char();
             if c.is_none() || !predicate(c.unwrap()) {
+                tracing::trace!("char not matched: {c:?}");
                 break;
             }
 
+            tracing::trace!("char matched: {c:?}");
             self.next();
         }
     }
@@ -480,12 +521,24 @@ impl Lexer {
     ///
     /// This method will return `Err` if the expected token was formatted incorrectly,
     /// or if the lexer unexpectedly encountered end-of-file.
+    #[tracing::instrument(
+        level = "INFO",
+        name = "lume_lexer::lexer::next_token",
+        parent = None,
+        fields(start_idx, end_idx, token),
+        skip(self),
+        err
+    )]
     pub fn next_token(&mut self) -> Result<Token> {
         let start_idx = self.position;
+        tracing::Span::current().record("start_idx", start_idx);
+
         let first_char = match self.current_char_or_eof() {
             '\0' => return Ok(Token::empty(TokenKind::Eof)),
             c => c,
         };
+
+        tracing::trace!("first character: {first_char:?}");
 
         let mut token = match first_char {
             // Identifiers, such as keywords and standalone words.
@@ -518,12 +571,17 @@ impl Lexer {
         };
 
         let end_idx = self.position;
+        tracing::Span::current().record("end_idx", end_idx);
+
         token.index = start_idx..end_idx;
+
+        tracing::Span::current().record("token", format_args!("{}", token.kind));
 
         Ok(token)
     }
 
     /// Parses a comment token at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn comment(&mut self) -> Token {
         let kind = self.eat_comment_prefix();
         let content = self.take_while(|c| c != '\n').trim().to_string();
@@ -531,6 +589,7 @@ impl Lexer {
         Token::new(kind, content)
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn eat_comment_prefix(&mut self) -> TokenKind {
         // Skip over all the whitespace characters, before attempting to eat the comment prefix.
         self.eat_while(char::is_whitespace);
@@ -543,6 +602,7 @@ impl Lexer {
     }
 
     /// Parses a block of comment tokens at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn comment_block(&mut self) -> Token {
         let mut kind = TokenKind::Comment;
         let mut comments = Vec::new();
@@ -578,6 +638,7 @@ impl Lexer {
     }
 
     /// Parses an identifier token at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn identifier(&mut self) -> Token {
         let mut content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
 
@@ -618,6 +679,7 @@ impl Lexer {
     }
 
     /// Parses a symbol token at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
     fn symbol(&mut self) -> Result<Token> {
         let slice = self
             .source
@@ -646,6 +708,7 @@ impl Lexer {
         Ok(Token::new(kind, symbol))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
@@ -702,6 +765,7 @@ impl Lexer {
     }
 
     /// Parses a number token at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn number(&mut self) -> Token {
         let start_index = self.position;
 
@@ -764,6 +828,7 @@ impl Lexer {
     ///
     /// This method consumes characters from the token stream until it encounters a non-digit character.
     /// If no radix prefix is found, the method reads all base-10 digits.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_radix_prefix(&mut self) -> u32 {
         // Default to base-10.
         let mut radix = 10;
@@ -806,6 +871,7 @@ impl Lexer {
         radix
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume_digits(&mut self, radix: u32) {
         let mut last_numeric = self.position;
 
@@ -824,6 +890,7 @@ impl Lexer {
         self.position = last_numeric;
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume_float_exponent(&mut self) {
         if matches!(self.current_char_or_eof(), '-' | '+') {
             self.next();
@@ -833,6 +900,7 @@ impl Lexer {
     }
 
     /// Parses a string token at the current cursor position.
+    #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
     fn string(&mut self) -> Result<Token> {
         let mut content = String::new();
 

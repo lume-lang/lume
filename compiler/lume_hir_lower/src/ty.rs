@@ -8,6 +8,7 @@ use lume_ast::{self as ast};
 use lume_hir::{self as hir, SELF_TYPE_NAME, SymbolName};
 
 impl LowerModule<'_> {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
         match expr {
             ast::Type::Named(t) => self.type_named(*t),
@@ -16,6 +17,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<Option<hir::Type>> {
         match expr {
             Some(e) => Ok(Some(self.type_ref(e)?)),
@@ -23,6 +25,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_named(&self, mut expr: ast::NamedType) -> Result<hir::Type> {
         let type_params = expr
             .name
@@ -44,10 +47,12 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
         self.type_std(ARRAY_STD_TYPE, vec![*expr.element_type])
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_self(&self, expr: ast::SelfType) -> Result<hir::Type> {
         let location = self.location(expr.location);
         let name = match &self.self_type {
@@ -72,6 +77,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_std(&self, name: &str, type_params: Vec<ast::Type>) -> Result<hir::Type> {
         let id = self.item_id(name);
 

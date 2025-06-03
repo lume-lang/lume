@@ -9,6 +9,7 @@ use lume_ast::{self as ast, Node};
 use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Vec<hir::Expression> {
         expressions
             .into_iter()
@@ -22,6 +23,7 @@ impl LowerModule<'_> {
             .collect::<Vec<_>>()
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
         let expr = match statement {
             ast::Expression::Array(e) => self.expr_array(*e)?,
@@ -39,6 +41,7 @@ impl LowerModule<'_> {
         Ok(expr)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn opt_expression(&mut self, statement: Option<ast::Expression>) -> Result<Option<hir::Expression>> {
         match statement {
             Some(expr) => Ok(Some(self.expression(expr)?)),
@@ -46,6 +49,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
         // TODO: Implement proper array expression lowering
         let array_path = lume_ast::Path::with_root(vec!["std", ARRAY_STD_TYPE], ARRAY_WITH_CAPACITY_FUNC);
@@ -79,6 +83,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
@@ -92,6 +97,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
@@ -121,6 +127,7 @@ impl LowerModule<'_> {
         Ok(hir::Expression { id, location, kind })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_cast(&mut self, expr: ast::Cast) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let source = self.expression(expr.source)?;
@@ -134,6 +141,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_literal(&mut self, expr: ast::Literal) -> hir::Expression {
         let literal = self.literal(expr);
 
@@ -144,6 +152,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_member(&mut self, expr: ast::Member) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
@@ -161,6 +170,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_range(&mut self, expr: ast::Range) -> Result<hir::Expression> {
         let range_type_name = if expr.inclusive {
             RANGE_INCLUSIVE_STD_TYPE
@@ -189,6 +199,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_variable(&mut self, expr: ast::Variable) -> Result<hir::Expression> {
         let id = self.next_expr_id();
 

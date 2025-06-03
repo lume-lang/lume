@@ -9,6 +9,7 @@ pub(super) struct DefineMethodBodies<'a> {
 }
 
 impl DefineMethodBodies<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineMethodBodies::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineMethodBodies { ctx };

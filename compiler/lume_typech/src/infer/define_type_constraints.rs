@@ -9,6 +9,7 @@ pub(super) struct DefineTypeConstraints<'a> {
 }
 
 impl DefineTypeConstraints<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineTypeConstraints::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineTypeConstraints { ctx };

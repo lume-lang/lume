@@ -9,6 +9,7 @@ pub(super) struct DefineTypeParameters<'a> {
 }
 
 impl DefineTypeParameters<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineTypeParameters::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineTypeParameters { ctx };

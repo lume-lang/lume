@@ -11,6 +11,7 @@ pub(super) struct Expressions<'a> {
 }
 
 impl TypeCheckerPass for Expressions<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "Expressions::run", skip_all, err)]
     fn run(tcx: &mut ThirBuildCtx) -> Result<()> {
         for (_, symbol) in &tcx.hir.items {
             Expressions { tcx }.visit(symbol)?;

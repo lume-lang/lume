@@ -97,6 +97,7 @@ impl<'a> LowerState<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    #[tracing::instrument(name = "lume_hir_lower::lower_state::lower", level = "DEBUG", skip_all, err)]
     pub fn lower(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
         let mut lower = LowerState::new(package, source_map, dcx);
 
@@ -108,6 +109,14 @@ impl<'a> LowerState<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    #[tracing::instrument(
+        parent = None,
+        name = "lume_hir_lower::lower_state::lower_into",
+        level = "INFO",
+        skip_all,
+        fields(package = self.package.name),
+        err
+    )]
     pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
@@ -186,6 +195,14 @@ impl<'a> LowerModule<'a> {
     /// # Errors
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    #[tracing::instrument(
+        parent = None,
+        name = "lume_hir_lower::lower_module::lower",
+        level = "INFO",
+        skip_all,
+        fields(file = %file.name),
+        err
+    )]
     pub fn lower(
         map: &'a mut Map,
         file: Arc<SourceFile>,
@@ -203,6 +220,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Adds implicit imports to the module.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn insert_implicit_imports(&mut self) -> Result<()> {
         let import_item = ast::Import::std(DEFAULT_STD_IMPORTS);
 
@@ -210,8 +228,8 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Converts the given value into an [`ItemId`].
-    #[allow(clippy::unused_self)]
-    fn item_id<T: std::hash::Hash + Sized>(&self, value: T) -> ItemId {
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    fn item_id<T: std::hash::Hash + Sized + std::fmt::Debug>(&self, value: T) -> ItemId {
         ItemId::from_name(&value)
     }
 
@@ -228,7 +246,8 @@ impl<'a> LowerModule<'a> {
     /// // also uses `Foo` as it's hash value (!!!)
     /// impl Foo {}
     /// ```
-    fn impl_id<T: std::hash::Hash + Sized>(&mut self, value: T) -> ItemId {
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    fn impl_id<T: std::hash::Hash + Sized + std::fmt::Debug>(&mut self, value: T) -> ItemId {
         let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
         self.impl_id_counter += 1;
 
@@ -238,6 +257,7 @@ impl<'a> LowerModule<'a> {
     /// Generates the next [`ExpressionId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn next_expr_id(&mut self) -> ExpressionId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
@@ -248,6 +268,7 @@ impl<'a> LowerModule<'a> {
     /// Generates the next [`StatementId`] instance in the chain.
     ///
     /// Local IDs are simply incremented over the last used ID, starting from 0.
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn next_stmt_id(&mut self) -> StatementId {
         let id = self.local_id_counter;
         self.local_id_counter += 1;
@@ -370,6 +391,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
     fn top_namespace(&mut self, expr: ast::Namespace) -> Result<()> {
         self.namespace = Some(self.import_path(expr.path)?);
 
@@ -404,6 +426,7 @@ impl<'a> LowerModule<'a> {
         Ok(())
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
     fn top_import(&mut self, expr: ast::Import) -> Result<()> {
         for imported_name in expr.names {
             let namespace = self.import_path(expr.path.clone())?;

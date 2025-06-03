@@ -31,21 +31,25 @@ impl Iterator for ParentHirIterator<'_> {
 
 impl ThirBuildCtx {
     /// Returns the [`lume_hir::Item`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_item(&self, id: ItemId) -> Option<&lume_hir::Item> {
         self.hir.items.get(&id)
     }
 
     /// Returns the [`lume_hir::Expression`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expr(&self, id: lume_span::ExpressionId) -> Option<&lume_hir::Expression> {
         self.hir.expressions.get(&id)
     }
 
     /// Returns the [`lume_hir::Statement`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_stmt(&self, id: lume_span::StatementId) -> Option<&lume_hir::Statement> {
         self.hir.statements.get(&id)
     }
 
     /// Returns the [`lume_hir::Def`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_def(&self, id: lume_span::DefId) -> Option<lume_hir::Def> {
         match id {
             lume_span::DefId::Item(id) => self.hir_item(id).map(lume_hir::Def::Item),
@@ -59,6 +63,7 @@ impl ThirBuildCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Item`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_item(&self, id: ItemId) -> &lume_hir::Item {
         match self.hir.items.get(&id) {
             Some(item) => item,
@@ -71,6 +76,7 @@ impl ThirBuildCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Expression`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_expr(&self, id: lume_span::ExpressionId) -> &lume_hir::Expression {
         match self.hir.expressions.get(&id) {
             Some(item) => item,
@@ -83,6 +89,7 @@ impl ThirBuildCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Statement`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_stmt(&self, id: lume_span::StatementId) -> &lume_hir::Statement {
         match self.hir.statements.get(&id) {
             Some(item) => item,
@@ -95,6 +102,7 @@ impl ThirBuildCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Def`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_def(&self, id: lume_span::DefId) -> lume_hir::Def {
         match self.hir_def(id) {
             Some(item) => item,
@@ -104,6 +112,7 @@ impl ThirBuildCtx {
 
     /// Returns the parent of the given HIR element, if any is found.
     #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn hir_parent_of(&self, def: DefId) -> Option<DefId> {
         self.ancestry.get(&def).copied()
     }
@@ -118,11 +127,13 @@ impl ThirBuildCtx {
     }
 
     /// Returns the parent of the given HIR element, if any is found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn hir_parent_iter(&self, def: DefId) -> impl Iterator<Item = lume_hir::Def> {
         self.hir_parent_id_iter(def).map(move |id| self.hir_expect_def(id))
     }
 
     /// Returns all the type parameters available for the [`lume_hir::Def`] with the given ID.
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn hir_avail_type_params(&self, def: DefId) -> Vec<&lume_hir::TypeParameter> {
         let mut acc = Vec::new();
 
@@ -146,6 +157,7 @@ impl ThirBuildCtx {
     /// # Errors
     ///
     /// If no matching ancestor is found, returns [`Err`].
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn hir_ctx_return_type(&self, def: DefId) -> Result<lume_types::TypeRef> {
         for parent in self.hir_parent_iter(def) {
             let lume_hir::Def::Item(item) = parent else {

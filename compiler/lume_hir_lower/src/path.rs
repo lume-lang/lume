@@ -8,6 +8,7 @@ impl LowerModule<'_> {
     /// Lowers an import path to an HIR path.
     ///
     /// For example, the import path `std::io (File)` would become `std::io::File`.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn import_path(&mut self, path: ast::ImportPath) -> Result<hir::Path> {
         let location = self.location(path.location);
 

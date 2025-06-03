@@ -38,6 +38,11 @@ impl Project {
         ProjectParser::locate(root, dcx)
     }
 
+    /// Gets the path to the `Arcfile` from the [`Project`] directory.
+    pub fn path(&self) -> &PathBuf {
+        &self.path
+    }
+
     /// Gets all the [`Package`]s from the [`Project`] instance.
     pub fn packages(&self) -> &[Package] {
         &self.packages

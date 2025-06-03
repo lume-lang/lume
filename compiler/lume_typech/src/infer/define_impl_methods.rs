@@ -9,6 +9,7 @@ pub(super) struct DefineImplementationMethods<'a> {
 }
 
 impl DefineImplementationMethods<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineImplementationMethods::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let mut hir = std::mem::take(&mut ctx.hir);
         let mut define = DefineImplementationMethods { ctx };

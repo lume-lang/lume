@@ -60,6 +60,7 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn type_of(&self, def: ExpressionId) -> Result<TypeRef> {
         self.type_of_expr(self.hir_expect_expr(def))
     }
@@ -72,6 +73,7 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
@@ -146,6 +148,7 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
             lume_hir::StatementKind::Variable(var) => self.type_of_vardecl(var),
@@ -161,6 +164,7 @@ impl ThirBuildCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
         let type_params = self.hir_avail_type_params(DefId::Statement(stmt.id));
 
@@ -172,6 +176,7 @@ impl ThirBuildCtx {
     }
 
     /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret(Display))]
     pub(crate) fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&SymbolName> {
         Ok(&self.tcx.ty_expect(type_ref.instance_of)?.name)
     }

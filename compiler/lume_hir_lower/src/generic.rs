@@ -6,6 +6,7 @@ use lume_ast::{self as ast, Node};
 use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<Vec<hir::TypeParameter>> {
         params
             .into_iter()
@@ -30,6 +31,7 @@ impl LowerModule<'_> {
             .collect::<Result<Vec<_>>>()
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn type_arguments(&self, params: Vec<ast::TypeArgument>) -> Result<Vec<hir::TypeArgument>> {
         params
             .into_iter()

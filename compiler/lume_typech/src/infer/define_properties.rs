@@ -8,6 +8,7 @@ pub(super) struct DefineProperties<'a> {
 }
 
 impl DefineProperties<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefineProperties::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let mut hir = std::mem::take(&mut ctx.hir);
         let mut pass = DefineProperties { ctx };

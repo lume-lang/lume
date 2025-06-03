@@ -5,6 +5,7 @@ use lume_lexer::TokenKind;
 use crate::{Parser, err, errors::*};
 
 impl Parser {
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     pub(super) fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         match self.token().kind {
             TokenKind::Import => self.parse_import(),
@@ -21,6 +22,7 @@ impl Parser {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_pub_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
@@ -30,6 +32,7 @@ impl Parser {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_import(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Import)?.start();
         let path = self.parse_import_path()?;
@@ -54,6 +57,7 @@ impl Parser {
         Ok(TopLevelExpression::Import(Box::new(import_def)))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_namespace(&mut self) -> Result<TopLevelExpression> {
         let (path, location) = self.consume_with_loc(|p| {
             p.consume(TokenKind::Namespace)?;
@@ -64,12 +68,14 @@ impl Parser {
         Ok(TopLevelExpression::Namespace(Box::new(Namespace { path, location })))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_impl(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         self.parse_impl_visibility(visibility)
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_impl_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = visibility.location().start();
 
@@ -90,12 +96,14 @@ impl Parser {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         self.parse_fn_visibility(visibility)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_fn_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = visibility.location().start();
 
@@ -125,6 +133,7 @@ impl Parser {
         Ok(TopLevelExpression::FunctionDefinition(Box::new(function_def)))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_params(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
         if !self.peek(TokenKind::LeftParen) {
@@ -134,6 +143,7 @@ impl Parser {
         self.consume_paren_seq(Parser::parse_fn_param)
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_param(&mut self) -> Result<Parameter> {
         if let Some(token) = self.consume_if(TokenKind::SelfRef) {
             let location = token.index;
@@ -167,6 +177,7 @@ impl Parser {
     }
 
     /// Parses the return type of the current function definition.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_return_type(&mut self) -> Result<Option<Box<Type>>> {
         if self.consume_if(TokenKind::Arrow).is_none() {
             return Ok(None);
@@ -175,6 +186,7 @@ impl Parser {
         Ok(Some(Box::new(self.parse_type()?)))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_struct(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Struct)?.start();
 
@@ -200,6 +212,7 @@ impl Parser {
         ))))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_visibility(&mut self) -> Result<Visibility> {
         // If the member is marked as public, make it so.
         if let TokenKind::Pub = self.token().kind {
@@ -218,6 +231,7 @@ impl Parser {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_struct_property(&mut self) -> Result<Property> {
         self.read_doc_comment();
 
@@ -249,6 +263,7 @@ impl Parser {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_method(&mut self) -> Result<MethodDefinition> {
         self.read_doc_comment();
 
@@ -284,6 +299,7 @@ impl Parser {
         })
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_method_name(&mut self) -> Result<Identifier> {
         match self.consume_any() {
             // Allow actual identifiers.
@@ -296,6 +312,7 @@ impl Parser {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_trait(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Trait)?.start();
 
@@ -318,6 +335,7 @@ impl Parser {
         ))))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
         self.read_doc_comment();
 
@@ -355,6 +373,7 @@ impl Parser {
     ///   V6,
     /// }
     /// ```
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_enum(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Enum)?.start();
 
@@ -374,6 +393,7 @@ impl Parser {
     }
 
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
         self.read_doc_comment();
 
@@ -403,6 +423,7 @@ impl Parser {
     /// ```lm
     /// type Alias = String | Int
     /// ```
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_type_alias(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Type)?.start();
         let name = self.parse_identifier()?;
@@ -425,6 +446,7 @@ impl Parser {
         ))))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
         let name = self.parse_type()?;
@@ -445,6 +467,7 @@ impl Parser {
         Ok(TopLevelExpression::Use(Box::new(use_trait)))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_use_impl(&mut self) -> Result<TraitMethodImplementation> {
         let visibility = self.parse_visibility()?;
         self.expect_fn()?;

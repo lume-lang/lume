@@ -15,6 +15,7 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 levenshtein = { version = "=1.0.5" }
 indexmap = { version = "^2.9" }
+tracing = { workspace = true }
 
 [dev-dependencies]
 arc = { path = "../arc" }

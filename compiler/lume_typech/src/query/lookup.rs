@@ -148,6 +148,7 @@ impl<'tcx> ThirBuildCtx {
     /// Methods returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn lookup_methods_on<'a>(
         &'tcx self,
         ty: &'a lume_types::TypeRef,
@@ -164,6 +165,7 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// If the [`Method`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn check_method<'a>(
         &'tcx self,
         method: &'a Method,
@@ -232,6 +234,7 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// If the [`Function`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn check_function<'a>(
         &'tcx self,
         function: &'a Function,
@@ -276,6 +279,7 @@ impl<'tcx> ThirBuildCtx {
     /// Methods returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Method`] is otherwise valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
     pub(crate) fn lookup_method_suggestions(
         &'tcx self,
         ty: &lume_types::TypeRef,
@@ -299,6 +303,7 @@ impl<'tcx> ThirBuildCtx {
     /// Functions returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
     pub(crate) fn lookup_function_suggestions(&'tcx self, name: &SymbolName) -> Vec<&'tcx Function> {
         self.tcx()
             .functions()
@@ -325,6 +330,7 @@ impl<'tcx> ThirBuildCtx {
     /// Callables returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable(&'tcx self, expr: &lume_hir::CallExpression) -> Result<Callable<'tcx>> {
         match &expr {
             lume_hir::CallExpression::Instanced(call) => {
@@ -354,6 +360,7 @@ impl<'tcx> ThirBuildCtx {
     /// Methods returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_methods(
         &'tcx self,
         expr: &lume_hir::CallExpression,
@@ -423,6 +430,7 @@ impl<'tcx> ThirBuildCtx {
     /// Functions returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up functions
     /// which only match function name, see [`ThirBuildCtx::lookup_functions_unchecked()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_functions(&'tcx self, expr: &lume_hir::StaticCall) -> Result<&'tcx Function> {
         let function_name = &expr.name;
         let mut suggestions = Vec::new();
@@ -482,6 +490,7 @@ impl<'tcx> ThirBuildCtx {
     /// Functions returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn lookup_functions_unchecked(&'tcx self, name: &SymbolName) -> Vec<&'tcx Function> {
         self.tcx().functions().filter(|func| &func.name == name).collect()
     }
@@ -526,6 +535,7 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For a static callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_static()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.lookup_callable(&lume_hir::CallExpression::Instanced(call))
     }
@@ -539,6 +549,7 @@ impl<'tcx> ThirBuildCtx {
     ///
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For an instance callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_instance()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.lookup_callable(&lume_hir::CallExpression::Static(call))
     }
@@ -548,6 +559,7 @@ impl<'tcx> ThirBuildCtx {
     /// Methods returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn methods_defined_on(&'tcx self, self_ty: &lume_types::TypeRef) -> Vec<&'tcx Method> {
         self.tcx().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
     }

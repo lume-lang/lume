@@ -8,6 +8,7 @@ use lume_ast::{self as ast};
 use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_type(&mut self, expr: ast::TypeDefinition) -> Result<lume_hir::Item> {
         match expr {
             ast::TypeDefinition::Struct(t) => self.def_struct(*t),
@@ -17,6 +18,7 @@ impl LowerModule<'_> {
         }
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         self.current_item = ItemId::from_name(&name);
@@ -49,6 +51,7 @@ impl LowerModule<'_> {
         )))))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_property(&mut self, expr: ast::Property) -> Result<hir::Property> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -74,6 +77,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_impl(&mut self, expr: ast::Implementation) -> Result<lume_hir::Item> {
         let target = self.type_ref(*expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -102,6 +106,7 @@ impl LowerModule<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_impl_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -131,6 +136,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -159,6 +165,7 @@ impl LowerModule<'_> {
         )))))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -205,6 +212,7 @@ impl LowerModule<'_> {
         )))))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_enum_case(&self, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
         let name = self.symbol_name(expr.name)?;
         let location = self.location(expr.location);
@@ -224,6 +232,7 @@ impl LowerModule<'_> {
         Ok(symbol)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_alias(&self, expr: ast::AliasDefinition) -> Result<lume_hir::Item> {
         let name = self.symbol_name(expr.name)?;
         let definition = self.type_ref(*expr.definition)?;
@@ -241,6 +250,7 @@ impl LowerModule<'_> {
         )))))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<lume_hir::Item> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.symbol_name(expr.name)?;
@@ -271,6 +281,7 @@ impl LowerModule<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
         params
             .into_iter()
@@ -305,6 +316,7 @@ impl LowerModule<'_> {
             .collect::<Result<Vec<_>>>()
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parameter(&mut self, param: ast::Parameter) -> Result<hir::Parameter> {
         let name = self.identifier(param.name);
         let param_type = self.type_ref(param.param_type)?;
@@ -317,6 +329,7 @@ impl LowerModule<'_> {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
@@ -339,6 +352,7 @@ impl LowerModule<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_use_methods(
         &mut self,
         methods: Vec<ast::TraitMethodImplementation>,
@@ -349,6 +363,7 @@ impl LowerModule<'_> {
             .collect::<Result<Vec<_>>>()
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
         let visibility = lower_visibility(&expr.visibility);
         let name = self.symbol_name(expr.name)?;

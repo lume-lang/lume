@@ -8,6 +8,7 @@ pub(super) struct DefinePropertyTypes<'a> {
 }
 
 impl DefinePropertyTypes<'_> {
+    #[tracing::instrument(level = "DEBUG", name = "DefinePropertyTypes::run_all", skip_all, err)]
     pub(super) fn run_all(ctx: &mut ThirBuildCtx) -> Result<()> {
         let hir = std::mem::take(&mut ctx.hir);
         let mut define = DefinePropertyTypes { ctx };

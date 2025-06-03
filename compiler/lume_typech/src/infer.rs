@@ -49,6 +49,13 @@ impl ThirBuildCtx {
     ///
     /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
     /// etc, or when expected items cannot be found within the context.
+    #[tracing::instrument(
+        level = "INFO",
+        name = "lume_typech::ThirBuildCtx::define_types",
+        parent = None,
+        skip(self),
+        err
+    )]
     pub fn define_types(&mut self) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self);
         infer::define_functions::DefineFunctions::run_all(self);
@@ -71,6 +78,7 @@ impl ThirBuildCtx {
     ///
     /// The resolved references are stored in the `resolved_calls` field of the `ThirBuildCtx`, which can be
     /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn infer_calls(&mut self) -> Result<()> {
         for (id, expr) in self.hir.expressions() {
             let reference: CallReference = match &expr.kind {
@@ -127,6 +135,7 @@ impl ThirBuildCtx {
     }
 
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
+    #[tracing::instrument(level = "DEBUG", skip(self))]
     pub(crate) fn hir_expect_var_stmt(&self, id: StatementId) -> &lume_hir::VariableDeclaration {
         let stmt = self.hir_expect_stmt(id);
 
@@ -137,6 +146,7 @@ impl ThirBuildCtx {
     }
 
     /// Lowers the given HIR type into a type reference.
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, loc = %ty.location), err)]
     pub(crate) fn mk_type_ref(&self, ty: &lume_hir::Type) -> Result<TypeRef> {
         let params: &[&TypeParameter] = &[];
 
@@ -145,6 +155,7 @@ impl ThirBuildCtx {
 
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, loc = %ty.location), err)]
     pub(crate) fn mk_type_ref_generic<T: AsRef<TypeParameter>>(
         &self,
         ty: &lume_hir::Type,
@@ -164,6 +175,7 @@ impl ThirBuildCtx {
         Ok(type_ref)
     }
 
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]
     fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &SymbolName, type_params: &[T]) -> Option<TypeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
