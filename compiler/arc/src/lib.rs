@@ -87,6 +87,9 @@ pub struct Package {
 
     /// Defines the source files defined within the [`Project`].
     pub files: Vec<Arc<SourceFile>>,
+
+    /// Defines the dependencies for the package.
+    pub dependencies: Dependencies,
 }
 
 impl Package {
@@ -199,4 +202,19 @@ impl Package {
 
         Ok(matched_files)
     }
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Dependencies {
+    /// Defines whether the parent [`Package`] should compile without linking
+    /// the standard library. Defaults to [`false`].
+    pub no_std: bool,
+
+    pub dependencies: Vec<Dependency>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub struct Dependency {
+    pub source: String,
+    pub version: VersionReq,
 }
