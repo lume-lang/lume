@@ -61,6 +61,7 @@ pub enum TokenKind {
     Identifier(String),
     String(String),
     Integer(i64),
+    Boolean(bool),
     Comma,
     Equal,
     BraceLeft,
@@ -81,6 +82,7 @@ impl std::fmt::Display for TokenKind {
         match self {
             Self::Identifier(val) | Self::String(val) => write!(f, "{val}"),
             Self::Integer(val) => write!(f, "{val}"),
+            Self::Boolean(val) => write!(f, "{val}"),
             Self::Comma => write!(f, ","),
             Self::Equal => write!(f, "="),
             Self::BraceLeft => write!(f, "["),
@@ -167,6 +169,7 @@ impl Lexer {
     ///
     /// This method will return `Err` if the expected token was formatted incorrectly,
     /// or if the lexer unexpectedly encountered end-of-file.
+    #[allow(clippy::too_many_lines)]
     #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
     pub fn next(&mut self) -> Result<Token> {
         let start_idx = self.position;
@@ -185,8 +188,14 @@ impl Lexer {
                 let end_idx = self.move_while(|c| c.is_ascii_alphanumeric() || c == '_');
                 let content = &self.source.content[start_idx..end_idx];
 
+                let kind = if matches!(content, "false" | "true") {
+                    TokenKind::Boolean(content == "true")
+                } else {
+                    TokenKind::Identifier(content.to_string())
+                };
+
                 Token {
-                    kind: TokenKind::Identifier(content.to_string()),
+                    kind,
                     index: start_idx..end_idx,
                 }
             }
@@ -478,6 +487,32 @@ mod tests {
             Token {
                 kind: TokenKind::Identifier(String::from("IDENT")),
                 index: 0..5
+            }
+        );
+    }
+
+    #[test]
+    fn ident_as_bool_false() {
+        let mut lexer = lexer("false");
+
+        assert_eq!(
+            lexer.next().unwrap(),
+            Token {
+                kind: TokenKind::Boolean(false),
+                index: 0..5
+            }
+        );
+    }
+
+    #[test]
+    fn ident_as_bool_true() {
+        let mut lexer = lexer("true");
+
+        assert_eq!(
+            lexer.next().unwrap(),
+            Token {
+                kind: TokenKind::Boolean(true),
+                index: 0..4
             }
         );
     }
