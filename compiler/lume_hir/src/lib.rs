@@ -835,15 +835,46 @@ impl Expression {
         })))
     }
 
-    /// Creates a new [`Expression`] with a [`LiteralKind::I32`] value.
-    pub fn lit_i32(value: i32) -> Self {
-        Self::lit(LiteralKind::Int(Box::new(IntLiteral {
+    /// Creates a new [`Expression`] with a [`LiteralKind::U64`] value.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if `value` is too large to fit in a signed [`i64`] value.
+    pub fn lit_u64(value: u64) -> error_snippet::Result<Self> {
+        Ok(Self::lit(LiteralKind::Int(Box::new(IntLiteral {
             id: ExpressionId::default(),
-            value: value.into(),
-            kind: IntKind::I32,
-        })))
+            value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
+            kind: IntKind::U64,
+        }))))
     }
 }
+
+macro_rules! expr_lit_int {
+    (
+        $func:ident,
+        $kind:ident,
+        $ty:ty
+    ) => {
+        impl Expression {
+            pub fn $func(value: $ty) -> Self {
+                Self::lit(LiteralKind::Int(Box::new(IntLiteral {
+                    id: ExpressionId::default(),
+                    value: value.into(),
+                    kind: IntKind::$kind,
+                })))
+            }
+        }
+    };
+}
+
+expr_lit_int!(lit_i8, I8, i8);
+expr_lit_int!(lit_i16, I16, i16);
+expr_lit_int!(lit_i32, I32, i32);
+expr_lit_int!(lit_i64, I64, i64);
+
+expr_lit_int!(lit_u8, U8, u8);
+expr_lit_int!(lit_u16, U16, u16);
+expr_lit_int!(lit_u32, U32, u32);
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {

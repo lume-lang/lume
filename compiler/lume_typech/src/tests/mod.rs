@@ -1,3 +1,4 @@
+mod inference;
 mod query;
 
 use std::sync::Arc;
@@ -42,4 +43,9 @@ fn type_infer(input: &str) -> Result<ThirBuildCtx> {
     tcx.define_types()?;
 
     Ok(tcx)
+}
+
+#[track_caller]
+fn empty_tcx() -> ThirBuildCtx {
+    type_infer("").unwrap()
 }
