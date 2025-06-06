@@ -58,16 +58,36 @@ impl Block {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct Array {
+    pub values: Vec<Value>,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Property {
     pub name: Spanned<String>,
     pub value: Value,
     pub location: Location,
 }
 
+impl From<Property> for Value {
+    fn from(prop: Property) -> Self {
+        prop.value
+    }
+}
+
+impl<'a> From<&'a Property> for &'a Value {
+    fn from(prop: &'a Property) -> Self {
+        &prop.value
+    }
+}
+
 #[derive(Clone, PartialEq, Eq)]
 pub(crate) enum Value {
     String(Spanned<String>),
     Integer(Spanned<i64>),
+    Boolean(Spanned<bool>),
+    Array(Box<Array>),
     Block(Box<Block>),
 }
 
@@ -76,6 +96,8 @@ impl Value {
         match self {
             Self::String(val) => &val.span,
             Self::Integer(val) => &val.span,
+            Self::Boolean(val) => &val.span,
+            Self::Array(val) => &val.location.range,
             Self::Block(block) => &block.location.range,
         }
     }
@@ -86,6 +108,8 @@ impl std::fmt::Display for Value {
         match self {
             Self::String(_) => write!(f, "String"),
             Self::Integer(_) => write!(f, "Integer"),
+            Self::Boolean(_) => write!(f, "Boolean"),
+            Self::Array(_) => write!(f, "Array"),
             Self::Block(_) => write!(f, "Block"),
         }
     }
@@ -96,6 +120,8 @@ impl std::fmt::Debug for Value {
         match self {
             Self::String(val) => write!(f, "String(\"{}\")", val.value),
             Self::Integer(val) => write!(f, "Integer({})", val.value),
+            Self::Boolean(val) => write!(f, "Boolean({})", val.value),
+            Self::Array(val) => write!(f, "Array({:?})", val.values),
             Self::Block(val) => f
                 .debug_struct("Block")
                 .field("type", &val.ty.value)
@@ -206,6 +232,22 @@ impl Parser {
         }
     }
 
+    /// Peeks the next [`Token`] from the [`Lexer`] and returns [`true`] if it matches the given kind.
+    fn peek(&mut self, kind: &TokenKind) -> bool {
+        &self.token().kind == kind
+    }
+
+    /// Consumes the next [`Token`] from the [`Lexer`] if it matches the given kind.
+    fn consume_if(&mut self, kind: &TokenKind) -> bool {
+        if self.peek(kind) {
+            self.skip();
+
+            true
+        } else {
+            false
+        }
+    }
+
     /// Consumes the next [`Token`] from the [`Lexer`] and returns it if it matches the expected kind. Additionally,
     /// it advances the cursor position by a single token.
     ///
@@ -264,6 +306,31 @@ impl Parser {
         }
 
         Ok(blocks)
+    }
+
+    /// Parses a single `Array` statement within an `Arcfile` into an [`Array`].
+    fn parse_array(&mut self) -> Result<Array> {
+        let start = self.consume(TokenKind::BraceLeft)?.start();
+
+        let mut values = Vec::new();
+
+        while !self.peek(&TokenKind::BraceRight) {
+            values.push(self.parse_value()?);
+
+            if !self.consume_if(&TokenKind::Comma) {
+                break;
+            }
+        }
+
+        let end = self.consume(TokenKind::BraceRight)?.end();
+
+        Ok(Array {
+            values,
+            location: Location {
+                source: self.source.clone(),
+                range: start..end,
+            },
+        })
     }
 
     /// Parses a single `Block` statement within an `Arcfile` into a [`Block`].
@@ -392,10 +459,18 @@ impl Parser {
     fn parse_value(&mut self) -> Result<Value> {
         let pos = self.position();
 
+        if let TokenKind::Identifier(_) = self.token().kind {
+            return Ok(Value::Block(Box::new(self.parse_block()?)));
+        }
+
+        if let TokenKind::BraceLeft = self.token().kind {
+            return Ok(Value::Array(Box::new(self.parse_array()?)));
+        }
+
         Ok(match &self.consume_any().kind {
             TokenKind::String(str) => Value::String(Spanned::new(str.clone(), pos)),
             TokenKind::Integer(int) => Value::Integer(Spanned::new(*int, pos)),
-            TokenKind::Identifier(_) => Value::Block(Box::new(self.parse_block()?)),
+            TokenKind::Boolean(val) => Value::Boolean(Spanned::new(*val, pos)),
             kind => {
                 return Err(ExpectedValue {
                     source: self.source.clone(),
