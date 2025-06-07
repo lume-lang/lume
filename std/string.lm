@@ -1,0 +1,17 @@
+namespace std
+
+/// Defines an immutable, UTF-8 encoded string.
+///
+/// Strings are most often created implicitly using double-quotes around some text, which is the
+/// defined syntax for string literals. To create a new `String`, simply wrap some text
+/// with double-quotes:
+///
+/// ```
+/// # Create an empty string
+/// ""
+///
+/// # Create a string with some content
+/// "Hello world!"
+/// ```
+struct String
+{ }
