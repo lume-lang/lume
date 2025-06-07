@@ -163,6 +163,8 @@ impl PackageParser {
             .dcx
             .with(|handle| Parser::new(self.source.clone(), handle).parse())?;
 
+        let mut package = None;
+
         for block in &blocks {
             if block.ty.value() != "Package" {
                 self.dcx.emit(
@@ -177,7 +179,19 @@ impl PackageParser {
                 continue;
             }
 
-            return self.parse_package(block);
+            if package.is_some() {
+                return Err(ArcfileMultiplePackages {
+                    source: block.location.source.clone(),
+                    range: block.ty.span().clone(),
+                }
+                .into());
+            }
+
+            package = Some(self.parse_package(block)?);
+        }
+
+        if let Some(pkg) = package {
+            return Ok(pkg);
         }
 
         Err(ArcfileNoPackages {
