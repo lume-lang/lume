@@ -57,7 +57,7 @@ impl Driver {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     pub fn build_project(root: &PathBuf) -> Result<()> {
-        let mut driver = Self::from_root(root)?;
+        let driver = Self::from_root(root)?;
 
         driver.build()
     }
@@ -67,19 +67,49 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if:
-    /// - the given path has no `Arcfile` within it,
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
-    pub fn build(&mut self) -> Result<()> {
+    pub fn build(&self) -> Result<()> {
+        let mut package = Package::default();
+        let mut dependencies = self.package.dependencies.graph.all();
+
+        // Build all the dependencies of the package in reverse, so all the
+        // dependencies without any sub-dependencies can be built first.
+        dependencies.reverse();
+
+        for dependency in dependencies {
+            dependency.clone_into(&mut package);
+            self.build_package(&mut package)?;
+        }
+
+        self.package.clone_into(&mut package);
+        self.build_package(&mut package)?;
+
+        Ok(())
+    }
+
+    /// Builds the given [`Package`] into an executable or library.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - an error occured while compiling the project,
+    /// - an error occured while linking the project
+    /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
+    pub fn build_package(&self, package: &mut Package) -> Result<()> {
         let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
         dcx.exit_on_error();
 
-        self.package.add_std_sources();
-        self.package.add_project_sources()?;
+        if !package.dependencies.no_std {
+            package.add_std_sources();
+        }
 
-        Compiler::build_package(&self.package, &self.options, dcx)
+        package.add_project_sources()?;
+
+        Compiler::build_package(package, &self.options, dcx)
     }
 }
 
