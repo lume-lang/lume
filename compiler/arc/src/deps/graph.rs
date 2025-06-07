@@ -114,6 +114,11 @@ impl DependencyGraph {
         }
     }
 
+    /// Gets the [`Package`] instances from the graph.
+    pub fn all(&self) -> Vec<&Package> {
+        self.map.values().collect::<Vec<_>>()
+    }
+
     /// Gets the [`Package`] instance with the given ID, if any.
     pub fn get(&self, id: PackageId) -> Option<&Package> {
         self.map.get(&id)
