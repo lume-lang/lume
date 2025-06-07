@@ -1,8 +1,8 @@
 ---
-source: compiler/arc/src/serializer.rs
-description: "Package {}"
+source: compiler/arc/src/serializer/tests.rs
+description: "Package \"sample\" {}"
 ---
-ArcfileMissingName {
+ArcfileMissingVersion {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -11,10 +11,10 @@ ArcfileMissingName {
             0,
         ),
         name: Internal,
-        content: "Package {}",
+        content: "Package \"sample\" {}",
         package: PackageId(
             0,
         ),
     },
-    range: 0..10,
+    range: 0..19,
 }

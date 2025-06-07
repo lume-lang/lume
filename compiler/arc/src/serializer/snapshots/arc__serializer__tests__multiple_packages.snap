@@ -1,0 +1,20 @@
+---
+source: compiler/arc/src/serializer/tests.rs
+description: "Package \"package01\" { version = \"1.0.0\" lume_version = \"^0\" }\n        Package \"package02\" { version = \"1.0.0\" lume_version = \"^0\" }\n        Package \"package03\" { version = \"1.0.0\" lume_version = \"^0\" }"
+---
+ArcfileMultiplePackages {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "Package \"package01\" { version = \"1.0.0\" lume_version = \"^0\" }\n        Package \"package02\" { version = \"1.0.0\" lume_version = \"^0\" }\n        Package \"package03\" { version = \"1.0.0\" lume_version = \"^0\" }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 70..77,
+}

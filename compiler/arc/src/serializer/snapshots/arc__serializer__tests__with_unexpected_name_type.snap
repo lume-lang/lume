@@ -1,6 +1,6 @@
 ---
-source: compiler/arc/src/serializer.rs
-description: "Package \"sample\" {\n                lume_version = 1\n            }"
+source: compiler/arc/src/serializer/tests.rs
+description: "Package 123 {}"
 ---
 ArcfileUnexpectedType {
     source: SourceFile {
@@ -11,12 +11,12 @@ ArcfileUnexpectedType {
             0,
         ),
         name: Internal,
-        content: "Package \"sample\" {\n                lume_version = 1\n            }",
+        content: "Package 123 {}",
         package: PackageId(
             0,
         ),
     },
-    range: 50..51,
+    range: 8..11,
     expected: "String",
     found: "Integer",
 }

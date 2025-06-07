@@ -76,6 +76,7 @@ fn test_with_unexpected_name_type() {
 fn test_with_unexpected_lume_version_type() {
     assert_err_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = 1
         }"
     );
@@ -85,6 +86,7 @@ fn test_with_unexpected_lume_version_type() {
 fn test_invalid_version_string() {
     assert_err_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = \"^1-1\"
         }"
     );
@@ -94,6 +96,7 @@ fn test_invalid_version_string() {
 fn test_name() {
     assert_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = \"^0\"
         }"
     );
@@ -103,6 +106,7 @@ fn test_name() {
 fn test_description() {
     assert_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = \"^0\"
             description = \"Some description\"
         }"
@@ -113,6 +117,7 @@ fn test_description() {
 fn test_license() {
     assert_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = \"^0\"
             license = \"MIT\"
         }"
@@ -123,6 +128,7 @@ fn test_license() {
 fn test_repository() {
     assert_snap_eq!(
         "Package \"sample\" {
+            version = \"1.0.0\"
             lume_version = \"^0\"
             repository = \"http://github.com/lume-lang/lume\"
         }"
@@ -197,9 +203,9 @@ fn test_prerelease_lume_version_failure() {
 
 #[test]
 fn test_multiple_packages() {
-    assert_snap_eq!(
-        "Package \"package01\" { lume_version = \"^0\" }
-        Package \"package02\" { lume_version = \"^0\" }
-        Package \"package03\" { lume_version = \"^0\" }"
+    assert_err_snap_eq!(
+        "Package \"package01\" { version = \"1.0.0\" lume_version = \"^0\" }
+        Package \"package02\" { version = \"1.0.0\" lume_version = \"^0\" }
+        Package \"package03\" { version = \"1.0.0\" lume_version = \"^0\" }"
     );
 }

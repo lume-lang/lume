@@ -1,7 +1,0 @@
----
-source: compiler/arc/src/serializer.rs
-expression: "parse_err(\"\")"
----
-ArcfileNoPackages {
-    path: "<test>",
-}

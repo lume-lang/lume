@@ -1,0 +1,39 @@
+---
+source: compiler/arc/src/serializer/tests.rs
+description: "Package \"sample\" {\n            version = \"1.0.0\"\n            lume_version = \"^0\"\n            description = \"Some description\"\n        }"
+---
+Manifest {
+    path: "",
+    name: "sample",
+    lume_version: Spanned {
+        value: VersionReq {
+            comparators: [
+                Comparator {
+                    op: Caret,
+                    major: 0,
+                    minor: None,
+                    patch: None,
+                    pre: Prerelease(""),
+                },
+            ],
+        },
+        span: 76..80,
+    },
+    version: Spanned {
+        value: Version {
+            major: 1,
+            minor: 0,
+            patch: 0,
+        },
+        span: 41..48,
+    },
+    description: Some(
+        "Some description",
+    ),
+    license: None,
+    repository: None,
+    dependencies: ManifestDependencies {
+        no_std: false,
+        dependencies: [],
+    },
+}
