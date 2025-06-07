@@ -29,7 +29,7 @@ fn run() -> Result<()> {
     let args: Vec<String> = env::args().collect();
     let mut opts = Options::new();
 
-    opts.parsing_style(ParsingStyle::StopAtFirstFree);
+    opts.parsing_style(ParsingStyle::FloatingFrees);
     opts.optflag("h", "help", "Shows this help screen");
     opts.optflag("v", "version", "Prints the current compiler version");
     opts.optflag("", "trace", "Enables tracing of the compiler");
