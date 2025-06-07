@@ -76,6 +76,16 @@ pub struct ArcfileMissingName {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "missing `version` attribute", code = "ARC0211")]
+pub struct ArcfileMissingVersion {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("Package table is missing a `version` field.")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "missing `lume_version` attribute", code = "ARC0212")]
 pub struct ArcfileMissingLumeVersion {
     #[span]

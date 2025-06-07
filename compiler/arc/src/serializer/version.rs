@@ -1,12 +1,12 @@
 use error_snippet::Result;
 use semver::{Version, VersionReq};
 
-use crate::Package;
-use crate::ProjectParser;
+use crate::PackageParser;
 use crate::errors::*;
 use crate::parser::{Property, Spanned};
+use crate::serializer::Manifest;
 
-impl ProjectParser {
+impl PackageParser {
     /// Gets the SemVer-version requirement from the given [`Property`].
     pub(crate) fn version_req(&self, prop: &Property) -> Result<Spanned<VersionReq>> {
         let version_str = self.expect_prop_string(prop)?.to_owned();
@@ -42,9 +42,9 @@ impl ProjectParser {
     }
 
     /// Verifies that the current Lume compiler version is compatible
-    /// with the one required by the [`Package`].
-    pub(crate) fn verify_lume_version(&self, package: &Package) -> Result<()> {
-        let required_lume_version = package.lume_version.clone();
+    /// with the one required by the [`Manifest`].
+    pub(crate) fn verify_lume_version(&self, manifest: &Manifest) -> Result<()> {
+        let required_lume_version = manifest.lume_version.clone();
         let current_lume_version = self.current_lume_version.clone();
 
         if !required_lume_version.value().matches(&current_lume_version) {

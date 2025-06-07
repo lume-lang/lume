@@ -2,16 +2,16 @@ use super::*;
 use error_snippet::Error;
 
 #[track_caller]
-fn parser(input: &str) -> ProjectParser {
+fn parser(input: &str) -> PackageParser {
     let path = Path::new("<test>");
     let source = SourceFile::internal(input.to_string());
     let dcx = DiagCtxHandle::shim();
 
-    ProjectParser::from_source(path, Arc::new(source), dcx).unwrap()
+    PackageParser::from_source(path, Arc::new(source), dcx)
 }
 
 #[track_caller]
-fn parse(input: &str) -> Project {
+fn parse(input: &str) -> Manifest {
     parser(input).parse().unwrap()
 }
 

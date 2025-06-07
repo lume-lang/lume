@@ -1,0 +1,3 @@
+fn lib_function() -> String {
+    return "Hello from library!";
+}

@@ -3,15 +3,15 @@ use std::{
     sync::Arc,
 };
 
-use crate::parser::{Block, Parser, Value};
-use crate::{Package, Project, errors::*};
+use crate::errors::*;
+use crate::parser::{Block, Parser, Spanned, Value};
 
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
 use lume_span::{PackageId, SourceFile};
-use semver::Version;
+use semver::{Version, VersionReq};
 
-mod dep;
+pub(crate) mod dep;
 mod prop;
 mod version;
 
@@ -20,8 +20,68 @@ mod tests;
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
-pub(crate) struct ProjectParser {
-    /// Absolute path to the project's Arcfile.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Manifest {
+    /// Defines the root directory which defines this package.
+    pub path: PathBuf,
+
+    /// Defines the name of the package.
+    pub name: String,
+
+    /// Defines the minimum required version of Lume.
+    pub lume_version: Spanned<VersionReq>,
+
+    /// Defines the current version of the package.
+    pub version: Spanned<Version>,
+
+    /// Defines an optional description of the package.
+    pub description: Option<String>,
+
+    /// Defines the license of the source code within the package. Optional.
+    pub license: Option<String>,
+
+    /// Defines the URL of the source code repository for the package.
+    pub repository: Option<String>,
+
+    /// Defines the dependencies for the package.
+    pub dependencies: ManifestDependencies,
+}
+
+impl std::hash::Hash for Manifest {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        self.version.value().hash(state);
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ManifestDependencies {
+    /// Defines whether the parent [`Package`] should compile without linking
+    /// the standard library. Defaults to [`false`].
+    pub no_std: bool,
+
+    /// Defines the dependencies with the package manifest.
+    pub dependencies: Vec<ManifestDependency>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ManifestDependency {
+    /// If the dependency is located on the same filesystem
+    /// as the referencing package, defines the path to the dependency
+    /// root.
+    ///
+    /// If the dependency is remote, whether it's a networked location or
+    /// from an internet registry, defines the path to the local copy
+    /// of the dependency source.
+    pub source: String,
+
+    /// Defines the required version of the dependency, which is required
+    /// by the referencing package.
+    pub required_version: VersionReq,
+}
+
+pub(crate) struct PackageParser {
+    /// Absolute path to the package's Arcfile.
     path: PathBuf,
 
     /// Handle to the diagnostics context which will handle parsing errors.
@@ -30,15 +90,12 @@ pub(crate) struct ProjectParser {
     /// Source file of the project's Arcfile.
     source: Arc<SourceFile>,
 
-    /// Defines the parsed blocks within the source file.
-    blocks: Vec<Block>,
-
     /// Defines the current Lume version.
     current_lume_version: Version,
 }
 
-impl ProjectParser {
-    /// Creates a new [`ProjectParser`] instance using the given `Arcfile` source file path.
+impl PackageParser {
+    /// Creates a new [`PackageParser`] instance using the given `Arcfile` source file path.
     ///
     /// # Errors
     ///
@@ -62,28 +119,25 @@ impl ProjectParser {
 
         let source = SourceFile::new(PackageId::empty(), file_name, content);
 
-        Self::from_source(path, Arc::new(source), dcx)
+        Ok(Self::from_source(path, Arc::new(source), dcx))
     }
 
-    /// Creates a new [`ProjectParser`] instance using the given `Arcfile` source file.
+    /// Creates a new [`PackageParser`] instance using the given `Arcfile` source file.
     ///
     /// # Errors
     ///
     /// This method may fail if the given `Arcfile` is improperly formatted or
     /// otherwise invalid.
-    pub fn from_source(path: &Path, source: Arc<SourceFile>, mut dcx: DiagCtxHandle) -> Result<Self> {
-        let blocks = dcx.with(|handle| Parser::new(source.clone(), handle).parse())?;
-
-        Ok(Self {
+    pub fn from_source(path: &Path, source: Arc<SourceFile>, dcx: DiagCtxHandle) -> Self {
+        Self {
             path: path.to_path_buf(),
             source,
             dcx,
-            blocks,
             current_lume_version: Self::current_lume_version(),
-        })
+        }
     }
 
-    /// Creates a new [`ProjectParser`] instance by locating the `Arcfile` in the given root directory.
+    /// Creates a new [`PackageParser`] instance by locating the `Arcfile` in the given root directory.
     ///
     /// # Errors
     ///
@@ -91,7 +145,7 @@ impl ProjectParser {
     /// - the given path has no `Arcfile` stored within it,
     /// - the located `Arcfile` doesn't refer to a file
     /// - or if the given `Arcfile` is otherwise invalid
-    pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Project> {
+    pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Manifest> {
         let path = root.join(DEFAULT_ARCFILE);
         if !path.is_file() {
             return Err(ArcfileMissing {
@@ -100,24 +154,16 @@ impl ProjectParser {
             .into());
         }
 
-        ProjectParser::new(&path, dcx)?.parse()
+        Self::new(&path, dcx)?.parse()
     }
 
-    /// Parses a [`Project`] from the input source file.
-    fn parse(&mut self) -> Result<Project> {
-        let project = Project {
-            path: self.path.clone(),
-            packages: self.parse_packages()?,
-        };
+    /// Parses the [`Manifest`] instance from the input source code.
+    fn parse(&mut self) -> Result<Manifest> {
+        let blocks = self
+            .dcx
+            .with(|handle| Parser::new(self.source.clone(), handle).parse())?;
 
-        Ok(project)
-    }
-
-    /// Parses a list of zero-or-more [`Package`] instances from the input source code.
-    fn parse_packages(&mut self) -> Result<Vec<Package>> {
-        let mut packages = Vec::new();
-
-        for block in &self.blocks {
+        for block in &blocks {
             if block.ty.value() != "Package" {
                 self.dcx.emit(
                     ArcfileUnknownItem {
@@ -131,21 +177,17 @@ impl ProjectParser {
                 continue;
             }
 
-            packages.push(self.parse_package(block)?);
+            return self.parse_package(block);
         }
 
-        if packages.is_empty() {
-            return Err(ArcfileNoPackages {
-                path: self.path.to_string_lossy().into_owned(),
-            }
-            .into());
+        Err(ArcfileNoPackages {
+            path: self.path.to_string_lossy().into_owned(),
         }
-
-        Ok(packages)
+        .into())
     }
 
-    /// Parses a single [`Package`] instance from the given [`Block`].
-    fn parse_package(&self, block: &Block) -> Result<Package> {
+    /// Parses a single [`Manifest`] instance from the given [`Block`].
+    fn parse_package(&self, block: &Block) -> Result<Manifest> {
         let name = match block.arguments.first() {
             Some(name) => match name {
                 Value::String(str) => str.value().clone(),
@@ -169,8 +211,14 @@ impl ProjectParser {
         };
 
         let version = match block.find_prop("version") {
-            Some(prop) => Some(self.version(prop)?),
-            None => None,
+            Some(prop) => self.version(prop)?,
+            None => {
+                return Err(ArcfileMissingVersion {
+                    source: block.location.source.clone(),
+                    range: block.location.range.clone(),
+                }
+                .into());
+            }
         };
 
         let lume_version = match block.find_prop("lume_version") {
@@ -190,21 +238,19 @@ impl ProjectParser {
 
         let dependencies = self.parse_dependencies(block)?;
 
-        let package = Package {
-            id: PackageId::from_name(&name),
+        let manifest = Manifest {
             path: self.path.parent().unwrap().to_path_buf(),
             name,
-            lume_version,
             version,
+            lume_version,
             description,
             license,
             repository,
-            files: Vec::new(),
             dependencies,
         };
 
-        self.verify_lume_version(&package)?;
+        self.verify_lume_version(&manifest)?;
 
-        Ok(package)
+        Ok(manifest)
     }
 }

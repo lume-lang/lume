@@ -1,65 +1,26 @@
+pub mod deps;
 pub mod errors;
 pub(crate) mod parser;
 pub(crate) mod serializer;
 pub mod stdlib;
 
-use crate::errors::*;
+use crate::deps::DependencyResolver;
 use crate::parser::Spanned;
-use crate::serializer::ProjectParser;
+use crate::serializer::{Manifest, PackageParser};
+use crate::{deps::Dependencies, errors::*};
 
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
 use lume_errors::DiagCtxHandle;
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
+use std::ops::Range;
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Project {
-    /// Defines the path to the Arcfile.
-    path: PathBuf,
-
-    /// Defines the packages within the project.
-    packages: Vec<Package>,
-}
-
-impl Project {
-    /// Locates the project in the given root directory.
-    ///
-    /// # Errors
-    ///
-    /// This method may fail if:
-    /// - the given path has no `Arcfile` stored within it
-    /// - or the located `Arcfile` doesn't refer to a file.
-    pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Project> {
-        ProjectParser::locate(root, dcx)
-    }
-
-    /// Gets the path to the `Arcfile` from the [`Project`] directory.
-    pub fn path(&self) -> &PathBuf {
-        &self.path
-    }
-
-    /// Gets all the [`Package`]s from the [`Project`] instance.
-    pub fn packages(&self) -> &[Package] {
-        &self.packages
-    }
-
-    /// Gets all the [`Package`]s from the [`Project`] instance.
-    pub fn packages_mut(&mut self) -> &mut [Package] {
-        &mut self.packages
-    }
-
-    /// Finds the [`Package`] from the [`Project`] with the given ID.
-    pub fn find_package(&self, id: PackageId) -> Option<&Package> {
-        self.packages.iter().find(|pkg| pkg.id == id)
-    }
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Package {
     /// Uniquely identifies the package.
     pub id: PackageId,
@@ -74,7 +35,7 @@ pub struct Package {
     pub lume_version: Spanned<VersionReq>,
 
     /// Defines the current version of the package.
-    pub version: Option<Spanned<Version>>,
+    pub version: Spanned<Version>,
 
     /// Defines an optional description of the package.
     pub description: Option<String>,
@@ -93,6 +54,38 @@ pub struct Package {
 }
 
 impl Package {
+    /// Locates the [`Package`] in the given root directory.
+    ///
+    /// # Errors
+    ///
+    /// This method may fail if:
+    /// - the given path has no `Arcfile` stored within it
+    /// - or the located `Arcfile` doesn't refer to a file.
+    pub fn locate(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Package> {
+        DependencyResolver::resolve(root, dcx)
+    }
+
+    /// Creates a new [`Package`] from the given [`Manifest`]-instance.
+    pub fn from_manifest(manifest: Manifest) -> Package {
+        let id = PackageId::from_name(&manifest.name);
+
+        Self {
+            id,
+            path: manifest.path,
+            name: manifest.name,
+            lume_version: manifest.lume_version,
+            version: manifest.version,
+            description: manifest.description,
+            license: manifest.license,
+            repository: manifest.repository,
+            files: Vec::new(),
+            dependencies: Dependencies {
+                no_std: manifest.dependencies.no_std,
+                ..Dependencies::default()
+            },
+        }
+    }
+
     /// Gets the absolute path to the project directory.
     ///
     /// The project directory is the parent directory of the `Arcfile`.
@@ -204,17 +197,19 @@ impl Package {
     }
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Dependencies {
-    /// Defines whether the parent [`Package`] should compile without linking
-    /// the standard library. Defaults to [`false`].
-    pub no_std: bool,
-
-    pub dependencies: Vec<Dependency>,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-pub struct Dependency {
-    pub source: String,
-    pub version: VersionReq,
+impl Default for Package {
+    fn default() -> Self {
+        Self {
+            id: PackageId::empty(),
+            path: PathBuf::new(),
+            name: String::new(),
+            lume_version: Spanned::default(),
+            version: Spanned::new(Version::new(0, 0, 0), Range::<usize>::default()),
+            description: None,
+            license: None,
+            repository: None,
+            files: Vec::new(),
+            dependencies: Dependencies::default(),
+        }
+    }
 }

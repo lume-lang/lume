@@ -1,10 +1,10 @@
 use error_snippet::Result;
 
-use crate::ProjectParser;
+use crate::PackageParser;
 use crate::errors::*;
 use crate::parser::{Block, Property, Value};
 
-impl ProjectParser {
+impl PackageParser {
     /// Expects the given [`Block`] to have a [`Property`] with the given name.
     pub(crate) fn opt_string_prop(&self, block: &Block, name: &'static str) -> Result<Option<String>> {
         match block.find_prop(name) {
