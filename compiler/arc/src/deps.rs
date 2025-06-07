@@ -10,13 +10,14 @@ use lume_errors::DiagCtxHandle;
 use lume_span::PackageId;
 use semver::VersionReq;
 
-pub use self::fetch::*;
-use crate::deps::DependencyFetcher;
-use crate::deps::FileDependencyFetcher;
+use crate::deps::fetch::DependencyFetcher;
+use crate::deps::fetch::FileDependencyFetcher;
+use crate::deps::fetch::GitDependencyFetcher;
 use crate::deps::graph::DependencyGraph;
 use crate::{Package, PackageParser};
 
 const FILE_SCHEME: &str = "file";
+const GIT_SCHEME: &str = "git";
 
 /// Defines a mapping between [`PackageId`]s and their corresponding
 /// [`Package`] instances.
@@ -166,21 +167,24 @@ impl<'pkg> DependencyResolver<'pkg> {
     fn fetch_dependency(&'pkg self, source: &str, version: &VersionReq) -> Result<PathBuf> {
         let dependency_path = self.parse_dependency_path(source);
 
-        let DependencyPath::Url(url) = dependency_path else {
+        let DependencyPath::Url(url) = dependency_path.clone() else {
             return FileDependencyFetcher.fetch(dependency_path, version);
         };
 
-        let fetcher: Box<dyn DependencyFetcher> = match url.scheme() {
-            FILE_SCHEME => Box::new(FileDependencyFetcher),
-            scheme => {
-                return Err(error_snippet::SimpleDiagnostic::new(format!(
-                    "protocol or scheme is not supported: {scheme}"
-                ))
-                .into());
+        if let Some(host) = url.host_str() {
+            if ["http", "https"].contains(&url.scheme()) && ["github.com", "gitlab.com"].contains(&host) {
+                return GitDependencyFetcher.fetch(dependency_path, version);
             }
-        };
+        }
 
-        fetcher.fetch(DependencyPath::Url(url), version)
+        match url.scheme() {
+            FILE_SCHEME => FileDependencyFetcher.fetch(dependency_path, version),
+            GIT_SCHEME => GitDependencyFetcher.fetch(dependency_path, version),
+            scheme => Err(error_snippet::SimpleDiagnostic::new(format!(
+                "protocol or scheme is not supported: {scheme}"
+            ))
+            .into()),
+        }
     }
 
     /// Attempts to parse the given path to a [`DependencyPath`].

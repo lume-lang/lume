@@ -7,7 +7,7 @@ Package "sample" {
 
     dependencies = [
         Dependency {
-            source = "../lib"
+            source = "https://github.com/lume-lang/lume"
             version = "=1.0.0"
         }
     ]

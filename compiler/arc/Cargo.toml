@@ -11,6 +11,7 @@ lume_span = { path = "../lume_span" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 fxhash = "=0.2.1"
+git2 = "0.20.2"
 glob = "^0"
 indexmap = "=2.9.0"
 petgraph = "=0.8.2"
