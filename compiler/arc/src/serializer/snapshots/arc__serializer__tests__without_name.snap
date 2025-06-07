@@ -1,8 +1,8 @@
 ---
-source: compiler/arc/src/serializer.rs
-description: "Package 123 {}"
+source: compiler/arc/src/serializer/tests.rs
+description: "Package {}"
 ---
-ArcfileUnexpectedType {
+ArcfileMissingName {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -11,12 +11,10 @@ ArcfileUnexpectedType {
             0,
         ),
         name: Internal,
-        content: "Package 123 {}",
+        content: "Package {}",
         package: PackageId(
             0,
         ),
     },
-    range: 8..11,
-    expected: "String",
-    found: "Integer",
+    range: 0..10,
 }
