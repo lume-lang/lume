@@ -135,3 +135,17 @@ pub struct ArcfileIncompatibleLumeVersion {
 pub struct ArcfileNoPackages {
     pub path: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "multiple packages defined",
+    code = "ARC0216",
+    help = "Arcfiles currently only support single-package projects"
+)]
+pub struct ArcfileMultiplePackages {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("first package defined here")]
+    pub range: Range<usize>,
+}
