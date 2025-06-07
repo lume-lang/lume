@@ -4,4 +4,11 @@ Package "sample" {
     description = "A sample Lume project using Arc"
     license = "MIT"
     repository = "https://github.com/lume-lang/lume"
+
+    dependencies = [
+        Dependency {
+            source = "../lib"
+            version = "=1.0.0"
+        }
+    ]
 }

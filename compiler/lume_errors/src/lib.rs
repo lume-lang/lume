@@ -210,6 +210,7 @@ impl DiagCtx {
 ///
 /// The handle acts as a mutable reference to it's parent [`DiagCtx`] instance,
 /// but will drain all errors to the output, once it's been dropped or manually drained.
+#[derive(Clone)]
 pub struct DiagCtxHandle {
     /// Contains the parent [`DiagCtxInner`] handler.
     inner: Arc<Mutex<DiagCtxInner>>,

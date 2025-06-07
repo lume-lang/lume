@@ -8,11 +8,15 @@ rust-version.workspace = true
 lume_errors = { path = "../lume_errors" }
 lume_span = { path = "../lume_span" }
 
-glob = "^0"
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+fxhash = "=0.2.1"
+glob = "^0"
+indexmap = "=2.9.0"
+petgraph = "=0.8.2"
 rust-embed = { version = "8.7.0", features = ["interpolate-folder-path"] }
 semver = { version = "^1" }
+url = "=2.5.4"
 
 [dev-dependencies]
 insta = { version = "1.42.2" }

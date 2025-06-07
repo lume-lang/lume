@@ -1,6 +1,6 @@
-use std::path::Path;
+use std::path::PathBuf;
 
-use arc::{Package, Project};
+use arc::Package;
 use error_snippet::Result;
 use lume_errors::{DiagCtx, DiagOutputFormat};
 use lume_span::SourceMap;
@@ -14,35 +14,35 @@ pub struct Options {
 }
 
 pub struct Driver {
-    /// Defines the structure of the Arcfile within the project.
-    pub project: Project,
+    /// Defines the structure of the Arcfile within the package.
+    pub package: Package,
 
     /// Defines the compilations options to use.
     pub options: Options,
 }
 
 impl Driver {
-    /// Creates a new compilation driver from the given project root.
+    /// Creates a new compilation driver from the given package root.
     ///
-    /// This function will look for Arcfiles within the given root folder, and build the project accordingly.
+    /// This function will look for Arcfiles within the given root folder, and build the package accordingly.
     /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
     ///
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &Path) -> Result<Self> {
+    pub fn from_root(root: &PathBuf) -> Result<Self> {
         let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
         dcx.exit_on_error();
 
-        let project = dcx.with(|handle| Project::locate(root, handle))?;
+        let package = dcx.with(|handle| Package::locate(root, handle))?;
 
-        Ok(Driver::from_project(project))
+        Ok(Driver::from_package(package))
     }
 
-    /// Creates a new compilation driver from the given [`Project`].
-    pub fn from_project(project: Project) -> Self {
+    /// Creates a new compilation driver from the given [`Package`].
+    pub fn from_package(package: Package) -> Self {
         Driver {
-            project,
+            package,
             options: Options::default(),
         }
     }
@@ -56,7 +56,7 @@ impl Driver {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    pub fn build_project(root: &Path) -> Result<()> {
+    pub fn build_project(root: &PathBuf) -> Result<()> {
         let mut driver = Self::from_root(root)?;
 
         driver.build()
@@ -71,19 +71,15 @@ impl Driver {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(project = %self.project.path().display()), err)]
+    #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
     pub fn build(&mut self) -> Result<()> {
-        for package in self.project.packages_mut() {
-            let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
-            dcx.exit_on_error();
+        let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
+        dcx.exit_on_error();
 
-            package.add_std_sources();
-            package.add_project_sources()?;
+        self.package.add_std_sources();
+        self.package.add_project_sources()?;
 
-            Compiler::build_package(package, &self.options, dcx)?;
-        }
-
-        Ok(())
+        Compiler::build_package(&self.package, &self.options, dcx)
     }
 }
 

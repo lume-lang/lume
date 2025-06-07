@@ -1,20 +1,19 @@
 use error_snippet::Result;
 
-use crate::Dependencies;
-use crate::Dependency;
-use crate::ProjectParser;
+use crate::PackageParser;
 use crate::parser::Block;
+use crate::serializer::{ManifestDependencies, ManifestDependency};
 
-impl ProjectParser {
+impl PackageParser {
     /// Parses the dependencies from the given package block.
-    pub(crate) fn parse_dependencies(&self, block: &Block) -> Result<Dependencies> {
+    pub(crate) fn parse_dependencies(&self, block: &Block) -> Result<ManifestDependencies> {
         let no_std = match block.find_prop("no_std") {
             Some(prop) => self.expect_prop_bool(prop)?,
             None => false,
         };
 
         let Some(dependencies) = block.find_prop("dependencies") else {
-            return Ok(Dependencies {
+            return Ok(ManifestDependencies {
                 no_std,
                 dependencies: Vec::new(),
             });
@@ -31,11 +30,11 @@ impl ProjectParser {
             })
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(Dependencies { no_std, dependencies })
+        Ok(ManifestDependencies { no_std, dependencies })
     }
 
     /// Parses the dependencies from the given package block.
-    pub(crate) fn parse_dependency(&self, block: &Block) -> Result<Dependency> {
+    pub(crate) fn parse_dependency(&self, block: &Block) -> Result<ManifestDependency> {
         if block.ty.value() != "Dependency" {
             todo!();
         }
@@ -49,8 +48,11 @@ impl ProjectParser {
         };
 
         let source = self.expect_prop_string(source_prop)?.to_owned();
-        let version = self.version_req(version_prop)?.into_value();
+        let required_version = self.version_req(version_prop)?.into_value();
 
-        Ok(Dependency { source, version })
+        Ok(ManifestDependency {
+            source,
+            required_version,
+        })
     }
 }
