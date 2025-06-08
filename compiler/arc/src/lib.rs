@@ -5,6 +5,7 @@ pub(crate) mod serializer;
 pub mod stdlib;
 
 use crate::deps::DependencyResolver;
+pub use crate::deps::fetch::{clean_local_cache_dir, local_cache_dir};
 use crate::parser::Spanned;
 use crate::serializer::{Manifest, PackageParser};
 use crate::{deps::Dependencies, errors::*};

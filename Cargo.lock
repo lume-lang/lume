@@ -33,6 +33,7 @@ dependencies = [
  "petgraph",
  "rust-embed",
  "semver",
+ "tracing",
  "url",
 ]
 
