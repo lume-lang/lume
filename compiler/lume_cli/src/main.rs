@@ -5,7 +5,6 @@ mod tracing;
 use std::env;
 
 use clap::{Arg, ArgAction, Command};
-use commands::run;
 use error_snippet::{GraphicalRenderer, Result, handler::Handler};
 
 fn run() -> Result<()> {
@@ -29,7 +28,8 @@ fn run() -> Result<()> {
                 .help("Prints the current version of Lume")
                 .action(ArgAction::Version),
         )
-        .subcommand(run::command());
+        .subcommand(commands::arc::command())
+        .subcommand(commands::run::command());
 
     let matches = command.get_matches();
 
@@ -38,7 +38,8 @@ fn run() -> Result<()> {
     }
 
     match matches.subcommand() {
-        Some(("run", sub_matches)) => run::run(sub_matches)?,
+        Some(("arc", sub_matches)) => commands::arc::run(sub_matches)?,
+        Some(("run", sub_matches)) => commands::run::run(sub_matches)?,
         _ => unreachable!(),
     }
 

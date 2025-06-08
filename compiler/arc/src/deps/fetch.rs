@@ -47,7 +47,7 @@ pub fn local_cache_dir() -> PathBuf {
 ///
 /// To see which directory is the current local cache directory, see [`local_cache_dir`].
 #[tracing::instrument(level = "DEBUG", err)]
-pub fn clean_local_cache_dir() -> Result<()> {
+pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
     let lcd = local_cache_dir();
     tracing::debug!("attempting to clear local cache directory ({})", lcd.display());
 
@@ -69,6 +69,10 @@ pub fn clean_local_cache_dir() -> Result<()> {
         };
 
         tracing::trace!("attempting to remove `{}`...", cached_pkg_path.display());
+
+        if dry_run {
+            continue;
+        }
 
         let result = if cached_pkg_path.is_dir() {
             std::fs::remove_dir_all(&cached_pkg_path)
