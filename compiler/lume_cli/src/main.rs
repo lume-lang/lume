@@ -4,67 +4,45 @@ mod tracing;
 
 use std::env;
 
+use clap::{Arg, ArgAction, Command};
 use commands::run;
-use error::{InvalidCliError, UnknownCommandError};
-use error_snippet::{GraphicalRenderer, IntoDiagnostic, Result, handler::Handler};
-use getopts::{Options, ParsingStyle};
-
-const USAGE: &str = "Usage: lume [OPTIONS] [COMMAND | FILE]
-
-Commands:
-
-    build    Compile Lume source file(s)
-
-Examples:
-
-    lume build hello.lm    # Compile the file into an executable";
-
-fn print_usage() {
-    println!("{USAGE}");
-
-    std::process::exit(0)
-}
+use error_snippet::{GraphicalRenderer, Result, handler::Handler};
 
 fn run() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let mut opts = Options::new();
+    let command = Command::new("Lume")
+        .about("Lume's toolchain and package manager")
+        .version(env!("CARGO_PKG_VERSION"))
+        .subcommand_required(true)
+        .arg_required_else_help(true)
+        .allow_missing_positional(true)
+        .disable_version_flag(true)
+        .arg(
+            Arg::new("trace")
+                .long("trace")
+                .help("Enables tracing of the compiler")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("version")
+                .short('v')
+                .long("version")
+                .help("Prints the current version of Lume")
+                .action(ArgAction::Version),
+        )
+        .subcommand(run::command());
 
-    opts.parsing_style(ParsingStyle::FloatingFrees);
-    opts.optflag("h", "help", "Shows this help screen");
-    opts.optflag("v", "version", "Prints the current compiler version");
-    opts.optflag("", "trace", "Enables tracing of the compiler");
+    let matches = command.get_matches();
 
-    let matches = match opts.parse(&args[1..]) {
-        Ok(matches) => matches,
-        Err(err) => {
-            return Err(InvalidCliError {
-                inner: vec![err.into_diagnostic()],
-            }
-            .into());
-        }
-    };
-
-    if matches.opt_present("h") {
-        print_usage();
-    }
-
-    if matches.opt_present("v") {
-        println!("{}", env!("CARGO_PKG_VERSION"));
-        std::process::exit(0)
-    }
-
-    if matches.opt_present("trace") {
+    if let Some(true) = matches.get_one("trace") {
         tracing::register_default_tracer();
     }
 
-    match matches.free.first().map(String::as_str) {
-        Some("run") => run::run(&matches.free[1..]),
-        Some(cmd) => Err(UnknownCommandError { command: cmd.into() }.into()),
-        None => {
-            print_usage();
-            Ok(())
-        }
+    match matches.subcommand() {
+        Some(("run", sub_matches)) => run::run(sub_matches)?,
+        _ => unreachable!(),
     }
+
+    Ok(())
 }
 
 fn main() {

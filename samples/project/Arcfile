@@ -5,10 +5,5 @@ Package "sample" {
     license = "MIT"
     repository = "https://github.com/lume-lang/lume"
 
-    dependencies = [
-        Dependency {
-            source = "https://github.com/lume-lang/lume"
-            version = "=1.0.0"
-        }
-    ]
+    dependencies = []
 }
