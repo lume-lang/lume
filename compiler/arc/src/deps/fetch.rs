@@ -36,6 +36,54 @@ static LOCAL_CACHE_DIR: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(
     std::env::temp_dir()
 });
 
+/// Returns the current local cache directory for saving caches and/or clones
+/// of remote dependency packages.
+#[tracing::instrument(level = "TRACE", ret)]
+pub fn local_cache_dir() -> PathBuf {
+    LOCAL_CACHE_DIR.to_path_buf()
+}
+
+/// Clears the local cache directory for all caches and clones of remote dependency packages.
+///
+/// To see which directory is the current local cache directory, see [`local_cache_dir`].
+#[tracing::instrument(level = "DEBUG", err)]
+pub fn clean_local_cache_dir() -> Result<()> {
+    let lcd = local_cache_dir();
+    tracing::debug!("attempting to clear local cache directory ({})", lcd.display());
+
+    // If the directory doesn't exist, we have nothing to do.
+    if !lcd.is_dir() {
+        tracing::debug!("cache directory does not exist, skipping...");
+        return Ok(());
+    }
+
+    let cached_packages = match std::fs::read_dir(lcd) {
+        Ok(packages) => packages,
+        Err(err) => return Err(err.into()),
+    };
+
+    for entry in cached_packages {
+        let cached_pkg_path = match entry {
+            Ok(path) => path.path(),
+            Err(err) => return Err(err.into()),
+        };
+
+        tracing::trace!("attempting to remove `{}`...", cached_pkg_path.display());
+
+        let result = if cached_pkg_path.is_dir() {
+            std::fs::remove_dir_all(&cached_pkg_path)
+        } else {
+            std::fs::remove_file(&cached_pkg_path)
+        };
+
+        if let Err(err) = result {
+            return Err(err.into());
+        }
+    }
+
+    Ok(())
+}
+
 pub trait DependencyFetcher {
     /// Fetches the package defined at the given path and returns
     /// the path to a local copy of the dependency root.
