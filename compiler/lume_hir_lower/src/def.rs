@@ -340,7 +340,7 @@ impl LowerModule<'_> {
 
         self.self_type = None;
         self.current_item = ItemId::from_name(&[&name.name, &target.name]);
-        let id = self.item_id(&name);
+        let id = self.item_id((&target, &name));
 
         Ok(lume_hir::Item::Use(Box::new(hir::TraitImplementation {
             id,

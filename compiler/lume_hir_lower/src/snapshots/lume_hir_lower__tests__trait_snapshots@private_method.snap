@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "trait Add { fn add(other: int) -> int }"
+description: "trait Add { fn add(other: int) -> int; }"
 ---
 Map {
     package: PackageId(
@@ -93,10 +93,10 @@ Map {
                                 },
                             ),
                             block: None,
-                            location: <internal>:12:37,
+                            location: <internal>:12:38,
                         },
                     ],
-                    location: <internal>:0:39,
+                    location: <internal>:0:40,
                 },
             ),
         ),
