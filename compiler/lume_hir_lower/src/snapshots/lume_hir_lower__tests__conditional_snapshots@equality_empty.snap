@@ -90,14 +90,6 @@ description: "let a = 0; if a == 1 { }"
                 },
                 cases: [
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                3,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -105,7 +97,7 @@ description: "let a = 0; if a == 1 { }"
                                         0,
                                     ),
                                     index: Idx(
-                                        4,
+                                        3,
                                     ),
                                 },
                                 location: <internal>:14:19,
@@ -116,7 +108,7 @@ description: "let a = 0; if a == 1 { }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                4,
+                                                3,
                                             ),
                                         },
                                         callee: Expression {
@@ -125,7 +117,7 @@ description: "let a = 0; if a == 1 { }"
                                                     0,
                                                 ),
                                                 index: Idx(
-                                                    6,
+                                                    5,
                                                 ),
                                             },
                                             location: <internal>:14:15,
@@ -136,7 +128,7 @@ description: "let a = 0; if a == 1 { }"
                                                             0,
                                                         ),
                                                         index: Idx(
-                                                            6,
+                                                            5,
                                                         ),
                                                     },
                                                     reference: StatementId {
@@ -169,7 +161,7 @@ description: "let a = 0; if a == 1 { }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        5,
+                                                        4,
                                                     ),
                                                 },
                                                 location: <internal>:19:20,
@@ -180,7 +172,7 @@ description: "let a = 0; if a == 1 { }"
                                                                 0,
                                                             ),
                                                             index: Idx(
-                                                                5,
+                                                                4,
                                                             ),
                                                         },
                                                         location: <internal>:19:20,
@@ -191,7 +183,7 @@ description: "let a = 0; if a == 1 { }"
                                                                         0,
                                                                     ),
                                                                     index: Idx(
-                                                                        5,
+                                                                        4,
                                                                     ),
                                                                 },
                                                                 value: 1,

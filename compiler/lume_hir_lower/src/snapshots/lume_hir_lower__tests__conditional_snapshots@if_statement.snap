@@ -24,14 +24,6 @@ description: "if true { let a = 1; }"
                 },
                 cases: [
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                1,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -39,7 +31,7 @@ description: "if true { let a = 1; }"
                                         0,
                                     ),
                                     index: Idx(
-                                        2,
+                                        1,
                                     ),
                                 },
                                 location: <internal>:3:7,
@@ -50,7 +42,7 @@ description: "if true { let a = 1; }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                2,
+                                                1,
                                             ),
                                         },
                                         location: <internal>:3:7,
@@ -61,7 +53,7 @@ description: "if true { let a = 1; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        2,
+                                                        1,
                                                     ),
                                                 },
                                                 value: true,
@@ -79,7 +71,7 @@ description: "if true { let a = 1; }"
                                             0,
                                         ),
                                         index: Idx(
-                                            3,
+                                            2,
                                         ),
                                     },
                                     kind: Variable(
@@ -89,7 +81,7 @@ description: "if true { let a = 1; }"
                                                     0,
                                                 ),
                                                 index: Idx(
-                                                    3,
+                                                    2,
                                                 ),
                                             },
                                             name: Identifier {
@@ -103,7 +95,7 @@ description: "if true { let a = 1; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        4,
+                                                        3,
                                                     ),
                                                 },
                                                 location: <internal>:18:19,
@@ -114,7 +106,7 @@ description: "if true { let a = 1; }"
                                                                 0,
                                                             ),
                                                             index: Idx(
-                                                                4,
+                                                                3,
                                                             ),
                                                         },
                                                         location: <internal>:18:19,
@@ -125,7 +117,7 @@ description: "if true { let a = 1; }"
                                                                         0,
                                                                     ),
                                                                     index: Idx(
-                                                                        4,
+                                                                        3,
                                                                     ),
                                                                 },
                                                                 value: 1,

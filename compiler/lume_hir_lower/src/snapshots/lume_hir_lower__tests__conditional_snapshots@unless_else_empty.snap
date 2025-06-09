@@ -24,14 +24,6 @@ description: "unless true { } else { }"
                 },
                 cases: [
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                1,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -39,7 +31,7 @@ description: "unless true { } else { }"
                                         0,
                                     ),
                                     index: Idx(
-                                        2,
+                                        1,
                                     ),
                                 },
                                 location: <internal>:7:11,
@@ -50,7 +42,7 @@ description: "unless true { } else { }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                2,
+                                                1,
                                             ),
                                         },
                                         location: <internal>:7:11,
@@ -61,7 +53,7 @@ description: "unless true { } else { }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        2,
+                                                        1,
                                                     ),
                                                 },
                                                 value: true,
@@ -78,14 +70,6 @@ description: "unless true { } else { }"
                         location: <internal>:7:15,
                     },
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                3,
-                            ),
-                        },
                         condition: None,
                         block: Block {
                             statements: [],

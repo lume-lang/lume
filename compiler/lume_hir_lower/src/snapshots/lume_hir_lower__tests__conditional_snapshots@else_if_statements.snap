@@ -24,14 +24,6 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                 },
                 cases: [
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                1,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -39,7 +31,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                         0,
                                     ),
                                     index: Idx(
-                                        2,
+                                        1,
                                     ),
                                 },
                                 location: <internal>:3:7,
@@ -50,7 +42,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                2,
+                                                1,
                                             ),
                                         },
                                         location: <internal>:3:7,
@@ -61,7 +53,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        2,
+                                                        1,
                                                     ),
                                                 },
                                                 value: true,
@@ -79,7 +71,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                             0,
                                         ),
                                         index: Idx(
-                                            3,
+                                            2,
                                         ),
                                     },
                                     kind: Variable(
@@ -89,7 +81,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                     0,
                                                 ),
                                                 index: Idx(
-                                                    3,
+                                                    2,
                                                 ),
                                             },
                                             name: Identifier {
@@ -103,7 +95,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        4,
+                                                        3,
                                                     ),
                                                 },
                                                 location: <internal>:18:19,
@@ -114,7 +106,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                                 0,
                                                             ),
                                                             index: Idx(
-                                                                4,
+                                                                3,
                                                             ),
                                                         },
                                                         location: <internal>:18:19,
@@ -125,7 +117,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                                         0,
                                                                     ),
                                                                     index: Idx(
-                                                                        4,
+                                                                        3,
                                                                     ),
                                                                 },
                                                                 value: 0,
@@ -145,14 +137,6 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                         location: <internal>:3:22,
                     },
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                5,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -160,7 +144,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                         0,
                                     ),
                                     index: Idx(
-                                        6,
+                                        4,
                                     ),
                                 },
                                 location: <internal>:31:36,
@@ -171,7 +155,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                6,
+                                                4,
                                             ),
                                         },
                                         location: <internal>:31:36,
@@ -182,7 +166,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        6,
+                                                        4,
                                                     ),
                                                 },
                                                 value: false,
@@ -200,7 +184,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                             0,
                                         ),
                                         index: Idx(
-                                            7,
+                                            5,
                                         ),
                                     },
                                     kind: Variable(
@@ -210,7 +194,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                     0,
                                                 ),
                                                 index: Idx(
-                                                    7,
+                                                    5,
                                                 ),
                                             },
                                             name: Identifier {
@@ -224,7 +208,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        8,
+                                                        6,
                                                     ),
                                                 },
                                                 location: <internal>:47:48,
@@ -235,7 +219,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                                 0,
                                                             ),
                                                             index: Idx(
-                                                                8,
+                                                                6,
                                                             ),
                                                         },
                                                         location: <internal>:47:48,
@@ -246,7 +230,7 @@ description: "if true { let a = 0; } else if false { let a = 0; }"
                                                                         0,
                                                                     ),
                                                                     index: Idx(
-                                                                        8,
+                                                                        6,
                                                                     ),
                                                                 },
                                                                 value: 0,

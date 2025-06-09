@@ -24,14 +24,6 @@ description: "if true { } else if false { } else { }"
                 },
                 cases: [
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                1,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -39,7 +31,7 @@ description: "if true { } else if false { } else { }"
                                         0,
                                     ),
                                     index: Idx(
-                                        2,
+                                        1,
                                     ),
                                 },
                                 location: <internal>:3:7,
@@ -50,7 +42,7 @@ description: "if true { } else if false { } else { }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                2,
+                                                1,
                                             ),
                                         },
                                         location: <internal>:3:7,
@@ -61,7 +53,7 @@ description: "if true { } else if false { } else { }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        2,
+                                                        1,
                                                     ),
                                                 },
                                                 value: true,
@@ -78,14 +70,6 @@ description: "if true { } else if false { } else { }"
                         location: <internal>:3:11,
                     },
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                3,
-                            ),
-                        },
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
@@ -93,7 +77,7 @@ description: "if true { } else if false { } else { }"
                                         0,
                                     ),
                                     index: Idx(
-                                        4,
+                                        2,
                                     ),
                                 },
                                 location: <internal>:20:25,
@@ -104,7 +88,7 @@ description: "if true { } else if false { } else { }"
                                                 0,
                                             ),
                                             index: Idx(
-                                                4,
+                                                2,
                                             ),
                                         },
                                         location: <internal>:20:25,
@@ -115,7 +99,7 @@ description: "if true { } else if false { } else { }"
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        4,
+                                                        2,
                                                     ),
                                                 },
                                                 value: false,
@@ -132,14 +116,6 @@ description: "if true { } else if false { } else { }"
                         location: <internal>:20:29,
                     },
                     Condition {
-                        id: StatementId {
-                            def: ItemId(
-                                0,
-                            ),
-                            index: Idx(
-                                5,
-                            ),
-                        },
                         condition: None,
                         block: Block {
                             statements: [],
