@@ -1,0 +1,15 @@
+---
+source: compiler/lume_typech/src/tests/check.rs
+description: "fn foo() -> Int32 {\n        while true {\n            return true;\n        }\n        return 0_i32;\n    }"
+---
+× error[LM4001]: mismatched types
+   ╭───────────
+ 2 │         while true {
+ 3 │             return true;
+   │                    ^^^^ expected type Int32, but found type Boolean...
+ 4 │         }
+   ∶ 
+ 1 │ fn foo() -> Int32 {
+   │             ^^^^^ ...because of type defined here
+ 2 │         while true {
+   ╰──

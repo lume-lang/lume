@@ -1,0 +1,15 @@
+---
+source: compiler/lume_typech/src/tests/check.rs
+description: "fn foo() -> Boolean {\n            return false;\n        }\n\n        fn bar() -> Int32 {\n            return foo();\n        }"
+---
+× error[LM4001]: mismatched types
+   ╭───────────
+ 1 │ fn foo() -> Boolean {
+   │             ^^^^^^^ expected type Int32, but found type Boolean...
+ 2 │             return false;
+   ∶ 
+ 4 │ 
+ 5 │         fn bar() -> Int32 {
+   │                     ^^^^^ ...because of type defined here
+ 6 │             return foo();
+   ╰──
