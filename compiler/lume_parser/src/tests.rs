@@ -609,14 +609,14 @@ fn test_type_alias_snapshots() {
 #[test]
 fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { }", "empty");
-    assert_snap_eq!("trait Add { pub fn add(other: int) -> int }", "method");
+    assert_snap_eq!("trait Add { pub fn add(other: int) -> int; }", "method");
     assert_snap_eq!(
         "trait Add { pub fn add(other: int) -> int { return self + other; } }",
         "method_impl"
     );
     assert_snap_eq!("trait Add<T> { }", "generic");
     assert_snap_eq!("trait Add<T1, T2> { }", "generics");
-    assert_snap_eq!("trait Add { fn add(other: int) -> int }", "private_method");
+    assert_snap_eq!("trait Add { fn add(other: int) -> int; }", "private_method");
     assert_snap_eq!("trait Add<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("trait Add<T1: Numeric, T2: Numeric> {}", "constrained_generics");
     assert_snap_eq!("trait Add { pub fn add(other: int) { } }", "method_no_ret");

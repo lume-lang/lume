@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
+expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
 ---
 [
     TypeDefinition(
@@ -90,13 +90,13 @@ expression: "parse(\"trait Add { fn add(other: int) -> int }\")"
                         ),
                         block: None,
                         location: Location(
-                            12..37,
+                            12..38,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..39,
+                    0..40,
                 ),
                 documentation: None,
             },

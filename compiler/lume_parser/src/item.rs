@@ -349,7 +349,11 @@ impl Parser {
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_opt_block()?;
+        let block = if self.check(TokenKind::Semicolon) {
+            None
+        } else {
+            Some(self.parse_block()?)
+        };
 
         let end = self.previous_token().end();
 
