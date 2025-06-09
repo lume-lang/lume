@@ -7,6 +7,7 @@ fn infer_expr_lit_match() -> Result<()> {
     let tcx = empty_tcx();
     let matches: &[(lume_hir::Expression, SymbolName)] = &[
         (lume_hir::Expression::lit_bool(false), SymbolName::boolean()),
+        (lume_hir::Expression::lit_string("hello!"), SymbolName::string()),
         (lume_hir::Expression::lit_i8(16), SymbolName::i8()),
         (lume_hir::Expression::lit_i16(16), SymbolName::i16()),
         (lume_hir::Expression::lit_i32(16), SymbolName::i32()),

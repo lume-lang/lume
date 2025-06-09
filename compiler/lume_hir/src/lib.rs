@@ -834,6 +834,14 @@ impl Expression {
         })))
     }
 
+    /// Creates a new [`Expression`] with a [`LiteralKind::String`] value.
+    pub fn lit_string(value: impl Into<String>) -> Self {
+        Self::lit(LiteralKind::String(Box::new(StringLiteral {
+            id: ExpressionId::default(),
+            value: value.into(),
+        })))
+    }
+
     /// Creates a new [`Expression`] with a [`LiteralKind::U64`] value.
     ///
     /// # Errors
