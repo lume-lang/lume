@@ -26,7 +26,7 @@ impl<T: std::clone::Clone> CacheStore<T> {
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
     pub fn read(&self) -> RwLockReadGuard<HashMap<u64, T>> {
-        self.inner.try_read().unwrap()
+        self.inner.read().unwrap()
     }
 
     /// Retrieves an exclusive-write access to the [`CacheStore`]'s inner map instance.
@@ -36,7 +36,7 @@ impl<T: std::clone::Clone> CacheStore<T> {
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
     pub fn write(&self) -> RwLockWriteGuard<HashMap<u64, T>> {
-        self.inner.try_write().unwrap()
+        self.inner.write().unwrap()
     }
 
     /// Attempts to retrieve the value with the given key from the
