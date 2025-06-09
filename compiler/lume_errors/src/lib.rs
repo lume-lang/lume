@@ -170,7 +170,7 @@ impl DiagCtx {
     ///
     /// let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     ///
-    /// dcx.with(|mut handle| {
+    /// dcx.with_res(|mut handle| {
     ///     let error = SimpleDiagnostic::new("An error occurred");
     ///     handle.emit(error.into());
     /// });
