@@ -3,17 +3,17 @@ use error_snippet::Result;
 use lume_hir::{self, PathSegment, TypeId};
 use lume_span::StatementId;
 
-mod define_functions;
+mod define_func;
 mod define_impl;
-mod define_impl_methods;
 mod define_method_bodies;
 mod define_properties;
 mod define_property_types;
 mod define_scopes;
+mod define_trait;
+mod define_trait_func;
 mod define_type_constraints;
 mod define_type_params;
 mod define_types;
-mod define_use;
 
 /// Defines a list of types which are often used in other languages,
 /// but have a different name in Lume.
@@ -57,12 +57,12 @@ impl ThirBuildCtx {
     )]
     pub fn define_types(&mut self) -> Result<()> {
         infer::define_types::DefineTypes::run_all(self);
-        infer::define_functions::DefineFunctions::run_all(self);
+        infer::define_func::DefineFunctions::run_all(self);
         infer::define_impl::define_impl(self);
-        infer::define_use::define_trait_impl(self)?;
+        infer::define_trait::define_trait_impl(self)?;
         infer::define_properties::DefineProperties::run_all(self)?;
+        infer::define_trait_func::DefineTraitMethods::run_all(self)?;
         infer::define_type_params::DefineTypeParameters::run_all(self)?;
-        infer::define_impl_methods::DefineImplementationMethods::run_all(self)?;
         infer::define_type_constraints::DefineTypeConstraints::run_all(self)?;
         infer::define_property_types::DefinePropertyTypes::run_all(self)?;
         infer::define_method_bodies::DefineMethodBodies::run_all(self)?;
