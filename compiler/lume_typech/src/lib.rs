@@ -42,6 +42,16 @@ impl ThirBuildCtx {
         }
     }
 
+    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
+    pub fn hir(&self) -> &lume_hir::map::Map {
+        &self.hir
+    }
+
+    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
+    pub fn hir_mut(&mut self) -> &mut lume_hir::map::Map {
+        &mut self.hir
+    }
+
     /// Retrieves the type context from the build context.
     pub fn tcx(&self) -> &TypeDatabaseContext {
         &self.tcx
