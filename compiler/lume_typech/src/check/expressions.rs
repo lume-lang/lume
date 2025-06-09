@@ -74,7 +74,26 @@ impl Expressions<'_> {
         match &stmt.kind {
             lume_hir::StatementKind::Variable(var) => self.variable_declaration(var),
             lume_hir::StatementKind::Return(ret) => self.return_statement(ret),
-            _ => Ok(()),
+            lume_hir::StatementKind::If(cond) => {
+                for case in &cond.cases {
+                    self.define_block_scope(&case.block)?;
+                }
+
+                Ok(())
+            }
+            lume_hir::StatementKind::Unless(cond) => {
+                for case in &cond.cases {
+                    self.define_block_scope(&case.block)?;
+                }
+
+                Ok(())
+            }
+            lume_hir::StatementKind::InfiniteLoop(stmt) => self.define_block_scope(&stmt.block),
+            lume_hir::StatementKind::IteratorLoop(stmt) => self.define_block_scope(&stmt.block),
+            lume_hir::StatementKind::PredicateLoop(stmt) => self.define_block_scope(&stmt.block),
+            lume_hir::StatementKind::Expression(_)
+            | lume_hir::StatementKind::Break(_)
+            | lume_hir::StatementKind::Continue(_) => Ok(()),
         }
     }
 
