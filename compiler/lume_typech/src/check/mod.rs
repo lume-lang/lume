@@ -68,7 +68,16 @@ impl ThirBuildCtx {
             return Ok(true);
         }
 
-        println!("typech: {from:#?} {to:#?}");
+        if log::log_enabled!(log::Level::Debug) {
+            let from_pretty = self.new_named_type(from)?;
+            let to_pretty = self.new_named_type(to)?;
+
+            log::debug!("type-checking failed: {from_pretty} => {to_pretty}");
+
+            if log::log_enabled!(log::Level::Trace) {
+                log::trace!("expanded type info: {from:?} => {to:?}");
+            }
+        }
 
         Ok(false)
     }

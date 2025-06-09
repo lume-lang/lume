@@ -869,6 +869,7 @@ dependencies = [
  "indexmap",
  "insta",
  "levenshtein",
+ "log",
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
