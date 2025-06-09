@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use arc::Package;
 use error_snippet::Result;
-use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_errors::DiagCtxHandle;
 use lume_span::SourceMap;
 use lume_typech::ThirBuildCtx;
 
@@ -19,6 +19,9 @@ pub struct Driver {
 
     /// Defines the compilations options to use.
     pub options: Options,
+
+    /// Defines the diagnostics context for reporting errors during compilation.
+    dcx: DiagCtxHandle,
 }
 
 impl Driver {
@@ -30,20 +33,18 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &PathBuf) -> Result<Self> {
-        let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
-        dcx.exit_on_error();
-
+    pub fn from_root(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Self> {
         let package = dcx.with(|handle| Package::locate(root, handle))?;
 
-        Ok(Driver::from_package(package))
+        Ok(Driver::from_package(package, dcx))
     }
 
     /// Creates a new compilation driver from the given [`Package`].
-    pub fn from_package(package: Package) -> Self {
+    pub fn from_package(package: Package, dcx: DiagCtxHandle) -> Self {
         Driver {
             package,
             options: Options::default(),
+            dcx,
         }
     }
 
@@ -56,10 +57,14 @@ impl Driver {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    pub fn build_project(root: &PathBuf) -> Result<()> {
-        let driver = Self::from_root(root)?;
+    pub fn build_project(root: &PathBuf, dcx: DiagCtxHandle) -> Result<()> {
+        let mut driver = Self::from_root(root, dcx)?;
 
-        driver.build()
+        if let Err(err) = driver.build() {
+            driver.dcx.emit(err);
+        }
+
+        Ok(())
     }
 
     /// Builds the given compiler state into an executable or library.
@@ -71,7 +76,7 @@ impl Driver {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
-    pub fn build(&self) -> Result<()> {
+    pub fn build(&mut self) -> Result<()> {
         let mut package = Package::default();
         let mut dependencies = self.package.dependencies.graph.all();
 
@@ -100,16 +105,14 @@ impl Driver {
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
     pub fn build_package(&self, package: &mut Package) -> Result<()> {
-        let mut dcx = DiagCtx::new(DiagOutputFormat::Graphical);
-        dcx.exit_on_error();
-
         if !package.dependencies.no_std {
             package.add_std_sources();
         }
 
         package.add_project_sources()?;
 
-        Compiler::build_package(package, &self.options, dcx)
+        self.dcx
+            .with(|dcx| Compiler::build_package(package, &self.options, dcx))
     }
 }
 
@@ -122,7 +125,7 @@ pub struct Compiler<'a> {
     options: &'a Options,
 
     /// Defines the diagnostics handler context.
-    dcx: DiagCtx,
+    dcx: DiagCtxHandle,
 
     /// Defines the global source map for all source files.
     source_map: SourceMap,
@@ -138,7 +141,7 @@ impl<'a> Compiler<'a> {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, options: &'a Options, dcx: DiagCtx) -> Result<()> {
+    pub fn build_package(package: &'a Package, options: &'a Options, dcx: DiagCtxHandle) -> Result<()> {
         let mut compiler = Self {
             package,
             options,
@@ -166,7 +169,7 @@ impl<'a> Compiler<'a> {
     /// Type checks all the given source files.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let mut thir_ctx = self.dcx.with(|handle| lume_typech::ThirBuildCtx::new(hir, handle));
+        let mut thir_ctx = self.dcx.with_res(|dcx| lume_typech::ThirBuildCtx::new(hir, dcx))?;
 
         // Defines the types of all nodes within the HIR maps.
         thir_ctx.define_types()?;

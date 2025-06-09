@@ -1,5 +1,5 @@
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use error_snippet::Result;
+use lume_errors::DiagCtxHandle;
 
 pub(crate) fn command() -> Command {
     Command::new("clean")
@@ -13,8 +13,10 @@ pub(crate) fn command() -> Command {
         )
 }
 
-pub(crate) fn run(args: &ArgMatches) -> Result<()> {
+pub(crate) fn run(args: &ArgMatches, mut dcx: DiagCtxHandle) {
     let dry_run = args.get_flag("dry-run");
 
-    arc::clean_local_cache_dir(dry_run)
+    if let Err(err) = arc::clean_local_cache_dir(dry_run) {
+        dcx.emit(err);
+    }
 }

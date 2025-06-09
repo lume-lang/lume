@@ -6,10 +6,13 @@ use super::*;
 
 #[track_caller]
 fn lower(input: &str) -> Result<Map> {
-    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
 
-    let expressions = dcx.with(|handle| Parser::new(source.clone(), handle)).parse().unwrap();
+    let expressions = dcx
+        .with_res(|handle| Parser::new(source.clone(), handle))?
+        .parse()
+        .unwrap();
 
     let module_id = PackageId::empty();
     let mut map = Map::empty(module_id);
@@ -21,7 +24,7 @@ fn lower(input: &str) -> Result<Map> {
 
 #[track_caller]
 fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
-    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let source = Arc::new(SourceFile::internal(input));
 
     let mut parser = Parser::new_with_str(input);
@@ -31,7 +34,7 @@ fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
 
     let module_id = PackageId::empty();
     let mut map = Map::empty(module_id);
-    let mut lower = dcx.with(|handle| LowerModule::new(&mut map, source, handle));
+    let mut lower = dcx.with_res(|handle| LowerModule::new(&mut map, source, handle))?;
 
     Ok(lower.statements(statements))
 }

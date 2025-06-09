@@ -26,7 +26,7 @@ fn package_with_src(input: &str) -> Package {
 
 #[track_caller]
 fn lower_into_hir(input: &str) -> Result<Map> {
-    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let mut source_map = SourceMap::new();
 
     let package = package_with_src(input);
@@ -36,10 +36,10 @@ fn lower_into_hir(input: &str) -> Result<Map> {
 
 #[track_caller]
 fn type_infer(input: &str) -> Result<ThirBuildCtx> {
-    let mut dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
     let hir = lower_into_hir(input)?;
 
-    let mut tcx = dcx.with(|handle| ThirBuildCtx::new(hir, handle));
+    let mut tcx = dcx.with_res(|handle| ThirBuildCtx::new(hir, handle))?;
     tcx.define_types()?;
 
     Ok(tcx)

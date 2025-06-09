@@ -737,6 +737,7 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "lume_driver",
+ "lume_errors",
  "tracing",
  "tracing-subscriber",
 ]

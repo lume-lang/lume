@@ -5,9 +5,26 @@ mod tracing;
 use std::env;
 
 use clap::{Arg, ArgAction, Command};
-use error_snippet::{GraphicalRenderer, Result, handler::Handler};
+use lume_errors::{DiagCtx, DiagOutputFormat};
 
-fn run() -> Result<()> {
+fn main() {
+    use std::io::Write;
+
+    // Initialize logger
+    let env = env_logger::Env::default()
+        .filter_or("LUMEC_LOG_LEVEL", "warn")
+        .write_style_or("LUMEC_LOG_STYLE", "auto");
+
+    env_logger::builder()
+        .parse_env(env)
+        .format(|buf, rec| {
+            let style = buf.default_level_style(rec.level());
+            let level = rec.level().to_string().to_lowercase();
+
+            writeln!(buf, "{style}{level}{style:#}: {}", rec.args())
+        })
+        .init();
+
     let command = Command::new("Lume")
         .about("Lume's toolchain and package manager")
         .version(env!("CARGO_PKG_VERSION"))
@@ -37,48 +54,11 @@ fn run() -> Result<()> {
         tracing::register_default_tracer();
     }
 
-    match matches.subcommand() {
-        Some(("arc", sub_matches)) => commands::arc::run(sub_matches)?,
-        Some(("run", sub_matches)) => commands::run::run(sub_matches)?,
+    let dcx = DiagCtx::new(DiagOutputFormat::Graphical);
+
+    let _ = dcx.with_res(|dcx| match matches.subcommand() {
+        Some(("arc", sub_matches)) => commands::arc::run(sub_matches, dcx),
+        Some(("run", sub_matches)) => commands::run::run(sub_matches, dcx),
         _ => unreachable!(),
-    }
-
-    Ok(())
-}
-
-fn main() {
-    use std::io::Write;
-
-    // Initialize logger
-    let env = env_logger::Env::default()
-        .filter_or("LUMEC_LOG_LEVEL", "warn")
-        .write_style_or("LUMEC_LOG_STYLE", "auto");
-
-    env_logger::builder()
-        .parse_env(env)
-        .format(|buf, rec| {
-            let style = buf.default_level_style(rec.level());
-            let level = rec.level().to_string().to_lowercase();
-
-            writeln!(buf, "{style}{level}{style:#}: {}", rec.args())
-        })
-        .init();
-
-    match run() {
-        Ok(()) => {}
-        Err(err) => {
-            let renderer = Box::new(GraphicalRenderer::new());
-            let mut handler = error_snippet::handler::DiagnosticHandler::with_renderer(renderer);
-            handler.exit_on_error();
-
-            // We're expecting an error here, since the handler will *always* return
-            // a [`error_snippet::handler::DrainError::CompoundError`], which we also need to print.
-            //
-            // We could also get an error of [`std::fmt::Error`], which we should also report.
-            if let Err(drain_err) = handler.report_and_drain(err) {
-                let compound_diag = error_snippet::SimpleDiagnostic::new(drain_err.to_string());
-                let _ = handler.report_and_drain(compound_diag.into());
-            }
-        }
-    }
+    });
 }

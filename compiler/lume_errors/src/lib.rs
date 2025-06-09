@@ -1,37 +1,11 @@
 #![allow(clippy::arc_with_non_send_sync)]
 #![feature(negative_impls)]
 
-use error_snippet::{DiagnosticHandler, Handler, Renderer, SimpleDiagnostic};
+use error_snippet::{DiagnosticHandler, Handler, Renderer, Result, SimpleDiagnostic};
 use std::sync::{
     Arc, Mutex, MutexGuard,
     atomic::{AtomicBool, Ordering},
 };
-
-/// Derived from the Rust compiler.
-///
-/// [Original source](https://github.com/rust-lang/rust/blob/c79bbfab78dcb0a72aa3b2bc35c00334b58bfe2e/compiler/rustc_span/src/fatal_error.rs)
-#[derive(Debug, Clone, Copy)]
-pub struct FatalError;
-
-pub struct FatalErrorMarker;
-
-// Don't implement Send on FatalError. This makes it impossible to `panic_any!(FatalError)`.
-// We don't want to invoke the panic handler and print a backtrace for fatal errors.
-impl !Send for FatalError {}
-
-impl FatalError {
-    pub fn raise() -> ! {
-        std::panic::resume_unwind(Box::new(FatalErrorMarker))
-    }
-}
-
-impl std::fmt::Display for FatalError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "fatal error occured, aborting...")
-    }
-}
-
-impl std::error::Error for FatalError {}
 
 /// Defines the different options for outputting diagnostics,
 /// once they've been drained from the the diagnostic context ([`DiagCtx`]).
@@ -57,10 +31,6 @@ struct DiagCtxInner {
     /// Defines whether the context has reported any errors upon draining
     /// and should exit at the soonest possible convenience.
     tainted: AtomicBool,
-
-    /// Defines whether to halt the application, if an error is encountered
-    /// during a drain.
-    exit_on_error: bool,
 }
 
 impl DiagCtxInner {
@@ -80,27 +50,28 @@ impl DiagCtxInner {
         DiagCtxInner {
             handler,
             tainted: AtomicBool::new(false),
-            exit_on_error: false,
         }
     }
 
     /// Drains the currently reported errors in the context to the output buffer.
     ///
     /// For more information, read the documentation on [`DiagCtxHandle::drain()`].
-    fn drain(&mut self) {
+    fn drain(&mut self) -> Result<()> {
         let encountered_errors = match self.handler.drain() {
-            Ok(()) => return,
+            Ok(()) => return Ok(()),
             Err(error_snippet::DrainError::Fmt(e)) => panic!("{e:?}"),
             Err(error_snippet::DrainError::CompoundError(cnt)) => cnt,
         };
 
-        let message = format!("aborting due to {encountered_errors} previous errors");
-        let abort_diag = Box::new(SimpleDiagnostic::new(message));
-
-        let _ = self.handler.report_and_drain(abort_diag);
-
         // Mark the context as tainted.
         self.tainted.store(true, Ordering::Release);
+
+        let message = format!(
+            "aborting due to {encountered_errors} previous error{}",
+            if encountered_errors == 1 { "" } else { "s" }
+        );
+
+        Err(SimpleDiagnostic::new(message).into())
     }
 }
 
@@ -110,6 +81,7 @@ impl DiagCtxInner {
 ///
 /// Certain diagnostics may cause a single stage within the compiler
 /// to halt or exit early, where-as others might be more benign.
+#[derive(Clone)]
 pub struct DiagCtx {
     /// The inner handler for diagnostics, which holds all the
     /// reporting diagnostics.
@@ -132,42 +104,53 @@ impl DiagCtx {
         self.inner.lock().unwrap()
     }
 
-    /// Enables the context to halt the application, if an error is encountered
-    /// during a drain.
-    pub fn exit_on_error(&mut self) {
-        self.handler().exit_on_error = true;
-    }
-
     /// Create a handle for the diagnostic context, which can be
     /// used to emit diagnositcs to the inner context.
-    fn handle(&mut self) -> DiagCtxHandle {
+    fn handle(&self) -> DiagCtxHandle {
         DiagCtxHandle {
             inner: Arc::clone(&self.inner),
         }
     }
 
-    /// Raises a panic if the diagnostics context is tainted with errors.
-    fn abort_if_errors(&self) {
-        if self.tainted() {
-            // Raise a fatal error, without printing a backtrace.
-            FatalError::raise();
-        }
+    /// Emits the given diagnostic to the context directly, without
+    /// passing any handles or instances around.
+    ///
+    /// The diagnostic will not be drained from the handler immediately. To
+    /// drain the diagnostic, see [`DiagCtx::drain()`].
+    pub fn emit(&mut self, diag: error_snippet::Error) {
+        self.handler().handler.report(diag);
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immedietly. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immedietly drained to the inner handler.
-    pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
-        // Create local scope so we ensure the handle is dropped, draining
-        // all reported diagnostics to the handler.
-        let res = {
-            let handle = self.handle();
-            f(handle)
-        };
+    /// which is executed immediately. Upon finishing the closure, the handle is dropped
+    /// and all diagnostics reporting within it are immediately drained to the inner handler.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if an error occured while executing the closure or if the closure itself
+    /// returned `Err`.
+    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
+        let handle = self.handle();
+        let res = f(handle);
 
-        if self.handler().exit_on_error {
-            self.abort_if_errors();
-        }
+        self.handler().drain()?;
+
+        Ok(res)
+    }
+
+    /// Creates a new handle, which is only valid within the given closure,
+    /// which is executed immediately. Upon finishing the closure, the handle is dropped
+    /// and all diagnostics reporting within it are immediately drained to the inner handler.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if an error occured while executing the closure or if the closure itself
+    /// returned `Err`.
+    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
+        let handle = self.handle();
+        let res = f(handle);
+
+        self.handler().drain()?;
 
         res
     }
@@ -229,23 +212,25 @@ impl DiagCtxHandle {
         self.inner.lock().unwrap()
     }
 
-    /// Emits the given error to the parent context.
+    /// Emits the given diagnostic to the context directly, without
+    /// passing any handles or instances around.
     ///
-    /// Depending on the severity of the error, it might cause the
-    /// execution of the program to halt (e.g. fatal errors, bugs, etc.), but
-    /// most would simply be reporting until drained from the context.
+    /// The diagnostic will not be drained from the handler immediately. To
+    /// drain the diagnostic, see [`DiagCtxHandle::drain()`].
     #[track_caller]
-    pub fn emit(&mut self, diagnostic: error_snippet::Error) {
-        self.handler().handler.report(diagnostic);
+    pub fn emit(&mut self, diag: error_snippet::Error) {
+        self.handler().handler.report(diag);
     }
 
     /// Drains the currently reported errors in the context to the output buffer.
     ///
+    /// # Errors
+    ///
     /// If any reported diagnostics have a severity at or above [`error_snippet::Severity::Error`],
     /// they will be counted towards a [`error_snippet::DrainError::CompoundError`], which will be
     /// raised when draining has finished.
-    pub fn drain(&mut self) {
-        self.handler().drain();
+    pub fn drain(&mut self) -> Result<()> {
+        self.handler().drain()
     }
 
     /// Determines whether the diagnostic context is tainted.
@@ -257,34 +242,42 @@ impl DiagCtxHandle {
 
     /// Create a handle for the diagnostic context, which can be
     /// used to emit diagnositcs to the inner context.
-    fn handle(&mut self) -> DiagCtxHandle {
+    fn handle(&self) -> DiagCtxHandle {
         DiagCtxHandle {
             inner: Arc::clone(&self.inner),
         }
     }
 
-    /// Raises a panic if the diagnostics context is tainted with errors.
-    fn abort_if_errors(&self) {
-        if self.tainted() {
-            // Raise a fatal error, without printing a backtrace.
-            FatalError::raise();
-        }
+    /// Creates a new handle, which is only valid within the given closure,
+    /// which is executed immediately. Upon finishing the closure, the handle is dropped
+    /// and all diagnostics reporting within it are immediately drained to the inner handler.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if an error occured while executing the closure or if the closure itself
+    /// returned `Err`.
+    pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
+        let handle = self.handle();
+        let res = f(handle);
+
+        self.handler().drain()?;
+
+        Ok(res)
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immedietly. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immedietly drained to the inner handler.
-    pub fn with<TReturn>(&mut self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> TReturn {
-        // Create local scope so we ensure the handle is dropped, draining
-        // all reported diagnostics to the handler.
-        let res = {
-            let handle = self.handle();
-            f(handle)
-        };
+    /// which is executed immediately. Upon finishing the closure, the handle is dropped
+    /// and all diagnostics reporting within it are immediately drained to the inner handler.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if an error occured while executing the closure or if the closure itself
+    /// returned `Err`.
+    pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
+        let handle = self.handle();
+        let res = f(handle);
 
-        if self.handler().exit_on_error {
-            self.abort_if_errors();
-        }
+        self.handler().drain()?;
 
         res
     }
@@ -292,12 +285,6 @@ impl DiagCtxHandle {
 
 unsafe impl Send for DiagCtxHandle {}
 unsafe impl Sync for DiagCtxHandle {}
-
-impl Drop for DiagCtxHandle {
-    fn drop(&mut self) {
-        self.drain();
-    }
-}
 
 /// Defines a [`Renderer`] for handlers, which don't report any errors.
 /// Instead, it sends the reported diagnostics to the void, where they won't disturb anyone.

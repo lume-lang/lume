@@ -1,8 +1,8 @@
 use crate::commands::project_or_cwd;
 
 use clap::{Arg, ArgAction, ArgMatches, Command};
-use error_snippet::Result;
 use lume_driver::Driver;
+use lume_errors::DiagCtxHandle;
 
 pub(crate) fn command() -> Command {
     Command::new("run")
@@ -16,17 +16,32 @@ pub(crate) fn command() -> Command {
         )
 }
 
-pub(crate) fn run(args: &ArgMatches) -> Result<()> {
-    let input: String = if let Some(v) = args.get_one::<String>("path") {
-        project_or_cwd(Some(v))?
+pub(crate) fn run(args: &ArgMatches, mut dcx: DiagCtxHandle) {
+    let input = if let Some(v) = args.get_one::<String>("path") {
+        project_or_cwd(Some(v))
     } else {
-        project_or_cwd(None)?
+        project_or_cwd(None)
     };
 
-    let mut driver = Driver::from_root(&std::path::PathBuf::from(input))?;
+    let project_path = match input {
+        Ok(path) => path,
+        Err(err) => {
+            dcx.emit(err);
+            return;
+        }
+    };
+
+    let mut driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
+        Ok(driver) => driver,
+        Err(err) => {
+            dcx.emit(err);
+            return;
+        }
+    };
+
     driver.options.print_type_context = args.get_flag("print-type-ctx");
 
-    driver.build()?;
-
-    Ok(())
+    if let Err(err) = driver.build() {
+        dcx.emit(err);
+    }
 }

@@ -1,7 +1,7 @@
 pub(crate) mod clean;
 
 use clap::{ArgMatches, Command};
-use error_snippet::Result;
+use lume_errors::DiagCtxHandle;
 
 pub(crate) fn command() -> Command {
     Command::new("arc")
@@ -12,11 +12,9 @@ pub(crate) fn command() -> Command {
         .subcommand(clean::command())
 }
 
-pub(crate) fn run(matches: &ArgMatches) -> Result<()> {
+pub(crate) fn run(matches: &ArgMatches, dcx: DiagCtxHandle) {
     match matches.subcommand() {
-        Some(("clean", sub_matches)) => clean::run(sub_matches)?,
+        Some(("clean", sub_matches)) => clean::run(sub_matches, dcx),
         _ => unreachable!(),
     }
-
-    Ok(())
 }

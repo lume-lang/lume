@@ -100,13 +100,13 @@ impl<'pkg> DependencyResolver<'pkg> {
         let mut resolver = DependencyResolver { root, dcx };
 
         let (mut root_package, manifest_map, dependency_map) = resolver.resolve_package_dependencies(root)?;
-        let dependency_graph = DependencyGraph::build(manifest_map, dependency_map)?;
+        let graph = DependencyGraph::build(manifest_map, dependency_map)?;
 
         // Verify that all local dependencies have an allowed version number,
         // which matches their required version, as defined by their dependent.
-        resolver.dcx.with(|handle| dependency_graph.verify_dependencies(handle));
+        resolver.dcx.with_res(|handle| graph.verify_dependencies(handle))?;
 
-        root_package.dependencies.graph = dependency_graph;
+        root_package.dependencies.graph = graph;
 
         Ok(root_package)
     }
