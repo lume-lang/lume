@@ -20,6 +20,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 arc = { path = "../arc" }
+lume_errors_test = { path = "../lume_errors_test" }
 lume_hir_lower = { path = "../lume_hir_lower" }
 lume_parser = { path = "../lume_parser" }
 

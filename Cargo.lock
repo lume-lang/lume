@@ -767,6 +767,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_errors_test"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "insta",
+ "lume_errors",
+]
+
+[[package]]
 name = "lume_hir"
 version = "0.1.0"
 dependencies = [
@@ -872,6 +881,7 @@ dependencies = [
  "levenshtein",
  "log",
  "lume_errors",
+ "lume_errors_test",
  "lume_hir",
  "lume_hir_lower",
  "lume_parser",

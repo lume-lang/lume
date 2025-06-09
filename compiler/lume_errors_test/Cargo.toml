@@ -1,0 +1,14 @@
+[package]
+name = "lume_errors_test"
+version.workspace = true
+edition = "2024"
+rust-version.workspace = true
+
+[dependencies]
+lume_errors = { path = "../lume_errors" }
+
+error_snippet = { workspace = true }
+insta = { version = "=1.43.1" }
+
+[lints]
+workspace = true

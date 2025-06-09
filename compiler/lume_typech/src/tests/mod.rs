@@ -1,3 +1,4 @@
+mod check;
 mod inference;
 mod query;
 
@@ -6,6 +7,7 @@ use std::sync::Arc;
 use arc::Package;
 use error_snippet::Result;
 use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_errors_test::assert_dcx_snapshot;
 use lume_hir::map::Map;
 use lume_hir_lower::LowerState;
 use lume_span::{SourceFile, SourceMap};
@@ -48,4 +50,20 @@ fn type_infer(input: &str) -> Result<ThirBuildCtx> {
 #[track_caller]
 fn empty_tcx() -> ThirBuildCtx {
     type_infer("").unwrap()
+}
+
+/// Asserts that the given Lume code renders the same output as
+/// has been saved and snapshot in a previous iteration.
+#[macro_export]
+macro_rules! assert_typech_snapshot {
+    ($input:expr) => {
+        let dcx = lume_errors::DiagCtx::new_buffered(512);
+        let hir = $crate::tests::lower_into_hir($input).unwrap();
+
+        let mut tcx = dcx.with_res(|handle| $crate::ThirBuildCtx::new(hir, handle)).unwrap();
+        let _ = tcx.define_types();
+        let _ = tcx.typecheck();
+
+        $crate::tests::assert_dcx_snapshot!($input, &dcx);
+    };
 }
