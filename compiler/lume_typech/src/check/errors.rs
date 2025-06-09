@@ -22,6 +22,23 @@ pub struct MismatchedTypes {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
+    message = "unavailable cast",
+    code = "LM4004",
+    help = "to allow casting, add the `Cast<{to}>` trait to {from}"
+)]
+pub struct UnavailableCast {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("cannot cast {from} to type {to}")]
+    pub range: Range<usize>,
+
+    pub from: NamedTypeRef,
+    pub to: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
     message = "type unavailable in Lume",
     code = "LM4101",
     help = "you can use the {suggestion} type, which likely is what you meant."

@@ -220,6 +220,10 @@ impl SymbolName {
     pub fn boolean() -> Self {
         Self::from_parts(Some(["std"]), "Boolean")
     }
+
+    pub fn cast() -> Self {
+        Self::from_parts(Some(["std", "ops"]), "Cast")
+    }
 }
 
 impl std::fmt::Display for SymbolName {
