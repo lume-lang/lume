@@ -1,7 +1,9 @@
 #![allow(clippy::arc_with_non_send_sync)]
 #![feature(negative_impls)]
 
-use error_snippet::{DiagnosticHandler, Handler, Renderer, Result, SimpleDiagnostic};
+use error_snippet::{
+    BufferedDiagnosticHandler, DiagnosticHandler, GraphicalRenderer, Handler, Renderer, Result, SimpleDiagnostic,
+};
 use std::sync::{
     Arc, Mutex, MutexGuard,
     atomic::{AtomicBool, Ordering},
@@ -26,7 +28,7 @@ pub enum DiagOutputFormat {
 struct DiagCtxInner {
     /// The inner handler for diagnostics, which holds all the
     /// reporting diagnostics.
-    handler: DiagnosticHandler,
+    handler: Box<dyn Handler>,
 
     /// Defines whether the context has reported any errors upon draining
     /// and should exit at the soonest possible convenience.
@@ -37,18 +39,31 @@ impl DiagCtxInner {
     /// Creates a new [`DiagCtxInner`] instance using the given output format.
     fn new(fmt: DiagOutputFormat) -> Self {
         let renderer: Box<dyn Renderer + Send + Sync> = match fmt {
-            DiagOutputFormat::Graphical => Box::new(error_snippet::GraphicalRenderer::new()),
+            DiagOutputFormat::Graphical => Box::new(GraphicalRenderer::new()),
             DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
         };
 
-        let mut handler = error_snippet::DiagnosticHandler::with_renderer(renderer);
+        let mut handler = DiagnosticHandler::with_renderer(renderer);
 
         // If we drain an error to the handler, propagate the error count upwards, so
         // we can handle it at a higher level, instead of exiting the application.
         handler.exit_on_error();
 
         DiagCtxInner {
-            handler,
+            handler: Box::new(handler),
+            tainted: AtomicBool::new(false),
+        }
+    }
+
+    /// Creates a new [`DiagCtxInner`] instance with buffered, graphical output.
+    fn new_buffered(capacity: usize) -> Self {
+        let mut renderer = GraphicalRenderer::new();
+        renderer.use_colors = false;
+
+        let handler = BufferedDiagnosticHandler::with_renderer(capacity, Box::new(renderer));
+
+        DiagCtxInner {
+            handler: Box::new(handler),
             tainted: AtomicBool::new(false),
         }
     }
@@ -73,6 +88,18 @@ impl DiagCtxInner {
 
         Err(SimpleDiagnostic::new(message).into())
     }
+
+    /// Returns the buffered content of the diagnostics context.
+    ///
+    /// If the context is not buffered, returns [`None`]. Otherwise, returns the buffer
+    /// as a [`Some(String)`]. To create a buffered context, see [`DiagCtxInner::new_buffered()`].
+    pub fn buffer(&self) -> Option<String> {
+        let handler = self.handler.as_ref() as &dyn std::any::Any;
+
+        handler
+            .downcast_ref::<error_snippet::BufferedDiagnosticHandler>()
+            .map(|buf| buf.buffer().to_owned())
+    }
 }
 
 /// A context to deal with diagnostics, which is meant to
@@ -92,6 +119,16 @@ impl DiagCtx {
     /// Creates a new [`DiagCtx`] instance using the given output format.
     pub fn new(fmt: DiagOutputFormat) -> Self {
         let inner = DiagCtxInner::new(fmt);
+
+        DiagCtx {
+            inner: Arc::new(Mutex::new(inner)),
+        }
+    }
+
+    /// Creates a new [`DiagCtx`] instance with buffered, graphical output.
+    #[allow(dead_code, reason = "will only be used in snapshot tests")]
+    pub fn new_buffered(capacity: usize) -> Self {
+        let inner = DiagCtxInner::new_buffered(capacity);
 
         DiagCtx {
             inner: Arc::new(Mutex::new(inner)),
@@ -183,6 +220,14 @@ impl DiagCtx {
     /// is dropped.
     pub fn tainted(&self) -> bool {
         self.handler().tainted.load(Ordering::Acquire)
+    }
+
+    /// Returns the buffered content of the diagnostics context.
+    ///
+    /// If the context is not buffered, returns [`None`]. Otherwise, returns the buffer
+    /// as a [`Some(String)`]. To create a buffered context, see [`DiagCtx::new_buffered()`].
+    pub fn buffer(&self) -> Option<String> {
+        self.handler().buffer()
     }
 }
 
