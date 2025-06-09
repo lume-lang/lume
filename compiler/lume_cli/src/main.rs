@@ -47,6 +47,23 @@ fn run() -> Result<()> {
 }
 
 fn main() {
+    use std::io::Write;
+
+    // Initialize logger
+    let env = env_logger::Env::default()
+        .filter_or("LUMEC_LOG_LEVEL", "warn")
+        .write_style_or("LUMEC_LOG_STYLE", "auto");
+
+    env_logger::builder()
+        .parse_env(env)
+        .format(|buf, rec| {
+            let style = buf.default_level_style(rec.level());
+            let level = rec.level().to_string().to_lowercase();
+
+            writeln!(buf, "{style}{level}{style:#}: {}", rec.args())
+        })
+        .init();
+
     match run() {
         Ok(()) => {}
         Err(err) => {

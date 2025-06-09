@@ -9,6 +9,7 @@ arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver" }
 
 clap = "=4.5.39"
+env_logger = { version = "=0.11.8" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
