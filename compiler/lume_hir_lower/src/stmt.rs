@@ -182,7 +182,6 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
-        let id = self.next_stmt_id();
         let location = self.location(expr.location);
 
         let condition = if let Some(cond) = expr.condition {
@@ -194,7 +193,6 @@ impl LowerModule<'_> {
         let block = self.block(expr.block);
 
         Ok(hir::Condition {
-            id,
             condition,
             block,
             location,

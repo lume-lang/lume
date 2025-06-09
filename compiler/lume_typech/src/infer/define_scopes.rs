@@ -156,14 +156,11 @@ impl DefineScopes<'_> {
     }
 
     fn define_condition_scope(&mut self, cond: &lume_hir::Condition, parent: DefId) -> Result<()> {
-        let stmt_id = DefId::Statement(cond.id);
-        let _ = self.ancestry.try_insert(stmt_id, parent);
-
         if let Some(condition) = &cond.condition {
-            self.define_expr_scope(condition, stmt_id)?;
+            self.define_expr_scope(condition, parent)?;
         }
 
-        self.define_block_scope(&cond.block, stmt_id)?;
+        self.define_block_scope(&cond.block, parent)?;
 
         Ok(())
     }

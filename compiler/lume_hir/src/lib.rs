@@ -777,7 +777,6 @@ pub struct Unless {
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Condition {
-    pub id: StatementId,
     pub condition: Option<Expression>,
     pub block: Block,
     pub location: Location,
