@@ -4,9 +4,10 @@ description: "fn foo() -> Boolean {\n            return false;\n        }\n\n   
 ---
 × error[LM4001]: mismatched types
    ╭───────────
- 1 │ fn foo() -> Boolean {
-   │             ^^^^^^^ expected type Int32, but found type Boolean...
- 2 │             return false;
+ 5 │         fn bar() -> Int32 {
+ 6 │             return foo();
+   │                    ^^^^^^ expected type Int32, but found type Boolean...
+ 7 │         }
    ∶ 
  4 │ 
  5 │         fn bar() -> Int32 {

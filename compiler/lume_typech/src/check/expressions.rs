@@ -137,9 +137,14 @@ impl Expressions<'_> {
         };
 
         if !self.tcx.check_type_compatibility(&actual, &expected)? {
+            let expect_range = match &stmt.value {
+                Some(val) => &val.location.index,
+                None => &self.tcx.hir_expect_stmt(stmt.id).location.index,
+            };
+
             return Err(MismatchedTypes {
                 source: expected.location.file.clone(),
-                expect_range: actual.location.index.clone(),
+                expect_range: expect_range.clone(),
                 reason_range: expected.location.index.clone(),
                 expected: self.tcx.new_named_type(&expected)?,
                 found: self.tcx.new_named_type(&actual)?,
