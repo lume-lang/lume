@@ -1,0 +1,39 @@
+namespace std::ops
+
+/// Defines a valid value-to-value conversion without consuming the memory
+/// content of the input value. The `Cast` trait is most useful in cases when
+/// you need to repeatedly convert one type to another, most likely with scalars
+/// or error values.
+///
+/// [`Cast`] allows for explicit type casting between any two value types, such
+/// as casting [`Boolean`] values to [`Int32`]:
+///
+/// ```lm
+/// use Cast<Int32> in Boolean {
+///     pub fn cast(self) -> Int32 {
+///         if self {
+///             return 1;
+///         } else {
+///             return 0;
+///         }
+///     }
+/// }
+/// ```
+///
+/// **Note: the input value must never be altered.** The `Cast` trait is intended
+/// to create a new instance from the input value and there may be unforseen
+/// consequences when performing a mutable operation implicitly.
+///
+/// # Examples
+///
+/// [`Boolean`] implements [`Cast<Int32>`], which allows you to cast
+/// any instance of [`Boolean`] to [`Int32`], like so:
+///
+/// ```lm
+/// let bool_value = false;
+/// let int_value = bool_value as Int32;
+/// ```
+trait Cast<T> {
+    /// Convert the input instance into a new instance of [`T`].
+    pub fn cast(self) -> T;
+}
