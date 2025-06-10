@@ -23,8 +23,19 @@ impl LowerModule<'_> {
     /// This functions much like [`block`], but pushes a boundary into the symbol table,
     /// separating local variables within the block from the parent scope.
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn isolated_block(&mut self, expr: ast::Block) -> hir::Block {
+    pub(super) fn isolated_block(&mut self, expr: ast::Block, params: &[lume_hir::Parameter]) -> hir::Block {
         self.locals.push_boundary();
+
+        for param in params {
+            let decl = lume_hir::VariableDeclaration {
+                id: self.next_stmt_id(),
+                name: param.name.clone(),
+                declared_type: Some(param.param_type.clone()),
+                value: lume_hir::Expression::void(),
+            };
+
+            self.locals.define(decl);
+        }
 
         let statements = self.statements(expr.statements);
         let location = self.location(expr.location);

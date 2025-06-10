@@ -817,6 +817,15 @@ pub struct Expression {
 }
 
 impl Expression {
+    /// Creates a new [`Expression`] with a [`LiteralKind::Void`] value.
+    pub fn void() -> Self {
+        Self {
+            id: ExpressionId::default(),
+            location: Location::empty(),
+            kind: ExpressionKind::Void,
+        }
+    }
+
     /// Creates a new [`Expression`] with the given [`LiteralKind`] value.
     pub fn lit(kind: LiteralKind) -> Self {
         Self {
@@ -909,6 +918,7 @@ pub enum ExpressionKind {
     Literal(Box<Literal>),
     Member(Box<Member>),
     Variable(Box<Variable>),
+    Void,
 }
 
 #[derive(Debug, Clone, PartialEq)]

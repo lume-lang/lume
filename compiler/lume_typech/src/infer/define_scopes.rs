@@ -194,7 +194,9 @@ impl DefineScopes<'_> {
 
                 Ok(())
             }
-            lume_hir::ExpressionKind::Literal(_) | lume_hir::ExpressionKind::Variable(_) => Ok(()),
+            lume_hir::ExpressionKind::Literal(_)
+            | lume_hir::ExpressionKind::Variable(_)
+            | lume_hir::ExpressionKind::Void => Ok(()),
         }
     }
 }

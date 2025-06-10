@@ -110,6 +110,7 @@ impl ThirBuildCtx {
 
                 Ok(self.type_of(decl.value.id)?)
             }
+            lume_hir::ExpressionKind::Void => Ok(TypeRef::void()),
         }
     }
 

@@ -120,7 +120,7 @@ impl LowerModule<'_> {
         let block = if expr.external {
             None
         } else {
-            Some(self.isolated_block(expr.block))
+            Some(self.isolated_block(expr.block, &parameters))
         };
 
         Ok(hir::MethodDefinition {
@@ -175,7 +175,7 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         let id = self.item_id((&name, &self.current_item));
-        let block = expr.block.map(|b| self.isolated_block(b));
+        let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
         Ok(hir::TraitMethodDefinition {
             id,
@@ -265,7 +265,7 @@ impl LowerModule<'_> {
         let block = if expr.external {
             None
         } else {
-            Some(self.isolated_block(expr.block))
+            Some(self.isolated_block(expr.block, &parameters))
         };
 
         Ok(lume_hir::Item::Function(Box::new(hir::FunctionDefinition {
@@ -370,7 +370,7 @@ impl LowerModule<'_> {
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
-        let block = self.isolated_block(expr.block);
+        let block = self.isolated_block(expr.block, &parameters);
 
         let id = self.item_id((&name, &self.current_item));
         let location = self.location(expr.location);
