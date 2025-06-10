@@ -1,5 +1,7 @@
 pub(crate) mod commands;
 pub(crate) mod error;
+
+#[cfg(debug_assertions)]
 mod tracing;
 
 use std::env;
@@ -33,12 +35,6 @@ fn main() {
         .allow_missing_positional(true)
         .disable_version_flag(true)
         .arg(
-            Arg::new("trace")
-                .long("trace")
-                .help("Enables tracing of the compiler")
-                .action(ArgAction::SetTrue),
-        )
-        .arg(
             Arg::new("version")
                 .short('v')
                 .long("version")
@@ -48,8 +44,17 @@ fn main() {
         .subcommand(commands::arc::command())
         .subcommand(commands::run::command());
 
+    #[cfg(debug_assertions)]
+    let command = command.arg(
+        Arg::new("trace")
+            .long("trace")
+            .help("Enables tracing of the compiler")
+            .action(ArgAction::SetTrue),
+    );
+
     let matches = command.get_matches();
 
+    #[cfg(debug_assertions)]
     if let Some(true) = matches.get_one("trace") {
         tracing::register_default_tracer();
     }
