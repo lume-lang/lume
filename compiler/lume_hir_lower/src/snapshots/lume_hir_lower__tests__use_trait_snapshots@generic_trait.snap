@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "\n            use Enumerable<T> in Vector<T> {\n                pub fn next() -> T {}\n            }"
+description: "\n            use<T> Enumerable<T> in Vector<T> {\n                pub fn next() -> T { }\n            }"
 ---
 Map {
     package: PackageId(
@@ -28,10 +28,10 @@ Map {
                         name: Named(
                             Identifier {
                                 name: "Enumerable",
-                                location: <internal>:17:27,
+                                location: <internal>:20:30,
                             },
                         ),
-                        location: <internal>:17:30,
+                        location: <internal>:20:33,
                     },
                     type_params: [
                         Type {
@@ -47,16 +47,16 @@ Map {
                                 name: Named(
                                     Identifier {
                                         name: "T",
-                                        location: <internal>:28:29,
+                                        location: <internal>:31:32,
                                     },
                                 ),
-                                location: <internal>:28:29,
+                                location: <internal>:31:32,
                             },
                             type_params: [],
-                            location: <internal>:28:29,
+                            location: <internal>:31:32,
                         },
                     ],
-                    location: <internal>:17:30,
+                    location: <internal>:20:33,
                 },
                 target: Type {
                     id: ItemId(
@@ -71,10 +71,10 @@ Map {
                         name: Named(
                             Identifier {
                                 name: "Vector",
-                                location: <internal>:34:40,
+                                location: <internal>:37:43,
                             },
                         ),
-                        location: <internal>:34:43,
+                        location: <internal>:37:46,
                     },
                     type_params: [
                         Type {
@@ -90,16 +90,16 @@ Map {
                                 name: Named(
                                     Identifier {
                                         name: "T",
-                                        location: <internal>:41:42,
+                                        location: <internal>:44:45,
                                     },
                                 ),
-                                location: <internal>:41:42,
+                                location: <internal>:44:45,
                             },
                             type_params: [],
-                            location: <internal>:41:42,
+                            location: <internal>:44:45,
                         },
                     ],
-                    location: <internal>:34:43,
+                    location: <internal>:37:46,
                 },
                 methods: [
                     TraitMethodImplementation {
@@ -113,10 +113,10 @@ Map {
                             name: Named(
                                 Identifier {
                                     name: "next",
-                                    location: <internal>:69:73,
+                                    location: <internal>:72:76,
                                 },
                             ),
-                            location: <internal>:69:73,
+                            location: <internal>:72:76,
                         },
                         parameters: [],
                         type_parameters: [],
@@ -134,24 +134,35 @@ Map {
                                     name: Named(
                                         Identifier {
                                             name: "T",
-                                            location: <internal>:79:80,
+                                            location: <internal>:82:83,
                                         },
                                     ),
-                                    location: <internal>:79:80,
+                                    location: <internal>:82:83,
                                 },
                                 type_params: [],
-                                location: <internal>:79:80,
+                                location: <internal>:82:83,
                             },
                         ),
                         block: Block {
                             statements: [],
-                            location: <internal>:81:83,
+                            location: <internal>:84:87,
                         },
-                        location: <internal>:62:83,
+                        location: <internal>:65:87,
                     },
                 ],
-                type_parameters: [],
-                location: <internal>:13:97,
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T",
+                            location: <internal>:17:18,
+                        },
+                        type_id: None,
+                        type_param_id: None,
+                        constraints: [],
+                        location: <internal>:17:18,
+                    },
+                ],
+                location: <internal>:13:101,
             },
         ),
     },

@@ -185,6 +185,7 @@ Map {
                         location: <internal>:55:91,
                     },
                 ],
+                type_parameters: [],
                 location: <internal>:13:105,
             },
         ),

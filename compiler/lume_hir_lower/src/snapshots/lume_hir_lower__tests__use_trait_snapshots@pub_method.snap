@@ -156,6 +156,7 @@ Map {
                         location: <internal>:48:84,
                     },
                 ],
+                type_parameters: [],
                 location: <internal>:13:98,
             },
         ),

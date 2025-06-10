@@ -540,6 +540,14 @@ fn test_use_trait_snapshots() {
             }",
         "generic_type"
     );
+
+    assert_snap_eq!(
+        "
+            use<T> Enumerable<T> in Vector<T> {
+                pub fn next() -> T { }
+            }",
+        "generic_trait"
+    );
 }
 
 #[test]

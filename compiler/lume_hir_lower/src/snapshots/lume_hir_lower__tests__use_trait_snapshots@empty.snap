@@ -65,6 +65,7 @@ Map {
                     location: <internal>:11:16,
                 },
                 methods: [],
+                type_parameters: [],
                 location: <internal>:0:19,
             },
         ),

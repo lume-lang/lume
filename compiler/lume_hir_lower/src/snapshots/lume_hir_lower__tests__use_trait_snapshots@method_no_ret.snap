@@ -127,6 +127,7 @@ Map {
                         location: <internal>:48:71,
                     },
                 ],
+                type_parameters: [],
                 location: <internal>:13:85,
             },
         ),
