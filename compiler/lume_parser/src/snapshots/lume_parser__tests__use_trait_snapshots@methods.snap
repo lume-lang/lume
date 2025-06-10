@@ -191,6 +191,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                     ),
                 },
             ],
+            type_parameters: [],
             location: Location(
                 9..207,
             ),

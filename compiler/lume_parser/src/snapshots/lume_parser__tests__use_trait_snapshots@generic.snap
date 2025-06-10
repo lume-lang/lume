@@ -218,6 +218,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                     ),
                 },
             ],
+            type_parameters: [],
             location: Location(
                 9..143,
             ),

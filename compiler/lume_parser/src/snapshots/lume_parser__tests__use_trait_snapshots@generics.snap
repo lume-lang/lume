@@ -240,6 +240,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                     ),
                 },
             ],
+            type_parameters: [],
             location: Location(
                 9..150,
             ),

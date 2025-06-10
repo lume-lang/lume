@@ -101,6 +101,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                     ),
                 },
             ],
+            type_parameters: [],
             location: Location(
                 9..80,
             ),

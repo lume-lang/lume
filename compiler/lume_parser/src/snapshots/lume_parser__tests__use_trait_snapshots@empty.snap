@@ -50,6 +50,7 @@ expression: "parse(\"use Add in Int32 {}\")"
                 },
             ),
             methods: [],
+            type_parameters: [],
             location: Location(
                 0..19,
             ),
