@@ -331,6 +331,8 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
+
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
 
@@ -348,6 +350,7 @@ impl LowerModule<'_> {
             name: Box::new(name),
             target: Box::new(target),
             methods,
+            type_parameters,
             location,
         })))
     }

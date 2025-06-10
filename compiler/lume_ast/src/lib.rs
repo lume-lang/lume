@@ -524,6 +524,7 @@ pub struct UseTrait {
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
+    pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
 }
 

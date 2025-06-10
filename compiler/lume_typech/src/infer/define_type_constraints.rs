@@ -18,6 +18,7 @@ impl DefineTypeConstraints<'_> {
             match symbol {
                 lume_hir::Item::Type(t) => define.define_type(t)?,
                 lume_hir::Item::Impl(i) => define.define_impl(i)?,
+                lume_hir::Item::Use(u) => define.define_use(u)?,
                 lume_hir::Item::Function(f) => define.define_function(f)?,
                 _ => (),
             }
@@ -69,6 +70,22 @@ impl DefineTypeConstraints<'_> {
         self.define_type_constraints(&implementation.type_parameters, &type_params)?;
 
         for method in &implementation.methods {
+            let method_id = method.method_id.unwrap();
+            let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
+
+            self.define_type_constraints(&method.type_parameters, &type_params)?;
+        }
+
+        Ok(())
+    }
+
+    fn define_use(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
+        let use_id = trait_impl.use_id.unwrap();
+        let type_params = self.ctx.tcx().type_params_of(use_id)?.to_owned();
+
+        self.define_type_constraints(&trait_impl.type_parameters, &type_params)?;
+
+        for method in &trait_impl.methods {
             let method_id = method.method_id.unwrap();
             let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
 

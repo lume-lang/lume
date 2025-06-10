@@ -453,6 +453,8 @@ impl Parser {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
+        let type_parameters = self.parse_type_parameters()?;
+
         let name = self.parse_type()?;
 
         self.consume(TokenKind::In)?;
@@ -462,6 +464,7 @@ impl Parser {
         let end = self.previous_token().end();
 
         let use_trait = UseTrait {
+            type_parameters,
             name: Box::new(name),
             target: Box::new(target),
             methods,

@@ -686,12 +686,19 @@ pub struct TraitImplementation {
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
+    pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
 }
 
 impl TraitImplementation {
     pub fn ident(&self) -> &PathSegment {
         self.name.ident()
+    }
+}
+
+impl WithTypeParameters for TraitImplementation {
+    fn type_params(&self) -> &Vec<TypeParameter> {
+        &self.type_parameters
     }
 }
 

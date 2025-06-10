@@ -127,7 +127,10 @@ impl DefineMethodBodies<'_> {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.ctx.mk_type_ref(&param.param_type)?;
+                let type_ref = self.ctx.mk_type_ref_generic(
+                    &param.param_type,
+                    &[&trait_impl.type_parameters[..], &method.type_parameters[..]].concat(),
+                )?;
 
                 self.ctx
                     .tcx_mut()
@@ -153,7 +156,9 @@ impl DefineMethodBodies<'_> {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.ctx.mk_type_ref(&param.param_type)?;
+                let type_ref = self
+                    .ctx
+                    .mk_type_ref_generic(&param.param_type, &implementation.type_parameters)?;
 
                 self.ctx
                     .tcx_mut()

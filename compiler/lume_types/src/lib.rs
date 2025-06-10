@@ -75,6 +75,22 @@ impl WithTypeParameters for MethodId {
     }
 }
 
+impl WithTypeParameters for UseId {
+    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        match tcx.use_(self) {
+            Some(m) => Ok(&m.type_parameters),
+            None => Err(UseNotFound { id: self }.into()),
+        }
+    }
+
+    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
+        match tcx.use_mut(self) {
+            Some(m) => Ok(&mut m.type_parameters),
+            None => Err(UseNotFound { id: self }.into()),
+        }
+    }
+}
+
 impl WithTypeParameters for TypeId {
     fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
         let Some(ty) = tcx.type_(self) else {
@@ -299,6 +315,7 @@ pub struct Use {
     pub id: UseId,
     pub trait_: TypeRef,
     pub target: TypeRef,
+    pub type_parameters: Vec<TypeParameterId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -615,6 +632,20 @@ impl TypeDatabaseContext {
         self.uses.iter_mut()
     }
 
+    /// Gets the [`Use`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Use`] is not found.
+    pub fn use_(&self, id: UseId) -> Option<&Use> {
+        self.uses.get(id.0 as usize)
+    }
+
+    /// Gets the [`Use`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Use`] is not found.
+    pub fn use_mut(&mut self, id: UseId) -> Option<&mut Use> {
+        self.uses.get_mut(id.0 as usize)
+    }
+
     /// Gets the [`Method`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Method`] is not found.
@@ -768,10 +799,15 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Use`] with the target.
     #[inline]
-    pub fn use_alloc(&mut self, trait_: TypeRef, target: TypeRef) -> UseId {
+    pub fn use_alloc(&mut self) -> UseId {
         let id = UseId(self.uses.len() as u64);
 
-        self.uses.push(Use { id, trait_, target });
+        self.uses.push(Use {
+            id,
+            trait_: TypeRef::unknown(),
+            target: TypeRef::unknown(),
+            type_parameters: Vec::new(),
+        });
 
         id
     }

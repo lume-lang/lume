@@ -134,6 +134,29 @@ impl DefineTypeParameters<'_> {
     }
 
     fn define_use(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
+        let use_id = trait_impl.use_id.unwrap();
+
+        for type_param in &mut trait_impl.type_parameters {
+            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+
+            type_param.type_param_id = Some(type_param_id);
+            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+
+            self.ctx.tcx_mut().push_type_param(use_id, type_param_id)?;
+        }
+
+        let trait_ref = self
+            .ctx
+            .mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters)?;
+
+        let target_ref = self
+            .ctx
+            .mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters)?;
+
+        let trait_impl_ref = self.ctx.tcx_mut().use_mut(use_id).unwrap();
+        trait_impl_ref.trait_ = trait_ref;
+        trait_impl_ref.target = target_ref;
+
         for method in &mut trait_impl.methods {
             let method_id = method.method_id.unwrap();
 

@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, TypeId};
+use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, TypeId, UseId};
 
 use crate::{Item, TypeKind, TypeKindRef};
 
@@ -25,6 +25,12 @@ pub struct MethodNotFound {
 #[diagnostic(message = "could not find implementation {id:?} in context")]
 pub struct ImplNotFound {
     pub id: ImplId,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find trait implementation {id:?} in context")]
+pub struct UseNotFound {
+    pub id: UseId,
 }
 
 #[derive(Diagnostic, Debug)]
