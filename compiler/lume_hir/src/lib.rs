@@ -236,7 +236,7 @@ impl std::fmt::Display for SymbolName {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub enum PathSegment {
     Named(Identifier),
     Typed(Identifier, Vec<Type>),
@@ -274,9 +274,41 @@ impl From<&str> for PathSegment {
     }
 }
 
+impl PartialEq for PathSegment {
+    fn eq(&self, other: &Self) -> bool {
+        self.identifier() == other.identifier()
+    }
+}
+
+impl std::hash::Hash for PathSegment {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.identifier().hash(state);
+
+        if let Self::Typed(_, type_args) = self {
+            type_args.hash(state);
+        }
+    }
+}
+
 impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.identifier())
+        write!(f, "{}", self.identifier())?;
+
+        if let Self::Typed(_, type_args) = self {
+            if !type_args.is_empty() {
+                write!(
+                    f,
+                    "<{}>",
+                    type_args
+                        .iter()
+                        .map(|arg| arg.name.to_string())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )?;
+            }
+        }
+
+        Ok(())
     }
 }
 

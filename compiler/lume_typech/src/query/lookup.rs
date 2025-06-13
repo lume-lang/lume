@@ -212,16 +212,6 @@ impl<'tcx> ThirBuildCtx {
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        // Verify that all the parameters are compatible with the arguments
-        // passed to the method.
-        for (param, arg) in method.parameters.inner().iter().zip(arguments.iter()) {
-            let arg_type = self.type_of_expr(arg)?;
-
-            if !self.check_type_compatibility(&arg_type, &param.ty)? {
-                failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
-            }
-        }
-
         if failures.is_empty() {
             Ok(CallableCheckResult::Success)
         } else {
@@ -254,16 +244,6 @@ impl<'tcx> ThirBuildCtx {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
-        }
-
-        // Verify that all the parameters are compatible with the arguments
-        // passed to the method.
-        for (param, arg) in function.parameters.inner().iter().zip(expr.arguments.iter()) {
-            let arg_type = self.type_of_expr(arg)?;
-
-            if !self.check_type_compatibility(&arg_type, &param.ty)? {
-                failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
-            }
         }
 
         if failures.is_empty() {
