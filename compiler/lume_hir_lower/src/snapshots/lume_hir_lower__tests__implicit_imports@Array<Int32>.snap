@@ -31,7 +31,7 @@ Map {
                 return_type: Some(
                     Type {
                         id: ItemId(
-                            10635630889498220685,
+                            1091291420166496344,
                         ),
                         name: SymbolName {
                             namespace: Some(
@@ -57,7 +57,7 @@ Map {
                         type_params: [
                             Type {
                                 id: ItemId(
-                                    9261998375256972311,
+                                    13608251888059153114,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(

@@ -8,16 +8,16 @@ Map {
     ),
     items: {
         ItemId(
-            5494773208919359799,
+            15987533324266704003,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    5494773208919359799,
+                    15987533324266704003,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        12506335137184408543,
+                        3729622771921818476,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -38,7 +38,7 @@ Map {
                 },
                 target: Type {
                     id: ItemId(
-                        9261998375256972311,
+                        13608251888059153114,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -83,7 +83,7 @@ Map {
                                 },
                                 param_type: Type {
                                     id: ItemId(
-                                        9261998375256972311,
+                                        13608251888059153114,
                                     ),
                                     name: SymbolName {
                                         namespace: Some(
@@ -117,7 +117,7 @@ Map {
                         return_type: Some(
                             Type {
                                 id: ItemId(
-                                    9261998375256972311,
+                                    13608251888059153114,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(

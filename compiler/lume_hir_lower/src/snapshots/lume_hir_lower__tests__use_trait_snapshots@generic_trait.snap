@@ -8,16 +8,16 @@ Map {
     ),
     items: {
         ItemId(
-            7383209251544118903,
+            17007826589591389512,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    7383209251544118903,
+                    17007826589591389512,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        11777267840007390966,
+                        4863703123816121347,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -36,7 +36,7 @@ Map {
                     type_params: [
                         Type {
                             id: ItemId(
-                                16411931616039809451,
+                                10382560105972960337,
                             ),
                             name: SymbolName {
                                 namespace: Some(
@@ -60,7 +60,7 @@ Map {
                 },
                 target: Type {
                     id: ItemId(
-                        9011182855678824397,
+                        3921845314145725332,
                     ),
                     name: SymbolName {
                         namespace: Some(
@@ -79,7 +79,7 @@ Map {
                     type_params: [
                         Type {
                             id: ItemId(
-                                16411931616039809451,
+                                10382560105972960337,
                             ),
                             name: SymbolName {
                                 namespace: Some(
@@ -117,7 +117,7 @@ Map {
                         return_type: Some(
                             Type {
                                 id: ItemId(
-                                    16411931616039809451,
+                                    10382560105972960337,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(

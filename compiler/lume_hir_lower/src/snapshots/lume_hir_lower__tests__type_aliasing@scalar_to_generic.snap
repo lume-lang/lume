@@ -28,7 +28,7 @@ Map {
                     },
                     definition: Type {
                         id: ItemId(
-                            3994735493679760258,
+                            15305381369542258004,
                         ),
                         name: SymbolName {
                             namespace: Some(
@@ -47,7 +47,7 @@ Map {
                         type_params: [
                             Type {
                                 id: ItemId(
-                                    13368803257710341115,
+                                    59532598947674694,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(

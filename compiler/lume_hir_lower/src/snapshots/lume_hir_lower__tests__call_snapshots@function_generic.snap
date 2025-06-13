@@ -65,7 +65,7 @@ description: "let _ = call::<T>(0, 1);"
                                 Named {
                                     ty: Type {
                                         id: ItemId(
-                                            16411931616039809451,
+                                            10382560105972960337,
                                         ),
                                         name: SymbolName {
                                             namespace: Some(

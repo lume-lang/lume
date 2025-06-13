@@ -93,7 +93,7 @@ description: 0 as u64 == 0;
                                     },
                                     target: Type {
                                         id: ItemId(
-                                            8592730076283604162,
+                                            2586979368357421486,
                                         ),
                                         name: SymbolName {
                                             namespace: Some(

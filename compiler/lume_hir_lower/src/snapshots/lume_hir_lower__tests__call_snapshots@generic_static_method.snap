@@ -59,7 +59,7 @@ description: "let _ = Int32::<T>::call(0, 1);"
                                                 [
                                                     Type {
                                                         id: ItemId(
-                                                            16411931616039809451,
+                                                            10382560105972960337,
                                                         ),
                                                         name: SymbolName {
                                                             namespace: Some(

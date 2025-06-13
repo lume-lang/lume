@@ -38,7 +38,7 @@ Map {
                         constraints: [
                             Type {
                                 id: ItemId(
-                                    9613957012452617865,
+                                    6129574414018423941,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -70,7 +70,7 @@ Map {
                         constraints: [
                             Type {
                                 id: ItemId(
-                                    9613957012452617865,
+                                    6129574414018423941,
                                 ),
                                 name: SymbolName {
                                     namespace: Some(
@@ -96,7 +96,7 @@ Map {
                 return_type: Some(
                     Type {
                         id: ItemId(
-                            2745571829241957363,
+                            9344623788042179276,
                         ),
                         name: SymbolName {
                             namespace: Some(
