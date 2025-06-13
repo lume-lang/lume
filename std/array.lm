@@ -3,7 +3,7 @@ namespace std
 /// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
 /// is a generic type, all values within the array must be of the same type.
 ///
-/// While they can be created like any other class using `new Array()`, they are most often created
+/// While they can be created like any other class using [`Array::new()`], they are most often created
 /// implicitly by using the array literal syntax. To create an array, surround a comma-separated list of
 /// values with square brackets:
 ///
@@ -25,6 +25,12 @@ struct Array<T>
 { }
 
 impl<T> Array<T> {
+    /// Allocates a new array with the given items.
+    ///
+    /// When creating a new array with a list of items, it allocates an array
+    /// with the capacity of the length of the items.
+    pub fn external new(...items: T) -> Array<T>
+
     /// Allocates a new array with enough space for at least `capacity` elements.
     ///
     /// When creating an array with a set capacity, it's length will still be zero.
