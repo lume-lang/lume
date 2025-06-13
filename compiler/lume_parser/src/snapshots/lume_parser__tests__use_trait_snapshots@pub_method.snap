@@ -94,6 +94,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
                                     },
                                 },
                             ),
+                            vararg: false,
                             location: Location(
                                 51..63,
                             ),

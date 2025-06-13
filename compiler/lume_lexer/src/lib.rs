@@ -68,6 +68,7 @@ pub enum TokenKind {
     Div,
     DivAssign,
     Dot,
+    DotDotDot,
     Else,
     Enum,
     Eof,
@@ -222,6 +223,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Div => "/",
             TokenKind::DivAssign => "/=",
             TokenKind::Dot => ".",
+            TokenKind::DotDotDot => "...",
             TokenKind::Else => "else",
             TokenKind::Enum => "enum",
             TokenKind::Eof => "EOF",
@@ -684,7 +686,7 @@ impl Lexer {
             .content
             .chars()
             .skip(self.position)
-            .take(2)
+            .take(3)
             .collect::<String>();
 
         let chars: Vec<char> = slice.chars().collect();
@@ -708,6 +710,12 @@ impl Lexer {
 
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
+        if chars.len() >= 3 {
+            if let ('.', '.', '.') = (chars[0], chars[1], chars[2]) {
+                return Ok((TokenKind::DotDotDot, 3));
+            }
+        }
+
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
@@ -1047,6 +1055,8 @@ mod tests {
 
     #[test]
     fn test_symbols_map() {
+        assert_token!("...", TokenKind::DotDotDot, Some("..."), 0, 3);
+
         assert_token!("+=", TokenKind::AddAssign, Some("+="), 0, 2);
         assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
         assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);

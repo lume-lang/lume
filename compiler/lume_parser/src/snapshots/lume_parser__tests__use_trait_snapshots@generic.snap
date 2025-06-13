@@ -117,6 +117,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                     },
                                 },
                             ),
+                            vararg: false,
                             location: Location(
                                 58..70,
                             ),

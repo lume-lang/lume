@@ -49,6 +49,7 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                             },
                         },
                     ),
+                    vararg: false,
                     location: Location(
                         8..16,
                     ),
@@ -89,6 +90,7 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                             ),
                         },
                     ),
+                    vararg: false,
                     location: Location(
                         18..32,
                     ),

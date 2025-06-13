@@ -153,6 +153,7 @@ impl Parser {
                     name: "self".into(),
                     location: location.clone().into(),
                 },
+                vararg: false,
                 param_type: Type::SelfType(Box::new(SelfType {
                     location: location.clone().into(),
                 })),
@@ -160,6 +161,7 @@ impl Parser {
             });
         }
 
+        let vararg = self.check(TokenKind::DotDotDot);
         let name = self.parse_identifier()?;
 
         self.consume(TokenKind::Colon)?;
@@ -172,6 +174,7 @@ impl Parser {
         Ok(Parameter {
             name,
             param_type,
+            vararg,
             location: (start..end).into(),
         })
     }

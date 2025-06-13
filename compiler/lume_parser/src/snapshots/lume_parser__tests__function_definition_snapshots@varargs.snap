@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn main(argc: u8) -> void { }\")"
+expression: "parse(\"fn foo(...args: Int32) {}\")"
 ---
 [
     FunctionDefinition(
@@ -14,17 +14,17 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
             ),
             external: false,
             name: Identifier {
-                name: "main",
+                name: "foo",
                 location: Location(
-                    3..7,
+                    3..6,
                 ),
             },
             parameters: [
                 Parameter {
                     name: Identifier {
-                        name: "argc",
+                        name: "args",
                         location: Location(
-                            8..12,
+                            10..14,
                         ),
                     },
                     param_type: Named(
@@ -33,61 +33,38 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                                 root: [],
                                 name: PathSegment {
                                     name: Identifier {
-                                        name: "u8",
+                                        name: "Int32",
                                         location: Location(
-                                            14..16,
+                                            16..21,
                                         ),
                                     },
                                     type_arguments: [],
                                     location: Location(
-                                        14..16,
+                                        16..21,
                                     ),
                                 },
                                 location: Location(
-                                    14..16,
+                                    16..21,
                                 ),
                             },
                         },
                     ),
-                    vararg: false,
+                    vararg: true,
                     location: Location(
-                        8..16,
+                        10..21,
                     ),
                 },
             ],
             type_parameters: [],
-            return_type: Some(
-                Named(
-                    NamedType {
-                        name: Path {
-                            root: [],
-                            name: PathSegment {
-                                name: Identifier {
-                                    name: "void",
-                                    location: Location(
-                                        21..25,
-                                    ),
-                                },
-                                type_arguments: [],
-                                location: Location(
-                                    21..25,
-                                ),
-                            },
-                            location: Location(
-                                21..25,
-                            ),
-                        },
-                    },
-                ),
-            ),
+            return_type: None,
             block: Block {
                 statements: [],
                 location: Location(
-                    26..29,
+                    23..25,
                 ),
             },
             location: Location(
-                0..29,
+                0..25,
             ),
             documentation: None,
         },

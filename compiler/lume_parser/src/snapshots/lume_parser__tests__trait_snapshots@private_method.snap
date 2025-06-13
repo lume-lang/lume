@@ -58,6 +58,7 @@ expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
                                         },
                                     },
                                 ),
+                                vararg: false,
                                 location: Location(
                                     19..29,
                                 ),
