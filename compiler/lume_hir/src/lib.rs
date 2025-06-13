@@ -336,6 +336,67 @@ pub trait Node {
     fn location(&self) -> &Location;
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct Signature<'a> {
+    pub name: &'a Identifier,
+    pub type_parameters: &'a [TypeParameter],
+    pub parameters: &'a [Parameter],
+    pub return_type: Option<&'a Type>,
+}
+
+impl Signature<'_> {
+    pub fn to_owned(&self) -> SignatureOwned {
+        SignatureOwned {
+            name: self.name.clone(),
+            type_parameters: self.type_parameters.to_vec(),
+            parameters: self.parameters.to_vec(),
+            return_type: self.return_type.cloned(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SignatureOwned {
+    pub name: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
+    pub parameters: Vec<Parameter>,
+    pub return_type: Option<Type>,
+}
+
+impl std::fmt::Display for SignatureOwned {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "fn {}", self.name)?;
+
+        if !self.type_parameters.is_empty() {
+            write!(
+                f,
+                "<{}>",
+                self.type_parameters
+                    .iter()
+                    .map(|t| t.name.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
+        }
+
+        write!(
+            f,
+            "({})",
+            self.parameters
+                .iter()
+                .map(|t| t.name.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        )?;
+
+        if let Some(return_ty) = &self.return_type {
+            write!(f, " -> {}", return_ty.name)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
@@ -449,6 +510,15 @@ pub enum Visibility {
     Public,
 }
 
+impl std::fmt::Display for Visibility {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Public => write!(f, "pub"),
+            Self::Private => write!(f, "priv"),
+        }
+    }
+}
+
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: ItemId,
@@ -474,11 +544,17 @@ impl WithTypeParameters for FunctionDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, Eq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
     pub location: Location,
+}
+
+impl PartialEq for Parameter {
+    fn eq(&self, other: &Self) -> bool {
+        self.param_type == other.param_type
+    }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
@@ -673,6 +749,17 @@ pub struct TraitMethodDefinition {
     pub location: Location,
 }
 
+impl TraitMethodDefinition {
+    pub fn signature(&self) -> Signature {
+        Signature {
+            name: &self.name,
+            type_parameters: &self.type_parameters,
+            parameters: &self.parameters,
+            return_type: self.return_type.as_ref(),
+        }
+    }
+}
+
 impl WithTypeParameters for TraitMethodDefinition {
     fn type_params(&self) -> &Vec<TypeParameter> {
         &self.type_parameters
@@ -707,7 +794,7 @@ pub struct TraitMethodImplementation {
     pub id: ItemId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
-    pub name: SymbolName,
+    pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Type>,
@@ -716,8 +803,13 @@ pub struct TraitMethodImplementation {
 }
 
 impl TraitMethodImplementation {
-    pub fn ident(&self) -> &PathSegment {
-        &self.name.name
+    pub fn signature(&self) -> Signature {
+        Signature {
+            name: &self.name,
+            type_parameters: &self.type_parameters,
+            parameters: &self.parameters,
+            return_type: self.return_type.as_ref(),
+        }
     }
 }
 
@@ -1104,13 +1196,28 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Node, Debug, Clone, Eq)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub type_id: Option<TypeId>,
     pub type_param_id: Option<TypeParameterId>,
     pub constraints: Vec<Box<Type>>,
     pub location: Location,
+}
+
+impl PartialEq for TypeParameter {
+    fn eq(&self, other: &Self) -> bool {
+        self.constraints == other.constraints
+    }
+}
+
+impl std::hash::Hash for TypeParameter {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        self.type_id.hash(state);
+        self.type_param_id.hash(state);
+        self.constraints.hash(state);
+    }
 }
 
 impl AsRef<TypeParameter> for TypeParameter {
@@ -1148,7 +1255,7 @@ impl Node for TypeArgument {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Node, Debug, Clone, Eq)]
 pub struct Type {
     pub id: ItemId,
     pub name: SymbolName,
@@ -1159,6 +1266,12 @@ pub struct Type {
 impl Type {
     pub fn ident(&self) -> &PathSegment {
         &self.name.name
+    }
+}
+
+impl PartialEq for Type {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.type_params == other.type_params
     }
 }
 

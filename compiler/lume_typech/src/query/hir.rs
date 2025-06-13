@@ -71,6 +71,20 @@ impl ThirBuildCtx {
         }
     }
 
+    /// Returns the [`lume_hir::TypeDefinition`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::TypeDefinition`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_type(&self, id: ItemId) -> &lume_hir::TypeDefinition {
+        let lume_hir::Item::Type(ty) = self.hir_expect_item(id) else {
+            panic!("expected HIR type with ID of {id:?}")
+        };
+
+        ty
+    }
+
     /// Returns the [`lume_hir::Expression`] with the given ID, if any.
     ///
     /// # Panics

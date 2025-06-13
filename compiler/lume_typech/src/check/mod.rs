@@ -5,7 +5,8 @@ use crate::ThirBuildCtx;
 
 pub(crate) mod errors;
 pub(crate) mod expressions;
-mod lookup;
+pub(crate) mod lookup;
+pub(crate) mod traits;
 
 /// Represents a single pass which will be executed when invoking
 /// the type checker on a given [`ThirBuildCtx`]-instance.
@@ -32,6 +33,7 @@ impl ThirBuildCtx {
     )]
     pub fn typecheck(&mut self) -> Result<()> {
         expressions::Expressions::run(self)?;
+        traits::TraitChecking::run(self)?;
 
         Ok(())
     }

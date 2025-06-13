@@ -61,10 +61,8 @@ impl DefineTraitMethods<'_> {
 
         for method in &mut trait_impl.methods {
             let method_name = method.name.clone();
-            let mut qualified_name = SymbolName::with_root(
-                trait_impl.target.name.clone(),
-                PathSegment::Named(method_name.as_ident().clone()),
-            );
+            let mut qualified_name =
+                SymbolName::with_root(trait_impl.target.name.clone(), PathSegment::Named(method_name.clone()));
 
             qualified_name.location = method_name.location.clone();
 

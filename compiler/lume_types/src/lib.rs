@@ -9,7 +9,7 @@ use lume_hir::{
 };
 use lume_span::{ItemId, Location};
 
-mod errors;
+pub mod errors;
 
 pub trait WithTypeParameters {
     /// Gets the type parameters of the current instance.
@@ -258,6 +258,7 @@ impl Struct {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Trait {
+    pub id: ItemId,
     pub name: SymbolName,
     pub type_parameters: Vec<TypeParameterId>,
 }
@@ -265,6 +266,7 @@ pub struct Trait {
 impl Trait {
     pub fn new(reference: &lume_hir::TraitDefinition) -> Self {
         Self {
+            id: reference.id,
             name: reference.name.clone(),
             type_parameters: Vec::new(),
         }

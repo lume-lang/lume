@@ -369,7 +369,7 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
         let visibility = lower_visibility(&expr.visibility);
-        let name = self.symbol_name(expr.name)?;
+        let name = self.identifier(expr.name);
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;

@@ -1,6 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
+use lume_hir::{SignatureOwned, Visibility};
 use lume_span::SourceFile;
 use lume_types::NamedTypeRef;
 
@@ -52,4 +53,55 @@ pub struct UnavailableScalarType {
 
     pub found: String,
     pub suggestion: &'static str,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "missing method in implementation", code = "LM4161")]
+pub struct TraitImplMissingMethod {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("trait implementation does not implement method {name}")]
+    pub range: Range<usize>,
+
+    pub name: lume_hir::Identifier,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "implemented trait does not match trait definition", code = "LM4165")]
+pub struct TraitImplTypeParameterCountMismatch {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("trait has {found} type parameters, but expected {expected} from trait definition")]
+    pub range: Range<usize>,
+
+    pub expected: usize,
+    pub found: usize,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "implemented method does not match definition visibility", code = "LM4168")]
+pub struct TraitMethodVisibilityMismatch {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected method to be {expected}, found {found}")]
+    pub range: Range<usize>,
+
+    pub expected: Visibility,
+    pub found: Visibility,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "implemented method does not match definition signature", code = "LM4169")]
+pub struct TraitMethodSignatureMismatch {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected signature {expected}, found {found}")]
+    pub range: Range<usize>,
+
+    pub expected: SignatureOwned,
+    pub found: SignatureOwned,
 }

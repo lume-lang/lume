@@ -1,8 +1,8 @@
 use crate::{ThirBuildCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, FunctionId, Identifier, MethodId};
+use lume_hir::{self, FunctionId, Identifier, MethodId, UseId};
 use lume_query::cached_query;
-use lume_types::{Function, Method};
+use lume_types::{Function, Method, Trait};
 
 mod diagnostics;
 pub(crate) mod hir;
@@ -180,5 +180,15 @@ impl ThirBuildCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err, ret(Display))]
     pub(crate) fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&SymbolName> {
         Ok(&self.tcx.ty_expect(type_ref.instance_of)?.name)
+    }
+
+    /// Returns the [`Trait`] definition, which matches the [`Use`] declaration with the given ID.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub(crate) fn trait_def_of(&self, use_id: UseId) -> Result<&Trait> {
+        let Some(use_ref) = self.tcx.use_(use_id) else {
+            return Err(lume_types::errors::UseNotFound { id: use_id }.into());
+        };
+
+        self.tcx.ty_expect_trait(use_ref.trait_.instance_of)
     }
 }
