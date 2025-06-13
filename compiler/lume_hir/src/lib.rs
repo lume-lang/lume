@@ -548,6 +548,7 @@ impl WithTypeParameters for FunctionDefinition {
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
+    pub vararg: bool,
     pub location: Location,
 }
 

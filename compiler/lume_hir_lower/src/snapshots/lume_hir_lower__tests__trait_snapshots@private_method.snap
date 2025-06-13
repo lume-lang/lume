@@ -65,6 +65,7 @@ Map {
                                         type_params: [],
                                         location: <internal>:26:29,
                                     },
+                                    vararg: false,
                                     location: <internal>:19:29,
                                 },
                             ],

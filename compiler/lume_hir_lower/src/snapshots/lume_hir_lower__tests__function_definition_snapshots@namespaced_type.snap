@@ -1,0 +1,73 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn main() -> std::Int32 {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId(
+            8095934718272011788,
+        ): Function(
+            FunctionDefinition {
+                id: ItemId(
+                    8095934718272011788,
+                ),
+                func_id: None,
+                visibility: Private,
+                name: SymbolName {
+                    namespace: None,
+                    name: Named(
+                        Identifier {
+                            name: "main",
+                            location: <internal>:3:7,
+                        },
+                    ),
+                    location: <internal>:3:7,
+                },
+                parameters: [],
+                type_parameters: [],
+                return_type: Some(
+                    Type {
+                        id: ItemId(
+                            9261998375256972311,
+                        ),
+                        name: SymbolName {
+                            namespace: Some(
+                                PathRoot {
+                                    segments: [
+                                        Named(
+                                            Identifier {
+                                                name: "std",
+                                                location: <internal>:13:16,
+                                            },
+                                        ),
+                                    ],
+                                },
+                            ),
+                            name: Named(
+                                Identifier {
+                                    name: "Int32",
+                                    location: <internal>:18:23,
+                                },
+                            ),
+                            location: <internal>:18:23,
+                        },
+                        type_params: [],
+                        location: <internal>:18:23,
+                    },
+                ),
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:24:26,
+                    },
+                ),
+                location: <internal>:0:26,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

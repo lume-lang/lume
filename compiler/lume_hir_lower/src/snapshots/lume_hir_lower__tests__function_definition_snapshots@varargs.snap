@@ -1,0 +1,81 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn foo(...args: Int32) {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId(
+            17561646994490527473,
+        ): Function(
+            FunctionDefinition {
+                id: ItemId(
+                    17561646994490527473,
+                ),
+                func_id: None,
+                visibility: Private,
+                name: SymbolName {
+                    namespace: None,
+                    name: Named(
+                        Identifier {
+                            name: "foo",
+                            location: <internal>:3:6,
+                        },
+                    ),
+                    location: <internal>:3:6,
+                },
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "args",
+                            location: <internal>:10:14,
+                        },
+                        param_type: Type {
+                            id: ItemId(
+                                9261998375256972311,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Named(
+                                    Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
+                            },
+                            type_params: [],
+                            location: <internal>:16:21,
+                        },
+                        vararg: true,
+                        location: <internal>:10:21,
+                    },
+                ],
+                type_parameters: [],
+                return_type: None,
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:23:25,
+                    },
+                ),
+                location: <internal>:0:25,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

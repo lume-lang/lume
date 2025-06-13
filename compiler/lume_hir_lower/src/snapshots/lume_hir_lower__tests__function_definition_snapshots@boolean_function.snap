@@ -1,0 +1,44 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn empty?() {}"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId(
+            14454532326948576248,
+        ): Function(
+            FunctionDefinition {
+                id: ItemId(
+                    14454532326948576248,
+                ),
+                func_id: None,
+                visibility: Private,
+                name: SymbolName {
+                    namespace: None,
+                    name: Named(
+                        Identifier {
+                            name: "empty?",
+                            location: <internal>:3:9,
+                        },
+                    ),
+                    location: <internal>:3:9,
+                },
+                parameters: [],
+                type_parameters: [],
+                return_type: None,
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:12:14,
+                    },
+                ),
+                location: <internal>:0:14,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

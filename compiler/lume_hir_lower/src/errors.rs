@@ -72,6 +72,20 @@ pub struct SelfOutsideObjectContext {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "vararg parameter must be last",
+    code = "LM3016",
+    help = "consider moving the vararg parameter to the end"
+)]
+pub struct VarargNotLastParameter {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("vararg parameter must be the last parameter")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
     #[span]

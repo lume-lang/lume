@@ -108,14 +108,8 @@ Map {
                         ),
                         method_id: None,
                         visibility: Public,
-                        name: SymbolName {
-                            namespace: None,
-                            name: Named(
-                                Identifier {
-                                    name: "next",
-                                    location: <internal>:72:76,
-                                },
-                            ),
+                        name: Identifier {
+                            name: "next",
                             location: <internal>:72:76,
                         },
                         parameters: [],

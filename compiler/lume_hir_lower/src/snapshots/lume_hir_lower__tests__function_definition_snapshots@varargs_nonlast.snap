@@ -1,0 +1,20 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn foo(...args: Int32, a: Int32) {}"
+---
+VarargNotLastParameter {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "fn foo(...args: Int32, a: Int32) {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 10..21,
+}

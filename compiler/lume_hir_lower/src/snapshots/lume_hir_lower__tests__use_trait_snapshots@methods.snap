@@ -71,14 +71,8 @@ Map {
                         ),
                         method_id: None,
                         visibility: Public,
-                        name: SymbolName {
-                            namespace: None,
-                            name: Named(
-                                Identifier {
-                                    name: "to_string",
-                                    location: <internal>:56:65,
-                                },
-                            ),
+                        name: Identifier {
+                            name: "to_string",
                             location: <internal>:56:65,
                         },
                         parameters: [],
@@ -125,14 +119,8 @@ Map {
                         ),
                         method_id: None,
                         visibility: Public,
-                        name: SymbolName {
-                            namespace: None,
-                            name: Named(
-                                Identifier {
-                                    name: "to_int",
-                                    location: <internal>:105:111,
-                                },
-                            ),
+                        name: Identifier {
+                            name: "to_int",
                             location: <internal>:105:111,
                         },
                         parameters: [],

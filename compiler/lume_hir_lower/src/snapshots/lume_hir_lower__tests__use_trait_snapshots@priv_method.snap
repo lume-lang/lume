@@ -71,14 +71,8 @@ Map {
                         ),
                         method_id: None,
                         visibility: Private,
-                        name: SymbolName {
-                            namespace: None,
-                            name: Named(
-                                Identifier {
-                                    name: "add",
-                                    location: <internal>:51:54,
-                                },
-                            ),
+                        name: Identifier {
+                            name: "add",
                             location: <internal>:51:54,
                         },
                         parameters: [
@@ -115,6 +109,7 @@ Map {
                                     type_params: [],
                                     location: <internal>:62:67,
                                 },
+                                vararg: false,
                                 location: <internal>:55:67,
                             },
                         ],

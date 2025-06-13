@@ -283,6 +283,8 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
+        let param_len = params.len();
+
         params
             .into_iter()
             .enumerate()
@@ -311,6 +313,15 @@ impl LowerModule<'_> {
                     .into());
                 }
 
+                // Make sure that any vararg parameters exist only on the last position.
+                if param.vararg && index + 1 < param_len {
+                    return Err(VarargNotLastParameter {
+                        source: self.file.clone(),
+                        range: param.location.0.clone(),
+                    }
+                    .into());
+                }
+
                 self.parameter(param)
             })
             .collect::<Result<Vec<_>>>()
@@ -325,6 +336,7 @@ impl LowerModule<'_> {
         Ok(hir::Parameter {
             name,
             param_type,
+            vararg: param.vararg,
             location,
         })
     }

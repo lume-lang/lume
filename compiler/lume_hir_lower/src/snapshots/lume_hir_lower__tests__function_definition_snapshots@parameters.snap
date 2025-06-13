@@ -53,6 +53,7 @@ Map {
                             type_params: [],
                             location: <internal>:14:16,
                         },
+                        vararg: false,
                         location: <internal>:8:16,
                     },
                     Parameter {
@@ -117,6 +118,7 @@ Map {
                             ],
                             location: <internal>:0:0,
                         },
+                        vararg: false,
                         location: <internal>:18:32,
                     },
                 ],
