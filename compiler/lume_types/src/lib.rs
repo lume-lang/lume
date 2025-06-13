@@ -134,6 +134,7 @@ pub struct Parameter {
     pub idx: usize,
     pub name: String,
     pub ty: TypeRef,
+    pub vararg: bool,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -146,11 +147,12 @@ impl Parameters {
         Self::default()
     }
 
-    pub fn push(&mut self, name: String, ty: TypeRef) {
+    pub fn push(&mut self, name: String, ty: TypeRef, vararg: bool) {
         self.params.push(Parameter {
             idx: self.params.len(),
             name,
             ty,
+            vararg,
         });
     }
 
@@ -164,6 +166,10 @@ impl Parameters {
 
     pub fn is_empty(&self) -> bool {
         self.params.is_empty()
+    }
+
+    pub fn is_vararg(&self) -> bool {
+        self.params.iter().any(|param| param.vararg)
     }
 }
 

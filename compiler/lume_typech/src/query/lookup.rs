@@ -206,8 +206,8 @@ impl<'tcx> ThirBuildCtx {
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        if method.parameters.len() != arguments.len() {
-            failures.push(CallableCheckError::ArgumentCountMismatch);
+        if let CallableCheckResult::Failure(err) = self.check_params(&method.parameters, arguments)? {
+            failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
         }
@@ -250,8 +250,8 @@ impl<'tcx> ThirBuildCtx {
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        if function.parameters.len() != expr.arguments.len() {
-            failures.push(CallableCheckError::ArgumentCountMismatch);
+        if let CallableCheckResult::Failure(err) = self.check_params(&function.parameters, &expr.arguments)? {
+            failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
         }
@@ -263,6 +263,89 @@ impl<'tcx> ThirBuildCtx {
 
             if !self.check_type_compatibility(&arg_type, &param.ty)? {
                 failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
+            }
+        }
+
+        if failures.is_empty() {
+            Ok(CallableCheckResult::Success)
+        } else {
+            Ok(CallableCheckResult::Failure(failures))
+        }
+    }
+
+    /// Checks whether the given arguments matches the signature of the given
+    /// parameters.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn check_params<'a>(
+        &'tcx self,
+        parameters: &'a lume_types::Parameters,
+        arguments: &'a [lume_hir::Expression],
+    ) -> Result<CallableCheckResult> {
+        let mut failures = Vec::new();
+
+        // Verify that the expected argument count is met, as defined
+        // by the parameter definition.
+        if (parameters.is_vararg() && parameters.len() > arguments.len())
+            || (!parameters.is_vararg() && parameters.len() != arguments.len())
+        {
+            failures.push(CallableCheckError::ArgumentCountMismatch);
+
+            return Ok(CallableCheckResult::Failure(failures));
+        }
+
+        if parameters.is_vararg() {
+            // If the parameter count is variable, expect at least
+            // the amount of required parameters as arguments.
+            //
+            // If a function/method takes N parameters + 1 vararg parameter,
+            // we expect at least N arguments.
+            if parameters.len() > arguments.len() {
+                failures.push(CallableCheckError::ArgumentCountMismatch);
+
+                return Ok(CallableCheckResult::Failure(failures));
+            }
+
+            let fixed_param_count = parameters.len() - 1;
+
+            let (vararg_param, fixed_params) = parameters.inner().split_last().unwrap();
+            let (fixed_args, vararg_args) = arguments.split_at(fixed_param_count);
+
+            // Verify that all the fixed parameters are compatible with the arguments
+            // passed to the method.
+            for (param, arg) in fixed_params.iter().zip(fixed_args.iter()) {
+                let arg_type = self.type_of_expr(arg)?;
+
+                if !self.check_type_compatibility(&arg_type, &param.ty)? {
+                    failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
+                }
+            }
+
+            // Verify that the vararg parameter has the same type as all arguments,
+            // which sits after the last fixed parameter.
+            for arg in vararg_args {
+                let arg_type = self.type_of_expr(arg)?;
+
+                if !self.check_type_compatibility(&arg_type, &vararg_param.ty)? {
+                    failures.push(CallableCheckError::ArgumentTypeMismatch(vararg_param.idx));
+                }
+            }
+        } else {
+            // If the parameter count is fixed, we need exactly
+            // that amount of arguments.
+            if parameters.len() != arguments.len() {
+                failures.push(CallableCheckError::ArgumentCountMismatch);
+
+                return Ok(CallableCheckResult::Failure(failures));
+            }
+
+            // Verify that all the parameters are compatible with the arguments
+            // passed to the method.
+            for (param, arg) in parameters.inner().iter().zip(arguments.iter()) {
+                let arg_type = self.type_of_expr(arg)?;
+
+                if !self.check_type_compatibility(&arg_type, &param.ty)? {
+                    failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
+                }
             }
         }
 

@@ -47,7 +47,7 @@ impl DefineMethodBodies<'_> {
                             .method_mut(method_id)
                             .unwrap()
                             .parameters
-                            .push(name, type_ref);
+                            .push(name, type_ref, param.vararg);
                     }
 
                     self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
@@ -77,7 +77,7 @@ impl DefineMethodBodies<'_> {
                             .method_mut(method_id)
                             .unwrap()
                             .parameters
-                            .push(name, type_ref);
+                            .push(name, type_ref, param.vararg);
                     }
 
                     self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
@@ -109,7 +109,7 @@ impl DefineMethodBodies<'_> {
                 .function_mut(func_id)
                 .unwrap()
                 .parameters
-                .push(name, type_ref);
+                .push(name, type_ref, param.vararg);
         }
 
         self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
@@ -137,7 +137,7 @@ impl DefineMethodBodies<'_> {
                     .method_mut(method_id)
                     .unwrap()
                     .parameters
-                    .push(name, type_ref);
+                    .push(name, type_ref, param.vararg);
             }
 
             self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
@@ -165,7 +165,7 @@ impl DefineMethodBodies<'_> {
                     .method_mut(method_id)
                     .unwrap()
                     .parameters
-                    .push(name, type_ref);
+                    .push(name, type_ref, param.vararg);
             }
 
             self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
