@@ -13,7 +13,8 @@ pub(crate) fn command() -> Command {
         )
 }
 
-pub(crate) fn run(args: &ArgMatches, mut dcx: DiagCtxHandle) {
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
     let dry_run = args.get_flag("dry-run");
 
     if let Err(err) = arc::clean_local_cache_dir(dry_run) {

@@ -154,7 +154,7 @@ impl DiagCtx {
     ///
     /// The diagnostic will not be drained from the handler immediately. To
     /// drain the diagnostic, see [`DiagCtx::drain()`].
-    pub fn emit(&mut self, diag: error_snippet::Error) {
+    pub fn emit(&self, diag: error_snippet::Error) {
         self.handler().handler.report(diag);
     }
 
@@ -263,7 +263,7 @@ impl DiagCtxHandle {
     /// The diagnostic will not be drained from the handler immediately. To
     /// drain the diagnostic, see [`DiagCtxHandle::drain()`].
     #[track_caller]
-    pub fn emit(&mut self, diag: error_snippet::Error) {
+    pub fn emit(&self, diag: error_snippet::Error) {
         self.handler().handler.report(diag);
     }
 

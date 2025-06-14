@@ -16,7 +16,8 @@ pub(crate) fn command() -> Command {
         )
 }
 
-pub(crate) fn run(args: &ArgMatches, mut dcx: DiagCtxHandle) {
+#[allow(clippy::needless_pass_by_value)]
+pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
     let input = if let Some(v) = args.get_one::<String>("path") {
         project_or_cwd(Some(v))
     } else {

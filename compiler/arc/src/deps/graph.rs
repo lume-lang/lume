@@ -72,7 +72,8 @@ impl DependencyGraph {
     ///
     /// Returns `Err` if the local dependency has a `SemVer` version number which
     /// doesn't match the required version defined by the dependent.
-    pub fn verify_dependency(&self, dependent: PackageId, dependency: PackageId, mut dcx: DiagCtxHandle) {
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn verify_dependency(&self, dependent: PackageId, dependency: PackageId, dcx: DiagCtxHandle) {
         let dependent = match self.get_err(dependent) {
             Ok(dep) => dep,
             Err(err) => {
