@@ -199,6 +199,18 @@ impl std::fmt::Display for Location {
     }
 }
 
+impl From<Location> for Arc<dyn error_snippet::Source> {
+    fn from(value: Location) -> Self {
+        value.file
+    }
+}
+
+impl From<Location> for error_snippet::SpanRange {
+    fn from(value: Location) -> Self {
+        value.index.into()
+    }
+}
+
 impl std::hash::Hash for Location {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.file.name.hash(state);

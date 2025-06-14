@@ -84,10 +84,9 @@ impl ThirBuildCtx {
 
                 if !self.check_type_compatibility(&lhs, &rhs)? {
                     return Err(diagnostics::NonMatchingBinaryOp {
-                        source: expr.location.file.clone(),
-                        range: expr.location.index.clone(),
-                        lhs: expr.lhs.location.index.clone(),
-                        rhs: expr.rhs.location.index.clone(),
+                        source: expr.location.clone(),
+                        lhs: expr.lhs.location.clone(),
+                        rhs: expr.rhs.location.clone(),
                         lhs_ty: self.new_named_type(&lhs)?.to_string(),
                         rhs_ty: self.new_named_type(&rhs)?.to_string(),
                     }
@@ -109,8 +108,7 @@ impl ThirBuildCtx {
 
                 if self.type_ref_name(&lhs)? != &SymbolName::boolean() {
                     return Err(diagnostics::BooleanOperationOnNonBoolean {
-                        source: expr.location.file.clone(),
-                        range: expr.lhs.location.index.clone(),
+                        source: expr.lhs.location.clone(),
                         expected: SymbolName::boolean().to_string(),
                         found: self.new_named_type(&lhs)?.to_string(),
                     }
@@ -119,8 +117,7 @@ impl ThirBuildCtx {
 
                 if self.type_ref_name(&rhs)? != &SymbolName::boolean() {
                     return Err(diagnostics::BooleanOperationOnNonBoolean {
-                        source: expr.location.file.clone(),
-                        range: expr.rhs.location.index.clone(),
+                        source: expr.rhs.location.clone(),
                         expected: SymbolName::boolean().to_string(),
                         found: self.new_named_type(&rhs)?.to_string(),
                     }

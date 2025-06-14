@@ -303,9 +303,9 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "error_snippet"
-version = "0.1.11"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab69d20a0b3a8a19475456b4676309e2d7230ed5e25f12c83e6f914bfa43c518"
+checksum = "d3f61cf1d245ca115232dfeff5a99722ff34fa19d1ffc7494206917a2502364d"
 dependencies = [
  "error_snippet_derive",
  "indexmap",
@@ -314,9 +314,9 @@ dependencies = [
 
 [[package]]
 name = "error_snippet_derive"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97acd8ea73795ab82c83d0a43a367ddd98ab5d8d04aee69cc6871bbfd83a7447"
+checksum = "42ab303584f928440963f9b385d0a04b576f25ee47799f28cb0b4c53f4f40d5c"
 dependencies = [
  "proc-macro2",
  "quote",

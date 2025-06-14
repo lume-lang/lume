@@ -190,9 +190,8 @@ impl Expressions<'_> {
             let declared_type = stmt.declared_type.clone().unwrap();
 
             return Err(MismatchedTypes {
-                source: stmt.value.location.file.clone(),
-                expect_range: stmt.value.location.index.clone(),
-                reason_range: declared_type.location.index.clone(),
+                expect_loc: stmt.value.location.clone(),
+                reason_loc: declared_type.location.clone(),
                 expected: self.tcx.new_named_type(&resolved_type)?,
                 found: self.tcx.new_named_type(&value_expr)?,
             }
@@ -222,15 +221,14 @@ impl Expressions<'_> {
         };
 
         if !self.tcx.check_type_compatibility(&actual, &expected)? {
-            let expect_range = match &stmt.value {
-                Some(val) => &val.location.index,
-                None => &self.tcx.hir_expect_stmt(stmt.id).location.index,
+            let expect_loc = match &stmt.value {
+                Some(val) => &val.location,
+                None => &self.tcx.hir_expect_stmt(stmt.id).location,
             };
 
             return Err(MismatchedTypes {
-                source: expected.location.file.clone(),
-                expect_range: expect_range.clone(),
-                reason_range: expected.location.index.clone(),
+                expect_loc: expect_loc.clone(),
+                reason_loc: expected.location.clone(),
                 expected: self.tcx.new_named_type(&expected)?,
                 found: self.tcx.new_named_type(&actual)?,
             }

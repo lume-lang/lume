@@ -75,17 +75,14 @@ pub struct SuggestedFunction {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "binary operation on non-matching types", code = "LM4172")]
 pub struct NonMatchingBinaryOp {
-    #[span]
-    pub source: Arc<SourceFile>,
+    #[label(source, "cannot perform binary operation between non-matching types")]
+    pub source: lume_span::Location,
 
-    #[label("cannot perform binary operation between non-matching types")]
-    pub range: Range<usize>,
+    #[label(source, "found type {lhs_ty} on left-hand side...")]
+    pub lhs: lume_span::Location,
 
-    #[label("found type {lhs_ty} on left-hand side...")]
-    pub lhs: Range<usize>,
-
-    #[label("...and found type {rhs_ty} on right-hand side")]
-    pub rhs: Range<usize>,
+    #[label(source, "...and found type {rhs_ty} on right-hand side")]
+    pub rhs: lume_span::Location,
 
     pub lhs_ty: String,
     pub rhs_ty: String,
@@ -94,11 +91,8 @@ pub struct NonMatchingBinaryOp {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "boolean operation on non-boolean type", code = "LM4173")]
 pub struct BooleanOperationOnNonBoolean {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("expected boolean operation on {expected}, found {found}")]
-    pub range: Range<usize>,
+    #[label(source, "expected boolean operation on {expected}, found {found}")]
+    pub source: lume_span::Location,
 
     pub expected: String,
     pub found: String,
