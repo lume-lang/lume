@@ -6,16 +6,30 @@ use lume_span::{Location, SourceFile};
 use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "mismatched types", code = "LM4001")]
+#[diagnostic(
+    message = "mismatched types",
+    code = "LM4001",
+    help = "expected type {expected}\nfound type {found}"
+)]
 pub struct MismatchedTypes {
     #[label(source, "expected type {expected}, but found type {found}...")]
-    pub expect_loc: Location,
+    pub found_loc: Location,
 
     #[label(source, "...because of type defined here")]
     pub reason_loc: Location,
 
     pub expected: NamedTypeRef,
     pub found: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "trait is not implemented", code = "LM4002")]
+pub struct TraitNotImplemented {
+    #[label(source, "the trait {trait_name} is not implemented for the type {type_name}")]
+    pub location: Location,
+
+    pub trait_name: NamedTypeRef,
+    pub type_name: NamedTypeRef,
 }
 
 #[derive(Diagnostic, Debug)]

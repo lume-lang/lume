@@ -190,7 +190,7 @@ impl Expressions<'_> {
             let declared_type = stmt.declared_type.clone().unwrap();
 
             return Err(MismatchedTypes {
-                expect_loc: stmt.value.location.clone(),
+                found_loc: stmt.value.location.clone(),
                 reason_loc: declared_type.location.clone(),
                 expected: self.tcx.new_named_type(&resolved_type)?,
                 found: self.tcx.new_named_type(&value_expr)?,
@@ -221,13 +221,13 @@ impl Expressions<'_> {
         };
 
         if !self.tcx.check_type_compatibility(&actual, &expected)? {
-            let expect_loc = match &stmt.value {
+            let found_loc = match &stmt.value {
                 Some(val) => &val.location,
                 None => &self.tcx.hir_expect_stmt(stmt.id).location,
             };
 
             return Err(MismatchedTypes {
-                expect_loc: expect_loc.clone(),
+                found_loc: found_loc.clone(),
                 reason_loc: expected.location.clone(),
                 expected: self.tcx.new_named_type(&expected)?,
                 found: self.tcx.new_named_type(&actual)?,
