@@ -78,6 +78,24 @@ impl ThirBuildCtx {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
+            lume_hir::ExpressionKind::Binary(expr) => {
+                let lhs = self.type_of_expr(&expr.lhs)?;
+                let rhs = self.type_of_expr(&expr.rhs)?;
+
+                if !self.check_type_compatibility(&lhs, &rhs)? {
+                    return Err(diagnostics::NonMatchingBinaryOp {
+                        source: expr.location.file.clone(),
+                        range: expr.location.index.clone(),
+                        lhs: expr.lhs.location.index.clone(),
+                        rhs: expr.rhs.location.index.clone(),
+                        lhs_ty: self.new_named_type(&lhs)?.to_string(),
+                        rhs_ty: self.new_named_type(&rhs)?.to_string(),
+                    }
+                    .into());
+                }
+
+                Ok(lhs)
+            }
             lume_hir::ExpressionKind::StaticCall(call) => Ok(self.lookup_callable_static(call)?.return_type().clone()),
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callable = self.lookup_callable_instance(call)?;
@@ -85,6 +103,24 @@ impl ThirBuildCtx {
                 Ok(callable.return_type().clone())
             }
             lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
+            lume_hir::ExpressionKind::Logical(expr) => {
+                let lhs = self.type_of_expr(&expr.lhs)?;
+                let rhs = self.type_of_expr(&expr.rhs)?;
+
+                if !self.check_type_compatibility(&lhs, &rhs)? {
+                    return Err(diagnostics::NonMatchingBooleanOp {
+                        source: expr.location.file.clone(),
+                        range: expr.location.index.clone(),
+                        lhs: expr.lhs.location.index.clone(),
+                        rhs: expr.rhs.location.index.clone(),
+                        lhs_ty: self.new_named_type(&lhs)?.to_string(),
+                        rhs_ty: self.new_named_type(&rhs)?.to_string(),
+                    }
+                    .into());
+                }
+
+                Ok(lhs)
+            }
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee.id)?;
 

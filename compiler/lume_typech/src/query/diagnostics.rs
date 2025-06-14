@@ -73,6 +73,44 @@ pub struct SuggestedFunction {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "binary operation on non-matching types", code = "LM4172")]
+pub struct NonMatchingBinaryOp {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("cannot perform binary operation between non-matching types")]
+    pub range: Range<usize>,
+
+    #[label("found type {lhs_ty} on left-hand side...")]
+    pub lhs: Range<usize>,
+
+    #[label("...and found type {rhs_ty} on right-hand side")]
+    pub rhs: Range<usize>,
+
+    pub lhs_ty: String,
+    pub rhs_ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "boolean operation on non-matching types", code = "LM4173")]
+pub struct NonMatchingBooleanOp {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("cannot perform boolean operation between non-matching types")]
+    pub range: Range<usize>,
+
+    #[label("found type {lhs_ty} on left-hand side...")]
+    pub lhs: Range<usize>,
+
+    #[label("...and found type {rhs_ty} on right-hand side")]
+    pub rhs: Range<usize>,
+
+    pub lhs_ty: String,
+    pub rhs_ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find returning ancestor", code = "LM4216")]
 pub struct NoReturningAncestor {
     #[span]
