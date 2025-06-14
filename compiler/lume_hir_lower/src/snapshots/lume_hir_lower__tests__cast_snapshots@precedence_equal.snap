@@ -22,7 +22,7 @@ description: 0 as u64 == 0;
                         1,
                     ),
                 },
-                location: <internal>:0:12,
+                location: <internal>:0:13,
                 kind: InstanceCall(
                     InstanceCall {
                         id: ExpressionId {
@@ -166,6 +166,6 @@ description: 0 as u64 == 0;
                 ),
             },
         ),
-        location: <internal>:0:12,
+        location: <internal>:0:13,
     },
 ]

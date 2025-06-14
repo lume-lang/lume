@@ -168,7 +168,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                             5,
                         ),
                     },
-                    location: <internal>:57:75,
+                    location: <internal>:57:76,
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
@@ -221,7 +221,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                             6,
                                         ),
                                     },
-                                    location: <internal>:57:61,
+                                    location: <internal>:57:62,
                                     kind: InstanceCall(
                                         InstanceCall {
                                             id: ExpressionId {
@@ -325,7 +325,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                             9,
                                         ),
                                     },
-                                    location: <internal>:67:75,
+                                    location: <internal>:67:76,
                                     kind: InstanceCall(
                                         InstanceCall {
                                             id: ExpressionId {
@@ -345,7 +345,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                         11,
                                                     ),
                                                 },
-                                                location: <internal>:67:71,
+                                                location: <internal>:67:72,
                                                 kind: InstanceCall(
                                                     InstanceCall {
                                                         id: ExpressionId {

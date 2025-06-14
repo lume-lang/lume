@@ -100,7 +100,7 @@ description: "let a = 0; if a == 1 { }"
                                         3,
                                     ),
                                 },
-                                location: <internal>:14:19,
+                                location: <internal>:14:20,
                                 kind: InstanceCall(
                                     InstanceCall {
                                         id: ExpressionId {

@@ -1,0 +1,123 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: 0 | 0;
+---
+[
+    Statement {
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
+        kind: Expression(
+            Expression {
+                id: ExpressionId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                location: <internal>:0:5,
+                kind: Binary(
+                    Binary {
+                        id: ExpressionId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
+                        lhs: Expression {
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    2,
+                                ),
+                            },
+                            location: <internal>:0:1,
+                            kind: Literal(
+                                Literal {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            2,
+                                        ),
+                                    },
+                                    location: <internal>:0:1,
+                                    kind: Int(
+                                        IntLiteral {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
+                                            value: 0,
+                                            kind: I32,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                        op: BinaryOperator {
+                            kind: Or,
+                            location: <internal>:2:3,
+                        },
+                        rhs: Expression {
+                            id: ExpressionId {
+                                def: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    3,
+                                ),
+                            },
+                            location: <internal>:4:5,
+                            kind: Literal(
+                                Literal {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                    location: <internal>:4:5,
+                                    kind: Int(
+                                        IntLiteral {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
+                                            value: 0,
+                                            kind: I32,
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                        location: <internal>:0:5,
+                    },
+                ),
+            },
+        ),
+        location: <internal>:0:5,
+    },
+]

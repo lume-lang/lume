@@ -28,9 +28,11 @@ impl LowerModule<'_> {
         let expr = match statement {
             ast::Expression::Array(e) => self.expr_array(*e)?,
             ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
+            ast::Expression::Binary(e) => self.expr_binary(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Cast(e) => self.expr_cast(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
+            ast::Expression::Logical(e) => self.expr_logical(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
@@ -98,6 +100,37 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_binary(&mut self, expr: ast::Binary) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let lhs = self.expression(expr.lhs)?;
+        let rhs = self.expression(expr.rhs)?;
+
+        let operator_kind = match expr.op.kind {
+            ast::BinaryOperatorKind::And => hir::BinaryOperatorKind::And,
+            ast::BinaryOperatorKind::Or => hir::BinaryOperatorKind::Or,
+            ast::BinaryOperatorKind::Xor => hir::BinaryOperatorKind::Xor,
+        };
+
+        let operator_loc = self.location(expr.op.location);
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::Binary(Box::new(hir::Binary {
+                id,
+                lhs,
+                op: hir::BinaryOperator {
+                    kind: operator_kind,
+                    location: operator_loc,
+                },
+                rhs,
+                location,
+            })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
@@ -150,6 +183,36 @@ impl LowerModule<'_> {
             location: literal.location.clone(),
             kind: hir::ExpressionKind::Literal(Box::new(literal)),
         }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_logical(&mut self, expr: ast::Logical) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+        let lhs = self.expression(expr.lhs)?;
+        let rhs = self.expression(expr.rhs)?;
+
+        let operator_kind = match expr.op.kind {
+            ast::LogicalOperatorKind::And => hir::LogicalOperatorKind::And,
+            ast::LogicalOperatorKind::Or => hir::LogicalOperatorKind::Or,
+        };
+
+        let operator_loc = self.location(expr.op.location);
+
+        Ok(hir::Expression {
+            id,
+            location: location.clone(),
+            kind: hir::ExpressionKind::Logical(Box::new(hir::Logical {
+                id,
+                lhs,
+                op: hir::LogicalOperator {
+                    kind: operator_kind,
+                    location: operator_loc,
+                },
+                rhs,
+                location,
+            })),
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

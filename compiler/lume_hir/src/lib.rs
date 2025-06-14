@@ -1031,6 +1031,7 @@ expr_lit_int!(lit_u32, U32, u32);
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
+    Binary(Box<Binary>),
     Cast(Box<Cast>),
 
     /// Defines a call which was invoked without any callee or receiver.
@@ -1048,6 +1049,7 @@ pub enum ExpressionKind {
     /// ```
     InstanceCall(Box<InstanceCall>),
     Literal(Box<Literal>),
+    Logical(Box<Logical>),
     Member(Box<Member>),
     Variable(Box<Variable>),
     Void,
@@ -1094,6 +1096,28 @@ pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
     pub value: Expression,
+}
+
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOperatorKind {
+    And,
+    Or,
+    Xor,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct BinaryOperator {
+    pub kind: BinaryOperatorKind,
+    pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Binary {
+    pub id: ExpressionId,
+    pub lhs: Expression,
+    pub op: BinaryOperator,
+    pub rhs: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1211,6 +1235,27 @@ pub struct StringLiteral {
 pub struct BooleanLiteral {
     pub id: ExpressionId,
     pub value: bool,
+}
+
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LogicalOperatorKind {
+    And,
+    Or,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct LogicalOperator {
+    pub kind: LogicalOperatorKind,
+    pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Logical {
+    pub id: ExpressionId,
+    pub lhs: Expression,
+    pub op: LogicalOperator,
+    pub rhs: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
