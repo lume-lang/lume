@@ -92,22 +92,16 @@ pub struct NonMatchingBinaryOp {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "boolean operation on non-matching types", code = "LM4173")]
-pub struct NonMatchingBooleanOp {
+#[diagnostic(message = "boolean operation on non-boolean type", code = "LM4173")]
+pub struct BooleanOperationOnNonBoolean {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("cannot perform boolean operation between non-matching types")]
+    #[label("expected boolean operation on {expected}, found {found}")]
     pub range: Range<usize>,
 
-    #[label("found type {lhs_ty} on left-hand side...")]
-    pub lhs: Range<usize>,
-
-    #[label("...and found type {rhs_ty} on right-hand side")]
-    pub rhs: Range<usize>,
-
-    pub lhs_ty: String,
-    pub rhs_ty: String,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]
