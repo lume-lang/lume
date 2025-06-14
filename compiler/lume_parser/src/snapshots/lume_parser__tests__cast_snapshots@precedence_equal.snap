@@ -81,7 +81,7 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                 ],
                 type_arguments: [],
                 location: Location(
-                    0..12,
+                    0..13,
                 ),
             },
         ),

@@ -50,7 +50,7 @@ expression: "parse_expr(\"self + self;\")"
                 ],
                 type_arguments: [],
                 location: Location(
-                    0..7,
+                    0..11,
                 ),
             },
         ),

@@ -103,30 +103,18 @@ impl Parser {
     /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
     /// such as increment or decrement operators.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_infix_expression(&mut self, left: Expression, operator: Token) -> Result<Expression> {
-        let operator_loc = operator.index.clone();
+    fn parse_infix_expression(&mut self, lhs: Expression, operator: Token) -> Result<Expression> {
+        let rhs = self.parse_expression_with_precedence(operator.precedence())?;
 
-        let right = self.parse_expression_with_precedence(operator.precedence())?;
-        let name: String = operator.into();
+        if operator.is_binary() {
+            return self.parse_binary_operator_expression(lhs, operator, rhs);
+        }
 
-        let start = left.location().start();
-        let end = right.location().start();
+        if operator.is_boolean() {
+            return self.parse_boolean_operator_expression(lhs, operator, rhs);
+        }
 
-        Ok(Expression::Call(Box::new(Call {
-            callee: Some(left),
-            name: Path {
-                name: Identifier {
-                    name,
-                    location: operator_loc.clone().into(),
-                }
-                .into(),
-                root: Vec::new(),
-                location: operator_loc.into(),
-            },
-            arguments: vec![right],
-            type_arguments: vec![],
-            location: (start..end).into(),
-        })))
+        self.parse_other_operator_expression(lhs, operator, rhs)
     }
 
     /// Parses a postfix expression at the current cursor position.
@@ -155,6 +143,100 @@ impl Parser {
             type_arguments: vec![],
             location: (start..end).into(),
         }))
+    }
+
+    /// Parses the given left-hand- and right-hand-side expressions as a binary
+    /// operator expression call.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_binary_operator_expression(
+        &mut self,
+        lhs: Expression,
+        operator: Token,
+        rhs: Expression,
+    ) -> Result<Expression> {
+        debug_assert!(operator.is_binary());
+
+        let operator_kind = match operator.kind {
+            TokenKind::BinaryAnd => BinaryOperatorKind::And,
+            TokenKind::BinaryOr => BinaryOperatorKind::Or,
+            TokenKind::BinaryXor => BinaryOperatorKind::Xor,
+            kind => panic!("bug!: invalid binary operator token ({kind:?})"),
+        };
+
+        let start = lhs.location().start();
+        let end = rhs.location().end();
+
+        Ok(Expression::Binary(Box::new(Binary {
+            lhs,
+            op: BinaryOperator {
+                kind: operator_kind,
+                location: operator.index.clone().into(),
+            },
+            rhs,
+            location: (start..end).into(),
+        })))
+    }
+
+    /// Parses the given left-hand- and right-hand-side expressions as an
+    /// operator expression call.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_other_operator_expression(
+        &mut self,
+        lhs: Expression,
+        operator: Token,
+        rhs: Expression,
+    ) -> Result<Expression> {
+        let operator_loc = operator.index.clone();
+
+        let start = lhs.location().start();
+        let end = rhs.location().end();
+
+        Ok(Expression::Call(Box::new(Call {
+            callee: Some(lhs),
+            name: Path {
+                name: Identifier {
+                    name: operator.into(),
+                    location: operator_loc.clone().into(),
+                }
+                .into(),
+                root: Vec::new(),
+                location: operator_loc.into(),
+            },
+            arguments: vec![rhs],
+            type_arguments: vec![],
+            location: (start..end).into(),
+        })))
+    }
+
+    /// Parses the given left-hand- and right-hand-side expressions as a boolean
+    /// operator expression call.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_boolean_operator_expression(
+        &mut self,
+        lhs: Expression,
+        operator: Token,
+        rhs: Expression,
+    ) -> Result<Expression> {
+        debug_assert!(operator.is_boolean());
+
+        let operator_kind = match operator.kind {
+            TokenKind::And => LogicalOperatorKind::And,
+            TokenKind::Or => LogicalOperatorKind::Or,
+            kind => panic!("bug!: invalid boolean operator token ({kind:?})"),
+        };
+
+        let start = lhs.location().start();
+        let end = rhs.location().end();
+
+        Ok(Expression::Logical(Box::new(Logical {
+            lhs,
+            op: LogicalOperator {
+                kind: operator_kind,
+                location: operator.index.clone().into(),
+            },
+            rhs,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses an expression on the current cursor position, which is nested within parentheses.

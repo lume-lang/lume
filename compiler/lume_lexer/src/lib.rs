@@ -11,7 +11,7 @@ mod errors;
 pub const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
 
 const SYMBOLS: &[char] = &[
-    '+', '-', '*', '/', '=', '!', '?', '<', '>', '&', '|', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
+    '+', '-', '*', '/', '=', '!', '?', '<', '>', '&', '|', '^', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
 ];
 
 pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
@@ -25,16 +25,21 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::NotEqual, 3),
     (TokenKind::Greater, 4),
     (TokenKind::Less, 4),
-    (TokenKind::GreaterEqual, 4),
-    (TokenKind::LessEqual, 4),
-    (TokenKind::Add, 5),
-    (TokenKind::Sub, 5),
-    (TokenKind::Mul, 6),
-    (TokenKind::Div, 6),
-    (TokenKind::Increment, 7),
-    (TokenKind::Decrement, 7),
-    (TokenKind::Dot, 9),
-    (IDENTIFIER_SEPARATOR, 10),
+    (TokenKind::BinaryAnd, 5),
+    (TokenKind::BinaryXor, 6),
+    (TokenKind::BinaryOr, 7),
+    (TokenKind::And, 8),
+    (TokenKind::Or, 9),
+    (TokenKind::GreaterEqual, 10),
+    (TokenKind::LessEqual, 10),
+    (TokenKind::Add, 11),
+    (TokenKind::Sub, 11),
+    (TokenKind::Mul, 12),
+    (TokenKind::Div, 12),
+    (TokenKind::Increment, 13),
+    (TokenKind::Decrement, 13),
+    (TokenKind::Dot, 14),
+    (IDENTIFIER_SEPARATOR, 15),
 ];
 
 /// Defines the precedence for unary operators, such as `-` or `!`.
@@ -49,6 +54,12 @@ pub const UNARY_PRECEDENCE: u8 = 3;
 /// Defines all the operators which are notated as postfix, as opposed to infix.
 pub const POSTFIX_OPERATORS: &[TokenKind] = &[TokenKind::Increment, TokenKind::Decrement];
 
+/// Defines all the operators which are used in binary contexts.
+pub const BINARY_OPERATORS: &[TokenKind] = &[TokenKind::BinaryAnd, TokenKind::BinaryOr, TokenKind::BinaryXor];
+
+/// Defines all the operators which are used in boolean contexts.
+pub const BOOLEAN_OPERATORS: &[TokenKind] = &[TokenKind::And, TokenKind::Or];
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     As,
@@ -58,6 +69,9 @@ pub enum TokenKind {
     Arrow,
     Assign,
     DocComment,
+    BinaryAnd,
+    BinaryOr,
+    BinaryXor,
     Break,
     Builtin,
     Colon,
@@ -100,9 +114,9 @@ pub enum TokenKind {
     Namespace,
     NotEqual,
     PathSeparator,
-    Pipe,
     Pub,
     Question,
+    Or,
     Return,
     RightBracket,
     RightCurly,
@@ -179,6 +193,9 @@ impl TokenKind {
             TokenKind::Add
                 | TokenKind::AddAssign
                 | TokenKind::And
+                | TokenKind::BinaryAnd
+                | TokenKind::BinaryOr
+                | TokenKind::BinaryXor
                 | TokenKind::Decrement
                 | TokenKind::Div
                 | TokenKind::DivAssign
@@ -191,6 +208,7 @@ impl TokenKind {
                 | TokenKind::Mul
                 | TokenKind::MulAssign
                 | TokenKind::NotEqual
+                | TokenKind::Or
                 | TokenKind::Sub
                 | TokenKind::SubAssign
         )
@@ -209,10 +227,13 @@ impl From<TokenKind> for &'static str {
             TokenKind::As => "as",
             TokenKind::Add => "+",
             TokenKind::AddAssign => "+=",
-            TokenKind::And => "&",
+            TokenKind::And => "&&",
             TokenKind::Arrow => "->",
             TokenKind::Assign => "=",
             TokenKind::DocComment => "doc comment",
+            TokenKind::BinaryAnd => "&",
+            TokenKind::BinaryOr => "|",
+            TokenKind::BinaryXor => "^",
             TokenKind::Break => "break",
             TokenKind::Builtin => "builtin",
             TokenKind::Colon => ":",
@@ -255,9 +276,9 @@ impl From<TokenKind> for &'static str {
             TokenKind::NotEqual => "!=",
             TokenKind::Integer(_) => "integer",
             TokenKind::PathSeparator => "::",
-            TokenKind::Pipe => "|",
             TokenKind::Pub => "pub",
             TokenKind::Question => "?",
+            TokenKind::Or => "||",
             TokenKind::Return => "return",
             TokenKind::RightBracket => "]",
             TokenKind::RightCurly => "}",
@@ -371,6 +392,18 @@ impl Token {
     #[inline]
     pub fn is_postfix(&self) -> bool {
         POSTFIX_OPERATORS.iter().any(|k| k == &self.kind)
+    }
+
+    /// Determines whether the token is a binary operator.
+    #[inline]
+    pub fn is_binary(&self) -> bool {
+        BINARY_OPERATORS.iter().any(|k| k == &self.kind)
+    }
+
+    /// Determines whether the token is a boolean operator.
+    #[inline]
+    pub fn is_boolean(&self) -> bool {
+        BOOLEAN_OPERATORS.iter().any(|k| k == &self.kind)
     }
 }
 
@@ -719,6 +752,7 @@ impl Lexer {
         if chars.len() >= 2 {
             match (chars[0], chars[1]) {
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
+                ('&', '&') => return Ok((TokenKind::And, 2)),
                 ('-', '>') => return Ok((TokenKind::Arrow, 2)),
                 ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
@@ -729,6 +763,7 @@ impl Lexer {
                 ('<', '=') => return Ok((TokenKind::LessEqual, 2)),
                 ('*', '=') => return Ok((TokenKind::MulAssign, 2)),
                 ('!', '=') => return Ok((TokenKind::NotEqual, 2)),
+                ('|', '|') => return Ok((TokenKind::Or, 2)),
                 (':', ':') => return Ok((TokenKind::PathSeparator, 2)),
                 ('-', '=') => return Ok((TokenKind::SubAssign, 2)),
                 _ => {}
@@ -738,8 +773,10 @@ impl Lexer {
         if !chars.is_empty() {
             match chars[0] {
                 '+' => return Ok((TokenKind::Add, 1)),
-                '&' => return Ok((TokenKind::And, 1)),
                 '=' => return Ok((TokenKind::Assign, 1)),
+                '&' => return Ok((TokenKind::BinaryAnd, 1)),
+                '|' => return Ok((TokenKind::BinaryOr, 1)),
+                '^' => return Ok((TokenKind::BinaryXor, 1)),
                 ':' => return Ok((TokenKind::Colon, 1)),
                 ',' => return Ok((TokenKind::Comma, 1)),
                 '/' => return Ok((TokenKind::Div, 1)),
@@ -751,7 +788,6 @@ impl Lexer {
                 '(' => return Ok((TokenKind::LeftParen, 1)),
                 '<' => return Ok((TokenKind::Less, 1)),
                 '*' => return Ok((TokenKind::Mul, 1)),
-                '|' => return Ok((TokenKind::Pipe, 1)),
                 '?' => return Ok((TokenKind::Question, 1)),
                 ']' => return Ok((TokenKind::RightBracket, 1)),
                 '}' => return Ok((TokenKind::RightCurly, 1)),
@@ -1058,6 +1094,7 @@ mod tests {
         assert_token!("...", TokenKind::DotDotDot, Some("..."), 0, 3);
 
         assert_token!("+=", TokenKind::AddAssign, Some("+="), 0, 2);
+        assert_token!("&&", TokenKind::And, Some("&&"), 0, 2);
         assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
         assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);
         assert_token!("--", TokenKind::Decrement, Some("--"), 0, 2);
@@ -1067,10 +1104,13 @@ mod tests {
         assert_token!("<=", TokenKind::LessEqual, Some("<="), 0, 2);
         assert_token!("*=", TokenKind::MulAssign, Some("*="), 0, 2);
         assert_token!("!=", TokenKind::NotEqual, Some("!="), 0, 2);
+        assert_token!("||", TokenKind::Or, Some("||"), 0, 2);
         assert_token!("::", TokenKind::PathSeparator, Some("::"), 0, 2);
         assert_token!("-=", TokenKind::SubAssign, Some("-="), 0, 2);
 
-        assert_token!("&", TokenKind::And, Some("&"), 0, 1);
+        assert_token!("&", TokenKind::BinaryAnd, Some("&"), 0, 1);
+        assert_token!("|", TokenKind::BinaryOr, Some("|"), 0, 1);
+        assert_token!("^", TokenKind::BinaryXor, Some("^"), 0, 1);
         assert_token!("=", TokenKind::Assign, Some("="), 0, 1);
         assert_token!(":", TokenKind::Colon, Some(":"), 0, 1);
         assert_token!(",", TokenKind::Comma, Some(","), 0, 1);
@@ -1083,7 +1123,6 @@ mod tests {
         assert_token!("(", TokenKind::LeftParen, Some("("), 0, 1);
         assert_token!("<", TokenKind::Less, Some("<"), 0, 1);
         assert_token!("*", TokenKind::Mul, Some("*"), 0, 1);
-        assert_token!("|", TokenKind::Pipe, Some("|"), 0, 1);
         assert_token!("]", TokenKind::RightBracket, Some("]"), 0, 1);
         assert_token!("}", TokenKind::RightCurly, Some("}"), 0, 1);
         assert_token!(")", TokenKind::RightParen, Some(")"), 0, 1);

@@ -622,9 +622,11 @@ pub struct PredicateLoop {
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
+    Binary(Box<Binary>),
     Call(Box<Call>),
     Cast(Box<Cast>),
     Literal(Box<Literal>),
+    Logical(Box<Logical>),
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
@@ -640,6 +642,27 @@ pub struct Array {
 pub struct Assignment {
     pub target: Expression,
     pub value: Expression,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BinaryOperatorKind {
+    And,
+    Or,
+    Xor,
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub struct BinaryOperator {
+    pub kind: BinaryOperatorKind,
+    pub location: Location,
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub struct Binary {
+    pub lhs: Expression,
+    pub op: BinaryOperator,
+    pub rhs: Expression,
     pub location: Location,
 }
 
@@ -708,6 +731,26 @@ pub struct StringLiteral {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub value: bool,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LogicalOperatorKind {
+    And,
+    Or,
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub struct LogicalOperator {
+    pub kind: LogicalOperatorKind,
+    pub location: Location,
+}
+
+#[derive(Node, Debug, Clone, PartialEq)]
+pub struct Logical {
+    pub lhs: Expression,
+    pub op: LogicalOperator,
+    pub rhs: Expression,
     pub location: Location,
 }
 

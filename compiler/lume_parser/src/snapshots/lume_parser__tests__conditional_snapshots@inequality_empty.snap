@@ -55,7 +55,7 @@ expression: "parse_expr(\"if a != 1 { }\")"
                                 ],
                                 type_arguments: [],
                                 location: Location(
-                                    3..8,
+                                    3..9,
                                 ),
                             },
                         ),

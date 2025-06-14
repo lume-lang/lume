@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"0 || 0;\")"
+---
+[
+    Expression(
+        Logical(
+            Logical {
+                lhs: Literal(
+                    Int(
+                        IntLiteral {
+                            value: 0,
+                            location: Location(
+                                0..1,
+                            ),
+                            kind: I32,
+                        },
+                    ),
+                ),
+                op: LogicalOperator {
+                    kind: Or,
+                    location: Location(
+                        2..4,
+                    ),
+                },
+                rhs: Literal(
+                    Int(
+                        IntLiteral {
+                            value: 0,
+                            location: Location(
+                                5..6,
+                            ),
+                            kind: I32,
+                        },
+                    ),
+                ),
+                location: Location(
+                    0..6,
+                ),
+            },
+        ),
+    ),
+]

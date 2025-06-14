@@ -268,6 +268,19 @@ fn test_cast_snapshots() {
 }
 
 #[test]
+fn test_binary_snapshots() {
+    assert_expr_snap_eq!("0 & 0;", "and");
+    assert_expr_snap_eq!("0 | 0;", "or");
+    assert_expr_snap_eq!("0 ^ 0;", "xor");
+}
+
+#[test]
+fn test_boolean_snapshots() {
+    assert_expr_snap_eq!("0 && 0;", "and");
+    assert_expr_snap_eq!("0 || 0;", "or");
+}
+
+#[test]
 fn test_literal_snapshots() {
     assert_expr_snap_eq!("\"\";", "string_empty");
     assert_expr_snap_eq!("\"string\";", "string_content");

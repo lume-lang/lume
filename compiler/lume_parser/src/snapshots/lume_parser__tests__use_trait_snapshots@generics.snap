@@ -221,7 +221,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                                                 ],
                                                 type_arguments: [],
                                                 location: Location(
-                                                    113..120,
+                                                    113..125,
                                                 ),
                                             },
                                         ),

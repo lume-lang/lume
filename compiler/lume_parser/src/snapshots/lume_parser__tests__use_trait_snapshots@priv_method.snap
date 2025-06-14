@@ -176,7 +176,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                                                 ],
                                                 type_arguments: [],
                                                 location: Location(
-                                                    95..102,
+                                                    95..107,
                                                 ),
                                             },
                                         ),
