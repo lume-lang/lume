@@ -125,6 +125,11 @@ impl Expressions<'_> {
     }
 
     fn expression(&self, expr: &lume_hir::Expression) -> Result<()> {
+        // Even if the expression type is not yet handled, we still
+        // need to verify that the expression itself is valid by
+        // querying it's resulting type.
+        let _ = self.tcx.type_of_expr(expr)?;
+
         match &expr.kind {
             lume_hir::ExpressionKind::Cast(cast) => self.cast_expression(cast),
             _ => Ok(()),
