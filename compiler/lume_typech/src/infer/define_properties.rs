@@ -34,7 +34,7 @@ impl DefineProperties<'_> {
 
                 let property_id = self
                     .ctx
-                    .tcx_mut()
+                    .tdb_mut()
                     .property_alloc(type_id, property_name.clone(), visibility)?;
 
                 property.prop_id = Some(property_id);

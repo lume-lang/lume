@@ -129,8 +129,8 @@ impl ThirBuildCtx {
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee.id)?;
 
-                let Some(property) = self.tcx().find_property(callee_type.instance_of, &expr.name) else {
-                    let ty = self.tcx().type_(callee_type.instance_of).unwrap();
+                let Some(property) = self.tdb().find_property(callee_type.instance_of, &expr.name) else {
+                    let ty = self.tdb().type_(callee_type.instance_of).unwrap();
 
                     return Err(errors::MissingProperty {
                         source: expr.location.file.clone(),
@@ -160,23 +160,23 @@ impl ThirBuildCtx {
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
         let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => self.tcx().find_type(&SymbolName::i8()).unwrap(),
-                lume_hir::IntKind::U8 => self.tcx().find_type(&SymbolName::u8()).unwrap(),
-                lume_hir::IntKind::I16 => self.tcx().find_type(&SymbolName::i16()).unwrap(),
-                lume_hir::IntKind::U16 => self.tcx().find_type(&SymbolName::u16()).unwrap(),
-                lume_hir::IntKind::I32 => self.tcx().find_type(&SymbolName::i32()).unwrap(),
-                lume_hir::IntKind::U32 => self.tcx().find_type(&SymbolName::u32()).unwrap(),
-                lume_hir::IntKind::I64 => self.tcx().find_type(&SymbolName::i64()).unwrap(),
-                lume_hir::IntKind::U64 => self.tcx().find_type(&SymbolName::u64()).unwrap(),
-                lume_hir::IntKind::IPtr => self.tcx().find_type(&SymbolName::iptr()).unwrap(),
-                lume_hir::IntKind::UPtr => self.tcx().find_type(&SymbolName::uptr()).unwrap(),
+                lume_hir::IntKind::I8 => self.tdb().find_type(&SymbolName::i8()).unwrap(),
+                lume_hir::IntKind::U8 => self.tdb().find_type(&SymbolName::u8()).unwrap(),
+                lume_hir::IntKind::I16 => self.tdb().find_type(&SymbolName::i16()).unwrap(),
+                lume_hir::IntKind::U16 => self.tdb().find_type(&SymbolName::u16()).unwrap(),
+                lume_hir::IntKind::I32 => self.tdb().find_type(&SymbolName::i32()).unwrap(),
+                lume_hir::IntKind::U32 => self.tdb().find_type(&SymbolName::u32()).unwrap(),
+                lume_hir::IntKind::I64 => self.tdb().find_type(&SymbolName::i64()).unwrap(),
+                lume_hir::IntKind::U64 => self.tdb().find_type(&SymbolName::u64()).unwrap(),
+                lume_hir::IntKind::IPtr => self.tdb().find_type(&SymbolName::iptr()).unwrap(),
+                lume_hir::IntKind::UPtr => self.tdb().find_type(&SymbolName::uptr()).unwrap(),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => self.tcx().find_type(&SymbolName::float()).unwrap(),
-                lume_hir::FloatKind::F64 => self.tcx().find_type(&SymbolName::double()).unwrap(),
+                lume_hir::FloatKind::F32 => self.tdb().find_type(&SymbolName::float()).unwrap(),
+                lume_hir::FloatKind::F64 => self.tdb().find_type(&SymbolName::double()).unwrap(),
             },
-            lume_hir::LiteralKind::String(_) => self.tcx().find_type(&SymbolName::string()).unwrap(),
-            lume_hir::LiteralKind::Boolean(_) => self.tcx().find_type(&SymbolName::boolean()).unwrap(),
+            lume_hir::LiteralKind::String(_) => self.tdb().find_type(&SymbolName::string()).unwrap(),
+            lume_hir::LiteralKind::Boolean(_) => self.tdb().find_type(&SymbolName::boolean()).unwrap(),
         };
 
         TypeRef::new(ty.id, lit.location.clone())
@@ -220,16 +220,16 @@ impl ThirBuildCtx {
     /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret(Display))]
     pub(crate) fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&SymbolName> {
-        Ok(&self.tcx.ty_expect(type_ref.instance_of)?.name)
+        Ok(&self.tdb.ty_expect(type_ref.instance_of)?.name)
     }
 
     /// Returns the [`Trait`] definition, which matches the [`Use`] declaration with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn trait_def_of(&self, use_id: UseId) -> Result<&Trait> {
-        let Some(use_ref) = self.tcx.use_(use_id) else {
+        let Some(use_ref) = self.tdb.use_(use_id) else {
             return Err(lume_types::errors::UseNotFound { id: use_id }.into());
         };
 
-        self.tcx.ty_expect_trait(use_ref.trait_.instance_of)
+        self.tdb.ty_expect_trait(use_ref.trait_.instance_of)
     }
 }

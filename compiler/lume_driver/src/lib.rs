@@ -184,7 +184,7 @@ impl<'a> Compiler<'a> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn analyze(&mut self, thir: &ThirBuildCtx) -> Result<()> {
         if self.options.print_type_context {
-            println!("{:#?}", thir.tcx());
+            println!("{:#?}", thir.tdb());
         }
 
         Ok(())

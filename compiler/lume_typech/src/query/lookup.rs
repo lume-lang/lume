@@ -368,7 +368,7 @@ impl<'tcx> ThirBuildCtx {
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
     pub(crate) fn lookup_function_suggestions(&'tcx self, name: &SymbolName) -> Vec<&'tcx Function> {
-        self.tcx()
+        self.tdb()
             .functions()
             .filter(|func| {
                 // The namespaces on the function names must match,
@@ -473,7 +473,7 @@ impl<'tcx> ThirBuildCtx {
                 };
 
                 CallableLookupSuggestion {
-                    def: Callable::Method(self.tcx().method(method_id).unwrap()),
+                    def: Callable::Method(self.tdb().method(method_id).unwrap()),
                     reason: *errors.first().unwrap_or(&CallableCheckError::NameMismatch),
                 }
             })
@@ -535,7 +535,7 @@ impl<'tcx> ThirBuildCtx {
                 };
 
                 CallableLookupSuggestion {
-                    def: Callable::Function(self.tcx().function(function_id).unwrap()),
+                    def: Callable::Function(self.tdb().function(function_id).unwrap()),
                     reason: *errors.first().unwrap_or(&CallableCheckError::NameMismatch),
                 }
             })
@@ -555,7 +555,7 @@ impl<'tcx> ThirBuildCtx {
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn lookup_functions_unchecked(&'tcx self, name: &SymbolName) -> Vec<&'tcx Function> {
-        self.tcx().functions().filter(|func| &func.name == name).collect()
+        self.tdb().functions().filter(|func| &func.name == name).collect()
     }
 
     /// Sorts the given [`Callable`] suggestions after which [`Callable`] seems the most
@@ -624,6 +624,6 @@ impl<'tcx> ThirBuildCtx {
     /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn methods_defined_on(&'tcx self, self_ty: &lume_types::TypeRef) -> Vec<&'tcx Method> {
-        self.tcx().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
+        self.tdb().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
     }
 }

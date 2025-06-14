@@ -13,7 +13,7 @@ impl DefineFunctions {
             if let lume_hir::Item::Function(func) = item {
                 let name = func.name.clone();
                 let visibility = func.visibility;
-                let func_id = ctx.tcx_mut().func_alloc(name, visibility);
+                let func_id = ctx.tdb_mut().func_alloc(name, visibility);
 
                 func.func_id = Some(func_id);
             }

@@ -35,24 +35,24 @@ impl DefineTypeParameters<'_> {
                 let type_id = struct_def.type_id.unwrap();
 
                 for type_param in &mut struct_def.type_parameters {
-                    let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                    let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                    self.ctx.tcx_mut().push_type_param(type_id, type_param_id)?;
+                    self.ctx.tdb_mut().push_type_param(type_id, type_param_id)?;
                 }
 
                 for method in &mut struct_def.methods_mut() {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                        let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                        self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
+                        self.ctx.tdb_mut().push_type_param(method_id, type_param_id)?;
                     }
                 }
             }
@@ -60,24 +60,24 @@ impl DefineTypeParameters<'_> {
                 let type_id = trait_def.type_id.unwrap();
 
                 for type_param in &mut trait_def.type_parameters {
-                    let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                    let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                    self.ctx.tcx_mut().push_type_param(type_id, type_param_id)?;
+                    self.ctx.tdb_mut().push_type_param(type_id, type_param_id)?;
                 }
 
                 for method in &mut trait_def.methods {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters {
-                        let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                        let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                        self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
+                        self.ctx.tdb_mut().push_type_param(method_id, type_param_id)?;
                     }
                 }
             }
@@ -91,12 +91,12 @@ impl DefineTypeParameters<'_> {
         let impl_id = implementation.impl_id.unwrap();
 
         for type_param in &mut implementation.type_parameters {
-            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-            self.ctx.tcx_mut().push_type_param(impl_id, type_param_id)?;
+            self.ctx.tdb_mut().push_type_param(impl_id, type_param_id)?;
         }
 
         let type_ref = self
@@ -115,18 +115,18 @@ impl DefineTypeParameters<'_> {
 
             let method_id = self
                 .ctx
-                .tcx_mut()
+                .tdb_mut()
                 .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);
 
             for type_param in &mut method.type_parameters {
-                let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
                 type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
+                self.ctx.tdb_mut().push_type_param(method_id, type_param_id)?;
             }
         }
 
@@ -137,12 +137,12 @@ impl DefineTypeParameters<'_> {
         let use_id = trait_impl.use_id.unwrap();
 
         for type_param in &mut trait_impl.type_parameters {
-            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-            self.ctx.tcx_mut().push_type_param(use_id, type_param_id)?;
+            self.ctx.tdb_mut().push_type_param(use_id, type_param_id)?;
         }
 
         let trait_ref = self
@@ -153,7 +153,7 @@ impl DefineTypeParameters<'_> {
             .ctx
             .mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters)?;
 
-        let trait_impl_ref = self.ctx.tcx_mut().use_mut(use_id).unwrap();
+        let trait_impl_ref = self.ctx.tdb_mut().use_mut(use_id).unwrap();
         trait_impl_ref.trait_ = trait_ref;
         trait_impl_ref.target = target_ref;
 
@@ -161,12 +161,12 @@ impl DefineTypeParameters<'_> {
             let method_id = method.method_id.unwrap();
 
             for type_param in &mut method.type_parameters {
-                let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+                let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
                 type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-                self.ctx.tcx_mut().push_type_param(method_id, type_param_id)?;
+                self.ctx.tdb_mut().push_type_param(method_id, type_param_id)?;
             }
         }
 
@@ -177,19 +177,19 @@ impl DefineTypeParameters<'_> {
         let func_id = func.func_id.unwrap();
 
         for type_param in &mut func.type_parameters {
-            let type_param_id = self.ctx.tcx_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self.ctx.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(type_param_id));
 
-            self.ctx.tcx_mut().push_type_param(func_id, type_param_id)?;
+            self.ctx.tdb_mut().push_type_param(func_id, type_param_id)?;
         }
 
         Ok(())
     }
 
     fn wrap_type_param(&mut self, type_param_id: TypeParameterId) -> TypeId {
-        let name = self.ctx.tcx().type_parameter(type_param_id).unwrap().name.clone();
+        let name = self.ctx.tdb().type_parameter(type_param_id).unwrap().name.clone();
         let symbol_name = SymbolName {
             name: lume_hir::PathSegment::from(name),
             namespace: None,
@@ -197,7 +197,7 @@ impl DefineTypeParameters<'_> {
         };
 
         self.ctx
-            .tcx_mut()
+            .tdb_mut()
             .type_alloc(symbol_name, TypeKindRef::TypeParameter(type_param_id))
     }
 }

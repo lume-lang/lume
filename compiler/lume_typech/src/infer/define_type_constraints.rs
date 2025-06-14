@@ -33,26 +33,26 @@ impl DefineTypeConstraints<'_> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
-                let type_params = self.ctx.tcx().type_params_of(type_id)?.to_owned();
+                let type_params = self.ctx.tdb().type_params_of(type_id)?.to_owned();
 
                 self.define_type_constraints(&struct_def.type_parameters, &type_params)?;
 
                 for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
-                    let type_params = method_id.type_params(self.ctx.tcx())?.to_owned();
+                    let type_params = method_id.type_params(self.ctx.tdb())?.to_owned();
 
                     self.define_type_constraints(&method.type_parameters, &type_params)?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
-                let type_params = type_id.type_params(self.ctx.tcx())?.to_owned();
+                let type_params = type_id.type_params(self.ctx.tdb())?.to_owned();
 
                 self.define_type_constraints(&trait_def.type_parameters, &type_params)?;
 
                 for method in &trait_def.methods {
                     let method_id = method.method_id.unwrap();
-                    let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
+                    let type_params = self.ctx.tdb().type_params_of(method_id)?.to_owned();
 
                     self.define_type_constraints(&method.type_parameters, &type_params)?;
                 }
@@ -65,13 +65,13 @@ impl DefineTypeConstraints<'_> {
 
     fn define_impl(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.impl_id.unwrap();
-        let type_params = self.ctx.tcx().type_params_of(impl_id)?.to_owned();
+        let type_params = self.ctx.tdb().type_params_of(impl_id)?.to_owned();
 
         self.define_type_constraints(&implementation.type_parameters, &type_params)?;
 
         for method in &implementation.methods {
             let method_id = method.method_id.unwrap();
-            let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
+            let type_params = self.ctx.tdb().type_params_of(method_id)?.to_owned();
 
             self.define_type_constraints(&method.type_parameters, &type_params)?;
         }
@@ -81,13 +81,13 @@ impl DefineTypeConstraints<'_> {
 
     fn define_use(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.use_id.unwrap();
-        let type_params = self.ctx.tcx().type_params_of(use_id)?.to_owned();
+        let type_params = self.ctx.tdb().type_params_of(use_id)?.to_owned();
 
         self.define_type_constraints(&trait_impl.type_parameters, &type_params)?;
 
         for method in &trait_impl.methods {
             let method_id = method.method_id.unwrap();
-            let type_params = self.ctx.tcx().type_params_of(method_id)?.to_owned();
+            let type_params = self.ctx.tdb().type_params_of(method_id)?.to_owned();
 
             self.define_type_constraints(&method.type_parameters, &type_params)?;
         }
@@ -97,7 +97,7 @@ impl DefineTypeConstraints<'_> {
 
     fn define_function(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
-        let type_params = self.ctx.tcx().function(func_id).unwrap().type_parameters.clone();
+        let type_params = self.ctx.tdb().function(func_id).unwrap().type_parameters.clone();
 
         self.define_type_constraints(&func.type_parameters, &type_params)?;
 
@@ -110,7 +110,7 @@ impl DefineTypeConstraints<'_> {
                 let lowered_constraint = self.ctx.mk_type_ref(type_constraint)?;
 
                 self.ctx
-                    .tcx_mut()
+                    .tdb_mut()
                     .type_parameter_mut(*param_id)
                     .unwrap()
                     .constraints

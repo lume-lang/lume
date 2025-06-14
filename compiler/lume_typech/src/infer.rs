@@ -42,7 +42,7 @@ impl ThirBuildCtx {
     /// the HIR maps into the type database.
     ///
     /// The defined types are stored within the `ThirBuildCtx` struct, which can be
-    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tcx_mut()` method.
+    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tdb_mut()` method.
     ///
     /// # Errors
     ///
@@ -126,12 +126,12 @@ impl ThirBuildCtx {
         }
 
         // Afterwards, attempt to find the type name within the type context.
-        self.tcx().find_type(name).map(|ty| ty.id)
+        self.tdb().find_type(name).map(|ty| ty.id)
     }
 
     /// Attempts to find a [`TypeRef`] with the given name, if any.
     pub(crate) fn find_type_ref(&self, name: &SymbolName) -> Result<Option<TypeRef>> {
-        let Some(ty) = self.tcx().find_type(name) else {
+        let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);
         };
 

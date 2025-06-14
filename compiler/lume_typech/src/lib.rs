@@ -18,7 +18,7 @@ mod tests;
 
 pub struct ThirBuildCtx {
     /// Defines the type context from the build context.
-    tcx: TypeDatabaseContext,
+    tdb: TypeDatabaseContext,
 
     /// Defines the HIR map which contains the input expressions.
     hir: lume_hir::map::Map,
@@ -35,7 +35,7 @@ impl ThirBuildCtx {
     /// Creates a new empty THIR build context.
     pub fn new(hir: lume_hir::map::Map, dcx: DiagCtxHandle) -> ThirBuildCtx {
         ThirBuildCtx {
-            tcx: TypeDatabaseContext::default(),
+            tdb: TypeDatabaseContext::default(),
             hir,
             dcx,
             ancestry: BTreeMap::new(),
@@ -53,13 +53,13 @@ impl ThirBuildCtx {
     }
 
     /// Retrieves the type context from the build context.
-    pub fn tcx(&self) -> &TypeDatabaseContext {
-        &self.tcx
+    pub fn tdb(&self) -> &TypeDatabaseContext {
+        &self.tdb
     }
 
     /// Retrieves the type context from the build context.
-    pub fn tcx_mut(&mut self) -> &mut TypeDatabaseContext {
-        &mut self.tcx
+    pub fn tdb_mut(&mut self) -> &mut TypeDatabaseContext {
+        &mut self.tdb
     }
 
     /// Retrieves the diagnostics handler from the build context.

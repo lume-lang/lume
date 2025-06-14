@@ -9,7 +9,7 @@ pub(super) fn define_impl(ctx: &mut ThirBuildCtx) {
     for (_, item) in &mut hir.items {
         if let lume_hir::Item::Impl(implementation) = item {
             let target = implementation.target.name.clone();
-            let impl_id = ctx.tcx_mut().impl_alloc(target);
+            let impl_id = ctx.tdb_mut().impl_alloc(target);
 
             implementation.impl_id = Some(impl_id);
         }

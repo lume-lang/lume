@@ -33,7 +33,7 @@ impl DefinePropertyTypes<'_> {
                     .ctx
                     .mk_type_ref_generic(&property.property_type, &struct_def.type_parameters)?;
 
-                self.ctx.tcx_mut().property_mut(property_id).unwrap().property_type = type_ref;
+                self.ctx.tdb_mut().property_mut(property_id).unwrap().property_type = type_ref;
             }
         }
 

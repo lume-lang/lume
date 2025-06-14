@@ -43,14 +43,14 @@ impl DefineMethodBodies<'_> {
                         )?;
 
                         self.ctx
-                            .tcx_mut()
+                            .tdb_mut()
                             .method_mut(method_id)
                             .unwrap()
                             .parameters
                             .push(name, type_ref, param.vararg);
                     }
 
-                    self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
+                    self.ctx.tdb_mut().method_mut(method_id).unwrap().return_type =
                         if let Some(ret) = &method.return_type {
                             self.ctx.mk_type_ref_generic(
                                 ret,
@@ -73,14 +73,14 @@ impl DefineMethodBodies<'_> {
                         )?;
 
                         self.ctx
-                            .tcx_mut()
+                            .tdb_mut()
                             .method_mut(method_id)
                             .unwrap()
                             .parameters
                             .push(name, type_ref, param.vararg);
                     }
 
-                    self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type =
+                    self.ctx.tdb_mut().method_mut(method_id).unwrap().return_type =
                         if let Some(ret) = &method.return_type {
                             self.ctx.mk_type_ref_generic(
                                 ret,
@@ -105,14 +105,14 @@ impl DefineMethodBodies<'_> {
             let type_ref = self.ctx.mk_type_ref_generic(&param.param_type, &func.type_parameters)?;
 
             self.ctx
-                .tcx_mut()
+                .tdb_mut()
                 .function_mut(func_id)
                 .unwrap()
                 .parameters
                 .push(name, type_ref, param.vararg);
         }
 
-        self.ctx.tcx_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
+        self.ctx.tdb_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
             self.ctx.mk_type_ref_generic(ret, &func.type_parameters)?
         } else {
             TypeRef::void()
@@ -133,14 +133,14 @@ impl DefineMethodBodies<'_> {
                 )?;
 
                 self.ctx
-                    .tcx_mut()
+                    .tdb_mut()
                     .method_mut(method_id)
                     .unwrap()
                     .parameters
                     .push(name, type_ref, param.vararg);
             }
 
-            self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
+            self.ctx.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
                 self.ctx.mk_type_ref_generic(ret, &method.type_parameters)?
             } else {
                 TypeRef::void()
@@ -161,14 +161,14 @@ impl DefineMethodBodies<'_> {
                     .mk_type_ref_generic(&param.param_type, &implementation.type_parameters)?;
 
                 self.ctx
-                    .tcx_mut()
+                    .tdb_mut()
                     .method_mut(method_id)
                     .unwrap()
                     .parameters
                     .push(name, type_ref, param.vararg);
             }
 
-            self.ctx.tcx_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
+            self.ctx.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
                 self.ctx.mk_type_ref_generic(ret, &method.type_parameters)?
             } else {
                 TypeRef::void()

@@ -47,7 +47,7 @@ impl DefineTraitMethods<'_> {
 
             let method_id = self
                 .ctx
-                .tcx_mut()
+                .tdb_mut()
                 .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);
@@ -68,7 +68,7 @@ impl DefineTraitMethods<'_> {
 
             let method_id = self
                 .ctx
-                .tcx_mut()
+                .tdb_mut()
                 .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);

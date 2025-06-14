@@ -9,7 +9,7 @@ pub(super) fn define_trait_impl(ctx: &mut ThirBuildCtx) -> Result<()> {
 
     for (_, symbol) in &mut hir.items {
         if let lume_hir::Item::Use(trait_impl) = symbol {
-            trait_impl.use_id = Some(ctx.tcx_mut().use_alloc());
+            trait_impl.use_id = Some(ctx.tdb_mut().use_alloc());
         }
     }
 

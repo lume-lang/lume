@@ -179,7 +179,7 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
 fn query_methods_on_type_empty() -> Result<()> {
     let tcx = type_infer("struct A {} impl A {}")?;
 
-    let ty = tcx.tcx.find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb.find_type(&SymbolName::rooted("A")).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 0);
@@ -191,7 +191,7 @@ fn query_methods_on_type_empty() -> Result<()> {
 fn query_methods_on_type_single() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } }")?;
 
-    let ty = tcx.tcx.find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb.find_type(&SymbolName::rooted("A")).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 1);
@@ -209,7 +209,7 @@ fn query_methods_on_type_single() -> Result<()> {
 fn query_methods_on_type_single_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } pub fn bar() { } }")?;
 
-    let ty = tcx.tcx.find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb.find_type(&SymbolName::rooted("A")).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
@@ -229,7 +229,7 @@ fn query_methods_on_type_single_impl() -> Result<()> {
 fn query_methods_on_type_multiple_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } } impl A { pub fn bar() { } }")?;
 
-    let ty = tcx.tcx.find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb.find_type(&SymbolName::rooted("A")).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
@@ -256,7 +256,7 @@ fn query_check_method_empty() -> Result<()> {
     )?;
 
     let method = tcx
-        .tcx
+        .tdb
         .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
         .unwrap();
 
@@ -286,7 +286,7 @@ fn query_check_method_arg_count() -> Result<()> {
     )?;
 
     let method = tcx
-        .tcx
+        .tdb
         .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
         .unwrap();
 
@@ -318,7 +318,7 @@ fn query_check_method_arg_type() -> Result<()> {
     )?;
 
     let method = tcx
-        .tcx
+        .tdb
         .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
         .unwrap();
 
@@ -350,7 +350,7 @@ fn query_check_method_type_arg_count() -> Result<()> {
     )?;
 
     let method = tcx
-        .tcx
+        .tdb
         .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
         .unwrap();
 
@@ -382,7 +382,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
     )?;
 
     let method = tcx
-        .tcx
+        .tdb
         .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
         .unwrap();
 
