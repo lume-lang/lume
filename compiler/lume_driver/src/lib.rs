@@ -1,24 +1,15 @@
 use std::path::PathBuf;
 
-use arc::Package;
+use arc::locate_package;
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
+use lume_session::{GlobalCtx, Options, Package, Session};
 use lume_span::SourceMap;
 use lume_typech::ThirBuildCtx;
-
-#[derive(Default)]
-pub struct Options {
-    /// Defines whether the [`ThirBuildCtx`] should be printed to `stdio`, after
-    /// it's been inferred and type checked.
-    pub print_type_context: bool,
-}
 
 pub struct Driver {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
-
-    /// Defines the compilations options to use.
-    pub options: Options,
 
     /// Defines the diagnostics context for reporting errors during compilation.
     dcx: DiagCtxHandle,
@@ -34,18 +25,16 @@ impl Driver {
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
     pub fn from_root(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Self> {
-        let package = dcx.with(|handle| Package::locate(root, handle))?;
+        let mut package = dcx.with(|handle| locate_package(root, handle))?;
+
+        package.add_package_sources_recursive()?;
 
         Ok(Driver::from_package(package, dcx))
     }
 
     /// Creates a new compilation driver from the given [`Package`].
     pub fn from_package(package: Package, dcx: DiagCtxHandle) -> Self {
-        Driver {
-            package,
-            options: Options::default(),
-            dcx,
-        }
+        Driver { package, dcx }
     }
 
     /// Locates the [`Project`] from the given path and builds it into an executable or library.
@@ -57,11 +46,12 @@ impl Driver {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    pub fn build_project(root: &PathBuf, dcx: DiagCtxHandle) -> Result<()> {
-        let mut driver = Self::from_root(root, dcx)?;
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn build_project(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<()> {
+        let driver = Self::from_root(root, dcx.clone())?;
 
-        if let Err(err) = driver.build() {
-            driver.dcx.emit(err);
+        if let Err(err) = driver.build(opts) {
+            dcx.emit(err);
         }
 
         Ok(())
@@ -72,66 +62,46 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if:
-    /// - an error occured while compiling the project,
-    /// - an error occured while linking the project
+    /// - an error occured while compiling the package,
+    /// - an error occured while linking the package
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
-    pub fn build(&mut self) -> Result<()> {
-        let mut package = Package::default();
-        let mut dependencies = self.package.dependencies.graph.all();
+    #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
+    pub fn build(mut self, options: Options) -> Result<()> {
+        let session = Session {
+            dep_graph: std::mem::take(&mut self.package.dependencies.graph),
+            options,
+        };
+
+        let gcx = GlobalCtx::new(session, self.dcx);
+        let mut dependencies = gcx.session.dep_graph.all();
 
         // Build all the dependencies of the package in reverse, so all the
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
         for dependency in dependencies {
-            dependency.clone_into(&mut package);
-            self.build_package(&mut package)?;
+            Compiler::build_package(dependency, &gcx)?;
         }
 
-        self.package.clone_into(&mut package);
-        self.build_package(&mut package)?;
+        Compiler::build_package(&self.package, &gcx)?;
 
         Ok(())
-    }
-
-    /// Builds the given [`Package`] into an executable or library.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if:
-    /// - an error occured while compiling the project,
-    /// - an error occured while linking the project
-    /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(project = %self.package.path.display()), err)]
-    pub fn build_package(&self, package: &mut Package) -> Result<()> {
-        if !package.dependencies.no_std {
-            package.add_std_sources();
-        }
-
-        package.add_project_sources()?;
-
-        self.dcx
-            .with(|dcx| Compiler::build_package(package, &self.options, dcx))
     }
 }
 
 #[allow(unused)]
-pub struct Compiler<'a> {
+pub struct Compiler<'a, 'gcx> {
     /// Defines the specific [`Package`] instance to compile.
     package: &'a Package,
 
-    /// Defines the compilations options to use.
-    options: &'a Options,
-
-    /// Defines the diagnostics handler context.
-    dcx: DiagCtxHandle,
+    /// Defines the global compilation context.
+    gcx: &'a GlobalCtx<'gcx>,
 
     /// Defines the global source map for all source files.
     source_map: SourceMap,
 }
 
-impl<'a> Compiler<'a> {
+impl<'a, 'gcx> Compiler<'a, 'gcx> {
     /// Builds the [`Package`] with the given ID from the [`Project`] into an executable or library.
     ///
     /// # Errors
@@ -141,11 +111,10 @@ impl<'a> Compiler<'a> {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, options: &'a Options, dcx: DiagCtxHandle) -> Result<()> {
+    pub fn build_package(package: &'a Package, gcx: &'a GlobalCtx<'gcx>) -> Result<()> {
         let mut compiler = Self {
             package,
-            options,
-            dcx,
+            gcx,
             source_map: SourceMap::default(),
         };
 
@@ -159,17 +128,24 @@ impl<'a> Compiler<'a> {
         Ok(())
     }
 
+    /// Returns the diagnostics context.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn dcx(&self) -> DiagCtxHandle {
+        self.gcx.dcx.clone()
+    }
+
     /// Parses all the source files within the current [`Package`] into HIR.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
-        self.dcx
+        self.gcx
+            .dcx
             .with(|dcx| lume_hir_lower::LowerState::lower(self.package, &mut self.source_map, dcx))
     }
 
     /// Type checks all the given source files.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let mut thir_ctx = self.dcx.with_res(|dcx| lume_typech::ThirBuildCtx::new(hir, dcx))?;
+        let mut thir_ctx = self.gcx.dcx.with_res(|dcx| lume_typech::ThirBuildCtx::new(hir, dcx))?;
 
         // Defines the types of all nodes within the HIR maps.
         thir_ctx.define_types()?;
@@ -183,7 +159,7 @@ impl<'a> Compiler<'a> {
     /// Analyzes all the modules within the given state object.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn analyze(&mut self, thir: &ThirBuildCtx) -> Result<()> {
-        if self.options.print_type_context {
+        if self.gcx.session.options.print_type_context {
             println!("{:#?}", thir.tdb());
         }
 

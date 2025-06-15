@@ -13,6 +13,7 @@ test = false
 arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver" }
 lume_errors = { path = "../lume_errors" }
+lume_session = { path = "../lume_session" }
 
 clap = "=4.5.39"
 env_logger = { version = "=0.11.8" }

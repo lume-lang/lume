@@ -79,6 +79,7 @@ dependencies = [
  "indexmap",
  "insta",
  "lume_errors",
+ "lume_session",
  "lume_span",
  "petgraph",
  "rust-embed",
@@ -721,6 +722,7 @@ dependencies = [
  "error_snippet_derive",
  "lume_driver",
  "lume_errors",
+ "lume_session",
  "tracing",
  "tracing-subscriber",
 ]
@@ -735,6 +737,7 @@ dependencies = [
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
+ "lume_session",
  "lume_span",
  "lume_typech",
  "tracing",
@@ -785,6 +788,7 @@ dependencies = [
  "lume_errors",
  "lume_hir",
  "lume_parser",
+ "lume_session",
  "lume_span",
  "tracing",
 ]
@@ -843,6 +847,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_session"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "glob",
+ "indexmap",
+ "lume_errors",
+ "lume_span",
+ "petgraph",
+ "rust-embed",
+ "semver",
+ "tracing",
+]
+
+[[package]]
 name = "lume_span"
 version = "0.1.0"
 dependencies = [
@@ -869,6 +889,7 @@ dependencies = [
  "lume_hir_lower",
  "lume_parser",
  "lume_query",
+ "lume_session",
  "lume_span",
  "lume_types",
  "tracing",
@@ -1097,9 +1118,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "rust-embed"
-version = "8.7.2"
+version = "8.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "025908b8682a26ba8d12f6f2d66b987584a4a87bc024abc5bbc12553a8cd178a"
+checksum = "e5fbc0ee50fcb99af7cebb442e5df7b5b45e9460ffa3f8f549cd26b862bec49d"
 dependencies = [
  "rust-embed-impl",
  "rust-embed-utils",

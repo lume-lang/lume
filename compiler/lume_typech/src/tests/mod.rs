@@ -4,12 +4,12 @@ mod query;
 
 use std::sync::Arc;
 
-use arc::Package;
 use error_snippet::Result;
 use lume_errors::{DiagCtx, DiagOutputFormat};
 use lume_errors_test::assert_dcx_snapshot;
 use lume_hir::map::Map;
 use lume_hir_lower::LowerState;
+use lume_session::Package;
 use lume_span::{SourceFile, SourceMap};
 
 use crate::ThirBuildCtx;

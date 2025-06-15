@@ -1,31 +1,20 @@
-pub(crate) mod fetch;
-pub mod graph;
-
 use std::path::Path;
 use std::path::PathBuf;
 
 use error_snippet::Result;
-use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
-use lume_span::PackageId;
+use lume_session::DependencyGraph;
+use lume_session::dep_graph::DependencyMap;
+use lume_session::dep_graph::ManifestMap;
 use semver::VersionReq;
 
-use crate::deps::fetch::DependencyFetcher;
-use crate::deps::fetch::FileDependencyFetcher;
-use crate::deps::fetch::GitDependencyFetcher;
-use crate::deps::graph::DependencyGraph;
+use crate::fetch::DependencyFetcher;
+use crate::fetch::FileDependencyFetcher;
+use crate::fetch::GitDependencyFetcher;
 use crate::{Package, PackageParser};
 
-const FILE_SCHEME: &str = "file";
-const GIT_SCHEME: &str = "git";
-
-/// Defines a mapping between [`PackageId`]s and their corresponding
-/// [`Package`] instances.
-pub type ManifestMap = IndexMap<PackageId, Package>;
-
-/// Defines a mapping between [`Package`] instances and all of their
-/// direct dependencies, indexed by [`PackageId`]s.
-pub type DependencyMap = IndexMap<PackageId, Vec<(PackageId, VersionReq)>>;
+pub(crate) const FILE_SCHEME: &str = "file";
+pub(crate) const GIT_SCHEME: &str = "git";
 
 #[derive(Clone, Debug)]
 pub enum DependencyPath {
@@ -49,17 +38,6 @@ impl DependencyPath {
             Self::Path(_) => FILE_SCHEME,
         }
     }
-}
-
-#[derive(Default, Debug, Clone)]
-pub struct Dependencies {
-    /// Defines whether the parent [`Package`] should compile without linking
-    /// the standard library. Defaults to [`false`].
-    pub no_std: bool,
-
-    /// Defines the graph of all dependencies from the current [`Package`] instance
-    /// and descending down to all sub-dependencies, as well.
-    pub graph: DependencyGraph,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -133,7 +111,7 @@ impl<'pkg> DependencyResolver<'pkg> {
         let manifest = self.dcx.with(|handle| PackageParser::locate(root, handle))?;
         let dependencies = manifest.dependencies.clone();
 
-        let package = Package::from_manifest(manifest);
+        let package: Package = manifest.into();
 
         // If the manifest already exists within the set, we've already
         // visited it and we can hop out.

@@ -1,11 +1,19 @@
 use error_snippet::Result;
+use indexmap::IndexMap;
 use lume_errors::DiagCtxHandle;
 use lume_span::PackageId;
 use petgraph::prelude::DiGraphMap;
 use semver::VersionReq;
 
 use crate::Package;
-use crate::deps::{DependencyMap, ManifestMap};
+
+/// Defines a mapping between [`PackageId`]s and their corresponding
+/// [`Package`] instances.
+pub type ManifestMap = IndexMap<PackageId, Package>;
+
+/// Defines a mapping between [`Package`] instances and all of their
+/// direct dependencies, indexed by [`PackageId`]s.
+pub type DependencyMap = IndexMap<PackageId, Vec<(PackageId, VersionReq)>>;
 
 #[derive(Default, Debug, Clone)]
 pub struct DependencyGraph {
@@ -102,13 +110,11 @@ impl DependencyGraph {
             return;
         };
 
-        if !required_version.matches(dependency.version.value()) {
+        if !required_version.matches(&dependency.version) {
             dcx.emit(
                 error_snippet::SimpleDiagnostic::new(format!(
                     "`{}` {required_version} required by `{}` could not be found (found {})",
-                    dependency.name,
-                    dependent.name,
-                    dependency.version.value(),
+                    dependency.name, dependent.name, dependency.version,
                 ))
                 .into(),
             );
@@ -118,6 +124,11 @@ impl DependencyGraph {
     /// Gets the [`Package`] instances from the graph.
     pub fn all(&self) -> Vec<&Package> {
         self.map.values().collect::<Vec<_>>()
+    }
+
+    /// Gets the [`Package`] instances from the graph.
+    pub fn all_mut(&mut self) -> Vec<&mut Package> {
+        self.map.values_mut().collect::<Vec<_>>()
     }
 
     /// Gets the [`Package`] instance with the given ID, if any.

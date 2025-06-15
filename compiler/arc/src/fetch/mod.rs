@@ -1,12 +1,15 @@
+pub mod file;
+pub mod git;
+
 use std::path::PathBuf;
 
-use error_snippet::IntoDiagnostic;
 use error_snippet::Result;
-use error_snippet::SimpleDiagnostic;
 use semver::VersionReq;
 
 use crate::deps::DependencyPath;
-use crate::deps::FILE_SCHEME;
+
+pub use file::*;
+pub use git::*;
 
 /// Defines the name of the environment variable, which defines where
 /// Arc should place local clones and/or caches of remote dependencies.
@@ -100,81 +103,4 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
     fn fetch(&self, path: DependencyPath, version: &VersionReq) -> Result<PathBuf>;
-}
-
-/// Defines a [`DependencyFetcher`] which handles dependencies
-/// defined on the current filesystem.
-pub struct FileDependencyFetcher;
-
-impl DependencyFetcher for FileDependencyFetcher {
-    fn fetch(&self, path: DependencyPath, _: &VersionReq) -> Result<PathBuf> {
-        let path = match path {
-            DependencyPath::Path(p) => p,
-            DependencyPath::Url(url) if url.scheme() == FILE_SCHEME => PathBuf::from(url.path()),
-
-            DependencyPath::Url(url) => {
-                return Err(SimpleDiagnostic::new(format!(
-                    "unsupported path scheme: only local paths are supported, found {}",
-                    url.scheme()
-                ))
-                .into());
-            }
-        };
-
-        Ok(path)
-    }
-}
-
-/// Defines a [`DependencyFetcher`] which handles dependencies which live
-/// inside of a Git repository, either local or remote.
-pub struct GitDependencyFetcher;
-
-impl DependencyFetcher for GitDependencyFetcher {
-    fn fetch(&self, path: DependencyPath, _: &VersionReq) -> Result<PathBuf> {
-        let DependencyPath::Url(url) = path else {
-            return Err(SimpleDiagnostic::new(format!(
-                "unsupported path scheme: only Git URLs are supported, found {}",
-                path.protocol()
-            ))
-            .into());
-        };
-
-        let repository_path = PathBuf::from(url.path());
-        let repository_name = match repository_path.components().next_back() {
-            Some(seg) => seg.as_os_str().to_string_lossy().to_string(),
-            None => {
-                return Err(SimpleDiagnostic::new(format!(
-                    "failed to clone repository: could not find repository name from `{}`",
-                    url.path()
-                ))
-                .into());
-            }
-        };
-
-        let local_directory = LOCAL_CACHE_DIR.join(repository_name);
-
-        if !local_directory.exists() {
-            if let Err(err) = std::fs::create_dir_all(&local_directory) {
-                return Err(SimpleDiagnostic::new(
-                    "failed to clone repository: could not create local directory for clone",
-                )
-                .add_cause(err.into_diagnostic())
-                .into());
-            }
-        }
-
-        let mut fetch_opts = git2::FetchOptions::new();
-        fetch_opts.depth(1);
-
-        let mut clone_builder = git2::build::RepoBuilder::new();
-        clone_builder.fetch_options(fetch_opts);
-
-        if let Err(err) = clone_builder.clone(url.as_str(), local_directory.as_path()) {
-            return Err(SimpleDiagnostic::new("failed to clone repository")
-                .add_cause(err.into_diagnostic())
-                .into());
-        }
-
-        Ok(local_directory)
-    }
 }

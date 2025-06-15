@@ -10,6 +10,7 @@ lume_ast = { path = "../lume_ast" }
 lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
 lume_parser = { path = "../lume_parser" }
+lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 
 error_snippet = { workspace = true }

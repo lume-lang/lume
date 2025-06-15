@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use arc::Package;
 use error_snippet::Result;
 use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
 use lume_hir::{Identifier, PathRoot, SymbolName, map::Map};
 use lume_hir::{Path, PathSegment, symbols::*};
 use lume_parser::Parser;
+use lume_session::Package;
 use lume_span::{ExpressionId, ItemId, Location, SourceFile, SourceMap, StatementId, hash_id};
 
 mod errors;

@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 lume_errors = { path = "../lume_errors" }
+lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 
 error_snippet = { workspace = true }

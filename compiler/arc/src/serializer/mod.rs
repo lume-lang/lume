@@ -8,6 +8,7 @@ use crate::parser::{Block, Parser, Spanned, Value};
 
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
+use lume_session::{Dependencies, Package};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
@@ -51,6 +52,28 @@ impl std::hash::Hash for Manifest {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
         self.version.value().hash(state);
+    }
+}
+
+impl From<Manifest> for Package {
+    fn from(manifest: Manifest) -> Self {
+        let id = PackageId::from_name(&manifest.name);
+
+        Self {
+            id,
+            path: manifest.path,
+            name: manifest.name,
+            lume_version: manifest.lume_version.into_value(),
+            version: manifest.version.into_value(),
+            description: manifest.description,
+            license: manifest.license,
+            repository: manifest.repository,
+            files: Vec::new(),
+            dependencies: Dependencies {
+                no_std: manifest.dependencies.no_std,
+                ..Dependencies::default()
+            },
+        }
     }
 }
 

@@ -3,6 +3,7 @@ use crate::commands::project_or_cwd;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use lume_driver::Driver;
 use lume_errors::DiagCtxHandle;
+use lume_session::Options;
 
 pub(crate) fn command() -> Command {
     Command::new("run")
@@ -32,7 +33,11 @@ pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
         }
     };
 
-    let mut driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
+    let options = Options {
+        print_type_context: args.get_flag("print-type-ctx"),
+    };
+
+    let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
         Ok(driver) => driver,
         Err(err) => {
             dcx.emit(err);
@@ -40,9 +45,7 @@ pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
         }
     };
 
-    driver.options.print_type_context = args.get_flag("print-type-ctx");
-
-    if let Err(err) = driver.build() {
+    if let Err(err) = driver.build(options) {
         dcx.emit(err);
     }
 }
