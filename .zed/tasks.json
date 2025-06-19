@@ -1,0 +1,39 @@
+// Project tasks configuration. See https://zed.dev/docs/tasks for documentation.
+[
+  {
+    "label": "Build Lume (debug)",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--profile",
+      "dev"
+    ],
+    "use_new_terminal": false,
+    "reveal_target": "dock",
+    "hide": "on_success",
+    "shell": "system"
+  },
+  {
+    "label": "Build Lume (release)",
+    "command": "cargo",
+    "args": [
+      "build",
+      "--profile",
+      "release"
+    ],
+    "use_new_terminal": false,
+    "reveal_target": "dock",
+    "hide": "on_success",
+    "shell": "system"
+  },
+  {
+    "label": "Execute (samples/project)",
+    "command": "cargo",
+    "args": [
+      "run",
+      "--",
+      "run ./samples/project"
+    ],
+    "hide": "never"
+  }
+]

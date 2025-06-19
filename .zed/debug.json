@@ -1,0 +1,25 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Debug sample project (CodeLLDB)",
+    "build": {
+      "command": "cargo",
+      "args": [
+        "build",
+        "--profile",
+        "dev"
+      ]
+    },
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/target/debug/lume",
+    "args": [
+      "run",
+      "./samples/project"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT"
+  }
+]
