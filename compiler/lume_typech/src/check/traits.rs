@@ -1,30 +1,22 @@
 use error_snippet::Result;
 
-use crate::ThirBuildCtx;
-use crate::check::TypeCheckerPass;
+use crate::TyCheckCtx;
 
-/// Type checker pass to check whether implementations
-/// if any given trait is valid against the trait definition.
-pub(super) struct TraitChecking<'a> {
-    tcx: &'a ThirBuildCtx,
-}
-
-impl TypeCheckerPass for TraitChecking<'_> {
-    #[tracing::instrument(level = "DEBUG", name = "TraitChecking::run", skip_all, err)]
-    fn run(tcx: &mut ThirBuildCtx) -> Result<()> {
-        for (_, symbol) in &tcx.hir.items {
-            if let Err(err) = (TraitChecking { tcx }.visit(symbol)) {
-                tcx.dcx.emit(err);
+impl TyCheckCtx {
+    /// Type checker pass to check whether implementations
+    /// if any given trait is valid against the trait definition.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub(crate) fn typech_traits(&mut self) -> Result<()> {
+        for (_, item) in &self.hir().items {
+            if let Err(err) = self.typech_item(item) {
+                self.dcx().emit(err);
             }
         }
 
-        tcx.dcx().drain()
+        self.dcx().drain()
     }
-}
 
-#[allow(clippy::unused_self)]
-impl TraitChecking<'_> {
-    fn visit(&self, symbol: &lume_hir::Item) -> Result<()> {
+    fn typech_item(&self, symbol: &lume_hir::Item) -> Result<()> {
         if let lume_hir::Item::Use(trait_impl) = symbol {
             self.check_trait_impl(trait_impl)?;
         }
@@ -34,8 +26,8 @@ impl TraitChecking<'_> {
 
     fn check_trait_impl(&self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.use_id.unwrap();
-        let trait_type = self.tcx.trait_def_of(use_id)?;
-        let lume_hir::TypeDefinition::Trait(trait_def) = self.tcx.hir_expect_type(trait_type.id) else {
+        let trait_type = self.trait_def_of(use_id)?;
+        let lume_hir::TypeDefinition::Trait(trait_def) = self.hir_expect_type(trait_type.id) else {
             panic!("bug!: expected HIR ID to reference trait item");
         };
 
@@ -76,6 +68,7 @@ impl TraitChecking<'_> {
         Ok(())
     }
 
+    #[allow(clippy::unused_self)]
     fn check_trait_method<'a>(
         &self,
         method_def: &'a lume_hir::TraitMethodDefinition,

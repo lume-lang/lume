@@ -1,7 +1,9 @@
-use std::fmt::Write;
+use std::{fmt::Write, sync::Arc};
 
 use error_snippet::Result;
 use indexmap::IndexMap;
+use lume_errors::DiagCtx;
+use lume_session::GlobalCtx;
 
 use crate::errors::*;
 use lume_hir::{
@@ -912,5 +914,46 @@ impl TypeDatabaseContext {
         id.type_params_mut(self)?.push(type_id);
 
         Ok(())
+    }
+}
+
+/// Central data structure for performing analysis and checking on types within a compilation
+/// job. This structure contains references to all types defined within a source package,
+/// as well as all resulting types from expressions, statements, etc.
+pub struct TyCtx {
+    /// Defines the global context
+    gcx: Arc<GlobalCtx>,
+
+    /// Defines the database with all defined types
+    db: TypeDatabaseContext,
+}
+
+impl TyCtx {
+    /// Creates a new instance of [`TyCtx`] with the given global context.
+    pub fn new(gcx: Arc<GlobalCtx>) -> Self {
+        Self {
+            gcx,
+            db: TypeDatabaseContext::default(),
+        }
+    }
+
+    /// Gets the inner global context.
+    pub fn gcx(&self) -> &GlobalCtx {
+        &self.gcx
+    }
+
+    /// Gets the diagnostics context.
+    pub fn dcx(&self) -> DiagCtx {
+        self.gcx.dcx.clone()
+    }
+
+    /// Gets the inner type database context.
+    pub fn db(&self) -> &TypeDatabaseContext {
+        &self.db
+    }
+
+    /// Gets the inner type database context.
+    pub fn db_mut(&mut self) -> &mut TypeDatabaseContext {
+        &mut self.db
     }
 }

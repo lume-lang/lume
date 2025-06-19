@@ -13,3 +13,5 @@ description: "fn foo() -> Int32 {\n        if false {\n            return true;\
    │             ^^^^^ ...because of type defined here
  2 │         if false {
    ╰──
+   help: expected type Int32
+            found type Boolean

@@ -63,17 +63,13 @@ description: "for pattern in [1, 2, 3] { }"
                                 ),
                                 name: Named(
                                     Identifier {
-                                        name: "with_capacity",
+                                        name: "new",
                                         location: <internal>:0:0,
                                     },
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [
-                                Implicit {
-                                    location: <internal>:0:0,
-                                },
-                            ],
+                            type_arguments: [],
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
@@ -84,7 +80,45 @@ description: "for pattern in [1, 2, 3] { }"
                                             2,
                                         ),
                                     },
-                                    location: <internal>:0:0,
+                                    location: <internal>:16:17,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
+                                            location: <internal>:16:17,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            2,
+                                                        ),
+                                                    },
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                    location: <internal>:19:20,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -95,7 +129,45 @@ description: "for pattern in [1, 2, 3] { }"
                                                     3,
                                                 ),
                                             },
-                                            location: <internal>:0:0,
+                                            location: <internal>:19:20,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            3,
+                                                        ),
+                                                    },
+                                                    value: 2,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            4,
+                                        ),
+                                    },
+                                    location: <internal>:22:23,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    4,
+                                                ),
+                                            },
+                                            location: <internal>:22:23,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -107,7 +179,7 @@ description: "for pattern in [1, 2, 3] { }"
                                                         ),
                                                     },
                                                     value: 3,
-                                                    kind: U64,
+                                                    kind: I32,
                                                 },
                                             ),
                                         },

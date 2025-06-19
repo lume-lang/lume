@@ -24,7 +24,7 @@ mod ty;
 mod tests;
 
 const ARRAY_STD_TYPE: &str = "Array";
-const ARRAY_WITH_CAPACITY_FUNC: &str = "with_capacity";
+const ARRAY_NEW_FUNC: &str = "new";
 
 const RANGE_STD_TYPE: &str = "Range";
 const RANGE_INCLUSIVE_STD_TYPE: &str = "RangeInclusive";

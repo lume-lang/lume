@@ -9,7 +9,7 @@ use lume_types::NamedTypeRef;
 #[diagnostic(
     message = "mismatched types",
     code = "LM4001",
-    help = "expected type {expected}\nfound type {found}"
+    help = "expected type {expected}\n   found type {found}"
 )]
 pub struct MismatchedTypes {
     #[label(source, "expected type {expected}, but found type {found}...")]
@@ -115,4 +115,30 @@ pub struct TraitMethodSignatureMismatch {
 
     pub expected: SignatureOwned,
     pub found: SignatureOwned,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "binary operation on non-matching types", code = "LM4372")]
+pub(crate) struct NonMatchingBinaryOp {
+    #[label(source, "cannot perform binary operation between non-matching types")]
+    pub source: lume_span::Location,
+
+    #[label(source, "found type {lhs_ty} on left-hand side...")]
+    pub lhs: lume_span::Location,
+
+    #[label(source, "...and found type {rhs_ty} on right-hand side")]
+    pub rhs: lume_span::Location,
+
+    pub lhs_ty: String,
+    pub rhs_ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "boolean operation on non-boolean type", code = "LM4373")]
+pub(crate) struct BooleanOperationOnNonBoolean {
+    #[label(source, "expected boolean operation on {expected}, found {found}")]
+    pub source: lume_span::Location,
+
+    pub expected: String,
+    pub found: String,
 }

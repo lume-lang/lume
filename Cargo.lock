@@ -75,14 +75,10 @@ dependencies = [
  "error_snippet_derive",
  "fxhash",
  "git2",
- "glob",
- "indexmap",
  "insta",
  "lume_errors",
  "lume_session",
  "lume_span",
- "petgraph",
- "rust-embed",
  "semver",
  "tracing",
  "url",
@@ -737,9 +733,11 @@ dependencies = [
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
+ "lume_infer",
  "lume_session",
  "lume_span",
  "lume_typech",
+ "lume_types",
  "tracing",
 ]
 
@@ -790,6 +788,29 @@ dependencies = [
  "lume_parser",
  "lume_session",
  "lume_span",
+ "tracing",
+]
+
+[[package]]
+name = "lume_infer"
+version = "0.1.0"
+dependencies = [
+ "arc",
+ "error_snippet",
+ "error_snippet_derive",
+ "indexmap",
+ "insta",
+ "levenshtein",
+ "log",
+ "lume_errors",
+ "lume_errors_test",
+ "lume_hir",
+ "lume_hir_lower",
+ "lume_parser",
+ "lume_query",
+ "lume_session",
+ "lume_span",
+ "lume_types",
  "tracing",
 ]
 
@@ -887,6 +908,7 @@ dependencies = [
  "lume_errors_test",
  "lume_hir",
  "lume_hir_lower",
+ "lume_infer",
  "lume_parser",
  "lume_query",
  "lume_session",
@@ -902,7 +924,9 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "indexmap",
+ "lume_errors",
  "lume_hir",
+ "lume_session",
  "lume_span",
 ]
 

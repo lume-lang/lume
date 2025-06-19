@@ -13,3 +13,5 @@ description: "fn foo() -> Int32 {\n        for x in [] {\n            return tru
    │             ^^^^^ ...because of type defined here
  2 │         for x in [] {
    ╰──
+   help: expected type Int32
+            found type Boolean

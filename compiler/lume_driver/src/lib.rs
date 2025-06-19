@@ -1,11 +1,13 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use arc::locate_package;
 use error_snippet::Result;
-use lume_errors::DiagCtxHandle;
+use lume_errors::{DiagCtx, DiagCtxHandle};
+use lume_infer::TyInferCtx;
 use lume_session::{GlobalCtx, Options, Package, Session};
 use lume_span::SourceMap;
-use lume_typech::ThirBuildCtx;
+use lume_typech::TyCheckCtx;
+use lume_types::TyCtx;
 
 pub struct Driver {
     /// Defines the structure of the Arcfile within the package.
@@ -72,7 +74,7 @@ impl Driver {
             options,
         };
 
-        let gcx = GlobalCtx::new(session, self.dcx);
+        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
         let mut dependencies = gcx.session.dep_graph.all();
 
         // Build all the dependencies of the package in reverse, so all the
@@ -80,28 +82,28 @@ impl Driver {
         dependencies.reverse();
 
         for dependency in dependencies {
-            Compiler::build_package(dependency, &gcx)?;
+            Compiler::build_package(dependency, gcx.clone())?;
         }
 
-        Compiler::build_package(&self.package, &gcx)?;
+        Compiler::build_package(&self.package, gcx)?;
 
         Ok(())
     }
 }
 
 #[allow(unused)]
-pub struct Compiler<'a, 'gcx> {
+pub struct Compiler<'a> {
     /// Defines the specific [`Package`] instance to compile.
     package: &'a Package,
 
     /// Defines the global compilation context.
-    gcx: &'a GlobalCtx<'gcx>,
+    gcx: Arc<GlobalCtx>,
 
     /// Defines the global source map for all source files.
     source_map: SourceMap,
 }
 
-impl<'a, 'gcx> Compiler<'a, 'gcx> {
+impl<'a> Compiler<'a> {
     /// Builds the [`Package`] with the given ID from the [`Project`] into an executable or library.
     ///
     /// # Errors
@@ -111,7 +113,7 @@ impl<'a, 'gcx> Compiler<'a, 'gcx> {
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, gcx: &'a GlobalCtx<'gcx>) -> Result<()> {
+    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<()> {
         let mut compiler = Self {
             package,
             gcx,
@@ -130,7 +132,7 @@ impl<'a, 'gcx> Compiler<'a, 'gcx> {
 
     /// Returns the diagnostics context.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn dcx(&self) -> DiagCtxHandle {
+    fn dcx(&self) -> DiagCtx {
         self.gcx.dcx.clone()
     }
 
@@ -144,21 +146,23 @@ impl<'a, 'gcx> Compiler<'a, 'gcx> {
 
     /// Type checks all the given source files.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<lume_typech::ThirBuildCtx> {
-        let mut thir_ctx = self.gcx.dcx.with_res(|dcx| lume_typech::ThirBuildCtx::new(hir, dcx))?;
+    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<TyCheckCtx> {
+        let tcx = TyCtx::new(self.gcx.clone());
 
         // Defines the types of all nodes within the HIR maps.
-        thir_ctx.define_types()?;
+        let mut ticx = TyInferCtx::new(tcx, hir);
+        ticx.infer()?;
 
         // Then, make sure they're all valid.
-        thir_ctx.typecheck()?;
+        let mut tccx = TyCheckCtx::new(ticx);
+        tccx.typecheck()?;
 
-        Ok(thir_ctx)
+        Ok(tccx)
     }
 
     /// Analyzes all the modules within the given state object.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn analyze(&mut self, thir: &ThirBuildCtx) -> Result<()> {
+    fn analyze(&mut self, thir: &TyCheckCtx) -> Result<()> {
         if self.gcx.session.options.print_type_context {
             println!("{:#?}", thir.tdb());
         }

@@ -3,7 +3,6 @@ pub mod errors;
 pub mod fetch;
 pub(crate) mod parser;
 pub(crate) mod serializer;
-pub mod stdlib;
 
 use crate::deps::DependencyResolver;
 pub use crate::fetch::{clean_local_cache_dir, local_cache_dir};

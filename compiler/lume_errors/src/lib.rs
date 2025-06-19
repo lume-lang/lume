@@ -149,6 +149,17 @@ impl DiagCtx {
         }
     }
 
+    /// Drains the currently reported errors in the context to the output buffer.
+    ///
+    /// # Errors
+    ///
+    /// If any reported diagnostics have a severity at or above [`error_snippet::Severity::Error`],
+    /// they will be counted towards a [`error_snippet::DrainError::CompoundError`], which will be
+    /// raised when draining has finished.
+    pub fn drain(&mut self) -> Result<()> {
+        self.handler().drain()
+    }
+
     /// Emits the given diagnostic to the context directly, without
     /// passing any handles or instances around.
     ///
@@ -249,6 +260,14 @@ impl DiagCtxHandle {
     /// similar to a shim. Mostly used for testing.
     pub fn shim() -> Self {
         DiagCtx::new(DiagOutputFormat::Stubbed).handle()
+    }
+
+    /// Creates a [`DiagCtx`] from the given handle, which serves the same
+    /// output as the handle itself.
+    pub fn to_context(self) -> DiagCtx {
+        DiagCtx {
+            inner: self.inner.clone(),
+        }
     }
 
     /// Retrives the instance of the parent [`DiagCtxInner`], which

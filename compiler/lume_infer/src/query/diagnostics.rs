@@ -1,16 +1,17 @@
-use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, PathSegment, SymbolName};
-use lume_span::Location;
+use std::{ops::Range, sync::Arc};
 
-use crate::query::CallableCheckError;
+use error_snippet_derive::Diagnostic;
+use lume_hir::{Identifier, PathSegment};
+use lume_span::{Location, SourceFile};
+use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no such method was found", code = "LM4113")]
-pub(crate) struct MissingMethod {
+pub struct MissingMethod {
     #[label(source, "could not find method {method_name} on type {type_name}")]
     pub source: Location,
 
-    pub type_name: SymbolName,
+    pub type_name: NamedTypeRef,
     pub method_name: Identifier,
 
     #[related]
@@ -21,22 +22,23 @@ pub(crate) struct MissingMethod {
 #[diagnostic(
     message = "similar method found",
     code = "LM4118",
-    severity = Help,
-    help = "incompatible because of {reason}")]
-pub(crate) struct SuggestedMethod {
+    severity = Help)]
+pub struct SuggestedMethod {
     #[label(source, "found similar method {method_name} on type {type_name}")]
     pub source: Location,
 
     pub method_name: PathSegment,
-    pub type_name: SymbolName,
-    pub reason: CallableCheckError,
+    pub type_name: NamedTypeRef,
 }
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no such function was found", code = "LM4113")]
 pub struct MissingFunction {
-    #[label(source, "could not find function {function_name}")]
-    pub source: Location,
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("could not find function {function_name}")]
+    pub range: Range<usize>,
 
     pub function_name: Identifier,
 
@@ -48,12 +50,23 @@ pub struct MissingFunction {
 #[diagnostic(
     message = "similar function found",
     code = "LM4118",
-    severity = Help,
-    help = "incompatible because of {reason}")]
-pub(crate) struct SuggestedFunction {
-    #[label(source, "found similar function {function_name}")]
-    pub source: Location,
+    severity = Help)]
+pub struct SuggestedFunction {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("found similar function {function_name}")]
+    pub range: Range<usize>,
 
     pub function_name: PathSegment,
-    pub reason: CallableCheckError,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find returning ancestor", code = "LM4216")]
+pub struct NoReturningAncestor {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected returning ancestor, found None")]
+    pub range: Range<usize>,
 }

@@ -3,40 +3,14 @@ source: compiler/lume_typech/src/tests/query.rs
 expression: err
 ---
 MissingFunction {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "",
-        package: PackageId(
-            0,
-        ),
-    },
-    range: 0..0,
+    source: <internal>:0:0,
     function_name: Identifier {
         name: "foo",
         location: <internal>:0:0,
     },
     suggestions: [
         SuggestedFunction {
-            source: SourceFile {
-                id: SourceFileId(
-                    PackageId(
-                        0,
-                    ),
-                    0,
-                ),
-                name: Internal,
-                content: "fn foo(x: Int32) { }",
-                package: PackageId(
-                    0,
-                ),
-            },
-            range: 3..6,
+            source: <internal>:3:6,
             function_name: Named(
                 Identifier {
                     name: "foo",

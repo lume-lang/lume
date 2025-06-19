@@ -1,86 +1,54 @@
 #![feature(map_try_insert)]
 
-use std::collections::BTreeMap;
+use std::ops::Deref;
 
-use crate::query::CallReference;
-use error_snippet::Result;
-use lume_errors::DiagCtxHandle;
-use lume_hir::{SymbolName, TypeParameter};
-use lume_span::{DefId, ExpressionId};
-use lume_types::{NamedTypeRef, TypeDatabaseContext, TypeRef};
+use lume_errors::DiagCtx;
+use lume_hir::SymbolName;
+use lume_infer::TyInferCtx;
+use lume_infer::query::CallReference;
+use lume_types::TypeDatabaseContext;
 
 mod check;
 mod errors;
-mod infer;
 pub(crate) mod query;
 #[cfg(test)]
 mod tests;
 
-pub struct ThirBuildCtx {
-    /// Defines the type context from the build context.
-    tdb: TypeDatabaseContext,
-
-    /// Defines the HIR map which contains the input expressions.
-    hir: lume_hir::map::Map,
-
-    /// Defines the diagnostics handler.
-    dcx: DiagCtxHandle,
-
-    /// Defines a mapping any single node and their parent node.
-    pub ancestry: BTreeMap<DefId, DefId>,
+/// Central data structure for checking compatibility between types within the source package.
+///
+/// Notibly, [`TyCheckCtx`] is not responsible for inference. While it may perform some inference
+/// during the type-checking stage, the inference is deferred to the inner [`TyInferCtx`] instance.
+pub struct TyCheckCtx {
+    infer: TyInferCtx,
 }
 
 #[allow(dead_code)]
-impl ThirBuildCtx {
-    /// Creates a new empty THIR build context.
-    pub fn new(hir: lume_hir::map::Map, dcx: DiagCtxHandle) -> ThirBuildCtx {
-        ThirBuildCtx {
-            tdb: TypeDatabaseContext::default(),
-            hir,
-            dcx,
-            ancestry: BTreeMap::new(),
-        }
+impl TyCheckCtx {
+    /// Creates a new empty type checker context.
+    pub fn new(infer: TyInferCtx) -> TyCheckCtx {
+        TyCheckCtx { infer }
     }
 
     /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
     pub fn hir(&self) -> &lume_hir::map::Map {
-        &self.hir
-    }
-
-    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
-    pub fn hir_mut(&mut self) -> &mut lume_hir::map::Map {
-        &mut self.hir
+        self.infer.hir()
     }
 
     /// Retrieves the type context from the build context.
     pub fn tdb(&self) -> &TypeDatabaseContext {
-        &self.tdb
+        self.infer.tdb()
     }
 
-    /// Retrieves the type context from the build context.
-    pub fn tdb_mut(&mut self) -> &mut TypeDatabaseContext {
-        &mut self.tdb
+    /// Retrieves the diagnostics handler from the parent context.
+    pub fn dcx(&self) -> DiagCtx {
+        self.infer.dcx()
     }
+}
 
-    /// Retrieves the diagnostics handler from the build context.
-    pub fn dcx(&mut self) -> &mut DiagCtxHandle {
-        &mut self.dcx
-    }
+impl Deref for TyCheckCtx {
+    type Target = TyInferCtx;
 
-    /// Creates a new [`NamedTypeRef`] from the given [`TypeRef`].
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if any types referenced by the given [`TypeRef`], or any child
-    /// instances, are missing from the type context.
-    pub fn new_named_type(&self, type_ref: &TypeRef) -> Result<NamedTypeRef> {
-        let name = self.type_ref_name(type_ref)?.as_str().to_string();
-        let type_arguments = type_ref
-            .type_arguments
-            .iter()
-            .map(|arg| self.new_named_type(arg))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(NamedTypeRef { name, type_arguments })
+    fn deref(&self) -> &Self::Target {
+        &self.infer
     }
 }

@@ -9,7 +9,7 @@ use std::{
 
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
-use lume_errors::DiagCtxHandle;
+use lume_errors::DiagCtx;
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
@@ -23,10 +23,14 @@ pub struct Options {
 }
 
 /// Represents a compilation session, invoked by the driver.
+#[derive(Default)]
 pub struct Session {
     pub options: Options,
     pub dep_graph: DependencyGraph,
 }
+
+unsafe impl Send for Session {}
+unsafe impl Sync for Session {}
 
 /// Global context for all compiler operations and is used to pass around data
 /// to segmented stages of the compiler processs, such as parsing, analysis, checking,
@@ -35,22 +39,28 @@ pub struct Session {
 /// [`GlobalCtx`] also functions as a lookup table for options and session-variables,
 /// which have been defined in some previous stage, such as the options passed to the
 /// compiler, callbacks to invoke during execution, etc.
-pub struct GlobalCtx<'tcx> {
-    pub dcx: DiagCtxHandle,
+pub struct GlobalCtx {
     pub session: Session,
-
-    phantom: std::marker::PhantomData<&'tcx ()>,
+    pub dcx: DiagCtx,
 }
 
-impl GlobalCtx<'_> {
-    pub fn new(session: Session, dcx: DiagCtxHandle) -> Self {
+impl GlobalCtx {
+    pub fn new(session: Session, dcx: DiagCtx) -> Self {
+        Self { session, dcx }
+    }
+}
+
+impl Default for GlobalCtx {
+    fn default() -> Self {
         Self {
-            session,
-            dcx,
-            phantom: std::marker::PhantomData,
+            dcx: DiagCtx::new_buffered(512),
+            session: Session::default(),
         }
     }
 }
+
+unsafe impl Send for GlobalCtx {}
+unsafe impl Sync for GlobalCtx {}
 
 #[derive(Debug, Clone)]
 pub struct Package {

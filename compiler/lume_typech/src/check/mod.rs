@@ -1,22 +1,14 @@
 use error_snippet::Result;
 use lume_types::TypeRef;
 
-use crate::ThirBuildCtx;
+use crate::TyCheckCtx;
 
 pub(crate) mod errors;
 pub(crate) mod expressions;
 pub(crate) mod lookup;
 pub(crate) mod traits;
 
-/// Represents a single pass which will be executed when invoking
-/// the type checker on a given [`ThirBuildCtx`]-instance.
-pub trait TypeCheckerPass {
-    fn run(tcx: &mut ThirBuildCtx) -> Result<()>
-    where
-        Self: Sized;
-}
-
-impl ThirBuildCtx {
+impl TyCheckCtx {
     /// Performs type-checking on all the items in the context, after they've
     /// been inferred in a previous stage.
     ///
@@ -26,14 +18,14 @@ impl ThirBuildCtx {
     /// etc, or when expected items cannot be found within the context.
     #[tracing::instrument(
         level = "INFO",
-        name = "lume_typech::ThirBuildCtx::typecheck",
+        name = "lume_typech::TyCheckCtx::typecheck",
         parent = None,
         skip(self),
         err
     )]
     pub fn typecheck(&mut self) -> Result<()> {
-        expressions::Expressions::run(self)?;
-        traits::TraitChecking::run(self)?;
+        self.typech_expressions()?;
+        self.typech_traits()?;
 
         Ok(())
     }
@@ -60,8 +52,8 @@ impl ThirBuildCtx {
                 return Err(errors::MismatchedTypes {
                     reason_loc: to.location.clone(),
                     found_loc: from.location.clone(),
-                    expected: self.new_named_type(to)?,
-                    found: self.new_named_type(from)?,
+                    expected: self.infer.new_named_type(to)?,
+                    found: self.infer.new_named_type(from)?,
                 }
                 .into());
             }
@@ -82,8 +74,8 @@ impl ThirBuildCtx {
 
             return Err(errors::TraitNotImplemented {
                 location: from.location.clone(),
-                trait_name: self.new_named_type(from)?,
-                type_name: self.new_named_type(to)?,
+                trait_name: self.infer.new_named_type(from)?,
+                type_name: self.infer.new_named_type(to)?,
             }
             .into());
         }
@@ -91,8 +83,8 @@ impl ThirBuildCtx {
         if log::log_enabled!(log::Level::Debug) {
             log::debug!(
                 "type-checking failed: {} => {}",
-                self.new_named_type(from)?,
-                self.new_named_type(to)?
+                self.infer.new_named_type(from)?,
+                self.infer.new_named_type(to)?
             );
 
             if log::log_enabled!(log::Level::Trace) {
@@ -103,8 +95,8 @@ impl ThirBuildCtx {
         Err(errors::MismatchedTypes {
             reason_loc: to.location.clone(),
             found_loc: from.location.clone(),
-            expected: self.new_named_type(to)?,
-            found: self.new_named_type(from)?,
+            expected: self.infer.new_named_type(to)?,
+            found: self.infer.new_named_type(from)?,
         }
         .into())
     }

@@ -1,0 +1,246 @@
+use crate::{TyInferCtx, query::Callable};
+use error_snippet::{IntoDiagnostic, Result};
+use levenshtein::levenshtein;
+use lume_hir::{self, Identifier, SymbolName};
+use lume_types::{Function, Method};
+
+use super::diagnostics::{self};
+
+/// Defines the maximum Levenshtein distance allowed for method name suggestions.
+pub const MAX_LEVENSHTEIN_DISTANCE: usize = 3;
+
+impl TyInferCtx {
+    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`.
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn lookup_methods_on<'a>(&self, ty: &'a lume_types::TypeRef, name: &'a Identifier) -> Vec<&'_ Method> {
+        self.methods_defined_on(ty)
+            .into_iter()
+            .filter(|method| method.name.as_ident() == name)
+            .collect()
+    }
+
+    /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't an
+    /// exact match to `name`, but not too disimilar.
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is otherwise valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
+        self.methods_defined_on(ty)
+            .into_iter()
+            .filter(|method| {
+                let expected = &name.name;
+                let actual = &method.name.name.identifier().name;
+                let distance = levenshtein(expected, actual);
+
+                distance != 0 && distance < MAX_LEVENSHTEIN_DISTANCE
+            })
+            .collect()
+    }
+
+    /// Folds all the functions which could be suggested from the given call expression
+    /// into a single, emittable error message.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub(crate) fn fold_function_suggestions<'a>(
+        &self,
+        expr: &lume_hir::StaticCall,
+    ) -> Result<diagnostics::MissingFunction> {
+        let suggestion: Option<Result<error_snippet::Error>> =
+            self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
+                let function_name = suggestion.name.clone();
+
+                Ok(diagnostics::SuggestedFunction {
+                    source: function_name.location.file.clone(),
+                    range: function_name.location.index.clone(),
+                    function_name: function_name.name,
+                }
+                .into_diagnostic())
+            });
+
+        let suggestions = if let Some(suggested) = suggestion {
+            vec![suggested?]
+        } else {
+            Vec::new()
+        };
+
+        Ok(diagnostics::MissingFunction {
+            source: expr.name.location.file.clone(),
+            range: expr.name.location.index.clone(),
+            function_name: expr.name.as_ident().clone(),
+            suggestions,
+        })
+    }
+
+    /// Folds all the methods which could be suggested from the given call expression
+    /// into a single, emittable error message.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub(crate) fn fold_method_suggestions<'a>(
+        &self,
+        expr: &lume_hir::CallExpression,
+    ) -> Result<diagnostics::MissingMethod> {
+        let name = match expr {
+            lume_hir::CallExpression::Static(call) => &call.name.name,
+            lume_hir::CallExpression::Instanced(call) => &call.name,
+        };
+
+        let callee_type = match expr {
+            lume_hir::CallExpression::Static(call) => {
+                self.find_type_ref(&call.name.clone().parent().unwrap())?.unwrap()
+            }
+            lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee.id)?,
+        };
+
+        let suggestion: Option<Result<error_snippet::Error>> = self
+            .lookup_method_suggestions(&callee_type, name.identifier())
+            .first()
+            .map(|suggestion| {
+                let method_name = suggestion.name.clone();
+
+                Ok(diagnostics::SuggestedMethod {
+                    source: method_name.location.clone(),
+                    method_name: method_name.name,
+                    type_name: self.new_named_type(&callee_type)?,
+                }
+                .into_diagnostic())
+            });
+
+        let suggestions = if let Some(suggested) = suggestion {
+            vec![suggested?]
+        } else {
+            Vec::new()
+        };
+
+        Ok(diagnostics::MissingMethod {
+            source: name.location().clone(),
+            type_name: self.new_named_type(&callee_type)?,
+            method_name: name.identifier().clone(),
+            suggestions,
+        })
+    }
+
+    /// Looks up all [`Function`]s, where the name isn't an exact match to `name`,
+    /// but not too disimilar.
+    ///
+    /// Functions returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
+    pub fn lookup_function_suggestions(&self, name: &SymbolName) -> Vec<&'_ Function> {
+        self.tdb()
+            .functions()
+            .filter(|func| {
+                // The namespaces on the function names must match,
+                // so we don't match functions outside of the the
+                // expected namespace.
+                if !name.roots_eq(&func.name) {
+                    return false;
+                }
+
+                let expected = &name.as_str();
+                let actual = &func.name.as_str();
+                let distance = levenshtein(expected, actual);
+
+                distance != 0 && distance < MAX_LEVENSHTEIN_DISTANCE
+            })
+            .collect()
+    }
+
+    /// Looks up all registered [`Functions`]s of name `name`.
+    ///
+    /// Functions returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn lookup_functions_unchecked(&self, name: &SymbolName) -> Vec<&'_ Function> {
+        self.tdb().functions().filter(|func| &func.name == name).collect()
+    }
+
+    /// Looks up all registered [`Method`]s and [`Functions`]s of name `name`.
+    ///
+    /// Functions returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn lookup_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
+        match &expr {
+            expr @ lume_hir::CallExpression::Instanced(call) => {
+                let callee_type = self.type_of(call.callee.id)?;
+                let methods = self.lookup_methods_on(&callee_type, call.name.identifier());
+
+                let Some(method) = methods.first() else {
+                    let missing_method_err = self.fold_method_suggestions(expr)?;
+
+                    return Err(missing_method_err.into());
+                };
+
+                Ok(Callable::Method(method))
+            }
+            lume_hir::CallExpression::Static(call) => {
+                if let Some(callee_ty_name) = call.name.clone().parent() {
+                    let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
+                    let methods = self.lookup_methods_on(&callee_type, call.name.as_ident());
+
+                    let Some(method) = methods.first() else {
+                        let missing_method_err = self.fold_method_suggestions(expr)?;
+
+                        return Err(missing_method_err.into());
+                    };
+
+                    Ok(Callable::Method(method))
+                } else {
+                    let functions = self.lookup_functions_unchecked(&call.name);
+
+                    let Some(function) = functions.first() else {
+                        let missing_func_err = self.fold_function_suggestions(call)?;
+
+                        return Err(missing_func_err.into());
+                    };
+
+                    Ok(Callable::Function(function))
+                }
+            }
+        }
+    }
+
+    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
+    /// signature of the given instance call expression.
+    ///
+    /// Methods returned by this method are checked for validity within the current
+    /// context, including visibility, arguments and type arguments. The look up methods
+    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    ///
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For a static callable
+    /// lookup, see [`TyInferCtx::lookup_callable_static()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
+        self.lookup_callable(&lume_hir::CallExpression::Instanced(call))
+    }
+
+    /// Looks up all [`Callable`]s and attempts to find one, which matches the
+    /// signature of the given static call expression.
+    ///
+    /// Callables returned by this method are checked for validity within the current
+    /// context, including visibility, arguments and type arguments. To look up methods
+    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    ///
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For an instance callable
+    /// lookup, see [`TyInferCtx::lookup_callable_instance()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
+        self.lookup_callable(&lume_hir::CallExpression::Static(call))
+    }
+
+    /// Returns all the methods defined directly within the given type.
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> Vec<&'_ Method> {
+        self.tdb().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
+    }
+}

@@ -3,7 +3,7 @@ use error_snippet::Result;
 use crate::LowerModule;
 use crate::err;
 use crate::errors::*;
-use crate::{ARRAY_STD_TYPE, ARRAY_WITH_CAPACITY_FUNC, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE};
+use crate::{ARRAY_NEW_FUNC, ARRAY_STD_TYPE, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE};
 
 use lume_ast::{self as ast, Node};
 use lume_hir::{self as hir};
@@ -53,10 +53,10 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
-        // TODO: Implement proper array expression lowering
-        let array_path = lume_ast::Path::with_root(vec!["std", ARRAY_STD_TYPE], ARRAY_WITH_CAPACITY_FUNC);
+        let array_path = lume_ast::Path::with_root(vec!["std", ARRAY_STD_TYPE], ARRAY_NEW_FUNC);
 
         let id = self.next_expr_id();
+        let values = self.expressions(expr.values);
         let location = self.location(expr.location);
 
         Ok(hir::Expression {
@@ -65,22 +65,8 @@ impl LowerModule<'_> {
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
-                type_arguments: vec![hir::TypeArgument::Implicit {
-                    location: lume_span::Location::empty(),
-                }],
-                arguments: vec![hir::Expression {
-                    id: self.next_expr_id(),
-                    kind: hir::ExpressionKind::Literal(Box::new(hir::Literal {
-                        id: self.next_expr_id(),
-                        kind: hir::LiteralKind::Int(Box::new(hir::IntLiteral {
-                            id: self.next_expr_id(),
-                            value: usize::cast_signed(expr.values.len()) as i64,
-                            kind: hir::IntKind::U64,
-                        })),
-                        location: lume_span::Location::empty(),
-                    })),
-                    location: lume_span::Location::empty(),
-                }],
+                type_arguments: Vec::new(),
+                arguments: values,
             })),
         })
     }

@@ -68,17 +68,13 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                 ),
                                 name: Named(
                                     Identifier {
-                                        name: "with_capacity",
+                                        name: "new",
                                         location: <internal>:0:0,
                                     },
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [
-                                Implicit {
-                                    location: <internal>:0:0,
-                                },
-                            ],
+                            type_arguments: [],
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
@@ -89,7 +85,45 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                             2,
                                         ),
                                     },
-                                    location: <internal>:0:0,
+                                    location: <internal>:27:28,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    2,
+                                                ),
+                                            },
+                                            location: <internal>:27:28,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            2,
+                                                        ),
+                                                    },
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            3,
+                                        ),
+                                    },
+                                    location: <internal>:30:31,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -100,7 +134,45 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                     3,
                                                 ),
                                             },
-                                            location: <internal>:0:0,
+                                            location: <internal>:30:31,
+                                            kind: Int(
+                                                IntLiteral {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            3,
+                                                        ),
+                                                    },
+                                                    value: 2,
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        },
+                                    ),
+                                },
+                                Expression {
+                                    id: ExpressionId {
+                                        def: ItemId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            4,
+                                        ),
+                                    },
+                                    location: <internal>:33:34,
+                                    kind: Literal(
+                                        Literal {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    4,
+                                                ),
+                                            },
+                                            location: <internal>:33:34,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -112,7 +184,7 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                         ),
                                                     },
                                                     value: 3,
-                                                    kind: U64,
+                                                    kind: I32,
                                                 },
                                             ),
                                         },

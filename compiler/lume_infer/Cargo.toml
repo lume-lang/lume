@@ -1,5 +1,5 @@
 [package]
-name = "lume_typech"
+name = "lume_infer"
 version.workspace = true
 edition = "2024"
 rust-version.workspace = true
@@ -7,7 +7,6 @@ rust-version.workspace = true
 [dependencies]
 lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
-lume_infer = { path = "../lume_infer" }
 lume_query = { path = "../lume_query" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
