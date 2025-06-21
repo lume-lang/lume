@@ -13,7 +13,7 @@ pub(crate) struct MissingMethod {
     pub type_name: SymbolName,
     pub method_name: Identifier,
 
-    #[related]
+    #[related(collection)]
     pub suggestions: Vec<error_snippet::Error>,
 }
 
@@ -40,7 +40,7 @@ pub struct MissingFunction {
 
     pub function_name: Identifier,
 
-    #[related]
+    #[related(collection)]
     pub suggestions: Vec<error_snippet::Error>,
 }
 

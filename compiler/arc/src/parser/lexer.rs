@@ -39,7 +39,7 @@ pub struct InvalidInteger {
     pub value: String,
 
     #[cause]
-    pub reason: Vec<error_snippet::Error>,
+    pub reason: error_snippet::Error,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -241,7 +241,7 @@ impl Lexer {
                             source,
                             range: start_idx..end_idx,
                             value: number_str.to_string(),
-                            reason: vec![err.into_diagnostic()],
+                            reason: err.into_diagnostic(),
                         }
                         .into());
                     }

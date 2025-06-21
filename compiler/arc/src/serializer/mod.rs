@@ -128,10 +128,7 @@ impl PackageParser {
         let content = match std::fs::read_to_string(path) {
             Ok(content) => content,
             Err(err) => {
-                return Err(ArcfileIoError {
-                    inner: vec![err.into()],
-                }
-                .into());
+                return Err(ArcfileIoError { inner: err.into() }.into());
             }
         };
 

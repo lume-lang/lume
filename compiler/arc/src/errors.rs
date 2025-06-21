@@ -14,14 +14,7 @@ pub struct ArcfileMissing {
 #[diagnostic(message = "failed to read Arcfile", code = "ARC0102")]
 pub struct ArcfileIoError {
     #[related]
-    pub inner: Vec<Error>,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "failed to read Arcfile", code = "ARC0103")]
-pub struct ArcfileGlobError {
-    #[related]
-    pub inner: Vec<Error>,
+    pub inner: Error,
 }
 
 #[derive(Diagnostic, Debug)]

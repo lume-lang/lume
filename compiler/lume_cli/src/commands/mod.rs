@@ -12,7 +12,7 @@ pub fn project_or_cwd(path: Option<&str>) -> Result<String> {
         Ok(cwd) => cwd,
         Err(err) => {
             return Err(CouldNotDetermineBuildPath {
-                inner: vec![err.into_diagnostic()],
+                inner: err.into_diagnostic(),
             }
             .into());
         }
@@ -34,7 +34,7 @@ pub fn project_or_cwd(path: Option<&str>) -> Result<String> {
         Ok(path) => path,
         Err(err) => {
             return Err(CouldNotDetermineBuildPath {
-                inner: vec![err.into_diagnostic()],
+                inner: err.into_diagnostic(),
             }
             .into());
         }

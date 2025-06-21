@@ -7,8 +7,8 @@ version = "0.1.0"
 rust-version = "1.86.0"
 
 [workspace.dependencies]
-error_snippet = { version = "=0.1.12", features = ["derive"] }
-error_snippet_derive = { version = "=0.1.5" }
+error_snippet = { version = "=0.1.13", features = ["derive"] }
+error_snippet_derive = { version = "=0.1.6" }
 log = { version = "=0.4.27" }
 tracing = { version = "=0.1.41" }
 

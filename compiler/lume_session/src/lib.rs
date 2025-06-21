@@ -217,7 +217,7 @@ impl Package {
             Ok(paths) => paths,
             Err(err) => {
                 return Err(errors::ArcfileGlobError {
-                    inner: vec![err.into_diagnostic()],
+                    inner: err.into_diagnostic(),
                 }
                 .into());
             }
@@ -228,7 +228,7 @@ impl Package {
                 Ok(file) => file,
                 Err(err) => {
                     return Err(errors::ArcfileGlobError {
-                        inner: vec![err.into_diagnostic()],
+                        inner: err.into_diagnostic(),
                     }
                     .into());
                 }

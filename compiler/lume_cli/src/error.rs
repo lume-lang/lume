@@ -8,5 +8,5 @@ use error_snippet_derive::Diagnostic;
 )]
 pub struct CouldNotDetermineBuildPath {
     #[related]
-    pub inner: Vec<error_snippet::Error>,
+    pub inner: error_snippet::Error,
 }
