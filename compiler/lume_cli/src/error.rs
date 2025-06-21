@@ -7,6 +7,6 @@ use error_snippet_derive::Diagnostic;
     help = "Is the build path correct?"
 )]
 pub struct CouldNotDetermineBuildPath {
-    #[related]
+    #[cause]
     pub inner: error_snippet::Error,
 }
