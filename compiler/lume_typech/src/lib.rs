@@ -22,7 +22,6 @@ pub struct TyCheckCtx {
     infer: TyInferCtx,
 }
 
-#[allow(dead_code)]
 impl TyCheckCtx {
     /// Creates a new empty type checker context.
     pub fn new(infer: TyInferCtx) -> TyCheckCtx {
