@@ -156,7 +156,7 @@ impl TyInferCtx {
                 continue;
             };
 
-            for type_param in item.type_parameters() {
+            for type_param in item.type_parameters().iter() {
                 acc.push(type_param);
             }
         }

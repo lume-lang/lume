@@ -7,8 +7,8 @@ use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<Vec<hir::TypeParameter>> {
-        params
+    pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<hir::TypeParameters> {
+        let type_params = params
             .into_iter()
             .map(|param| {
                 let location = self.location(param.name.location.clone());
@@ -28,12 +28,14 @@ impl LowerModule<'_> {
                     location,
                 })
             })
-            .collect::<Result<Vec<_>>>()
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::TypeParameters { inner: type_params })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(crate) fn type_arguments(&self, params: Vec<ast::TypeArgument>) -> Result<Vec<hir::TypeArgument>> {
-        params
+    pub(crate) fn type_arguments(&self, params: Vec<ast::TypeArgument>) -> Result<hir::TypeArguments> {
+        let type_args = params
             .into_iter()
             .map(|param| {
                 let location = self.location(param.ty.location().clone());
@@ -41,6 +43,8 @@ impl LowerModule<'_> {
 
                 Ok(hir::TypeArgument::Named { ty, location })
             })
-            .collect::<Result<Vec<_>>>()
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::TypeArguments { inner: type_args })
     }
 }

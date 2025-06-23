@@ -42,7 +42,7 @@ fn query_function_check_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -60,7 +60,7 @@ fn query_function_check_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -81,7 +81,7 @@ fn query_function_check_arg_type() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -105,7 +105,7 @@ fn query_function_check_arg_type_second() -> Result<()> {
             lume_hir::Expression::lit_bool(false),
             lume_hir::Expression::lit_bool(false),
         ],
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -126,7 +126,7 @@ fn query_function_check_arg_type_match() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: vec![lume_hir::Expression::lit_bool(false), lume_hir::Expression::lit_i32(1)],
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -144,7 +144,7 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -167,7 +167,8 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
         arguments: Vec::new(),
         type_arguments: vec![lume_hir::TypeArgument::Implicit {
             location: lume_span::Location::empty(),
-        }],
+        }]
+        .into(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -264,7 +265,7 @@ fn query_check_method_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::from_parts(Some(["A"]), "foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -294,7 +295,7 @@ fn query_check_method_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::from_parts(Some(["A"]), "foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -326,7 +327,7 @@ fn query_check_method_arg_type() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::from_parts(Some(["A"]), "foo"),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -358,7 +359,7 @@ fn query_check_method_type_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::from_parts(Some(["A"]), "foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -392,7 +393,8 @@ fn query_check_method_type_arg_valid() -> Result<()> {
         arguments: Vec::new(),
         type_arguments: vec![lume_hir::TypeArgument::Implicit {
             location: lume_span::Location::empty(),
-        }],
+        }]
+        .into(),
     };
 
     assert_eq!(
@@ -411,7 +413,7 @@ fn query_lookup_functions_single() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -434,7 +436,7 @@ fn query_lookup_functions_missing() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -454,7 +456,7 @@ fn query_lookup_functions_suggestion_name_mismatch() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -474,7 +476,7 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -494,7 +496,7 @@ fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -514,7 +516,7 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: SymbolName::rooted("foo"),
         arguments: Vec::new(),
-        type_arguments: Vec::new(),
+        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);

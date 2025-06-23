@@ -234,7 +234,7 @@ impl TyInferCtx {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
 
-                for type_param in &mut struct_def.type_parameters {
+                for type_param in &mut struct_def.type_parameters.iter_mut() {
                     let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
@@ -246,7 +246,7 @@ impl TyInferCtx {
                 for method in &mut struct_def.methods_mut() {
                     let method_id = method.method_id.unwrap();
 
-                    for type_param in &mut method.type_parameters {
+                    for type_param in &mut method.type_parameters.iter_mut() {
                         let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
@@ -259,7 +259,7 @@ impl TyInferCtx {
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
 
-                for type_param in &mut trait_def.type_parameters {
+                for type_param in &mut trait_def.type_parameters.iter_mut() {
                     let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
@@ -271,7 +271,7 @@ impl TyInferCtx {
                 for method in &mut trait_def.methods {
                     let method_id = method.method_id.unwrap();
 
-                    for type_param in &mut method.type_parameters {
+                    for type_param in &mut method.type_parameters.iter_mut() {
                         let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
@@ -290,7 +290,7 @@ impl TyInferCtx {
     fn define_impl_type_params(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.impl_id.unwrap();
 
-        for type_param in &mut implementation.type_parameters {
+        for type_param in &mut implementation.type_parameters.iter_mut() {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
@@ -299,7 +299,8 @@ impl TyInferCtx {
             self.tdb_mut().push_type_param(impl_id, type_param_id)?;
         }
 
-        let type_ref = self.mk_type_ref_generic(implementation.target.as_ref(), &implementation.type_parameters)?;
+        let type_ref =
+            self.mk_type_ref_generic(implementation.target.as_ref(), &implementation.type_parameters.inner)?;
 
         for method in &mut implementation.methods {
             let method_name = method.name.clone();
@@ -317,7 +318,7 @@ impl TyInferCtx {
 
             method.method_id = Some(method_id);
 
-            for type_param in &mut method.type_parameters {
+            for type_param in &mut method.type_parameters.iter_mut() {
                 let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
@@ -333,7 +334,7 @@ impl TyInferCtx {
     fn define_trait_impl_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.use_id.unwrap();
 
-        for type_param in &mut trait_impl.type_parameters {
+        for type_param in &mut trait_impl.type_parameters.iter_mut() {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
@@ -342,9 +343,9 @@ impl TyInferCtx {
             self.tdb_mut().push_type_param(use_id, type_param_id)?;
         }
 
-        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters)?;
+        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.inner)?;
 
-        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters)?;
+        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.inner)?;
 
         let trait_impl_ref = self.tdb_mut().use_mut(use_id).unwrap();
         trait_impl_ref.trait_ = trait_ref;
@@ -353,7 +354,7 @@ impl TyInferCtx {
         for method in &mut trait_impl.methods {
             let method_id = method.method_id.unwrap();
 
-            for type_param in &mut method.type_parameters {
+            for type_param in &mut method.type_parameters.iter_mut() {
                 let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
@@ -369,7 +370,7 @@ impl TyInferCtx {
     fn define_func_type_params(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.func_id.unwrap();
 
-        for type_param in &mut func.type_parameters {
+        for type_param in &mut func.type_parameters.iter_mut() {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
@@ -420,26 +421,26 @@ impl TyInferCtx {
                 let type_id = struct_def.type_id.unwrap();
                 let type_params = self.tdb().type_params_of(type_id)?.to_owned();
 
-                self.lower_type_constraints(&struct_def.type_parameters, &type_params)?;
+                self.lower_type_constraints(&struct_def.type_parameters.inner, &type_params)?;
 
                 for method in struct_def.methods() {
                     let method_id = method.method_id.unwrap();
                     let type_params = method_id.type_params(self.tdb())?.to_owned();
 
-                    self.lower_type_constraints(&method.type_parameters, &type_params)?;
+                    self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let type_id = trait_def.type_id.unwrap();
                 let type_params = type_id.type_params(self.tdb())?.to_owned();
 
-                self.lower_type_constraints(&trait_def.type_parameters, &type_params)?;
+                self.lower_type_constraints(&trait_def.type_parameters.inner, &type_params)?;
 
                 for method in &trait_def.methods {
                     let method_id = method.method_id.unwrap();
                     let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
-                    self.lower_type_constraints(&method.type_parameters, &type_params)?;
+                    self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
                 }
             }
             _ => {}
@@ -452,13 +453,13 @@ impl TyInferCtx {
         let impl_id = implementation.impl_id.unwrap();
         let type_params = self.tdb().type_params_of(impl_id)?.to_owned();
 
-        self.lower_type_constraints(&implementation.type_parameters, &type_params)?;
+        self.lower_type_constraints(&implementation.type_parameters.inner, &type_params)?;
 
         for method in &implementation.methods {
             let method_id = method.method_id.unwrap();
             let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
-            self.lower_type_constraints(&method.type_parameters, &type_params)?;
+            self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
         }
 
         Ok(())
@@ -468,13 +469,13 @@ impl TyInferCtx {
         let use_id = trait_impl.use_id.unwrap();
         let type_params = self.tdb().type_params_of(use_id)?.to_owned();
 
-        self.lower_type_constraints(&trait_impl.type_parameters, &type_params)?;
+        self.lower_type_constraints(&trait_impl.type_parameters.inner, &type_params)?;
 
         for method in &trait_impl.methods {
             let method_id = method.method_id.unwrap();
             let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
-            self.lower_type_constraints(&method.type_parameters, &type_params)?;
+            self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
         }
 
         Ok(())
@@ -484,7 +485,7 @@ impl TyInferCtx {
         let func_id = func.func_id.unwrap();
         let type_params = self.tdb().function(func_id).unwrap().type_parameters.clone();
 
-        self.lower_type_constraints(&func.type_parameters, &type_params)?;
+        self.lower_type_constraints(&func.type_parameters.inner, &type_params)?;
 
         Ok(())
     }
@@ -526,7 +527,7 @@ impl TyInferCtx {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             for property in struct_def.properties() {
                 let property_id = property.prop_id.unwrap();
-                let type_ref = self.mk_type_ref_generic(&property.property_type, &struct_def.type_parameters)?;
+                let type_ref = self.mk_type_ref_generic(&property.property_type, &struct_def.type_parameters.inner)?;
 
                 self.tdb_mut().property_mut(property_id).unwrap().property_type = type_ref;
             }
@@ -566,7 +567,7 @@ impl TyInferCtx {
                         let name = param.name.name.clone();
                         let type_ref = self.mk_type_ref_generic(
                             &param.param_type,
-                            &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&struct_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
                         )?;
 
                         self.tdb_mut()
@@ -579,7 +580,7 @@ impl TyInferCtx {
                     self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
                         self.mk_type_ref_generic(
                             ret,
-                            &[&struct_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&struct_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
                         )?
                     } else {
                         TypeRef::void()
@@ -594,7 +595,7 @@ impl TyInferCtx {
                         let name = param.name.name.clone();
                         let type_ref = self.mk_type_ref_generic(
                             &param.param_type,
-                            &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
                         )?;
 
                         self.tdb_mut()
@@ -607,7 +608,7 @@ impl TyInferCtx {
                     self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
                         self.mk_type_ref_generic(
                             ret,
-                            &[&trait_def.type_parameters[..], &method.type_parameters[..]].concat(),
+                            &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
                         )?
                     } else {
                         TypeRef::void()
@@ -625,7 +626,7 @@ impl TyInferCtx {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.mk_type_ref_generic(&param.param_type, &func.type_parameters)?;
+            let type_ref = self.mk_type_ref_generic(&param.param_type, &func.type_parameters.inner)?;
 
             self.tdb_mut()
                 .function_mut(func_id)
@@ -635,7 +636,7 @@ impl TyInferCtx {
         }
 
         self.tdb_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
-            self.mk_type_ref_generic(ret, &func.type_parameters)?
+            self.mk_type_ref_generic(ret, &func.type_parameters.inner)?
         } else {
             TypeRef::void()
         };
@@ -651,7 +652,7 @@ impl TyInferCtx {
                 let name = param.name.name.clone();
                 let type_ref = self.mk_type_ref_generic(
                     &param.param_type,
-                    &[&trait_impl.type_parameters[..], &method.type_parameters[..]].concat(),
+                    &[&trait_impl.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
                 )?;
 
                 self.tdb_mut()
@@ -662,7 +663,7 @@ impl TyInferCtx {
             }
 
             self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                self.mk_type_ref_generic(ret, &method.type_parameters)?
+                self.mk_type_ref_generic(ret, &method.type_parameters.inner)?
             } else {
                 TypeRef::void()
             };
@@ -677,7 +678,7 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.mk_type_ref_generic(&param.param_type, &implementation.type_parameters)?;
+                let type_ref = self.mk_type_ref_generic(&param.param_type, &implementation.type_parameters.inner)?;
 
                 self.tdb_mut()
                     .method_mut(method_id)
@@ -687,7 +688,7 @@ impl TyInferCtx {
             }
 
             self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                self.mk_type_ref_generic(ret, &method.type_parameters)?
+                self.mk_type_ref_generic(ret, &method.type_parameters.inner)?
             } else {
                 TypeRef::void()
             };

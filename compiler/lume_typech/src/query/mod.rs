@@ -269,7 +269,7 @@ impl TyCheckCtx {
             // Verify that all the fixed parameters are compatible with the arguments
             // passed to the method.
             for (param, arg) in fixed_params.iter().zip(fixed_args.iter()) {
-                let arg_type = self.infer.type_of_expr(arg)?;
+                let arg_type = self.type_of_expr(arg)?;
 
                 if !self.check_type_compatibility(&arg_type, &param.ty)? {
                     failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
@@ -279,7 +279,7 @@ impl TyCheckCtx {
             // Verify that the vararg parameter has the same type as all arguments,
             // which sits after the last fixed parameter.
             for arg in vararg_args {
-                let arg_type = self.infer.type_of_expr(arg)?;
+                let arg_type = self.type_of_expr(arg)?;
 
                 if !self.check_type_compatibility(&arg_type, &vararg_param.ty)? {
                     failures.push(CallableCheckError::ArgumentTypeMismatch(vararg_param.idx));
@@ -297,7 +297,7 @@ impl TyCheckCtx {
             // Verify that all the parameters are compatible with the arguments
             // passed to the method.
             for (param, arg) in parameters.inner().iter().zip(arguments.iter()) {
-                let arg_type = self.infer.type_of_expr(arg)?;
+                let arg_type = self.type_of_expr(arg)?;
 
                 if !self.check_type_compatibility(&arg_type, &param.ty)? {
                     failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));

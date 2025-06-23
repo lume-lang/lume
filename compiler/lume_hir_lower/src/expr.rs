@@ -65,7 +65,7 @@ impl LowerModule<'_> {
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
-                type_arguments: Vec::new(),
+                type_arguments: hir::TypeArguments::new(),
                 arguments: values,
             })),
         })
@@ -242,7 +242,8 @@ impl LowerModule<'_> {
                 name: self.resolve_symbol_name(&range_type)?,
                 type_arguments: vec![hir::TypeArgument::Implicit {
                     location: lume_span::Location::empty(),
-                }],
+                }]
+                .into(),
                 arguments: vec![lower, upper],
             })),
         })

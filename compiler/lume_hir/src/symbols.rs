@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-
-use crate::*;
+use std::{borrow::Borrow, collections::HashMap, hash::Hash};
 
 /// Defines a single frame within the symbol table. Each frame can contain multiple entries.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) struct SymbolTableFrame {
+pub(crate) struct SymbolTableFrame<TKey: Hash + Eq, TEntry> {
     /// Defines all the symbols defined within the frame.
-    entries: HashMap<String, VariableDeclaration>,
+    entries: HashMap<TKey, TEntry>,
 }
 
-impl SymbolTableFrame {
+impl<TKey: Hash + Eq, TEntry> SymbolTableFrame<TKey, TEntry> {
     pub fn new() -> Self {
         Self {
             entries: HashMap::new(),
@@ -19,10 +17,10 @@ impl SymbolTableFrame {
 
 /// Defines a single frame within the symbol table. Each frame can be either be symbols or a boundary.
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum SymbolTableEntry {
+pub(crate) enum SymbolTableEntry<TKey: Hash + Eq, TEntry> {
     /// Frames indicate a scope with zero-or-more symbols defined within it.
     /// The symbol table can jump frames to access symbols defined in parent scopes.
-    Frame(SymbolTableFrame),
+    Frame(SymbolTableFrame<TKey, TEntry>),
 
     /// Boundaries are only meant to be implemented when all symbols in the local scope
     /// should be hidden. This is most often the case when calling a function or method,
@@ -32,9 +30,9 @@ pub(crate) enum SymbolTableEntry {
     Boundary,
 }
 
-impl SymbolTableEntry {
+impl<TKey: Hash + Eq, TEntry> SymbolTableEntry<TKey, TEntry> {
     pub fn symbol() -> Self {
-        Self::Frame(SymbolTableFrame::new())
+        Self::Frame(SymbolTableFrame::<TKey, TEntry>::new())
     }
 
     pub fn boundary() -> Self {
@@ -77,15 +75,15 @@ impl SymbolTableEntry {
 /// Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
 /// which was called before `a` was declared.
 #[derive(Default, Debug, Clone, PartialEq)]
-pub struct SymbolTable {
+pub struct SymbolTable<TKey: Hash + Eq, TEntry> {
     /// Defines all the entries within the table, ordered by the declaration order.
-    symbols: Vec<SymbolTableEntry>,
+    symbols: Vec<SymbolTableEntry<TKey, TEntry>>,
 }
 
-impl SymbolTable {
+impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
     /// Creates a new symbol table, without any content.
     pub fn new() -> Self {
-        let mut table = Self::default();
+        let mut table = SymbolTable { symbols: Vec::new() };
 
         // The first frame functions as a global scope, so it should always be present.
         table.push_frame();
@@ -127,9 +125,9 @@ impl SymbolTable {
     ///
     /// This is usually called when a new variable is introduced within an existing block scope.
     #[expect(clippy::missing_panics_doc, reason = "infallible")]
-    pub fn define(&mut self, decl: VariableDeclaration) {
+    pub fn define(&mut self, name: TKey, decl: TEntry) {
         if let SymbolTableEntry::Frame(frame) = self.symbols.last_mut().unwrap() {
-            frame.entries.insert(decl.name.name.clone(), decl);
+            frame.entries.insert(name, decl);
         }
     }
 
@@ -139,7 +137,11 @@ impl SymbolTable {
     /// To retrieve the symbol, the table will iterate, in reverse order, up until a symbol with the same
     /// name is found, inside of the current scope. If the iterator reaches a boundary, it will stop searching
     /// for local symbols and continue searching in the global scope.
-    pub fn retrieve(&self, name: &str) -> Option<&VariableDeclaration> {
+    pub fn retrieve<K>(&self, name: &K) -> Option<&TEntry>
+    where
+        TKey: Borrow<K>,
+        K: Hash + Eq + ?Sized,
+    {
         if let Some(symbol) = self.retrieve_scoped(name) {
             return Some(symbol);
         }
@@ -169,7 +171,11 @@ impl SymbolTable {
     }
 
     /// Attempts to retrieve a symbol of the given name from the current scope.
-    fn retrieve_scoped(&self, name: &str) -> Option<&VariableDeclaration> {
+    fn retrieve_scoped<K>(&self, name: &K) -> Option<&TEntry>
+    where
+        TKey: Borrow<K>,
+        K: Hash + Eq + ?Sized,
+    {
         for entry in self.symbols.iter().rev() {
             match entry {
                 SymbolTableEntry::Frame(f) => {
@@ -185,7 +191,11 @@ impl SymbolTable {
     }
 
     /// Attempts to retrieve a symbol of the given name from the global scope.
-    fn retrieve_global(&self, name: &str) -> Option<&VariableDeclaration> {
+    fn retrieve_global<K>(&self, name: &K) -> Option<&TEntry>
+    where
+        TKey: Borrow<K>,
+        K: Hash + Eq + ?Sized,
+    {
         if let Some(SymbolTableEntry::Frame(f)) = self.symbols.first() {
             if let Some(v) = f.entries.get(name) {
                 return Some(v);
@@ -196,9 +206,19 @@ impl SymbolTable {
     }
 }
 
+impl SymbolTable<String, crate::VariableDeclaration> {
+    /// Appends a new named symbol to the current symbol scope.
+    ///
+    /// This is usually called when a new variable is introduced within an existing block scope.
+    pub fn define_var(&mut self, decl: crate::VariableDeclaration) {
+        self.define(decl.name.to_string(), decl);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::*;
 
     fn var(name: &str) -> VariableDeclaration {
         let statement_id = StatementId::default();
@@ -228,7 +248,7 @@ mod tests {
 
     #[test]
     fn test_empty_symbol_table() {
-        let table = SymbolTable::new();
+        let table = SymbolTable::<String, VariableDeclaration>::new();
 
         assert_eq!(table.retrieve("var"), None);
     }
@@ -238,7 +258,7 @@ mod tests {
         let mut table = SymbolTable::new();
         let var = var("var");
 
-        table.define(var.clone());
+        table.define_var(var.clone());
 
         assert_eq!(table.retrieve("var"), Some(&var));
     }
@@ -249,8 +269,8 @@ mod tests {
         let var1 = var("var1");
         let var2 = var("var2");
 
-        table.define(var1.clone());
-        table.define(var2.clone());
+        table.define_var(var1.clone());
+        table.define_var(var2.clone());
 
         assert_eq!(table.retrieve("var1"), Some(&var1));
         assert_eq!(table.retrieve("var2"), Some(&var2));
@@ -261,7 +281,7 @@ mod tests {
         let mut table = SymbolTable::new_without_global();
 
         let var = var("var");
-        table.define(var.clone());
+        table.define_var(var.clone());
         table.push_boundary();
 
         assert_eq!(table.retrieve("var"), None);
@@ -272,12 +292,12 @@ mod tests {
         let mut table = SymbolTable::new();
 
         let var1 = var("var1");
-        table.define(var1.clone());
+        table.define_var(var1.clone());
 
         table.push_boundary();
 
         let var2 = var("var2");
-        table.define(var2.clone());
+        table.define_var(var2.clone());
 
         assert_eq!(table.retrieve("var2"), Some(&var2));
     }
@@ -287,18 +307,18 @@ mod tests {
         let mut table = SymbolTable::new_without_global();
 
         let var1 = var("var1");
-        table.define(var1.clone());
+        table.define_var(var1.clone());
 
         let var2 = var("var2");
-        table.define(var2.clone());
+        table.define_var(var2.clone());
 
         table.push_boundary();
 
         let var3 = var("var3");
-        table.define(var3.clone());
+        table.define_var(var3.clone());
 
         let var4 = var("var4");
-        table.define(var4.clone());
+        table.define_var(var4.clone());
 
         assert_eq!(table.retrieve("var1"), None);
         assert_eq!(table.retrieve("var2"), None);
@@ -318,12 +338,12 @@ mod tests {
         let mut table = SymbolTable::new_without_global();
 
         let var1 = var("var1");
-        table.define(var1.clone());
+        table.define_var(var1.clone());
 
         table.push_boundary();
 
         let var2 = var("var2");
-        table.define(var2.clone());
+        table.define_var(var2.clone());
 
         assert_eq!(table.retrieve("var1"), None);
 
@@ -337,19 +357,19 @@ mod tests {
         let mut table = SymbolTable::new();
 
         let global = var("global");
-        table.define(global.clone());
+        table.define_var(global.clone());
 
         table.push_boundary();
 
         let non_global = var("non_global");
-        table.define(non_global.clone());
+        table.define_var(non_global.clone());
 
         table.push_boundary();
         table.push_boundary();
         table.push_boundary();
 
         let var = var("var");
-        table.define(var.clone());
+        table.define_var(var.clone());
 
         assert_eq!(table.retrieve("global"), Some(&global));
         assert_eq!(table.retrieve("non_global"), None);

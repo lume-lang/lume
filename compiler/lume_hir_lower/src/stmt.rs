@@ -34,7 +34,7 @@ impl LowerModule<'_> {
                 value: lume_hir::Expression::void(),
             };
 
-            self.locals.define(decl);
+            self.locals.define_var(decl);
         }
 
         let statements = self.statements(expr.statements);
@@ -107,7 +107,7 @@ impl LowerModule<'_> {
             value,
         };
 
-        self.locals.define(decl.clone());
+        self.locals.define_var(decl.clone());
 
         let statement = hir::Statement {
             id,

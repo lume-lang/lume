@@ -360,7 +360,7 @@ impl Path {
 /// Trait for HIR nodes which can contain some amount of type parameters.
 pub trait WithTypeParameters {
     /// Gets all the type parameters of this node.
-    fn type_params(&self) -> &Vec<TypeParameter>;
+    fn type_params(&self) -> &TypeParameters;
 }
 
 /// Trait for HIR nodes which have some location attached.
@@ -380,7 +380,7 @@ impl Signature<'_> {
     pub fn to_owned(&self) -> SignatureOwned {
         SignatureOwned {
             name: self.name.clone(),
-            type_parameters: self.type_parameters.to_vec(),
+            type_parameters: self.type_parameters.to_vec().into(),
             parameters: self.parameters.to_vec(),
             return_type: self.return_type.cloned(),
         }
@@ -390,7 +390,7 @@ impl Signature<'_> {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SignatureOwned {
     pub name: Identifier,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub parameters: Vec<Parameter>,
     pub return_type: Option<Type>,
 }
@@ -461,19 +461,21 @@ impl Item {
         }
     }
 
-    pub fn type_parameters(&self) -> &[TypeParameter] {
+    pub fn type_parameters(&self) -> &TypeParameters {
+        static EMPTY: TypeParameters = TypeParameters::new();
+
         match self {
             Item::Function(symbol) => &symbol.type_parameters,
             Item::Type(symbol) => match &**symbol {
                 TypeDefinition::Struct(s) => &s.type_parameters,
                 TypeDefinition::Trait(t) => &t.type_parameters,
-                _ => &[],
+                _ => &EMPTY,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
             Item::Method(symbol) => &symbol.type_parameters,
             Item::TraitMethodDef(symbol) => &symbol.type_parameters,
             Item::TraitMethodImpl(symbol) => &symbol.type_parameters,
-            _ => &[],
+            _ => &EMPTY,
         }
     }
 }
@@ -558,7 +560,7 @@ pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub return_type: Option<Type>,
     pub block: Option<Block>,
     pub location: Location,
@@ -571,7 +573,7 @@ impl FunctionDefinition {
 }
 
 impl WithTypeParameters for FunctionDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -663,7 +665,7 @@ pub struct StructDefinition {
     pub builtin: bool,
     pub properties: Vec<Property>,
     pub methods: Vec<MethodDefinition>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub location: Location,
 }
 
@@ -690,7 +692,7 @@ impl StructDefinition {
 }
 
 impl WithTypeParameters for StructDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -701,12 +703,12 @@ pub struct Implementation {
     pub impl_id: Option<ImplId>,
     pub target: Box<Type>,
     pub methods: Vec<MethodDefinition>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub location: Location,
 }
 
 impl WithTypeParameters for Implementation {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -735,14 +737,14 @@ pub struct MethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub return_type: Option<Type>,
     pub block: Option<Block>,
     pub location: Location,
 }
 
 impl WithTypeParameters for MethodDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -752,7 +754,7 @@ pub struct TraitDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
     pub name: SymbolName,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
 }
@@ -764,7 +766,7 @@ impl TraitDefinition {
 }
 
 impl WithTypeParameters for TraitDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -776,7 +778,7 @@ pub struct TraitMethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub return_type: Option<Type>,
     pub block: Option<Block>,
     pub location: Location,
@@ -786,7 +788,7 @@ impl TraitMethodDefinition {
     pub fn signature(&self) -> Signature {
         Signature {
             name: &self.name,
-            type_parameters: &self.type_parameters,
+            type_parameters: &self.type_parameters.inner,
             parameters: &self.parameters,
             return_type: self.return_type.as_ref(),
         }
@@ -794,7 +796,7 @@ impl TraitMethodDefinition {
 }
 
 impl WithTypeParameters for TraitMethodDefinition {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -806,7 +808,7 @@ pub struct TraitImplementation {
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub location: Location,
 }
 
@@ -817,7 +819,7 @@ impl TraitImplementation {
 }
 
 impl WithTypeParameters for TraitImplementation {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -829,7 +831,7 @@ pub struct TraitMethodImplementation {
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
-    pub type_parameters: Vec<TypeParameter>,
+    pub type_parameters: TypeParameters,
     pub return_type: Option<Type>,
     pub block: Block,
     pub location: Location,
@@ -839,7 +841,7 @@ impl TraitMethodImplementation {
     pub fn signature(&self) -> Signature {
         Signature {
             name: &self.name,
-            type_parameters: &self.type_parameters,
+            type_parameters: &self.type_parameters.inner,
             parameters: &self.parameters,
             return_type: self.return_type.as_ref(),
         }
@@ -847,7 +849,7 @@ impl TraitMethodImplementation {
 }
 
 impl WithTypeParameters for TraitMethodImplementation {
-    fn type_params(&self) -> &Vec<TypeParameter> {
+    fn type_params(&self) -> &TypeParameters {
         &self.type_parameters
     }
 }
@@ -1083,7 +1085,7 @@ impl CallExpression<'_> {
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> &[TypeArgument] {
+    pub fn type_arguments(&self) -> &TypeArguments {
         match self {
             Self::Instanced(call) => &call.type_arguments,
             Self::Static(call) => &call.type_arguments,
@@ -1131,7 +1133,7 @@ pub struct Cast {
 pub struct StaticCall {
     pub id: ExpressionId,
     pub name: SymbolName,
-    pub type_arguments: Vec<TypeArgument>,
+    pub type_arguments: TypeArguments,
     pub arguments: Vec<Expression>,
 }
 
@@ -1140,7 +1142,7 @@ pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: PathSegment,
-    pub type_arguments: Vec<TypeArgument>,
+    pub type_arguments: TypeArguments,
     pub arguments: Vec<Expression>,
 }
 
@@ -1304,7 +1306,40 @@ impl AsRef<TypeParameter> for TypeParameter {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+pub struct TypeParameters {
+    pub inner: Vec<TypeParameter>,
+}
+
+impl TypeParameters {
+    pub const fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &TypeParameter> {
+        self.inner.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeParameter> {
+        self.inner.iter_mut()
+    }
+}
+
+impl From<Vec<TypeParameter>> for TypeParameters {
+    fn from(value: Vec<TypeParameter>) -> Self {
+        Self { inner: value }
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum TypeArgument {
     /// Defines a named type argument, which was specified by the user, but not yet resolved.
     Named { ty: Type, location: Location },
@@ -1330,6 +1365,45 @@ impl Node for TypeArgument {
         match self {
             TypeArgument::Named { location, .. } | TypeArgument::Implicit { location } => location,
         }
+    }
+}
+
+#[derive(Hash, Clone, Debug, PartialEq, Eq)]
+pub struct TypeArguments {
+    pub inner: Vec<TypeArgument>,
+}
+
+impl TypeArguments {
+    pub const fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &TypeArgument> {
+        self.inner.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeArgument> {
+        self.inner.iter_mut()
+    }
+}
+
+impl Default for TypeArguments {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<Vec<TypeArgument>> for TypeArguments {
+    fn from(value: Vec<TypeArgument>) -> Self {
+        Self { inner: value }
     }
 }
 

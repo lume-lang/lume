@@ -150,7 +150,7 @@ pub struct LowerModule<'a> {
     map: &'a mut Map,
 
     /// Defines all the local symbols within the current scope.
-    locals: SymbolTable,
+    locals: SymbolTable<String, lume_hir::VariableDeclaration>,
 
     /// Mapping between all imported items and their corresponding item IDs.
     imports: HashMap<String, SymbolName>,
