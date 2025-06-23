@@ -2,16 +2,13 @@ use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
 use lume_hir::{Identifier, SymbolName};
-use lume_span::SourceFile;
+use lume_span::{Location, SourceFile};
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Could not find type {name} in this scope", code = "LM4100")]
+#[diagnostic(message = "could not find type {name} in this scope", code = "LM4100")]
 pub struct MissingType {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("Is there a missing import for the type {name}?")]
-    pub range: Range<usize>,
+    #[label(source, "is there a missing import for the type {name}?")]
+    pub source: Location,
 
     pub name: SymbolName,
 }

@@ -130,8 +130,6 @@ impl TyInferCtx {
                 lume_hir::IntKind::U32 => self.tdb().find_type(&SymbolName::u32()).unwrap(),
                 lume_hir::IntKind::I64 => self.tdb().find_type(&SymbolName::i64()).unwrap(),
                 lume_hir::IntKind::U64 => self.tdb().find_type(&SymbolName::u64()).unwrap(),
-                lume_hir::IntKind::IPtr => self.tdb().find_type(&SymbolName::iptr()).unwrap(),
-                lume_hir::IntKind::UPtr => self.tdb().find_type(&SymbolName::uptr()).unwrap(),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
                 lume_hir::FloatKind::F32 => self.tdb().find_type(&SymbolName::float()).unwrap(),

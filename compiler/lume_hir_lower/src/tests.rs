@@ -108,8 +108,6 @@ fn test_implicit_imports() {
         "UInt32",
         "Int64",
         "UInt64",
-        "IntPtr",
-        "UIntPtr",
         "Float",
         "Double",
         "Array<Int32>",

@@ -23,6 +23,3 @@ struct builtin UInt32 { }
 
 /// Represents an 64-bit unsigned integer, which can store values from `0` to `18446744073709551615`.
 struct builtin UInt64 { }
-
-type IntPtr = Int64
-type UIntPtr = UInt64

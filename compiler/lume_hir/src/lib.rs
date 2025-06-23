@@ -1178,8 +1178,6 @@ pub enum IntKind {
     U32,
     I64,
     U64,
-    IPtr,
-    UPtr,
 }
 
 impl From<lume_ast::IntKind> for IntKind {

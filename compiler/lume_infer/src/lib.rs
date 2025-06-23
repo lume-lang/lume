@@ -224,8 +224,7 @@ impl TyInferCtx {
         }
 
         errors::MissingType {
-            source: ty.location.file.clone(),
-            range: ty.location.index.clone(),
+            source: ty.location.clone(),
             name: ty.name.clone(),
         }
         .into()
