@@ -9,7 +9,7 @@ use super::*;
 #[test]
 fn query_function_name_rooted() -> Result<()> {
     let tcx = type_infer("fn foo() { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
 
     assert_eq!(funcs.len(), 1);
 
@@ -25,7 +25,7 @@ fn query_function_name_rooted() -> Result<()> {
 #[test]
 fn query_function_name_rooted_name_mismatch() -> Result<()> {
     let tcx = type_infer("fn fooo() { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
 
     assert_eq!(funcs.len(), 0);
 
@@ -35,7 +35,7 @@ fn query_function_name_rooted_name_mismatch() -> Result<()> {
 #[test]
 fn query_function_check_empty() -> Result<()> {
     let tcx = type_infer("fn foo() { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -53,7 +53,7 @@ fn query_function_check_empty() -> Result<()> {
 #[test]
 fn query_function_check_arg_count() -> Result<()> {
     let tcx = type_infer("fn foo(x: Int32) { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -74,7 +74,7 @@ fn query_function_check_arg_count() -> Result<()> {
 #[test]
 fn query_function_check_arg_type() -> Result<()> {
     let tcx = type_infer("fn foo(x: Int32) { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -95,7 +95,7 @@ fn query_function_check_arg_type() -> Result<()> {
 #[test]
 fn query_function_check_arg_type_second() -> Result<()> {
     let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -119,7 +119,7 @@ fn query_function_check_arg_type_second() -> Result<()> {
 #[test]
 fn query_function_check_arg_type_match() -> Result<()> {
     let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -137,7 +137,7 @@ fn query_function_check_arg_type_match() -> Result<()> {
 #[test]
 fn query_function_check_type_arg_type_count() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
@@ -158,7 +158,7 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
 #[test]
 fn query_function_check_type_arg_type_match() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
-    let funcs = tcx.lookup_functions_unchecked(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {

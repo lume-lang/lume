@@ -322,14 +322,14 @@ impl TyCheckCtx {
     pub(crate) fn lookup_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
         match &expr {
             lume_hir::CallExpression::Instanced(call) => {
-                let callee_type = self.infer.type_of(call.callee.id)?;
+                let callee_type = self.type_of(call.callee.id)?;
                 let method = self.lookup_methods(expr, &callee_type)?;
 
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.name.clone().parent() {
-                    let callee_type = self.infer.find_type_ref(&callee_ty_name)?.unwrap();
+                    let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
                     let method = self.lookup_methods(expr, &callee_type)?;
 
                     Ok(Callable::Method(method))
@@ -361,7 +361,7 @@ impl TyCheckCtx {
 
         let mut suggestions = Vec::new();
 
-        for method in self.infer.lookup_methods_on(callee_type, method_name) {
+        for method in self.lookup_methods_on(callee_type, method_name) {
             if let CallableCheckResult::Failure(failures) = self.check_method(method, expr)? {
                 suggestions.push((CallReference::Method(method.id), failures));
 
@@ -371,7 +371,7 @@ impl TyCheckCtx {
             return Ok(method);
         }
 
-        for suggestion in self.infer.lookup_method_suggestions(callee_type, method_name) {
+        for suggestion in self.lookup_method_suggestions(callee_type, method_name) {
             let failures = if let CallableCheckResult::Failure(failures) = self.check_method(suggestion, expr)? {
                 // We're explicitly removing name mismatches, as they should
                 // not have matching names in suggested methods.
@@ -417,13 +417,13 @@ impl TyCheckCtx {
     ///
     /// Functions returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up functions
-    /// which only match function name, see [`ThirBuildCtx::lookup_functions_unchecked()`].
+    /// which only match function name, see [`ThirBuildCtx::probe_functions()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
         let function_name = &expr.name;
         let mut suggestions = Vec::new();
 
-        for function in self.infer.lookup_functions_unchecked(function_name) {
+        for function in self.probe_functions(function_name) {
             if let CallableCheckResult::Failure(failures) = self.check_function(function, expr)? {
                 suggestions.push((CallReference::Function(function.id), failures));
 
@@ -433,7 +433,7 @@ impl TyCheckCtx {
             return Ok(function);
         }
 
-        for suggestion in self.infer.lookup_function_suggestions(function_name) {
+        for suggestion in self.lookup_function_suggestions(function_name) {
             let failures = if let CallableCheckResult::Failure(failures) = self.check_function(suggestion, expr)? {
                 // We're explicitly removing name mismatches, as they should
                 // not have matching names in suggested methods.

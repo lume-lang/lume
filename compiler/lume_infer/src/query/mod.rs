@@ -80,9 +80,9 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
             lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs),
-            lume_hir::ExpressionKind::StaticCall(call) => Ok(self.lookup_callable_static(call)?.return_type().clone()),
+            lume_hir::ExpressionKind::StaticCall(call) => Ok(self.probe_callable_static(call)?.return_type().clone()),
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                let callable = self.lookup_callable_instance(call)?;
+                let callable = self.probe_callable_instance(call)?;
 
                 Ok(callable.return_type().clone())
             }
@@ -153,18 +153,40 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
+            lume_hir::StatementKind::If(cond) => self.type_of_if_conditional(cond),
+            lume_hir::StatementKind::Unless(cond) => self.type_of_unless_conditional(cond),
             lume_hir::StatementKind::Variable(var) => self.type_of_vardecl(var),
+            lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void()),
         }
     }
 
+    /// Returns the *type* of the given [`lume_hir::If`] statement.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
+        let primary_case = cond.cases.first().unwrap();
+
+        self.type_of_condition(primary_case)
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Unless`] statement.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_unless_conditional(&self, cond: &lume_hir::Unless) -> Result<TypeRef> {
+        let primary_case = cond.cases.first().unwrap();
+
+        self.type_of_condition(primary_case)
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Condition`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_condition(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
+        self.type_of_block(&cond.block)
+    }
+
     /// Returns the *type* of the given [`lume_hir::VariableDeclaration`].
-    ///
-    /// # Panics
-    ///
-    /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
@@ -175,6 +197,36 @@ impl TyInferCtx {
         } else {
             self.type_of_expr(&stmt.value)
         }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Return`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_return(&self, stmt: &lume_hir::Return) -> Result<TypeRef> {
+        if let Some(expr) = &stmt.value {
+            self.type_of_expr(expr)
+        } else {
+            Ok(TypeRef::void())
+        }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Block`]. The type of the block
+    /// is determined by the inferred type of the last expression in the block, or [`TypeRef::void()`]
+    /// if no return statement is present.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_block(&self, block: &lume_hir::Block) -> Result<TypeRef> {
+        let Some(last_statement) = block.statements.last() else {
+            return Ok(TypeRef::void());
+        };
+
+        self.type_of_stmt(last_statement)
     }
 
     /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].

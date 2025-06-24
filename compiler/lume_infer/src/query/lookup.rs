@@ -46,10 +46,7 @@ impl TyInferCtx {
     /// Folds all the functions which could be suggested from the given call expression
     /// into a single, emittable error message.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    pub(crate) fn fold_function_suggestions<'a>(
-        &self,
-        expr: &lume_hir::StaticCall,
-    ) -> Result<diagnostics::MissingFunction> {
+    fn fold_function_suggestions<'a>(&self, expr: &lume_hir::StaticCall) -> Result<diagnostics::MissingFunction> {
         let suggestion: Option<Result<error_snippet::Error>> =
             self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
                 let function_name = suggestion.name.clone();
@@ -79,10 +76,7 @@ impl TyInferCtx {
     /// Folds all the methods which could be suggested from the given call expression
     /// into a single, emittable error message.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    pub(crate) fn fold_method_suggestions<'a>(
-        &self,
-        expr: &lume_hir::CallExpression,
-    ) -> Result<diagnostics::MissingMethod> {
+    fn fold_method_suggestions<'a>(&self, expr: &lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
         let name = match expr {
             lume_hir::CallExpression::Static(call) => &call.name.name,
             lume_hir::CallExpression::Instanced(call) => &call.name,
@@ -156,7 +150,7 @@ impl TyInferCtx {
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn lookup_functions_unchecked(&self, name: &SymbolName) -> Vec<&'_ Function> {
+    pub fn probe_functions(&self, name: &SymbolName) -> Vec<&'_ Function> {
         self.tdb().functions().filter(|func| &func.name == name).collect()
     }
 
@@ -165,7 +159,7 @@ impl TyInferCtx {
     /// Functions returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn lookup_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
+    pub fn probe_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
         match &expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
                 let callee_type = self.type_of(call.callee.id)?;
@@ -192,7 +186,7 @@ impl TyInferCtx {
 
                     Ok(Callable::Method(method))
                 } else {
-                    let functions = self.lookup_functions_unchecked(&call.name);
+                    let functions = self.probe_functions(&call.name);
 
                     let Some(function) = functions.first() else {
                         let missing_func_err = self.fold_function_suggestions(call)?;
@@ -216,8 +210,8 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For a static callable
     /// lookup, see [`TyInferCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
-        self.lookup_callable(&lume_hir::CallExpression::Instanced(call))
+    pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
+        self.probe_callable(&lume_hir::CallExpression::Instanced(call))
     }
 
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
@@ -230,8 +224,8 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For an instance callable
     /// lookup, see [`TyInferCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
-        self.lookup_callable(&lume_hir::CallExpression::Static(call))
+    pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
+        self.probe_callable(&lume_hir::CallExpression::Static(call))
     }
 
     /// Returns all the methods defined directly within the given type.
