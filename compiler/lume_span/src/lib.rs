@@ -5,15 +5,16 @@
 
 pub mod id;
 
+use std::fmt::Display;
 use std::hash::Hash;
-use std::ops::Range;
+use std::ops::{Deref, Range};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock, RwLock};
 
 use error_snippet::Result;
 use error_snippet_derive::Diagnostic;
 use fxhash::hash64;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 
 pub use id::*;
 
@@ -28,6 +29,106 @@ pub use id::*;
 pub fn hash_id<T: Hash + ?Sized>(id: &T) -> u64 {
     hash64(id)
 }
+
+#[derive(PartialEq, Eq)]
+pub struct Interned<T: ?Sized>(usize, std::marker::PhantomData<T>);
+
+impl<T: ?Sized> Clone for Interned<T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T: ?Sized> Copy for Interned<T> {}
+
+impl<T: Clone + Hash + Eq + 'static> Interned<T> {
+    pub fn get(&self, interner: &'static Interner<T>) -> &'static T {
+        interner.get(*self)
+    }
+}
+
+impl Interned<str> {
+    pub fn as_str(&self) -> &'static str {
+        Interner::<str>::with(|interner| interner.get(*self))
+    }
+}
+
+impl Deref for Interned<str> {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        Interner::<str>::with(|interner| interner.get(*self))
+    }
+}
+
+impl Display for Interned<str> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
+    }
+}
+
+pub struct Interner<T: Hash + Eq + ?Sized + 'static> {
+    strings: RwLock<IndexSet<&'static T>>,
+}
+
+impl<T> Interner<T>
+where
+    T: Hash + Eq + ?Sized + 'static,
+{
+    /// Creates a new lazy-locked [`Interner`], which can be used to create
+    /// static instances of [`Interner`].
+    const fn new_locked() -> LazyLock<Interner<T>> {
+        LazyLock::new(|| Self {
+            strings: RwLock::new(IndexSet::new()),
+        })
+    }
+
+    /// Gets an interned string from the interner.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal lock is poisoned or if the given index is invalid.
+    pub fn get(&self, interned: Interned<T>) -> &'static T {
+        self.strings.read().unwrap().get_index(interned.0).unwrap()
+    }
+}
+
+impl<T> Interner<T>
+where
+    T: Hash + Eq + Clone + 'static,
+{
+    /// Interns the given string so it can be referenced multiple times without
+    /// duplicating the string data.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal lock is poisoned or multiple threads are trying to
+    /// access the lock simultaneously.
+    #[inline]
+    pub fn intern(&self, val: &T) -> Interned<T> {
+        let mut strings = self.strings.write().unwrap();
+        if let Some(idx) = strings.get_index_of(val) {
+            return Interned(idx, std::marker::PhantomData);
+        }
+
+        let leaked: &'static T = Box::leak(Box::new(val.clone()));
+        let (idx, _) = strings.insert_full(leaked);
+
+        Interned(idx, std::marker::PhantomData)
+    }
+}
+
+impl Interner<str> {
+    /// Invokes some functionality on the global [`Interner`] instance.
+    pub fn with<R, F>(f: F) -> R
+    where
+        F: FnOnce(&'static Interner<str>) -> R,
+    {
+        f(&SYMBOL_INTERNER)
+    }
+}
+
+static SYMBOL_INTERNER: LazyLock<Interner<str>> = Interner::<str>::new_locked();
 
 #[derive(Hash, Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
@@ -217,6 +318,18 @@ impl std::hash::Hash for Location {
         self.index.hash(state);
     }
 }
+
+impl Interner<Location> {
+    /// Invokes some functionality on the global [`Interner`] instance.
+    pub fn with<R, F>(f: F) -> R
+    where
+        F: FnOnce(&'static Interner<Location>) -> R,
+    {
+        f(&LOCATION_INTERNER)
+    }
+}
+
+static LOCATION_INTERNER: LazyLock<Interner<Location>> = Interner::<Location>::new_locked();
 
 #[derive(Debug, Diagnostic)]
 #[diagnostic(message = "could not find source file with ID {id:?}")]
