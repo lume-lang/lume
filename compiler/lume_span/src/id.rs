@@ -1,7 +1,7 @@
 /// Uniquely identifies some definition or value, independently of
 /// the parent package or item.
 #[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct Idx(u64);
+pub struct Idx(usize);
 
 impl Idx {
     /// Creates a new [`Idx`] without a unique ID.
@@ -19,28 +19,28 @@ impl Idx {
         Idx(self.0 + 1)
     }
 
-    /// Gets the [`Idx`] as a value of `u64`.
+    /// Gets the [`Idx`] as a value of `usize`.
     #[inline]
-    pub const fn as_u64(self) -> u64 {
+    pub const fn as_usize(self) -> usize {
         self.0
     }
 
-    /// Creates a new [`Idx`] from the given `u64` value.
+    /// Creates a new [`Idx`] from the given `usize` value.
     #[inline]
-    pub const fn from_u64(val: u64) -> Self {
+    pub const fn from_usize(val: usize) -> Self {
         Self(val)
     }
 }
 
-impl From<u64> for Idx {
-    fn from(value: u64) -> Self {
+impl From<usize> for Idx {
+    fn from(value: usize) -> Self {
         Idx(value)
     }
 }
 
 impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
     fn from(value: &T) -> Self {
-        Idx(crate::hash64(value))
+        Idx(crate::hash_id(value))
     }
 }
 
@@ -49,7 +49,7 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
 /// Packages are identified by a unique ID, which is used to locate the package's source files.
 /// The ID is generated from the name of the package using a hash function.
 #[derive(Hash, Debug, Default, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct PackageId(u64);
+pub struct PackageId(usize);
 
 impl PackageId {
     /// Creates a new [`PackageId`] from the given name.
@@ -74,15 +74,15 @@ impl PackageId {
         Self(0)
     }
 
-    /// Gets the [`PackageId`] as a value of `u64`.
+    /// Gets the [`PackageId`] as a value of `usize`.
     #[inline]
-    pub const fn as_u64(self) -> u64 {
+    pub const fn as_usize(self) -> usize {
         self.0
     }
 
-    /// Creates a new [`PackageId`] from the given `u64` value.
+    /// Creates a new [`PackageId`] from the given `usize` value.
     #[inline]
-    pub const fn from_u64(val: u64) -> Self {
+    pub const fn from_usize(val: usize) -> Self {
         Self(val)
     }
 
@@ -95,13 +95,13 @@ impl PackageId {
 
 impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
     fn from(value: &T) -> Self {
-        PackageId(crate::hash64(value))
+        PackageId(crate::hash_id(value))
     }
 }
 
 /// Uniquely identifies a top-level item within the package [`ItemId::package`].
 #[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct ItemId(u64);
+pub struct ItemId(usize);
 
 impl ItemId {
     /// Creates a new [`ItemId`] from the given name.
@@ -119,15 +119,15 @@ impl ItemId {
         Self::from_name(name)
     }
 
-    /// Gets the [`ItemId`] as a value of `u64`.
+    /// Gets the [`ItemId`] as a value of `usize`.
     #[inline]
-    pub const fn as_u64(self) -> u64 {
+    pub const fn as_usize(self) -> usize {
         self.0
     }
 
-    /// Creates a new [`PackageId`] from the given `u64` value.
+    /// Creates a new [`PackageId`] from the given `usize` value.
     #[inline]
-    pub const fn from_u64(val: u64) -> Self {
+    pub const fn from_usize(val: usize) -> Self {
         Self(val)
     }
 
@@ -141,7 +141,7 @@ impl ItemId {
     #[inline]
     #[must_use]
     pub const fn empty() -> Self {
-        Self::from_u64(0)
+        Self::from_usize(0)
     }
 }
 

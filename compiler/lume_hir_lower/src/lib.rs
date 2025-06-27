@@ -165,10 +165,10 @@ pub struct LowerModule<'a> {
     current_item: ItemId,
 
     /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
-    local_id_counter: u64,
+    local_id_counter: usize,
 
     /// Defines the current counter for [`ItemId`] instances, which refer to implementation blocks.
-    impl_id_counter: u64,
+    impl_id_counter: usize,
 }
 
 impl<'a> LowerModule<'a> {
@@ -184,7 +184,7 @@ impl<'a> LowerModule<'a> {
             imports: HashMap::new(),
             namespace: None,
             self_type: None,
-            current_item: ItemId::from_u64(package_id.as_u64()),
+            current_item: ItemId::from_usize(package_id.as_usize()),
             local_id_counter: 0,
             impl_id_counter: 0,
         }
@@ -251,7 +251,7 @@ impl<'a> LowerModule<'a> {
         let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
         self.impl_id_counter += 1;
 
-        ItemId::from_u64(id)
+        ItemId::from_usize(id)
     }
 
     /// Generates the next [`ExpressionId`] instance in the chain.
