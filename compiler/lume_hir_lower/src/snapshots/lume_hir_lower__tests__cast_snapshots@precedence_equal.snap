@@ -121,7 +121,9 @@ description: 0 as u64 == 0;
                                 location: <internal>:9:11,
                             },
                         ),
-                        type_arguments: [],
+                        type_arguments: TypeArguments {
+                            inner: [],
+                        },
                         arguments: [
                             Expression {
                                 id: ExpressionId {

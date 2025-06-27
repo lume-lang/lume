@@ -69,7 +69,9 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [],
+                            type_arguments: TypeArguments {
+                                inner: [],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {

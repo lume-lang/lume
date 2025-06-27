@@ -26,28 +26,30 @@ Map {
                         ),
                         location: <internal>:6:9,
                     },
-                    type_parameters: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T1",
+                    type_parameters: TypeParameters {
+                        inner: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T1",
+                                    location: <internal>:10:12,
+                                },
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
                                 location: <internal>:10:12,
                             },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [],
-                            location: <internal>:10:12,
-                        },
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T2",
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T2",
+                                    location: <internal>:14:16,
+                                },
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
                                 location: <internal>:14:16,
                             },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [],
-                            location: <internal>:14:16,
-                        },
-                    ],
+                        ],
+                    },
                     methods: [],
                     location: <internal>:0:21,
                 },

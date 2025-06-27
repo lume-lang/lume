@@ -48,7 +48,9 @@ Map {
                             location: <internal>:15:19,
                         },
                         parameters: [],
-                        type_parameters: [],
+                        type_parameters: TypeParameters {
+                            inner: [],
+                        },
                         return_type: Some(
                             Type {
                                 id: ItemId(
@@ -81,7 +83,9 @@ Map {
                         location: <internal>:12:34,
                     },
                 ],
-                type_parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
                 location: <internal>:0:36,
             },
         ),

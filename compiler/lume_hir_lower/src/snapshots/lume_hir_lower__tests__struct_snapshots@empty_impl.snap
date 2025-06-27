@@ -44,7 +44,9 @@ Map {
                     location: <internal>:5:10,
                 },
                 methods: [],
-                type_parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
                 location: <internal>:0:13,
             },
         ),

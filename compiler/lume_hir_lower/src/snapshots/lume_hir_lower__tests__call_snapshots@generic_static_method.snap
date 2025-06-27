@@ -91,7 +91,9 @@ description: "let _ = Int32::<T>::call(0, 1);"
                                 ),
                                 location: <internal>:8:24,
                             },
-                            type_arguments: [],
+                            type_arguments: TypeArguments {
+                                inner: [],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {

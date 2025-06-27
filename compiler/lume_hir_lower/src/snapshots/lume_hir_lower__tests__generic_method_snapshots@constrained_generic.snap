@@ -48,40 +48,42 @@ Map {
                             location: <internal>:15:19,
                         },
                         parameters: [],
-                        type_parameters: [
-                            TypeParameter {
-                                name: Identifier {
-                                    name: "T",
-                                    location: <internal>:20:21,
-                                },
-                                type_id: None,
-                                type_param_id: None,
-                                constraints: [
-                                    Type {
-                                        id: ItemId(
-                                            6129574414018423941,
-                                        ),
-                                        name: SymbolName {
-                                            namespace: Some(
-                                                PathRoot {
-                                                    segments: [],
-                                                },
+                        type_parameters: TypeParameters {
+                            inner: [
+                                TypeParameter {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: <internal>:20:21,
+                                    },
+                                    type_id: None,
+                                    type_param_id: None,
+                                    constraints: [
+                                        Type {
+                                            id: ItemId(
+                                                6129574414018423941,
                                             ),
-                                            name: Named(
-                                                Identifier {
-                                                    name: "Numeric",
-                                                    location: <internal>:23:30,
-                                                },
-                                            ),
+                                            name: SymbolName {
+                                                namespace: Some(
+                                                    PathRoot {
+                                                        segments: [],
+                                                    },
+                                                ),
+                                                name: Named(
+                                                    Identifier {
+                                                        name: "Numeric",
+                                                        location: <internal>:23:30,
+                                                    },
+                                                ),
+                                                location: <internal>:23:30,
+                                            },
+                                            type_params: [],
                                             location: <internal>:23:30,
                                         },
-                                        type_params: [],
-                                        location: <internal>:23:30,
-                                    },
-                                ],
-                                location: <internal>:20:21,
-                            },
-                        ],
+                                    ],
+                                    location: <internal>:20:21,
+                                },
+                            ],
+                        },
                         return_type: Some(
                             Type {
                                 id: ItemId(
@@ -114,7 +116,9 @@ Map {
                         location: <internal>:12:44,
                     },
                 ],
-                type_parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
                 location: <internal>:0:46,
             },
         ),

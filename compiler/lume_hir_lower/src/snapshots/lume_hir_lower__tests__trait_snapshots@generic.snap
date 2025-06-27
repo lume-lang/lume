@@ -26,18 +26,20 @@ Map {
                         ),
                         location: <internal>:6:9,
                     },
-                    type_parameters: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T",
+                    type_parameters: TypeParameters {
+                        inner: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T",
+                                    location: <internal>:10:11,
+                                },
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
                                 location: <internal>:10:11,
                             },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [],
-                            location: <internal>:10:11,
-                        },
-                    ],
+                        ],
+                    },
                     methods: [],
                     location: <internal>:0:16,
                 },

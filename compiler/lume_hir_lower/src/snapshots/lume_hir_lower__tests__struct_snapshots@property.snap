@@ -110,7 +110,9 @@ Map {
                         },
                     ],
                     methods: [],
-                    type_parameters: [],
+                    type_parameters: TypeParameters {
+                        inner: [],
+                    },
                     location: <internal>:13:69,
                 },
             ),

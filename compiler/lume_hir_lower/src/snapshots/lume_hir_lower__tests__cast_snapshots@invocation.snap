@@ -67,7 +67,9 @@ description: call() as u64;
                                         ),
                                         location: <internal>:0:4,
                                     },
-                                    type_arguments: [],
+                                    type_arguments: TypeArguments {
+                                        inner: [],
+                                    },
                                     arguments: [],
                                 },
                             ),

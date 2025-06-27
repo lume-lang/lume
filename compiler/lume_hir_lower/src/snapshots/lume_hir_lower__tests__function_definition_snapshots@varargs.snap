@@ -64,7 +64,9 @@ Map {
                         location: <internal>:10:21,
                     },
                 ],
-                type_parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
                 return_type: None,
                 block: Some(
                     Block {

@@ -29,18 +29,20 @@ Map {
                     builtin: false,
                     properties: [],
                     methods: [],
-                    type_parameters: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T",
+                    type_parameters: TypeParameters {
+                        inner: [
+                            TypeParameter {
+                                name: Identifier {
+                                    name: "T",
+                                    location: <internal>:12:13,
+                                },
+                                type_id: None,
+                                type_param_id: None,
+                                constraints: [],
                                 location: <internal>:12:13,
                             },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [],
-                            location: <internal>:12:13,
-                        },
-                    ],
+                        ],
+                    },
                     location: <internal>:0:17,
                 },
             ),

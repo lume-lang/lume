@@ -61,7 +61,9 @@ description: let _ = call();
                                 ),
                                 location: <internal>:8:12,
                             },
-                            type_arguments: [],
+                            type_arguments: TypeArguments {
+                                inner: [],
+                            },
                             arguments: [],
                         },
                     ),

@@ -27,7 +27,9 @@ Map {
                     location: <internal>:3:9,
                 },
                 parameters: [],
-                type_parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
                 return_type: None,
                 block: Some(
                     Block {

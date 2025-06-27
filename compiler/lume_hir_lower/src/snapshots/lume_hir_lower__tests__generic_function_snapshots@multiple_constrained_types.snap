@@ -27,61 +27,63 @@ Map {
                     location: <internal>:3:7,
                 },
                 parameters: [],
-                type_parameters: [
-                    TypeParameter {
-                        name: Identifier {
-                            name: "T",
-                            location: <internal>:8:9,
-                        },
-                        type_id: None,
-                        type_param_id: None,
-                        constraints: [
-                            Type {
-                                id: ItemId(
-                                    6129574414018423941,
-                                ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
+                type_parameters: TypeParameters {
+                    inner: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: <internal>:8:9,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [
+                                Type {
+                                    id: ItemId(
+                                        6129574414018423941,
                                     ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "Numeric",
-                                            location: <internal>:11:18,
-                                        },
-                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Named(
+                                            Identifier {
+                                                name: "Numeric",
+                                                location: <internal>:11:18,
+                                            },
+                                        ),
+                                        location: <internal>:11:18,
+                                    },
+                                    type_params: [],
                                     location: <internal>:11:18,
                                 },
-                                type_params: [],
-                                location: <internal>:11:18,
-                            },
-                            Type {
-                                id: ItemId(
-                                    11032658524003341115,
-                                ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
+                                Type {
+                                    id: ItemId(
+                                        11032658524003341115,
                                     ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "Floating",
-                                            location: <internal>:21:29,
-                                        },
-                                    ),
+                                    name: SymbolName {
+                                        namespace: Some(
+                                            PathRoot {
+                                                segments: [],
+                                            },
+                                        ),
+                                        name: Named(
+                                            Identifier {
+                                                name: "Floating",
+                                                location: <internal>:21:29,
+                                            },
+                                        ),
+                                        location: <internal>:21:29,
+                                    },
+                                    type_params: [],
                                     location: <internal>:21:29,
                                 },
-                                type_params: [],
-                                location: <internal>:21:29,
-                            },
-                        ],
-                        location: <internal>:8:9,
-                    },
-                ],
+                            ],
+                            location: <internal>:8:9,
+                        },
+                    ],
+                },
                 return_type: Some(
                     Type {
                         id: ItemId(

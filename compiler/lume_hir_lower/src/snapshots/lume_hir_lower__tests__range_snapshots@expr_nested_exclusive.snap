@@ -206,11 +206,13 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [
-                                Implicit {
-                                    location: <internal>:0:0,
-                                },
-                            ],
+                            type_arguments: TypeArguments {
+                                inner: [
+                                    Implicit {
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
@@ -274,7 +276,9 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     location: <internal>:59:60,
                                                 },
                                             ),
-                                            type_arguments: [],
+                                            type_arguments: TypeArguments {
+                                                inner: [],
+                                            },
                                             arguments: [
                                                 Expression {
                                                     id: ExpressionId {
@@ -398,7 +402,9 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                 location: <internal>:68:69,
                                                             },
                                                         ),
-                                                        type_arguments: [],
+                                                        type_arguments: TypeArguments {
+                                                            inner: [],
+                                                        },
                                                         arguments: [
                                                             Expression {
                                                                 id: ExpressionId {
@@ -446,7 +452,9 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     location: <internal>:72:73,
                                                 },
                                             ),
-                                            type_arguments: [],
+                                            type_arguments: TypeArguments {
+                                                inner: [],
+                                            },
                                             arguments: [
                                                 Expression {
                                                     id: ExpressionId {

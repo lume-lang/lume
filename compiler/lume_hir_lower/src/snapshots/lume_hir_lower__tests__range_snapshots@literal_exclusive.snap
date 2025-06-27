@@ -74,11 +74,13 @@ description: let _ = (0..1);
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [
-                                Implicit {
-                                    location: <internal>:0:0,
-                                },
-                            ],
+                            type_arguments: TypeArguments {
+                                inner: [
+                                    Implicit {
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {

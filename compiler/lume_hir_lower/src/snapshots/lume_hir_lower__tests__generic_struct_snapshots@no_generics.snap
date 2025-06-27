@@ -29,7 +29,9 @@ Map {
                     builtin: false,
                     properties: [],
                     methods: [],
-                    type_parameters: [],
+                    type_parameters: TypeParameters {
+                        inner: [],
+                    },
                     location: <internal>:0:14,
                 },
             ),

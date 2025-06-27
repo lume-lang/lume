@@ -91,32 +91,34 @@ description: "let _ = 1.call::<T>(0, 1);"
                                     location: <internal>:10:14,
                                 },
                             ),
-                            type_arguments: [
-                                Named {
-                                    ty: Type {
-                                        id: ItemId(
-                                            10382560105972960337,
-                                        ),
-                                        name: SymbolName {
-                                            namespace: Some(
-                                                PathRoot {
-                                                    segments: [],
-                                                },
+                            type_arguments: TypeArguments {
+                                inner: [
+                                    Named {
+                                        ty: Type {
+                                            id: ItemId(
+                                                10382560105972960337,
                                             ),
-                                            name: Named(
-                                                Identifier {
-                                                    name: "T",
-                                                    location: <internal>:17:18,
-                                                },
-                                            ),
+                                            name: SymbolName {
+                                                namespace: Some(
+                                                    PathRoot {
+                                                        segments: [],
+                                                    },
+                                                ),
+                                                name: Named(
+                                                    Identifier {
+                                                        name: "T",
+                                                        location: <internal>:17:18,
+                                                    },
+                                                ),
+                                                location: <internal>:17:18,
+                                            },
+                                            type_params: [],
                                             location: <internal>:17:18,
                                         },
-                                        type_params: [],
                                         location: <internal>:17:18,
                                     },
-                                    location: <internal>:17:18,
-                                },
-                            ],
+                                ],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {

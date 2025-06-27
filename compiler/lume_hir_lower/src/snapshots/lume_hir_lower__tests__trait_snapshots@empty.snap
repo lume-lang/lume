@@ -26,7 +26,9 @@ Map {
                         ),
                         location: <internal>:6:9,
                     },
-                    type_parameters: [],
+                    type_parameters: TypeParameters {
+                        inner: [],
+                    },
                     methods: [],
                     location: <internal>:0:13,
                 },

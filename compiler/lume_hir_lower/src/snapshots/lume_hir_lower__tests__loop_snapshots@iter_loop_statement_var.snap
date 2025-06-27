@@ -74,7 +74,9 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                 ),
                                 location: <internal>:0:0,
                             },
-                            type_arguments: [],
+                            type_arguments: TypeArguments {
+                                inner: [],
+                            },
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
