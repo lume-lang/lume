@@ -15,6 +15,19 @@ use indexmap::IndexMap;
 
 use crate::hash_id;
 
+pub trait Internable
+where
+    Self: Sized,
+{
+    fn intern(&self) -> Interned<Self>;
+}
+
+impl<T: Clone + Hash + Eq + Send + Sync + 'static> Internable for T {
+    fn intern(&self) -> Interned<Self> {
+        Interner::with(|interner| interner.intern(self))
+    }
+}
+
 #[derive(PartialEq, Eq)]
 pub struct Interned<T>(usize, std::marker::PhantomData<T>);
 
@@ -64,6 +77,18 @@ impl<T: Ord + 'static> Ord for Interned<T> {
     }
 }
 
+impl<T: Hash + 'static> Hash for Interned<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        Interned::<T>::deref(self).hash(state);
+    }
+}
+
+impl<T: AsRef<U> + 'static, U: ?Sized> AsRef<U> for Interned<T> {
+    fn as_ref(&self) -> &U {
+        Interned::<T>::deref(self).as_ref()
+    }
+}
+
 unsafe impl<T> Send for Interned<T> {}
 unsafe impl<T> Sync for Interned<T> {}
 
@@ -88,6 +113,16 @@ impl Interner {
             #[cfg(debug_assertions)]
             types: RwLock::new(IndexMap::new()),
         })
+    }
+
+    /// Retrieves the amount of interned instances within the global
+    /// [`Interner`] instance.
+    #[inline]
+    pub fn count() -> usize {
+        match CURRENT_INTERNER.container.read() {
+            Ok(container) => container.len(),
+            Err(_) => 0,
+        }
     }
 
     /// Interns the given instance so it can be referenced multiple times without
@@ -186,7 +221,7 @@ pub static CURRENT_INTERNER: LazyLock<Interner> = Interner::new_locked();
 #[cfg(test)]
 #[allow(clippy::borrow_as_ptr, clippy::ref_as_ptr, reason = "used for reference checking")]
 mod tests {
-    use crate::Location;
+    use crate::source::Location;
 
     use super::*;
 

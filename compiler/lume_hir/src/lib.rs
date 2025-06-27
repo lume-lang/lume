@@ -157,7 +157,7 @@ impl SymbolName {
         Self {
             namespace: Some(namespace),
             name,
-            location: base.location.clone(),
+            location: base.location,
         }
     }
 
@@ -251,8 +251,8 @@ impl PathSegment {
     }
 
     #[inline]
-    pub fn location(&self) -> &Location {
-        &self.identifier().location
+    pub fn location(&self) -> Location {
+        self.identifier().location
     }
 }
 
@@ -365,7 +365,7 @@ pub trait WithTypeParameters {
 
 /// Trait for HIR nodes which have some location attached.
 pub trait Node {
-    fn location(&self) -> &Location;
+    fn location(&self) -> Location;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -496,11 +496,11 @@ impl Def<'_> {
         }
     }
 
-    pub fn location(&self) -> &Location {
+    pub fn location(&self) -> Location {
         match self {
             Def::Item(def) => def.location(),
-            Def::Statement(def) => &def.location,
-            Def::Expression(def) => &def.location,
+            Def::Statement(def) => def.location,
+            Def::Expression(def) => def.location,
         }
     }
 }
@@ -1359,9 +1359,9 @@ impl TypeArgument {
 }
 
 impl Node for TypeArgument {
-    fn location(&self) -> &Location {
+    fn location(&self) -> Location {
         match self {
-            TypeArgument::Named { location, .. } | TypeArgument::Implicit { location } => location,
+            TypeArgument::Named { location, .. } | TypeArgument::Implicit { location } => *location,
         }
     }
 }

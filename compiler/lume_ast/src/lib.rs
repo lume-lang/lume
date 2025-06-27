@@ -1,7 +1,16 @@
-use lume_macros::Node;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Location(pub std::ops::Range<usize>);
+
+macro_rules! node_location {
+    ($name:ident) => {
+        impl Node for $name {
+            #[inline]
+            fn location(&self) -> &Location {
+                &self.location
+            }
+        }
+    };
+}
 
 impl Location {
     #[inline]
@@ -39,11 +48,13 @@ pub trait Node {
     fn location(&self) -> &Location;
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
 }
+
+node_location!(Identifier);
 
 impl Identifier {
     #[must_use]
@@ -97,11 +108,13 @@ impl PartialEq for Identifier {
     }
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct ImportPath {
     pub path: Vec<Identifier>,
     pub location: Location,
 }
+
+node_location!(ImportPath);
 
 impl ImportPath {
     #[must_use]
@@ -154,11 +167,13 @@ impl PartialEq for ImportPath {
     }
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct NamespacePath {
     pub path: Vec<Identifier>,
     pub location: Location,
 }
+
+node_location!(NamespacePath);
 
 impl NamespacePath {
     #[must_use]
@@ -211,12 +226,14 @@ impl PartialEq for NamespacePath {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PathSegment {
     pub name: Identifier,
     pub type_arguments: Vec<Type>,
     pub location: Location,
 }
+
+node_location!(PathSegment);
 
 impl<T: Into<Identifier>> From<T> for PathSegment {
     fn from(name: T) -> PathSegment {
@@ -236,12 +253,14 @@ impl std::fmt::Display for PathSegment {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Path {
     pub root: Vec<PathSegment>,
     pub name: PathSegment,
     pub location: Location,
 }
+
+node_location!(Path);
 
 impl Path {
     #[must_use]
@@ -285,11 +304,13 @@ impl std::fmt::Display for Path {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
     pub location: Location,
 }
+
+node_location!(Block);
 
 impl Block {
     pub fn from_location(location: impl Into<Location>) -> Self {
@@ -300,7 +321,7 @@ impl Block {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
@@ -308,23 +329,39 @@ pub struct Parameter {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Parameter);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Visibility {
     Public(Box<Public>),
     Private(Box<Private>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+impl Node for Visibility {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Public(e) => &e.location,
+            Self::Private(e) => &e.location,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Public {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Public);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Private {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Private);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TopLevelExpression {
     Import(Box<Import>),
     Namespace(Box<Namespace>),
@@ -334,12 +371,28 @@ pub enum TopLevelExpression {
     Use(Box<UseTrait>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+impl Node for TopLevelExpression {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Import(e) => &e.location,
+            Self::Namespace(e) => &e.location,
+            Self::FunctionDefinition(e) => &e.location,
+            Self::TypeDefinition(e) => e.location(),
+            Self::Impl(e) => &e.location,
+            Self::Use(e) => &e.location,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Import {
     pub path: ImportPath,
     pub names: Vec<Identifier>,
     pub location: Location,
 }
+
+node_location!(Import);
 
 impl Import {
     #[must_use]
@@ -376,13 +429,15 @@ impl Import {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Namespace {
     pub path: ImportPath,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Namespace);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -395,7 +450,9 @@ pub struct FunctionDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(FunctionDefinition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
@@ -403,7 +460,20 @@ pub enum TypeDefinition {
     Alias(Box<AliasDefinition>),
 }
 
+impl Node for TypeDefinition {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Struct(e) => &e.location,
+            Self::Trait(e) => &e.location,
+            Self::Enum(e) => &e.location,
+            Self::Alias(e) => &e.location,
+        }
+    }
+}
+
 impl TypeDefinition {
+    #[inline]
     #[must_use]
     pub fn name(&self) -> &Identifier {
         match self {
@@ -415,7 +485,7 @@ impl TypeDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub name: Identifier,
     pub builtin: bool,
@@ -425,7 +495,9 @@ pub struct StructDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(StructDefinition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Property {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -435,7 +507,9 @@ pub struct Property {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Property);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub visibility: Visibility,
     pub external: bool,
@@ -448,7 +522,9 @@ pub struct MethodDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(MethodDefinition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,
@@ -457,7 +533,9 @@ pub struct TraitDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(TraitDefinition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -469,7 +547,9 @@ pub struct TraitMethodDefinition {
     pub documentation: Option<String>,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(TraitMethodDefinition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
@@ -477,13 +557,15 @@ pub struct EnumDefinition {
     pub documentation: Option<String>,
 }
 
+node_location!(EnumDefinition);
+
 impl std::fmt::Display for EnumDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub name: Identifier,
     pub parameters: Vec<Box<Type>>,
@@ -491,13 +573,15 @@ pub struct EnumDefinitionCase {
     pub documentation: Option<String>,
 }
 
+node_location!(EnumDefinitionCase);
+
 impl std::fmt::Display for EnumDefinitionCase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AliasDefinition {
     pub name: Identifier,
     pub definition: Box<Type>,
@@ -505,13 +589,15 @@ pub struct AliasDefinition {
     pub documentation: Option<String>,
 }
 
+node_location!(AliasDefinition);
+
 impl std::fmt::Display for AliasDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.name.to_string())
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub visibility: Visibility,
     pub name: Box<Type>,
@@ -520,7 +606,9 @@ pub struct Implementation {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Implementation);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct UseTrait {
     pub name: Box<Type>,
     pub target: Box<Type>,
@@ -529,7 +617,9 @@ pub struct UseTrait {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(UseTrait);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub visibility: Visibility,
     pub name: Identifier,
@@ -540,7 +630,9 @@ pub struct TraitMethodImplementation {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(TraitMethodImplementation);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
     Break(Box<Break>),
@@ -554,7 +646,25 @@ pub enum Statement {
     Expression(Box<Expression>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+impl Node for Statement {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::VariableDeclaration(e) => &e.location,
+            Self::Break(e) => &e.location,
+            Self::Continue(e) => &e.location,
+            Self::Return(e) => &e.location,
+            Self::If(e) => &e.location,
+            Self::Unless(e) => &e.location,
+            Self::InfiniteLoop(e) => &e.location,
+            Self::IteratorLoop(e) => &e.location,
+            Self::PredicateLoop(e) => &e.location,
+            Self::Expression(e) => e.location(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
@@ -562,48 +672,64 @@ pub struct VariableDeclaration {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(VariableDeclaration);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Break {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Break);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Continue {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Continue);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Return {
     pub value: Option<Expression>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Return);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct IfCondition {
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(IfCondition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct UnlessCondition {
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(UnlessCondition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Condition {
     pub condition: Option<Expression>,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Condition);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(InfiniteLoop);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub pattern: Identifier,
     pub collection: Expression,
@@ -611,14 +737,18 @@ pub struct IteratorLoop {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(IteratorLoop);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct PredicateLoop {
     pub condition: Expression,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(PredicateLoop);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
@@ -632,18 +762,40 @@ pub enum Expression {
     Variable(Box<Variable>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+impl Node for Expression {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Array(e) => &e.location,
+            Self::Assignment(e) => &e.location,
+            Self::Binary(e) => &e.location,
+            Self::Call(e) => &e.location,
+            Self::Cast(e) => &e.location,
+            Self::Literal(e) => e.location(),
+            Self::Logical(e) => &e.location,
+            Self::Member(e) => &e.location,
+            Self::Range(e) => &e.location,
+            Self::Variable(e) => e.location(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Array {
     pub values: Vec<Expression>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Array);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub target: Expression,
     pub value: Expression,
     pub location: Location,
 }
+
+node_location!(Assignment);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorKind {
@@ -652,13 +804,15 @@ pub enum BinaryOperatorKind {
     Xor,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(BinaryOperator);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Binary {
     pub lhs: Expression,
     pub op: BinaryOperator,
@@ -666,7 +820,9 @@ pub struct Binary {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Binary);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Call {
     pub callee: Option<Expression>,
     pub name: Path,
@@ -675,14 +831,18 @@ pub struct Call {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Call);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Cast {
     pub source: Expression,
     pub target_type: Type,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Cast);
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Literal {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -690,12 +850,26 @@ pub enum Literal {
     Boolean(Box<BooleanLiteral>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+impl Node for Literal {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Int(e) => &e.location,
+            Self::Float(e) => &e.location,
+            Self::String(e) => &e.location,
+            Self::Boolean(e) => &e.location,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct IntLiteral {
     pub value: i64,
     pub location: Location,
     pub kind: IntKind,
 }
+
+node_location!(IntLiteral);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IntKind {
@@ -709,12 +883,14 @@ pub enum IntKind {
     U64,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
     pub value: f64,
     pub location: Location,
     pub kind: FloatKind,
 }
+
+node_location!(FloatLiteral);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FloatKind {
@@ -722,17 +898,21 @@ pub enum FloatKind {
     F64,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StringLiteral {
     pub value: String,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(StringLiteral);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
     pub value: bool,
     pub location: Location,
 }
+
+node_location!(BooleanLiteral);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LogicalOperatorKind {
@@ -740,13 +920,15 @@ pub enum LogicalOperatorKind {
     Or,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct LogicalOperator {
     pub kind: LogicalOperatorKind,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(LogicalOperator);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Logical {
     pub lhs: Expression,
     pub op: LogicalOperator,
@@ -754,20 +936,26 @@ pub struct Logical {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Logical);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Member {
     pub callee: Expression,
     pub name: String,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+node_location!(Member);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Range {
     pub lower: Expression,
     pub upper: Expression,
     pub inclusive: bool,
     pub location: Location,
 }
+
+node_location!(Range);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Variable {
@@ -803,11 +991,22 @@ impl Node for TypeArgument {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Named(Box<NamedType>),
     Array(Box<ArrayType>),
     SelfType(Box<SelfType>),
+}
+
+impl Node for Type {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Named(e) => e.location(),
+            Self::Array(e) => &e.location,
+            Self::SelfType(e) => &e.location,
+        }
+    }
 }
 
 impl Type {
@@ -858,11 +1057,13 @@ impl std::fmt::Display for NamedType {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
     pub location: Location,
 }
+
+node_location!(ArrayType);
 
 impl std::fmt::Display for ArrayType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -870,10 +1071,12 @@ impl std::fmt::Display for ArrayType {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SelfType {
     pub location: Location,
 }
+
+node_location!(SelfType);
 
 impl std::fmt::Display for SelfType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

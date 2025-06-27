@@ -4,9 +4,6 @@ version.workspace = true
 edition = "2024"
 rust-version.workspace = true
 
-[dependencies]
-lume_macros = { path = "../lume_macros" }
-
 [dev-dependencies]
 insta = { version = "1.42.2", features = ["yaml"] }
 

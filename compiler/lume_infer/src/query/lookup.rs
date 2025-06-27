@@ -96,7 +96,7 @@ impl TyInferCtx {
                 let method_name = suggestion.name.clone();
 
                 Ok(diagnostics::SuggestedMethod {
-                    source: method_name.location.clone(),
+                    source: method_name.location,
                     method_name: method_name.name,
                     type_name: self.new_named_type(&callee_type)?,
                 }
@@ -110,7 +110,7 @@ impl TyInferCtx {
         };
 
         Ok(diagnostics::MissingMethod {
-            source: name.location().clone(),
+            source: name.location(),
             type_name: self.new_named_type(&callee_type)?,
             method_name: name.identifier().clone(),
             suggestions,

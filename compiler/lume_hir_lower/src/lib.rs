@@ -8,7 +8,7 @@ use lume_hir::{Identifier, PathRoot, SymbolName, map::Map};
 use lume_hir::{Path, PathSegment, symbols::*};
 use lume_parser::Parser;
 use lume_session::Package;
-use lume_span::{ExpressionId, ItemId, Location, SourceFile, SourceMap, StatementId, hash_id};
+use lume_span::{ExpressionId, Internable, ItemId, Location, SourceFile, SourceMap, StatementId, hash_id};
 
 mod errors;
 
@@ -64,7 +64,7 @@ macro_rules! err {
     ) => {
         $kind {
             source: $self.file.clone(),
-            range: $location.index,
+            range: $location.index.clone(),
             $( $field: $value ),*
         }
         .into()
@@ -385,10 +385,11 @@ impl<'a> LowerModule<'a> {
     }
 
     fn location(&self, expr: ast::Location) -> Location {
-        Location {
+        lume_span::source::Location {
             file: self.file.clone(),
             index: expr.0,
         }
+        .intern()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]

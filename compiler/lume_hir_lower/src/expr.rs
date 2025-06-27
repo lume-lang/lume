@@ -61,7 +61,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
@@ -102,7 +102,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Binary(Box::new(hir::Binary {
                 id,
                 lhs,
@@ -166,7 +166,7 @@ impl LowerModule<'_> {
 
         hir::Expression {
             id: literal.id,
-            location: literal.location.clone(),
+            location: literal.location,
             kind: hir::ExpressionKind::Literal(Box::new(literal)),
         }
     }
@@ -187,7 +187,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Logical(Box::new(hir::Logical {
                 id,
                 lhs,
@@ -209,7 +209,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Member(Box::new(hir::Member {
                 id,
                 callee,
@@ -260,7 +260,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Expression {
             id,
-            location: location.clone(),
+            location,
             kind: hir::ExpressionKind::Variable(Box::new(hir::Variable {
                 id,
                 reference: local_id.id,

@@ -50,8 +50,8 @@ impl TyCheckCtx {
             // void => value OR value => void
             (false, true) | (true, false) => {
                 return Err(errors::MismatchedTypes {
-                    reason_loc: to.location.clone(),
-                    found_loc: from.location.clone(),
+                    reason_loc: to.location,
+                    found_loc: from.location,
                     expected: self.infer.new_named_type(to)?,
                     found: self.infer.new_named_type(from)?,
                 }
@@ -73,7 +73,7 @@ impl TyCheckCtx {
             }
 
             return Err(errors::TraitNotImplemented {
-                location: from.location.clone(),
+                location: from.location,
                 trait_name: self.infer.new_named_type(from)?,
                 type_name: self.infer.new_named_type(to)?,
             }
@@ -93,8 +93,8 @@ impl TyCheckCtx {
         }
 
         Err(errors::MismatchedTypes {
-            reason_loc: to.location.clone(),
-            found_loc: from.location.clone(),
+            reason_loc: to.location,
+            found_loc: from.location,
             expected: self.infer.new_named_type(to)?,
             found: self.infer.new_named_type(from)?,
         }

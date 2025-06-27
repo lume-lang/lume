@@ -194,12 +194,8 @@ impl TyInferCtx {
             return Ok(lume_types::TypeRef::void());
         }
 
-        let location = self.hir_expect_def(def).location().clone();
+        let location = self.hir_expect_def(def).location();
 
-        Err(diagnostics::NoReturningAncestor {
-            source: location.file,
-            range: location.index,
-        }
-        .into())
+        Err(diagnostics::NoReturningAncestor { source: location }.into())
     }
 }

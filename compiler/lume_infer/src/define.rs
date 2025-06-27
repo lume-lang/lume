@@ -169,14 +169,14 @@ impl TyInferCtx {
 
     fn define_trait_def_methods(&mut self, trait_def: &mut lume_hir::TraitDefinition) -> Result<()> {
         let type_id = trait_def.type_id.unwrap();
-        let type_ref = TypeRef::new(type_id, trait_def.location.clone());
+        let type_ref = TypeRef::new(type_id, trait_def.location);
 
         for method in &mut trait_def.methods {
             let method_name = method.name.clone();
             let mut qualified_name =
                 SymbolName::with_root(trait_def.name.clone(), PathSegment::Named(method_name.clone()));
 
-            qualified_name.location = method_name.location.clone();
+            qualified_name.location = method_name.location;
 
             let method_id = self
                 .tdb_mut()
@@ -196,7 +196,7 @@ impl TyInferCtx {
             let mut qualified_name =
                 SymbolName::with_root(trait_impl.target.name.clone(), PathSegment::Named(method_name.clone()));
 
-            qualified_name.location = method_name.location.clone();
+            qualified_name.location = method_name.location;
 
             let method_id = self
                 .tdb_mut()
@@ -310,7 +310,7 @@ impl TyInferCtx {
                 PathSegment::Named(method_name.clone()),
             );
 
-            qualified_name.location = method_name.location.clone();
+            qualified_name.location = method_name.location;
 
             let method_id = self
                 .tdb_mut()

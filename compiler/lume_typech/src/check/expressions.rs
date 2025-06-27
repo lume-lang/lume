@@ -137,8 +137,8 @@ impl TyCheckCtx {
             let declared_type = stmt.declared_type.clone().unwrap();
 
             return Err(MismatchedTypes {
-                found_loc: stmt.value.location.clone(),
-                reason_loc: declared_type.location.clone(),
+                found_loc: stmt.value.location,
+                reason_loc: declared_type.location,
                 expected: self.new_named_type(&resolved_type)?,
                 found: self.new_named_type(&value_expr)?,
             }
@@ -169,13 +169,13 @@ impl TyCheckCtx {
 
         if !self.check_type_compatibility(&actual, &expected)? {
             let found_loc = match &stmt.value {
-                Some(val) => &val.location,
-                None => &self.hir_expect_stmt(stmt.id).location,
+                Some(val) => val.location,
+                None => self.hir_expect_stmt(stmt.id).location,
             };
 
             return Err(MismatchedTypes {
-                found_loc: found_loc.clone(),
-                reason_loc: expected.location.clone(),
+                found_loc,
+                reason_loc: expected.location,
                 expected: self.new_named_type(&expected)?,
                 found: self.new_named_type(&actual)?,
             }
@@ -221,9 +221,9 @@ impl TyCheckCtx {
         //       These types MUST be the same.
         if lhs != rhs {
             return Err(NonMatchingBinaryOp {
-                source: expr.location.clone(),
-                lhs: lhs.location.clone(),
-                rhs: rhs.location.clone(),
+                source: expr.location,
+                lhs: lhs.location,
+                rhs: rhs.location,
                 lhs_ty: self.new_named_type(&lhs)?.to_string(),
                 rhs_ty: self.new_named_type(&rhs)?.to_string(),
             }
@@ -253,7 +253,7 @@ impl TyCheckCtx {
 
         // Resolve the `Cast` type from the type context
         let cast_ref = self.find_type_ref(&lume_hir::SymbolName::cast())?.unwrap();
-        let mut cast_trait = TypeRef::new(cast_ref.instance_of, cast_ref.location.clone());
+        let mut cast_trait = TypeRef::new(cast_ref.instance_of, cast_ref.location);
 
         cast_trait.type_arguments.push(dest_type);
 
@@ -287,7 +287,7 @@ impl TyCheckCtx {
 
         if self.type_ref_name(&lhs)? != &SymbolName::boolean() {
             return Err(BooleanOperationOnNonBoolean {
-                source: expr.lhs.location.clone(),
+                source: expr.lhs.location,
                 expected: SymbolName::boolean().to_string(),
                 found: self.new_named_type(&lhs)?.to_string(),
             }
@@ -296,7 +296,7 @@ impl TyCheckCtx {
 
         if self.type_ref_name(&rhs)? != &SymbolName::boolean() {
             return Err(BooleanOperationOnNonBoolean {
-                source: expr.rhs.location.clone(),
+                source: expr.rhs.location,
                 expected: SymbolName::boolean().to_string(),
                 found: self.new_named_type(&rhs)?.to_string(),
             }

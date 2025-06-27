@@ -64,9 +64,6 @@ pub struct SuggestedFunction {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find returning ancestor", code = "LM4216")]
 pub struct NoReturningAncestor {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("expected returning ancestor, found None")]
-    pub range: Range<usize>,
+    #[label(source, "expected returning ancestor, found None")]
+    pub source: Location,
 }

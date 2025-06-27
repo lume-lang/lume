@@ -148,7 +148,7 @@ impl TyInferCtx {
             return Err(self.missing_type_err(ty));
         };
 
-        let mut type_ref = TypeRef::new(found_type, ty.location.clone());
+        let mut type_ref = TypeRef::new(found_type, ty.location);
 
         for type_param in &ty.type_params {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
@@ -186,7 +186,7 @@ impl TyInferCtx {
             return Ok(None);
         };
 
-        let location = name.location.clone();
+        let location = name.location;
 
         if let PathSegment::Typed(_, args) = &name.name {
             let args = args
@@ -224,7 +224,7 @@ impl TyInferCtx {
         }
 
         errors::MissingType {
-            source: ty.location.clone(),
+            source: ty.location,
             name: ty.name.clone(),
         }
         .into()

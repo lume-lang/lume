@@ -77,7 +77,7 @@ impl LowerModule<'_> {
 
                 hir::Statement {
                     id,
-                    location: expr.location.clone(),
+                    location: expr.location,
                     kind: hir::StatementKind::Expression(Box::new(expr)),
                 }
             }
@@ -168,7 +168,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
         })
     }
@@ -186,7 +186,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::Unless(Box::new(hir::Unless { id, cases, location })),
         })
     }
@@ -218,7 +218,7 @@ impl LowerModule<'_> {
 
         hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
         }
     }
@@ -232,7 +232,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::IteratorLoop(Box::new(hir::IteratorLoop {
                 id,
                 collection,
@@ -251,7 +251,7 @@ impl LowerModule<'_> {
 
         Ok(hir::Statement {
             id,
-            location: location.clone(),
+            location,
             kind: hir::StatementKind::PredicateLoop(Box::new(hir::PredicateLoop {
                 id,
                 condition,

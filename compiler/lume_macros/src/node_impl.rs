@@ -27,8 +27,8 @@ impl NodeImpl {
             NodeImpl::Struct(ident) => {
                 quote! {
                     impl Node for #ident {
-                        fn location(&self) -> &Location {
-                            &self.location
+                        fn location(&self) -> Location {
+                            self.location
                         }
                     }
                 }
@@ -43,7 +43,7 @@ impl NodeImpl {
 
                 quote! {
                     impl Node for #ident {
-                        fn location(&self) -> &Location {
+                        fn location(&self) -> Location {
                             match self {
                                 #(#cases),*
                             }

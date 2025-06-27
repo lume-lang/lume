@@ -80,7 +80,7 @@ impl MethodLookupError<'_> {
                 let method_name = suggestion.def.name().clone();
 
                 diagnostics::SuggestedMethod {
-                    source: method_name.location.clone(),
+                    source: method_name.location,
                     type_name: self.type_name.clone(),
                     method_name: method_name.name,
                     reason: suggestion.reason,
@@ -90,7 +90,7 @@ impl MethodLookupError<'_> {
             .collect::<Vec<error_snippet::Error>>();
 
         diagnostics::MissingMethod {
-            source: self.method_name.location.clone(),
+            source: self.method_name.location,
             type_name: self.type_name,
             method_name: self.method_name,
             suggestions,
@@ -118,7 +118,7 @@ impl FunctionLookupError<'_> {
                 let function_name = suggestion.def.name().clone();
 
                 diagnostics::SuggestedFunction {
-                    source: function_name.location.clone(),
+                    source: function_name.location,
                     function_name: function_name.name,
                     reason: suggestion.reason,
                 }
@@ -127,7 +127,7 @@ impl FunctionLookupError<'_> {
             .collect::<Vec<error_snippet::Error>>();
 
         diagnostics::MissingFunction {
-            source: self.function_name.location.clone(),
+            source: self.function_name.location,
             function_name: self.function_name.as_ident().clone(),
             suggestions,
         }

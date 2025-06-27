@@ -60,7 +60,7 @@ impl LowerModule<'_> {
             None => {
                 return Err(SelfOutsideClass {
                     source: self.file.clone(),
-                    range: location.index,
+                    range: location.index.clone(),
                     ty: String::from(SELF_TYPE_NAME),
                 }
                 .into());

@@ -100,7 +100,7 @@ impl TyInferCtx {
                         type_name: ty.name.clone(),
                         property_name: Identifier {
                             name: expr.name.clone(),
-                            location: expr.location.clone(),
+                            location: expr.location,
                         },
                     }
                     .into());
@@ -139,7 +139,7 @@ impl TyInferCtx {
             lume_hir::LiteralKind::Boolean(_) => self.tdb().find_type(&SymbolName::boolean()).unwrap(),
         };
 
-        TypeRef::new(ty.id, lit.location.clone())
+        TypeRef::new(ty.id, lit.location)
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].

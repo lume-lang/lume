@@ -704,7 +704,6 @@ name = "lume_ast"
 version = "0.1.0"
 dependencies = [
  "insta",
- "lume_macros",
 ]
 
 [[package]]
