@@ -116,7 +116,23 @@ Map {
                         type_parameters: TypeParameters {
                             inner: [],
                         },
-                        return_type: None,
+                        return_type: Type {
+                            id: ItemId(
+                                0,
+                            ),
+                            name: SymbolName {
+                                namespace: None,
+                                name: Named(
+                                    Identifier {
+                                        name: "Void",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
+                            },
+                            type_params: [],
+                            location: <internal>:0:0,
+                        },
                         block: Block {
                             statements: [],
                             location: <internal>:69:71,

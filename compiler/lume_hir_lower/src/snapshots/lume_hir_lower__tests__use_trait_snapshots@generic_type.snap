@@ -116,29 +116,27 @@ Map {
                         type_parameters: TypeParameters {
                             inner: [],
                         },
-                        return_type: Some(
-                            Type {
-                                id: ItemId(
-                                    10382560105972960337,
+                        return_type: Type {
+                            id: ItemId(
+                                10382560105972960337,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [],
+                                    },
                                 ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
-                                    ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "T",
-                                            location: <internal>:79:80,
-                                        },
-                                    ),
-                                    location: <internal>:79:80,
-                                },
-                                type_params: [],
+                                name: Named(
+                                    Identifier {
+                                        name: "T",
+                                        location: <internal>:79:80,
+                                    },
+                                ),
                                 location: <internal>:79:80,
                             },
-                        ),
+                            type_params: [],
+                            location: <internal>:79:80,
+                        },
                         block: Block {
                             statements: [],
                             location: <internal>:81:83,

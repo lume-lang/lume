@@ -74,29 +74,27 @@ Map {
                             type_parameters: TypeParameters {
                                 inner: [],
                             },
-                            return_type: Some(
-                                Type {
-                                    id: ItemId(
-                                        8802535191565915315,
+                            return_type: Type {
+                                id: ItemId(
+                                    8802535191565915315,
+                                ),
+                                name: SymbolName {
+                                    namespace: Some(
+                                        PathRoot {
+                                            segments: [],
+                                        },
                                     ),
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [],
-                                            },
-                                        ),
-                                        name: Named(
-                                            Identifier {
-                                                name: "int",
-                                                location: <internal>:34:37,
-                                            },
-                                        ),
-                                        location: <internal>:34:37,
-                                    },
-                                    type_params: [],
+                                    name: Named(
+                                        Identifier {
+                                            name: "int",
+                                            location: <internal>:34:37,
+                                        },
+                                    ),
                                     location: <internal>:34:37,
                                 },
-                            ),
+                                type_params: [],
+                                location: <internal>:34:37,
+                            },
                             block: None,
                             location: <internal>:12:38,
                         },

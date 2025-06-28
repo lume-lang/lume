@@ -173,36 +173,34 @@ Map {
                         type_parameters: TypeParameters {
                             inner: [],
                         },
-                        return_type: Some(
-                            Type {
-                                id: ItemId(
-                                    17936619929632074031,
+                        return_type: Type {
+                            id: ItemId(
+                                17936619929632074031,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
                                 ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [
-                                                Named(
-                                                    Identifier {
-                                                        name: "std",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                ),
-                                            ],
-                                        },
-                                    ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "Int64",
-                                            location: <internal>:0:0,
-                                        },
-                                    ),
-                                    location: <internal>:0:0,
-                                },
-                                type_params: [],
-                                location: <internal>:90:95,
+                                name: Named(
+                                    Identifier {
+                                        name: "Int64",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
                             },
-                        ),
+                            type_params: [],
+                            location: <internal>:90:95,
+                        },
                         block: Block {
                             statements: [],
                             location: <internal>:96:98,

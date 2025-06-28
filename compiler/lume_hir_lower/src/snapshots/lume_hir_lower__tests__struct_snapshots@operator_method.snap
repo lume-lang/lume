@@ -51,29 +51,27 @@ Map {
                         type_parameters: TypeParameters {
                             inner: [],
                         },
-                        return_type: Some(
-                            Type {
-                                id: ItemId(
-                                    1065681184011410214,
+                        return_type: Type {
+                            id: ItemId(
+                                1065681184011410214,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [],
+                                    },
                                 ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
-                                    ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "bool",
-                                            location: <internal>:55:59,
-                                        },
-                                    ),
-                                    location: <internal>:55:59,
-                                },
-                                type_params: [],
+                                name: Named(
+                                    Identifier {
+                                        name: "bool",
+                                        location: <internal>:55:59,
+                                    },
+                                ),
                                 location: <internal>:55:59,
                             },
-                        ),
+                            type_params: [],
+                            location: <internal>:55:59,
+                        },
                         block: Some(
                             Block {
                                 statements: [

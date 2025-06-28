@@ -95,29 +95,27 @@ Map {
                         },
                     ],
                 },
-                return_type: Some(
-                    Type {
-                        id: ItemId(
-                            9344623788042179276,
+                return_type: Type {
+                    id: ItemId(
+                        9344623788042179276,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [],
+                            },
                         ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
-                                    name: "void",
-                                    location: <internal>:39:43,
-                                },
-                            ),
-                            location: <internal>:39:43,
-                        },
-                        type_params: [],
+                        name: Named(
+                            Identifier {
+                                name: "void",
+                                location: <internal>:39:43,
+                            },
+                        ),
                         location: <internal>:39:43,
                     },
-                ),
+                    type_params: [],
+                    location: <internal>:39:43,
+                },
                 block: Some(
                     Block {
                         statements: [],

@@ -30,65 +30,63 @@ Map {
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                return_type: Some(
-                    Type {
-                        id: ItemId(
-                            5261057285903567923,
-                        ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [
-                                        Named(
-                                            Identifier {
-                                                name: "std",
-                                                location: <internal>:0:0,
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
-                                    name: "RangeInclusive",
-                                    location: <internal>:0:0,
-                                },
-                            ),
-                            location: <internal>:0:0,
-                        },
-                        type_params: [
-                            Type {
-                                id: ItemId(
-                                    13608251888059153114,
-                                ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [
-                                                Named(
-                                                    Identifier {
-                                                        name: "std",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                ),
-                                            ],
-                                        },
-                                    ),
-                                    name: Named(
+                return_type: Type {
+                    id: ItemId(
+                        5261057285903567923,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
                                         Identifier {
-                                            name: "Int32",
+                                            name: "std",
                                             location: <internal>:0:0,
                                         },
                                     ),
-                                    location: <internal>:0:0,
-                                },
-                                type_params: [],
-                                location: <internal>:27:32,
+                                ],
                             },
-                        ],
-                        location: <internal>:12:33,
+                        ),
+                        name: Named(
+                            Identifier {
+                                name: "RangeInclusive",
+                                location: <internal>:0:0,
+                            },
+                        ),
+                        location: <internal>:0:0,
                     },
-                ),
+                    type_params: [
+                        Type {
+                            id: ItemId(
+                                13608251888059153114,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [
+                                            Named(
+                                                Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            ),
+                                        ],
+                                    },
+                                ),
+                                name: Named(
+                                    Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                ),
+                                location: <internal>:0:0,
+                            },
+                            type_params: [],
+                            location: <internal>:27:32,
+                        },
+                    ],
+                    location: <internal>:12:33,
+                },
                 block: Some(
                     Block {
                         statements: [],

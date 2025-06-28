@@ -72,29 +72,27 @@ Map {
                                 },
                             ],
                         },
-                        return_type: Some(
-                            Type {
-                                id: ItemId(
-                                    9344623788042179276,
+                        return_type: Type {
+                            id: ItemId(
+                                9344623788042179276,
+                            ),
+                            name: SymbolName {
+                                namespace: Some(
+                                    PathRoot {
+                                        segments: [],
+                                    },
                                 ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
-                                    ),
-                                    name: Named(
-                                        Identifier {
-                                            name: "void",
-                                            location: <internal>:33:37,
-                                        },
-                                    ),
-                                    location: <internal>:33:37,
-                                },
-                                type_params: [],
+                                name: Named(
+                                    Identifier {
+                                        name: "void",
+                                        location: <internal>:33:37,
+                                    },
+                                ),
                                 location: <internal>:33:37,
                             },
-                        ),
+                            type_params: [],
+                            location: <internal>:33:37,
+                        },
                         block: Some(
                             Block {
                                 statements: [],

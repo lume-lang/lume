@@ -30,36 +30,34 @@ Map {
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                return_type: Some(
-                    Type {
-                        id: ItemId(
-                            3213347080193984297,
+                return_type: Type {
+                    id: ItemId(
+                        3213347080193984297,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
                         ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [
-                                        Named(
-                                            Identifier {
-                                                name: "std",
-                                                location: <internal>:0:0,
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
-                                    name: "Int16",
-                                    location: <internal>:0:0,
-                                },
-                            ),
-                            location: <internal>:0:0,
-                        },
-                        type_params: [],
-                        location: <internal>:12:17,
+                        name: Named(
+                            Identifier {
+                                name: "Int16",
+                                location: <internal>:0:0,
+                            },
+                        ),
+                        location: <internal>:0:0,
                     },
-                ),
+                    type_params: [],
+                    location: <internal>:12:17,
+                },
                 block: Some(
                     Block {
                         statements: [],

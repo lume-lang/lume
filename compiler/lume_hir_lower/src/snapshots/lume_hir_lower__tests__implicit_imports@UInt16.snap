@@ -30,36 +30,34 @@ Map {
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                return_type: Some(
-                    Type {
-                        id: ItemId(
-                            4227202099044862681,
+                return_type: Type {
+                    id: ItemId(
+                        4227202099044862681,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
                         ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [
-                                        Named(
-                                            Identifier {
-                                                name: "std",
-                                                location: <internal>:0:0,
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
-                                    name: "UInt16",
-                                    location: <internal>:0:0,
-                                },
-                            ),
-                            location: <internal>:0:0,
-                        },
-                        type_params: [],
-                        location: <internal>:12:18,
+                        name: Named(
+                            Identifier {
+                                name: "UInt16",
+                                location: <internal>:0:0,
+                            },
+                        ),
+                        location: <internal>:0:0,
                     },
-                ),
+                    type_params: [],
+                    location: <internal>:12:18,
+                },
                 block: Some(
                     Block {
                         statements: [],

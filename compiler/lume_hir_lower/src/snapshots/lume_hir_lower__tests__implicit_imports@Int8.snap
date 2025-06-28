@@ -30,36 +30,34 @@ Map {
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                return_type: Some(
-                    Type {
-                        id: ItemId(
-                            14824942057310852598,
+                return_type: Type {
+                    id: ItemId(
+                        14824942057310852598,
+                    ),
+                    name: SymbolName {
+                        namespace: Some(
+                            PathRoot {
+                                segments: [
+                                    Named(
+                                        Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                    ),
+                                ],
+                            },
                         ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [
-                                        Named(
-                                            Identifier {
-                                                name: "std",
-                                                location: <internal>:0:0,
-                                            },
-                                        ),
-                                    ],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
-                                    name: "Int8",
-                                    location: <internal>:0:0,
-                                },
-                            ),
-                            location: <internal>:0:0,
-                        },
-                        type_params: [],
-                        location: <internal>:12:16,
+                        name: Named(
+                            Identifier {
+                                name: "Int8",
+                                location: <internal>:0:0,
+                            },
+                        ),
+                        location: <internal>:0:0,
                     },
-                ),
+                    type_params: [],
+                    location: <internal>:12:16,
+                },
                 block: Some(
                     Block {
                         statements: [],
