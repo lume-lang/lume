@@ -527,7 +527,24 @@ impl Lexer {
         }
     }
 
+    /// Gets characters while the given character is found.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn take_until(&mut self, c: char) -> &str {
+        let start = self.position;
+
+        let sliced = &self.source.content[start..];
+        let found_idx = match sliced.find(c).map(|i| i + start) {
+            Some(idx) => idx,
+            None => self.source.content.len(),
+        };
+
+        self.position = found_idx;
+        &self.source.content[start..found_idx]
+    }
+
     /// Gets characters while the predicate returns `true`.
+    #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
         let start = self.position;
@@ -621,7 +638,7 @@ impl Lexer {
     #[tracing::instrument(level = "DEBUG", skip(self), ret)]
     fn comment(&mut self) -> Token {
         let kind = self.eat_comment_prefix();
-        let content = self.take_while(|c| c != '\n').trim().to_string();
+        let content = self.take_until('\n').trim().to_string();
 
         Token::new(kind, content)
     }
