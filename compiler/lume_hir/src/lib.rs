@@ -373,7 +373,7 @@ pub struct Signature<'a> {
     pub name: &'a Identifier,
     pub type_parameters: &'a [TypeParameter],
     pub parameters: &'a [Parameter],
-    pub return_type: Option<&'a Type>,
+    pub return_type: &'a Type,
 }
 
 impl Signature<'_> {
@@ -382,7 +382,7 @@ impl Signature<'_> {
             name: self.name.clone(),
             type_parameters: self.type_parameters.to_vec().into(),
             parameters: self.parameters.to_vec(),
-            return_type: self.return_type.cloned(),
+            return_type: self.return_type.clone(),
         }
     }
 }
@@ -392,7 +392,7 @@ pub struct SignatureOwned {
     pub name: Identifier,
     pub type_parameters: TypeParameters,
     pub parameters: Vec<Parameter>,
-    pub return_type: Option<Type>,
+    pub return_type: Type,
 }
 
 impl std::fmt::Display for SignatureOwned {
@@ -413,19 +413,14 @@ impl std::fmt::Display for SignatureOwned {
 
         write!(
             f,
-            "({})",
+            "({}) -> {}",
             self.parameters
                 .iter()
                 .map(|t| t.name.to_string())
                 .collect::<Vec<_>>()
-                .join(", ")
-        )?;
-
-        if let Some(return_ty) = &self.return_type {
-            write!(f, " -> {}", return_ty.name)?;
-        }
-
-        Ok(())
+                .join(", "),
+            self.return_type.name
+        )
     }
 }
 
@@ -561,7 +556,7 @@ pub struct FunctionDefinition {
     pub name: SymbolName,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
-    pub return_type: Option<Type>,
+    pub return_type: Type,
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -738,7 +733,7 @@ pub struct MethodDefinition {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
-    pub return_type: Option<Type>,
+    pub return_type: Type,
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -779,7 +774,7 @@ pub struct TraitMethodDefinition {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
-    pub return_type: Option<Type>,
+    pub return_type: Type,
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -790,7 +785,7 @@ impl TraitMethodDefinition {
             name: &self.name,
             type_parameters: &self.type_parameters.inner,
             parameters: &self.parameters,
-            return_type: self.return_type.as_ref(),
+            return_type: &self.return_type,
         }
     }
 }
@@ -832,7 +827,7 @@ pub struct TraitMethodImplementation {
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
-    pub return_type: Option<Type>,
+    pub return_type: Type,
     pub block: Block,
     pub location: Location,
 }
@@ -843,7 +838,7 @@ impl TraitMethodImplementation {
             name: &self.name,
             type_parameters: &self.type_parameters.inner,
             parameters: &self.parameters,
-            return_type: self.return_type.as_ref(),
+            return_type: &self.return_type,
         }
     }
 }
@@ -1414,6 +1409,15 @@ pub struct Type {
 }
 
 impl Type {
+    pub fn void() -> Type {
+        Self {
+            id: ItemId::from_usize(0),
+            name: SymbolName::void(),
+            type_params: Vec::new(),
+            location: Location::empty(),
+        }
+    }
+
     pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }

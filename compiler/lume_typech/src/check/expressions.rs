@@ -35,6 +35,8 @@ impl TyCheckCtx {
         for method in struct_def.methods() {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
+
+                self.ensure_block_ty_match(block, &self.mk_type_ref(&method.return_type)?)?;
             }
         }
 
@@ -45,6 +47,8 @@ impl TyCheckCtx {
         for method in &trait_def.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
+
+                self.ensure_block_ty_match(block, &self.mk_type_ref(&method.return_type)?)?;
             }
         }
 
@@ -54,6 +58,8 @@ impl TyCheckCtx {
     fn define_function_scope(&self, func: &lume_hir::FunctionDefinition) -> Result<()> {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
+
+            self.ensure_block_ty_match(block, &self.mk_type_ref(&func.return_type)?)?;
         }
 
         Ok(())

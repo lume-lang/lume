@@ -142,3 +142,34 @@ pub(crate) struct BooleanOperationOnNonBoolean {
     pub expected: String,
     pub found: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "mismatched types in branch",
+    code = "LM4384",
+    help = "expected type {expected}\n   found type {found}",
+    help = "all branches must return the same type"
+)]
+pub struct MismatchedTypesBranches {
+    #[label(source, "expected type {expected}, but found type {found}...")]
+    pub found_loc: Location,
+
+    #[label(source, "...because of type defined here")]
+    pub reason_loc: Location,
+
+    pub expected: NamedTypeRef,
+    pub found: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "missing return in branch",
+    code = "LM4387",
+    help = "conditionals without an `else` branch can return `void`\nwhich is incompatible with {expected}"
+)]
+pub struct MissingReturnBranch {
+    #[label(source, "not all branches return a value")]
+    pub source: Location,
+
+    pub expected: NamedTypeRef,
+}

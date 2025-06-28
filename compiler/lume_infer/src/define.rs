@@ -577,14 +577,10 @@ impl TyInferCtx {
                             .push(name, type_ref, param.vararg);
                     }
 
-                    self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                        self.mk_type_ref_generic(
-                            ret,
-                            &[&struct_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
-                        )?
-                    } else {
-                        TypeRef::void()
-                    }
+                    self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
+                        &method.return_type,
+                        &[&struct_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                    )?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
@@ -605,14 +601,10 @@ impl TyInferCtx {
                             .push(name, type_ref, param.vararg);
                     }
 
-                    self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                        self.mk_type_ref_generic(
-                            ret,
-                            &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
-                        )?
-                    } else {
-                        TypeRef::void()
-                    }
+                    self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
+                        &method.return_type,
+                        &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                    )?;
                 }
             }
             _ => (),
@@ -635,11 +627,8 @@ impl TyInferCtx {
                 .push(name, type_ref, param.vararg);
         }
 
-        self.tdb_mut().function_mut(func_id).unwrap().return_type = if let Some(ret) = &func.return_type {
-            self.mk_type_ref_generic(ret, &func.type_parameters.inner)?
-        } else {
-            TypeRef::void()
-        };
+        self.tdb_mut().function_mut(func_id).unwrap().return_type =
+            self.mk_type_ref_generic(&func.return_type, &func.type_parameters.inner)?;
 
         Ok(())
     }
@@ -662,11 +651,8 @@ impl TyInferCtx {
                     .push(name, type_ref, param.vararg);
             }
 
-            self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                self.mk_type_ref_generic(ret, &method.type_parameters.inner)?
-            } else {
-                TypeRef::void()
-            };
+            self.tdb_mut().method_mut(method_id).unwrap().return_type =
+                self.mk_type_ref_generic(&method.return_type, &method.type_parameters.inner)?;
         }
 
         Ok(())
@@ -687,11 +673,8 @@ impl TyInferCtx {
                     .push(name, type_ref, param.vararg);
             }
 
-            self.tdb_mut().method_mut(method_id).unwrap().return_type = if let Some(ret) = &method.return_type {
-                self.mk_type_ref_generic(ret, &method.type_parameters.inner)?
-            } else {
-                TypeRef::void()
-            };
+            self.tdb_mut().method_mut(method_id).unwrap().return_type =
+                self.mk_type_ref_generic(&method.return_type, &method.type_parameters.inner)?;
         }
 
         Ok(())

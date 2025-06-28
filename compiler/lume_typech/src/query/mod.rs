@@ -4,7 +4,7 @@ use crate::{TyCheckCtx, *};
 use error_snippet::Result;
 use lume_hir::{self, Identifier};
 use lume_infer::query::Callable;
-use lume_types::{Function, Method};
+use lume_types::{Function, Method, TypeRef};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum CallableCheckError {
@@ -530,5 +530,105 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.lookup_callable(&lume_hir::CallExpression::Static(call))
+    }
+
+    /// Ensures that the return type of a block matches the expected type.
+    ///
+    /// # Errors
+    ///
+    /// If not all branches return a value, or if different branches return different types,
+    /// the method returns `Err`.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn ensure_block_ty_match(&self, block: &lume_hir::Block, expected: &TypeRef) -> Result<()> {
+        self.ensure_type_compatibility(&self.type_of_block_ret(block)?, expected)
+    }
+
+    /// Attempts to find the return type of a block. The return type is inferred
+    /// from the last statement within the block, or `void` if empty.
+    ///
+    /// # Errors
+    ///
+    /// If not all branches return a value, or if different branches return different types,
+    /// the method returns `Err`.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn type_of_block_ret(&self, block: &lume_hir::Block) -> Result<TypeRef> {
+        let last_statement = block.statements.last();
+
+        if let Some(stmt) = last_statement {
+            self.matching_type_of_stmt(stmt)
+        } else {
+            Ok(TypeRef::void())
+        }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Statement`]. All branches
+    /// of the statement are asserted to return the same type.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if different branches return different types.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub(crate) fn matching_type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
+        match &stmt.kind {
+            lume_hir::StatementKind::If(cond) => self.matching_type_of_cond(&cond.cases),
+            lume_hir::StatementKind::Unless(cond) => self.matching_type_of_cond(&cond.cases),
+            _ => self.type_of_stmt(stmt),
+        }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Condition`]s. All conditions
+    /// of the given list are asserted to return the same type.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if different conditions return different types.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub(crate) fn matching_type_of_cond(&self, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
+        let first_case = cases.first().expect("expected at least 1 case");
+        let last_case = cases.last().expect("expected at least 1 case");
+
+        let expected_type = self.type_of_condition(first_case)?;
+
+        // Ensure that all branches return the same type
+        for case in cases.iter().skip(1) {
+            let found_type = self.type_of_condition(case)?;
+
+            if found_type != expected_type {
+                return Err(crate::check::errors::MismatchedTypesBranches {
+                    found: self.new_named_type(&found_type)?,
+                    expected: self.new_named_type(&expected_type)?,
+                    found_loc: found_type.location,
+                    reason_loc: expected_type.location,
+                }
+                .into());
+            }
+        }
+
+        // Ensure that all possible combinations of conditions return a value
+        if !self.is_void(&expected_type)? {
+            let Some(else_block) = cases.iter().rfind(|case| case.condition.is_none()) else {
+                return Err(crate::check::errors::MissingReturnBranch {
+                    source: last_case.location,
+                    expected: self.new_named_type(&expected_type)?,
+                }
+                .into());
+            };
+
+            self.ensure_block_ty_match(&else_block.block, &expected_type)?;
+        }
+
+        Ok(expected_type)
     }
 }

@@ -18,10 +18,10 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<Option<hir::Type>> {
+    pub(super) fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<hir::Type> {
         match expr {
-            Some(e) => Ok(Some(self.type_ref(e)?)),
-            None => Ok(None),
+            Some(e) => Ok(self.type_ref(e)?),
+            None => Ok(hir::Type::void()),
         }
     }
 
