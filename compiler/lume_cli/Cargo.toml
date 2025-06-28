@@ -15,12 +15,16 @@ lume_driver = { path = "../lume_driver" }
 lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session" }
 
-clap = "=4.5.39"
+clap = { version = "=4.5.39", features = ["derive"] }
 env_logger = { version = "=0.11.8" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { version = "=0.3.19", features = ["env-filter"] }
+tracing-tracy = { version = "=0.11.2", optional = true }
+
+[features]
+tracing-tracy = ["dep:tracing-tracy"]
 
 [lints]
 workspace = true

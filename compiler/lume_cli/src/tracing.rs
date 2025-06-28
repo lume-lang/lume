@@ -1,9 +1,34 @@
+use clap::ValueEnum;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::layer::SubscriberExt;
 
-pub(crate) fn register_default_tracer() {
+#[derive(ValueEnum, Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Tracer {
+    #[default]
+    Console,
+    #[cfg(feature = "tracing-tracy")]
+    Tracy,
+}
+
+pub(crate) fn register_global_tracer(kind: Tracer) {
+    match kind {
+        Tracer::Console => register_console_tracer(),
+        #[cfg(feature = "tracing-tracy")]
+        Tracer::Tracy => register_tracy_tracer(),
+    }
+}
+
+#[cfg(feature = "tracing-tracy")]
+fn register_tracy_tracer() {
+    let tracy_layer = tracing_tracy::TracyLayer::default();
+    let tracer = tracing_subscriber::registry().with(tracy_layer);
+
+    tracing::subscriber::set_global_default(tracer).unwrap();
+}
+
+fn register_console_tracer() {
     let format = tracing_subscriber::fmt::format()
         .compact()
         .with_file(true)

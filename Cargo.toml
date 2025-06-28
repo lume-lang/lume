@@ -1,10 +1,17 @@
+[package]
+name = "lume"
+version = { workspace = true }
+rust-version = { workspace = true }
+edition = { workspace = true }
+
 [workspace]
-members = ["compiler/lume_cli"]
+members = ["compiler/*"]
 resolver = "3"
 
 [workspace.package]
 version = "0.1.0"
 rust-version = "1.86.0"
+edition = "2024"
 
 [workspace.dependencies]
 error_snippet = { version = "=0.1.13", features = ["derive"] }
@@ -12,7 +19,14 @@ error_snippet_derive = { version = "=0.1.6" }
 log = { version = "=0.4.27" }
 tracing = { version = "=0.1.41" }
 
+[features]
+tracing-tracy = ["lume_cli/tracing-tracy"]
+
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 must_use_candidate = "allow"
 wildcard_imports = "allow"
+
+[dependencies]
+lume_cli = { path = "compiler/lume_cli" }
+lume_driver = { path = "compiler/lume_driver" }

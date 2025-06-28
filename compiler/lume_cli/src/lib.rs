@@ -1,3 +1,5 @@
+#![feature(exclusive_wrapper)]
+
 pub(crate) mod commands;
 pub(crate) mod error;
 
@@ -9,7 +11,7 @@ use std::env;
 use clap::{Arg, ArgAction, Command};
 use lume_errors::{DiagCtx, DiagOutputFormat};
 
-fn main() {
+pub fn lume_cli_entry() {
     use std::io::Write;
 
     // Initialize logger
@@ -45,18 +47,28 @@ fn main() {
         .subcommand(commands::run::command());
 
     #[cfg(debug_assertions)]
-    let command = command.arg(
-        Arg::new("trace")
-            .long("trace")
-            .help("Enables tracing of the compiler")
-            .action(ArgAction::SetTrue),
-    );
+    let command = command
+        .arg(
+            Arg::new("trace")
+                .long("trace")
+                .help("Enables tracing of the compiler")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("tracer")
+                .long("tracer")
+                .help("Defines which tracer to use")
+                .value_parser(clap::value_parser!(tracing::Tracer))
+                .action(ArgAction::Set),
+        );
 
     let matches = command.get_matches();
 
     #[cfg(debug_assertions)]
     if let Some(true) = matches.get_one("trace") {
-        tracing::register_default_tracer();
+        tracing::register_global_tracer(tracing::Tracer::default());
+    } else if let Some(val) = matches.get_one::<tracing::Tracer>("tracer") {
+        tracing::register_global_tracer(*val);
     }
 
     let dcx = DiagCtx::new(DiagOutputFormat::Graphical);
