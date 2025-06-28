@@ -538,7 +538,7 @@ impl TyCheckCtx {
     ///
     /// If not all branches return a value, or if different branches return different types,
     /// the method returns `Err`.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn ensure_block_ty_match(&self, block: &lume_hir::Block, expected: &TypeRef) -> Result<()> {
         self.ensure_type_compatibility(&self.type_of_block_ret(block)?, expected)
     }

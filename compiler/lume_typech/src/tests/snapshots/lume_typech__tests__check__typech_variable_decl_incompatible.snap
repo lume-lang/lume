@@ -5,12 +5,12 @@ description: "fn foo() {\n        let _: Int32 = false;\n    }"
 × error[LM4001]: mismatched types
    ╭───────────
  1 │ fn foo() {
- 2 │         let _: Int32 = 1_i32;
+ 2 │         let _: Int32 = false;
    │                        ^^^^^ expected type Int32, but found type Boolean...
  3 │     }
    ∶ 
  1 │ fn foo() {
- 2 │         let _: Int32 = 1_i32;
+ 2 │         let _: Int32 = false;
    │                ^^^^^ ...because of type defined here
  3 │     }
    ╰──

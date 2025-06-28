@@ -153,9 +153,11 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
+            lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
+            lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
+            lume_hir::StatementKind::PredicateLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::If(cond) => self.type_of_if_conditional(cond),
             lume_hir::StatementKind::Unless(cond) => self.type_of_unless_conditional(cond),
-            lume_hir::StatementKind::Variable(var) => self.type_of_vardecl(var),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void()),
         }

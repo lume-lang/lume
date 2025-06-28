@@ -514,7 +514,7 @@ pub struct TypeParameter {
     pub constraints: Vec<TypeRef>,
 }
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct TypeDatabaseContext {
     pub types: Vec<Type>,
     pub properties: Vec<Property>,
@@ -528,10 +528,7 @@ pub struct TypeDatabaseContext {
 #[allow(clippy::cast_possible_truncation)]
 impl TypeDatabaseContext {
     pub fn new() -> Self {
-        Self {
-            types: vec![Type::void()],
-            ..Self::default()
-        }
+        Self::default()
     }
 
     /// Gets an iterator which iterates all [`Type`]-instances within
@@ -914,6 +911,20 @@ impl TypeDatabaseContext {
         id.type_params_mut(self)?.push(type_id);
 
         Ok(())
+    }
+}
+
+impl Default for TypeDatabaseContext {
+    fn default() -> Self {
+        Self {
+            types: vec![Type::void()],
+            properties: Vec::new(),
+            methods: Vec::new(),
+            functions: Vec::new(),
+            type_parameters: Vec::new(),
+            implementations: Vec::new(),
+            uses: Vec::new(),
+        }
     }
 }
 
