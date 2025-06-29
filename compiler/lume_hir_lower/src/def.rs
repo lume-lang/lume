@@ -20,7 +20,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<lume_hir::Item> {
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         self.current_item = ItemId::from_name(&name);
 
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -138,7 +138,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -191,7 +191,7 @@ impl LowerModule<'_> {
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -214,7 +214,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_enum_case(&self, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
 
         let parameters = expr
@@ -234,7 +234,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_alias(&self, expr: ast::AliasDefinition) -> Result<lume_hir::Item> {
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let definition = self.type_ref(*expr.definition)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -253,7 +253,7 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<lume_hir::Item> {
         let visibility = lower_visibility(&expr.visibility);
-        let name = self.symbol_name(expr.name)?;
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;

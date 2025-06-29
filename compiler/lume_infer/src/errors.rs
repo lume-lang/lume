@@ -1,7 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, SymbolName};
+use lume_hir::{Identifier, Path};
 use lume_span::{Location, SourceFile};
 
 #[derive(Diagnostic, Debug)]
@@ -10,7 +10,7 @@ pub struct MissingType {
     #[label(source, "is there a missing import for the type {name}?")]
     pub source: Location,
 
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -39,6 +39,6 @@ pub struct MissingProperty {
     #[label("could not find property {property_name} on type {type_name}")]
     pub range: Range<usize>,
 
-    pub type_name: SymbolName,
+    pub type_name: Path,
     pub property_name: Identifier,
 }

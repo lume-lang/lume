@@ -1,7 +1,7 @@
 use crate::{TyInferCtx, query::Callable};
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
-use lume_hir::{self, Identifier, SymbolName};
+use lume_hir::{self, Identifier, Node, Path};
 use lume_types::{Function, Method};
 
 use super::diagnostics::{self};
@@ -19,7 +19,7 @@ impl TyInferCtx {
     pub fn lookup_methods_on<'a>(&self, ty: &'a lume_types::TypeRef, name: &'a Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
             .into_iter()
-            .filter(|method| method.name.as_ident() == name)
+            .filter(|method| method.name.name() == name)
             .collect()
     }
 
@@ -35,7 +35,7 @@ impl TyInferCtx {
             .into_iter()
             .filter(|method| {
                 let expected = &name.name;
-                let actual = &method.name.name.identifier().name;
+                let actual = &method.name.name.name().name;
                 let distance = levenshtein(expected, actual);
 
                 distance != 0 && distance < MAX_LEVENSHTEIN_DISTANCE
@@ -68,7 +68,7 @@ impl TyInferCtx {
         Ok(diagnostics::MissingFunction {
             source: expr.name.location.file.clone(),
             range: expr.name.location.index.clone(),
-            function_name: expr.name.as_ident().clone(),
+            function_name: expr.name.name().clone(),
             suggestions,
         })
     }
@@ -90,7 +90,7 @@ impl TyInferCtx {
         };
 
         let suggestion: Option<Result<error_snippet::Error>> = self
-            .lookup_method_suggestions(&callee_type, name.identifier())
+            .lookup_method_suggestions(&callee_type, name.name())
             .first()
             .map(|suggestion| {
                 let method_name = suggestion.name.clone();
@@ -112,7 +112,7 @@ impl TyInferCtx {
         Ok(diagnostics::MissingMethod {
             source: name.location(),
             type_name: self.new_named_type(&callee_type)?,
-            method_name: name.identifier().clone(),
+            method_name: name.name().clone(),
             suggestions,
         })
     }
@@ -124,19 +124,19 @@ impl TyInferCtx {
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
-    pub fn lookup_function_suggestions(&self, name: &SymbolName) -> Vec<&'_ Function> {
+    pub fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb()
             .functions()
             .filter(|func| {
                 // The namespaces on the function names must match,
                 // so we don't match functions outside of the the
                 // expected namespace.
-                if !name.roots_eq(&func.name) {
+                if name.root != func.name.root {
                     return false;
                 }
 
-                let expected = &name.as_str();
-                let actual = &func.name.as_str();
+                let expected = &name.name.name().as_str();
+                let actual = &func.name.name().as_str();
                 let distance = levenshtein(expected, actual);
 
                 distance != 0 && distance < MAX_LEVENSHTEIN_DISTANCE
@@ -150,7 +150,7 @@ impl TyInferCtx {
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn probe_functions(&self, name: &SymbolName) -> Vec<&'_ Function> {
+    pub fn probe_functions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb().functions().filter(|func| &func.name == name).collect()
     }
 
@@ -163,7 +163,7 @@ impl TyInferCtx {
         match &expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
                 let callee_type = self.type_of(call.callee.id)?;
-                let methods = self.lookup_methods_on(&callee_type, call.name.identifier());
+                let methods = self.lookup_methods_on(&callee_type, call.name.name());
 
                 let Some(method) = methods.first() else {
                     let missing_method_err = self.fold_method_suggestions(expr)?;
@@ -176,7 +176,7 @@ impl TyInferCtx {
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.name.clone().parent() {
                     let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
-                    let methods = self.lookup_methods_on(&callee_type, call.name.as_ident());
+                    let methods = self.lookup_methods_on(&callee_type, call.name.name());
 
                     let Some(method) = methods.first() else {
                         let missing_method_err = self.fold_method_suggestions(expr)?;

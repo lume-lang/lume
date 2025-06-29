@@ -1,11 +1,12 @@
 use error_snippet::Result;
+use lume_ast::Node;
 
 use crate::ARRAY_STD_TYPE;
 use crate::LowerModule;
 use crate::errors::*;
 
 use lume_ast::{self as ast};
-use lume_hir::{self as hir, SELF_TYPE_NAME, SymbolName};
+use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -26,30 +27,21 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_named(&self, mut expr: ast::NamedType) -> Result<hir::Type> {
-        let type_params = expr
-            .name
-            .name
-            .type_arguments
-            .drain(..)
-            .map(|ty| Ok(Box::new(self.type_ref(ty)?)))
-            .collect::<Result<Vec<_>>>()?;
-
+    fn type_named(&self, expr: ast::NamedType) -> Result<hir::Type> {
         let name = self.resolve_symbol_name(&expr.name)?;
-        let location = self.location(expr.name.location);
+        let location = self.location(expr.location().clone());
         let id = self.item_id(&name);
 
-        Ok(hir::Type {
-            id,
-            name,
-            type_params,
-            location,
-        })
+        Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
-        self.type_std(ARRAY_STD_TYPE, vec![*expr.element_type])
+        self.type_std(ast::PathSegment::Type {
+            name: ARRAY_STD_TYPE.into(),
+            type_arguments: vec![*expr.element_type],
+            location: expr.location,
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -69,28 +61,21 @@ impl LowerModule<'_> {
 
         let id = self.item_id(&name);
 
-        Ok(hir::Type {
-            id,
-            name,
-            type_params: Vec::new(),
-            location,
-        })
+        Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_std(&self, name: &str, type_params: Vec<ast::Type>) -> Result<hir::Type> {
-        let id = self.item_id(name);
+    fn type_std(&self, name: ast::PathSegment) -> Result<hir::Type> {
+        let location = self.location(name.location().clone());
 
-        let type_params = type_params
-            .into_iter()
-            .map(|ty| Ok(Box::new(self.type_ref(ty)?)))
-            .collect::<Result<Vec<_>>>()?;
+        let name = self.path_segment(name)?;
+        let path = hir::Path::from_parts(Some(vec![hir::PathSegment::namespace("std")]), name);
+        let id = self.item_id(&path);
 
         Ok(hir::Type {
             id,
-            name: SymbolName::from_parts(Some(["std"]), name),
-            type_params,
-            location: lume_span::Location::empty(),
+            name: path,
+            location,
         })
     }
 }

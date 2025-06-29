@@ -14,6 +14,7 @@ mod errors;
 pub mod expr;
 pub mod generic;
 pub mod item;
+pub mod path;
 pub mod stmt;
 pub mod ty;
 
@@ -41,6 +42,9 @@ pub struct Parser {
 
     /// Defines the documentation comment for the current item, if any.
     doc_token: Option<String>,
+
+    /// Defines whether the parser should attempt to recover from errors.
+    attempt_recovery: bool,
 }
 
 #[macro_export]
@@ -79,6 +83,7 @@ impl Parser {
             position: 0,
             tokens: Vec::new(),
             doc_token: None,
+            attempt_recovery: true,
         }
     }
 
@@ -119,6 +124,7 @@ impl Parser {
     /// parser unexpectedly reaches end-of-file.
     pub fn parse_str(str: &str) -> Result<Vec<TopLevelExpression>> {
         let mut parser = Parser::new_with_str(str);
+        parser.disable_recovery();
 
         parser.parse()
     }
@@ -135,8 +141,15 @@ impl Parser {
     pub fn parse_src(sources: &SourceMap, file: SourceFileId, dcx: DiagCtxHandle) -> Result<Vec<TopLevelExpression>> {
         let source_file = sources.get_or_err(file)?;
         let mut parser = Parser::new(source_file, dcx);
+        parser.disable_recovery();
 
         parser.parse()
+    }
+
+    /// Disables the parser from attempting to recover from errors.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn disable_recovery(&mut self) {
+        self.attempt_recovery = false;
     }
 
     /// Prepares the parser to being parsing.
@@ -282,7 +295,14 @@ impl Parser {
         self.peek_offset(kind, 0)
     }
 
-    /// Advances the cursor position by a single token.
+    /// Advances the cursor position backwards by a single token.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    fn rewind(&mut self) {
+        self.index -= 1;
+        self.position = self.token().start();
+    }
+
+    /// Advances the cursor position forward by a single token.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn skip(&mut self) {
         self.index += 1;
@@ -294,6 +314,14 @@ impl Parser {
     fn move_to(&mut self, index: usize) {
         self.index = index;
         self.position = self.token().start();
+    }
+
+    /// Moves the current cursor position to the given position.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    fn move_to_pos(&mut self, pos: usize) {
+        while self.position > pos {
+            self.rewind();
+        }
     }
 
     /// Consumes the next token from the lexer and returns it if it matches the expected kind.
@@ -611,36 +639,6 @@ impl Parser {
         Ok(path)
     }
 
-    /// Parses the next token as a symbol path.
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_path(&mut self) -> Result<Path> {
-        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_path_segment)?;
-        let (name, root) = segments.split_last().unwrap();
-
-        Ok(Path {
-            name: name.to_owned(),
-            root: root.to_owned(),
-            location: name.location.clone(),
-        })
-    }
-
-    /// Parses the next token as a single segment of a symbol path.
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_path_segment(&mut self) -> Result<PathSegment> {
-        let ((name, type_arguments), location) = self.consume_with_loc(|p| {
-            let name = p.parse_identifier()?;
-            let params = p.parse_type_arguments_boxed()?;
-
-            Ok((name, params))
-        })?;
-
-        Ok(PathSegment {
-            name,
-            type_arguments,
-            location,
-        })
-    }
-
     /// Returns a block for functions or methods.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_block(&mut self) -> Result<Block> {
@@ -653,6 +651,10 @@ impl Parser {
                 match p.parse_statement() {
                     Ok(stmt) => stmts.push(stmt),
                     Err(err) => {
+                        if !p.attempt_recovery {
+                            return Err(err);
+                        }
+
                         p.dcx.emit(err);
 
                         p.recover_statement();

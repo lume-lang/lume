@@ -2,7 +2,7 @@ mod diagnostics;
 
 use crate::{TyCheckCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, Identifier};
+use lume_hir::{self, Identifier, Path};
 use lume_infer::query::Callable;
 use lume_types::{Function, Method, TypeRef};
 
@@ -61,7 +61,7 @@ pub(crate) struct CallableLookupSuggestion<'a> {
 #[derive(Debug)]
 pub(crate) struct MethodLookupError<'a> {
     /// Defines the name of the type on which the method was being looked up.
-    pub type_name: SymbolName,
+    pub type_name: Path,
 
     /// Defines the name of the method that was being looked up.
     pub method_name: Identifier,
@@ -102,7 +102,7 @@ impl MethodLookupError<'_> {
 #[derive(Debug)]
 pub(crate) struct FunctionLookupError<'a> {
     /// Defines the name of the function that was being looked up.
-    pub function_name: SymbolName,
+    pub function_name: Path,
 
     /// Defines a list of possible suggestions for the function lookup.
     pub suggestions: Vec<CallableLookupSuggestion<'a>>,
@@ -128,7 +128,7 @@ impl FunctionLookupError<'_> {
 
         diagnostics::MissingFunction {
             source: self.function_name.location,
-            function_name: self.function_name.as_ident().clone(),
+            function_name: self.function_name.name().clone(),
             suggestions,
         }
         .into()
@@ -210,7 +210,7 @@ impl TyCheckCtx {
 
         // Verify that the amount of type arguments match the
         // expected number of type parameters.
-        if function.type_parameters.len() != expr.type_arguments.len() {
+        if function.type_parameters.len() != expr.type_arguments().len() {
             failures.push(CallableCheckError::TypeParameterCountMismatch);
 
             return Ok(CallableCheckResult::Failure(failures));
@@ -355,8 +355,8 @@ impl TyCheckCtx {
         callee_type: &lume_types::TypeRef,
     ) -> Result<&'_ Method> {
         let method_name = match &expr {
-            lume_hir::CallExpression::Instanced(call) => call.name.identifier(),
-            lume_hir::CallExpression::Static(call) => call.name.name.identifier(),
+            lume_hir::CallExpression::Instanced(call) => call.name.name(),
+            lume_hir::CallExpression::Static(call) => call.name.name.name(),
         };
 
         let mut suggestions = Vec::new();

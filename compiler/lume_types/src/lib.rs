@@ -7,7 +7,7 @@ use lume_session::GlobalCtx;
 
 use crate::errors::*;
 use lume_hir::{
-    FunctionId, ImplId, MethodId, PathSegment, PropertyId, SymbolName, TypeId, TypeParameterId, UseId, Visibility,
+    FunctionId, ImplId, MethodId, Path, PathSegment, PropertyId, TypeId, TypeParameterId, UseId, Visibility,
 };
 use lume_span::{ItemId, Location};
 
@@ -189,7 +189,7 @@ pub struct FunctionSig<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub id: FunctionId,
-    pub name: SymbolName,
+    pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
@@ -221,7 +221,7 @@ pub struct Method {
     pub id: MethodId,
     pub visibility: Visibility,
     pub callee: TypeRef,
-    pub name: SymbolName,
+    pub name: Path,
     pub type_parameters: Vec<TypeParameterId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
@@ -250,7 +250,7 @@ impl Method {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Struct {
     pub id: ItemId,
-    pub name: SymbolName,
+    pub name: Path,
     pub type_parameters: Vec<TypeParameterId>,
 }
 
@@ -267,7 +267,7 @@ impl Struct {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Trait {
     pub id: ItemId,
-    pub name: SymbolName,
+    pub name: Path,
     pub type_parameters: Vec<TypeParameterId>,
 }
 
@@ -283,7 +283,7 @@ impl Trait {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 impl Enum {
@@ -297,12 +297,12 @@ impl Enum {
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumCase {
     pub parent: ItemId,
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alias {
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 impl Alias {
@@ -316,7 +316,7 @@ impl Alias {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub id: ImplId,
-    pub target: SymbolName,
+    pub target: Path,
     pub type_parameters: Vec<TypeParameterId>,
 }
 
@@ -397,7 +397,7 @@ pub struct Type {
     pub id: TypeId,
     pub kind: TypeKindRef,
     pub transport: TypeTransport,
-    pub name: SymbolName,
+    pub name: Path,
 
     pub properties: IndexMap<String, PropertyId>,
     pub methods: IndexMap<PathSegment, MethodId>,
@@ -410,7 +410,7 @@ impl Type {
             id: TYPEREF_VOID_ID,
             kind: TypeKindRef::Void,
             transport: TypeTransport::Copy,
-            name: SymbolName::void(),
+            name: Path::void(),
             properties: IndexMap::new(),
             methods: IndexMap::new(),
         }
@@ -734,12 +734,12 @@ impl TypeDatabaseContext {
     }
 
     /// Attempts to find a [`Type`] with the given name, if any.
-    pub fn find_type(&self, name: &SymbolName) -> Option<&Type> {
+    pub fn find_type(&self, name: &Path) -> Option<&Type> {
         self.types().find(|ty| ty.name == *name)
     }
 
     /// Attempts to find a [`Function`] with the given name, if any.
-    pub fn find_function(&self, name: &SymbolName) -> Option<&Function> {
+    pub fn find_function(&self, name: &Path) -> Option<&Function> {
         self.functions().find(|func| func.name == *name)
     }
 
@@ -749,13 +749,13 @@ impl TypeDatabaseContext {
     }
 
     /// Attempts to find a [`Method`] with the given name, if any.
-    pub fn find_method(&self, name: &SymbolName) -> Option<&Method> {
+    pub fn find_method(&self, name: &Path) -> Option<&Method> {
         self.methods().find(|met| met.name == *name)
     }
 
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
-    pub fn func_alloc(&mut self, name: SymbolName, visibility: Visibility) -> FunctionId {
+    pub fn func_alloc(&mut self, name: Path, visibility: Visibility) -> FunctionId {
         let id = FunctionId(self.functions.len() as u64);
 
         let func = Function {
@@ -773,7 +773,7 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, name: SymbolName, kind: TypeKindRef) -> TypeId {
+    pub fn type_alloc(&mut self, name: Path, kind: TypeKindRef) -> TypeId {
         let id = TypeId(self.types.len() as u64);
 
         let ty = Type {
@@ -791,7 +791,7 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Implementation`] with the target.
     #[inline]
-    pub fn impl_alloc(&mut self, target: SymbolName) -> ImplId {
+    pub fn impl_alloc(&mut self, target: Path) -> ImplId {
         let id = ImplId(self.implementations.len() as u64);
 
         let implementation = Implementation {
@@ -853,7 +853,7 @@ impl TypeDatabaseContext {
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn method_alloc(&mut self, owner: TypeRef, name: SymbolName, visibility: Visibility) -> Result<MethodId> {
+    pub fn method_alloc(&mut self, owner: TypeRef, name: Path, visibility: Visibility) -> Result<MethodId> {
         let id = MethodId(self.methods.len() as u64);
         let instance = owner.instance_of;
 

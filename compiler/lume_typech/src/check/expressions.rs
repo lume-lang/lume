@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_hir::SymbolName;
+use lume_hir::Path;
 use lume_types::TypeRef;
 
 use crate::TyCheckCtx;
@@ -258,7 +258,7 @@ impl TyCheckCtx {
         let expr_location = &self.hir_expect_expr(expr.id).location;
 
         // Resolve the `Cast` type from the type context
-        let cast_ref = self.find_type_ref(&lume_hir::SymbolName::cast())?.unwrap();
+        let cast_ref = self.find_type_ref(&Path::cast())?.unwrap();
         let mut cast_trait = TypeRef::new(cast_ref.instance_of, cast_ref.location);
 
         cast_trait.type_arguments.push(dest_type);
@@ -291,19 +291,19 @@ impl TyCheckCtx {
         let lhs = self.type_of_expr(&expr.lhs)?;
         let rhs = self.type_of_expr(&expr.rhs)?;
 
-        if self.type_ref_name(&lhs)? != &SymbolName::boolean() {
+        if self.type_ref_name(&lhs)? != &Path::boolean() {
             return Err(BooleanOperationOnNonBoolean {
                 source: expr.lhs.location,
-                expected: SymbolName::boolean().to_string(),
+                expected: Path::boolean().to_string(),
                 found: self.new_named_type(&lhs)?.to_string(),
             }
             .into());
         }
 
-        if self.type_ref_name(&rhs)? != &SymbolName::boolean() {
+        if self.type_ref_name(&rhs)? != &Path::boolean() {
             return Err(BooleanOperationOnNonBoolean {
                 source: expr.rhs.location,
-                expected: SymbolName::boolean().to_string(),
+                expected: Path::boolean().to_string(),
                 found: self.new_named_type(&rhs)?.to_string(),
             }
             .into());

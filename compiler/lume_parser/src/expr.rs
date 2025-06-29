@@ -131,16 +131,14 @@ impl Parser {
         Expression::Call(Box::new(Call {
             callee: Some(left),
             name: Path {
-                name: Identifier {
+                name: PathSegment::callable(Identifier {
                     name: operator.into(),
                     location: operator_loc.clone().into(),
-                }
-                .into(),
+                }),
                 root: Vec::new(),
                 location: operator_loc.into(),
             },
             arguments: vec![],
-            type_arguments: vec![],
             location: (start..end).into(),
         }))
     }
@@ -194,16 +192,14 @@ impl Parser {
         Ok(Expression::Call(Box::new(Call {
             callee: Some(lhs),
             name: Path {
-                name: Identifier {
+                name: PathSegment::callable(Identifier {
                     name: operator.into(),
                     location: operator_loc.clone().into(),
-                }
-                .into(),
+                }),
                 root: Vec::new(),
                 location: operator_loc.into(),
             },
             arguments: vec![rhs],
-            type_arguments: vec![],
             location: (start..end).into(),
         })))
     }
@@ -326,6 +322,24 @@ impl Parser {
             // If the identifier is following by a separator, it's refering to a namespaced identifier
             IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
 
+            // If the identifier is following by a lesser sign, it might be referring to a generic call expression
+            TokenKind::Less => {
+                let current_idx = self.index;
+
+                // If we fail to parse the type arguments, move back to the original position
+                // and continue parsing at the fallthrough case.
+                let has_type_args = self.parse_type_arguments().is_ok();
+                let is_call_expr = self.token().kind == TokenKind::LeftParen;
+
+                self.move_to(current_idx);
+
+                match (has_type_args, is_call_expr) {
+                    (_, true) => self.parse_call(None, identifier),
+                    (true, false) => self.parse_path_expression(identifier),
+                    (false, _) => Ok(self.parse_variable(identifier)),
+                }
+            }
+
             // If the name stands alone, it's likely a variable reference
             _ => Ok(self.parse_variable(identifier)),
         }
@@ -333,10 +347,10 @@ impl Parser {
 
     /// Parses a call expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn parse_call(&mut self, callee: Option<Expression>, name: impl Into<Path>) -> Result<Expression> {
-        let name = name.into();
-
+    fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
         let type_arguments = self.parse_type_arguments()?;
+        let type_arguments_end = self.token().end();
+
         let arguments = self.parse_call_arguments()?;
 
         let start = name.location.start();
@@ -344,9 +358,12 @@ impl Parser {
 
         let call = Call {
             callee,
-            name,
+            name: Path::rooted(PathSegment::Callable {
+                name,
+                type_arguments,
+                location: (start..type_arguments_end).into(),
+            }),
             arguments,
-            type_arguments,
             location: (start..end).into(),
         };
 
@@ -375,7 +392,7 @@ impl Parser {
         let name = self.parse_callable_name()?;
 
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenKind::LeftParen) || self.check(IDENTIFIER_SEPARATOR) {
+        if self.peek(TokenKind::LeftParen) || self.peek(TokenKind::Less) {
             tracing::trace!("member expr is method invocation");
 
             let identifier = Identifier {
@@ -445,90 +462,34 @@ impl Parser {
     /// Parses a path expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
-        let mut location_end = self.position;
+        // Move the cursor back to the start of the given identifier.
+        self.move_to_pos(name.location.start());
 
-        self.consume(IDENTIFIER_SEPARATOR)?;
+        let path = self.parse_path()?;
 
-        // We cannot know from our current position whether
-        // the current expression refers to a call expression or a path expression.
-        //
-        // Consider the expression:
-        // ```lm (illustrative)
-        // let _ = foo::<T>();
-        //              ^ cursor is here
-        // ```
-        //
-        // At the current position, it could also be a typed path segment, much like:
-        // ```lm (illustrative)
-        // let _ = foo::<T>::call();
-        //              ^ cursor is here
-        // ```
-        //
-        // So, we need to see if any parenthesis are present AFTER the type arguments. And since
-        // type arguments can be of any length, we need to parse them, rewind and check what we found.
-        if self.peek(TokenKind::Less) {
-            let position = self.index;
-            let _ = self.parse_type_arguments()?;
-
-            // ```lm (illustrative)
-            // let _ = foo::<T>();
-            //                 ^ cursor is here...
-            //              ^ ...move back here
-            // ```
-            if self.peek(TokenKind::LeftParen) {
-                // We have to rewind, since `parse_call` parses
-                // the type arguments for the call expression.
-                self.move_to(position);
-
-                return self.parse_call(None, name);
+        match &path.name {
+            PathSegment::Namespace { name } => Err(crate::errors::ExpectedValueNamespace {
+                source: self.source.clone(),
+                range: name.location.0.clone(),
+                actual: name.to_string(),
             }
-
-            location_end = self.position;
-
-            // ```lm (illustrative)
-            // let _ = foo::<T>::call();
-            //                   ^ cursor is here...
-            //              ^ ...move back here
-            // ```
-            self.move_to(position);
-        }
-
-        // If any type arguments are defined, we need to parse them now.
-        let type_arguments = if self.peek(TokenKind::Less) {
-            let args = self.parse_type_arguments_boxed()?;
-            location_end = self.position;
-
-            self.consume(IDENTIFIER_SEPARATOR)?;
-
-            args
-        } else {
-            Vec::new()
-        };
-
-        let location = (name.location.start()..location_end).into();
-
-        let path = Path::rooted(PathSegment {
-            name,
-            type_arguments,
-            location,
-        });
-        let mut expression = self.parse_expression()?;
-
-        Self::merge_expression_with_path(&mut expression, path);
-
-        Ok(expression)
-    }
-
-    /// Merges a path with an expression.
-    fn merge_expression_with_path(expr: &mut Expression, path: Path) {
-        match expr {
-            Expression::Call(call) => {
-                call.name.merge(path);
+            .into()),
+            PathSegment::Type { location, .. } => Err(crate::errors::ExpectedValueType {
+                source: self.source.clone(),
+                range: location.0.clone(),
+                actual: path.name.to_string(),
             }
-            Expression::Member(member) => {
-                Self::merge_expression_with_path(&mut member.callee, path);
+            .into()),
+            PathSegment::Callable { location, .. } => {
+                let arguments = self.parse_call_arguments()?;
+
+                Ok(Expression::Call(Box::new(Call {
+                    location: (location.start()..location.end()).into(),
+                    callee: None,
+                    name: path,
+                    arguments,
+                })))
             }
-            _ => {}
         }
     }
 

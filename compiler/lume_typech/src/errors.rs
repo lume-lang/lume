@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, SymbolName};
+use lume_hir::{Identifier, Path};
 use lume_span::Location;
 
 #[derive(Diagnostic, Debug)]
@@ -8,7 +8,7 @@ pub struct MissingType {
     #[label(source, "is there a missing import for the type {name}?")]
     pub source: Location,
 
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -17,7 +17,7 @@ pub struct MissingSymbol {
     #[label(source, "no symbol with name {name:?} was found")]
     pub source: Location,
 
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -26,7 +26,7 @@ pub struct AttemptedTypeInvocation {
     #[label(source, "attempted to invoke type {name}")]
     pub source: Location,
 
-    pub name: SymbolName,
+    pub name: Path,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -35,7 +35,7 @@ pub struct MissingProperty {
     #[label(source, "could not find property {property_name} on type {type_name}")]
     pub source: Location,
 
-    pub type_name: SymbolName,
+    pub type_name: Path,
     pub property_name: Identifier,
 }
 

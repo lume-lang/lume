@@ -70,6 +70,16 @@ impl Identifier {
     pub fn as_var(self) -> Expression {
         Expression::Variable(Box::new(Variable { name: self }))
     }
+
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
+    pub fn is_lower(&self) -> bool {
+        self.name.starts_with(|c: char| c.is_ascii_lowercase())
+    }
 }
 
 impl From<String> for Identifier {
@@ -227,29 +237,118 @@ impl PartialEq for NamespacePath {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PathSegment {
-    pub name: Identifier,
-    pub type_arguments: Vec<Type>,
-    pub location: Location,
+pub enum PathSegment {
+    /// Denotes a segment which refers to a namespace.
+    ///
+    /// ```lm
+    /// std::io::File
+    /// ^^^  ^^ both namespace segments
+    /// ```
+    Namespace { name: Identifier },
+
+    /// Denotes a segment which refers to a type, optionally with type arguments.
+    ///
+    /// ```lm
+    /// std::io::File
+    ///          ^^^^ type segment
+    /// ```
+    Type {
+        name: Identifier,
+        type_arguments: Vec<Type>,
+        location: Location,
+    },
+
+    /// Denotes a segment which refers to a callable, such as a function or method.
+    ///
+    /// ```lm
+    /// std::io::File::open()
+    ///                ^^^^ callable segment
+    ///
+    /// std::io::read_file()
+    ///          ^^^^^^^^^ callable segment
+    /// ```
+    Callable {
+        name: Identifier,
+        type_arguments: Vec<Type>,
+        location: Location,
+    },
 }
 
-node_location!(PathSegment);
+impl PathSegment {
+    /// Creates a new namespace segment, with the given name.
+    pub fn namespace(identifier: impl Into<Identifier>) -> Self {
+        Self::Namespace {
+            name: identifier.into(),
+        }
+    }
 
-impl<T: Into<Identifier>> From<T> for PathSegment {
-    fn from(name: T) -> PathSegment {
-        let name = name.into();
+    /// Creates a new type segment, with the given name.
+    pub fn ty(identifier: impl Into<Identifier>) -> Self {
+        let identifier = identifier.into();
 
-        PathSegment {
-            location: name.location.clone(),
-            name,
+        Self::Type {
+            location: identifier.location.clone(),
+            name: identifier,
             type_arguments: Vec::new(),
+        }
+    }
+
+    /// Creates a new callable segment, with the given name.
+    pub fn callable(identifier: impl Into<Identifier>) -> Self {
+        let identifier = identifier.into();
+
+        Self::Callable {
+            location: identifier.location.clone(),
+            name: identifier,
+            type_arguments: Vec::new(),
+        }
+    }
+
+    /// Gets the name of the path segment.
+    pub fn name(&self) -> &Identifier {
+        match self {
+            Self::Namespace { name } | Self::Type { name, .. } | Self::Callable { name, .. } => name,
+        }
+    }
+
+    /// Gets the type arguments of the path segment.
+    pub fn type_arguments(&self) -> &[Type] {
+        match self {
+            Self::Namespace { .. } => &[],
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
+        }
+    }
+
+    /// Takes the type arguments from the path segment.
+    pub fn take_type_arguments(self) -> Vec<Type> {
+        match self {
+            Self::Namespace { .. } => Vec::new(),
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
         }
     }
 }
 
 impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{}<{:?}>", self.name, self.type_arguments))
+        match self {
+            Self::Namespace { name } => f.write_str(name.as_str()),
+            Self::Type {
+                name, type_arguments, ..
+            }
+            | Self::Callable {
+                name, type_arguments, ..
+            } => f.write_fmt(format_args!("{name}<{type_arguments:?}>")),
+        }
+    }
+}
+
+impl Node for PathSegment {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Namespace { name } => &name.location,
+            Self::Type { location, .. } | Self::Callable { location, .. } => location,
+        }
     }
 }
 
@@ -265,7 +364,7 @@ node_location!(Path);
 impl Path {
     #[must_use]
     pub fn rooted(name: PathSegment) -> Self {
-        let location = name.location.clone();
+        let location = name.location().clone();
 
         Path {
             name,
@@ -290,11 +389,13 @@ impl Path {
         self.root.insert(0, other.name);
         self.location = (other.location.start()..self.location.end()).into();
     }
-}
 
-impl From<Identifier> for Path {
-    fn from(identifier: Identifier) -> Path {
-        Path::rooted(identifier.into())
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.type_arguments()
+    }
+
+    pub fn take_type_arguments(self) -> Vec<Type> {
+        self.name.take_type_arguments()
     }
 }
 
@@ -827,7 +928,6 @@ pub struct Call {
     pub callee: Option<Expression>,
     pub name: Path,
     pub arguments: Vec<Expression>,
-    pub type_arguments: Vec<TypeArgument>,
     pub location: Location,
 }
 
@@ -980,17 +1080,6 @@ impl Node for TypeParameter {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct TypeArgument {
-    pub ty: Type,
-}
-
-impl Node for TypeArgument {
-    fn location(&self) -> &Location {
-        self.ty.location()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Named(Box<NamedType>),
@@ -1043,10 +1132,10 @@ impl std::fmt::Display for NamedType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{}", self.name))?;
 
-        if !self.name.name.type_arguments.is_empty() {
+        if !self.name.name.type_arguments().is_empty() {
             f.write_str("<")?;
 
-            for type_param in &self.name.name.type_arguments {
+            for type_param in self.name.name.type_arguments() {
                 f.write_fmt(format_args!("{type_param}"))?;
             }
 

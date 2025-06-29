@@ -28,23 +28,9 @@ impl Parser {
         })
     }
 
-    /// Parses zero-or-more type arguments.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<TypeArgument>> {
-        if !self.peek(TokenKind::Less) {
-            return Ok(Vec::new());
-        }
-
-        self.consume_comma_seq(TokenKind::Less, TokenKind::Greater, |p| {
-            let ty = p.parse_type()?;
-
-            Ok(TypeArgument { ty })
-        })
-    }
-
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub(super) fn parse_type_arguments_boxed(&mut self) -> Result<Vec<Type>> {
+    pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<Type>> {
         if !self.peek(TokenKind::Less) {
             return Ok(Vec::new());
         }

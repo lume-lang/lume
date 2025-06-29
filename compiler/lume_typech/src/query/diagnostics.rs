@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, PathSegment, SymbolName};
+use lume_hir::{Identifier, Path, PathSegment};
 use lume_span::Location;
 
 use crate::query::CallableCheckError;
@@ -10,7 +10,7 @@ pub(crate) struct MissingMethod {
     #[label(source, "could not find method {method_name} on type {type_name}")]
     pub source: Location,
 
-    pub type_name: SymbolName,
+    pub type_name: Path,
     pub method_name: Identifier,
 
     #[related(collection)]
@@ -28,7 +28,7 @@ pub(crate) struct SuggestedMethod {
     pub source: Location,
 
     pub method_name: PathSegment,
-    pub type_name: SymbolName,
+    pub type_name: Path,
     pub reason: CallableCheckError,
 }
 

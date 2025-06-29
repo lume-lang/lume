@@ -1,7 +1,7 @@
 use crate::assert_typech_snapshot;
 
 #[test]
-fn typech_variable_decl_compatible() {
+fn typech_variable_decl_comp() {
     assert_typech_snapshot!(
         "fn foo() {
         let _: Int32 = 1_i32;
@@ -10,7 +10,7 @@ fn typech_variable_decl_compatible() {
 }
 
 #[test]
-fn typech_variable_decl_incompatible() {
+fn typech_variable_decl_incomp() {
     assert_typech_snapshot!(
         "fn foo() {
         let _: Int32 = false;

@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 
 use error_snippet::Result;
 use lume_errors::DiagCtx;
-use lume_hir::{PathSegment, SymbolName, TypeId, TypeParameter};
+use lume_hir::{Path, TypeId, TypeParameter};
 use lume_span::{DefId, StatementId};
 use lume_types::{NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
 
@@ -150,7 +150,7 @@ impl TyInferCtx {
 
         let mut type_ref = TypeRef::new(found_type, ty.location);
 
-        for type_param in &ty.type_params {
+        for type_param in ty.type_arguments() {
             let type_param_ref = self.mk_type_ref_generic(type_param, type_params)?;
             type_ref.type_arguments.push(type_param_ref);
         }
@@ -159,14 +159,10 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]
-    fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &SymbolName, type_params: &[T]) -> Option<TypeId> {
+    fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &Path, type_params: &[T]) -> Option<TypeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
-            let lume_hir::PathSegment::Named(type_name) = &name.name else {
-                break;
-            };
-
-            if &type_param.as_ref().name == type_name {
+            if &type_param.as_ref().name == name.name.name() {
                 return Some(type_param.as_ref().type_id.unwrap());
             }
         }
@@ -181,38 +177,31 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid references
     /// to type IDs.
-    pub fn find_type_ref(&self, name: &SymbolName) -> Result<Option<TypeRef>> {
+    pub fn find_type_ref(&self, name: &Path) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);
         };
 
         let location = name.location;
 
-        if let PathSegment::Typed(_, args) = &name.name {
-            let args = args
-                .iter()
-                .map(|arg| self.mk_type_ref(arg))
-                .collect::<Result<Vec<_>>>()?;
+        let args = name
+            .type_arguments()
+            .iter()
+            .map(|arg| self.mk_type_ref(arg))
+            .collect::<Result<Vec<_>>>()?;
 
-            Ok(Some(TypeRef {
-                instance_of: ty.id,
-                type_arguments: args,
-                location,
-            }))
-        } else {
-            Ok(Some(TypeRef::new(ty.id, location)))
-        }
+        Ok(Some(TypeRef {
+            instance_of: ty.id,
+            type_arguments: args,
+            location,
+        }))
     }
 
     /// Returns an error indicating that the given type was not found.
     #[allow(clippy::unused_self)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
-            let lume_hir::PathSegment::Named(ty_name) = &ty.name.name else {
-                continue;
-            };
-
-            if newcomer_name == &ty_name.name {
+            if newcomer_name == &ty.name.name().as_str() {
                 return errors::UnavailableScalarType {
                     source: ty.location.file.clone(),
                     range: ty.location.index.clone(),
@@ -237,7 +226,8 @@ impl TyInferCtx {
     /// Returns `Err` if any types referenced by the given [`TypeRef`], or any child
     /// instances, are missing from the type context.
     pub fn new_named_type(&self, type_ref: &TypeRef) -> Result<NamedTypeRef> {
-        let name = self.type_ref_name(type_ref)?.as_str().to_string();
+        let name = self.type_ref_name(type_ref)?.to_string();
+
         let type_arguments = type_ref
             .type_arguments
             .iter()

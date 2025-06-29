@@ -53,7 +53,10 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
-        let array_path = lume_ast::Path::with_root(vec!["std", ARRAY_STD_TYPE], ARRAY_NEW_FUNC);
+        let array_path = lume_ast::Path::with_root(
+            vec![ast::PathSegment::namespace("std"), ast::PathSegment::ty(ARRAY_STD_TYPE)],
+            ast::PathSegment::callable(ARRAY_NEW_FUNC),
+        );
 
         let id = self.next_expr_id();
         let values = self.expressions(expr.values);
@@ -65,7 +68,6 @@ impl LowerModule<'_> {
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
-                type_arguments: hir::TypeArguments::new(),
                 arguments: values,
             })),
         })
@@ -120,7 +122,6 @@ impl LowerModule<'_> {
     fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
-        let type_arguments = self.type_arguments(expr.type_arguments)?;
         let arguments = self.expressions(expr.arguments);
         let location = self.location(expr.location);
 
@@ -131,16 +132,10 @@ impl LowerModule<'_> {
                 id,
                 callee,
                 name: name.name,
-                type_arguments,
                 arguments,
             }))
         } else {
-            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
-                id,
-                name,
-                type_arguments,
-                arguments,
-            }))
+            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall { id, name, arguments }))
         };
 
         Ok(hir::Expression { id, location, kind })
@@ -227,7 +222,13 @@ impl LowerModule<'_> {
             RANGE_STD_TYPE
         };
 
-        let range_type = lume_ast::Path::with_root(vec!["std", range_type_name], RANGE_NEW_FUNC);
+        let range_type = lume_ast::Path::with_root(
+            vec![
+                ast::PathSegment::namespace("std"),
+                ast::PathSegment::ty(range_type_name),
+            ],
+            ast::PathSegment::callable(RANGE_NEW_FUNC),
+        );
 
         let id = self.next_expr_id();
         let location = self.location(expr.location);
@@ -240,10 +241,6 @@ impl LowerModule<'_> {
             kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&range_type)?,
-                type_arguments: vec![hir::TypeArgument::Implicit {
-                    location: lume_span::Location::empty(),
-                }]
-                .into(),
                 arguments: vec![lower, upper],
             })),
         })

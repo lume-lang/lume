@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_hir::{PathSegment, SymbolName, TypeId, TypeParameterId};
+use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
 use lume_span::DefId;
 use lume_types::{Alias, Enum, Struct, Trait, TypeKindRef, TypeRef, TypeTransport, WithTypeParameters};
 
@@ -174,7 +174,7 @@ impl TyInferCtx {
         for method in &mut trait_def.methods {
             let method_name = method.name.clone();
             let mut qualified_name =
-                SymbolName::with_root(trait_def.name.clone(), PathSegment::Named(method_name.clone()));
+                Path::with_root(trait_def.name.clone(), PathSegment::callable(method_name.clone()));
 
             qualified_name.location = method_name.location;
 
@@ -193,8 +193,10 @@ impl TyInferCtx {
 
         for method in &mut trait_impl.methods {
             let method_name = method.name.clone();
-            let mut qualified_name =
-                SymbolName::with_root(trait_impl.target.name.clone(), PathSegment::Named(method_name.clone()));
+            let mut qualified_name = Path::with_root(
+                trait_impl.target.name.clone(),
+                PathSegment::callable(method_name.clone()),
+            );
 
             qualified_name.location = method_name.location;
 
@@ -305,9 +307,9 @@ impl TyInferCtx {
         for method in &mut implementation.methods {
             let method_name = method.name.clone();
 
-            let mut qualified_name = SymbolName::with_root(
+            let mut qualified_name = Path::with_root(
                 implementation.target.name.clone(),
-                PathSegment::Named(method_name.clone()),
+                PathSegment::callable(method_name.clone()),
             );
 
             qualified_name.location = method_name.location;
@@ -384,9 +386,10 @@ impl TyInferCtx {
 
     fn wrap_type_param(&mut self, type_param_id: TypeParameterId) -> TypeId {
         let name = self.tdb().type_parameter(type_param_id).unwrap().name.clone();
-        let symbol_name = SymbolName {
-            name: lume_hir::PathSegment::from(name),
-            namespace: None,
+
+        let symbol_name = Path {
+            name: PathSegment::ty(name),
+            root: Vec::new(),
             location: lume_span::Location::empty(),
         };
 

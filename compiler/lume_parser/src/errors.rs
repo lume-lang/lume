@@ -147,6 +147,30 @@ pub struct InvalidExpression {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "expected value, found type", code = "LM1073")]
+pub struct ExpectedValueType {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected value, found type {actual:?} instead")]
+    pub range: Range<usize>,
+
+    pub actual: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "expected value, found namespace", code = "LM1074")]
+pub struct ExpectedValueNamespace {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected value, found namespace {actual:?} instead")]
+    pub range: Range<usize>,
+
+    pub actual: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "Invalid literal value", code = "LM1078")]
 pub struct InvalidLiteral {
     #[span]

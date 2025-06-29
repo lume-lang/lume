@@ -1,4 +1,4 @@
-use lume_hir::SymbolName;
+use lume_hir::{Path, PathSegment};
 use lume_span::Location;
 use lume_types::TypeRef;
 
@@ -9,13 +9,13 @@ use super::*;
 #[test]
 fn query_function_name_rooted() -> Result<()> {
     let tcx = type_infer("fn foo() { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
 
     assert_eq!(funcs.len(), 1);
 
     let func = funcs.first().unwrap();
 
-    assert_eq!(func.name, SymbolName::rooted("foo"));
+    assert_eq!(func.name, Path::rooted(PathSegment::callable("foo")));
     assert_eq!(func.parameters.len(), 0);
     assert_eq!(func.return_type, TypeRef::void());
 
@@ -25,7 +25,7 @@ fn query_function_name_rooted() -> Result<()> {
 #[test]
 fn query_function_name_rooted_name_mismatch() -> Result<()> {
     let tcx = type_infer("fn fooo() { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
 
     assert_eq!(funcs.len(), 0);
 
@@ -35,14 +35,13 @@ fn query_function_name_rooted_name_mismatch() -> Result<()> {
 #[test]
 fn query_function_check_empty() -> Result<()> {
     let tcx = type_infer("fn foo() { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -53,14 +52,13 @@ fn query_function_check_empty() -> Result<()> {
 #[test]
 fn query_function_check_arg_count() -> Result<()> {
     let tcx = type_infer("fn foo(x: Int32) { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -74,14 +72,13 @@ fn query_function_check_arg_count() -> Result<()> {
 #[test]
 fn query_function_check_arg_type() -> Result<()> {
     let tcx = type_infer("fn foo(x: Int32) { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -95,17 +92,16 @@ fn query_function_check_arg_type() -> Result<()> {
 #[test]
 fn query_function_check_arg_type_second() -> Result<()> {
     let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![
             lume_hir::Expression::lit_bool(false),
             lume_hir::Expression::lit_bool(false),
         ],
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -119,14 +115,13 @@ fn query_function_check_arg_type_second() -> Result<()> {
 #[test]
 fn query_function_check_arg_type_match() -> Result<()> {
     let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false), lume_hir::Expression::lit_i32(1)],
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -137,14 +132,13 @@ fn query_function_check_arg_type_match() -> Result<()> {
 #[test]
 fn query_function_check_type_arg_type_count() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -158,17 +152,17 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
 #[test]
 fn query_function_check_type_arg_type_match() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
-    let funcs = tcx.probe_functions(&SymbolName::rooted("foo"));
+    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::Callable {
+            name: "foo".into(),
+            type_arguments: vec![lume_hir::Type::void()],
+            location: Location::empty(),
+        }),
         arguments: Vec::new(),
-        type_arguments: vec![lume_hir::TypeArgument::Implicit {
-            location: lume_span::Location::empty(),
-        }]
-        .into(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -180,7 +174,7 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
 fn query_methods_on_type_empty() -> Result<()> {
     let tcx = type_infer("struct A {} impl A {}")?;
 
-    let ty = tcx.tdb().find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 0);
@@ -192,14 +186,17 @@ fn query_methods_on_type_empty() -> Result<()> {
 fn query_methods_on_type_single() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } }")?;
 
-    let ty = tcx.tdb().find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 1);
 
     let method = methods.first().unwrap();
 
-    assert_eq!(method.name, SymbolName::from_parts(Some(["A"]), "foo"));
+    assert_eq!(
+        method.name,
+        Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
+    );
     assert_eq!(method.parameters.len(), 0);
     assert_eq!(method.return_type, TypeRef::void());
 
@@ -210,16 +207,22 @@ fn query_methods_on_type_single() -> Result<()> {
 fn query_methods_on_type_single_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } pub fn bar() { } }")?;
 
-    let ty = tcx.tdb().find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
 
-    assert_eq!(methods[0].name, SymbolName::from_parts(Some(["A"]), "foo"));
+    assert_eq!(
+        methods[0].name,
+        Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
+    );
     assert_eq!(methods[0].parameters.len(), 0);
     assert_eq!(methods[0].return_type, TypeRef::void());
 
-    assert_eq!(methods[1].name, SymbolName::from_parts(Some(["A"]), "bar"));
+    assert_eq!(
+        methods[1].name,
+        Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("bar"))
+    );
     assert_eq!(methods[1].parameters.len(), 0);
     assert_eq!(methods[1].return_type, TypeRef::void());
 
@@ -230,16 +233,22 @@ fn query_methods_on_type_single_impl() -> Result<()> {
 fn query_methods_on_type_multiple_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } } impl A { pub fn bar() { } }")?;
 
-    let ty = tcx.tdb().find_type(&SymbolName::rooted("A")).unwrap();
+    let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
     let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
 
     assert_eq!(methods.len(), 2);
 
-    assert_eq!(methods[0].name, SymbolName::from_parts(Some(["A"]), "foo"));
+    assert_eq!(
+        methods[0].name,
+        Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo"))
+    );
     assert_eq!(methods[0].parameters.len(), 0);
     assert_eq!(methods[0].return_type, TypeRef::void());
 
-    assert_eq!(methods[1].name, SymbolName::from_parts(Some(["A"]), "bar"));
+    assert_eq!(
+        methods[1].name,
+        Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("bar"))
+    );
     assert_eq!(methods[1].parameters.len(), 0);
     assert_eq!(methods[1].return_type, TypeRef::void());
 
@@ -258,14 +267,16 @@ fn query_check_method_empty() -> Result<()> {
 
     let method = tcx
         .tdb()
-        .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
+        .find_method(&Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::callable("foo"),
+        ))
         .unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::from_parts(Some(["A"]), "foo"),
+        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -288,14 +299,16 @@ fn query_check_method_arg_count() -> Result<()> {
 
     let method = tcx
         .tdb()
-        .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
+        .find_method(&Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::callable("foo"),
+        ))
         .unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::from_parts(Some(["A"]), "foo"),
+        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -320,14 +333,16 @@ fn query_check_method_arg_type() -> Result<()> {
 
     let method = tcx
         .tdb()
-        .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
+        .find_method(&Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::callable("foo"),
+        ))
         .unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::from_parts(Some(["A"]), "foo"),
+        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -352,14 +367,16 @@ fn query_check_method_type_arg_count() -> Result<()> {
 
     let method = tcx
         .tdb()
-        .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
+        .find_method(&Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::callable("foo"),
+        ))
         .unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::from_parts(Some(["A"]), "foo"),
+        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     assert_eq!(
@@ -384,17 +401,23 @@ fn query_check_method_type_arg_valid() -> Result<()> {
 
     let method = tcx
         .tdb()
-        .find_method(&SymbolName::from_parts(Some(["A"]), "foo"))
+        .find_method(&Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::callable("foo"),
+        ))
         .unwrap();
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::from_parts(Some(["A"]), "foo"),
+        name: Path::from_parts(
+            Some([PathSegment::ty("A")]),
+            PathSegment::Callable {
+                name: "foo".into(),
+                type_arguments: vec![lume_hir::Type::void()],
+                location: Location::empty(),
+            },
+        ),
         arguments: Vec::new(),
-        type_arguments: vec![lume_hir::TypeArgument::Implicit {
-            location: lume_span::Location::empty(),
-        }]
-        .into(),
     };
 
     assert_eq!(
@@ -411,16 +434,15 @@ fn query_lookup_functions_single() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
     assert!(func.is_ok());
 
     let func = func.unwrap();
-    assert_eq!(func.name, SymbolName::rooted("foo"));
+    assert_eq!(func.name, Path::rooted(PathSegment::callable("foo")));
     assert_eq!(func.parameters.len(), 0);
     assert_eq!(func.type_parameters.len(), 0);
     assert_eq!(func.return_type, TypeRef::void());
@@ -434,9 +456,8 @@ fn query_lookup_functions_missing() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -454,9 +475,8 @@ fn query_lookup_functions_suggestion_name_mismatch() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -474,9 +494,8 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -494,9 +513,8 @@ fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -514,9 +532,8 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
-        name: SymbolName::rooted("foo"),
+        name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        type_arguments: lume_hir::TypeArguments::new(),
     };
 
     let func = tcx.lookup_functions(&expr);

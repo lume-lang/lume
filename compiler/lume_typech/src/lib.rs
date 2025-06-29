@@ -3,7 +3,6 @@
 use std::ops::Deref;
 
 use lume_errors::DiagCtx;
-use lume_hir::SymbolName;
 use lume_infer::TyInferCtx;
 use lume_infer::query::CallReference;
 use lume_types::TypeDatabaseContext;

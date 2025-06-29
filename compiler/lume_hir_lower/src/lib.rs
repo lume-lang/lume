@@ -4,8 +4,7 @@ use std::sync::Arc;
 use error_snippet::Result;
 use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
-use lume_hir::{Identifier, PathRoot, SymbolName, map::Map};
-use lume_hir::{Path, PathSegment, symbols::*};
+use lume_hir::{Identifier, Path, PathSegment, map::Map, symbols::*};
 use lume_parser::Parser;
 use lume_session::Package;
 use lume_span::{ExpressionId, Internable, ItemId, Location, SourceFile, SourceMap, StatementId, hash_id};
@@ -153,13 +152,13 @@ pub struct LowerModule<'a> {
     locals: SymbolTable<String, lume_hir::VariableDeclaration>,
 
     /// Mapping between all imported items and their corresponding item IDs.
-    imports: HashMap<String, SymbolName>,
+    imports: HashMap<String, Path>,
 
     /// Defines the currently containing namespace expressions exist within, if any.
-    namespace: Option<lume_hir::Path>,
+    namespace: Option<Path>,
 
     /// Defines the currently containing class expressions exist within, if any.
-    self_type: Option<SymbolName>,
+    self_type: Option<Path>,
 
     /// Defines the ID of the current item being lowered, if any.
     current_item: ItemId,
@@ -276,23 +275,23 @@ impl<'a> LowerModule<'a> {
         StatementId::from_id(self.current_item, id)
     }
 
-    /// Gets the [`lume_hir::SymbolName`] for the item with the given name.
-    fn resolve_symbol_name(&self, path: &ast::Path) -> Result<SymbolName> {
+    /// Gets the [`lume_hir::Path`] for the item with the given name.
+    fn resolve_symbol_name(&self, path: &ast::Path) -> Result<Path> {
         if let Some(symbol) = self.resolve_imported_symbol(path)? {
             return Ok(symbol.clone());
         }
 
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
-        Ok(SymbolName {
-            namespace: Some(self.path_root(path.root.clone())?),
+        Ok(Path {
+            root: self.path_root(path.root.clone())?,
             name: self.path_segment(path.name.clone())?,
             location: self.location(path.location.clone()),
         })
     }
 
-    /// Attemps to resolve a [`lume_hir::SymbolName`] for an imported symbol.
-    fn resolve_imported_symbol(&self, path: &ast::Path) -> Result<Option<SymbolName>> {
+    /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
+    fn resolve_imported_symbol(&self, path: &ast::Path) -> Result<Option<Path>> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported path.
             //
@@ -304,23 +303,17 @@ impl<'a> LowerModule<'a> {
             //     io::File::from_path("foo.txt");
             // ```
             if let Some(name) = path.root.first() {
-                if name.name.name == *import {
+                if name.name().name == *import {
                     // Since we only matched a subset of the imported symbol,
                     // we need to merge the two paths together, so it forms a fully-qualified path.
-                    let mut namespace = PathRoot::default();
-
-                    if let Some(ns) = &symbol.namespace {
-                        for segment in &ns.segments {
-                            namespace.segments.push(segment.clone());
-                        }
-                    }
+                    let mut root: Vec<PathSegment> = symbol.root.clone();
 
                     for segment in &path.root {
-                        namespace.segments.push(self.path_segment(segment.clone())?);
+                        root.push(self.path_segment(segment.clone())?);
                     }
 
-                    return Ok(Some(SymbolName {
-                        namespace: Some(namespace),
+                    return Ok(Some(Path {
+                        root,
                         name: self.path_segment(path.name.clone())?,
                         location: self.location(path.location.clone()),
                     }));
@@ -333,23 +326,12 @@ impl<'a> LowerModule<'a> {
             //
             //     File::from_path("foo.txt");
             // ```
-            else if path.name.name.name == *import {
+            else if path.name.name().name == *import {
                 return Ok(Some(symbol.clone()));
             }
         }
 
         Ok(None)
-    }
-
-    fn symbol_name(&self, name: ast::Identifier) -> Result<SymbolName> {
-        let namespace = self.namespace.clone().map(Path::to_pathroot);
-        let location = self.location(name.location.clone());
-
-        Ok(SymbolName {
-            namespace,
-            name: self.path_segment(ast::PathSegment::from(name))?,
-            location,
-        })
     }
 
     fn identifier(&self, expr: ast::Identifier) -> Identifier {
@@ -361,26 +343,59 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn path_root(&self, expr: Vec<ast::PathSegment>) -> Result<PathRoot> {
-        let segments = expr
-            .into_iter()
-            .map(|seg| self.path_segment(seg))
-            .collect::<Result<Vec<_>>>()?;
+    fn expand_name(&self, name: ast::PathSegment) -> Result<Path> {
+        if let Some(ns) = &self.namespace {
+            Ok(Path::with_root(ns.clone(), self.path_segment(name)?))
+        } else {
+            Ok(Path::rooted(self.path_segment(name)?))
+        }
+    }
 
-        Ok(PathRoot { segments })
+    fn path_root(&self, expr: Vec<ast::PathSegment>) -> Result<Vec<PathSegment>> {
+        expr.into_iter()
+            .map(|seg| self.path_segment(seg))
+            .collect::<Result<Vec<_>>>()
     }
 
     fn path_segment(&self, expr: ast::PathSegment) -> Result<PathSegment> {
-        if expr.type_arguments.is_empty() {
-            Ok(PathSegment::Named(self.identifier(expr.name)))
-        } else {
-            let type_args = expr
-                .type_arguments
-                .into_iter()
-                .map(|arg| self.type_ref(arg))
-                .collect::<Result<Vec<_>>>()?;
+        match expr {
+            ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
+            ast::PathSegment::Type {
+                name,
+                type_arguments,
+                location,
+            } => {
+                let name = self.identifier(name);
+                let location = self.location(location);
+                let type_arguments = type_arguments
+                    .into_iter()
+                    .map(|arg| self.type_ref(arg))
+                    .collect::<Result<Vec<_>>>()?;
 
-            Ok(PathSegment::Typed(self.identifier(expr.name), type_args))
+                Ok(PathSegment::Type {
+                    name,
+                    type_arguments,
+                    location,
+                })
+            }
+            ast::PathSegment::Callable {
+                name,
+                type_arguments,
+                location,
+            } => {
+                let name = self.identifier(name);
+                let location = self.location(location);
+                let type_arguments = type_arguments
+                    .into_iter()
+                    .map(|arg| self.type_ref(arg))
+                    .collect::<Result<Vec<_>>>()?;
+
+                Ok(PathSegment::Callable {
+                    name,
+                    type_arguments,
+                    location,
+                })
+            }
         }
     }
 
@@ -431,15 +446,12 @@ impl<'a> LowerModule<'a> {
     fn top_import(&mut self, expr: ast::Import) -> Result<()> {
         for imported_name in expr.names {
             let namespace = self.import_path(expr.path.clone())?;
-            let location = self.location(imported_name.location.clone());
 
-            let imported_symbol_name = SymbolName {
-                name: self.path_segment(ast::PathSegment::from(imported_name.clone()))?,
-                namespace: Some(namespace.to_pathroot()),
-                location,
-            };
+            let imported_name = PathSegment::ty(self.identifier(imported_name));
+            let imported_symbol_name = Path::with_root(namespace, imported_name);
 
-            self.imports.insert(imported_name.name, imported_symbol_name);
+            self.imports
+                .insert(imported_symbol_name.name.to_string(), imported_symbol_name);
         }
 
         Ok(())

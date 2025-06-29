@@ -33,6 +33,13 @@ pub struct Identifier {
     pub location: Location,
 }
 
+impl Identifier {
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        &self.name
+    }
+}
+
 impl std::hash::Hash for Identifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
@@ -61,301 +68,298 @@ impl PartialEq for Identifier {
 }
 
 #[derive(Debug, Clone, Eq)]
-pub struct SymbolName {
-    /// Defines the namespace which the symbol was defined in.
-    pub namespace: Option<PathRoot>,
-
-    /// Defines the relative name of the symbol within it's namespace.
-    pub name: PathSegment,
-
-    pub location: Location,
-}
-
-impl SymbolName {
-    pub fn as_ident(&self) -> &Identifier {
-        self.name.identifier()
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.as_ident().name
-    }
-
-    /// Gets the parent symbol, which contains the current symbol instance.
-    ///
-    /// For example, given a [`SymbolName`] of `std::io::File::open()`, returns
-    /// `Some(std::io::File)`. If no namespace is defined, returns `None`.
-    pub fn parent(self) -> Option<Self> {
-        if let Some(root) = self.namespace {
-            let (name, root) = root.segments.split_last()?;
-
-            Some(Self {
-                name: name.to_owned(),
-                namespace: Some(PathRoot {
-                    segments: root.to_vec(),
-                }),
-                location: self.location,
-            })
-        } else {
-            None
-        }
-    }
-
-    /// Determines whether the roots (or namespaces) of the two
-    /// given symbol names are equal.
-    pub fn roots_eq(&self, other: &SymbolName) -> bool {
-        match (&self.namespace, &other.namespace) {
-            (Some(s), Some(o)) => s == o,
-            (None, Some(o)) => o.segments.is_empty(),
-            (Some(s), None) => s.segments.is_empty(),
-            (None, None) => true,
-        }
-    }
-}
-
-impl PartialEq for SymbolName {
-    fn eq(&self, other: &SymbolName) -> bool {
-        self.name == other.name && self.roots_eq(other)
-    }
-}
-
-impl std::hash::Hash for SymbolName {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.namespace.hash(state);
-        self.name.hash(state);
-    }
-}
-
-impl SymbolName {
-    pub fn rooted(name: impl Into<String>) -> Self {
-        let name = PathSegment::from(name.into());
-
-        Self {
-            namespace: None,
-            name,
-            location: Location::empty(),
-        }
-    }
-
-    pub fn from_parts(
-        namespace: Option<impl IntoIterator<Item = impl Into<PathSegment>>>,
-        name: impl Into<String>,
-    ) -> Self {
-        let namespace = namespace.map(|ns| PathRoot::from(ns));
-        let name = PathSegment::from(name.into());
-
-        Self {
-            namespace,
-            name,
-            location: Location::empty(),
-        }
-    }
-
-    pub fn with_root(base: SymbolName, name: PathSegment) -> Self {
-        let mut namespace = base.namespace.unwrap_or_default();
-        namespace.segments.push(base.name);
-
-        Self {
-            namespace: Some(namespace),
-            name,
-            location: base.location,
-        }
-    }
-
-    pub fn void() -> Self {
-        Self::rooted("Void")
-    }
-
-    pub fn i8() -> Self {
-        Self::from_parts(Some(["std"]), "Int8")
-    }
-
-    pub fn u8() -> Self {
-        Self::from_parts(Some(["std"]), "UInt8")
-    }
-
-    pub fn i16() -> Self {
-        Self::from_parts(Some(["std"]), "Int8")
-    }
-
-    pub fn u16() -> Self {
-        Self::from_parts(Some(["std"]), "UInt16")
-    }
-
-    pub fn i32() -> Self {
-        Self::from_parts(Some(["std"]), "Int32")
-    }
-
-    pub fn u32() -> Self {
-        Self::from_parts(Some(["std"]), "UInt32")
-    }
-
-    pub fn i64() -> Self {
-        Self::from_parts(Some(["std"]), "Int64")
-    }
-
-    pub fn u64() -> Self {
-        Self::from_parts(Some(["std"]), "UInt64")
-    }
-
-    pub fn iptr() -> Self {
-        Self::from_parts(Some(["std"]), "IPtr")
-    }
-
-    pub fn uptr() -> Self {
-        Self::from_parts(Some(["std"]), "UPtr")
-    }
-
-    pub fn float() -> Self {
-        Self::from_parts(Some(["std"]), "Float")
-    }
-
-    pub fn double() -> Self {
-        Self::from_parts(Some(["std"]), "Double")
-    }
-
-    pub fn string() -> Self {
-        Self::from_parts(Some(["std"]), "String")
-    }
-
-    pub fn boolean() -> Self {
-        Self::from_parts(Some(["std"]), "Boolean")
-    }
-
-    pub fn cast() -> Self {
-        Self::from_parts(Some(["std", "ops"]), "Cast")
-    }
-}
-
-impl std::fmt::Display for SymbolName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(ns) = &self.namespace {
-            write!(f, "{ns}::")?;
-        }
-
-        write!(f, "{}", self.name)
-    }
-}
-
-#[derive(Debug, Clone, Eq)]
 pub enum PathSegment {
-    Named(Identifier),
-    Typed(Identifier, Vec<Type>),
+    /// Denotes a segment which refers to a namespace.
+    ///
+    /// ```lm
+    /// std::io::File
+    /// ^^^  ^^ both namespace segments
+    /// ```
+    Namespace { name: Identifier },
+
+    /// Denotes a segment which refers to a type, optionally with type arguments.
+    ///
+    /// ```lm
+    /// std::io::File
+    ///          ^^^^ type segment
+    /// ```
+    Type {
+        name: Identifier,
+        type_arguments: Vec<Type>,
+        location: Location,
+    },
+
+    /// Denotes a segment which refers to a callable, such as a function or method.
+    ///
+    /// ```lm
+    /// std::io::File::open()
+    ///                ^^^^ callable segment
+    ///
+    /// std::io::read_file()
+    ///          ^^^^^^^^^ callable segment
+    /// ```
+    Callable {
+        name: Identifier,
+        type_arguments: Vec<Type>,
+        location: Location,
+    },
 }
 
 impl PathSegment {
-    #[inline]
-    pub fn identifier(&self) -> &Identifier {
-        match self {
-            Self::Named(i) | Self::Typed(i, _) => i,
+    /// Creates a new namespace segment, with the given name.
+    pub fn namespace(identifier: impl Into<Identifier>) -> Self {
+        Self::Namespace {
+            name: identifier.into(),
         }
     }
 
-    #[inline]
-    pub fn location(&self) -> Location {
-        self.identifier().location
+    /// Creates a new type segment, with the given name.
+    pub fn ty(identifier: impl Into<Identifier>) -> Self {
+        let identifier = identifier.into();
+
+        Self::Type {
+            location: identifier.location,
+            name: identifier,
+            type_arguments: Vec::new(),
+        }
     }
-}
 
-impl From<Identifier> for PathSegment {
-    fn from(value: Identifier) -> Self {
-        Self::Named(value)
+    /// Creates a new callable segment, with the given name.
+    pub fn callable(identifier: impl Into<Identifier>) -> Self {
+        let identifier = identifier.into();
+
+        Self::Callable {
+            location: identifier.location,
+            name: identifier,
+            type_arguments: Vec::new(),
+        }
     }
-}
 
-impl From<String> for PathSegment {
-    fn from(value: String) -> Self {
-        Self::Named(Identifier::from(value))
+    /// Gets the name of the path segment.
+    pub fn name(&self) -> &Identifier {
+        match self {
+            Self::Namespace { name } | Self::Type { name, .. } | Self::Callable { name, .. } => name,
+        }
     }
-}
 
-impl From<&str> for PathSegment {
-    fn from(value: &str) -> Self {
-        Self::Named(Identifier::from(value))
+    /// Gets the type arguments of the path segment.
+    pub fn type_arguments(&self) -> &[Type] {
+        match self {
+            Self::Namespace { .. } => &[],
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
+        }
     }
-}
 
-impl PartialEq for PathSegment {
-    fn eq(&self, other: &Self) -> bool {
-        self.identifier() == other.identifier()
-    }
-}
-
-impl std::hash::Hash for PathSegment {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.identifier().hash(state);
-
-        if let Self::Typed(_, type_args) = self {
-            type_args.hash(state);
+    /// Takes the type arguments from the path segment.
+    pub fn take_type_arguments(self) -> Vec<Type> {
+        match self {
+            Self::Namespace { .. } => Vec::new(),
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
         }
     }
 }
 
 impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.identifier())?;
+        match self {
+            Self::Namespace { name } => f.write_str(name.as_str()),
+            Self::Type {
+                name, type_arguments, ..
+            }
+            | Self::Callable {
+                name, type_arguments, ..
+            } => {
+                write!(f, "{name}",)?;
 
-        if let Self::Typed(_, type_args) = self {
-            if !type_args.is_empty() {
-                write!(
-                    f,
-                    "<{}>",
-                    type_args
-                        .iter()
-                        .map(|arg| arg.name.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                )?;
+                if !type_arguments.is_empty() {
+                    write!(
+                        f,
+                        "<{}>",
+                        type_arguments
+                            .iter()
+                            .map(std::string::ToString::to_string)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )?;
+                }
+
+                Ok(())
             }
         }
-
-        Ok(())
     }
 }
 
-#[derive(Hash, Default, Debug, Clone, PartialEq, Eq)]
-pub struct PathRoot {
-    pub segments: Vec<PathSegment>,
-}
-
-impl std::fmt::Display for PathRoot {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (idx, segment) in self.segments.iter().enumerate() {
-            write!(f, "{segment}")?;
-
-            if idx < self.segments.len() - 1 {
-                write!(f, "::")?;
-            }
+impl Node for PathSegment {
+    #[inline]
+    fn location(&self) -> Location {
+        match self {
+            Self::Namespace { name } => name.location,
+            Self::Type { location, .. } | Self::Callable { location, .. } => *location,
         }
-
-        Ok(())
     }
 }
 
-impl<T: IntoIterator<Item = impl Into<PathSegment>>> From<T> for PathRoot {
-    fn from(value: T) -> Self {
-        let segments = value
-            .into_iter()
-            .map(Into::<PathSegment>::into)
-            .collect::<Vec<PathSegment>>();
-
-        Self { segments }
+impl PartialEq for PathSegment {
+    fn eq(&self, other: &Self) -> bool {
+        self.name() == other.name()
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+impl std::hash::Hash for PathSegment {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name().hash(state);
+        self.type_arguments().hash(state);
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Path {
     pub root: Vec<PathSegment>,
     pub name: PathSegment,
+    pub location: Location,
 }
 
 impl Path {
-    pub fn to_pathroot(self) -> PathRoot {
-        let mut segments = self.root;
-        segments.push(self.name);
+    pub fn rooted(name: impl Into<PathSegment>) -> Self {
+        let name = name.into();
 
-        PathRoot { segments }
+        Self {
+            root: Vec::new(),
+            location: name.location(),
+            name,
+        }
+    }
+
+    pub fn from_parts(
+        root: Option<impl IntoIterator<Item = impl Into<PathSegment>>>,
+        name: impl Into<PathSegment>,
+    ) -> Self {
+        let name = name.into();
+
+        Self {
+            root: root
+                .map(|ns| ns.into_iter().map(Into::into).collect())
+                .unwrap_or_default(),
+            location: name.location(),
+            name,
+        }
+    }
+
+    pub fn with_root(base: Path, name: PathSegment) -> Self {
+        let mut root = base.root;
+        root.push(base.name);
+
+        Self {
+            root,
+            name,
+            location: base.location,
+        }
+    }
+
+    pub fn void() -> Self {
+        Self::rooted(PathSegment::ty("Void"))
+    }
+
+    pub fn i8() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int8"))
+    }
+
+    pub fn u8() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt8"))
+    }
+
+    pub fn i16() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int16"))
+    }
+
+    pub fn u16() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt16"))
+    }
+
+    pub fn i32() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int32"))
+    }
+
+    pub fn u32() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt32"))
+    }
+
+    pub fn i64() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Int64"))
+    }
+
+    pub fn u64() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt64"))
+    }
+
+    pub fn float() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Float"))
+    }
+
+    pub fn double() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Double"))
+    }
+
+    pub fn string() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("String"))
+    }
+
+    pub fn boolean() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Boolean"))
+    }
+
+    pub fn cast() -> Self {
+        Self::from_parts(
+            Some([PathSegment::namespace("std"), PathSegment::namespace("ops")]),
+            PathSegment::ty("Cast"),
+        )
+    }
+
+    /// Gets the parent symbol, which contains the current symbol instance.
+    ///
+    /// For example, given a [`Path`] of `std::io::File::open()`, returns
+    /// `Some(std::io::File)`. If no namespace is defined, returns `None`.
+    pub fn parent(self) -> Option<Self> {
+        let (name, root) = self.root.split_last()?;
+
+        Some(Self {
+            name: name.to_owned(),
+            root: root.to_vec(),
+            location: self.location,
+        })
+    }
+
+    /// Gets the name of the path segment.
+    pub fn name(&self) -> &Identifier {
+        self.name.name()
+    }
+
+    /// Gets the type arguments of the path segment.
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.type_arguments()
     }
 }
+
+impl std::fmt::Display for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+impl std::hash::Hash for Path {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.root.hash(state);
+        self.name.hash(state);
+    }
+}
+
+impl PartialEq for Path {
+    fn eq(&self, other: &Self) -> bool {
+        self.root == other.root && self.name == other.name
+    }
+}
+
+impl Eq for Path {}
 
 /// Trait for HIR nodes which can contain some amount of type parameters.
 pub trait WithTypeParameters {
@@ -521,7 +525,7 @@ impl Symbol {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct ExternalSymbol {
-    pub name: SymbolName,
+    pub name: Path,
     pub location: Location,
 }
 
@@ -553,7 +557,7 @@ pub struct FunctionDefinition {
     pub id: ItemId,
     pub func_id: Option<FunctionId>,
     pub visibility: Visibility,
-    pub name: SymbolName,
+    pub name: Path,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
@@ -605,7 +609,7 @@ impl TypeDefinition {
         }
     }
 
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         match self {
             TypeDefinition::Enum(def) => def.name(),
             TypeDefinition::Alias(def) => def.name(),
@@ -619,20 +623,20 @@ impl TypeDefinition {
 pub struct EnumDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
-    pub name: SymbolName,
+    pub name: Path,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
 }
 
 impl EnumDefinition {
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         &self.name
     }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
-    pub name: SymbolName,
+    pub name: Path,
     pub parameters: Vec<Box<Type>>,
     pub location: Location,
 }
@@ -641,13 +645,13 @@ pub struct EnumDefinitionCase {
 pub struct AliasDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
-    pub name: SymbolName,
+    pub name: Path,
     pub definition: Box<Type>,
     pub location: Location,
 }
 
 impl AliasDefinition {
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         &self.name
     }
 }
@@ -656,7 +660,7 @@ impl AliasDefinition {
 pub struct StructDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
-    pub name: SymbolName,
+    pub name: Path,
     pub builtin: bool,
     pub properties: Vec<Property>,
     pub methods: Vec<MethodDefinition>,
@@ -665,7 +669,7 @@ pub struct StructDefinition {
 }
 
 impl StructDefinition {
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         &self.name
     }
 
@@ -748,14 +752,14 @@ impl WithTypeParameters for MethodDefinition {
 pub struct TraitDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
-    pub name: SymbolName,
+    pub name: Path,
     pub type_parameters: TypeParameters,
     pub methods: Vec<TraitMethodDefinition>,
     pub location: Location,
 }
 
 impl TraitDefinition {
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         &self.name
     }
 }
@@ -1080,10 +1084,10 @@ impl CallExpression<'_> {
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> &TypeArguments {
+    pub fn type_arguments(&self) -> &[Type] {
         match self {
-            Self::Instanced(call) => &call.type_arguments,
-            Self::Static(call) => &call.type_arguments,
+            Self::Instanced(call) => call.type_arguments(),
+            Self::Static(call) => call.type_arguments(),
         }
     }
 }
@@ -1127,9 +1131,14 @@ pub struct Cast {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct StaticCall {
     pub id: ExpressionId,
-    pub name: SymbolName,
-    pub type_arguments: TypeArguments,
+    pub name: Path,
     pub arguments: Vec<Expression>,
+}
+
+impl StaticCall {
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.name.type_arguments()
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1137,8 +1146,13 @@ pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: PathSegment,
-    pub type_arguments: TypeArguments,
     pub arguments: Vec<Expression>,
+}
+
+impl InstanceCall {
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.type_arguments()
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
@@ -1361,6 +1375,15 @@ impl Node for TypeArgument {
     }
 }
 
+impl std::fmt::Display for TypeArgument {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TypeArgument::Named { ty, .. } => ty.fmt(f),
+            TypeArgument::Implicit { .. } => write!(f, "?T"),
+        }
+    }
+}
+
 #[derive(Hash, Clone, Debug, PartialEq, Eq)]
 pub struct TypeArguments {
     pub inner: Vec<TypeArgument>,
@@ -1403,8 +1426,7 @@ impl From<Vec<TypeArgument>> for TypeArguments {
 #[derive(Node, Debug, Clone, Eq)]
 pub struct Type {
     pub id: ItemId,
-    pub name: SymbolName,
-    pub type_params: Vec<Box<Type>>,
+    pub name: Path,
     pub location: Location,
 }
 
@@ -1412,8 +1434,7 @@ impl Type {
     pub fn void() -> Type {
         Self {
             id: ItemId::from_usize(0),
-            name: SymbolName::void(),
-            type_params: Vec::new(),
+            name: Path::void(),
             location: Location::empty(),
         }
     }
@@ -1421,11 +1442,22 @@ impl Type {
     pub fn ident(&self) -> &PathSegment {
         &self.name.name
     }
+
+    /// Gets the type arguments of the path segment.
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.type_arguments()
+    }
 }
 
 impl PartialEq for Type {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name && self.type_params == other.type_params
+        self.name == other.name
+    }
+}
+
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.name.fmt(f)
     }
 }
 

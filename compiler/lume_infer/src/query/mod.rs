@@ -1,6 +1,6 @@
 use crate::{TyInferCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, FunctionId, Identifier, MethodId, SymbolName, UseId};
+use lume_hir::{self, FunctionId, Identifier, MethodId, Path, UseId};
 use lume_query::cached_query;
 use lume_span::ExpressionId;
 use lume_types::{Function, Method, Trait, TypeRef};
@@ -28,7 +28,7 @@ pub enum Callable<'a> {
 }
 
 impl Callable<'_> {
-    pub fn name(&self) -> &SymbolName {
+    pub fn name(&self) -> &Path {
         match self {
             Self::Method(method) => &method.name,
             Self::Function(function) => &function.name,
@@ -122,21 +122,21 @@ impl TyInferCtx {
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
         let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => self.tdb().find_type(&SymbolName::i8()).unwrap(),
-                lume_hir::IntKind::U8 => self.tdb().find_type(&SymbolName::u8()).unwrap(),
-                lume_hir::IntKind::I16 => self.tdb().find_type(&SymbolName::i16()).unwrap(),
-                lume_hir::IntKind::U16 => self.tdb().find_type(&SymbolName::u16()).unwrap(),
-                lume_hir::IntKind::I32 => self.tdb().find_type(&SymbolName::i32()).unwrap(),
-                lume_hir::IntKind::U32 => self.tdb().find_type(&SymbolName::u32()).unwrap(),
-                lume_hir::IntKind::I64 => self.tdb().find_type(&SymbolName::i64()).unwrap(),
-                lume_hir::IntKind::U64 => self.tdb().find_type(&SymbolName::u64()).unwrap(),
+                lume_hir::IntKind::I8 => self.tdb().find_type(&Path::i8()).unwrap(),
+                lume_hir::IntKind::U8 => self.tdb().find_type(&Path::u8()).unwrap(),
+                lume_hir::IntKind::I16 => self.tdb().find_type(&Path::i16()).unwrap(),
+                lume_hir::IntKind::U16 => self.tdb().find_type(&Path::u16()).unwrap(),
+                lume_hir::IntKind::I32 => self.tdb().find_type(&Path::i32()).unwrap(),
+                lume_hir::IntKind::U32 => self.tdb().find_type(&Path::u32()).unwrap(),
+                lume_hir::IntKind::I64 => self.tdb().find_type(&Path::i64()).unwrap(),
+                lume_hir::IntKind::U64 => self.tdb().find_type(&Path::u64()).unwrap(),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => self.tdb().find_type(&SymbolName::float()).unwrap(),
-                lume_hir::FloatKind::F64 => self.tdb().find_type(&SymbolName::double()).unwrap(),
+                lume_hir::FloatKind::F32 => self.tdb().find_type(&Path::float()).unwrap(),
+                lume_hir::FloatKind::F64 => self.tdb().find_type(&Path::double()).unwrap(),
             },
-            lume_hir::LiteralKind::String(_) => self.tdb().find_type(&SymbolName::string()).unwrap(),
-            lume_hir::LiteralKind::Boolean(_) => self.tdb().find_type(&SymbolName::boolean()).unwrap(),
+            lume_hir::LiteralKind::String(_) => self.tdb().find_type(&Path::string()).unwrap(),
+            lume_hir::LiteralKind::Boolean(_) => self.tdb().find_type(&Path::boolean()).unwrap(),
         };
 
         TypeRef::new(ty.id, lit.location)
@@ -231,9 +231,9 @@ impl TyInferCtx {
         self.type_of_stmt(last_statement)
     }
 
-    /// Returns the fully-qualified [`SymbolName`] of the given [`TypeRef`].
+    /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret(Display))]
-    pub fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&SymbolName> {
+    pub fn type_ref_name(&self, type_ref: &TypeRef) -> Result<&Path> {
         Ok(&self.tdb().ty_expect(type_ref.instance_of)?.name)
     }
 
