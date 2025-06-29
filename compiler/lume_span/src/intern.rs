@@ -119,10 +119,10 @@ impl Interner {
     /// [`Interner`] instance.
     #[inline]
     pub fn count() -> usize {
-        match CURRENT_INTERNER.container.read() {
+        CURRENT_INTERNER.with(|interner| match interner.container.read() {
             Ok(container) => container.len(),
             Err(_) => 0,
-        }
+        })
     }
 
     /// Interns the given instance so it can be referenced multiple times without
@@ -138,7 +138,7 @@ impl Interner {
         T: Clone + Eq + Hash + Send + Sync + 'static,
         B: Borrow<T>,
     {
-        CURRENT_INTERNER.intern(val)
+        CURRENT_INTERNER.with(|interner| interner.intern(val))
     }
 
     /// Interns the given instance so it can be referenced multiple times without
@@ -210,13 +210,15 @@ impl Interner {
     /// Invokes some functionality on the global [`Interner`] instance.
     pub fn with<R, F>(f: F) -> R
     where
-        F: FnOnce(&'static Interner) -> R,
+        F: FnOnce(&Interner) -> R,
     {
-        f(&CURRENT_INTERNER)
+        CURRENT_INTERNER.with(|it| f(it))
     }
 }
 
-pub static CURRENT_INTERNER: LazyLock<Interner> = Interner::new_locked();
+thread_local! {
+    pub static CURRENT_INTERNER: LazyLock<Interner> = Interner::new_locked();
+}
 
 #[cfg(test)]
 #[allow(clippy::borrow_as_ptr, clippy::ref_as_ptr, reason = "used for reference checking")]
