@@ -1,7 +1,7 @@
 use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro::TokenStream;
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens, quote};
 use syn::{ItemFn, ReturnType, parse_macro_input, punctuated::Punctuated};
 
 #[derive(Debug, FromMeta)]
@@ -36,8 +36,6 @@ pub(crate) fn cached_query(args: TokenStream, input: TokenStream) -> TokenStream
     let inputs = signature.inputs.clone();
     let output = signature.output.clone();
 
-    let cache_ident = format_ident!("{}", fn_ident.to_string().to_uppercase());
-    let fn_cache_ident = format_ident!("{}_cache", fn_ident);
     let cache_value_ty = determine_cache_value_type(&args, &output);
 
     let keys = if let Some(keys) = args.key {
@@ -66,34 +64,35 @@ pub(crate) fn cached_query(args: TokenStream, input: TokenStream) -> TokenStream
     };
 
     let return_value = if args.result {
-        quote! { Ok(value) }
+        quote! { Ok(__value) }
     } else {
-        quote! { value }
+        quote! { __value }
     };
 
-    let cache_ident_doc = format!(
-        "Retrieves the underlying [`lume_query::CacheStore`] instance, which memoizes the results of the [`{fn_ident}`] method."
-    );
-
     let expanded = quote! {
-        #[doc = #cache_ident_doc]
-        #visibility fn #fn_cache_ident () -> &'static ::lume_query::CacheStore {
-            static #cache_ident: ::lume_query::CacheStore = ::lume_query::CacheStore::new();
-
-            &#cache_ident
-        }
-
         #(#attributes)*
         #[allow(unused_must_use, reason = "auto-generated")]
         #visibility fn #fn_ident (#inputs) #output {
-            let hash = #calculate_hash_expr;
+            let __hash = #calculate_hash_expr;
+            let __ref: &::lume_session::GlobalCtx = &*self;
+            let __store = ::lume_query::CacheContext::store(__ref);
 
-            if let Some(value) = Self::#fn_cache_ident().get::<#cache_value_ty>(hash) {
+            if let Some(__value) = __store.get::<#cache_value_ty>(__hash) {
+                ::lume_query::tracing::trace!(
+                    target: "lume_query",
+                    "cache hit {}({}) -> {}", stringify!(#fn_ident), __hash, stringify!(#cache_value_ty)
+                );
+
                 return #return_value;
             }
 
-            let value = #execute_block;
-            Self::#fn_cache_ident().insert(hash, value.clone());
+            ::lume_query::tracing::trace!(
+                target: "lume_query",
+                "cache miss {}({}) -> {}", stringify!(#fn_ident), __hash, stringify!(#cache_value_ty)
+            );
+
+            let __value = #execute_block;
+            __store.insert(__hash, __value.clone());
 
             #return_value
         }

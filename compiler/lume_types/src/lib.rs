@@ -1,4 +1,4 @@
-use std::{fmt::Write, sync::Arc};
+use std::{fmt::Write, ops::Deref, sync::Arc};
 
 use error_snippet::Result;
 use indexmap::IndexMap;
@@ -966,5 +966,13 @@ impl TyCtx {
     /// Gets the inner type database context.
     pub fn db_mut(&mut self) -> &mut TypeDatabaseContext {
         &mut self.db
+    }
+}
+
+impl Deref for TyCtx {
+    type Target = GlobalCtx;
+
+    fn deref(&self) -> &Self::Target {
+        &self.gcx
     }
 }

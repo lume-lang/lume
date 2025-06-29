@@ -8,6 +8,7 @@ rust-version.workspace = true
 lume_query_macros = { path = "../lume_query_macros", optional = true }
 
 once_cell = "=1.21.3"
+tracing = { workspace = true }
 
 [features]
 default = ["proc_macros"]

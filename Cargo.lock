@@ -908,6 +908,7 @@ version = "0.1.0"
 dependencies = [
  "lume_query_macros",
  "once_cell",
+ "tracing",
 ]
 
 [[package]]
@@ -930,6 +931,7 @@ dependencies = [
  "glob",
  "indexmap",
  "lume_errors",
+ "lume_query",
  "lume_span",
  "petgraph",
  "rust-embed",

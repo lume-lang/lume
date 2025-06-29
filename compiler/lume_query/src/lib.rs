@@ -7,6 +7,15 @@ use std::{
 
 #[cfg(feature = "proc_macros")]
 pub use lume_query_macros::cached_query;
+#[cfg(feature = "proc_macros")]
+pub use tracing;
+
+/// A trait that provides access to a [`CacheStore`] instance.
+pub trait CacheContext {
+    /// Retrieves the instance of [`CacheStore`], which is provided by the
+    /// [`CacheContext`] implementation.
+    fn store(&self) -> &CacheStore;
+}
 
 pub struct CacheStore {
     inner: Lazy<RwLock<HashMap<u64, &'static (dyn Any + Send + Sync)>>>,

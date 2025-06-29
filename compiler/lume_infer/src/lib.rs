@@ -1,6 +1,6 @@
 #![feature(map_try_insert)]
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, ops::Deref};
 
 use error_snippet::Result;
 use lume_errors::DiagCtx;
@@ -235,5 +235,13 @@ impl TyInferCtx {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(NamedTypeRef { name, type_arguments })
+    }
+}
+
+impl Deref for TyInferCtx {
+    type Target = TyCtx;
+
+    fn deref(&self) -> &Self::Target {
+        &self.tcx
     }
 }

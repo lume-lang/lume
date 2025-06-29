@@ -10,6 +10,7 @@ use std::{
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
 use lume_errors::DiagCtx;
+use lume_query::{CacheContext, CacheStore};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
@@ -42,11 +43,16 @@ unsafe impl Sync for Session {}
 pub struct GlobalCtx {
     pub session: Session,
     pub dcx: DiagCtx,
+    store: CacheStore,
 }
 
 impl GlobalCtx {
     pub fn new(session: Session, dcx: DiagCtx) -> Self {
-        Self { session, dcx }
+        Self {
+            session,
+            dcx,
+            store: CacheStore::new(),
+        }
     }
 }
 
@@ -55,7 +61,14 @@ impl Default for GlobalCtx {
         Self {
             dcx: DiagCtx::new_buffered(512),
             session: Session::default(),
+            store: CacheStore::new(),
         }
+    }
+}
+
+impl CacheContext for GlobalCtx {
+    fn store(&self) -> &CacheStore {
+        &self.store
     }
 }
 
