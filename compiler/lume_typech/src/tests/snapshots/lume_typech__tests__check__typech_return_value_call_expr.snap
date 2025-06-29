@@ -11,7 +11,7 @@ description: "fn foo() -> Boolean {\n            return false;\n        }\n\n   
    ∶ 
  4 │ 
  5 │         fn bar() -> Int32 {
-   │                     ^^^^^ ...because of type defined here
+   │                     ^^^^^^^ ...because of type defined here
  6 │             return foo();
    ╰──
    help: expected type Int32

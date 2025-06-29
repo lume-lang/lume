@@ -2,4 +2,3 @@
 source: compiler/lume_typech/src/tests/check.rs
 description: "fn foo() {\n        let _: Int32 = 1_i32;\n    }"
 ---
-

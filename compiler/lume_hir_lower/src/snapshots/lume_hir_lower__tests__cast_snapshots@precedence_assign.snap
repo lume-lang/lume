@@ -87,23 +87,18 @@ description: let _ = 0 as u64;
                             },
                             target: Type {
                                 id: ItemId(
-                                    2586979368357421486,
+                                    13902787388289951280,
                                 ),
-                                name: SymbolName {
-                                    namespace: Some(
-                                        PathRoot {
-                                            segments: [],
-                                        },
-                                    ),
-                                    name: Named(
-                                        Identifier {
+                                name: Path {
+                                    root: [],
+                                    name: Namespace {
+                                        name: Identifier {
                                             name: "u64",
                                             location: <internal>:13:16,
                                         },
-                                    ),
+                                    },
                                     location: <internal>:13:16,
                                 },
-                                type_params: [],
                                 location: <internal>:13:16,
                             },
                         },

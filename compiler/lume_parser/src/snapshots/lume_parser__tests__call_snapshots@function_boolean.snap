@@ -17,7 +17,7 @@ expression: "parse_expr(\"let _ = call?();\")"
                     callee: None,
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Callable {
                             name: Identifier {
                                 name: "call?",
                                 location: Location(
@@ -26,15 +26,14 @@ expression: "parse_expr(\"let _ = call?();\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                8..13,
+                                8..14,
                             ),
                         },
                         location: Location(
-                            8..13,
+                            8..14,
                         ),
                     },
                     arguments: [],
-                    type_arguments: [],
                     location: Location(
                         8..16,
                     ),

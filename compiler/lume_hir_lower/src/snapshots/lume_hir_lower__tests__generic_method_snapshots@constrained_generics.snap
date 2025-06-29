@@ -8,38 +8,35 @@ Map {
     ),
     items: {
         ItemId(
-            18323927258415247498,
+            9685703253129516901,
         ): Impl(
             Implementation {
                 id: ItemId(
-                    18323927258415247498,
+                    9685703253129516901,
                 ),
                 impl_id: None,
                 target: Type {
                     id: ItemId(
-                        10184502059897337314,
+                        13825029388148061585,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Test",
                                 location: <internal>:5:9,
                             },
-                        ),
-                        location: <internal>:5:9,
+                            type_arguments: [],
+                            location: <internal>:5:11,
+                        },
+                        location: <internal>:5:11,
                     },
-                    type_params: [],
-                    location: <internal>:5:9,
+                    location: <internal>:5:11,
                 },
                 methods: [
                     MethodDefinition {
                         id: ItemId(
-                            5477856671308558519,
+                            4609697254383574920,
                         ),
                         method_id: None,
                         visibility: Private,
@@ -60,24 +57,21 @@ Map {
                                     constraints: [
                                         Type {
                                             id: ItemId(
-                                                6129574414018423941,
+                                                12406655113887153806,
                                             ),
-                                            name: SymbolName {
-                                                namespace: Some(
-                                                    PathRoot {
-                                                        segments: [],
-                                                    },
-                                                ),
-                                                name: Named(
-                                                    Identifier {
+                                            name: Path {
+                                                root: [],
+                                                name: Type {
+                                                    name: Identifier {
                                                         name: "Numeric",
                                                         location: <internal>:24:31,
                                                     },
-                                                ),
-                                                location: <internal>:24:31,
+                                                    type_arguments: [],
+                                                    location: <internal>:24:32,
+                                                },
+                                                location: <internal>:24:32,
                                             },
-                                            type_params: [],
-                                            location: <internal>:24:31,
+                                            location: <internal>:24:32,
                                         },
                                     ],
                                     location: <internal>:20:22,
@@ -92,24 +86,21 @@ Map {
                                     constraints: [
                                         Type {
                                             id: ItemId(
-                                                6129574414018423941,
+                                                12406655113887153806,
                                             ),
-                                            name: SymbolName {
-                                                namespace: Some(
-                                                    PathRoot {
-                                                        segments: [],
-                                                    },
-                                                ),
-                                                name: Named(
-                                                    Identifier {
+                                            name: Path {
+                                                root: [],
+                                                name: Type {
+                                                    name: Identifier {
                                                         name: "Numeric",
                                                         location: <internal>:37:44,
                                                     },
-                                                ),
-                                                location: <internal>:37:44,
+                                                    type_arguments: [],
+                                                    location: <internal>:37:45,
+                                                },
+                                                location: <internal>:37:45,
                                             },
-                                            type_params: [],
-                                            location: <internal>:37:44,
+                                            location: <internal>:37:45,
                                         },
                                     ],
                                     location: <internal>:33:35,
@@ -118,24 +109,21 @@ Map {
                         },
                         return_type: Type {
                             id: ItemId(
-                                9344623788042179276,
+                                17666474489655347949,
                             ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
                                         name: "void",
                                         location: <internal>:51:55,
                                     },
-                                ),
-                                location: <internal>:51:55,
+                                    type_arguments: [],
+                                    location: <internal>:51:57,
+                                },
+                                location: <internal>:51:57,
                             },
-                            type_params: [],
-                            location: <internal>:51:55,
+                            location: <internal>:51:57,
                         },
                         block: Some(
                             Block {

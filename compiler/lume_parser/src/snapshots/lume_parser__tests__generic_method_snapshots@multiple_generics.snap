@@ -16,7 +16,7 @@ expression: "parse(\"impl Test { fn test<T1, T2>() -> void {} }\")"
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Test",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<T1, T2>() -> void {} }\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                5..9,
+                                5..11,
                             ),
                         },
                         location: Location(
-                            5..9,
+                            5..11,
                         ),
                     },
                 },
@@ -76,7 +76,7 @@ expression: "parse(\"impl Test { fn test<T1, T2>() -> void {} }\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "void",
                                             location: Location(
@@ -85,11 +85,11 @@ expression: "parse(\"impl Test { fn test<T1, T2>() -> void {} }\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            33..37,
+                                            33..39,
                                         ),
                                     },
                                     location: Location(
-                                        33..37,
+                                        33..39,
                                     ),
                                 },
                             },

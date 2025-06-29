@@ -11,12 +11,14 @@ MissingFunction {
     suggestions: [
         SuggestedFunction {
             source: <internal>:3:7,
-            function_name: Named(
-                Identifier {
+            function_name: Type {
+                name: Identifier {
                     name: "foo_",
                     location: <internal>:3:7,
                 },
-            ),
+                type_arguments: [],
+                location: <internal>:3:7,
+            },
             reason: NameMismatch,
         },
     ],

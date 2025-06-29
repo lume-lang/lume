@@ -47,22 +47,17 @@ description: let _ = call(0);
                                     1,
                                 ),
                             },
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Callable {
+                                    name: Identifier {
                                         name: "call",
                                         location: <internal>:8:12,
                                     },
-                                ),
-                                location: <internal>:8:12,
-                            },
-                            type_arguments: TypeArguments {
-                                inner: [],
+                                    type_arguments: [],
+                                    location: <internal>:8:13,
+                                },
+                                location: <internal>:8:13,
                             },
                             arguments: [
                                 Expression {

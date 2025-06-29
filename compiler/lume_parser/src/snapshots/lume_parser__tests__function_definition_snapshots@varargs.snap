@@ -31,7 +31,7 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
                         NamedType {
                             name: Path {
                                 root: [],
-                                name: PathSegment {
+                                name: Type {
                                     name: Identifier {
                                         name: "Int32",
                                         location: Location(
@@ -40,18 +40,18 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
                                     },
                                     type_arguments: [],
                                     location: Location(
-                                        16..21,
+                                        16..22,
                                     ),
                                 },
                                 location: Location(
-                                    16..21,
+                                    16..22,
                                 ),
                             },
                         },
                     ),
                     vararg: true,
                     location: Location(
-                        10..21,
+                        10..22,
                     ),
                 },
             ],

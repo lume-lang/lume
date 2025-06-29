@@ -10,7 +10,7 @@ description: "fn foo() -> Int32 {\n        while true {\n            return true
  4 │         }
    ∶ 
  1 │ fn foo() -> Int32 {
-   │             ^^^^^ ...because of type defined here
+   │             ^^^^^^^ ...because of type defined here
  2 │         while true {
    ╰──
    help: expected type Int32

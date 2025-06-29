@@ -85,14 +85,13 @@ description: let _ = 1.call(0);
                                     },
                                 ),
                             },
-                            name: Named(
-                                Identifier {
+                            name: Callable {
+                                name: Identifier {
                                     name: "call",
                                     location: <internal>:10:14,
                                 },
-                            ),
-                            type_arguments: TypeArguments {
-                                inner: [],
+                                type_arguments: [],
+                                location: <internal>:10:15,
                             },
                             arguments: [
                                 Expression {

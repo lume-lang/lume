@@ -9,7 +9,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Add",
                                 location: Location(
@@ -21,7 +21,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
                                                     name: "Int32",
                                                     location: Location(
@@ -30,22 +30,22 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    17..22,
+                                                    17..23,
                                                 ),
                                             },
                                             location: Location(
-                                                17..22,
+                                                17..23,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                13..23,
+                                13..26,
                             ),
                         },
                         location: Location(
-                            13..23,
+                            13..26,
                         ),
                     },
                 },
@@ -54,7 +54,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
@@ -63,11 +63,11 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                             },
                             type_arguments: [],
                             location: Location(
-                                27..32,
+                                27..34,
                             ),
                         },
                         location: Location(
-                            27..32,
+                            27..34,
                         ),
                     },
                 },
@@ -99,7 +99,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
@@ -108,18 +108,18 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                65..70,
+                                                65..71,
                                             ),
                                         },
                                         location: Location(
-                                            65..70,
+                                            65..71,
                                         ),
                                     },
                                 },
                             ),
                             vararg: false,
                             location: Location(
-                                58..70,
+                                58..71,
                             ),
                         },
                     ],
@@ -129,7 +129,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
@@ -138,11 +138,11 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            75..80,
+                                            75..82,
                                         ),
                                     },
                                     location: Location(
-                                        75..80,
+                                        75..82,
                                     ),
                                 },
                             },
@@ -169,7 +169,7 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                                 ),
                                                 name: Path {
                                                     root: [],
-                                                    name: PathSegment {
+                                                    name: Callable {
                                                         name: Identifier {
                                                             name: "+",
                                                             location: Location(
@@ -197,7 +197,6 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                                         },
                                                     ),
                                                 ],
-                                                type_arguments: [],
                                                 location: Location(
                                                     106..118,
                                                 ),

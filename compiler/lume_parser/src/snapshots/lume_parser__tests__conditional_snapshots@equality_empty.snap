@@ -24,7 +24,7 @@ expression: "parse_expr(\"if a == 1 { }\")"
                                 ),
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Callable {
                                         name: Identifier {
                                             name: "==",
                                             location: Location(
@@ -53,7 +53,6 @@ expression: "parse_expr(\"if a == 1 { }\")"
                                         ),
                                     ),
                                 ],
-                                type_arguments: [],
                                 location: Location(
                                     3..9,
                                 ),

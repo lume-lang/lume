@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            16861767705937592120,
+            12629599239576135137,
         ): Type(
             Struct(
                 StructDefinition {
                     id: ItemId(
-                        16861767705937592120,
+                        12629599239576135137,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Int32",
                                 location: <internal>:7:12,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:7:12,
+                        },
                         location: <internal>:7:12,
                     },
                     builtin: false,

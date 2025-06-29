@@ -8,43 +8,42 @@ Map {
     ),
     items: {
         ItemId(
-            12314200219861369160,
+            5175167619020667705,
         ): Type(
             Alias(
                 AliasDefinition {
                     id: ItemId(
-                        12314200219861369160,
+                        5175167619020667705,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Foo",
                                 location: <internal>:39:42,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:39:42,
+                        },
                         location: <internal>:39:42,
                     },
                     definition: Type {
                         id: ItemId(
-                            4596565343203938484,
+                            11341747990850848846,
                         ),
-                        name: SymbolName {
-                            namespace: Some(
-                                PathRoot {
-                                    segments: [],
-                                },
-                            ),
-                            name: Named(
-                                Identifier {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
                                     name: "Bar",
                                     location: <internal>:45:48,
                                 },
-                            ),
+                                type_arguments: [],
+                                location: <internal>:45:48,
+                            },
                             location: <internal>:45:48,
                         },
-                        type_params: [],
                         location: <internal>:45:48,
                     },
                     location: <internal>:34:48,

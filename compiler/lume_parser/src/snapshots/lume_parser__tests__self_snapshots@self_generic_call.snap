@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"self.invoke::<T>();\")"
+expression: "parse_expr(\"self.invoke<T>();\")"
 ---
 [
     Expression(
@@ -20,51 +20,48 @@ expression: "parse_expr(\"self.invoke::<T>();\")"
                 ),
                 name: Path {
                     root: [],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "invoke",
                             location: Location(
                                 5..11,
                             ),
                         },
-                        type_arguments: [],
+                        type_arguments: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: Location(
+                                                    12..13,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                12..14,
+                                            ),
+                                        },
+                                        location: Location(
+                                            12..14,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
                         location: Location(
-                            5..11,
+                            5..15,
                         ),
                     },
                     location: Location(
-                        5..11,
+                        5..15,
                     ),
                 },
                 arguments: [],
-                type_arguments: [
-                    TypeArgument {
-                        ty: Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: PathSegment {
-                                        name: Identifier {
-                                            name: "T",
-                                            location: Location(
-                                                14..15,
-                                            ),
-                                        },
-                                        type_arguments: [],
-                                        location: Location(
-                                            14..15,
-                                        ),
-                                    },
-                                    location: Location(
-                                        14..15,
-                                    ),
-                                },
-                            },
-                        ),
-                    },
-                ],
                 location: Location(
-                    5..19,
+                    5..17,
                 ),
             },
         ),

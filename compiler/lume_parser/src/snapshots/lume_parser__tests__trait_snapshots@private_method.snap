@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
+expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
 ---
 [
     TypeDefinition(
@@ -40,27 +40,27 @@ expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
-                                                    name: "int",
+                                                    name: "Int32",
                                                     location: Location(
-                                                        26..29,
+                                                        26..31,
                                                     ),
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    26..29,
+                                                    26..32,
                                                 ),
                                             },
                                             location: Location(
-                                                26..29,
+                                                26..32,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    19..29,
+                                    19..32,
                                 ),
                             },
                         ],
@@ -70,20 +70,20 @@ expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    34..37,
+                                                    36..41,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                34..37,
+                                                36..42,
                                             ),
                                         },
                                         location: Location(
-                                            34..37,
+                                            36..42,
                                         ),
                                     },
                                 },
@@ -91,13 +91,13 @@ expression: "parse(\"trait Add { fn add(other: int) -> int; }\")"
                         ),
                         block: None,
                         location: Location(
-                            12..38,
+                            12..42,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..40,
+                    0..44,
                 ),
                 documentation: None,
             },

@@ -33,7 +33,7 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Numeric",
                                             location: Location(
@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            11..18,
+                                            11..20,
                                         ),
                                     },
                                     location: Location(
-                                        11..18,
+                                        11..20,
                                     ),
                                 },
                             },
@@ -55,7 +55,7 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Floating",
                                             location: Location(
@@ -64,11 +64,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            21..29,
+                                            21..30,
                                         ),
                                     },
                                     location: Location(
-                                        21..29,
+                                        21..30,
                                     ),
                                 },
                             },
@@ -81,7 +81,7 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
@@ -90,11 +90,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    36..40,
+                                    36..42,
                                 ),
                             },
                             location: Location(
-                                36..40,
+                                36..42,
                             ),
                         },
                     },

@@ -248,8 +248,8 @@ fn test_function_definition_snapshots() {
     assert_snap_eq!("fn main() -> void { let a = 0; }", "statement");
     assert_snap_eq!("fn main() -> void { let a = 0; let b = 1; }", "statements");
     assert_snap_eq!("fn main() {}", "no_return_type");
-    assert_snap_eq!("fn main(argc: u8) -> void { }", "parameter");
-    assert_snap_eq!("fn main(argc: u8, arcv: [String]) -> void { }", "parameters");
+    assert_snap_eq!("fn main(argc: UInt8) -> void { }", "parameter");
+    assert_snap_eq!("fn main(argc: UInt8, arcv: [String]) -> void { }", "parameters");
     assert_snap_eq!("fn external main() -> void", "external");
     assert_err_snap_eq!("fn external main() -> void {}", "external_body");
     assert_snap_eq!("pub fn main() -> void {}", "pub_modifier");
@@ -305,9 +305,9 @@ fn test_self_snapshots() {
     assert_expr_snap_eq!("self;", "self");
     assert_expr_snap_eq!("self + self;", "self_binary_op");
     assert_expr_snap_eq!("self.invoke();", "self_call");
-    assert_expr_snap_eq!("self.invoke::<T>();", "self_generic_call");
+    assert_expr_snap_eq!("self.invoke<T>();", "self_generic_call");
     assert_expr_snap_eq!("self::invoke();", "self_static_call");
-    assert_expr_snap_eq!("self::invoke::<T>();", "self_static_generic_call");
+    assert_expr_snap_eq!("self::invoke<T>();", "self_static_generic_call");
 }
 
 #[test]
@@ -377,16 +377,19 @@ fn test_call_snapshots() {
     assert_expr_snap_eq!("let _ = call(a);", "function_param_1");
     assert_expr_snap_eq!("let _ = call(a, b);", "function_param_2");
     assert_expr_snap_eq!("let _ = call?();", "function_boolean");
-    assert_expr_snap_eq!("let _ = call::<T>(a, b);", "function_generic");
+    assert_expr_snap_eq!("let _ = call<T>(a, b);", "function_generic");
 
     assert_expr_snap_eq!("let _ = a.call();", "method_empty");
     assert_expr_snap_eq!("let _ = a.call(a);", "method_param_1");
     assert_expr_snap_eq!("let _ = a.call(a, b);", "method_param_2");
     assert_expr_snap_eq!("let _ = a.call?();", "method_boolean");
-    assert_expr_snap_eq!("let _ = a.call::<T>(a, b);", "method_generic");
+    assert_expr_snap_eq!("let _ = a.call<T>(a, b);", "method_generic");
     assert_expr_snap_eq!("let _ = Foo::call(a, b);", "static_method");
-    assert_expr_snap_eq!("let _ = Foo::call::<T>(a, b);", "static_generic_method");
-    assert_expr_snap_eq!("let _ = Foo::<T>::call(a, b);", "generic_static_method");
+    assert_expr_snap_eq!("let _ = Foo::call<T>(a, b);", "static_generic_method");
+    assert_expr_snap_eq!("let _ = Foo<T>::call(a, b);", "generic_static_method");
+    assert_expr_snap_eq!("let _ = std::io::Buffer::call(a, b);", "namespaced_static_method");
+    assert_expr_snap_eq!("let _ = std::Buffer<T>::call(a, b);", "namespaced_generic_ty_method");
+    assert_expr_snap_eq!("let _ = std::Buffer::call<T>(a, b);", "namespaced_generic_method");
 }
 
 #[test]
@@ -488,7 +491,7 @@ fn test_struct_snapshots() {
     assert_snap_eq!(
         "
         impl Foo {
-            pub fn ==() -> bool {
+            pub fn ==() -> Boolean {
                 return true;
             }
         }",
@@ -590,7 +593,7 @@ fn test_enum_snapshots() {
     assert_snap_eq!(
         "
         enum Foo {
-            Bar(int)
+            Bar(Int32)
         }",
         "variant_param_single"
     );
@@ -598,7 +601,7 @@ fn test_enum_snapshots() {
     assert_snap_eq!(
         "
         enum Foo {
-            Bar(int, int)
+            Bar(Int32, Int32)
         }",
         "variant_param_multiple"
     );
@@ -606,8 +609,8 @@ fn test_enum_snapshots() {
     assert_snap_eq!(
         "
         enum Foo {
-            Bar(int, int),
-            Baz(int, int)
+            Bar(Int32, Int32),
+            Baz(Int32, Int32)
         }",
         "multiple_variants_multiple_params"
     );
@@ -623,17 +626,17 @@ fn test_type_alias_snapshots() {
 #[test]
 fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { }", "empty");
-    assert_snap_eq!("trait Add { pub fn add(other: int) -> int; }", "method");
+    assert_snap_eq!("trait Add { pub fn add(other: Int32) -> Int32; }", "method");
     assert_snap_eq!(
-        "trait Add { pub fn add(other: int) -> int { return self + other; } }",
+        "trait Add { pub fn add(other: Int32) -> Int32 { return self + other; } }",
         "method_impl"
     );
     assert_snap_eq!("trait Add<T> { }", "generic");
     assert_snap_eq!("trait Add<T1, T2> { }", "generics");
-    assert_snap_eq!("trait Add { fn add(other: int) -> int; }", "private_method");
+    assert_snap_eq!("trait Add { fn add(other: Int32) -> Int32; }", "private_method");
     assert_snap_eq!("trait Add<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("trait Add<T1: Numeric, T2: Numeric> {}", "constrained_generics");
-    assert_snap_eq!("trait Add { pub fn add(other: int) { } }", "method_no_ret");
+    assert_snap_eq!("trait Add { pub fn add(other: Int32) { } }", "method_no_ret");
 }
 
 #[test]

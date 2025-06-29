@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Foo",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                             },
                             type_arguments: [],
                             location: Location(
-                                14..17,
+                                14..19,
                             ),
                         },
                         location: Location(
-                            14..17,
+                            14..19,
                         ),
                     },
                 },
@@ -67,7 +67,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
@@ -76,11 +76,11 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            47..52,
+                                            47..54,
                                         ),
                                     },
                                     location: Location(
-                                        47..52,
+                                        47..54,
                                     ),
                                 },
                             },

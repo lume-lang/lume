@@ -24,17 +24,13 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Namespace {
                                             name: Identifier {
                                                 name: "u64",
                                                 location: Location(
                                                     5..8,
                                                 ),
                                             },
-                                            type_arguments: [],
-                                            location: Location(
-                                                5..8,
-                                            ),
                                         },
                                         location: Location(
                                             5..8,
@@ -50,7 +46,7 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                 ),
                 name: Path {
                     root: [],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "==",
                             location: Location(
@@ -79,7 +75,6 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                         ),
                     ),
                 ],
-                type_arguments: [],
                 location: Location(
                     0..13,
                 ),

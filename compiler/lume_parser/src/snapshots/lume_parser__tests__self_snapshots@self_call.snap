@@ -20,7 +20,7 @@ expression: "parse_expr(\"self.invoke();\")"
                 ),
                 name: Path {
                     root: [],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "invoke",
                             location: Location(
@@ -29,15 +29,14 @@ expression: "parse_expr(\"self.invoke();\")"
                         },
                         type_arguments: [],
                         location: Location(
-                            5..11,
+                            5..12,
                         ),
                     },
                     location: Location(
-                        5..11,
+                        5..12,
                     ),
                 },
                 arguments: [],
-                type_arguments: [],
                 location: Location(
                     5..14,
                 ),

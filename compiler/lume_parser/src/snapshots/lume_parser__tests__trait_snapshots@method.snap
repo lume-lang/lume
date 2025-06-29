@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { pub fn add(other: int) -> int; }\")"
+expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
 ---
 [
     TypeDefinition(
@@ -40,27 +40,27 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int; }\")"
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
-                                                    name: "int",
+                                                    name: "Int32",
                                                     location: Location(
-                                                        30..33,
+                                                        30..35,
                                                     ),
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    30..33,
+                                                    30..36,
                                                 ),
                                             },
                                             location: Location(
-                                                30..33,
+                                                30..36,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    23..33,
+                                    23..36,
                                 ),
                             },
                         ],
@@ -70,20 +70,20 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int; }\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    38..41,
+                                                    40..45,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                38..41,
+                                                40..46,
                                             ),
                                         },
                                         location: Location(
-                                            38..41,
+                                            40..46,
                                         ),
                                     },
                                 },
@@ -91,13 +91,13 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int; }\")"
                         ),
                         block: None,
                         location: Location(
-                            16..42,
+                            16..46,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..44,
+                    0..48,
                 ),
                 documentation: None,
             },

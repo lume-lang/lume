@@ -53,22 +53,17 @@ description: call() as u64;
                                             2,
                                         ),
                                     },
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [],
-                                            },
-                                        ),
-                                        name: Named(
-                                            Identifier {
+                                    name: Path {
+                                        root: [],
+                                        name: Callable {
+                                            name: Identifier {
                                                 name: "call",
                                                 location: <internal>:0:4,
                                             },
-                                        ),
-                                        location: <internal>:0:4,
-                                    },
-                                    type_arguments: TypeArguments {
-                                        inner: [],
+                                            type_arguments: [],
+                                            location: <internal>:0:5,
+                                        },
+                                        location: <internal>:0:5,
                                     },
                                     arguments: [],
                                 },
@@ -76,23 +71,18 @@ description: call() as u64;
                         },
                         target: Type {
                             id: ItemId(
-                                2586979368357421486,
+                                13902787388289951280,
                             ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
                                         name: "u64",
                                         location: <internal>:10:13,
                                     },
-                                ),
+                                },
                                 location: <internal>:10:13,
                             },
-                            type_params: [],
                             location: <internal>:10:13,
                         },
                     },

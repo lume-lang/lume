@@ -8,98 +8,86 @@ Map {
     ),
     items: {
         ItemId(
-            17007826589591389512,
+            14353073384594717167,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    17007826589591389512,
+                    14353073384594717167,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        4863703123816121347,
+                        13380267704548414892,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Enumerable",
                                 location: <internal>:20:30,
                             },
-                        ),
-                        location: <internal>:20:33,
-                    },
-                    type_params: [
-                        Type {
-                            id: ItemId(
-                                10382560105972960337,
-                            ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
+                            type_arguments: [
+                                Type {
+                                    id: ItemId(
+                                        8901637729188007634,
+                                    ),
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: <internal>:31:32,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:31:33,
+                                        },
+                                        location: <internal>:31:33,
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "T",
-                                        location: <internal>:31:32,
-                                    },
-                                ),
-                                location: <internal>:31:32,
-                            },
-                            type_params: [],
-                            location: <internal>:31:32,
+                                    location: <internal>:31:33,
+                                },
+                            ],
+                            location: <internal>:20:36,
                         },
-                    ],
-                    location: <internal>:20:33,
+                        location: <internal>:20:36,
+                    },
+                    location: <internal>:20:36,
                 },
                 target: Type {
                     id: ItemId(
-                        3921845314145725332,
+                        7484320765453361402,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Vector",
                                 location: <internal>:37:43,
                             },
-                        ),
-                        location: <internal>:37:46,
-                    },
-                    type_params: [
-                        Type {
-                            id: ItemId(
-                                10382560105972960337,
-                            ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
+                            type_arguments: [
+                                Type {
+                                    id: ItemId(
+                                        8901637729188007634,
+                                    ),
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: <internal>:44:45,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:44:46,
+                                        },
+                                        location: <internal>:44:46,
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "T",
-                                        location: <internal>:44:45,
-                                    },
-                                ),
-                                location: <internal>:44:45,
-                            },
-                            type_params: [],
-                            location: <internal>:44:45,
+                                    location: <internal>:44:46,
+                                },
+                            ],
+                            location: <internal>:37:48,
                         },
-                    ],
-                    location: <internal>:37:46,
+                        location: <internal>:37:48,
+                    },
+                    location: <internal>:37:48,
                 },
                 methods: [
                     TraitMethodImplementation {
@@ -118,24 +106,21 @@ Map {
                         },
                         return_type: Type {
                             id: ItemId(
-                                10382560105972960337,
+                                8901637729188007634,
                             ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
                                         name: "T",
                                         location: <internal>:82:83,
                                     },
-                                ),
-                                location: <internal>:82:83,
+                                    type_arguments: [],
+                                    location: <internal>:82:85,
+                                },
+                                location: <internal>:82:85,
                             },
-                            type_params: [],
-                            location: <internal>:82:83,
+                            location: <internal>:82:85,
                         },
                         block: Block {
                             statements: [],

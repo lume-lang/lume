@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn main(argc: u8) -> void { }\")"
+expression: "parse(\"fn main(argc: UInt8) -> void { }\")"
 ---
 [
     FunctionDefinition(
@@ -31,27 +31,27 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                         NamedType {
                             name: Path {
                                 root: [],
-                                name: PathSegment {
+                                name: Type {
                                     name: Identifier {
-                                        name: "u8",
+                                        name: "UInt8",
                                         location: Location(
-                                            14..16,
+                                            14..19,
                                         ),
                                     },
                                     type_arguments: [],
                                     location: Location(
-                                        14..16,
+                                        14..20,
                                     ),
                                 },
                                 location: Location(
-                                    14..16,
+                                    14..20,
                                 ),
                             },
                         },
                     ),
                     vararg: false,
                     location: Location(
-                        8..16,
+                        8..20,
                     ),
                 },
             ],
@@ -61,20 +61,20 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
-                                        21..25,
+                                        24..28,
                                     ),
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    21..25,
+                                    24..30,
                                 ),
                             },
                             location: Location(
-                                21..25,
+                                24..30,
                             ),
                         },
                     },
@@ -83,11 +83,11 @@ expression: "parse(\"fn main(argc: u8) -> void { }\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    26..29,
+                    29..32,
                 ),
             },
             location: Location(
-                0..29,
+                0..32,
             ),
             documentation: None,
         },

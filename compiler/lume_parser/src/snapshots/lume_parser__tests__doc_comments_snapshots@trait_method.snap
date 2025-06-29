@@ -35,7 +35,7 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "void",
                                                 location: Location(
@@ -44,11 +44,11 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                78..82,
+                                                78..84,
                                             ),
                                         },
                                         location: Location(
-                                            78..82,
+                                            78..84,
                                         ),
                                     },
                                 },

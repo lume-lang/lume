@@ -16,7 +16,7 @@ expression: "parse(\"/// This is a doc comment\n        type Foo = Bar\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "Bar",
                                     location: Location(

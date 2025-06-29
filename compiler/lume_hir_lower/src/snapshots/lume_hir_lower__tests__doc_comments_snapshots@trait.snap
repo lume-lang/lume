@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            12314200219861369160,
+            5175167619020667705,
         ): Type(
             Trait(
                 TraitDefinition {
                     id: ItemId(
-                        12314200219861369160,
+                        5175167619020667705,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Foo",
                                 location: <internal>:40:43,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:40:43,
+                        },
                         location: <internal>:40:43,
                     },
                     type_parameters: TypeParameters {

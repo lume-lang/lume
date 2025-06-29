@@ -47,39 +47,32 @@ description: let _ = (0..=1);
                                     1,
                                 ),
                             },
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                            Named(
-                                                Identifier {
-                                                    name: "RangeInclusive",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "new",
-                                        location: <internal>:0:0,
-                                    },
-                                ),
-                                location: <internal>:0:0,
-                            },
-                            type_arguments: TypeArguments {
-                                inner: [
-                                    Implicit {
+                                    Type {
+                                        name: Identifier {
+                                            name: "RangeInclusive",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
                                         location: <internal>:0:0,
                                     },
                                 ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "new",
+                                        location: <internal>:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
+                                location: <internal>:0:0,
                             },
                             arguments: [
                                 Expression {

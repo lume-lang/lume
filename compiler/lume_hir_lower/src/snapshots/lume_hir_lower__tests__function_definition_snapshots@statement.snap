@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            8095934718272011788,
+            18378013473329591206,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    8095934718272011788,
+                    18378013473329591206,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "main",
                             location: <internal>:3:7,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:7,
+                    },
                     location: <internal>:3:7,
                 },
                 parameters: [],
@@ -32,24 +34,21 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        9344623788042179276,
+                        17666474489655347949,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "void",
                                 location: <internal>:13:17,
                             },
-                        ),
-                        location: <internal>:13:17,
+                            type_arguments: [],
+                            location: <internal>:13:19,
+                        },
+                        location: <internal>:13:19,
                     },
-                    type_params: [],
-                    location: <internal>:13:17,
+                    location: <internal>:13:19,
                 },
                 block: Some(
                     Block {
@@ -57,7 +56,7 @@ Map {
                             Statement {
                                 id: StatementId {
                                     def: ItemId(
-                                        8095934718272011788,
+                                        18378013473329591206,
                                     ),
                                     index: Idx(
                                         0,
@@ -67,7 +66,7 @@ Map {
                                     VariableDeclaration {
                                         id: StatementId {
                                             def: ItemId(
-                                                8095934718272011788,
+                                                18378013473329591206,
                                             ),
                                             index: Idx(
                                                 0,
@@ -81,7 +80,7 @@ Map {
                                         value: Expression {
                                             id: ExpressionId {
                                                 def: ItemId(
-                                                    8095934718272011788,
+                                                    18378013473329591206,
                                                 ),
                                                 index: Idx(
                                                     1,
@@ -92,7 +91,7 @@ Map {
                                                 Literal {
                                                     id: ExpressionId {
                                                         def: ItemId(
-                                                            8095934718272011788,
+                                                            18378013473329591206,
                                                         ),
                                                         index: Idx(
                                                             1,
@@ -103,7 +102,7 @@ Map {
                                                         IntLiteral {
                                                             id: ExpressionId {
                                                                 def: ItemId(
-                                                                    8095934718272011788,
+                                                                    18378013473329591206,
                                                                 ),
                                                                 index: Idx(
                                                                     1,
@@ -131,7 +130,7 @@ Map {
     statements: {
         StatementId {
             def: ItemId(
-                8095934718272011788,
+                18378013473329591206,
             ),
             index: Idx(
                 0,
@@ -139,7 +138,7 @@ Map {
         }: Statement {
             id: StatementId {
                 def: ItemId(
-                    8095934718272011788,
+                    18378013473329591206,
                 ),
                 index: Idx(
                     0,
@@ -149,7 +148,7 @@ Map {
                 VariableDeclaration {
                     id: StatementId {
                         def: ItemId(
-                            8095934718272011788,
+                            18378013473329591206,
                         ),
                         index: Idx(
                             0,
@@ -163,7 +162,7 @@ Map {
                     value: Expression {
                         id: ExpressionId {
                             def: ItemId(
-                                8095934718272011788,
+                                18378013473329591206,
                             ),
                             index: Idx(
                                 1,
@@ -174,7 +173,7 @@ Map {
                             Literal {
                                 id: ExpressionId {
                                     def: ItemId(
-                                        8095934718272011788,
+                                        18378013473329591206,
                                     ),
                                     index: Idx(
                                         1,
@@ -185,7 +184,7 @@ Map {
                                     IntLiteral {
                                         id: ExpressionId {
                                             def: ItemId(
-                                                8095934718272011788,
+                                                18378013473329591206,
                                             ),
                                             index: Idx(
                                                 1,
@@ -206,7 +205,7 @@ Map {
     expressions: {
         ExpressionId {
             def: ItemId(
-                8095934718272011788,
+                18378013473329591206,
             ),
             index: Idx(
                 1,
@@ -214,7 +213,7 @@ Map {
         }: Expression {
             id: ExpressionId {
                 def: ItemId(
-                    8095934718272011788,
+                    18378013473329591206,
                 ),
                 index: Idx(
                     1,
@@ -225,7 +224,7 @@ Map {
                 Literal {
                     id: ExpressionId {
                         def: ItemId(
-                            8095934718272011788,
+                            18378013473329591206,
                         ),
                         index: Idx(
                             1,
@@ -236,7 +235,7 @@ Map {
                         IntLiteral {
                             id: ExpressionId {
                                 def: ItemId(
-                                    8095934718272011788,
+                                    18378013473329591206,
                                 ),
                                 index: Idx(
                                     1,

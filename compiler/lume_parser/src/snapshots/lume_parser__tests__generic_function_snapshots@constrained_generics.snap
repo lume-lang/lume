@@ -33,7 +33,7 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Numeric",
                                             location: Location(
@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            12..19,
+                                            12..20,
                                         ),
                                     },
                                     location: Location(
-                                        12..19,
+                                        12..20,
                                     ),
                                 },
                             },
@@ -65,7 +65,7 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Numeric",
                                             location: Location(
@@ -74,11 +74,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            25..32,
+                                            25..33,
                                         ),
                                     },
                                     location: Location(
-                                        25..32,
+                                        25..33,
                                     ),
                                 },
                             },
@@ -91,7 +91,7 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
@@ -100,11 +100,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    39..43,
+                                    39..45,
                                 ),
                             },
                             location: Location(
-                                39..43,
+                                39..45,
                             ),
                         },
                     },

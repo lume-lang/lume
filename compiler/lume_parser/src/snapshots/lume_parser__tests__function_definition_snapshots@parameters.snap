@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
+expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
 ---
 [
     FunctionDefinition(
@@ -31,34 +31,34 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                         NamedType {
                             name: Path {
                                 root: [],
-                                name: PathSegment {
+                                name: Type {
                                     name: Identifier {
-                                        name: "u8",
+                                        name: "UInt8",
                                         location: Location(
-                                            14..16,
+                                            14..19,
                                         ),
                                     },
                                     type_arguments: [],
                                     location: Location(
-                                        14..16,
+                                        14..20,
                                     ),
                                 },
                                 location: Location(
-                                    14..16,
+                                    14..20,
                                 ),
                             },
                         },
                     ),
                     vararg: false,
                     location: Location(
-                        8..16,
+                        8..20,
                     ),
                 },
                 Parameter {
                     name: Identifier {
                         name: "arcv",
                         location: Location(
-                            18..22,
+                            21..25,
                         ),
                     },
                     param_type: Array(
@@ -67,32 +67,32 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "String",
                                                 location: Location(
-                                                    25..31,
+                                                    28..34,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                25..31,
+                                                28..35,
                                             ),
                                         },
                                         location: Location(
-                                            25..31,
+                                            28..35,
                                         ),
                                     },
                                 },
                             ),
                             location: Location(
-                                24..32,
+                                27..35,
                             ),
                         },
                     ),
                     vararg: false,
                     location: Location(
-                        18..32,
+                        21..35,
                     ),
                 },
             ],
@@ -102,20 +102,20 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
-                                        37..41,
+                                        40..44,
                                     ),
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    37..41,
+                                    40..46,
                                 ),
                             },
                             location: Location(
-                                37..41,
+                                40..46,
                             ),
                         },
                     },
@@ -124,11 +124,11 @@ expression: "parse(\"fn main(argc: u8, arcv: [String]) -> void { }\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    42..45,
+                    45..48,
                 ),
             },
             location: Location(
-                0..45,
+                0..48,
             ),
             documentation: None,
         },

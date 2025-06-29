@@ -277,14 +277,13 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                         },
                                     ),
                                 },
-                                name: Named(
-                                    Identifier {
+                                name: Callable {
+                                    name: Identifier {
                                         name: "b",
                                         location: <internal>:76:77,
                                     },
-                                ),
-                                type_arguments: TypeArguments {
-                                    inner: [],
+                                    type_arguments: [],
+                                    location: <internal>:76:78,
                                 },
                                 arguments: [
                                     Expression {

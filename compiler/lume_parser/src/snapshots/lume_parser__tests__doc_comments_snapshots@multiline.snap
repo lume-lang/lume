@@ -26,7 +26,7 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
@@ -35,11 +35,11 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    102..106,
+                                    102..108,
                                 ),
                             },
                             location: Location(
-                                102..106,
+                                102..108,
                             ),
                         },
                     },

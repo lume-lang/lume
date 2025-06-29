@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            17561646994490527473,
+            14135399907963487766,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    17561646994490527473,
+                    14135399907963487766,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "foo",
                             location: <internal>:3:6,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:6,
+                    },
                     location: <internal>:3:6,
                 },
                 parameters: [
@@ -34,34 +36,33 @@ Map {
                         },
                         param_type: Type {
                             id: ItemId(
-                                13608251888059153114,
+                                6143724420395906933,
                             ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
+                            name: Path {
+                                root: [
+                                    Type {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
+                                ],
+                                name: Type {
+                                    name: Identifier {
                                         name: "Int32",
                                         location: <internal>:0:0,
                                     },
-                                ),
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
                                 location: <internal>:0:0,
                             },
-                            type_params: [],
-                            location: <internal>:16:21,
+                            location: <internal>:16:22,
                         },
                         vararg: true,
-                        location: <internal>:10:21,
+                        location: <internal>:10:22,
                     },
                 ],
                 type_parameters: TypeParameters {
@@ -71,17 +72,18 @@ Map {
                     id: ItemId(
                         0,
                     ),
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Void",
                                 location: <internal>:0:0,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
                         location: <internal>:0:0,
                     },
-                    type_params: [],
                     location: <internal>:0:0,
                 },
                 block: Some(

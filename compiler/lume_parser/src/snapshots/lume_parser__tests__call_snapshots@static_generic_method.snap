@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
+expression: "parse_expr(\"let _ = Foo::call<T>(a, b);\")"
 ---
 [
     VariableDeclaration(
@@ -17,7 +17,7 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                     callee: None,
                     name: Path {
                         root: [
-                            PathSegment {
+                            Type {
                                 name: Identifier {
                                     name: "Foo",
                                     location: Location(
@@ -26,24 +26,47 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    8..11,
+                                    8..13,
                                 ),
                             },
                         ],
-                        name: PathSegment {
+                        name: Callable {
                             name: Identifier {
                                 name: "call",
                                 location: Location(
                                     13..17,
                                 ),
                             },
-                            type_arguments: [],
+                            type_arguments: [
+                                Named(
+                                    NamedType {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: Location(
+                                                        18..19,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    18..20,
+                                                ),
+                                            },
+                                            location: Location(
+                                                18..20,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                             location: Location(
-                                13..17,
+                                13..21,
                             ),
                         },
                         location: Location(
-                            8..17,
+                            13..21,
                         ),
                     },
                     arguments: [
@@ -52,7 +75,7 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                                 name: Identifier {
                                     name: "a",
                                     location: Location(
-                                        23..24,
+                                        21..22,
                                     ),
                                 },
                             },
@@ -62,45 +85,19 @@ expression: "parse_expr(\"let _ = Foo::call::<T>(a, b);\")"
                                 name: Identifier {
                                     name: "b",
                                     location: Location(
-                                        26..27,
+                                        24..25,
                                     ),
                                 },
                             },
                         ),
                     ],
-                    type_arguments: [
-                        TypeArgument {
-                            ty: Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: PathSegment {
-                                            name: Identifier {
-                                                name: "T",
-                                                location: Location(
-                                                    20..21,
-                                                ),
-                                            },
-                                            type_arguments: [],
-                                            location: Location(
-                                                20..21,
-                                            ),
-                                        },
-                                        location: Location(
-                                            20..21,
-                                        ),
-                                    },
-                                },
-                            ),
-                        },
-                    ],
                     location: Location(
-                        13..29,
+                        13..21,
                     ),
                 },
             ),
             location: Location(
-                0..29,
+                0..27,
             ),
         },
     ),

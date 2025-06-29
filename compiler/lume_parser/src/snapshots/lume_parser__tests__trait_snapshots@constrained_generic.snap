@@ -25,7 +25,7 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -34,11 +34,11 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                13..20,
+                                                13..21,
                                             ),
                                         },
                                         location: Location(
-                                            13..20,
+                                            13..21,
                                         ),
                                     },
                                 },

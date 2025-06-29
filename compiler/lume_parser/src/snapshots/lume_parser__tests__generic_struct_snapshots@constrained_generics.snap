@@ -27,7 +27,7 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -36,11 +36,11 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                16..23,
+                                                16..24,
                                             ),
                                         },
                                         location: Location(
-                                            16..23,
+                                            16..24,
                                         ),
                                     },
                                 },
@@ -59,7 +59,7 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -68,11 +68,11 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                29..36,
+                                                29..37,
                                             ),
                                         },
                                         location: Location(
-                                            29..36,
+                                            29..37,
                                         ),
                                     },
                                 },

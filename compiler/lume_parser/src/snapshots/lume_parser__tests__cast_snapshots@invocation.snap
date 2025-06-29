@@ -11,7 +11,7 @@ expression: "parse_expr(\"a() as u64;\")"
                         callee: None,
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Callable {
                                 name: Identifier {
                                     name: "a",
                                     location: Location(
@@ -20,15 +20,14 @@ expression: "parse_expr(\"a() as u64;\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    0..1,
+                                    0..2,
                                 ),
                             },
                             location: Location(
-                                0..1,
+                                0..2,
                             ),
                         },
                         arguments: [],
-                        type_arguments: [],
                         location: Location(
                             0..6,
                         ),
@@ -38,17 +37,13 @@ expression: "parse_expr(\"a() as u64;\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Namespace {
                                 name: Identifier {
                                     name: "u64",
                                     location: Location(
                                         7..10,
                                     ),
                                 },
-                                type_arguments: [],
-                                location: Location(
-                                    7..10,
-                                ),
                             },
                             location: Location(
                                 7..10,

@@ -25,7 +25,7 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -34,11 +34,11 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                14..21,
+                                                14..22,
                                             ),
                                         },
                                         location: Location(
-                                            14..21,
+                                            14..22,
                                         ),
                                     },
                                 },
@@ -57,7 +57,7 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -66,11 +66,11 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                27..34,
+                                                27..35,
                                             ),
                                         },
                                         location: Location(
-                                            27..34,
+                                            27..35,
                                         ),
                                     },
                                 },

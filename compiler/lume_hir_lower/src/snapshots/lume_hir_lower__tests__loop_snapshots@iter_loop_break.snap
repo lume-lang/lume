@@ -42,35 +42,32 @@ description: "for pattern in [1, 2, 3] { break; }"
                                     1,
                                 ),
                             },
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                            Named(
-                                                Identifier {
-                                                    name: "Array",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
+                                    Type {
+                                        name: Identifier {
+                                            name: "Array",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                                name: Callable {
+                                    name: Identifier {
                                         name: "new",
                                         location: <internal>:0:0,
                                     },
-                                ),
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
                                 location: <internal>:0:0,
-                            },
-                            type_arguments: TypeArguments {
-                                inner: [],
                             },
                             arguments: [
                                 Expression {

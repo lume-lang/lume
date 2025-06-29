@@ -16,7 +16,7 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Test",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                5..9,
+                                5..11,
                             ),
                         },
                         location: Location(
-                            5..9,
+                            5..11,
                         ),
                     },
                 },
@@ -67,7 +67,7 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "void",
                                             location: Location(
@@ -76,11 +76,11 @@ expression: "parse(\"impl Test { fn test<T>() -> void {} }\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            28..32,
+                                            28..34,
                                         ),
                                     },
                                     location: Location(
-                                        28..32,
+                                        28..34,
                                     ),
                                 },
                             },

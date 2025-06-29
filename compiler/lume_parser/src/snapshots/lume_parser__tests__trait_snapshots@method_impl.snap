@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + other; } }\")"
+expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self + other; } }\")"
 ---
 [
     TypeDefinition(
@@ -40,27 +40,27 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
-                                                    name: "int",
+                                                    name: "Int32",
                                                     location: Location(
-                                                        30..33,
+                                                        30..35,
                                                     ),
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    30..33,
+                                                    30..36,
                                                 ),
                                             },
                                             location: Location(
-                                                30..33,
+                                                30..36,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    23..33,
+                                    23..36,
                                 ),
                             },
                         ],
@@ -70,20 +70,20 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    38..41,
+                                                    40..45,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                38..41,
+                                                40..47,
                                             ),
                                         },
                                         location: Location(
-                                            38..41,
+                                            40..47,
                                         ),
                                     },
                                 },
@@ -103,7 +103,7 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                                                     name: Identifier {
                                                                         name: "self",
                                                                         location: Location(
-                                                                            51..55,
+                                                                            55..59,
                                                                         ),
                                                                     },
                                                                 },
@@ -111,20 +111,20 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                                         ),
                                                         name: Path {
                                                             root: [],
-                                                            name: PathSegment {
+                                                            name: Callable {
                                                                 name: Identifier {
                                                                     name: "+",
                                                                     location: Location(
-                                                                        56..57,
+                                                                        60..61,
                                                                     ),
                                                                 },
                                                                 type_arguments: [],
                                                                 location: Location(
-                                                                    56..57,
+                                                                    60..61,
                                                                 ),
                                                             },
                                                             location: Location(
-                                                                56..57,
+                                                                60..61,
                                                             ),
                                                         },
                                                         arguments: [
@@ -133,38 +133,37 @@ expression: "parse(\"trait Add { pub fn add(other: int) -> int { return self + o
                                                                     name: Identifier {
                                                                         name: "other",
                                                                         location: Location(
-                                                                            58..63,
+                                                                            62..67,
                                                                         ),
                                                                     },
                                                                 },
                                                             ),
                                                         ],
-                                                        type_arguments: [],
                                                         location: Location(
-                                                            51..63,
+                                                            55..67,
                                                         ),
                                                     },
                                                 ),
                                             ),
                                             location: Location(
-                                                44..64,
+                                                48..68,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    42..66,
+                                    46..70,
                                 ),
                             },
                         ),
                         location: Location(
-                            16..66,
+                            16..70,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..68,
+                    0..72,
                 ),
                 documentation: None,
             },

@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            7555774581651727328,
+            13825029388148061585,
         ): Type(
             Struct(
                 StructDefinition {
                     id: ItemId(
-                        7555774581651727328,
+                        13825029388148061585,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Test",
                                 location: <internal>:7:11,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:7:11,
+                        },
                         location: <internal>:7:11,
                     },
                     builtin: false,
@@ -41,24 +43,21 @@ Map {
                                 constraints: [
                                     Type {
                                         id: ItemId(
-                                            6129574414018423941,
+                                            12406655113887153806,
                                         ),
-                                        name: SymbolName {
-                                            namespace: Some(
-                                                PathRoot {
-                                                    segments: [],
-                                                },
-                                            ),
-                                            name: Named(
-                                                Identifier {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
                                                     name: "Numeric",
                                                     location: <internal>:16:23,
                                                 },
-                                            ),
-                                            location: <internal>:16:23,
+                                                type_arguments: [],
+                                                location: <internal>:16:24,
+                                            },
+                                            location: <internal>:16:24,
                                         },
-                                        type_params: [],
-                                        location: <internal>:16:23,
+                                        location: <internal>:16:24,
                                     },
                                 ],
                                 location: <internal>:12:14,
@@ -73,24 +72,21 @@ Map {
                                 constraints: [
                                     Type {
                                         id: ItemId(
-                                            6129574414018423941,
+                                            12406655113887153806,
                                         ),
-                                        name: SymbolName {
-                                            namespace: Some(
-                                                PathRoot {
-                                                    segments: [],
-                                                },
-                                            ),
-                                            name: Named(
-                                                Identifier {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
                                                     name: "Numeric",
                                                     location: <internal>:29:36,
                                                 },
-                                            ),
-                                            location: <internal>:29:36,
+                                                type_arguments: [],
+                                                location: <internal>:29:37,
+                                            },
+                                            location: <internal>:29:37,
                                         },
-                                        type_params: [],
-                                        location: <internal>:29:36,
+                                        location: <internal>:29:37,
                                     },
                                 ],
                                 location: <internal>:25:27,

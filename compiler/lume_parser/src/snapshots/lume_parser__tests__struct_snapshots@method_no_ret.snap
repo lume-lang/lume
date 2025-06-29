@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Foo",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                             },
                             type_arguments: [],
                             location: Location(
-                                14..17,
+                                14..19,
                             ),
                         },
                         location: Location(
-                            14..17,
+                            14..19,
                         ),
                     },
                 },

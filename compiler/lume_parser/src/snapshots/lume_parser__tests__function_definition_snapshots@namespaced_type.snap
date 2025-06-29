@@ -26,20 +26,16 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                     NamedType {
                         name: Path {
                             root: [
-                                PathSegment {
+                                Namespace {
                                     name: Identifier {
                                         name: "std",
                                         location: Location(
                                             13..16,
                                         ),
                                     },
-                                    type_arguments: [],
-                                    location: Location(
-                                        13..16,
-                                    ),
                                 },
                             ],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "Int32",
                                     location: Location(
@@ -48,11 +44,11 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    18..23,
+                                    18..25,
                                 ),
                             },
                             location: Location(
-                                18..23,
+                                18..25,
                             ),
                         },
                     },

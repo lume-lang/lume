@@ -179,39 +179,32 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                     5,
                                 ),
                             },
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                            Named(
-                                                Identifier {
-                                                    name: "RangeInclusive",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "new",
-                                        location: <internal>:0:0,
-                                    },
-                                ),
-                                location: <internal>:0:0,
-                            },
-                            type_arguments: TypeArguments {
-                                inner: [
-                                    Implicit {
+                                    Type {
+                                        name: Identifier {
+                                            name: "RangeInclusive",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
                                         location: <internal>:0:0,
                                     },
                                 ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "new",
+                                        location: <internal>:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
+                                location: <internal>:0:0,
                             },
                             arguments: [
                                 Expression {
@@ -270,14 +263,13 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     },
                                                 ),
                                             },
-                                            name: Named(
-                                                Identifier {
+                                            name: Callable {
+                                                name: Identifier {
                                                     name: "+",
                                                     location: <internal>:59:60,
                                                 },
-                                            ),
-                                            type_arguments: TypeArguments {
-                                                inner: [],
+                                                type_arguments: [],
+                                                location: <internal>:59:60,
                                             },
                                             arguments: [
                                                 Expression {
@@ -396,14 +388,13 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                 },
                                                             ),
                                                         },
-                                                        name: Named(
-                                                            Identifier {
+                                                        name: Callable {
+                                                            name: Identifier {
                                                                 name: "+",
                                                                 location: <internal>:69:70,
                                                             },
-                                                        ),
-                                                        type_arguments: TypeArguments {
-                                                            inner: [],
+                                                            type_arguments: [],
+                                                            location: <internal>:69:70,
                                                         },
                                                         arguments: [
                                                             Expression {
@@ -446,14 +437,13 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                     },
                                                 ),
                                             },
-                                            name: Named(
-                                                Identifier {
+                                            name: Callable {
+                                                name: Identifier {
                                                     name: "+",
                                                     location: <internal>:73:74,
                                                 },
-                                            ),
-                                            type_arguments: TypeArguments {
-                                                inner: [],
+                                                type_arguments: [],
+                                                location: <internal>:73:74,
                                             },
                                             arguments: [
                                                 Expression {

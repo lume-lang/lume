@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            14825577416135075223,
+            13811513517830038765,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    14825577416135075223,
+                    13811513517830038765,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "test",
                             location: <internal>:3:7,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:7,
+                    },
                     location: <internal>:3:7,
                 },
                 parameters: [],
@@ -53,24 +55,21 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        9344623788042179276,
+                        17666474489655347949,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "void",
                                 location: <internal>:21:25,
                             },
-                        ),
-                        location: <internal>:21:25,
+                            type_arguments: [],
+                            location: <internal>:21:27,
+                        },
+                        location: <internal>:21:27,
                     },
-                    type_params: [],
-                    location: <internal>:21:25,
+                    location: <internal>:21:27,
                 },
                 block: Some(
                     Block {

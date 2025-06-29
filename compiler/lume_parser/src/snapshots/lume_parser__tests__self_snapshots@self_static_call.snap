@@ -9,7 +9,7 @@ expression: "parse_expr(\"self::invoke();\")"
                 callee: None,
                 name: Path {
                     root: [
-                        PathSegment {
+                        Type {
                             name: Identifier {
                                 name: "self",
                                 location: Location(
@@ -18,11 +18,11 @@ expression: "parse_expr(\"self::invoke();\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                0..4,
+                                0..6,
                             ),
                         },
                     ],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "invoke",
                             location: Location(
@@ -31,17 +31,16 @@ expression: "parse_expr(\"self::invoke();\")"
                         },
                         type_arguments: [],
                         location: Location(
-                            6..12,
+                            6..13,
                         ),
                     },
                     location: Location(
-                        0..12,
+                        6..13,
                     ),
                 },
                 arguments: [],
-                type_arguments: [],
                 location: Location(
-                    6..15,
+                    6..13,
                 ),
             },
         ),

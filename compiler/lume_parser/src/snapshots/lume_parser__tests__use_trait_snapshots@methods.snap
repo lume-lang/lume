@@ -9,7 +9,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Cast",
                                 location: Location(
@@ -18,11 +18,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             },
                             type_arguments: [],
                             location: Location(
-                                13..17,
+                                13..20,
                             ),
                         },
                         location: Location(
-                            13..17,
+                            13..20,
                         ),
                     },
                 },
@@ -31,7 +31,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
@@ -40,11 +40,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             },
                             type_arguments: [],
                             location: Location(
-                                21..26,
+                                21..28,
                             ),
                         },
                         location: Location(
-                            21..26,
+                            21..28,
                         ),
                     },
                 },
@@ -71,7 +71,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "String",
                                             location: Location(
@@ -80,11 +80,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            63..69,
+                                            63..71,
                                         ),
                                     },
                                     location: Location(
-                                        63..69,
+                                        63..71,
                                     ),
                                 },
                             },
@@ -141,7 +141,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
@@ -150,11 +150,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            147..152,
+                                            147..154,
                                         ),
                                     },
                                     location: Location(
-                                        147..152,
+                                        147..154,
                                     ),
                                 },
                             },

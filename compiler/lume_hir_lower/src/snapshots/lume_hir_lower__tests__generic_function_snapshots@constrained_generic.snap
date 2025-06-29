@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            14825577416135075223,
+            13811513517830038765,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    14825577416135075223,
+                    13811513517830038765,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "test",
                             location: <internal>:3:7,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:7,
+                    },
                     location: <internal>:3:7,
                 },
                 parameters: [],
@@ -39,24 +41,21 @@ Map {
                             constraints: [
                                 Type {
                                     id: ItemId(
-                                        6129574414018423941,
+                                        12406655113887153806,
                                     ),
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [],
-                                            },
-                                        ),
-                                        name: Named(
-                                            Identifier {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
                                                 name: "Numeric",
                                                 location: <internal>:11:18,
                                             },
-                                        ),
-                                        location: <internal>:11:18,
+                                            type_arguments: [],
+                                            location: <internal>:11:19,
+                                        },
+                                        location: <internal>:11:19,
                                     },
-                                    type_params: [],
-                                    location: <internal>:11:18,
+                                    location: <internal>:11:19,
                                 },
                             ],
                             location: <internal>:8:9,
@@ -65,24 +64,21 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        9344623788042179276,
+                        17666474489655347949,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "void",
                                 location: <internal>:25:29,
                             },
-                        ),
-                        location: <internal>:25:29,
+                            type_arguments: [],
+                            location: <internal>:25:31,
+                        },
+                        location: <internal>:25:31,
                     },
-                    type_params: [],
-                    location: <internal>:25:29,
+                    location: <internal>:25:31,
                 },
                 block: Some(
                     Block {

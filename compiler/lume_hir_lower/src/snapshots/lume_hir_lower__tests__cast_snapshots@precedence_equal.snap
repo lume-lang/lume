@@ -93,36 +93,30 @@ description: 0 as u64 == 0;
                                     },
                                     target: Type {
                                         id: ItemId(
-                                            2586979368357421486,
+                                            13902787388289951280,
                                         ),
-                                        name: SymbolName {
-                                            namespace: Some(
-                                                PathRoot {
-                                                    segments: [],
-                                                },
-                                            ),
-                                            name: Named(
-                                                Identifier {
+                                        name: Path {
+                                            root: [],
+                                            name: Namespace {
+                                                name: Identifier {
                                                     name: "u64",
                                                     location: <internal>:5:8,
                                                 },
-                                            ),
+                                            },
                                             location: <internal>:5:8,
                                         },
-                                        type_params: [],
                                         location: <internal>:5:8,
                                     },
                                 },
                             ),
                         },
-                        name: Named(
-                            Identifier {
+                        name: Callable {
+                            name: Identifier {
                                 name: "==",
                                 location: <internal>:9:11,
                             },
-                        ),
-                        type_arguments: TypeArguments {
-                            inner: [],
+                            type_arguments: [],
+                            location: <internal>:9:11,
                         },
                         arguments: [
                             Expression {

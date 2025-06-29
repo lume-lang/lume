@@ -30,7 +30,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                             ),
                             name: Path {
                                 root: [],
-                                name: PathSegment {
+                                name: Callable {
                                     name: Identifier {
                                         name: "+",
                                         location: Location(
@@ -58,7 +58,6 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                     },
                                 ),
                             ],
-                            type_arguments: [],
                             location: Location(
                                 10..15,
                             ),
@@ -83,7 +82,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                         ),
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Callable {
                                                 name: Identifier {
                                                     name: "+",
                                                     location: Location(
@@ -111,7 +110,6 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                                 },
                                             ),
                                         ],
-                                        type_arguments: [],
                                         location: Location(
                                             20..25,
                                         ),
@@ -120,7 +118,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                             ),
                             name: Path {
                                 root: [],
-                                name: PathSegment {
+                                name: Callable {
                                     name: Identifier {
                                         name: "+",
                                         location: Location(
@@ -149,7 +147,6 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                     ),
                                 ),
                             ],
-                            type_arguments: [],
                             location: Location(
                                 20..29,
                             ),

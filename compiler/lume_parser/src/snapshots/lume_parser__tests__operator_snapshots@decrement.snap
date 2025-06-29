@@ -20,7 +20,7 @@ expression: "parse_expr(\"a--;\")"
                 ),
                 name: Path {
                     root: [],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "--",
                             location: Location(
@@ -37,7 +37,6 @@ expression: "parse_expr(\"a--;\")"
                     ),
                 },
                 arguments: [],
-                type_arguments: [],
                 location: Location(
                     0..3,
                 ),

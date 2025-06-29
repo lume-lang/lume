@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
+expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
 ---
 [
     VariableDeclaration(
@@ -17,16 +17,32 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                     callee: None,
                     name: Path {
                         root: [
-                            Type {
+                            Namespace {
                                 name: Identifier {
-                                    name: "Foo",
+                                    name: "std",
                                     location: Location(
                                         8..11,
                                     ),
                                 },
+                            },
+                            Namespace {
+                                name: Identifier {
+                                    name: "io",
+                                    location: Location(
+                                        13..15,
+                                    ),
+                                },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Buffer",
+                                    location: Location(
+                                        17..23,
+                                    ),
+                                },
                                 type_arguments: [],
                                 location: Location(
-                                    8..13,
+                                    17..25,
                                 ),
                             },
                         ],
@@ -34,16 +50,16 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                             name: Identifier {
                                 name: "call",
                                 location: Location(
-                                    13..17,
+                                    25..29,
                                 ),
                             },
                             type_arguments: [],
                             location: Location(
-                                13..18,
+                                25..30,
                             ),
                         },
                         location: Location(
-                            13..18,
+                            25..30,
                         ),
                     },
                     arguments: [
@@ -52,7 +68,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                 name: Identifier {
                                     name: "a",
                                     location: Location(
-                                        18..19,
+                                        30..31,
                                     ),
                                 },
                             },
@@ -62,19 +78,19 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                 name: Identifier {
                                     name: "b",
                                     location: Location(
-                                        21..22,
+                                        33..34,
                                     ),
                                 },
                             },
                         ),
                     ],
                     location: Location(
-                        13..18,
+                        25..30,
                     ),
                 },
             ),
             location: Location(
-                0..24,
+                0..36,
             ),
         },
     ),

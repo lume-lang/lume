@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar(int, int)\n        }\")"
+expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n        }\")"
 ---
 [
     TypeDefinition(
@@ -25,20 +25,20 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int)\n        }\
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    36..39,
+                                                    36..41,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..39,
+                                                36..42,
                                             ),
                                         },
                                         location: Location(
-                                            36..39,
+                                            36..42,
                                         ),
                                     },
                                 },
@@ -47,33 +47,33 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int)\n        }\
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    41..44,
+                                                    43..48,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                41..44,
+                                                43..49,
                                             ),
                                         },
                                         location: Location(
-                                            41..44,
+                                            43..49,
                                         ),
                                     },
                                 },
                             ),
                         ],
                         location: Location(
-                            32..45,
+                            32..49,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    9..55,
+                    9..59,
                 ),
                 documentation: None,
             },

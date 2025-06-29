@@ -33,7 +33,7 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Numeric",
                                             location: Location(
@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            11..18,
+                                            11..19,
                                         ),
                                     },
                                     location: Location(
-                                        11..18,
+                                        11..19,
                                     ),
                                 },
                             },
@@ -59,7 +59,7 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
@@ -68,11 +68,11 @@ expression: "parse(\"fn test<T: Numeric>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    25..29,
+                                    25..31,
                                 ),
                             },
                             location: Location(
-                                25..29,
+                                25..31,
                             ),
                         },
                     },

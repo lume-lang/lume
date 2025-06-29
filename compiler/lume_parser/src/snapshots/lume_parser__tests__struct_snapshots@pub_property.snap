@@ -32,7 +32,7 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
@@ -41,11 +41,11 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            41..46,
+                                            41..48,
                                         ),
                                     },
                                     location: Location(
-                                        41..46,
+                                        41..48,
                                     ),
                                 },
                             },

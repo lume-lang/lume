@@ -27,7 +27,7 @@ expression: "parse(\"struct Test<T: Numeric> {}\")"
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
                                                 name: "Numeric",
                                                 location: Location(
@@ -36,11 +36,11 @@ expression: "parse(\"struct Test<T: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                15..22,
+                                                15..23,
                                             ),
                                         },
                                         location: Location(
-                                            15..22,
+                                            15..23,
                                         ),
                                     },
                                 },

@@ -16,7 +16,7 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Test",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                             },
                             type_arguments: [],
                             location: Location(
-                                5..9,
+                                5..11,
                             ),
                         },
                         location: Location(
-                            5..9,
+                            5..11,
                         ),
                     },
                 },
@@ -64,7 +64,7 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
                                                     name: "Numeric",
                                                     location: Location(
@@ -73,11 +73,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    24..31,
+                                                    24..32,
                                                 ),
                                             },
                                             location: Location(
-                                                24..31,
+                                                24..32,
                                             ),
                                         },
                                     },
@@ -96,7 +96,7 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
                                                     name: "Numeric",
                                                     location: Location(
@@ -105,11 +105,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    37..44,
+                                                    37..45,
                                                 ),
                                             },
                                             location: Location(
-                                                37..44,
+                                                37..45,
                                             ),
                                         },
                                     },
@@ -122,7 +122,7 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "void",
                                             location: Location(
@@ -131,11 +131,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            51..55,
+                                            51..57,
                                         ),
                                     },
                                     location: Location(
-                                        51..55,
+                                        51..57,
                                     ),
                                 },
                             },

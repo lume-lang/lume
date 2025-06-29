@@ -20,7 +20,7 @@ expression: "parse_expr(\"a >= b;\")"
                 ),
                 name: Path {
                     root: [],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: ">=",
                             location: Location(
@@ -48,7 +48,6 @@ expression: "parse_expr(\"a >= b;\")"
                         },
                     ),
                 ],
-                type_arguments: [],
                 location: Location(
                     0..6,
                 ),

@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Foo",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                             },
                             type_arguments: [],
                             location: Location(
-                                14..17,
+                                14..19,
                             ),
                         },
                         location: Location(
-                            14..17,
+                            14..19,
                         ),
                     },
                 },
@@ -57,7 +57,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
@@ -66,11 +66,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            48..53,
+                                            48..55,
                                         ),
                                     },
                                     location: Location(
-                                        48..53,
+                                        48..55,
                                     ),
                                 },
                             },

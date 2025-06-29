@@ -22,7 +22,7 @@ expression: "parse_expr(\"return a.b(c);\")"
                         ),
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Callable {
                                 name: Identifier {
                                     name: "b",
                                     location: Location(
@@ -31,11 +31,11 @@ expression: "parse_expr(\"return a.b(c);\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    9..10,
+                                    9..11,
                                 ),
                             },
                             location: Location(
-                                9..10,
+                                9..11,
                             ),
                         },
                         arguments: [
@@ -50,7 +50,6 @@ expression: "parse_expr(\"return a.b(c);\")"
                                 },
                             ),
                         ],
-                        type_arguments: [],
                         location: Location(
                             9..14,
                         ),

@@ -16,7 +16,7 @@ expression: "parse(\"impl Int32 {}\")"
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"impl Int32 {}\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                5..10,
+                                5..12,
                             ),
                         },
                         location: Location(
-                            5..10,
+                            5..12,
                         ),
                     },
                 },

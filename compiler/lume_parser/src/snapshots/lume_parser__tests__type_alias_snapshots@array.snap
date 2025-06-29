@@ -18,7 +18,7 @@ expression: "parse(\"type A = [B]\")"
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "B",
                                             location: Location(
@@ -27,11 +27,11 @@ expression: "parse(\"type A = [B]\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            10..11,
+                                            10..12,
                                         ),
                                     },
                                     location: Location(
-                                        10..11,
+                                        10..12,
                                     ),
                                 },
                             },

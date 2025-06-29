@@ -9,7 +9,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Zero",
                                 location: Location(
@@ -18,11 +18,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             },
                             type_arguments: [],
                             location: Location(
-                                13..17,
+                                13..20,
                             ),
                         },
                         location: Location(
-                            13..17,
+                            13..20,
                         ),
                     },
                 },
@@ -31,7 +31,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Int32",
                                 location: Location(
@@ -40,11 +40,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             },
                             type_arguments: [],
                             location: Location(
-                                21..26,
+                                21..28,
                             ),
                         },
                         location: Location(
-                            21..26,
+                            21..28,
                         ),
                     },
                 },
@@ -71,7 +71,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "Boolean",
                                             location: Location(
@@ -80,11 +80,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            59..66,
+                                            59..68,
                                         ),
                                     },
                                     location: Location(
-                                        59..66,
+                                        59..68,
                                     ),
                                 },
                             },

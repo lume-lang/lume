@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"self::invoke::<T>();\")"
+expression: "parse_expr(\"self::invoke<T>();\")"
 ---
 [
     Expression(
@@ -9,7 +9,7 @@ expression: "parse_expr(\"self::invoke::<T>();\")"
                 callee: None,
                 name: Path {
                     root: [
-                        PathSegment {
+                        Type {
                             name: Identifier {
                                 name: "self",
                                 location: Location(
@@ -18,55 +18,52 @@ expression: "parse_expr(\"self::invoke::<T>();\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                0..4,
+                                0..6,
                             ),
                         },
                     ],
-                    name: PathSegment {
+                    name: Callable {
                         name: Identifier {
                             name: "invoke",
                             location: Location(
                                 6..12,
                             ),
                         },
-                        type_arguments: [],
+                        type_arguments: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "T",
+                                                location: Location(
+                                                    13..14,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                13..15,
+                                            ),
+                                        },
+                                        location: Location(
+                                            13..15,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
                         location: Location(
-                            6..12,
+                            6..16,
                         ),
                     },
                     location: Location(
-                        0..12,
+                        6..16,
                     ),
                 },
                 arguments: [],
-                type_arguments: [
-                    TypeArgument {
-                        ty: Named(
-                            NamedType {
-                                name: Path {
-                                    root: [],
-                                    name: PathSegment {
-                                        name: Identifier {
-                                            name: "T",
-                                            location: Location(
-                                                15..16,
-                                            ),
-                                        },
-                                        type_arguments: [],
-                                        location: Location(
-                                            15..16,
-                                        ),
-                                    },
-                                    location: Location(
-                                        15..16,
-                                    ),
-                                },
-                            },
-                        ),
-                    },
-                ],
                 location: Location(
-                    6..20,
+                    6..16,
                 ),
             },
         ),

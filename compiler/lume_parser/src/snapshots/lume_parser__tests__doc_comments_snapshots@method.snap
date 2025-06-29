@@ -16,7 +16,7 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Foo",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                             },
                             type_arguments: [],
                             location: Location(
-                                5..8,
+                                5..10,
                             ),
                         },
                         location: Location(
-                            5..8,
+                            5..10,
                         ),
                     },
                 },
@@ -57,7 +57,7 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "void",
                                             location: Location(
@@ -66,11 +66,11 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            77..81,
+                                            77..83,
                                         ),
                                     },
                                     location: Location(
-                                        77..81,
+                                        77..83,
                                     ),
                                 },
                             },

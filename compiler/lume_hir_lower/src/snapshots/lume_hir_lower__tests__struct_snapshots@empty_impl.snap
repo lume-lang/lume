@@ -8,40 +8,39 @@ Map {
     ),
     items: {
         ItemId(
-            17356753458964956386,
+            12541700452115798297,
         ): Impl(
             Implementation {
                 id: ItemId(
-                    17356753458964956386,
+                    12541700452115798297,
                 ),
                 impl_id: None,
                 target: Type {
                     id: ItemId(
-                        13608251888059153114,
+                        6143724420395906933,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [
-                                    Named(
-                                        Identifier {
-                                            name: "std",
-                                            location: <internal>:0:0,
-                                        },
-                                    ),
-                                ],
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
                             },
-                        ),
-                        name: Named(
-                            Identifier {
+                        ],
+                        name: Type {
+                            name: Identifier {
                                 name: "Int32",
                                 location: <internal>:0:0,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
                         location: <internal>:0:0,
                     },
-                    type_params: [],
-                    location: <internal>:5:10,
+                    location: <internal>:5:12,
                 },
                 methods: [],
                 type_parameters: TypeParameters {

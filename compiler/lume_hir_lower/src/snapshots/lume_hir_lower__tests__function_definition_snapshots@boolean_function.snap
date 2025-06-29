@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            14454532326948576248,
+            1181870924740293517,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    14454532326948576248,
+                    1181870924740293517,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "empty?",
                             location: <internal>:3:9,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:9,
+                    },
                     location: <internal>:3:9,
                 },
                 parameters: [],
@@ -34,17 +36,18 @@ Map {
                     id: ItemId(
                         0,
                     ),
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Void",
                                 location: <internal>:0:0,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
                         location: <internal>:0:0,
                     },
-                    type_params: [],
                     location: <internal>:0:0,
                 },
                 block: Some(

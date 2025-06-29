@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n            Baz(int, int)\n        }\")"
+expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32),\n            Baz(Int32, Int32)\n        }\")"
 ---
 [
     TypeDefinition(
@@ -25,20 +25,20 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    36..39,
+                                                    36..41,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..39,
+                                                36..42,
                                             ),
                                         },
                                         location: Location(
-                                            36..39,
+                                            36..42,
                                         ),
                                     },
                                 },
@@ -47,27 +47,27 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    41..44,
+                                                    43..48,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                41..44,
+                                                43..49,
                                             ),
                                         },
                                         location: Location(
-                                            41..44,
+                                            43..49,
                                         ),
                                     },
                                 },
                             ),
                         ],
                         location: Location(
-                            32..45,
+                            32..49,
                         ),
                         documentation: None,
                     },
@@ -75,7 +75,7 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                         name: Identifier {
                             name: "Baz",
                             location: Location(
-                                59..62,
+                                63..66,
                             ),
                         },
                         parameters: [
@@ -83,20 +83,20 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    63..66,
+                                                    67..72,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                63..66,
+                                                67..73,
                                             ),
                                         },
                                         location: Location(
-                                            63..66,
+                                            67..73,
                                         ),
                                     },
                                 },
@@ -105,33 +105,33 @@ expression: "parse(\"\n        enum Foo {\n            Bar(int, int),\n         
                                 NamedType {
                                     name: Path {
                                         root: [],
-                                        name: PathSegment {
+                                        name: Type {
                                             name: Identifier {
-                                                name: "int",
+                                                name: "Int32",
                                                 location: Location(
-                                                    68..71,
+                                                    74..79,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                68..71,
+                                                74..80,
                                             ),
                                         },
                                         location: Location(
-                                            68..71,
+                                            74..80,
                                         ),
                                     },
                                 },
                             ),
                         ],
                         location: Location(
-                            59..72,
+                            63..80,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    9..82,
+                    9..90,
                 ),
                 documentation: None,
             },

@@ -8,118 +8,112 @@ Map {
     ),
     items: {
         ItemId(
-            15987533324266704003,
+            4643913508931576779,
         ): Use(
             TraitImplementation {
                 id: ItemId(
-                    15987533324266704003,
+                    4643913508931576779,
                 ),
                 use_id: None,
                 name: Type {
                     id: ItemId(
-                        3729622771921818476,
+                        15441871705290034520,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Add",
                                 location: <internal>:17:20,
                             },
-                        ),
-                        location: <internal>:17:34,
+                            type_arguments: [
+                                Type {
+                                    id: ItemId(
+                                        6143724420395906933,
+                                    ),
+                                    name: Path {
+                                        root: [
+                                            Type {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                        ],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: <internal>:0:0,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:0:0,
+                                        },
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:21:27,
+                                },
+                                Type {
+                                    id: ItemId(
+                                        6005476461629404090,
+                                    ),
+                                    name: Path {
+                                        root: [
+                                            Type {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                        ],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int64",
+                                                location: <internal>:0:0,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:0:0,
+                                        },
+                                        location: <internal>:0:0,
+                                    },
+                                    location: <internal>:28:34,
+                                },
+                            ],
+                            location: <internal>:17:37,
+                        },
+                        location: <internal>:17:37,
                     },
-                    type_params: [
-                        Type {
-                            id: ItemId(
-                                13608251888059153114,
-                            ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "Int32",
-                                        location: <internal>:0:0,
-                                    },
-                                ),
-                                location: <internal>:0:0,
-                            },
-                            type_params: [],
-                            location: <internal>:21:26,
-                        },
-                        Type {
-                            id: ItemId(
-                                17936619929632074031,
-                            ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
-                                    },
-                                ),
-                                name: Named(
-                                    Identifier {
-                                        name: "Int64",
-                                        location: <internal>:0:0,
-                                    },
-                                ),
-                                location: <internal>:0:0,
-                            },
-                            type_params: [],
-                            location: <internal>:28:33,
-                        },
-                    ],
-                    location: <internal>:17:34,
+                    location: <internal>:17:37,
                 },
                 target: Type {
                     id: ItemId(
-                        13608251888059153114,
+                        6143724420395906933,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [
-                                    Named(
-                                        Identifier {
-                                            name: "std",
-                                            location: <internal>:0:0,
-                                        },
-                                    ),
-                                ],
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
                             },
-                        ),
-                        name: Named(
-                            Identifier {
+                        ],
+                        name: Type {
+                            name: Identifier {
                                 name: "Int32",
                                 location: <internal>:0:0,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
                         location: <internal>:0:0,
                     },
-                    type_params: [],
-                    location: <internal>:38:43,
+                    location: <internal>:38:45,
                 },
                 methods: [
                     TraitMethodImplementation {
@@ -140,34 +134,33 @@ Map {
                                 },
                                 param_type: Type {
                                     id: ItemId(
-                                        13608251888059153114,
+                                        6143724420395906933,
                                     ),
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [
-                                                    Named(
-                                                        Identifier {
-                                                            name: "std",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ),
-                                                ],
+                                    name: Path {
+                                        root: [
+                                            Type {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
                                             },
-                                        ),
-                                        name: Named(
-                                            Identifier {
+                                        ],
+                                        name: Type {
+                                            name: Identifier {
                                                 name: "Int32",
                                                 location: <internal>:0:0,
                                             },
-                                        ),
+                                            type_arguments: [],
+                                            location: <internal>:0:0,
+                                        },
                                         location: <internal>:0:0,
                                     },
-                                    type_params: [],
-                                    location: <internal>:80:85,
+                                    location: <internal>:80:86,
                                 },
                                 vararg: false,
-                                location: <internal>:73:85,
+                                location: <internal>:73:86,
                             },
                         ],
                         type_parameters: TypeParameters {
@@ -175,31 +168,30 @@ Map {
                         },
                         return_type: Type {
                             id: ItemId(
-                                17936619929632074031,
+                                6005476461629404090,
                             ),
-                            name: SymbolName {
-                                namespace: Some(
-                                    PathRoot {
-                                        segments: [
-                                            Named(
-                                                Identifier {
-                                                    name: "std",
-                                                    location: <internal>:0:0,
-                                                },
-                                            ),
-                                        ],
+                            name: Path {
+                                root: [
+                                    Type {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
                                     },
-                                ),
-                                name: Named(
-                                    Identifier {
+                                ],
+                                name: Type {
+                                    name: Identifier {
                                         name: "Int64",
                                         location: <internal>:0:0,
                                     },
-                                ),
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
                                 location: <internal>:0:0,
                             },
-                            type_params: [],
-                            location: <internal>:90:95,
+                            location: <internal>:90:97,
                         },
                         block: Block {
                             statements: [],

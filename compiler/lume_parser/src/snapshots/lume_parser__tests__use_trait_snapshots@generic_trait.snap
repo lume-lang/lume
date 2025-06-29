@@ -9,7 +9,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Enumerable",
                                 location: Location(
@@ -21,7 +21,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
                                                     name: "T",
                                                     location: Location(
@@ -30,22 +30,22 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    27..28,
+                                                    27..29,
                                                 ),
                                             },
                                             location: Location(
-                                                27..28,
+                                                27..29,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                16..29,
+                                16..32,
                             ),
                         },
                         location: Location(
-                            16..29,
+                            16..32,
                         ),
                     },
                 },
@@ -54,7 +54,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Vector",
                                 location: Location(
@@ -66,7 +66,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                     NamedType {
                                         name: Path {
                                             root: [],
-                                            name: PathSegment {
+                                            name: Type {
                                                 name: Identifier {
                                                     name: "T",
                                                     location: Location(
@@ -75,22 +75,22 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    40..41,
+                                                    40..42,
                                                 ),
                                             },
                                             location: Location(
-                                                40..41,
+                                                40..42,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                33..42,
+                                33..44,
                             ),
                         },
                         location: Location(
-                            33..42,
+                            33..44,
                         ),
                     },
                 },
@@ -117,7 +117,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
                                             name: "T",
                                             location: Location(
@@ -126,11 +126,11 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            74..75,
+                                            74..77,
                                         ),
                                     },
                                     location: Location(
-                                        74..75,
+                                        74..77,
                                     ),
                                 },
                             },

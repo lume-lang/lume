@@ -10,7 +10,7 @@ description: "fn foo() -> Int32 {\n        unless false {\n            return tr
  4 │         }
    ∶ 
  1 │ fn foo() -> Int32 {
-   │             ^^^^^ ...because of type defined here
+   │             ^^^^^^^ ...because of type defined here
  2 │         unless false {
    ╰──
    help: expected type Int32

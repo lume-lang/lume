@@ -26,7 +26,7 @@ expression: "parse(\"pub fn main() -> void {}\")"
                     NamedType {
                         name: Path {
                             root: [],
-                            name: PathSegment {
+                            name: Type {
                                 name: Identifier {
                                     name: "void",
                                     location: Location(
@@ -35,11 +35,11 @@ expression: "parse(\"pub fn main() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    17..21,
+                                    17..23,
                                 ),
                             },
                             location: Location(
-                                17..21,
+                                17..23,
                             ),
                         },
                     },

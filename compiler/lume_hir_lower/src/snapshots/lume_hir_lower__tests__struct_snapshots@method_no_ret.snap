@@ -8,38 +8,35 @@ Map {
     ),
     items: {
         ItemId(
-            13138428697284688615,
+            15584863814090437165,
         ): Impl(
             Implementation {
                 id: ItemId(
-                    13138428697284688615,
+                    15584863814090437165,
                 ),
                 impl_id: None,
                 target: Type {
                     id: ItemId(
-                        7990845552190622859,
+                        5175167619020667705,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Foo",
                                 location: <internal>:18:21,
                             },
-                        ),
-                        location: <internal>:18:21,
+                            type_arguments: [],
+                            location: <internal>:18:23,
+                        },
+                        location: <internal>:18:23,
                     },
-                    type_params: [],
-                    location: <internal>:18:21,
+                    location: <internal>:18:23,
                 },
                 methods: [
                     MethodDefinition {
                         id: ItemId(
-                            2919503673305580145,
+                            6128482084880861643,
                         ),
                         method_id: None,
                         visibility: Private,
@@ -55,17 +52,18 @@ Map {
                             id: ItemId(
                                 0,
                             ),
-                            name: SymbolName {
-                                namespace: None,
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
                                         name: "Void",
                                         location: <internal>:0:0,
                                     },
-                                ),
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
                                 location: <internal>:0:0,
                             },
-                            type_params: [],
                             location: <internal>:0:0,
                         },
                         block: Some(

@@ -8,77 +8,71 @@ Map {
     ),
     items: {
         ItemId(
-            12314200219861369160,
+            5175167619020667705,
         ): Type(
             Enum(
                 EnumDefinition {
                     id: ItemId(
-                        12314200219861369160,
+                        5175167619020667705,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Foo",
                                 location: <internal>:18:21,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:18:21,
+                        },
                         location: <internal>:18:21,
                     },
                     cases: [
                         EnumDefinitionCase {
-                            name: SymbolName {
-                                namespace: None,
-                                name: Named(
-                                    Identifier {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
                                         name: "Bar",
                                         location: <internal>:40:43,
                                     },
-                                ),
+                                    type_arguments: [],
+                                    location: <internal>:40:43,
+                                },
                                 location: <internal>:40:43,
                             },
                             parameters: [
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        7468397361300629741,
                                     ),
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [],
-                                            },
-                                        ),
-                                        name: Named(
-                                            Identifier {
+                                    name: Path {
+                                        root: [],
+                                        name: Namespace {
+                                            name: Identifier {
                                                 name: "int",
                                                 location: <internal>:44:47,
                                             },
-                                        ),
+                                        },
                                         location: <internal>:44:47,
                                     },
-                                    type_params: [],
                                     location: <internal>:44:47,
                                 },
                                 Type {
                                     id: ItemId(
-                                        8802535191565915315,
+                                        7468397361300629741,
                                     ),
-                                    name: SymbolName {
-                                        namespace: Some(
-                                            PathRoot {
-                                                segments: [],
-                                            },
-                                        ),
-                                        name: Named(
-                                            Identifier {
+                                    name: Path {
+                                        root: [],
+                                        name: Namespace {
+                                            name: Identifier {
                                                 name: "int",
                                                 location: <internal>:49:52,
                                             },
-                                        ),
+                                        },
                                         location: <internal>:49:52,
                                     },
-                                    type_params: [],
                                     location: <internal>:49:52,
                                 },
                             ],

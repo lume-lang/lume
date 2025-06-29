@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            8095934718272011788,
+            18378013473329591206,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    8095934718272011788,
+                    18378013473329591206,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "main",
                             location: <internal>:3:7,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:3:7,
+                    },
                     location: <internal>:3:7,
                 },
                 parameters: [],
@@ -32,31 +34,28 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        13608251888059153114,
+                        6143724420395906933,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [
-                                    Named(
-                                        Identifier {
-                                            name: "std",
-                                            location: <internal>:13:16,
-                                        },
-                                    ),
-                                ],
+                    name: Path {
+                        root: [
+                            Namespace {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:13:16,
+                                },
                             },
-                        ),
-                        name: Named(
-                            Identifier {
+                        ],
+                        name: Type {
+                            name: Identifier {
                                 name: "Int32",
                                 location: <internal>:18:23,
                             },
-                        ),
-                        location: <internal>:18:23,
+                            type_arguments: [],
+                            location: <internal>:18:25,
+                        },
+                        location: <internal>:18:25,
                     },
-                    type_params: [],
-                    location: <internal>:18:23,
+                    location: <internal>:18:25,
                 },
                 block: Some(
                     Block {

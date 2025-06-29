@@ -16,5 +16,5 @@ VarargNotLastParameter {
             0,
         ),
     },
-    range: 10..21,
+    range: 10..22,
 }

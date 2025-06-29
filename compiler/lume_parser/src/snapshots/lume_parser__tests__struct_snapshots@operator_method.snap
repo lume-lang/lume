@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n                return true;\n            }\n        }\")"
+expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\n                return true;\n            }\n        }\")"
 ---
 [
     Impl(
@@ -16,7 +16,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n  
                 NamedType {
                     name: Path {
                         root: [],
-                        name: PathSegment {
+                        name: Type {
                             name: Identifier {
                                 name: "Foo",
                                 location: Location(
@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n  
                             },
                             type_arguments: [],
                             location: Location(
-                                14..17,
+                                14..19,
                             ),
                         },
                         location: Location(
-                            14..17,
+                            14..19,
                         ),
                     },
                 },
@@ -57,20 +57,20 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n  
                             NamedType {
                                 name: Path {
                                     root: [],
-                                    name: PathSegment {
+                                    name: Type {
                                         name: Identifier {
-                                            name: "bool",
+                                            name: "Boolean",
                                             location: Location(
-                                                47..51,
+                                                47..54,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            47..51,
+                                            47..56,
                                         ),
                                     },
                                     location: Location(
-                                        47..51,
+                                        47..56,
                                     ),
                                 },
                             },
@@ -86,31 +86,31 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> bool {\n  
                                                 BooleanLiteral {
                                                     value: true,
                                                     location: Location(
-                                                        77..81,
+                                                        80..84,
                                                     ),
                                                 },
                                             ),
                                         ),
                                     ),
                                     location: Location(
-                                        70..82,
+                                        73..85,
                                     ),
                                 },
                             ),
                         ],
                         location: Location(
-                            52..96,
+                            55..99,
                         ),
                     },
                     location: Location(
-                        32..96,
+                        32..99,
                     ),
                     documentation: None,
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..106,
+                9..109,
             ),
         },
     ),

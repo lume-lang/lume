@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            12314200219861369160,
+            5175167619020667705,
         ): Type(
             Enum(
                 EnumDefinition {
                     id: ItemId(
-                        12314200219861369160,
+                        5175167619020667705,
                     ),
                     type_id: None,
-                    name: SymbolName {
-                        namespace: None,
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "Foo",
                                 location: <internal>:5:8,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:5:8,
+                        },
                         location: <internal>:5:8,
                     },
                     cases: [],

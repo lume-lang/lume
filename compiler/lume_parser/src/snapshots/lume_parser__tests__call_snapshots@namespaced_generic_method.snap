@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
+expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
 ---
 [
     VariableDeclaration(
@@ -17,16 +17,24 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                     callee: None,
                     name: Path {
                         root: [
-                            Type {
+                            Namespace {
                                 name: Identifier {
-                                    name: "Foo",
+                                    name: "std",
                                     location: Location(
                                         8..11,
                                     ),
                                 },
+                            },
+                            Type {
+                                name: Identifier {
+                                    name: "Buffer",
+                                    location: Location(
+                                        13..19,
+                                    ),
+                                },
                                 type_arguments: [],
                                 location: Location(
-                                    8..13,
+                                    13..21,
                                 ),
                             },
                         ],
@@ -34,16 +42,39 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                             name: Identifier {
                                 name: "call",
                                 location: Location(
-                                    13..17,
+                                    21..25,
                                 ),
                             },
-                            type_arguments: [],
+                            type_arguments: [
+                                Named(
+                                    NamedType {
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: Location(
+                                                        26..27,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    26..28,
+                                                ),
+                                            },
+                                            location: Location(
+                                                26..28,
+                                            ),
+                                        },
+                                    },
+                                ),
+                            ],
                             location: Location(
-                                13..18,
+                                21..29,
                             ),
                         },
                         location: Location(
-                            13..18,
+                            21..29,
                         ),
                     },
                     arguments: [
@@ -52,7 +83,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                 name: Identifier {
                                     name: "a",
                                     location: Location(
-                                        18..19,
+                                        29..30,
                                     ),
                                 },
                             },
@@ -62,19 +93,19 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                 name: Identifier {
                                     name: "b",
                                     location: Location(
-                                        21..22,
+                                        32..33,
                                     ),
                                 },
                             },
                         ),
                     ],
                     location: Location(
-                        13..18,
+                        21..29,
                     ),
                 },
             ),
             location: Location(
-                0..24,
+                0..35,
             ),
         },
     ),

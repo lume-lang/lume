@@ -8,22 +8,24 @@ Map {
     ),
     items: {
         ItemId(
-            8095934718272011788,
+            18378013473329591206,
         ): Function(
             FunctionDefinition {
                 id: ItemId(
-                    8095934718272011788,
+                    18378013473329591206,
                 ),
                 func_id: None,
                 visibility: Private,
-                name: SymbolName {
-                    namespace: None,
-                    name: Named(
-                        Identifier {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
                             name: "main",
                             location: <internal>:12:16,
                         },
-                    ),
+                        type_arguments: [],
+                        location: <internal>:12:16,
+                    },
                     location: <internal>:12:16,
                 },
                 parameters: [],
@@ -32,23 +34,20 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        9344623788042179276,
+                        17666474489655347949,
                     ),
-                    name: SymbolName {
-                        namespace: Some(
-                            PathRoot {
-                                segments: [],
-                            },
-                        ),
-                        name: Named(
-                            Identifier {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
                                 name: "void",
                                 location: <internal>:22:26,
                             },
-                        ),
+                            type_arguments: [],
+                            location: <internal>:22:26,
+                        },
                         location: <internal>:22:26,
                     },
-                    type_params: [],
                     location: <internal>:22:26,
                 },
                 block: None,
