@@ -1,5 +1,6 @@
 pub use once_cell::sync::Lazy;
 use std::{
+    any::Any,
     collections::HashMap,
     sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
 };
@@ -7,11 +8,11 @@ use std::{
 #[cfg(feature = "proc_macros")]
 pub use lume_query_macros::cached_query;
 
-pub struct CacheStore<T: std::clone::Clone> {
-    inner: Lazy<RwLock<HashMap<u64, T>>>,
+pub struct CacheStore {
+    inner: Lazy<RwLock<HashMap<u64, &'static (dyn Any + Send + Sync)>>>,
 }
 
-impl<T: std::clone::Clone> CacheStore<T> {
+impl CacheStore {
     /// Creates a new, empty [`CacheStore`].
     pub const fn new() -> Self {
         Self {
@@ -25,7 +26,7 @@ impl<T: std::clone::Clone> CacheStore<T> {
     ///
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
-    pub fn read(&self) -> RwLockReadGuard<HashMap<u64, T>> {
+    pub fn read(&self) -> RwLockReadGuard<HashMap<u64, &'static (dyn Any + Send + Sync)>> {
         self.inner.read().unwrap()
     }
 
@@ -35,22 +36,26 @@ impl<T: std::clone::Clone> CacheStore<T> {
     ///
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
-    pub fn write(&self) -> RwLockWriteGuard<HashMap<u64, T>> {
+    pub fn write(&self) -> RwLockWriteGuard<HashMap<u64, &'static (dyn Any + Send + Sync)>> {
         self.inner.write().unwrap()
     }
 
     /// Attempts to retrieve the value with the given key from the
     /// [`CacheStore`], if it exists. If the value is found within the store,
     /// it is cloned and returned as `Some(...)`. Otherwise, returns `None`.
-    pub fn get(&self, key: u64) -> Option<T> {
-        self.read().get(&key).cloned()
+    pub fn get<T: Clone + 'static>(&self, key: u64) -> Option<T> {
+        let container = self.read();
+
+        container.get(&key)?.downcast_ref::<T>().cloned()
     }
 
     /// Inserts the given value into the [`CacheStore`] instance with
     /// the given key. If a value already exists with the given key, it is
     /// overwritten.
-    pub fn insert(&self, key: u64, value: T) {
-        self.write().insert(key, value);
+    pub fn insert<T: Clone + Send + Sync + 'static>(&self, key: u64, value: T) {
+        let mut container = self.write();
+
+        container.insert(key, Box::leak(Box::new(value)));
     }
 
     /// Looks up the given cache key within the [`CacheStore`] instance. If
@@ -58,7 +63,7 @@ impl<T: std::clone::Clone> CacheStore<T> {
     /// is not found within the store, `f` is invoked and the result is cloned and
     /// inserted into the store. After the value is stored, the original, un-cloned value
     /// is returned.
-    pub fn get_or_insert(&self, key: u64, f: impl FnOnce() -> T) -> T {
+    pub fn get_or_insert<T: Clone + Send + Sync + 'static>(&self, key: u64, f: impl FnOnce() -> T) -> T {
         if let Some(existing) = self.get(key) {
             return existing;
         }
@@ -70,7 +75,7 @@ impl<T: std::clone::Clone> CacheStore<T> {
     }
 }
 
-impl<T: std::clone::Clone> Default for CacheStore<T> {
+impl Default for CacheStore {
     fn default() -> Self {
         Self {
             inner: Lazy::new(|| RwLock::new(HashMap::new())),

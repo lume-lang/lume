@@ -77,9 +77,8 @@ pub(crate) fn cached_query(args: TokenStream, input: TokenStream) -> TokenStream
 
     let expanded = quote! {
         #[doc = #cache_ident_doc]
-        #visibility fn #fn_cache_ident () -> &'static ::lume_query::CacheStore<#cache_value_ty> {
-            static #cache_ident: ::lume_query::CacheStore<#cache_value_ty>
-                = ::lume_query::CacheStore::<#cache_value_ty>::new();
+        #visibility fn #fn_cache_ident () -> &'static ::lume_query::CacheStore {
+            static #cache_ident: ::lume_query::CacheStore = ::lume_query::CacheStore::new();
 
             &#cache_ident
         }
@@ -89,7 +88,7 @@ pub(crate) fn cached_query(args: TokenStream, input: TokenStream) -> TokenStream
         #visibility fn #fn_ident (#inputs) #output {
             let hash = #calculate_hash_expr;
 
-            if let Some(value) = Self::#fn_cache_ident().get(hash) {
+            if let Some(value) = Self::#fn_cache_ident().get::<#cache_value_ty>(hash) {
                 return #return_value;
             }
 
