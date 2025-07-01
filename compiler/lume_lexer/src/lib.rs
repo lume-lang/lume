@@ -39,6 +39,7 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Increment, 13),
     (TokenKind::Decrement, 13),
     (TokenKind::Dot, 14),
+    (TokenKind::DotDot, 14),
     (IDENTIFIER_SEPARATOR, 15),
 ];
 
@@ -82,6 +83,7 @@ pub enum TokenKind {
     Div,
     DivAssign,
     Dot,
+    DotDot,
     DotDotDot,
     Else,
     Enum,
@@ -244,6 +246,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Div => "/",
             TokenKind::DivAssign => "/=",
             TokenKind::Dot => ".",
+            TokenKind::DotDot => "..",
             TokenKind::DotDotDot => "...",
             TokenKind::Else => "else",
             TokenKind::Enum => "enum",
@@ -774,6 +777,7 @@ impl Lexer {
                 ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
                 ('-', '-') => return Ok((TokenKind::Decrement, 2)),
+                ('.', '.') => return Ok((TokenKind::DotDot, 2)),
                 ('/', '=') => return Ok((TokenKind::DivAssign, 2)),
                 ('>', '=') => return Ok((TokenKind::GreaterEqual, 2)),
                 ('+', '+') => return Ok((TokenKind::Increment, 2)),
@@ -1115,6 +1119,7 @@ mod tests {
         assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
         assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);
         assert_token!("--", TokenKind::Decrement, Some("--"), 0, 2);
+        assert_token!("..", TokenKind::DotDot, Some(".."), 0, 2);
         assert_token!("/=", TokenKind::DivAssign, Some("/="), 0, 2);
         assert_token!(">=", TokenKind::GreaterEqual, Some(">="), 0, 2);
         assert_token!("++", TokenKind::Increment, Some("++"), 0, 2);

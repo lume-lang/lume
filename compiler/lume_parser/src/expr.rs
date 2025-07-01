@@ -65,6 +65,13 @@ impl Parser {
     /// expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_following_expression(&mut self, left: Expression) -> Result<Expression> {
+        // If the expression is followed by two dots ('..'), it's a range expression.
+        if self.peek(TokenKind::DotDot) {
+            tracing::trace!("member expr is range");
+
+            return self.parse_range_expression(left);
+        }
+
         // If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
         //
         // In essence, this statement is handling cases where:
@@ -242,11 +249,6 @@ impl Parser {
 
         let expression = self.parse_expression_with_precedence(0)?;
 
-        // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot) && self.peek_next(TokenKind::Dot) {
-            return self.parse_range_expression(expression);
-        }
-
         self.consume(TokenKind::RightParen)?;
 
         Ok(expression)
@@ -268,8 +270,7 @@ impl Parser {
     /// Parses a range expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_range_expression(&mut self, lower: Expression) -> Result<Expression> {
-        self.consume(TokenKind::Dot)?;
-        self.consume(TokenKind::Dot)?;
+        self.consume(TokenKind::DotDot)?;
 
         let inclusive = self.check(TokenKind::Assign);
         let upper = self.parse_expression()?;
@@ -379,13 +380,6 @@ impl Parser {
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
-        // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::Dot) && self.peek_next(TokenKind::Dot) {
-            tracing::trace!("member expr is range");
-
-            return self.parse_range_expression(target);
-        }
-
         // Consume the dot token
         self.consume(TokenKind::Dot)?;
 
