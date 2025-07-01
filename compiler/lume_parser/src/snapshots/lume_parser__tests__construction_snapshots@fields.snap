@@ -1,0 +1,79 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
+---
+[
+    Expression(
+        Construct(
+            Construct {
+                path: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: Location(
+                                0..3,
+                            ),
+                        },
+                        type_arguments: [],
+                        location: Location(
+                            0..5,
+                        ),
+                    },
+                    location: Location(
+                        0..5,
+                    ),
+                },
+                fields: [
+                    Field {
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                6..9,
+                            ),
+                        },
+                        value: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        11..12,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            6..12,
+                        ),
+                    },
+                    Field {
+                        name: Identifier {
+                            name: "baz",
+                            location: Location(
+                                14..17,
+                            ),
+                        },
+                        value: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 1,
+                                    location: Location(
+                                        19..20,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            14..20,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..23,
+                ),
+            },
+        ),
+    ),
+]

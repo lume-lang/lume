@@ -1,4 +1,5 @@
 use error_snippet::Result;
+use lume_hir::Item;
 use lume_span::ItemId;
 
 use crate::LowerModule;
@@ -45,7 +46,6 @@ impl LowerModule<'_> {
                 builtin: expr.builtin,
                 type_parameters,
                 properties,
-                methods: Vec::new(),
                 location,
             },
         )))))
@@ -66,7 +66,7 @@ impl LowerModule<'_> {
             None
         };
 
-        Ok(hir::Property {
+        let prop = hir::Property {
             id,
             prop_id: None,
             name,
@@ -74,7 +74,11 @@ impl LowerModule<'_> {
             property_type,
             default_value,
             location,
-        })
+        };
+
+        self.map.items.insert(id, Item::Property(Box::new(prop.clone())));
+
+        Ok(prop)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -123,7 +127,7 @@ impl LowerModule<'_> {
             Some(self.isolated_block(expr.block, &parameters))
         };
 
-        Ok(hir::MethodDefinition {
+        let method = hir::MethodDefinition {
             id,
             method_id: None,
             name,
@@ -133,7 +137,11 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        })
+        };
+
+        self.map.items.insert(id, Item::Method(Box::new(method.clone())));
+
+        Ok(method)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -177,7 +185,7 @@ impl LowerModule<'_> {
         let id = self.item_id((&name, &self.current_item));
         let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
-        Ok(hir::TraitMethodDefinition {
+        let method = hir::TraitMethodDefinition {
             id,
             method_id: None,
             name,
@@ -187,7 +195,13 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        })
+        };
+
+        self.map
+            .items
+            .insert(id, Item::TraitMethodDef(Box::new(method.clone())));
+
+        Ok(method)
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
@@ -390,7 +404,7 @@ impl LowerModule<'_> {
         let id = self.item_id((&name, &self.current_item));
         let location = self.location(expr.location);
 
-        Ok(hir::TraitMethodImplementation {
+        let method = hir::TraitMethodImplementation {
             id,
             method_id: None,
             visibility,
@@ -400,7 +414,13 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        })
+        };
+
+        self.map
+            .items
+            .insert(id, Item::TraitMethodImpl(Box::new(method.clone())));
+
+        Ok(method)
     }
 }
 

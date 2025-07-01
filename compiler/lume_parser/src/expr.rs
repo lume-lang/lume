@@ -308,11 +308,21 @@ impl Parser {
     /// Parses an expression on the current cursor position, which is preceded by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_named_expression(&mut self) -> Result<Expression> {
-        let identifier = self.parse_callable_name()?;
+        let mut identifier = self.parse_identifier()?;
 
         match self.token().kind {
             // If the next token is an opening parenthesis, it's a method invocation
             TokenKind::LeftParen => self.parse_call(None, identifier),
+
+            // If the next token is a question mark, it's a method invocation
+            TokenKind::Question => {
+                let tok = self.consume(TokenKind::Question)?;
+
+                identifier.name.push_str(&tok.kind.to_string());
+                identifier.location.0.end += tok.len();
+
+                self.parse_call(None, identifier)
+            }
 
             // If the next token is a dot, it's some form of member access
             TokenKind::Dot => self.parse_member(identifier.as_var()),
@@ -322,6 +332,11 @@ impl Parser {
 
             // If the identifier is following by a separator, it's refering to a namespaced identifier
             IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
+
+            // If the identifier is followed by a left curly brace, it's a struct construction.
+            // We only assume this if the identifier is actually camel-case, as it might otherwise not
+            // refer to a type.
+            TokenKind::LeftCurly if !identifier.is_lower() => self.parse_construction_expression(identifier),
 
             // If the identifier is following by a lesser sign, it might be referring to a generic call expression
             TokenKind::Less => {
@@ -485,6 +500,40 @@ impl Parser {
                 })))
             }
         }
+    }
+
+    /// Parses a struct construction expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_construction_expression(&mut self, name: Identifier) -> Result<Expression> {
+        // Move the cursor back to the start of the given identifier.
+        self.move_to_pos(name.location.start());
+
+        let path = self.parse_path()?;
+        let fields = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_field)?;
+
+        let start = name.location().start();
+        let end = self.token().end();
+        let location = (start..end).into();
+
+        Ok(Expression::Construct(Box::new(Construct { location, path, fields })))
+    }
+
+    /// Parses a field expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_field(&mut self) -> Result<Field> {
+        let name = self.parse_identifier()?;
+
+        let value = if self.check(TokenKind::Colon) {
+            self.parse_expression()?
+        } else {
+            name.clone().as_var()
+        };
+
+        let start = name.location().start();
+        let end = value.location().end();
+        let location = (start..end).into();
+
+        Ok(Field { name, value, location })
     }
 
     /// Parses a variable reference expression on the current cursor position.

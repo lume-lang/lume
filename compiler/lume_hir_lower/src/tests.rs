@@ -145,6 +145,15 @@ fn test_cast_snapshots() {
 }
 
 #[test]
+fn test_construction_snapshots() {
+    assert_expr_snap_eq!("Foo { };", "empty");
+    assert_expr_snap_eq!("Self { };", "empty_self");
+    assert_expr_snap_eq!("Foo { bar: 0 };", "field");
+    assert_expr_snap_eq!("Foo { bar: 0, baz: 1 };", "fields");
+    assert_expr_snap_eq!("Foo { bar: 0, };", "trailing_comma");
+}
+
+#[test]
 fn test_binary_snapshots() {
     assert_expr_snap_eq!("0 & 0;", "and");
     assert_expr_snap_eq!("0 | 0;", "or");

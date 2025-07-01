@@ -1,0 +1,56 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"Foo { bar };\")"
+---
+[
+    Expression(
+        Construct(
+            Construct {
+                path: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: Location(
+                                0..3,
+                            ),
+                        },
+                        type_arguments: [],
+                        location: Location(
+                            0..5,
+                        ),
+                    },
+                    location: Location(
+                        0..5,
+                    ),
+                },
+                fields: [
+                    Field {
+                        name: Identifier {
+                            name: "bar",
+                            location: Location(
+                                6..9,
+                            ),
+                        },
+                        value: Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "bar",
+                                    location: Location(
+                                        6..9,
+                                    ),
+                                },
+                            },
+                        ),
+                        location: Location(
+                            6..9,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..12,
+                ),
+            },
+        ),
+    ),
+]

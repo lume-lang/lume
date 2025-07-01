@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr_err(\"Foo { bar: 0 baz };\")"
+---
+MissingDelimiterInSequence {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "Foo { bar: 0 baz };",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 13..16,
+    delimiter: ,,
+}

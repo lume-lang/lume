@@ -663,7 +663,6 @@ pub struct StructDefinition {
     pub name: Path,
     pub builtin: bool,
     pub properties: Vec<Property>,
-    pub methods: Vec<MethodDefinition>,
     pub type_parameters: TypeParameters,
     pub location: Location,
 }
@@ -679,14 +678,6 @@ impl StructDefinition {
 
     pub fn properties_mut(&mut self) -> impl Iterator<Item = &mut Property> {
         self.properties.iter_mut()
-    }
-
-    pub fn methods(&self) -> impl Iterator<Item = &MethodDefinition> {
-        self.methods.iter()
-    }
-
-    pub fn methods_mut(&mut self) -> impl Iterator<Item = &mut MethodDefinition> {
-        self.methods.iter_mut()
     }
 }
 
@@ -1034,6 +1025,7 @@ pub enum ExpressionKind {
     Assignment(Box<Assignment>),
     Binary(Box<Binary>),
     Cast(Box<Cast>),
+    Construct(Box<Construct>),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
@@ -1126,6 +1118,20 @@ pub struct Cast {
     pub id: ExpressionId,
     pub source: Expression,
     pub target: Type,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Construct {
+    pub id: ExpressionId,
+    pub path: Path,
+    pub fields: Vec<Field>,
+    pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Field {
+    pub name: Identifier,
+    pub value: Expression,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

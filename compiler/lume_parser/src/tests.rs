@@ -311,6 +311,17 @@ fn test_self_snapshots() {
 }
 
 #[test]
+fn test_construction_snapshots() {
+    assert_expr_snap_eq!("Foo { };", "empty");
+    assert_expr_snap_eq!("Self { };", "empty_self");
+    assert_expr_snap_eq!("Foo { bar: 0 };", "field");
+    assert_expr_snap_eq!("Foo { bar: 0, baz: 1 };", "fields");
+    assert_expr_snap_eq!("Foo { bar };", "shorthand");
+    assert_expr_snap_eq!("Foo { bar: 0, };", "trailing_comma");
+    assert_expr_err_snap_eq!("Foo { bar: 0 baz };", "missing_comma");
+}
+
+#[test]
 fn test_conditional_snapshots() {
     assert_expr_snap_eq!("if true { }", "if_empty");
     assert_expr_snap_eq!("if true { let a = 1; }", "if_statement");

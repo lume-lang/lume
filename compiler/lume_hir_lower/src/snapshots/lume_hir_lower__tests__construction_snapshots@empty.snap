@@ -1,0 +1,56 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "Foo { };"
+---
+[
+    Statement {
+        id: StatementId {
+            def: ItemId(
+                0,
+            ),
+            index: Idx(
+                0,
+            ),
+        },
+        kind: Expression(
+            Expression {
+                id: ExpressionId {
+                    def: ItemId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                location: <internal>:0:8,
+                kind: Construct(
+                    Construct {
+                        id: ExpressionId {
+                            def: ItemId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
+                        path: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: <internal>:0:3,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:5,
+                            },
+                            location: <internal>:0:5,
+                        },
+                        fields: [],
+                        location: <internal>:0:8,
+                    },
+                ),
+            },
+        ),
+        location: <internal>:0:8,
+    },
+]

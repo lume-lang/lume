@@ -856,6 +856,7 @@ pub enum Expression {
     Binary(Box<Binary>),
     Call(Box<Call>),
     Cast(Box<Cast>),
+    Construct(Box<Construct>),
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -872,6 +873,7 @@ impl Node for Expression {
             Self::Binary(e) => &e.location,
             Self::Call(e) => &e.location,
             Self::Cast(e) => &e.location,
+            Self::Construct(e) => &e.location,
             Self::Literal(e) => e.location(),
             Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
@@ -941,6 +943,24 @@ pub struct Cast {
 }
 
 node_location!(Cast);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Construct {
+    pub path: Path,
+    pub fields: Vec<Field>,
+    pub location: Location,
+}
+
+node_location!(Construct);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Field {
+    pub name: Identifier,
+    pub value: Expression,
+    pub location: Location,
+}
+
+node_location!(Field);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Literal {

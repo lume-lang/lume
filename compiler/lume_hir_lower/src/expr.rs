@@ -31,6 +31,7 @@ impl LowerModule<'_> {
             ast::Expression::Binary(e) => self.expr_binary(*e)?,
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Cast(e) => self.expr_cast(*e)?,
+            ast::Expression::Construct(e) => self.expr_construct(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
             ast::Expression::Logical(e) => self.expr_logical(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
@@ -153,6 +154,38 @@ impl LowerModule<'_> {
             location,
             kind: hir::ExpressionKind::Cast(Box::new(hir::Cast { id, source, target })),
         })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_construct(&mut self, expr: ast::Construct) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let path = self.resolve_symbol_name(&expr.path)?;
+        let fields = expr
+            .fields
+            .into_iter()
+            .map(|field| self.expr_field(field))
+            .collect::<Result<Vec<_>>>()?;
+
+        let location = self.location(expr.location);
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::Construct(Box::new(hir::Construct {
+                id,
+                path,
+                fields,
+                location,
+            })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_field(&mut self, expr: ast::Field) -> Result<hir::Field> {
+        let name = self.identifier(expr.name);
+        let value = self.expression(expr.value)?;
+
+        Ok(hir::Field { name, value })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
