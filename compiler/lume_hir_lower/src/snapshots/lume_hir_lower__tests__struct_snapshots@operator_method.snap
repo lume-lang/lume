@@ -8,6 +8,112 @@ Map {
     ),
     items: {
         ItemId(
+            13483592984258643384,
+        ): Method(
+            MethodDefinition {
+                id: ItemId(
+                    13483592984258643384,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "==",
+                    location: <internal>:47:49,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        13462382106022543892,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Namespace {
+                            name: Identifier {
+                                name: "bool",
+                                location: <internal>:55:59,
+                            },
+                        },
+                        location: <internal>:55:59,
+                    },
+                    location: <internal>:55:59,
+                },
+                block: Some(
+                    Block {
+                        statements: [
+                            Statement {
+                                id: StatementId {
+                                    def: ItemId(
+                                        5175167619020667705,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
+                                kind: Return(
+                                    Return {
+                                        id: StatementId {
+                                            def: ItemId(
+                                                5175167619020667705,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
+                                        value: Some(
+                                            Expression {
+                                                id: ExpressionId {
+                                                    def: ItemId(
+                                                        5175167619020667705,
+                                                    ),
+                                                    index: Idx(
+                                                        1,
+                                                    ),
+                                                },
+                                                kind: Literal(
+                                                    Literal {
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                5175167619020667705,
+                                                            ),
+                                                            index: Idx(
+                                                                1,
+                                                            ),
+                                                        },
+                                                        kind: Boolean(
+                                                            BooleanLiteral {
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        5175167619020667705,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        1,
+                                                                    ),
+                                                                },
+                                                                value: true,
+                                                            },
+                                                        ),
+                                                        location: <internal>:89:93,
+                                                    },
+                                                ),
+                                                location: <internal>:89:93,
+                                            },
+                                        ),
+                                        location: <internal>:82:94,
+                                    },
+                                ),
+                                location: <internal>:82:94,
+                            },
+                        ],
+                        location: <internal>:60:112,
+                    },
+                ),
+                location: <internal>:40:112,
+            },
+        ),
+        ItemId(
             15584863814090437165,
         ): Impl(
             Implementation {
@@ -96,7 +202,6 @@ Map {
                                                                 1,
                                                             ),
                                                         },
-                                                        location: <internal>:89:93,
                                                         kind: Literal(
                                                             Literal {
                                                                 id: ExpressionId {
@@ -107,7 +212,6 @@ Map {
                                                                         1,
                                                                     ),
                                                                 },
-                                                                location: <internal>:89:93,
                                                                 kind: Boolean(
                                                                     BooleanLiteral {
                                                                         id: ExpressionId {
@@ -121,10 +225,13 @@ Map {
                                                                         value: true,
                                                                     },
                                                                 ),
+                                                                location: <internal>:89:93,
                                                             },
                                                         ),
+                                                        location: <internal>:89:93,
                                                     },
                                                 ),
+                                                location: <internal>:82:94,
                                             },
                                         ),
                                         location: <internal>:82:94,
@@ -180,7 +287,6 @@ Map {
                                     1,
                                 ),
                             },
-                            location: <internal>:89:93,
                             kind: Literal(
                                 Literal {
                                     id: ExpressionId {
@@ -191,7 +297,6 @@ Map {
                                             1,
                                         ),
                                     },
-                                    location: <internal>:89:93,
                                     kind: Boolean(
                                         BooleanLiteral {
                                             id: ExpressionId {
@@ -205,10 +310,13 @@ Map {
                                             value: true,
                                         },
                                     ),
+                                    location: <internal>:89:93,
                                 },
                             ),
+                            location: <internal>:89:93,
                         },
                     ),
+                    location: <internal>:82:94,
                 },
             ),
             location: <internal>:82:94,
@@ -231,7 +339,6 @@ Map {
                     1,
                 ),
             },
-            location: <internal>:89:93,
             kind: Literal(
                 Literal {
                     id: ExpressionId {
@@ -242,7 +349,6 @@ Map {
                             1,
                         ),
                     },
-                    location: <internal>:89:93,
                     kind: Boolean(
                         BooleanLiteral {
                             id: ExpressionId {
@@ -256,8 +362,10 @@ Map {
                             value: true,
                         },
                     ),
+                    location: <internal>:89:93,
                 },
             ),
+            location: <internal>:89:93,
         },
     },
 }

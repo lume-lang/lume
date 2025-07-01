@@ -36,7 +36,6 @@ description: let __IDENT__ = 0;
                             1,
                         ),
                     },
-                    location: <internal>:16:17,
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
@@ -47,7 +46,6 @@ description: let __IDENT__ = 0;
                                     1,
                                 ),
                             },
-                            location: <internal>:16:17,
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
@@ -62,9 +60,12 @@ description: let __IDENT__ = 0;
                                     kind: I32,
                                 },
                             ),
+                            location: <internal>:16:17,
                         },
                     ),
+                    location: <internal>:16:17,
                 },
+                location: <internal>:0:18,
             },
         ),
         location: <internal>:0:18,

@@ -22,7 +22,6 @@ description: "Foo { bar: 0 };"
                         1,
                     ),
                 },
-                location: <internal>:0:15,
                 kind: Construct(
                     Construct {
                         id: ExpressionId {
@@ -60,7 +59,6 @@ description: "Foo { bar: 0 };"
                                             2,
                                         ),
                                     },
-                                    location: <internal>:11:12,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -71,7 +69,6 @@ description: "Foo { bar: 0 };"
                                                     2,
                                                 ),
                                             },
-                                            location: <internal>:11:12,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -86,14 +83,18 @@ description: "Foo { bar: 0 };"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:11:12,
                                         },
                                     ),
+                                    location: <internal>:11:12,
                                 },
+                                location: <internal>:6:12,
                             },
                         ],
                         location: <internal>:0:15,
                     },
                 ),
+                location: <internal>:0:15,
             },
         ),
         location: <internal>:0:15,

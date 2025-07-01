@@ -8,6 +8,75 @@ Map {
     ),
     items: {
         ItemId(
+            4915573846357939171,
+        ): TraitMethodDef(
+            TraitMethodDefinition {
+                id: ItemId(
+                    4915573846357939171,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "add",
+                    location: <internal>:19:22,
+                },
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "other",
+                            location: <internal>:23:28,
+                        },
+                        param_type: Type {
+                            id: ItemId(
+                                7468397361300629741,
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "int",
+                                        location: <internal>:30:33,
+                                    },
+                                },
+                                location: <internal>:30:33,
+                            },
+                            location: <internal>:30:33,
+                        },
+                        vararg: false,
+                        location: <internal>:23:33,
+                    },
+                ],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        0,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Void",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:35:38,
+                    },
+                ),
+                location: <internal>:16:38,
+            },
+        ),
+        ItemId(
             14895811466431262429,
         ): Type(
             Trait(

@@ -22,7 +22,6 @@ description: 0;
                         1,
                     ),
                 },
-                location: <internal>:0:1,
                 kind: Literal(
                     Literal {
                         id: ExpressionId {
@@ -33,7 +32,6 @@ description: 0;
                                 1,
                             ),
                         },
-                        location: <internal>:0:1,
                         kind: Int(
                             IntLiteral {
                                 id: ExpressionId {
@@ -48,8 +46,10 @@ description: 0;
                                 kind: I32,
                             },
                         ),
+                        location: <internal>:0:1,
                     },
                 ),
+                location: <internal>:0:1,
             },
         ),
         location: <internal>:0:1,

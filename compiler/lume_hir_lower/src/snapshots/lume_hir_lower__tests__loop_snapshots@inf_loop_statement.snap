@@ -57,7 +57,6 @@ description: "loop { let a = 0; }"
                                                 2,
                                             ),
                                         },
-                                        location: <internal>:15:16,
                                         kind: Literal(
                                             Literal {
                                                 id: ExpressionId {
@@ -68,7 +67,6 @@ description: "loop { let a = 0; }"
                                                         2,
                                                     ),
                                                 },
-                                                location: <internal>:15:16,
                                                 kind: Int(
                                                     IntLiteral {
                                                         id: ExpressionId {
@@ -83,9 +81,12 @@ description: "loop { let a = 0; }"
                                                         kind: I32,
                                                     },
                                                 ),
+                                                location: <internal>:15:16,
                                             },
                                         ),
+                                        location: <internal>:15:16,
                                     },
+                                    location: <internal>:7:17,
                                 },
                             ),
                             location: <internal>:7:17,

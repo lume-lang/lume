@@ -34,7 +34,6 @@ description: "if true { let a = 0; let b = 0; }"
                                         1,
                                     ),
                                 },
-                                location: <internal>:3:7,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -45,7 +44,6 @@ description: "if true { let a = 0; let b = 0; }"
                                                 1,
                                             ),
                                         },
-                                        location: <internal>:3:7,
                                         kind: Boolean(
                                             BooleanLiteral {
                                                 id: ExpressionId {
@@ -59,8 +57,10 @@ description: "if true { let a = 0; let b = 0; }"
                                                 value: true,
                                             },
                                         ),
+                                        location: <internal>:3:7,
                                     },
                                 ),
+                                location: <internal>:3:7,
                             },
                         ),
                         block: Block {
@@ -98,7 +98,6 @@ description: "if true { let a = 0; let b = 0; }"
                                                         3,
                                                     ),
                                                 },
-                                                location: <internal>:18:19,
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
@@ -109,7 +108,6 @@ description: "if true { let a = 0; let b = 0; }"
                                                                 3,
                                                             ),
                                                         },
-                                                        location: <internal>:18:19,
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
@@ -124,9 +122,12 @@ description: "if true { let a = 0; let b = 0; }"
                                                                 kind: I32,
                                                             },
                                                         ),
+                                                        location: <internal>:18:19,
                                                     },
                                                 ),
+                                                location: <internal>:18:19,
                                             },
+                                            location: <internal>:10:20,
                                         },
                                     ),
                                     location: <internal>:10:20,
@@ -164,7 +165,6 @@ description: "if true { let a = 0; let b = 0; }"
                                                         5,
                                                     ),
                                                 },
-                                                location: <internal>:29:30,
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
@@ -175,7 +175,6 @@ description: "if true { let a = 0; let b = 0; }"
                                                                 5,
                                                             ),
                                                         },
-                                                        location: <internal>:29:30,
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
@@ -190,9 +189,12 @@ description: "if true { let a = 0; let b = 0; }"
                                                                 kind: I32,
                                                             },
                                                         ),
+                                                        location: <internal>:29:30,
                                                     },
                                                 ),
+                                                location: <internal>:29:30,
                                             },
+                                            location: <internal>:21:31,
                                         },
                                     ),
                                     location: <internal>:21:31,

@@ -36,7 +36,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                             1,
                         ),
                     },
-                    location: <internal>:17:18,
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
@@ -47,7 +46,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                     1,
                                 ),
                             },
-                            location: <internal>:17:18,
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
@@ -62,9 +60,12 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                     kind: I32,
                                 },
                             ),
+                            location: <internal>:17:18,
                         },
                     ),
+                    location: <internal>:17:18,
                 },
+                location: <internal>:9:19,
             },
         ),
         location: <internal>:9:19,
@@ -102,7 +103,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                             3,
                         ),
                     },
-                    location: <internal>:36:37,
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
@@ -113,7 +113,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                     3,
                                 ),
                             },
-                            location: <internal>:36:37,
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
@@ -128,9 +127,12 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                     kind: I32,
                                 },
                             ),
+                            location: <internal>:36:37,
                         },
                     ),
+                    location: <internal>:36:37,
                 },
+                location: <internal>:28:38,
             },
         ),
         location: <internal>:28:38,
@@ -168,7 +170,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                             5,
                         ),
                     },
-                    location: <internal>:56:61,
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
@@ -216,7 +217,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                             6,
                                         ),
                                     },
-                                    location: <internal>:56:57,
                                     kind: Variable(
                                         Variable {
                                             id: ExpressionId {
@@ -227,14 +227,62 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                                     6,
                                                 ),
                                             },
-                                            reference: StatementId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
-                                                index: Idx(
-                                                    0,
-                                                ),
-                                            },
+                                            reference: Variable(
+                                                VariableDeclaration {
+                                                    id: StatementId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
+                                                    name: Identifier {
+                                                        name: "a",
+                                                        location: <internal>:13:14,
+                                                    },
+                                                    declared_type: None,
+                                                    value: Expression {
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                1,
+                                                            ),
+                                                        },
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        1,
+                                                                    ),
+                                                                },
+                                                                kind: Int(
+                                                                    IntLiteral {
+                                                                        id: ExpressionId {
+                                                                            def: ItemId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                1,
+                                                                            ),
+                                                                        },
+                                                                        value: 0,
+                                                                        kind: I32,
+                                                                    },
+                                                                ),
+                                                                location: <internal>:17:18,
+                                                            },
+                                                        ),
+                                                        location: <internal>:17:18,
+                                                    },
+                                                    location: <internal>:9:19,
+                                                },
+                                            ),
                                             name: Identifier {
                                                 name: "a",
                                                 location: <internal>:56:57,
@@ -242,6 +290,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                             location: <internal>:56:57,
                                         },
                                     ),
+                                    location: <internal>:56:57,
                                 },
                                 Expression {
                                     id: ExpressionId {
@@ -252,7 +301,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                             7,
                                         ),
                                     },
-                                    location: <internal>:60:61,
                                     kind: Variable(
                                         Variable {
                                             id: ExpressionId {
@@ -263,14 +311,62 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                                     7,
                                                 ),
                                             },
-                                            reference: StatementId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
-                                                index: Idx(
-                                                    2,
-                                                ),
-                                            },
+                                            reference: Variable(
+                                                VariableDeclaration {
+                                                    id: StatementId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            2,
+                                                        ),
+                                                    },
+                                                    name: Identifier {
+                                                        name: "b",
+                                                        location: <internal>:32:33,
+                                                    },
+                                                    declared_type: None,
+                                                    value: Expression {
+                                                        id: ExpressionId {
+                                                            def: ItemId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                3,
+                                                            ),
+                                                        },
+                                                        kind: Literal(
+                                                            Literal {
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        3,
+                                                                    ),
+                                                                },
+                                                                kind: Int(
+                                                                    IntLiteral {
+                                                                        id: ExpressionId {
+                                                                            def: ItemId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                3,
+                                                                            ),
+                                                                        },
+                                                                        value: 1,
+                                                                        kind: I32,
+                                                                    },
+                                                                ),
+                                                                location: <internal>:36:37,
+                                                            },
+                                                        ),
+                                                        location: <internal>:36:37,
+                                                    },
+                                                    location: <internal>:28:38,
+                                                },
+                                            ),
                                             name: Identifier {
                                                 name: "b",
                                                 location: <internal>:60:61,
@@ -278,11 +374,15 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = (a..=b);
                                             location: <internal>:60:61,
                                         },
                                     ),
+                                    location: <internal>:60:61,
                                 },
                             ],
+                            location: <internal>:56:61,
                         },
                     ),
+                    location: <internal>:56:61,
                 },
+                location: <internal>:47:63,
             },
         ),
         location: <internal>:47:63,

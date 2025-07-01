@@ -22,7 +22,6 @@ description: 0 | 0;
                         1,
                     ),
                 },
-                location: <internal>:0:5,
                 kind: Binary(
                     Binary {
                         id: ExpressionId {
@@ -42,7 +41,6 @@ description: 0 | 0;
                                     2,
                                 ),
                             },
-                            location: <internal>:0:1,
                             kind: Literal(
                                 Literal {
                                     id: ExpressionId {
@@ -53,7 +51,6 @@ description: 0 | 0;
                                             2,
                                         ),
                                     },
-                                    location: <internal>:0:1,
                                     kind: Int(
                                         IntLiteral {
                                             id: ExpressionId {
@@ -68,8 +65,10 @@ description: 0 | 0;
                                             kind: I32,
                                         },
                                     ),
+                                    location: <internal>:0:1,
                                 },
                             ),
+                            location: <internal>:0:1,
                         },
                         op: BinaryOperator {
                             kind: Or,
@@ -84,7 +83,6 @@ description: 0 | 0;
                                     3,
                                 ),
                             },
-                            location: <internal>:4:5,
                             kind: Literal(
                                 Literal {
                                     id: ExpressionId {
@@ -95,7 +93,6 @@ description: 0 | 0;
                                             3,
                                         ),
                                     },
-                                    location: <internal>:4:5,
                                     kind: Int(
                                         IntLiteral {
                                             id: ExpressionId {
@@ -110,12 +107,15 @@ description: 0 | 0;
                                             kind: I32,
                                         },
                                     ),
+                                    location: <internal>:4:5,
                                 },
                             ),
+                            location: <internal>:4:5,
                         },
                         location: <internal>:0:5,
                     },
                 ),
+                location: <internal>:0:5,
             },
         ),
         location: <internal>:0:5,

@@ -22,7 +22,6 @@ description: call() as u64;
                         1,
                     ),
                 },
-                location: <internal>:0:13,
                 kind: Cast(
                     Cast {
                         id: ExpressionId {
@@ -42,7 +41,6 @@ description: call() as u64;
                                     2,
                                 ),
                             },
-                            location: <internal>:0:9,
                             kind: StaticCall(
                                 StaticCall {
                                     id: ExpressionId {
@@ -66,8 +64,10 @@ description: call() as u64;
                                         location: <internal>:0:5,
                                     },
                                     arguments: [],
+                                    location: <internal>:0:9,
                                 },
                             ),
+                            location: <internal>:0:9,
                         },
                         target: Type {
                             id: ItemId(
@@ -85,8 +85,10 @@ description: call() as u64;
                             },
                             location: <internal>:10:13,
                         },
+                        location: <internal>:0:13,
                     },
                 ),
+                location: <internal>:0:13,
             },
         ),
         location: <internal>:0:13,

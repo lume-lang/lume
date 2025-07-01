@@ -36,7 +36,6 @@ description: "let a = 0; if a != 1 { }"
                             1,
                         ),
                     },
-                    location: <internal>:8:9,
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
@@ -47,7 +46,6 @@ description: "let a = 0; if a != 1 { }"
                                     1,
                                 ),
                             },
-                            location: <internal>:8:9,
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
@@ -62,9 +60,12 @@ description: "let a = 0; if a != 1 { }"
                                     kind: I32,
                                 },
                             ),
+                            location: <internal>:8:9,
                         },
                     ),
+                    location: <internal>:8:9,
                 },
+                location: <internal>:0:10,
             },
         ),
         location: <internal>:0:10,
@@ -100,7 +101,6 @@ description: "let a = 0; if a != 1 { }"
                                         3,
                                     ),
                                 },
-                                location: <internal>:14:20,
                                 kind: InstanceCall(
                                     InstanceCall {
                                         id: ExpressionId {
@@ -120,7 +120,6 @@ description: "let a = 0; if a != 1 { }"
                                                     5,
                                                 ),
                                             },
-                                            location: <internal>:14:15,
                                             kind: Variable(
                                                 Variable {
                                                     id: ExpressionId {
@@ -131,14 +130,62 @@ description: "let a = 0; if a != 1 { }"
                                                             5,
                                                         ),
                                                     },
-                                                    reference: StatementId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
-                                                        index: Idx(
-                                                            0,
-                                                        ),
-                                                    },
+                                                    reference: Variable(
+                                                        VariableDeclaration {
+                                                            id: StatementId {
+                                                                def: ItemId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
+                                                            name: Identifier {
+                                                                name: "a",
+                                                                location: <internal>:4:5,
+                                                            },
+                                                            declared_type: None,
+                                                            value: Expression {
+                                                                id: ExpressionId {
+                                                                    def: ItemId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        1,
+                                                                    ),
+                                                                },
+                                                                kind: Literal(
+                                                                    Literal {
+                                                                        id: ExpressionId {
+                                                                            def: ItemId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                1,
+                                                                            ),
+                                                                        },
+                                                                        kind: Int(
+                                                                            IntLiteral {
+                                                                                id: ExpressionId {
+                                                                                    def: ItemId(
+                                                                                        0,
+                                                                                    ),
+                                                                                    index: Idx(
+                                                                                        1,
+                                                                                    ),
+                                                                                },
+                                                                                value: 0,
+                                                                                kind: I32,
+                                                                            },
+                                                                        ),
+                                                                        location: <internal>:8:9,
+                                                                    },
+                                                                ),
+                                                                location: <internal>:8:9,
+                                                            },
+                                                            location: <internal>:0:10,
+                                                        },
+                                                    ),
                                                     name: Identifier {
                                                         name: "a",
                                                         location: <internal>:14:15,
@@ -146,6 +193,7 @@ description: "let a = 0; if a != 1 { }"
                                                     location: <internal>:14:15,
                                                 },
                                             ),
+                                            location: <internal>:14:15,
                                         },
                                         name: Callable {
                                             name: Identifier {
@@ -165,7 +213,6 @@ description: "let a = 0; if a != 1 { }"
                                                         4,
                                                     ),
                                                 },
-                                                location: <internal>:19:20,
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
@@ -176,7 +223,6 @@ description: "let a = 0; if a != 1 { }"
                                                                 4,
                                                             ),
                                                         },
-                                                        location: <internal>:19:20,
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
@@ -191,12 +237,16 @@ description: "let a = 0; if a != 1 { }"
                                                                 kind: I32,
                                                             },
                                                         ),
+                                                        location: <internal>:19:20,
                                                     },
                                                 ),
+                                                location: <internal>:19:20,
                                             },
                                         ],
+                                        location: <internal>:14:20,
                                     },
                                 ),
+                                location: <internal>:14:20,
                             },
                         ),
                         block: Block {

@@ -36,7 +36,6 @@ description: "let _ = 1.call(0, 1);"
                             1,
                         ),
                     },
-                    location: <internal>:10:21,
                     kind: InstanceCall(
                         InstanceCall {
                             id: ExpressionId {
@@ -56,7 +55,6 @@ description: "let _ = 1.call(0, 1);"
                                         4,
                                     ),
                                 },
-                                location: <internal>:8:9,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -67,7 +65,6 @@ description: "let _ = 1.call(0, 1);"
                                                 4,
                                             ),
                                         },
-                                        location: <internal>:8:9,
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
@@ -82,8 +79,10 @@ description: "let _ = 1.call(0, 1);"
                                                 kind: I32,
                                             },
                                         ),
+                                        location: <internal>:8:9,
                                     },
                                 ),
+                                location: <internal>:8:9,
                             },
                             name: Callable {
                                 name: Identifier {
@@ -103,7 +102,6 @@ description: "let _ = 1.call(0, 1);"
                                             2,
                                         ),
                                     },
-                                    location: <internal>:15:16,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -114,7 +112,6 @@ description: "let _ = 1.call(0, 1);"
                                                     2,
                                                 ),
                                             },
-                                            location: <internal>:15:16,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -129,8 +126,10 @@ description: "let _ = 1.call(0, 1);"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:15:16,
                                         },
                                     ),
+                                    location: <internal>:15:16,
                                 },
                                 Expression {
                                     id: ExpressionId {
@@ -141,7 +140,6 @@ description: "let _ = 1.call(0, 1);"
                                             3,
                                         ),
                                     },
-                                    location: <internal>:18:19,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -152,7 +150,6 @@ description: "let _ = 1.call(0, 1);"
                                                     3,
                                                 ),
                                             },
-                                            location: <internal>:18:19,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -167,13 +164,18 @@ description: "let _ = 1.call(0, 1);"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:18:19,
                                         },
                                     ),
+                                    location: <internal>:18:19,
                                 },
                             ],
+                            location: <internal>:10:21,
                         },
                     ),
+                    location: <internal>:10:21,
                 },
+                location: <internal>:0:21,
             },
         ),
         location: <internal>:0:21,

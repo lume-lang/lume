@@ -34,7 +34,6 @@ description: "if true { }"
                                         1,
                                     ),
                                 },
-                                location: <internal>:3:7,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -45,7 +44,6 @@ description: "if true { }"
                                                 1,
                                             ),
                                         },
-                                        location: <internal>:3:7,
                                         kind: Boolean(
                                             BooleanLiteral {
                                                 id: ExpressionId {
@@ -59,8 +57,10 @@ description: "if true { }"
                                                 value: true,
                                             },
                                         ),
+                                        location: <internal>:3:7,
                                     },
                                 ),
+                                location: <internal>:3:7,
                             },
                         ),
                         block: Block {

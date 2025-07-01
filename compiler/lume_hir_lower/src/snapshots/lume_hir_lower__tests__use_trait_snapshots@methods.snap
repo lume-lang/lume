@@ -8,6 +8,108 @@ Map {
     ),
     items: {
         ItemId(
+            17562429064548613062,
+        ): TraitMethodImpl(
+            TraitMethodImplementation {
+                id: ItemId(
+                    17562429064548613062,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "to_string",
+                    location: <internal>:56:65,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        8008751949105636900,
+                    ),
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
+                            },
+                        ],
+                        name: Type {
+                            name: Identifier {
+                                name: "String",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:71:79,
+                },
+                block: Block {
+                    statements: [],
+                    location: <internal>:78:80,
+                },
+                location: <internal>:49:80,
+            },
+        ),
+        ItemId(
+            2127391008029776,
+        ): TraitMethodImpl(
+            TraitMethodImplementation {
+                id: ItemId(
+                    2127391008029776,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "to_int",
+                    location: <internal>:105:111,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        6143724420395906933,
+                    ),
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
+                            },
+                        ],
+                        name: Type {
+                            name: Identifier {
+                                name: "Int32",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:117:124,
+                },
+                block: Block {
+                    statements: [],
+                    location: <internal>:123:125,
+                },
+                location: <internal>:98:125,
+            },
+        ),
+        ItemId(
             13636248319516628160,
         ): Use(
             TraitImplementation {

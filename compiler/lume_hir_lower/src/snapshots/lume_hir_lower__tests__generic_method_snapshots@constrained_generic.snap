@@ -8,6 +8,80 @@ Map {
     ),
     items: {
         ItemId(
+            4609697254383574920,
+        ): Method(
+            MethodDefinition {
+                id: ItemId(
+                    4609697254383574920,
+                ),
+                method_id: None,
+                visibility: Private,
+                name: Identifier {
+                    name: "test",
+                    location: <internal>:15:19,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: <internal>:20:21,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [
+                                Type {
+                                    id: ItemId(
+                                        12406655113887153806,
+                                    ),
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: <internal>:23:30,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:23:31,
+                                        },
+                                        location: <internal>:23:31,
+                                    },
+                                    location: <internal>:23:31,
+                                },
+                            ],
+                            location: <internal>:20:21,
+                        },
+                    ],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        17666474489655347949,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:37:41,
+                            },
+                            type_arguments: [],
+                            location: <internal>:37:43,
+                        },
+                        location: <internal>:37:43,
+                    },
+                    location: <internal>:37:43,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:42:44,
+                    },
+                ),
+                location: <internal>:12:44,
+            },
+        ),
+        ItemId(
             9685703253129516901,
         ): Impl(
             Implementation {

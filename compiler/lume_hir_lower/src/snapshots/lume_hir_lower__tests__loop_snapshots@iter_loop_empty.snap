@@ -31,7 +31,6 @@ description: "for pattern in [1, 2, 3] { }"
                             1,
                         ),
                     },
-                    location: <internal>:15:16,
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
@@ -79,7 +78,6 @@ description: "for pattern in [1, 2, 3] { }"
                                             2,
                                         ),
                                     },
-                                    location: <internal>:16:17,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -90,7 +88,6 @@ description: "for pattern in [1, 2, 3] { }"
                                                     2,
                                                 ),
                                             },
-                                            location: <internal>:16:17,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -105,8 +102,10 @@ description: "for pattern in [1, 2, 3] { }"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:16:17,
                                         },
                                     ),
+                                    location: <internal>:16:17,
                                 },
                                 Expression {
                                     id: ExpressionId {
@@ -117,7 +116,6 @@ description: "for pattern in [1, 2, 3] { }"
                                             3,
                                         ),
                                     },
-                                    location: <internal>:19:20,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -128,7 +126,6 @@ description: "for pattern in [1, 2, 3] { }"
                                                     3,
                                                 ),
                                             },
-                                            location: <internal>:19:20,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -143,8 +140,10 @@ description: "for pattern in [1, 2, 3] { }"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:19:20,
                                         },
                                     ),
+                                    location: <internal>:19:20,
                                 },
                                 Expression {
                                     id: ExpressionId {
@@ -155,7 +154,6 @@ description: "for pattern in [1, 2, 3] { }"
                                             4,
                                         ),
                                     },
-                                    location: <internal>:22:23,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -166,7 +164,6 @@ description: "for pattern in [1, 2, 3] { }"
                                                     4,
                                                 ),
                                             },
-                                            location: <internal>:22:23,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -181,12 +178,16 @@ description: "for pattern in [1, 2, 3] { }"
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:22:23,
                                         },
                                     ),
+                                    location: <internal>:22:23,
                                 },
                             ],
+                            location: <internal>:15:16,
                         },
                     ),
+                    location: <internal>:15:16,
                 },
                 block: Block {
                     statements: [],

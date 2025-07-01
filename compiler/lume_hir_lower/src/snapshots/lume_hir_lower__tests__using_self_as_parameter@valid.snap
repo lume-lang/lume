@@ -8,6 +8,112 @@ Map {
     ),
     items: {
         ItemId(
+            6128482084880861643,
+        ): Method(
+            MethodDefinition {
+                id: ItemId(
+                    6128482084880861643,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "bar",
+                    location: <internal>:26:29,
+                },
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "self",
+                            location: <internal>:30:34,
+                        },
+                        param_type: Type {
+                            id: ItemId(
+                                5175167619020667705,
+                            ),
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Foo",
+                                        location: <internal>:5:8,
+                                    },
+                                    type_arguments: [],
+                                    location: <internal>:5:10,
+                                },
+                                location: <internal>:5:10,
+                            },
+                            location: <internal>:30:34,
+                        },
+                        vararg: false,
+                        location: <internal>:30:34,
+                    },
+                    Parameter {
+                        name: Identifier {
+                            name: "a",
+                            location: <internal>:36:37,
+                        },
+                        param_type: Type {
+                            id: ItemId(
+                                6143724420395906933,
+                            ),
+                            name: Path {
+                                root: [
+                                    Type {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:39:45,
+                        },
+                        vararg: false,
+                        location: <internal>:36:45,
+                    },
+                ],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        17666474489655347949,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:49:53,
+                            },
+                            type_arguments: [],
+                            location: <internal>:49:55,
+                        },
+                        location: <internal>:49:55,
+                    },
+                    location: <internal>:49:55,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:54:57,
+                    },
+                ),
+                location: <internal>:19:57,
+            },
+        ),
+        ItemId(
             15584863814090437165,
         ): Impl(
             Implementation {

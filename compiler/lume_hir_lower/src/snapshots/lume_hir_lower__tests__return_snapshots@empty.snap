@@ -23,6 +23,7 @@ description: return;
                     ),
                 },
                 value: None,
+                location: <internal>:0:7,
             },
         ),
         location: <internal>:0:7,

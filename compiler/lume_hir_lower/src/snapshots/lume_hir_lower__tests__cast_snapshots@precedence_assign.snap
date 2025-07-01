@@ -36,7 +36,6 @@ description: let _ = 0 as u64;
                             1,
                         ),
                     },
-                    location: <internal>:8:16,
                     kind: Cast(
                         Cast {
                             id: ExpressionId {
@@ -56,7 +55,6 @@ description: let _ = 0 as u64;
                                         2,
                                     ),
                                 },
-                                location: <internal>:8:9,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -67,7 +65,6 @@ description: let _ = 0 as u64;
                                                 2,
                                             ),
                                         },
-                                        location: <internal>:8:9,
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
@@ -82,8 +79,10 @@ description: let _ = 0 as u64;
                                                 kind: I32,
                                             },
                                         ),
+                                        location: <internal>:8:9,
                                     },
                                 ),
+                                location: <internal>:8:9,
                             },
                             target: Type {
                                 id: ItemId(
@@ -101,9 +100,12 @@ description: let _ = 0 as u64;
                                 },
                                 location: <internal>:13:16,
                             },
+                            location: <internal>:8:16,
                         },
                     ),
+                    location: <internal>:8:16,
                 },
+                location: <internal>:0:17,
             },
         ),
         location: <internal>:0:17,

@@ -8,6 +8,50 @@ Map {
     ),
     items: {
         ItemId(
+            4609697254383574920,
+        ): Method(
+            MethodDefinition {
+                id: ItemId(
+                    4609697254383574920,
+                ),
+                method_id: None,
+                visibility: Private,
+                name: Identifier {
+                    name: "test",
+                    location: <internal>:15:19,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        17666474489655347949,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:27:31,
+                            },
+                            type_arguments: [],
+                            location: <internal>:27:33,
+                        },
+                        location: <internal>:27:33,
+                    },
+                    location: <internal>:27:33,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:32:34,
+                    },
+                ),
+                location: <internal>:12:34,
+            },
+        ),
+        ItemId(
             9685703253129516901,
         ): Impl(
             Implementation {

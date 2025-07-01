@@ -22,7 +22,6 @@ description: "\"\";"
                         1,
                     ),
                 },
-                location: <internal>:0:2,
                 kind: Literal(
                     Literal {
                         id: ExpressionId {
@@ -33,7 +32,6 @@ description: "\"\";"
                                 1,
                             ),
                         },
-                        location: <internal>:0:2,
                         kind: String(
                             StringLiteral {
                                 id: ExpressionId {
@@ -47,8 +45,10 @@ description: "\"\";"
                                 value: "",
                             },
                         ),
+                        location: <internal>:0:2,
                     },
                 ),
+                location: <internal>:0:2,
             },
         ),
         location: <internal>:0:2,

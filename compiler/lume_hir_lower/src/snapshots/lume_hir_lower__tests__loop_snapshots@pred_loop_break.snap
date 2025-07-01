@@ -31,7 +31,6 @@ description: "while true { break; }"
                             1,
                         ),
                     },
-                    location: <internal>:6:10,
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
@@ -42,7 +41,6 @@ description: "while true { break; }"
                                     1,
                                 ),
                             },
-                            location: <internal>:6:10,
                             kind: Boolean(
                                 BooleanLiteral {
                                     id: ExpressionId {
@@ -56,8 +54,10 @@ description: "while true { break; }"
                                     value: true,
                                 },
                             ),
+                            location: <internal>:6:10,
                         },
                     ),
+                    location: <internal>:6:10,
                 },
                 block: Block {
                     statements: [
@@ -80,6 +80,7 @@ description: "while true { break; }"
                                             2,
                                         ),
                                     },
+                                    location: <internal>:13:19,
                                 },
                             ),
                             location: <internal>:13:19,

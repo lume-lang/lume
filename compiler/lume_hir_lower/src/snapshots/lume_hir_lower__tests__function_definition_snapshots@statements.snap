@@ -86,7 +86,6 @@ Map {
                                                     1,
                                                 ),
                                             },
-                                            location: <internal>:28:29,
                                             kind: Literal(
                                                 Literal {
                                                     id: ExpressionId {
@@ -97,7 +96,6 @@ Map {
                                                             1,
                                                         ),
                                                     },
-                                                    location: <internal>:28:29,
                                                     kind: Int(
                                                         IntLiteral {
                                                             id: ExpressionId {
@@ -112,9 +110,12 @@ Map {
                                                             kind: I32,
                                                         },
                                                     ),
+                                                    location: <internal>:28:29,
                                                 },
                                             ),
+                                            location: <internal>:28:29,
                                         },
+                                        location: <internal>:20:30,
                                     },
                                 ),
                                 location: <internal>:20:30,
@@ -152,7 +153,6 @@ Map {
                                                     3,
                                                 ),
                                             },
-                                            location: <internal>:39:40,
                                             kind: Literal(
                                                 Literal {
                                                     id: ExpressionId {
@@ -163,7 +163,6 @@ Map {
                                                             3,
                                                         ),
                                                     },
-                                                    location: <internal>:39:40,
                                                     kind: Int(
                                                         IntLiteral {
                                                             id: ExpressionId {
@@ -178,9 +177,12 @@ Map {
                                                             kind: I32,
                                                         },
                                                     ),
+                                                    location: <internal>:39:40,
                                                 },
                                             ),
+                                            location: <internal>:39:40,
                                         },
+                                        location: <internal>:31:41,
                                     },
                                 ),
                                 location: <internal>:31:41,
@@ -234,7 +236,6 @@ Map {
                                 1,
                             ),
                         },
-                        location: <internal>:28:29,
                         kind: Literal(
                             Literal {
                                 id: ExpressionId {
@@ -245,7 +246,6 @@ Map {
                                         1,
                                     ),
                                 },
-                                location: <internal>:28:29,
                                 kind: Int(
                                     IntLiteral {
                                         id: ExpressionId {
@@ -260,9 +260,12 @@ Map {
                                         kind: I32,
                                     },
                                 ),
+                                location: <internal>:28:29,
                             },
                         ),
+                        location: <internal>:28:29,
                     },
+                    location: <internal>:20:30,
                 },
             ),
             location: <internal>:20:30,
@@ -307,7 +310,6 @@ Map {
                                 3,
                             ),
                         },
-                        location: <internal>:39:40,
                         kind: Literal(
                             Literal {
                                 id: ExpressionId {
@@ -318,7 +320,6 @@ Map {
                                         3,
                                     ),
                                 },
-                                location: <internal>:39:40,
                                 kind: Int(
                                     IntLiteral {
                                         id: ExpressionId {
@@ -333,9 +334,12 @@ Map {
                                         kind: I32,
                                     },
                                 ),
+                                location: <internal>:39:40,
                             },
                         ),
+                        location: <internal>:39:40,
                     },
+                    location: <internal>:31:41,
                 },
             ),
             location: <internal>:31:41,
@@ -358,7 +362,6 @@ Map {
                     1,
                 ),
             },
-            location: <internal>:28:29,
             kind: Literal(
                 Literal {
                     id: ExpressionId {
@@ -369,7 +372,6 @@ Map {
                             1,
                         ),
                     },
-                    location: <internal>:28:29,
                     kind: Int(
                         IntLiteral {
                             id: ExpressionId {
@@ -384,8 +386,10 @@ Map {
                             kind: I32,
                         },
                     ),
+                    location: <internal>:28:29,
                 },
             ),
+            location: <internal>:28:29,
         },
         ExpressionId {
             def: ItemId(
@@ -403,7 +407,6 @@ Map {
                     3,
                 ),
             },
-            location: <internal>:39:40,
             kind: Literal(
                 Literal {
                     id: ExpressionId {
@@ -414,7 +417,6 @@ Map {
                             3,
                         ),
                     },
-                    location: <internal>:39:40,
                     kind: Int(
                         IntLiteral {
                             id: ExpressionId {
@@ -429,8 +431,10 @@ Map {
                             kind: I32,
                         },
                     ),
+                    location: <internal>:39:40,
                 },
             ),
+            location: <internal>:39:40,
         },
     },
 }

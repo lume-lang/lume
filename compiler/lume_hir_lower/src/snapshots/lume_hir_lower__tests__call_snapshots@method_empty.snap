@@ -36,7 +36,6 @@ description: let _ = 1.call();
                             1,
                         ),
                     },
-                    location: <internal>:10:17,
                     kind: InstanceCall(
                         InstanceCall {
                             id: ExpressionId {
@@ -56,7 +55,6 @@ description: let _ = 1.call();
                                         2,
                                     ),
                                 },
-                                location: <internal>:8:9,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -67,7 +65,6 @@ description: let _ = 1.call();
                                                 2,
                                             ),
                                         },
-                                        location: <internal>:8:9,
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
@@ -82,8 +79,10 @@ description: let _ = 1.call();
                                                 kind: I32,
                                             },
                                         ),
+                                        location: <internal>:8:9,
                                     },
                                 ),
+                                location: <internal>:8:9,
                             },
                             name: Callable {
                                 name: Identifier {
@@ -94,9 +93,12 @@ description: let _ = 1.call();
                                 location: <internal>:10:15,
                             },
                             arguments: [],
+                            location: <internal>:10:17,
                         },
                     ),
+                    location: <internal>:10:17,
                 },
+                location: <internal>:0:17,
             },
         ),
         location: <internal>:0:17,

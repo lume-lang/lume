@@ -8,6 +8,48 @@ Map {
     ),
     items: {
         ItemId(
+            17893834130320319815,
+        ): TraitMethodImpl(
+            TraitMethodImplementation {
+                id: ItemId(
+                    17893834130320319815,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "next",
+                    location: <internal>:69:73,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        8901637729188007634,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "T",
+                                location: <internal>:79:80,
+                            },
+                            type_arguments: [],
+                            location: <internal>:79:82,
+                        },
+                        location: <internal>:79:82,
+                    },
+                    location: <internal>:79:82,
+                },
+                block: Block {
+                    statements: [],
+                    location: <internal>:81:83,
+                },
+                location: <internal>:62:83,
+            },
+        ),
+        ItemId(
             14353073384594717167,
         ): Use(
             TraitImplementation {

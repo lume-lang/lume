@@ -22,7 +22,6 @@ description: "Foo { };"
                         1,
                     ),
                 },
-                location: <internal>:0:8,
                 kind: Construct(
                     Construct {
                         id: ExpressionId {
@@ -49,6 +48,7 @@ description: "Foo { };"
                         location: <internal>:0:8,
                     },
                 ),
+                location: <internal>:0:8,
             },
         ),
         location: <internal>:0:8,

@@ -22,7 +22,6 @@ description: 0 as u64 == 0;
                         1,
                     ),
                 },
-                location: <internal>:0:13,
                 kind: InstanceCall(
                     InstanceCall {
                         id: ExpressionId {
@@ -42,7 +41,6 @@ description: 0 as u64 == 0;
                                     3,
                                 ),
                             },
-                            location: <internal>:0:8,
                             kind: Cast(
                                 Cast {
                                     id: ExpressionId {
@@ -62,7 +60,6 @@ description: 0 as u64 == 0;
                                                 4,
                                             ),
                                         },
-                                        location: <internal>:0:1,
                                         kind: Literal(
                                             Literal {
                                                 id: ExpressionId {
@@ -73,7 +70,6 @@ description: 0 as u64 == 0;
                                                         4,
                                                     ),
                                                 },
-                                                location: <internal>:0:1,
                                                 kind: Int(
                                                     IntLiteral {
                                                         id: ExpressionId {
@@ -88,8 +84,10 @@ description: 0 as u64 == 0;
                                                         kind: I32,
                                                     },
                                                 ),
+                                                location: <internal>:0:1,
                                             },
                                         ),
+                                        location: <internal>:0:1,
                                     },
                                     target: Type {
                                         id: ItemId(
@@ -107,8 +105,10 @@ description: 0 as u64 == 0;
                                         },
                                         location: <internal>:5:8,
                                     },
+                                    location: <internal>:0:8,
                                 },
                             ),
+                            location: <internal>:0:8,
                         },
                         name: Callable {
                             name: Identifier {
@@ -128,7 +128,6 @@ description: 0 as u64 == 0;
                                         2,
                                     ),
                                 },
-                                location: <internal>:12:13,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -139,7 +138,6 @@ description: 0 as u64 == 0;
                                                 2,
                                             ),
                                         },
-                                        location: <internal>:12:13,
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
@@ -154,12 +152,16 @@ description: 0 as u64 == 0;
                                                 kind: I32,
                                             },
                                         ),
+                                        location: <internal>:12:13,
                                     },
                                 ),
+                                location: <internal>:12:13,
                             },
                         ],
+                        location: <internal>:0:13,
                     },
                 ),
+                location: <internal>:0:13,
             },
         ),
         location: <internal>:0:13,

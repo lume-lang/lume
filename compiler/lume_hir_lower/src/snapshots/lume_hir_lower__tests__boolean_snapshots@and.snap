@@ -22,7 +22,6 @@ description: 0 && 0;
                         1,
                     ),
                 },
-                location: <internal>:0:6,
                 kind: Logical(
                     Logical {
                         id: ExpressionId {
@@ -42,7 +41,6 @@ description: 0 && 0;
                                     2,
                                 ),
                             },
-                            location: <internal>:0:1,
                             kind: Literal(
                                 Literal {
                                     id: ExpressionId {
@@ -53,7 +51,6 @@ description: 0 && 0;
                                             2,
                                         ),
                                     },
-                                    location: <internal>:0:1,
                                     kind: Int(
                                         IntLiteral {
                                             id: ExpressionId {
@@ -68,8 +65,10 @@ description: 0 && 0;
                                             kind: I32,
                                         },
                                     ),
+                                    location: <internal>:0:1,
                                 },
                             ),
+                            location: <internal>:0:1,
                         },
                         op: LogicalOperator {
                             kind: And,
@@ -84,7 +83,6 @@ description: 0 && 0;
                                     3,
                                 ),
                             },
-                            location: <internal>:5:6,
                             kind: Literal(
                                 Literal {
                                     id: ExpressionId {
@@ -95,7 +93,6 @@ description: 0 && 0;
                                             3,
                                         ),
                                     },
-                                    location: <internal>:5:6,
                                     kind: Int(
                                         IntLiteral {
                                             id: ExpressionId {
@@ -110,12 +107,15 @@ description: 0 && 0;
                                             kind: I32,
                                         },
                                     ),
+                                    location: <internal>:5:6,
                                 },
                             ),
+                            location: <internal>:5:6,
                         },
                         location: <internal>:0:6,
                     },
                 ),
+                location: <internal>:0:6,
             },
         ),
         location: <internal>:0:6,

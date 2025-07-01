@@ -22,7 +22,6 @@ description: true;
                         1,
                     ),
                 },
-                location: <internal>:0:4,
                 kind: Literal(
                     Literal {
                         id: ExpressionId {
@@ -33,7 +32,6 @@ description: true;
                                 1,
                             ),
                         },
-                        location: <internal>:0:4,
                         kind: Boolean(
                             BooleanLiteral {
                                 id: ExpressionId {
@@ -47,8 +45,10 @@ description: true;
                                 value: true,
                             },
                         ),
+                        location: <internal>:0:4,
                     },
                 ),
+                location: <internal>:0:4,
             },
         ),
         location: <internal>:0:4,

@@ -22,7 +22,6 @@ description: "Self { };"
                         1,
                     ),
                 },
-                location: <internal>:0:9,
                 kind: Construct(
                     Construct {
                         id: ExpressionId {
@@ -49,6 +48,7 @@ description: "Self { };"
                         location: <internal>:0:9,
                     },
                 ),
+                location: <internal>:0:9,
             },
         ),
         location: <internal>:0:9,

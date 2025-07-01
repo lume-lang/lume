@@ -36,7 +36,6 @@ description: let _ = 1.call(0);
                             1,
                         ),
                     },
-                    location: <internal>:10:18,
                     kind: InstanceCall(
                         InstanceCall {
                             id: ExpressionId {
@@ -56,7 +55,6 @@ description: let _ = 1.call(0);
                                         3,
                                     ),
                                 },
-                                location: <internal>:8:9,
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -67,7 +65,6 @@ description: let _ = 1.call(0);
                                                 3,
                                             ),
                                         },
-                                        location: <internal>:8:9,
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
@@ -82,8 +79,10 @@ description: let _ = 1.call(0);
                                                 kind: I32,
                                             },
                                         ),
+                                        location: <internal>:8:9,
                                     },
                                 ),
+                                location: <internal>:8:9,
                             },
                             name: Callable {
                                 name: Identifier {
@@ -103,7 +102,6 @@ description: let _ = 1.call(0);
                                             2,
                                         ),
                                     },
-                                    location: <internal>:15:16,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -114,7 +112,6 @@ description: let _ = 1.call(0);
                                                     2,
                                                 ),
                                             },
-                                            location: <internal>:15:16,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -129,13 +126,18 @@ description: let _ = 1.call(0);
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:15:16,
                                         },
                                     ),
+                                    location: <internal>:15:16,
                                 },
                             ],
+                            location: <internal>:10:18,
                         },
                     ),
+                    location: <internal>:10:18,
                 },
+                location: <internal>:0:18,
             },
         ),
         location: <internal>:0:18,

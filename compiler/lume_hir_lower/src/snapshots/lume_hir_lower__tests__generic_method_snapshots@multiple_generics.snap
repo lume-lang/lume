@@ -8,6 +8,71 @@ Map {
     ),
     items: {
         ItemId(
+            4609697254383574920,
+        ): Method(
+            MethodDefinition {
+                id: ItemId(
+                    4609697254383574920,
+                ),
+                method_id: None,
+                visibility: Private,
+                name: Identifier {
+                    name: "test",
+                    location: <internal>:15:19,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: <internal>:20:22,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:20:22,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: <internal>:24:26,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:24:26,
+                        },
+                    ],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        17666474489655347949,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:33:37,
+                            },
+                            type_arguments: [],
+                            location: <internal>:33:39,
+                        },
+                        location: <internal>:33:39,
+                    },
+                    location: <internal>:33:39,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:38:40,
+                    },
+                ),
+                location: <internal>:12:40,
+            },
+        ),
+        ItemId(
             9685703253129516901,
         ): Impl(
             Implementation {

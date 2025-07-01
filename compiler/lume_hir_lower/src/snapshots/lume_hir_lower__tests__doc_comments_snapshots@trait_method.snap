@@ -8,6 +8,50 @@ Map {
     ),
     items: {
         ItemId(
+            15564699351810098910,
+        ): TraitMethodDef(
+            TraitMethodDefinition {
+                id: ItemId(
+                    15564699351810098910,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "bar",
+                    location: <internal>:69:72,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        17666474489655347949,
+                    ),
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "void",
+                                location: <internal>:78:82,
+                            },
+                            type_arguments: [],
+                            location: <internal>:78:84,
+                        },
+                        location: <internal>:78:84,
+                    },
+                    location: <internal>:78:84,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:83:86,
+                    },
+                ),
+                location: <internal>:66:86,
+            },
+        ),
+        ItemId(
             5175167619020667705,
         ): Type(
             Trait(

@@ -36,7 +36,6 @@ description: let _ = call(0);
                             1,
                         ),
                     },
-                    location: <internal>:8:16,
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
@@ -69,7 +68,6 @@ description: let _ = call(0);
                                             2,
                                         ),
                                     },
-                                    location: <internal>:13:14,
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
@@ -80,7 +78,6 @@ description: let _ = call(0);
                                                     2,
                                                 ),
                                             },
-                                            location: <internal>:13:14,
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
@@ -95,13 +92,18 @@ description: let _ = call(0);
                                                     kind: I32,
                                                 },
                                             ),
+                                            location: <internal>:13:14,
                                         },
                                     ),
+                                    location: <internal>:13:14,
                                 },
                             ],
+                            location: <internal>:8:16,
                         },
                     ),
+                    location: <internal>:8:16,
                 },
+                location: <internal>:0:16,
             },
         ),
         location: <internal>:0:16,

@@ -8,6 +8,93 @@ Map {
     ),
     items: {
         ItemId(
+            4915573846357939171,
+        ): TraitMethodImpl(
+            TraitMethodImplementation {
+                id: ItemId(
+                    4915573846357939171,
+                ),
+                method_id: None,
+                visibility: Public,
+                name: Identifier {
+                    name: "add",
+                    location: <internal>:62:65,
+                },
+                parameters: [
+                    Parameter {
+                        name: Identifier {
+                            name: "other",
+                            location: <internal>:66:71,
+                        },
+                        param_type: Type {
+                            id: ItemId(
+                                6143724420395906933,
+                            ),
+                            name: Path {
+                                root: [
+                                    Type {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
+                                    },
+                                ],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Int32",
+                                        location: <internal>:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: <internal>:0:0,
+                                },
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:73:79,
+                        },
+                        vararg: false,
+                        location: <internal>:66:79,
+                    },
+                ],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId(
+                        6143724420395906933,
+                    ),
+                    name: Path {
+                        root: [
+                            Type {
+                                name: Identifier {
+                                    name: "std",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
+                            },
+                        ],
+                        name: Type {
+                            name: Identifier {
+                                name: "Int32",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:83:90,
+                },
+                block: Block {
+                    statements: [],
+                    location: <internal>:89:91,
+                },
+                location: <internal>:55:91,
+            },
+        ),
+        ItemId(
             4965440130371766701,
         ): Use(
             TraitImplementation {

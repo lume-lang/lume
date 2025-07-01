@@ -36,7 +36,6 @@ description: let _ = call();
                             1,
                         ),
                     },
-                    location: <internal>:8:15,
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
@@ -60,9 +59,12 @@ description: let _ = call();
                                 location: <internal>:8:13,
                             },
                             arguments: [],
+                            location: <internal>:8:15,
                         },
                     ),
+                    location: <internal>:8:15,
                 },
+                location: <internal>:0:15,
             },
         ),
         location: <internal>:0:15,

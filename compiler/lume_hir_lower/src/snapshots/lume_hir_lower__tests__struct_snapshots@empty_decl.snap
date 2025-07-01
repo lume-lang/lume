@@ -30,7 +30,6 @@ Map {
                     },
                     builtin: false,
                     properties: [],
-                    methods: [],
                     type_parameters: TypeParameters {
                         inner: [],
                     },
