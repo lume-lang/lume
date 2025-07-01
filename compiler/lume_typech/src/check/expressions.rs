@@ -1,4 +1,5 @@
 use error_snippet::Result;
+use indexmap::IndexSet;
 use lume_hir::Path;
 use lume_types::TypeRef;
 
@@ -22,17 +23,17 @@ impl TyCheckCtx {
     fn typech_expr_item(&self, symbol: &lume_hir::Item) -> Result<()> {
         match symbol {
             lume_hir::Item::Type(ty) => match &**ty {
-                lume_hir::TypeDefinition::Struct(struct_def) => self.define_struct_type(struct_def),
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
                 _ => Ok(()),
             },
+            lume_hir::Item::Impl(impl_def) => self.define_impl_type(impl_def),
             lume_hir::Item::Function(func) => self.define_function_scope(func),
             _ => Ok(()),
         }
     }
 
-    fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
-        for method in struct_def.methods() {
+    fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
+        for method in &trait_def.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
@@ -43,8 +44,8 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
-        for method in &trait_def.methods {
+    fn define_impl_type(&self, impl_def: &lume_hir::Implementation) -> Result<()> {
+        for method in &impl_def.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
@@ -201,6 +202,7 @@ impl TyCheckCtx {
         match &expr.kind {
             lume_hir::ExpressionKind::Binary(expr) => self.binary_expression(expr),
             lume_hir::ExpressionKind::Cast(cast) => self.cast_expression(cast),
+            lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr),
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 self.call_expression(&lume_hir::CallExpression::Instanced(call))
             }
@@ -285,8 +287,68 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    /// Asserts that the given construction expression fulfills the requirements by
+    /// the declared type which is being constructed, such as all fields being initialized,
+    /// types being compatible, etc. For instance, given the following statement:
+    ///
+    /// ```lm
+    /// struct Foo {
+    ///     bar: Int32,
+    /// }
+    ///
+    /// let _: Foo = Foo {
+    ///     bar: "Hello, world!",
+    /// };
+    /// ```
+    ///
+    /// this method would raise an error, since the field `bar` expands to be of type `String`,
+    /// which is incompatible with `Int32`.
+    fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
+        let constructed_type = self.find_type_ref(&expr.path)?.unwrap();
+        let properties = self.tdb().find_properties(constructed_type.instance_of);
+
+        let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
+
+        for property in properties {
+            let Some(field) = expr.fields.iter().find(|field| field.name.as_str() == property.name) else {
+                self.dcx().emit(
+                    MissingPropertyField {
+                        source: expr.location,
+                        field: property.name.clone(),
+                    }
+                    .into(),
+                );
+
+                continue;
+            };
+
+            let prop_ty = &property.property_type;
+            let field_ty = self.type_of_expr(&field.value)?;
+
+            if let Err(err) = self.ensure_type_compatibility(&field_ty, prop_ty) {
+                self.dcx().emit(err);
+            }
+
+            fields_left.swap_remove(&field.name);
+        }
+
+        for field_left in fields_left {
+            self.dcx().emit(
+                UnknownPropertyField {
+                    source: field_left.location,
+                    ty: self.new_named_type(&constructed_type)?,
+                    field: field_left.to_string(),
+                }
+                .into(),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Asserts that the logical expression is performed on boolean values, since
     /// only boolean values can be tested in logical expressions.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn logical_expression(&self, expr: &lume_hir::Logical) -> Result<()> {
         let lhs = self.type_of_expr(&expr.lhs)?;
         let rhs = self.type_of_expr(&expr.rhs)?;

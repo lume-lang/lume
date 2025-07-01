@@ -743,6 +743,11 @@ impl TypeDatabaseContext {
         self.functions().find(|func| func.name == *name)
     }
 
+    /// Attempts to find all [`Property`]s on the given parent type.
+    pub fn find_properties(&self, owner: TypeId) -> impl Iterator<Item = &Property> {
+        self.properties().filter(move |prop| prop.owner == owner)
+    }
+
     /// Attempts to find a [`Property`] with the given name on the given parent type, if any.
     pub fn find_property(&self, owner: TypeId, name: &String) -> Option<&Property> {
         self.properties().find(|prop| prop.owner == owner && prop.name == *name)

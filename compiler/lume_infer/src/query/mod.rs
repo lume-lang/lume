@@ -79,6 +79,17 @@ impl TyInferCtx {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
+            lume_hir::ExpressionKind::Construct(e) => {
+                let ty_opt = self.find_type_ref(&e.path)?;
+
+                ty_opt.ok_or_else(|| {
+                    self.missing_type_err(&lume_hir::Type {
+                        id: lume_span::ItemId::empty(),
+                        name: e.path.clone(),
+                        location: e.path.location,
+                    })
+                })
+            }
             lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs),
             lume_hir::ExpressionKind::StaticCall(call) => Ok(self.probe_callable_static(call)?.return_type().clone()),
             lume_hir::ExpressionKind::InstanceCall(call) => {

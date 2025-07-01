@@ -50,23 +50,6 @@ pub struct UnavailableCast {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "type unavailable in Lume",
-    code = "LM4101",
-    help = "you can use the {suggestion} type, which likely is what you meant."
-)]
-pub struct UnavailableScalarType {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("the type {found} does not exist in Lume.")]
-    pub range: Range<usize>,
-
-    pub found: String,
-    pub suggestion: &'static str,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "missing method in implementation", code = "LM4161")]
 pub struct TraitImplMissingMethod {
     #[span]
@@ -159,6 +142,25 @@ pub struct MismatchedTypesBranches {
 
     pub expected: NamedTypeRef,
     pub found: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "missing structure field", code = "LM4385")]
+pub struct MissingPropertyField {
+    #[label(source, "constructor is missing field {field}")]
+    pub source: Location,
+
+    pub field: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "unknown structure field", code = "LM4386")]
+pub struct UnknownPropertyField {
+    #[label(source, "type {ty} has no field {field}")]
+    pub source: Location,
+
+    pub ty: NamedTypeRef,
+    pub field: String,
 }
 
 #[derive(Diagnostic, Debug)]
