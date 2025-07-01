@@ -80,6 +80,11 @@ impl Identifier {
     pub fn is_lower(&self) -> bool {
         self.name.starts_with(|c: char| c.is_ascii_lowercase())
     }
+
+    #[inline]
+    pub fn is_all_upper(&self) -> bool {
+        self.name.chars().all(|c: char| c == '_' || c.is_ascii_uppercase())
+    }
 }
 
 impl From<String> for Identifier {
@@ -337,7 +342,23 @@ impl std::fmt::Display for PathSegment {
             }
             | Self::Callable {
                 name, type_arguments, ..
-            } => f.write_fmt(format_args!("{name}<{type_arguments:?}>")),
+            } => {
+                f.write_fmt(format_args!("{name}"))?;
+
+                if !type_arguments.is_empty() {
+                    write!(
+                        f,
+                        "<{}>",
+                        type_arguments
+                            .iter()
+                            .map(std::string::ToString::to_string)
+                            .collect::<Vec<String>>()
+                            .join(", ")
+                    )?;
+                }
+
+                Ok(())
+            }
         }
     }
 }
@@ -401,7 +422,11 @@ impl Path {
 
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?}::{}", self.root, self.name))
+        for segment in &self.root {
+            f.write_fmt(format_args!("{segment}::"))?;
+        }
+
+        f.write_fmt(format_args!("{}", self.name))
     }
 }
 
@@ -862,6 +887,7 @@ pub enum Expression {
     Member(Box<Member>),
     Range(Box<Range>),
     Variable(Box<Variable>),
+    Variant(Box<Variant>),
 }
 
 impl Node for Expression {
@@ -879,6 +905,7 @@ impl Node for Expression {
             Self::Member(e) => &e.location,
             Self::Range(e) => &e.location,
             Self::Variable(e) => e.location(),
+            Self::Variant(e) => e.location(),
         }
     }
 }
@@ -1083,6 +1110,17 @@ pub struct Variable {
 }
 
 impl Node for Variable {
+    fn location(&self) -> &Location {
+        &self.name.location
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Variant {
+    pub name: Path,
+}
+
+impl Node for Variant {
     fn location(&self) -> &Location {
         &self.name.location
     }

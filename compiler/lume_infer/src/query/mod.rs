@@ -123,6 +123,18 @@ impl TyInferCtx {
                 lume_hir::VariableSource::Parameter(param) => self.mk_type_ref(&param.param_type),
                 lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var),
             },
+            lume_hir::ExpressionKind::Variant(var) => {
+                let enum_segment = var.name.clone().parent().unwrap();
+                let enum_ty = self.find_type_ref(&enum_segment)?;
+
+                enum_ty.ok_or_else(|| {
+                    self.missing_type_err(&lume_hir::Type {
+                        id: lume_span::ItemId::empty(),
+                        name: enum_segment.clone(),
+                        location: enum_segment.location,
+                    })
+                })
+            }
             lume_hir::ExpressionKind::Void => Ok(TypeRef::void()),
         }
     }

@@ -356,6 +356,12 @@ impl Parser {
                 }
             }
 
+            // If the identifier is all upper case, we'll parse it as a const variable reference
+            _ if identifier.is_all_upper() => Ok(self.parse_variable(identifier)),
+
+            // If the identifier is not lower case, it might be a path expression
+            _ if !identifier.is_lower() => self.parse_path_expression(identifier),
+
             // If the name stands alone, it's likely a variable reference
             _ => Ok(self.parse_variable(identifier)),
         }
@@ -476,6 +482,11 @@ impl Parser {
 
         let path = self.parse_path()?;
 
+        let subtyped = path
+            .root
+            .last()
+            .is_some_and(|seg| matches!(seg, PathSegment::Type { .. }));
+
         match &path.name {
             PathSegment::Namespace { name } => Err(crate::errors::ExpectedValueNamespace {
                 source: self.source.clone(),
@@ -483,6 +494,7 @@ impl Parser {
                 actual: name.to_string(),
             }
             .into()),
+            PathSegment::Type { .. } if subtyped => Ok(Expression::Variant(Box::new(Variant { name: path }))),
             PathSegment::Type { location, .. } => Err(crate::errors::ExpectedValueType {
                 source: self.source.clone(),
                 range: location.0.clone(),

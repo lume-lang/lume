@@ -37,6 +37,7 @@ impl LowerModule<'_> {
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
+            ast::Expression::Variant(e) => self.expr_variant(*e)?,
         };
 
         self.map.expressions.insert(expr.id, expr.clone());
@@ -316,6 +317,19 @@ impl LowerModule<'_> {
                 name: self.identifier(expr.name.clone()),
                 location,
             })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_variant(&mut self, expr: ast::Variant) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let name = self.resolve_symbol_name(&expr.name)?;
+        let location = self.location(expr.location().clone());
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::Variant(Box::new(hir::Variant { id, name })),
         })
     }
 }

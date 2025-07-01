@@ -842,6 +842,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
+            | lume_hir::ExpressionKind::Variant(_)
             | lume_hir::ExpressionKind::Void => Ok(()),
         }
     }

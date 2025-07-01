@@ -1057,6 +1057,7 @@ pub enum ExpressionKind {
     Logical(Box<Logical>),
     Member(Box<Member>),
     Variable(Box<Variable>),
+    Variant(Box<Variant>),
     Void,
 }
 
@@ -1310,6 +1311,18 @@ pub struct Variable {
 pub enum VariableSource {
     Parameter(Parameter),
     Variable(VariableDeclaration),
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Variant {
+    pub id: ExpressionId,
+    pub name: Path,
+}
+
+impl Node for Variant {
+    fn location(&self) -> Location {
+        self.name.location
+    }
 }
 
 #[derive(Node, Debug, Clone, Eq)]

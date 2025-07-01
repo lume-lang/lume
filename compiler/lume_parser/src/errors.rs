@@ -152,7 +152,7 @@ pub struct ExpectedValueType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected value, found type {actual:?} instead")]
+    #[label("expected value, found type {actual} instead")]
     pub range: Range<usize>,
 
     pub actual: String,
@@ -164,7 +164,7 @@ pub struct ExpectedValueNamespace {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected value, found namespace {actual:?} instead")]
+    #[label("expected value, found namespace {actual} instead")]
     pub range: Range<usize>,
 
     pub actual: String,
