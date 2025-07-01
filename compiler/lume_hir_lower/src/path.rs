@@ -14,7 +14,7 @@ impl LowerModule<'_> {
             return Err(err!(self, location, InvalidNamespacePath, path, Box::new(path.path)));
         };
 
-        let name = lume_hir::PathSegment::ty(self.identifier(name.clone()));
+        let name = lume_hir::PathSegment::namespace(self.identifier(name.clone()));
 
         let root = root
             .iter()

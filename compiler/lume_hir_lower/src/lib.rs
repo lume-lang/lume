@@ -447,11 +447,15 @@ impl<'a> LowerModule<'a> {
         for imported_name in expr.names {
             let namespace = self.import_path(expr.path.clone())?;
 
-            let imported_name = PathSegment::ty(self.identifier(imported_name));
-            let imported_symbol_name = Path::with_root(namespace, imported_name);
+            let import_path_name = if imported_name.is_lower() {
+                PathSegment::callable(self.identifier(imported_name))
+            } else {
+                PathSegment::ty(self.identifier(imported_name))
+            };
 
-            self.imports
-                .insert(imported_symbol_name.name.to_string(), imported_symbol_name);
+            let imported_path = Path::with_root(namespace, import_path_name);
+
+            self.imports.insert(imported_path.name.to_string(), imported_path);
         }
 
         Ok(())

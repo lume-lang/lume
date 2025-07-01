@@ -338,6 +338,11 @@ impl Path {
     pub fn type_arguments(&self) -> &[Type] {
         self.name.type_arguments()
     }
+
+    /// Determines whether the path refers to a type.
+    pub fn is_type(&self) -> bool {
+        matches!(self.name, PathSegment::Type { .. })
+    }
 }
 
 impl std::fmt::Display for Path {
