@@ -882,20 +882,23 @@ pub struct VariableDeclaration {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Break {
     pub id: StatementId,
+    pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub id: StatementId,
+    pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: StatementId,
     pub value: Option<Expression>,
+    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
@@ -945,8 +948,8 @@ pub struct PredicateLoop {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Expression {
     pub id: ExpressionId,
-    pub location: Location,
     pub kind: ExpressionKind,
+    pub location: Location,
 }
 
 impl Expression {
@@ -1093,11 +1096,12 @@ impl CallExpression<'_> {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
@@ -1107,13 +1111,13 @@ pub enum BinaryOperatorKind {
     Xor,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Binary {
     pub id: ExpressionId,
     pub lhs: Expression,
@@ -1122,14 +1126,15 @@ pub struct Binary {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Cast {
     pub id: ExpressionId,
     pub source: Expression,
     pub target: Type,
+    pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Construct {
     pub id: ExpressionId,
     pub path: Path,
@@ -1137,17 +1142,19 @@ pub struct Construct {
     pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Field {
     pub name: Identifier,
     pub value: Expression,
+    pub location: Location,
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct StaticCall {
     pub id: ExpressionId,
     pub name: Path,
     pub arguments: Vec<Expression>,
+    pub location: Location,
 }
 
 impl StaticCall {
@@ -1156,12 +1163,13 @@ impl StaticCall {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct InstanceCall {
     pub id: ExpressionId,
     pub callee: Expression,
     pub name: PathSegment,
     pub arguments: Vec<Expression>,
+    pub location: Location,
 }
 
 impl InstanceCall {
@@ -1173,8 +1181,8 @@ impl InstanceCall {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Literal {
     pub id: ExpressionId,
-    pub location: Location,
     pub kind: LiteralKind,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

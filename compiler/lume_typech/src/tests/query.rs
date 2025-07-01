@@ -42,6 +42,7 @@ fn query_function_check_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -59,6 +60,7 @@ fn query_function_check_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -79,6 +81,7 @@ fn query_function_check_arg_type() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -102,6 +105,7 @@ fn query_function_check_arg_type_second() -> Result<()> {
             lume_hir::Expression::lit_bool(false),
             lume_hir::Expression::lit_bool(false),
         ],
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -122,6 +126,7 @@ fn query_function_check_arg_type_match() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false), lume_hir::Expression::lit_i32(1)],
+        location: Location::empty(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -139,6 +144,7 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -163,6 +169,7 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
             location: Location::empty(),
         }),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
@@ -277,6 +284,7 @@ fn query_check_method_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -309,6 +317,7 @@ fn query_check_method_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -343,6 +352,7 @@ fn query_check_method_arg_type() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -377,6 +387,7 @@ fn query_check_method_type_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -418,6 +429,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
             },
         ),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     assert_eq!(
@@ -436,6 +448,7 @@ fn query_lookup_functions_single() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -458,6 +471,7 @@ fn query_lookup_functions_missing() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -477,6 +491,7 @@ fn query_lookup_functions_suggestion_name_mismatch() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -496,6 +511,7 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -515,6 +531,7 @@ fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![lume_hir::Expression::lit_bool(false)],
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);
@@ -534,6 +551,7 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
+        location: Location::empty(),
     };
 
     let func = tcx.lookup_functions(&expr);

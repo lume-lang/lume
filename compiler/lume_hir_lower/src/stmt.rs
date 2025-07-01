@@ -124,7 +124,7 @@ impl LowerModule<'_> {
         hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Break(Box::new(hir::Break { id })),
+            kind: hir::StatementKind::Break(Box::new(hir::Break { id, location })),
         }
     }
 
@@ -136,7 +136,7 @@ impl LowerModule<'_> {
         hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Continue(Box::new(hir::Continue { id })),
+            kind: hir::StatementKind::Continue(Box::new(hir::Continue { id, location })),
         }
     }
 
@@ -149,7 +149,7 @@ impl LowerModule<'_> {
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Return(Box::new(hir::Return { id, value })),
+            kind: hir::StatementKind::Return(Box::new(hir::Return { id, value, location })),
         })
     }
 

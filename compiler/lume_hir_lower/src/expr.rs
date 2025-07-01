@@ -70,6 +70,7 @@ impl LowerModule<'_> {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
                 arguments: values,
+                location,
             })),
         })
     }
@@ -84,7 +85,12 @@ impl LowerModule<'_> {
         Ok(hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Assignment(Box::new(hir::Assignment { id, target, value })),
+            kind: hir::ExpressionKind::Assignment(Box::new(hir::Assignment {
+                id,
+                target,
+                value,
+                location,
+            })),
         })
     }
 
@@ -134,9 +140,15 @@ impl LowerModule<'_> {
                 callee,
                 name: name.name,
                 arguments,
+                location,
             }))
         } else {
-            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall { id, name, arguments }))
+            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
+                id,
+                name,
+                arguments,
+                location,
+            }))
         };
 
         Ok(hir::Expression { id, location, kind })
@@ -152,7 +164,12 @@ impl LowerModule<'_> {
         Ok(hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Cast(Box::new(hir::Cast { id, source, target })),
+            kind: hir::ExpressionKind::Cast(Box::new(hir::Cast {
+                id,
+                source,
+                target,
+                location,
+            })),
         })
     }
 
@@ -184,8 +201,9 @@ impl LowerModule<'_> {
     fn expr_field(&mut self, expr: ast::Field) -> Result<hir::Field> {
         let name = self.identifier(expr.name);
         let value = self.expression(expr.value)?;
+        let location = self.location(expr.location);
 
-        Ok(hir::Field { name, value })
+        Ok(hir::Field { name, value, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
@@ -275,6 +293,7 @@ impl LowerModule<'_> {
                 id,
                 name: self.resolve_symbol_name(&range_type)?,
                 arguments: vec![lower, upper],
+                location,
             })),
         })
     }
