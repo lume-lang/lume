@@ -328,7 +328,9 @@ impl TyCheckCtx {
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
-                if let Some(callee_ty_name) = call.name.clone().parent() {
+                if let Some(callee_ty_name) = call.name.clone().parent()
+                    && callee_ty_name.is_type()
+                {
                     let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
                     let method = self.lookup_methods(expr, &callee_type)?;
 
