@@ -149,10 +149,11 @@ impl<'pkg> DependencyResolver<'pkg> {
             return FileDependencyFetcher.fetch(dependency_path, version);
         };
 
-        if let Some(host) = url.host_str() {
-            if ["http", "https"].contains(&url.scheme()) && ["github.com", "gitlab.com"].contains(&host) {
-                return GitDependencyFetcher.fetch(dependency_path, version);
-            }
+        if let Some(host) = url.host_str()
+            && ["http", "https"].contains(&url.scheme())
+            && ["github.com", "gitlab.com"].contains(&host)
+        {
+            return GitDependencyFetcher.fetch(dependency_path, version);
         }
 
         match url.scheme() {

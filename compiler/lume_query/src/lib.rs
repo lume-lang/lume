@@ -35,7 +35,7 @@ impl CacheStore {
     ///
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
-    pub fn read(&self) -> RwLockReadGuard<HashMap<u64, &'static (dyn Any + Send + Sync)>> {
+    pub fn read(&'_ self) -> RwLockReadGuard<'_, HashMap<u64, &'static (dyn Any + Send + Sync)>> {
         self.inner.read().unwrap()
     }
 
@@ -45,7 +45,7 @@ impl CacheStore {
     ///
     /// This method panics if another thread write-locked the store before
     /// this method was invoked, without releasing the lock.
-    pub fn write(&self) -> RwLockWriteGuard<HashMap<u64, &'static (dyn Any + Send + Sync)>> {
+    pub fn write(&'_ self) -> RwLockWriteGuard<'_, HashMap<u64, &'static (dyn Any + Send + Sync)>> {
         self.inner.write().unwrap()
     }
 

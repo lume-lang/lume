@@ -8,7 +8,6 @@ use lume_infer::query::CallReference;
 use lume_types::TypeDatabaseContext;
 
 mod check;
-mod errors;
 pub(crate) mod query;
 #[cfg(test)]
 mod tests;

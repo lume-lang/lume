@@ -50,7 +50,7 @@ impl TyInferCtx {
 
     /// Returns the [`lume_hir::Def`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn hir_def(&self, id: lume_span::DefId) -> Option<lume_hir::Def> {
+    pub fn hir_def(&'_ self, id: lume_span::DefId) -> Option<lume_hir::Def<'_>> {
         match id {
             lume_span::DefId::Item(id) => self.hir_item(id).map(lume_hir::Def::Item),
             lume_span::DefId::Statement(id) => self.hir_stmt(id).map(lume_hir::Def::Statement),
@@ -117,7 +117,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::Def`] with the given ID was found.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn hir_expect_def(&self, id: lume_span::DefId) -> lume_hir::Def {
+    pub fn hir_expect_def(&'_ self, id: lume_span::DefId) -> lume_hir::Def<'_> {
         match self.hir_def(id) {
             Some(item) => item,
             None => panic!("expected HIR def with ID of {id:?}"),

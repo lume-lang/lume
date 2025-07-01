@@ -16,18 +16,6 @@ pub struct InvalidNamespacePath {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Undeclared function", code = "LM3012")]
-pub struct MissingFunction {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("Could not find a function named '{name}' in the current scope")]
-    pub range: Range<usize>,
-
-    pub name: String,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "cannot use {ty} outside of a class", code = "LM3013")]
 pub struct SelfOutsideClass {
     #[span]

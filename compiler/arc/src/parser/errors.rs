@@ -19,18 +19,6 @@ pub struct UnexpectedToken {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "unexpected top-level statement", code = "ARC0002")]
-pub struct InvalidTopLevelStatement {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("expected a top-level statement, got {actual} instead")]
-    pub range: Range<usize>,
-
-    pub actual: TokenKind,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "expected identifier", code = "ARC0003")]
 pub struct ExpectedIdentifier {
     #[span]

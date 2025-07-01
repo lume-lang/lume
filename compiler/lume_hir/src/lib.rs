@@ -788,7 +788,7 @@ pub struct TraitMethodDefinition {
 }
 
 impl TraitMethodDefinition {
-    pub fn signature(&self) -> Signature {
+    pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
             name: &self.name,
             type_parameters: &self.type_parameters.inner,
@@ -841,7 +841,7 @@ pub struct TraitMethodImplementation {
 }
 
 impl TraitMethodImplementation {
-    pub fn signature(&self) -> Signature {
+    pub fn signature(&'_ self) -> Signature<'_> {
         Signature {
             name: &self.name,
             type_parameters: &self.type_parameters.inner,

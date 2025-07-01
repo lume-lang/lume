@@ -28,13 +28,3 @@ pub struct MissingEndingQuote {
     #[label("string literal was started, but has no matching end-quote")]
     pub range: Range<usize>,
 }
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "end of file", code = "LM1023", help = "has the file been fully written?")]
-pub struct UnexpectedEndOfFile {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("unexpected end-of-file")]
-    pub range: Range<usize>,
-}

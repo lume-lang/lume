@@ -198,7 +198,7 @@ pub struct Function {
 
 impl Function {
     /// Gets the signature of the function.
-    pub fn sig(&self) -> FunctionSig {
+    pub fn sig(&'_ self) -> FunctionSig<'_> {
         FunctionSig {
             params: &self.parameters,
             type_params: &self.type_parameters,
@@ -229,7 +229,7 @@ pub struct Method {
 
 impl Method {
     /// Gets the signature of the method.
-    pub fn sig(&self) -> FunctionSig {
+    pub fn sig(&'_ self) -> FunctionSig<'_> {
         FunctionSig {
             params: &self.parameters,
             type_params: &self.type_parameters,

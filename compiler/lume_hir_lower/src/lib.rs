@@ -172,7 +172,7 @@ pub struct LowerModule<'a> {
 
 impl<'a> LowerModule<'a> {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &mut Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule {
+    pub fn new(map: &'_ mut Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'_> {
         let package_id = map.package;
 
         LowerModule {

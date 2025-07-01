@@ -426,10 +426,10 @@ impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self.kind)?;
 
-        if !self.kind.has_value() {
-            if let Some(value) = &self.value {
-                write!(f, " ({value})")?;
-            }
+        if !self.kind.has_value()
+            && let Some(value) = &self.value
+        {
+            write!(f, " ({value})")?;
         }
 
         Ok(())
@@ -763,10 +763,10 @@ impl Lexer {
 
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
-        if chars.len() >= 3 {
-            if let ('.', '.', '.') = (chars[0], chars[1], chars[2]) {
-                return Ok((TokenKind::DotDotDot, 3));
-            }
+        if chars.len() >= 3
+            && let ('.', '.', '.') = (chars[0], chars[1], chars[2])
+        {
+            return Ok((TokenKind::DotDotDot, 3));
         }
 
         if chars.len() >= 2 {

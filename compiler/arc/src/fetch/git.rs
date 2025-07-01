@@ -37,14 +37,14 @@ impl DependencyFetcher for GitDependencyFetcher {
 
         let local_directory = LOCAL_CACHE_DIR.join(repository_name);
 
-        if !local_directory.exists() {
-            if let Err(err) = std::fs::create_dir_all(&local_directory) {
-                return Err(SimpleDiagnostic::new(
-                    "failed to clone repository: could not create local directory for clone",
-                )
-                .add_cause(err.into_diagnostic())
-                .into());
-            }
+        if !local_directory.exists()
+            && let Err(err) = std::fs::create_dir_all(&local_directory)
+        {
+            return Err(SimpleDiagnostic::new(
+                "failed to clone repository: could not create local directory for clone",
+            )
+            .add_cause(err.into_diagnostic())
+            .into());
         }
 
         let mut fetch_opts = FetchOptions::new();

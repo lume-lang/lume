@@ -196,10 +196,10 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         TKey: Borrow<K>,
         K: Hash + Eq + ?Sized,
     {
-        if let Some(SymbolTableEntry::Frame(f)) = self.symbols.first() {
-            if let Some(v) = f.entries.get(name) {
-                return Some(v);
-            }
+        if let Some(SymbolTableEntry::Frame(f)) = self.symbols.first()
+            && let Some(v) = f.entries.get(name)
+        {
+            return Some(v);
         }
 
         None
