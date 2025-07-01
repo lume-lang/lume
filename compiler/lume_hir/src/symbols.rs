@@ -243,6 +243,7 @@ mod tests {
                 })),
                 location: Location::empty(),
             },
+            location: Location::empty(),
         }
     }
 

@@ -585,6 +585,14 @@ pub struct Parameter {
     pub location: Location,
 }
 
+impl std::hash::Hash for Parameter {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+        self.param_type.hash(state);
+        self.vararg.hash(state);
+    }
+}
+
 impl PartialEq for Parameter {
     fn eq(&self, other: &Self) -> bool {
         self.param_type == other.param_type
@@ -865,12 +873,13 @@ pub enum StatementKind {
     Expression(Box<Expression>),
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Node, Hash, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
     pub id: StatementId,
     pub name: Identifier,
     pub declared_type: Option<Type>,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1284,9 +1293,15 @@ pub struct Member {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub id: ExpressionId,
-    pub reference: StatementId,
+    pub reference: VariableSource,
     pub name: Identifier,
     pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub enum VariableSource {
+    Parameter(Parameter),
+    Variable(VariableDeclaration),
 }
 
 #[derive(Node, Debug, Clone, Eq)]

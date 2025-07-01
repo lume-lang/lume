@@ -282,9 +282,9 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_variable(&mut self, expr: ast::Variable) -> Result<hir::Expression> {
         let id = self.next_expr_id();
-
         let location = self.location(expr.location().clone());
-        let Some(local_id) = self.locals.retrieve(&expr.name.name) else {
+
+        let Some(var_source) = self.locals.retrieve(&expr.name.name) else {
             return Err(err!(self, location, UndeclaredVariable, name, expr.name.name));
         };
 
@@ -293,7 +293,7 @@ impl LowerModule<'_> {
             location,
             kind: hir::ExpressionKind::Variable(Box::new(hir::Variable {
                 id,
-                reference: local_id.id,
+                reference: var_source.clone(),
                 name: self.identifier(expr.name.clone()),
                 location,
             })),

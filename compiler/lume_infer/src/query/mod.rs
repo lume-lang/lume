@@ -119,11 +119,10 @@ impl TyInferCtx {
 
                 Ok(property.property_type.clone())
             }
-            lume_hir::ExpressionKind::Variable(var) => {
-                let decl = self.hir_expect_var_stmt(var.reference);
-
-                Ok(self.type_of(decl.value.id)?)
-            }
+            lume_hir::ExpressionKind::Variable(var) => match &var.reference {
+                lume_hir::VariableSource::Parameter(param) => self.mk_type_ref(&param.param_type),
+                lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var),
+            },
             lume_hir::ExpressionKind::Void => Ok(TypeRef::void()),
         }
     }
