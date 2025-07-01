@@ -30,9 +30,4 @@ impl<T> Array<T> {
     /// When creating a new array with a list of items, it allocates an array
     /// with the capacity of the length of the items.
     pub fn external new(...items: T) -> Array<T>
-
-    /// Allocates a new array with enough space for at least `capacity` elements.
-    ///
-    /// When creating an array with a set capacity, it's length will still be zero.
-    pub fn with_capacity(capacity: UInt64) -> Array<T> {}
 }

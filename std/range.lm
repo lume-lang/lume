@@ -1,29 +1,33 @@
 namespace std
 
 /// Represents a range bounded inclusively below and exclusively above.
-struct builtin Range<T> {
-    start: T;
-    end: T;
+struct builtin Range {
+    start: Int32;
+    end: Int32;
 }
 
-impl<T> Range<T> {
+impl Range {
     /// Creates a new range with the given bounds.
     ///
     /// This method creates a range bounded inclusively above and exclusively below. For
-    /// a range bounded inclusively above and below, see `RangeInclusive<T>::new(T, T)`.
-    pub fn new(start: T, end: T) -> Range<T> {}
+    /// a range bounded inclusively above and below, see `RangeInclusive::new(Int32, Int32)`.
+    pub fn new(start: Int32, end: Int32) -> Range {
+        return Range { start, end };
+    }
 }
 
 /// Represents a range bounded inclusively below and above.
-struct builtin RangeInclusive<T> {
-    start: T;
-    end: T;
+struct builtin RangeInclusive {
+    start: Int32;
+    end: Int32;
 }
 
-impl<T> RangeInclusive<T> {
+impl RangeInclusive {
     /// Creates a new range with the given bounds.
     ///
     /// This method creates a range bounded inclusively above and below. For a range
-    /// bounded inclusively above and exclusively below, see `Range<T>::new(T, T)`.
-    pub fn new(start: T, end: T) -> RangeInclusive<T> {}
+    /// bounded inclusively above and exclusively below, see `Range::new(Int32, Int32)`.
+    pub fn new(start: Int32, end: Int32) -> RangeInclusive {
+        return RangeInclusive { start, end };
+    }
 }
