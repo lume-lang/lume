@@ -358,7 +358,7 @@ fn test_array_snapshots() {
     assert_expr_snap_eq!("let _ = [a, b];", "multiple");
     assert_expr_snap_eq!("let _ = [a, [a, b]];", "nested");
     assert_expr_err_snap_eq!("let _ = [a b];", "missing_comma");
-    assert_expr_err_snap_eq!("let _ = [a, ];", "extra_comma");
+    assert_expr_snap_eq!("let _ = [a, ];", "trailing_comma");
 }
 
 #[test]
@@ -437,7 +437,7 @@ fn test_generic_function_snapshots() {
         "fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -> void {}",
         "multiple_types_with_multiple_constraints"
     );
-    assert_err_snap_eq!("fn test<T1,>() -> void {}", "missing_generic");
+    assert_snap_eq!("fn test<T1,>() -> void {}", "trailing_generic_comma");
     assert_err_snap_eq!("fn test<T1 T2>() -> void {}", "missing_comma");
 }
 
@@ -555,7 +555,7 @@ fn test_generic_struct_snapshots() {
     assert_snap_eq!("struct Test<T1, T2> {}", "multiple_generics");
     assert_snap_eq!("struct Test<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("struct Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
-    assert_err_snap_eq!("struct Test<T1,> {}", "missing_generic");
+    assert_snap_eq!("struct Test<T1,> {}", "trailing_generic_comma");
     assert_err_snap_eq!("struct Test<T1 T2> {}", "missing_comma");
 }
 
@@ -570,7 +570,7 @@ fn test_generic_method_snapshots() {
         "impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} }",
         "constrained_generics"
     );
-    assert_err_snap_eq!("impl Test { fn test<T1,>() -> void {} }", "missing_generic");
+    assert_snap_eq!("impl Test { fn test<T1,>() -> void {} }", "trailing_generic_comma");
     assert_err_snap_eq!("impl Test { fn test<T1 T2>() -> void {} }", "missing_comma");
 }
 
@@ -580,7 +580,7 @@ fn test_enum_snapshots() {
     assert_snap_eq!("enum Foo { Bar }", "single_variant");
     assert_snap_eq!("enum Foo { Bar, Baz }", "multiple_variants");
     assert_err_snap_eq!("enum Foo { Bar Baz }", "missing_comma");
-    assert_err_snap_eq!("enum Foo { Bar, Baz, }", "extra_comma");
+    assert_snap_eq!("enum Foo { Bar, Baz, }", "trailing_comma");
 
     assert_snap_eq!(
         "

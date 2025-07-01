@@ -2,7 +2,7 @@
 source: compiler/lume_parser/src/tests.rs
 expression: "parse_expr_err(\"let _ = [a b];\")"
 ---
-UnexpectedToken {
+MissingDelimiterInSequence {
     source: SourceFile {
         id: SourceFileId(
             PackageId(
@@ -17,6 +17,5 @@ UnexpectedToken {
         ),
     },
     range: 11..12,
-    expected: ,,
-    actual: identifier,
+    delimiter: ,,
 }

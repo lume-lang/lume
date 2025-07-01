@@ -452,12 +452,25 @@ impl Parser {
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
-        while self.consume_if(close).is_none() {
-            if !v.is_empty() && !self.peek(close) {
-                self.consume(delim)?;
-            }
+        if self.check(close) {
+            return Ok(v);
+        }
 
+        while !self.check(close) {
             v.push(f(self)?);
+
+            if !self.check(delim) {
+                if !self.check(close) {
+                    return Err(MissingDelimiterInSequence {
+                        source: self.source.clone(),
+                        range: self.token().index,
+                        delimiter: delim,
+                    }
+                    .into());
+                }
+
+                break;
+            }
         }
 
         Ok(v)

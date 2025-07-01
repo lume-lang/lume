@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"struct Test<T1,> {}\")"
+---
+[
+    TypeDefinition(
+        Struct(
+            StructDefinition {
+                name: Identifier {
+                    name: "Test",
+                    location: Location(
+                        7..11,
+                    ),
+                },
+                builtin: false,
+                properties: [],
+                type_parameters: [
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T1",
+                            location: Location(
+                                12..14,
+                            ),
+                        },
+                        constraints: [],
+                    },
+                ],
+                location: Location(
+                    0..19,
+                ),
+                documentation: None,
+            },
+        ),
+    ),
+]

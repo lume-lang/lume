@@ -1,0 +1,107 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
+---
+[
+    Impl(
+        Implementation {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..4,
+                    ),
+                },
+            ),
+            name: Named(
+                NamedType {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Test",
+                                location: Location(
+                                    5..9,
+                                ),
+                            },
+                            type_arguments: [],
+                            location: Location(
+                                5..11,
+                            ),
+                        },
+                        location: Location(
+                            5..11,
+                        ),
+                    },
+                },
+            ),
+            methods: [
+                MethodDefinition {
+                    visibility: Private(
+                        Private {
+                            location: Location(
+                                12..14,
+                            ),
+                        },
+                    ),
+                    external: false,
+                    name: Identifier {
+                        name: "test",
+                        location: Location(
+                            15..19,
+                        ),
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: Location(
+                                    20..22,
+                                ),
+                            },
+                            constraints: [],
+                        },
+                    ],
+                    return_type: Some(
+                        Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "void",
+                                            location: Location(
+                                                30..34,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            30..36,
+                                        ),
+                                    },
+                                    location: Location(
+                                        30..36,
+                                    ),
+                                },
+                            },
+                        ),
+                    ),
+                    block: Block {
+                        statements: [],
+                        location: Location(
+                            35..37,
+                        ),
+                    },
+                    location: Location(
+                        12..37,
+                    ),
+                    documentation: None,
+                },
+            ],
+            type_parameters: [],
+            location: Location(
+                0..39,
+            ),
+        },
+    ),
+]

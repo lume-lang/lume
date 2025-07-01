@@ -1,0 +1,70 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"fn test<T1,>() -> void {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..2,
+                    ),
+                },
+            ),
+            external: false,
+            name: Identifier {
+                name: "test",
+                location: Location(
+                    3..7,
+                ),
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: Location(
+                            8..10,
+                        ),
+                    },
+                    constraints: [],
+                },
+            ],
+            return_type: Some(
+                Named(
+                    NamedType {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: Location(
+                                        18..22,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    18..24,
+                                ),
+                            },
+                            location: Location(
+                                18..24,
+                            ),
+                        },
+                    },
+                ),
+            ),
+            block: Block {
+                statements: [],
+                location: Location(
+                    23..25,
+                ),
+            },
+            location: Location(
+                0..25,
+            ),
+            documentation: None,
+        },
+    ),
+]

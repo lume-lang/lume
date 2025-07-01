@@ -196,6 +196,18 @@ pub struct InvalidLiteralType {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "missing delimiter in sequence", code = "LM1080")]
+pub struct MissingDelimiterInSequence {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected {delimiter} in sequence")]
+    pub range: Range<usize>,
+
+    pub delimiter: TokenKind,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "Unexpected function body",
     code = "LM1090",
