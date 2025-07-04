@@ -347,6 +347,10 @@ impl Path {
 
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for segment in &self.root {
+            write!(f, "{segment}::")?;
+        }
+
         write!(f, "{}", self.name)
     }
 }
@@ -437,6 +441,14 @@ impl std::fmt::Display for SignatureOwned {
 pub struct Block {
     pub statements: Vec<Statement>,
     pub location: Location,
+}
+
+impl Block {
+    /// Determines whether all branches from the block return from the
+    /// control flow.
+    pub fn is_returning(&self) -> bool {
+        self.statements.iter().all(Statement::is_returning)
+    }
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
@@ -584,6 +596,7 @@ impl WithTypeParameters for FunctionDefinition {
 
 #[derive(Node, Debug, Clone, Eq)]
 pub struct Parameter {
+    pub index: usize,
     pub name: Identifier,
     pub param_type: Type,
     pub vararg: bool,
@@ -592,6 +605,7 @@ pub struct Parameter {
 
 impl std::hash::Hash for Parameter {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.index.hash(state);
         self.name.hash(state);
         self.param_type.hash(state);
         self.vararg.hash(state);
@@ -864,6 +878,22 @@ pub struct Statement {
     pub location: Location,
 }
 
+impl Statement {
+    /// Determines whether the given statement or all branches within
+    /// the statement branch away from the current control flow.
+    pub fn is_returning(&self) -> bool {
+        match &self.kind {
+            StatementKind::If(stmt) => stmt.is_returning(),
+            StatementKind::Unless(stmt) => stmt.is_returning(),
+            StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
+            StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
+            StatementKind::PredicateLoop(stmt) => stmt.is_returning(),
+            StatementKind::Return(_) | StatementKind::Continue(_) => true,
+            StatementKind::Variable(_) | StatementKind::Break(_) | StatementKind::Expression(_) => false,
+        }
+    }
+}
+
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum StatementKind {
     Variable(Box<VariableDeclaration>),
@@ -913,11 +943,37 @@ pub struct If {
     pub location: Location,
 }
 
+impl If {
+    /// Determines whether all branches from the statement return from the
+    /// control flow.
+    pub fn is_returning(&self) -> bool {
+        self.cases.iter().all(|case| case.block.is_returning())
+    }
+
+    /// Gets the `else` branch, if any is defined
+    pub fn else_branch(&self) -> Option<&Condition> {
+        self.cases.iter().find(|case| case.condition.is_none())
+    }
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Unless {
     pub id: StatementId,
     pub cases: Vec<Condition>,
     pub location: Location,
+}
+
+impl Unless {
+    /// Determines whether all branches from the statement return from the
+    /// control flow.
+    pub fn is_returning(&self) -> bool {
+        self.cases.iter().all(|case| case.block.is_returning())
+    }
+
+    /// Gets the `else` branch, if any is defined
+    pub fn else_branch(&self) -> Option<&Condition> {
+        self.cases.iter().find(|case| case.condition.is_none())
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
@@ -934,6 +990,13 @@ pub struct InfiniteLoop {
     pub location: Location,
 }
 
+impl InfiniteLoop {
+    /// Determines whether the block returns from the control flow.
+    pub fn is_returning(&self) -> bool {
+        self.block.is_returning()
+    }
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub id: StatementId,
@@ -942,12 +1005,26 @@ pub struct IteratorLoop {
     pub location: Location,
 }
 
+impl IteratorLoop {
+    /// Determines whether the block returns from the control flow.
+    pub fn is_returning(&self) -> bool {
+        self.block.is_returning()
+    }
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct PredicateLoop {
     pub id: StatementId,
     pub condition: Expression,
     pub block: Block,
     pub location: Location,
+}
+
+impl PredicateLoop {
+    /// Determines whether the block returns from the control flow.
+    pub fn is_returning(&self) -> bool {
+        self.block.is_returning()
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]

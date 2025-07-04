@@ -68,6 +68,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "arc"
 version = "0.1.0"
 dependencies = [
@@ -275,6 +281,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "either"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "encode_unicode"
@@ -584,6 +596,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "inkwell"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e67349bd7578d4afebbe15eaa642a80b884e8623db74b1716611b131feb1deef"
+dependencies = [
+ "either",
+ "inkwell_internals",
+ "libc",
+ "llvm-sys",
+ "once_cell",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "inkwell_internals"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f365c8de536236cfdebd0ba2130de22acefed18b1fb99c32783b3840aec5fb46"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "insta"
 version = "1.43.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -727,6 +764,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "241eaef5fd12c88705a01fc1066c48c4b36e0dd4377dcdc7ec3942cea7a69956"
 
 [[package]]
+name = "llvm-sys"
+version = "181.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d320f9d2723c97d4b78f9190a61ed25cc7cfbe456668c08e6e7dd8e50ceb8500"
+dependencies = [
+ "anyhow",
+ "cc",
+ "lazy_static",
+ "libc",
+ "regex-lite",
+ "semver",
+]
+
+[[package]]
 name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -778,16 +829,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_codegen"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "inkwell",
+ "lume_errors",
+ "lume_mir",
+ "lume_session",
+ "lume_span",
+ "tracing",
+]
+
+[[package]]
 name = "lume_driver"
 version = "0.1.0"
 dependencies = [
  "arc",
  "error_snippet",
  "error_snippet_derive",
+ "lume_codegen",
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
+ "lume_mir",
+ "lume_mir_lower",
  "lume_session",
  "lume_span",
  "lume_typech",
@@ -886,6 +954,34 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "lume_mir"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "lume_errors",
+ "lume_hir",
+ "lume_macros",
+ "lume_session",
+ "lume_span",
+]
+
+[[package]]
+name = "lume_mir_lower"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "error_snippet_derive",
+ "indexmap",
+ "lume_errors",
+ "lume_hir",
+ "lume_mir",
+ "lume_session",
+ "lume_span",
+ "lume_typech",
+ "lume_types",
 ]
 
 [[package]]
@@ -1149,7 +1245,7 @@ checksum = "dd6f9d3d47bdd2ad6945c5015a226ec6155d0bcdfd8f7cd29f86b71f8de99d2b"
 dependencies = [
  "getrandom 0.2.16",
  "libredox",
- "thiserror",
+ "thiserror 2.0.12",
 ]
 
 [[package]]
@@ -1183,6 +1279,12 @@ dependencies = [
  "memchr",
  "regex-syntax 0.8.5",
 ]
+
+[[package]]
+name = "regex-lite"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53a49587ad06b26609c52e423de037e7f57f20d53535d66e08c695f347df952a"
 
 [[package]]
 name = "regex-syntax"
@@ -1380,11 +1482,31 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52"
+dependencies = [
+ "thiserror-impl 1.0.69",
+]
+
+[[package]]
+name = "thiserror"
 version = "2.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "567b8a2dae586314f7be2a752ec7474332959c6460e02bde30d702a66d488708"
 dependencies = [
- "thiserror-impl",
+ "thiserror-impl 2.0.12",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.69"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

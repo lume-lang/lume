@@ -194,4 +194,25 @@ impl TyInferCtx {
 
         Err(diagnostics::NoReturningAncestor { source: location }.into())
     }
+
+    /// Attempts to get the body of the given [`ItemId`], if it contains a body.
+    ///
+    /// Otherwise, returns [`None`].
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the given [`ItemId`] is not a valid item or if the
+    /// item type cannot contain a body.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_body_of(&self, id: ItemId) -> Option<&lume_hir::Block> {
+        let item = self.hir_expect_item(id);
+
+        match &item {
+            lume_hir::Item::Method(method) => method.block.as_ref(),
+            lume_hir::Item::Function(func) => func.block.as_ref(),
+            lume_hir::Item::TraitMethodDef(func) => func.block.as_ref(),
+            lume_hir::Item::TraitMethodImpl(func) => Some(&func.block),
+            ty => panic!("bug!: item type cannot contain a body: {ty:?}"),
+        }
+    }
 }

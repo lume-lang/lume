@@ -211,6 +211,12 @@ impl StatementId {
             index: index.into(),
         }
     }
+
+    /// Converts the [`StatementId`] into a [`usize`].
+    #[inline]
+    pub fn as_usize(&self) -> usize {
+        crate::hash_id(&[self.def.as_usize(), self.index.as_usize()])
+    }
 }
 
 /// Uniquely identifies any local expression, such as variables, literals, calls or otherwise.

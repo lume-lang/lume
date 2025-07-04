@@ -85,8 +85,6 @@ impl Driver {
             Compiler::build_package(dependency, gcx.clone())?;
         }
 
-        Compiler::build_package(&self.package, gcx)?;
-
         Ok(())
     }
 }
@@ -123,8 +121,7 @@ impl<'a> Compiler<'a> {
         let sources = compiler.parse()?;
         let thir_ctx = compiler.type_check(sources)?;
 
-        compiler.analyze(&thir_ctx)?;
-        compiler.codegen()?;
+        compiler.codegen(thir_ctx)?;
         compiler.link()?;
 
         Ok(())
@@ -157,22 +154,20 @@ impl<'a> Compiler<'a> {
         let mut tccx = TyCheckCtx::new(ticx);
         tccx.typecheck()?;
 
-        Ok(tccx)
-    }
-
-    /// Analyzes all the modules within the given state object.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn analyze(&mut self, thir: &TyCheckCtx) -> Result<()> {
         if self.gcx.session.options.print_type_context {
-            println!("{:#?}", thir.tdb());
+            println!("{:#?}", tccx.tdb());
         }
 
-        Ok(())
+        Ok(tccx)
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn codegen(&mut self) -> Result<()> {
+    fn codegen(&mut self, thir: TyCheckCtx) -> Result<()> {
+        let mir = lume_mir_lower::ModuleTransformer::transform(&thir);
+
+        lume_codegen::Generator::codegen(self.package, mir);
+
         Ok(())
     }
 

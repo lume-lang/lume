@@ -189,6 +189,7 @@ pub struct FunctionSig<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub id: FunctionId,
+    pub hir: ItemId,
     pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: Vec<TypeParameterId>,
@@ -219,6 +220,7 @@ pub struct Property {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
     pub id: MethodId,
+    pub hir: ItemId,
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: Path,
@@ -451,6 +453,16 @@ impl TypeRef {
             type_arguments: vec![],
             location: Location::empty(),
         }
+    }
+
+    /// Determines if the type is `void`.
+    pub fn is_void(&self) -> bool {
+        self.instance_of == TYPEREF_VOID_ID
+    }
+
+    /// Determines if the type is unknown.
+    pub fn is_unknown(&self) -> bool {
+        self.instance_of == TYPEREF_UNKNOWN_ID
     }
 }
 
@@ -760,11 +772,12 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
-    pub fn func_alloc(&mut self, name: Path, visibility: Visibility) -> FunctionId {
+    pub fn func_alloc(&mut self, hir: ItemId, name: Path, visibility: Visibility) -> FunctionId {
         let id = FunctionId(self.functions.len() as u64);
 
         let func = Function {
             id,
+            hir,
             name,
             visibility,
             type_parameters: Vec::new(),
@@ -858,12 +871,19 @@ impl TypeDatabaseContext {
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn method_alloc(&mut self, owner: TypeRef, name: Path, visibility: Visibility) -> Result<MethodId> {
+    pub fn method_alloc(
+        &mut self,
+        hir: ItemId,
+        owner: TypeRef,
+        name: Path,
+        visibility: Visibility,
+    ) -> Result<MethodId> {
         let id = MethodId(self.methods.len() as u64);
         let instance = owner.instance_of;
 
         let method = Method {
             id,
+            hir,
             callee: owner,
             name: name.clone(),
             visibility,

@@ -66,7 +66,7 @@ impl TyInferCtx {
             if let lume_hir::Item::Function(func) = item {
                 let name = func.name.clone();
                 let visibility = func.visibility;
-                let func_id = self.tdb_mut().func_alloc(name, visibility);
+                let func_id = self.tdb_mut().func_alloc(func.id, name, visibility);
 
                 func.func_id = Some(func_id);
             }
@@ -178,9 +178,9 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id = self
-                .tdb_mut()
-                .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id =
+                self.tdb_mut()
+                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);
         }
@@ -200,9 +200,9 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id = self
-                .tdb_mut()
-                .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id =
+                self.tdb_mut()
+                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);
         }
@@ -301,9 +301,9 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id = self
-                .tdb_mut()
-                .method_alloc(type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id =
+                self.tdb_mut()
+                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
 
             method.method_id = Some(method_id);
 

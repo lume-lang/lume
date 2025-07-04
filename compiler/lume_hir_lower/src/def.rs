@@ -336,18 +336,19 @@ impl LowerModule<'_> {
                     .into());
                 }
 
-                self.parameter(param)
+                self.parameter(index, param)
             })
             .collect::<Result<Vec<_>>>()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn parameter(&mut self, param: ast::Parameter) -> Result<hir::Parameter> {
+    fn parameter(&mut self, index: usize, param: ast::Parameter) -> Result<hir::Parameter> {
         let name = self.identifier(param.name);
         let param_type = self.type_ref(param.param_type)?;
         let location = self.location(param.location);
 
         Ok(hir::Parameter {
+            index,
             name,
             param_type,
             vararg: param.vararg,
