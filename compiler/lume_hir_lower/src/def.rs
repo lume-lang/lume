@@ -15,7 +15,6 @@ impl LowerModule<'_> {
             ast::TypeDefinition::Struct(t) => self.def_struct(*t),
             ast::TypeDefinition::Trait(t) => self.def_trait(*t),
             ast::TypeDefinition::Enum(t) => self.def_enum(*t),
-            ast::TypeDefinition::Alias(t) => self.def_alias(*t),
         }
     }
 
@@ -244,24 +243,6 @@ impl LowerModule<'_> {
         };
 
         Ok(symbol)
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_alias(&self, expr: ast::AliasDefinition) -> Result<lume_hir::Item> {
-        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
-        let definition = self.type_ref(*expr.definition)?;
-        let location = self.location(expr.location);
-        let id = self.item_id(&name);
-
-        Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Alias(Box::new(
-            hir::AliasDefinition {
-                id,
-                type_id: None,
-                name,
-                definition: Box::new(definition),
-                location,
-            },
-        )))))
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

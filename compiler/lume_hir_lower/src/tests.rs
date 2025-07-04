@@ -193,8 +193,6 @@ fn test_conditional_snapshots() {
     assert_expr_snap_eq!("if true { } else if false { }", "if_else_if_empty");
     assert_expr_snap_eq!("if true { } else { }", "if_else_empty");
     assert_expr_snap_eq!("if true { } else if false { } else { }", "if_else_if_else_empty");
-    assert_expr_snap_eq!("unless true { }", "unless_empty");
-    assert_expr_snap_eq!("unless true { } else { }", "unless_else_empty");
     assert_expr_snap_eq!("let a = 0; if a == 1 { }", "equality_empty");
     assert_expr_snap_eq!("let a = 0; if a != 1 { }", "inequality_empty");
     assert_expr_snap_eq!("if true { let a = 0; }", "if_statement");
@@ -203,7 +201,6 @@ fn test_conditional_snapshots() {
         "if true { let a = 0; } else if false { let a = 0; }",
         "else_if_statements"
     );
-    assert_expr_snap_eq!("unless true { let a = 0; }", "unless_statement");
 }
 
 #[test]
@@ -484,13 +481,6 @@ fn test_enum_snapshots() {
 }
 
 #[test]
-fn test_type_alias_snapshots() {
-    assert_snap_eq!("type A = B", "scalar");
-    assert_snap_eq!("type A = [B]", "array");
-    assert_snap_eq!("type A = B<C>", "generic");
-}
-
-#[test]
 fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { }", "empty");
     assert_snap_eq!("trait Add { pub fn add(other: int) -> int; }", "method");
@@ -633,19 +623,6 @@ fn test_doc_comments_snapshots() {
         }",
         "enum_case"
     );
-
-    assert_snap_eq!(
-        "/// This is a doc comment
-        type Foo = Bar",
-        "type_alias"
-    );
-}
-
-#[test]
-fn test_type_aliasing() {
-    assert_snap_eq!("type A = B", "scalar_to_scalar");
-    assert_snap_eq!("type A = [B]", "scalar_to_array");
-    assert_snap_eq!("type A = B<C>", "scalar_to_generic");
 }
 
 #[test]

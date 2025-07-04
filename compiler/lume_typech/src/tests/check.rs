@@ -49,18 +49,6 @@ fn typech_return_value_condition_if() {
 }
 
 #[test]
-fn typech_return_value_condition_unless() {
-    assert_typech_snapshot!(
-        "fn foo() -> Int32 {
-        unless false {
-            return true;
-        }
-        return 0_i32;
-    }"
-    );
-}
-
-#[test]
 fn typech_return_value_condition_inf_loop() {
     assert_typech_snapshot!(
         "fn foo() -> Int32 {

@@ -131,8 +131,6 @@ pub enum TokenKind {
     SubAssign,
     Trait,
     True,
-    Type,
-    Unless,
     Use,
     While,
 }
@@ -163,8 +161,6 @@ impl TokenKind {
                 | TokenKind::Struct
                 | TokenKind::Trait
                 | TokenKind::True
-                | TokenKind::Type
-                | TokenKind::Unless
                 | TokenKind::Use
                 | TokenKind::While
         )
@@ -294,8 +290,6 @@ impl From<TokenKind> for &'static str {
             TokenKind::SubAssign => "-=",
             TokenKind::Trait => "trait",
             TokenKind::True => "true",
-            TokenKind::Type => "type",
-            TokenKind::Unless => "unless",
             TokenKind::Use => "use",
             TokenKind::While => "while",
         }
@@ -723,8 +717,6 @@ impl Lexer {
             "struct" => Token::empty(TokenKind::Struct),
             "trait" => Token::empty(TokenKind::Trait),
             "true" => Token::empty(TokenKind::True),
-            "type" => Token::empty(TokenKind::Type),
-            "unless" => Token::empty(TokenKind::Unless),
             "use" => Token::empty(TokenKind::Use),
             "while" => Token::empty(TokenKind::While),
             _ => Token::new(TokenKind::Identifier, content),
@@ -1101,11 +1093,9 @@ mod tests {
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
         assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
         assert_token!("struct", TokenKind::Struct, None::<String>, 0, 6);
-        assert_token!("type", TokenKind::Type, None::<String>, 0, 4);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
-        assert_token!("unless", TokenKind::Unless, None::<String>, 0, 6);
         assert_token!("use", TokenKind::Use, None::<String>, 0, 3);
         assert_token!("while", TokenKind::While, None::<String>, 0, 5);
     }

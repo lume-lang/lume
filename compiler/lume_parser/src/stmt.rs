@@ -2,7 +2,7 @@ use error_snippet::Result;
 use lume_ast::*;
 use lume_lexer::TokenKind;
 
-use crate::{Parser, err, errors::*};
+use crate::Parser;
 
 impl Parser {
     /// Parses zero-or-more abstract statements at the current cursor position.
@@ -30,7 +30,7 @@ impl Parser {
             TokenKind::Break => self.parse_break(),
             TokenKind::Continue => self.parse_continue(),
             TokenKind::Return => self.parse_return(),
-            TokenKind::If | TokenKind::Unless => self.parse_conditional(),
+            TokenKind::If => self.parse_if_conditional(),
             TokenKind::Loop => self.parse_infinite_loop(),
             TokenKind::For => self.parse_iterator_loop(),
             TokenKind::While => self.parse_predicate_loop(),
@@ -107,16 +107,6 @@ impl Parser {
         Ok(Statement::VariableDeclaration(Box::new(variable)))
     }
 
-    /// Parses a conditional statement at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_conditional(&mut self) -> Result<Statement> {
-        match self.token().kind {
-            TokenKind::If => self.parse_if_conditional(),
-            TokenKind::Unless => self.parse_unless_conditional(),
-            k => panic!("invalid conditional token given: {k}"),
-        }
-    }
-
     /// Parses an "if" conditional statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_if_conditional(&mut self) -> Result<Statement> {
@@ -140,33 +130,6 @@ impl Parser {
         };
 
         Ok(Statement::If(Box::new(conditional)))
-    }
-
-    /// Parses an "unless" conditional statement at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_unless_conditional(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::Unless)?.start();
-        let mut cases = Vec::new();
-
-        // Append the primary case
-        self.parse_conditional_case(&mut cases)?;
-
-        // Moan if any `else if` blocks are found
-        if self.peek(TokenKind::Else) && self.peek_next(TokenKind::If) {
-            return Err(err!(self, UnlessElseIfClause));
-        }
-
-        // Append the `else` case
-        self.parse_else_conditional_case(&mut cases)?;
-
-        let end = cases.last().unwrap().location.end();
-
-        let conditional = UnlessCondition {
-            cases,
-            location: (start..end).into(),
-        };
-
-        Ok(Statement::Unless(Box::new(conditional)))
     }
 
     /// Parses a case within a conditional statement at the current cursor position.

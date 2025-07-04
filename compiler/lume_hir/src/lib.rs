@@ -292,11 +292,11 @@ impl Path {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("UInt64"))
     }
 
-    pub fn float() -> Self {
+    pub fn f32() -> Self {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Float"))
     }
 
-    pub fn double() -> Self {
+    pub fn f64() -> Self {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Double"))
     }
 
@@ -485,7 +485,7 @@ impl Item {
             Item::Type(symbol) => match &**symbol {
                 TypeDefinition::Struct(s) => &s.type_parameters,
                 TypeDefinition::Trait(t) => &t.type_parameters,
-                _ => &EMPTY,
+                TypeDefinition::Enum(_) => &EMPTY,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
             Item::Method(symbol) => &symbol.type_parameters,
@@ -621,7 +621,6 @@ impl PartialEq for Parameter {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
-    Alias(Box<AliasDefinition>),
     Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
 }
@@ -630,7 +629,6 @@ impl TypeDefinition {
     pub fn id(&self) -> ItemId {
         match self {
             TypeDefinition::Enum(def) => def.id,
-            TypeDefinition::Alias(def) => def.id,
             TypeDefinition::Struct(def) => def.id,
             TypeDefinition::Trait(def) => def.id,
         }
@@ -639,7 +637,6 @@ impl TypeDefinition {
     pub fn name(&self) -> &Path {
         match self {
             TypeDefinition::Enum(def) => def.name(),
-            TypeDefinition::Alias(def) => def.name(),
             TypeDefinition::Struct(def) => def.name(),
             TypeDefinition::Trait(def) => def.name(),
         }
@@ -884,7 +881,6 @@ impl Statement {
     pub fn is_returning(&self) -> bool {
         match &self.kind {
             StatementKind::If(stmt) => stmt.is_returning(),
-            StatementKind::Unless(stmt) => stmt.is_returning(),
             StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
             StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
             StatementKind::PredicateLoop(stmt) => stmt.is_returning(),
@@ -901,7 +897,6 @@ pub enum StatementKind {
     Continue(Box<Continue>),
     Return(Box<Return>),
     If(Box<If>),
-    Unless(Box<Unless>),
     InfiniteLoop(Box<InfiniteLoop>),
     IteratorLoop(Box<IteratorLoop>),
     PredicateLoop(Box<PredicateLoop>),
@@ -944,26 +939,6 @@ pub struct If {
 }
 
 impl If {
-    /// Determines whether all branches from the statement return from the
-    /// control flow.
-    pub fn is_returning(&self) -> bool {
-        self.cases.iter().all(|case| case.block.is_returning())
-    }
-
-    /// Gets the `else` branch, if any is defined
-    pub fn else_branch(&self) -> Option<&Condition> {
-        self.cases.iter().find(|case| case.condition.is_none())
-    }
-}
-
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct Unless {
-    pub id: StatementId,
-    pub cases: Vec<Condition>,
-    pub location: Location,
-}
-
-impl Unless {
     /// Determines whether all branches from the statement return from the
     /// control flow.
     pub fn is_returning(&self) -> bool {

@@ -221,16 +221,6 @@ pub struct ExternalFunctionBody {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected `else if` clause", code = "LM1097")]
-pub struct UnlessElseIfClause {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("`unless` conditionals cannot have `else if` clauses")]
-    pub range: Range<usize>,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "Invalid import path",
     code = "LM1100",

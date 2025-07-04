@@ -583,7 +583,6 @@ pub enum TypeDefinition {
     Struct(Box<StructDefinition>),
     Trait(Box<TraitDefinition>),
     Enum(Box<EnumDefinition>),
-    Alias(Box<AliasDefinition>),
 }
 
 impl Node for TypeDefinition {
@@ -593,7 +592,6 @@ impl Node for TypeDefinition {
             Self::Struct(e) => &e.location,
             Self::Trait(e) => &e.location,
             Self::Enum(e) => &e.location,
-            Self::Alias(e) => &e.location,
         }
     }
 }
@@ -606,7 +604,6 @@ impl TypeDefinition {
             TypeDefinition::Struct(struct_def) => &struct_def.name,
             TypeDefinition::Trait(trait_def) => &trait_def.name,
             TypeDefinition::Enum(enum_def) => &enum_def.name,
-            TypeDefinition::Alias(alias_def) => &alias_def.name,
         }
     }
 }
@@ -765,7 +762,6 @@ pub enum Statement {
     Continue(Box<Continue>),
     Return(Box<Return>),
     If(Box<IfCondition>),
-    Unless(Box<UnlessCondition>),
     InfiniteLoop(Box<InfiniteLoop>),
     IteratorLoop(Box<IteratorLoop>),
     PredicateLoop(Box<PredicateLoop>),
@@ -781,7 +777,6 @@ impl Node for Statement {
             Self::Continue(e) => &e.location,
             Self::Return(e) => &e.location,
             Self::If(e) => &e.location,
-            Self::Unless(e) => &e.location,
             Self::InfiniteLoop(e) => &e.location,
             Self::IteratorLoop(e) => &e.location,
             Self::PredicateLoop(e) => &e.location,
@@ -829,14 +824,6 @@ pub struct IfCondition {
 }
 
 node_location!(IfCondition);
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct UnlessCondition {
-    pub cases: Vec<Condition>,
-    pub location: Location,
-}
-
-node_location!(UnlessCondition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Condition {

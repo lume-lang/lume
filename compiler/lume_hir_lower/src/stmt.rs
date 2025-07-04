@@ -63,7 +63,6 @@ impl LowerModule<'_> {
             ast::Statement::Continue(s) => self.stmt_continue(*s),
             ast::Statement::Return(s) => self.stmt_return(*s)?,
             ast::Statement::If(e) => self.stmt_if(*e)?,
-            ast::Statement::Unless(e) => self.stmt_unless(*e)?,
             ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
             ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
             ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
@@ -168,24 +167,6 @@ impl LowerModule<'_> {
             id,
             location,
             kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
-        })
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_unless(&mut self, expr: ast::UnlessCondition) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
-        let location = self.location(expr.location);
-
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.stmt_condition(c))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(hir::Statement {
-            id,
-            location,
-            kind: hir::StatementKind::Unless(Box::new(hir::Unless { id, cases, location })),
         })
     }
 

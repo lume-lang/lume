@@ -16,7 +16,6 @@ impl Parser {
             TokenKind::Struct => self.parse_struct(),
             TokenKind::Trait => self.parse_trait(),
             TokenKind::Enum => self.parse_enum(),
-            TokenKind::Type => self.parse_type_alias(),
             TokenKind::Use => self.parse_use(),
             k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
         }
@@ -423,34 +422,6 @@ impl Parser {
             location: (start..end).into(),
             documentation: self.doc_token.take(),
         })
-    }
-
-    /// Parses a single type alias definition, such as:
-    ///
-    /// ```lm
-    /// type Alias = String | Int
-    /// ```
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_type_alias(&mut self) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Type)?.start();
-        let name = self.parse_identifier()?;
-
-        // Skip equal sign between name and type
-        self.consume(TokenKind::Assign)?;
-
-        let definition = self.parse_type()?;
-        let end = definition.location().end();
-
-        let alias = AliasDefinition {
-            name,
-            definition: Box::new(definition),
-            location: (start..end).into(),
-            documentation: self.doc_token.take(),
-        };
-
-        Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Alias(
-            Box::new(alias),
-        ))))
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]

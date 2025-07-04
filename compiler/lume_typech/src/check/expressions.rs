@@ -100,17 +100,6 @@ impl TyCheckCtx {
 
                 Ok(())
             }
-            lume_hir::StatementKind::Unless(cond) => {
-                for case in &cond.cases {
-                    if let Some(expr) = &case.condition {
-                        self.expression(expr)?;
-                    }
-
-                    self.define_block_scope(&case.block)?;
-                }
-
-                Ok(())
-            }
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.define_block_scope(&stmt.block),
             lume_hir::StatementKind::IteratorLoop(stmt) => {
                 self.expression(&stmt.collection)?;
