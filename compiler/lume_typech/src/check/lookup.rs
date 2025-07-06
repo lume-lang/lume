@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_types::{TypeKindRef, TypeRef};
+use lume_types::{TypeKind, TypeRef, UserType};
 
 use crate::TyCheckCtx;
 
@@ -8,7 +8,7 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKindRef::Trait(_) => Ok(true),
+            TypeKind::User(UserType::Trait(_)) => Ok(true),
             _ => Ok(false),
         }
     }
@@ -17,7 +17,7 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn is_void(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKindRef::Void => Ok(true),
+            TypeKind::Void => Ok(true),
             _ => Ok(false),
         }
     }

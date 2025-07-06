@@ -1,14 +1,11 @@
 use std::{fmt::Write, ops::Deref, sync::Arc};
 
 use error_snippet::Result;
-use indexmap::IndexMap;
 use lume_errors::DiagCtx;
 use lume_session::GlobalCtx;
 
 use crate::errors::*;
-use lume_hir::{
-    FunctionId, ImplId, MethodId, Path, PathSegment, PropertyId, TypeId, TypeParameterId, UseId, Visibility,
-};
+use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeId, TypeParameterId, UseId, Visibility};
 use lume_span::{ItemId, Location};
 
 pub mod errors;
@@ -100,9 +97,9 @@ impl WithTypeParameters for TypeId {
         };
 
         match &ty.kind {
-            TypeKindRef::Struct(k) => Ok(&k.type_parameters),
-            TypeKindRef::Trait(k) => Ok(&k.type_parameters),
-            kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
+            TypeKind::User(UserType::Struct(k)) => Ok(&k.type_parameters),
+            TypeKind::User(UserType::Trait(k)) => Ok(&k.type_parameters),
+            kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
         }
     }
 
@@ -112,14 +109,26 @@ impl WithTypeParameters for TypeId {
         };
 
         match &mut ty.kind {
-            TypeKindRef::Struct(k) => Ok(&mut k.type_parameters),
-            TypeKindRef::Trait(k) => Ok(&mut k.type_parameters),
-            kind => Err(TypeParametersOnNonGenericType { ty: kind.clone() }.into()),
+            TypeKind::User(UserType::Struct(k)) => Ok(&mut k.type_parameters),
+            TypeKind::User(UserType::Trait(k)) => Ok(&mut k.type_parameters),
+            kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
         }
     }
 }
 
 const TYPEREF_VOID_ID: TypeId = TypeId(0x0000_00000);
+const TYPEREF_BOOL_ID: TypeId = TypeId(0x0000_00001);
+const TYPEREF_INT8_ID: TypeId = TypeId(0x0000_00002);
+const TYPEREF_INT16_ID: TypeId = TypeId(0x0000_00003);
+const TYPEREF_INT32_ID: TypeId = TypeId(0x0000_00004);
+const TYPEREF_INT64_ID: TypeId = TypeId(0x0000_00005);
+const TYPEREF_UINT8_ID: TypeId = TypeId(0x0000_00006);
+const TYPEREF_UINT16_ID: TypeId = TypeId(0x0000_00007);
+const TYPEREF_UINT32_ID: TypeId = TypeId(0x0000_00008);
+const TYPEREF_UINT64_ID: TypeId = TypeId(0x0000_00009);
+const TYPEREF_FLOAT32_ID: TypeId = TypeId(0x0000_0000A);
+const TYPEREF_FLOAT64_ID: TypeId = TypeId(0x0000_0000B);
+const TYPEREF_STRING_ID: TypeId = TypeId(0x0000_0000C);
 const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq)]
@@ -330,8 +339,11 @@ pub struct Use {
     pub type_parameters: Vec<TypeParameterId>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum TypeKind {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TypeKindRef {
+    /// Defines a non-value type.
+    Void,
+
     /// The type is a regular user-defined struct.
     Struct,
 
@@ -341,18 +353,27 @@ pub enum TypeKind {
     /// The type is a regular user-defined enumeration.
     Enum,
 
-    /// The type is an alias to some other type.
-    Alias,
+    /// Defines a 1-bit boolean type.
+    Bool,
+
+    /// Defines an N-bit signed integer type.
+    Int(u8),
+
+    /// Defines an N-bit unsigned integer type.
+    UInt(u8),
+
+    /// Defines an N-bit floating point type.
+    Float(u8),
+
+    /// Defines a string type.
+    String,
 
     /// The type is a reference to a type parameter in the current scope.
     TypeParameter,
-
-    /// Represents a non-value.
-    Void,
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum TypeKindRef {
+pub enum UserType {
     /// The type is a regular user-defined struct.
     Struct(Box<Struct>),
 
@@ -361,26 +382,57 @@ pub enum TypeKindRef {
 
     /// The type is a regular user-defined enumeration.
     Enum(Box<Enum>),
+}
 
-    /// The type is an alias to some other type.
-    Alias(Box<Alias>),
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypeKind {
+    /// Defines a non-value type.
+    Void,
+
+    /// Defines a 1-bit boolean type.
+    Bool,
+
+    /// Defines an N-bit signed integer type.
+    Int(u8),
+
+    /// Defines an N-bit unsigned integer type.
+    UInt(u8),
+
+    /// Defines an N-bit floating point type.
+    Float(u8),
+
+    /// Defines a user-defined type.
+    User(UserType),
+
+    /// Defines a string type.
+    String,
 
     /// The type is a reference to a type parameter in the current scope.
     TypeParameter(TypeParameterId),
-
-    /// Represents a non-value.
-    Void,
 }
 
-impl TypeKindRef {
-    fn as_kind(&self) -> TypeKind {
+impl TypeKind {
+    pub fn transport(&self) -> TypeTransport {
         match self {
-            TypeKindRef::Struct(_) => TypeKind::Struct,
-            TypeKindRef::Trait(_) => TypeKind::Trait,
-            TypeKindRef::Enum(_) => TypeKind::Enum,
-            TypeKindRef::Alias(_) => TypeKind::Alias,
-            TypeKindRef::TypeParameter(_) => TypeKind::TypeParameter,
-            TypeKindRef::Void => TypeKind::Void,
+            TypeKind::Void | TypeKind::Bool | TypeKind::Int(_) | TypeKind::UInt(_) | TypeKind::Float(_) => {
+                TypeTransport::Copy
+            }
+            TypeKind::User(_) | TypeKind::String | TypeKind::TypeParameter(_) => TypeTransport::Reference,
+        }
+    }
+
+    pub fn as_kind_ref(&self) -> TypeKindRef {
+        match self {
+            TypeKind::Void => TypeKindRef::Void,
+            TypeKind::Bool => TypeKindRef::Bool,
+            TypeKind::Int(n) => TypeKindRef::Int(*n),
+            TypeKind::UInt(n) => TypeKindRef::UInt(*n),
+            TypeKind::Float(n) => TypeKindRef::Float(*n),
+            TypeKind::String => TypeKindRef::String,
+            TypeKind::User(UserType::Struct(_)) => TypeKindRef::Struct,
+            TypeKind::User(UserType::Trait(_)) => TypeKindRef::Trait,
+            TypeKind::User(UserType::Enum(_)) => TypeKindRef::Enum,
+            TypeKind::TypeParameter(_) => TypeKindRef::TypeParameter,
         }
     }
 }
@@ -397,24 +449,125 @@ pub enum TypeTransport {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
     pub id: TypeId,
-    pub kind: TypeKindRef,
-    pub transport: TypeTransport,
+    pub kind: TypeKind,
     pub name: Path,
-
-    pub properties: IndexMap<String, PropertyId>,
-    pub methods: IndexMap<PathSegment, MethodId>,
 }
 
 impl Type {
-    /// Creates a new [`Type`] with an inner type of [`TypeKindRef::Void`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Void`].
     pub fn void() -> Self {
         Self {
             id: TYPEREF_VOID_ID,
-            kind: TypeKindRef::Void,
-            transport: TypeTransport::Copy,
+            kind: TypeKind::Void,
             name: Path::void(),
-            properties: IndexMap::new(),
-            methods: IndexMap::new(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Bool`].
+    pub fn bool() -> Self {
+        Self {
+            id: TYPEREF_BOOL_ID,
+            kind: TypeKind::Bool,
+            name: Path::boolean(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(8)`].
+    pub fn i8() -> Self {
+        Self {
+            id: TYPEREF_INT8_ID,
+            kind: TypeKind::Int(8),
+            name: Path::i8(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(16)`].
+    pub fn i16() -> Self {
+        Self {
+            id: TYPEREF_INT16_ID,
+            kind: TypeKind::Int(16),
+            name: Path::i16(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(32)`].
+    pub fn i32() -> Self {
+        Self {
+            id: TYPEREF_INT32_ID,
+            kind: TypeKind::Int(32),
+            name: Path::i32(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(64)`].
+    pub fn i64() -> Self {
+        Self {
+            id: TYPEREF_INT64_ID,
+            kind: TypeKind::Int(64),
+            name: Path::i64(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(8)`].
+    pub fn u8() -> Self {
+        Self {
+            id: TYPEREF_UINT8_ID,
+            kind: TypeKind::UInt(8),
+            name: Path::u8(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(16)`].
+    pub fn u16() -> Self {
+        Self {
+            id: TYPEREF_UINT16_ID,
+            kind: TypeKind::UInt(16),
+            name: Path::u16(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(32)`].
+    pub fn u32() -> Self {
+        Self {
+            id: TYPEREF_UINT32_ID,
+            kind: TypeKind::UInt(32),
+            name: Path::u32(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(64)`].
+    pub fn u64() -> Self {
+        Self {
+            id: TYPEREF_UINT64_ID,
+            kind: TypeKind::UInt(64),
+            name: Path::u64(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(32)`].
+    pub fn f32() -> Self {
+        Self {
+            id: TYPEREF_FLOAT32_ID,
+            kind: TypeKind::Float(32),
+            name: Path::f32(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(64)`].
+    pub fn f64() -> Self {
+        Self {
+            id: TYPEREF_FLOAT64_ID,
+            kind: TypeKind::Float(64),
+            name: Path::f64(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::String`].
+    pub fn string() -> Self {
+        Self {
+            id: TYPEREF_STRING_ID,
+            kind: TypeKind::String,
+            name: Path::string(),
         }
     }
 }
@@ -440,6 +593,114 @@ impl TypeRef {
     pub fn void() -> Self {
         Self {
             instance_of: TYPEREF_VOID_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Bool`].
+    pub fn bool() -> Self {
+        Self {
+            instance_of: TYPEREF_BOOL_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(8)`].
+    pub fn i8() -> Self {
+        Self {
+            instance_of: TYPEREF_INT8_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(16)`].
+    pub fn i16() -> Self {
+        Self {
+            instance_of: TYPEREF_INT16_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(32)`].
+    pub fn i32() -> Self {
+        Self {
+            instance_of: TYPEREF_INT32_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Int(64)`].
+    pub fn i64() -> Self {
+        Self {
+            instance_of: TYPEREF_INT64_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(8)`].
+    pub fn u8() -> Self {
+        Self {
+            instance_of: TYPEREF_UINT8_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(16)`].
+    pub fn u16() -> Self {
+        Self {
+            instance_of: TYPEREF_UINT16_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(32)`].
+    pub fn u32() -> Self {
+        Self {
+            instance_of: TYPEREF_UINT32_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::UInt(64)`].
+    pub fn u64() -> Self {
+        Self {
+            instance_of: TYPEREF_UINT64_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(32)`].
+    pub fn f32() -> Self {
+        Self {
+            instance_of: TYPEREF_FLOAT32_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Float(64)`].
+    pub fn f64() -> Self {
+        Self {
+            instance_of: TYPEREF_FLOAT64_ID,
+            type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::String`].
+    pub fn string() -> Self {
+        Self {
+            instance_of: TYPEREF_STRING_ID,
             type_arguments: vec![],
             location: Location::empty(),
         }
@@ -526,6 +787,12 @@ pub struct TypeParameter {
     pub constraints: Vec<TypeRef>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TypeArgument {
+    Named { name: String },
+    Resolved { param: TypeParameterId },
+}
+
 #[derive(Debug)]
 pub struct TypeDatabaseContext {
     pub types: Vec<Type>,
@@ -590,12 +857,12 @@ impl TypeDatabaseContext {
     pub fn ty_expect_trait(&self, id: TypeId) -> Result<&Trait> {
         let ty = self.ty_expect(id)?;
 
-        if let TypeKindRef::Trait(tr) = &ty.kind {
+        if let TypeKind::User(UserType::Trait(tr)) = &ty.kind {
             Ok(tr.as_ref())
         } else {
             Err(UnexpectedTypeKind {
-                expected: TypeKind::Trait,
-                found: ty.kind.as_kind(),
+                expected: TypeKindRef::Trait,
+                found: ty.kind.as_kind_ref(),
             }
             .into())
         }
@@ -791,17 +1058,9 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, name: Path, kind: TypeKindRef) -> TypeId {
+    pub fn type_alloc(&mut self, name: Path, kind: TypeKind) -> TypeId {
         let id = TypeId(self.types.len() as u64);
-
-        let ty = Type {
-            id,
-            kind,
-            name,
-            transport: TypeTransport::Reference,
-            properties: IndexMap::new(),
-            methods: IndexMap::new(),
-        };
+        let ty = Type { id, kind, name };
 
         self.types.push(ty);
         id
@@ -849,17 +1108,12 @@ impl TypeDatabaseContext {
         let prop = Property {
             id,
             owner,
-            name: name.clone(),
+            name,
             visibility,
             property_type: TypeRef::unknown(),
         };
 
         self.properties.push(prop);
-
-        match self.type_mut(owner) {
-            Some(ty) => ty.properties.insert(name, id),
-            None => return Err(TypeNotFound { id: owner }.into()),
-        };
 
         Ok(id)
     }
@@ -879,13 +1133,12 @@ impl TypeDatabaseContext {
         visibility: Visibility,
     ) -> Result<MethodId> {
         let id = MethodId(self.methods.len() as u64);
-        let instance = owner.instance_of;
 
         let method = Method {
             id,
             hir,
             callee: owner,
-            name: name.clone(),
+            name,
             visibility,
             parameters: Parameters::new(),
             type_parameters: Vec::new(),
@@ -893,11 +1146,6 @@ impl TypeDatabaseContext {
         };
 
         self.methods.push(method);
-
-        match self.type_mut(instance) {
-            Some(ty) => ty.methods.insert(name.name, id),
-            None => return Err(TypeNotFound { id: instance }.into()),
-        };
 
         Ok(id)
     }
@@ -942,7 +1190,21 @@ impl TypeDatabaseContext {
 impl Default for TypeDatabaseContext {
     fn default() -> Self {
         Self {
-            types: vec![Type::void()],
+            types: vec![
+                Type::void(),
+                Type::bool(),
+                Type::i8(),
+                Type::i16(),
+                Type::i32(),
+                Type::i64(),
+                Type::u8(),
+                Type::u16(),
+                Type::u32(),
+                Type::u64(),
+                Type::f32(),
+                Type::f64(),
+                Type::string(),
+            ],
             properties: Vec::new(),
             methods: Vec::new(),
             functions: Vec::new(),

@@ -1,7 +1,7 @@
 use error_snippet_derive::Diagnostic;
 use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, TypeId, UseId};
 
-use crate::{Item, TypeKind, TypeKindRef};
+use crate::{Item, TypeKindRef};
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find function {id:?} in context")]
@@ -60,6 +60,6 @@ pub struct TypeParametersOnNonGenericType {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "expected type to be kind of {expected:?}, found {found:?}")]
 pub struct UnexpectedTypeKind {
-    pub expected: TypeKind,
-    pub found: TypeKind,
+    pub expected: TypeKindRef,
+    pub found: TypeKindRef,
 }

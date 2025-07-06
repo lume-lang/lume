@@ -1,7 +1,7 @@
 use error_snippet::Result;
 use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
 use lume_span::DefId;
-use lume_types::{Alias, Enum, Struct, Trait, TypeKindRef, TypeRef, TypeTransport, WithTypeParameters};
+use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
 
 use crate::TyInferCtx;
 
@@ -23,32 +23,21 @@ impl TyInferCtx {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
-                let kind = TypeKindRef::Struct(Box::new(Struct::new(struct_def.as_ref())));
+                let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
                 let type_id = self.tdb_mut().type_alloc(name, kind);
 
                 struct_def.type_id = Some(type_id);
-
-                if struct_def.builtin {
-                    self.tdb_mut().type_mut(type_id).unwrap().transport = TypeTransport::Copy;
-                }
-            }
-            lume_hir::TypeDefinition::Alias(alias) => {
-                let name = alias.name.clone();
-                let kind = TypeKindRef::Alias(Box::new(Alias::new(alias.as_ref())));
-                let type_id = self.tdb_mut().type_alloc(name, kind);
-
-                alias.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
-                let kind = TypeKindRef::Trait(Box::new(Trait::new(trait_def.as_ref())));
+                let kind = TypeKind::User(UserType::Trait(Box::new(Trait::new(trait_def.as_ref()))));
                 let type_id = self.tdb_mut().type_alloc(name, kind);
 
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
-                let kind = TypeKindRef::Enum(Box::new(Enum::new(enum_def.as_ref())));
+                let kind = TypeKind::User(UserType::Enum(Box::new(Enum::new(enum_def.as_ref()))));
                 let type_id = self.tdb_mut().type_alloc(name, kind);
 
                 enum_def.type_id = Some(type_id);
@@ -270,7 +259,7 @@ impl TyInferCtx {
                     }
                 }
             }
-            _ => {}
+            lume_hir::TypeDefinition::Enum(_) => {}
         }
 
         Ok(())
@@ -381,7 +370,7 @@ impl TyInferCtx {
         };
 
         self.tdb_mut()
-            .type_alloc(symbol_name, TypeKindRef::TypeParameter(type_param_id))
+            .type_alloc(symbol_name, TypeKind::TypeParameter(type_param_id))
     }
 }
 
@@ -426,7 +415,7 @@ impl TyInferCtx {
                     self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
                 }
             }
-            _ => {}
+            lume_hir::TypeDefinition::Enum(_) => {}
         }
 
         Ok(())
@@ -647,7 +636,7 @@ impl TyInferCtx {
                 lume_hir::Item::Type(ty) => match ty.as_ref() {
                     lume_hir::TypeDefinition::Struct(f) => self.define_struct_scope(f)?,
                     lume_hir::TypeDefinition::Trait(f) => self.define_trait_scope(f)?,
-                    _ => (),
+                    lume_hir::TypeDefinition::Enum(_) => {}
                 },
                 lume_hir::Item::Impl(f) => self.define_impl_scope(f)?,
                 lume_hir::Item::Use(f) => self.define_use_scope(f)?,
@@ -752,13 +741,6 @@ impl TyInferCtx {
                 }
             }
             lume_hir::StatementKind::If(s) => {
-                for case in &s.cases {
-                    self.define_condition_scope(case, stmt_id)?;
-                }
-
-                Ok(())
-            }
-            lume_hir::StatementKind::Unless(s) => {
                 for case in &s.cases {
                     self.define_condition_scope(case, stmt_id)?;
                 }

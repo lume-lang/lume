@@ -30,6 +30,7 @@ Map {
                 },
                 parameters: [
                     Parameter {
+                        index: 0,
                         name: Identifier {
                             name: "argc",
                             location: <internal>:8:12,
@@ -54,6 +55,7 @@ Map {
                         location: <internal>:8:16,
                     },
                     Parameter {
+                        index: 1,
                         name: Identifier {
                             name: "arcv",
                             location: <internal>:18:22,
@@ -83,13 +85,11 @@ Map {
                                             ),
                                             name: Path {
                                                 root: [
-                                                    Type {
+                                                    Namespace {
                                                         name: Identifier {
                                                             name: "std",
                                                             location: <internal>:0:0,
                                                         },
-                                                        type_arguments: [],
-                                                        location: <internal>:0:0,
                                                     },
                                                 ],
                                                 name: Type {

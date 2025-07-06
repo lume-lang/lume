@@ -39,13 +39,11 @@ Map {
                     ),
                     name: Path {
                         root: [
-                            Type {
+                            Namespace {
                                 name: Identifier {
                                     name: "std",
                                     location: <internal>:0:0,
                                 },
-                                type_arguments: [],
-                                location: <internal>:0:0,
                             },
                         ],
                         name: Type {

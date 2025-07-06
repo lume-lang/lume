@@ -6,12 +6,12 @@ description: "fn foo() -> Int32 {\n        loop {\n            return true;\n   
    ╭───────────
  2 │         loop {
  3 │             return true;
-   │                    ^^^^ expected type Int32, but found type Boolean...
+   │                    ^^^^ expected type std::Int32, but found type std::Boolean...
  4 │         }
    ∶ 
  1 │ fn foo() -> Int32 {
    │             ^^^^^^^ ...because of type defined here
  2 │         loop {
    ╰──
-   help: expected type Int32
-            found type Boolean
+   help: expected type std::Int32
+            found type std::Boolean

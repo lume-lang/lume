@@ -22,6 +22,7 @@ Map {
                 },
                 parameters: [
                     Parameter {
+                        index: 0,
                         name: Identifier {
                             name: "self",
                             location: <internal>:30:34,
@@ -48,6 +49,7 @@ Map {
                         location: <internal>:30:34,
                     },
                     Parameter {
+                        index: 1,
                         name: Identifier {
                             name: "a",
                             location: <internal>:36:37,
@@ -58,13 +60,11 @@ Map {
                             ),
                             name: Path {
                                 root: [
-                                    Type {
+                                    Namespace {
                                         name: Identifier {
                                             name: "std",
                                             location: <internal>:0:0,
                                         },
-                                        type_arguments: [],
-                                        location: <internal>:0:0,
                                     },
                                 ],
                                 name: Type {
@@ -152,6 +152,7 @@ Map {
                         },
                         parameters: [
                             Parameter {
+                                index: 0,
                                 name: Identifier {
                                     name: "self",
                                     location: <internal>:30:34,
@@ -178,6 +179,7 @@ Map {
                                 location: <internal>:30:34,
                             },
                             Parameter {
+                                index: 1,
                                 name: Identifier {
                                     name: "a",
                                     location: <internal>:36:37,
@@ -188,13 +190,11 @@ Map {
                                     ),
                                     name: Path {
                                         root: [
-                                            Type {
+                                            Namespace {
                                                 name: Identifier {
                                                     name: "std",
                                                     location: <internal>:0:0,
                                                 },
-                                                type_arguments: [],
-                                                location: <internal>:0:0,
                                             },
                                         ],
                                         name: Type {

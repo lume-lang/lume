@@ -142,26 +142,24 @@ impl TyInferCtx {
     /// Attempts to get the type of a literal expression.
     #[cached_query]
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
-        let ty = match &lit.kind {
+        match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => self.tdb().find_type(&Path::i8()).unwrap(),
-                lume_hir::IntKind::U8 => self.tdb().find_type(&Path::u8()).unwrap(),
-                lume_hir::IntKind::I16 => self.tdb().find_type(&Path::i16()).unwrap(),
-                lume_hir::IntKind::U16 => self.tdb().find_type(&Path::u16()).unwrap(),
-                lume_hir::IntKind::I32 => self.tdb().find_type(&Path::i32()).unwrap(),
-                lume_hir::IntKind::U32 => self.tdb().find_type(&Path::u32()).unwrap(),
-                lume_hir::IntKind::I64 => self.tdb().find_type(&Path::i64()).unwrap(),
-                lume_hir::IntKind::U64 => self.tdb().find_type(&Path::u64()).unwrap(),
+                lume_hir::IntKind::I8 => TypeRef::i8(),
+                lume_hir::IntKind::U8 => TypeRef::u8(),
+                lume_hir::IntKind::I16 => TypeRef::i16(),
+                lume_hir::IntKind::U16 => TypeRef::u16(),
+                lume_hir::IntKind::I32 => TypeRef::i32(),
+                lume_hir::IntKind::U32 => TypeRef::u32(),
+                lume_hir::IntKind::I64 => TypeRef::i64(),
+                lume_hir::IntKind::U64 => TypeRef::u64(),
             },
             lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => self.tdb().find_type(&Path::float()).unwrap(),
-                lume_hir::FloatKind::F64 => self.tdb().find_type(&Path::double()).unwrap(),
+                lume_hir::FloatKind::F32 => TypeRef::f32(),
+                lume_hir::FloatKind::F64 => TypeRef::f64(),
             },
-            lume_hir::LiteralKind::String(_) => self.tdb().find_type(&Path::string()).unwrap(),
-            lume_hir::LiteralKind::Boolean(_) => self.tdb().find_type(&Path::boolean()).unwrap(),
-        };
-
-        TypeRef::new(ty.id, lit.location)
+            lume_hir::LiteralKind::String(_) => TypeRef::string(),
+            lume_hir::LiteralKind::Boolean(_) => TypeRef::bool(),
+        }
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
@@ -179,7 +177,6 @@ impl TyInferCtx {
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::PredicateLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::If(cond) => self.type_of_if_conditional(cond),
-            lume_hir::StatementKind::Unless(cond) => self.type_of_unless_conditional(cond),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void()),
         }
@@ -189,15 +186,6 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_if_conditional(&self, cond: &lume_hir::If) -> Result<TypeRef> {
-        let primary_case = cond.cases.first().unwrap();
-
-        self.type_of_condition(primary_case)
-    }
-
-    /// Returns the *type* of the given [`lume_hir::Unless`] statement.
-    #[cached_query(result)]
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_unless_conditional(&self, cond: &lume_hir::Unless) -> Result<TypeRef> {
         let primary_case = cond.cases.first().unwrap();
 
         self.type_of_condition(primary_case)

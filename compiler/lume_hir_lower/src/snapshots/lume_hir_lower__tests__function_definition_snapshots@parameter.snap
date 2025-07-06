@@ -30,6 +30,7 @@ Map {
                 },
                 parameters: [
                     Parameter {
+                        index: 0,
                         name: Identifier {
                             name: "argc",
                             location: <internal>:8:12,
