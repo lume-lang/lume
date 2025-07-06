@@ -1,9 +1,16 @@
-use inkwell::{basic_block::BasicBlock, values::BasicValue};
-use lume_mir::Function;
+use std::collections::HashMap;
 
+use inkwell::{basic_block::BasicBlock, types::BasicTypeEnum, values::PointerValue};
+use lume_mir::{Function, RegisterId};
+
+mod inst;
+mod term;
 mod ty;
+mod value;
+pub(crate) mod wrap;
 
-#[allow(dead_code)]
+pub(crate) use wrap::*;
+
 pub struct Generator<'ctx> {
     package: &'ctx lume_session::Package,
     mir: lume_mir::ModuleMap,
@@ -31,108 +38,74 @@ impl<'ctx> Generator<'ctx> {
     }
 }
 
-struct Context {
-    pub(crate) inner: inkwell::context::Context,
-}
-
-impl Context {
-    pub fn new() -> Self {
-        Self {
-            inner: inkwell::context::Context::create(),
-        }
-    }
-
-    pub fn create_builder<'ctx>(&'ctx self, func: inkwell::values::FunctionValue<'ctx>) -> Builder<'ctx> {
-        Builder::new(self, func)
-    }
-
-    pub fn create_module(&self, name: &str) -> Module<'_> {
-        Module::new(self, name)
-    }
-}
-
-struct Module<'ctx> {
-    context: &'ctx Context,
-    inner: inkwell::module::Module<'ctx>,
-}
-
-impl<'ctx> Module<'ctx> {
-    pub fn new(context: &'ctx Context, name: &str) -> Self {
-        let inner = context.inner.create_module(name);
-
-        Self { context, inner }
-    }
-
-    pub fn build(&self, funcs: &[Function]) {
-        for func in funcs {
-            let fn_type = self.context.void_type().fn_type(&[], false);
-            let fn_val = self.inner.add_function(&func.name, fn_type, None);
-            let builder = self.context.create_builder(fn_val);
-
-            let lower = FunctionLower::new(builder, func);
-            lower.build();
-        }
-    }
-}
-
-struct Builder<'ctx> {
-    inner: inkwell::builder::Builder<'ctx>,
-    pub(crate) func: inkwell::values::FunctionValue<'ctx>,
-    pub(crate) ctx: &'ctx Context,
-}
-
-#[allow(dead_code)]
-impl<'ctx> Builder<'ctx> {
-    pub fn new(ctx: &'ctx Context, func: inkwell::values::FunctionValue<'ctx>) -> Self {
-        Self {
-            inner: ctx.inner.create_builder(),
-            func,
-            ctx,
-        }
-    }
-
-    pub fn add_block(&self) -> BasicBlock<'ctx> {
-        self.ctx.inner.append_basic_block(self.func, "")
-    }
-
-    pub fn switch_to_block(&self, block: BasicBlock<'ctx>) {
-        self.inner.position_at_end(block);
-    }
-
-    pub fn unreachable(&self) {
-        self.inner.build_unreachable().unwrap();
-    }
-
-    pub fn return_any(&self, value: Option<&dyn BasicValue<'ctx>>) {
-        if let Some(value) = value {
-            self.return_value(value);
-        } else {
-            self.return_void();
-        }
-    }
-
-    pub fn return_value(&self, value: &dyn BasicValue<'ctx>) {
-        self.inner.build_return(Some(value)).unwrap();
-    }
-
-    pub fn return_void(&self) {
-        self.inner.build_return(None).unwrap();
-    }
-}
-
 struct FunctionLower<'ctx> {
     builder: Builder<'ctx>,
     func: &'ctx Function,
+    variables: HashMap<RegisterId, PointerValue<'ctx>>,
+    variable_types: HashMap<RegisterId, BasicTypeEnum<'ctx>>,
 }
 
 impl<'ctx> FunctionLower<'ctx> {
-    pub fn new(builder: Builder<'ctx>, func: &'ctx Function) -> Self {
-        Self { builder, func }
+    pub fn lower(builder: Builder<'ctx>, func: &'ctx Function) {
+        let mut lower = Self::new(builder, func);
+        lower.build();
     }
 
-    pub fn build(&self) {
-        let block = self.builder.add_block();
-        self.builder.switch_to_block(block);
-        self.builder.return_void();
+    pub fn new(builder: Builder<'ctx>, func: &'ctx Function) -> Self {
+        Self {
+            builder,
+            func,
+            variables: HashMap::new(),
+            variable_types: HashMap::new(),
+        }
+    }
+
+    pub fn build(&mut self) {
+        // Pre-allocate blocks for the function, so that they can be referenced
+        // before they are visited by the transformer.
+        for block in &self.func.blocks {
+            self.builder.register_block(block.id, self.builder.add_block());
+        }
+
+        self.create_func_registers();
+
+        for block in &self.func.blocks {
+            self.build_block(block);
+        }
+    }
+
+    fn create_func_registers(&mut self) {
+        for (id, reg) in self.func.registers.iter() {
+            self.builder.switch_to_block_id(reg.block);
+
+            let llvm_ty = self.builder.ctx.lower_type(&reg.ty);
+
+            self.variable_types.insert(id, llvm_ty);
+            self.variables.insert(id, self.builder.alloca(llvm_ty));
+        }
+    }
+
+    fn build_block(&self, block: &lume_mir::BasicBlock) {
+        self.builder.switch_to_block(self.builder.block(block.id));
+
+        for inst in block.instructions() {
+            self.instruction(inst);
+        }
+
+        if let Some(terminator) = block.terminator() {
+            self.terminator(terminator);
+        }
+    }
+
+    pub(crate) fn var(&self, id: RegisterId) -> PointerValue<'ctx> {
+        self.variables[&id]
+    }
+
+    pub(crate) fn var_type(&self, id: RegisterId) -> BasicTypeEnum<'ctx> {
+        self.variable_types[&id]
+    }
+
+    pub(crate) fn load(&self, id: RegisterId) -> (PointerValue<'ctx>, BasicTypeEnum<'ctx>) {
+        (self.var(id), self.var_type(id))
     }
 }
