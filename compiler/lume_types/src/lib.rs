@@ -312,19 +312,6 @@ pub struct EnumCase {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Alias {
-    pub name: Path,
-}
-
-impl Alias {
-    pub fn new(reference: &lume_hir::AliasDefinition) -> Self {
-        Self {
-            name: reference.name.clone(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub id: ImplId,
     pub target: Path,
@@ -719,6 +706,86 @@ impl TypeRef {
     /// Determines if the type is `void`.
     pub fn is_void(&self) -> bool {
         self.instance_of == TYPEREF_VOID_ID
+    }
+
+    /// Determines if the type is a `bool`.
+    pub fn is_bool(&self) -> bool {
+        self.instance_of == TYPEREF_BOOL_ID
+    }
+
+    /// Determines if the type is an integer.
+    pub fn is_integer(&self) -> bool {
+        matches!(
+            self.instance_of,
+            TYPEREF_INT8_ID
+                | TYPEREF_INT16_ID
+                | TYPEREF_INT32_ID
+                | TYPEREF_INT64_ID
+                | TYPEREF_UINT8_ID
+                | TYPEREF_UINT16_ID
+                | TYPEREF_UINT32_ID
+                | TYPEREF_UINT64_ID
+        )
+    }
+
+    /// Determines if the type is a floating-point number.
+    pub fn is_float(&self) -> bool {
+        matches!(self.instance_of, TYPEREF_FLOAT32_ID | TYPEREF_FLOAT64_ID)
+    }
+
+    /// Determines if the type is an `i8`.
+    pub fn is_i8(&self) -> bool {
+        self.instance_of == TYPEREF_INT8_ID
+    }
+
+    /// Determines if the type is an `i16`.
+    pub fn is_i16(&self) -> bool {
+        self.instance_of == TYPEREF_INT16_ID
+    }
+
+    /// Determines if the type is an `i32`.
+    pub fn is_i32(&self) -> bool {
+        self.instance_of == TYPEREF_INT32_ID
+    }
+
+    /// Determines if the type is an `i64`.
+    pub fn is_i64(&self) -> bool {
+        self.instance_of == TYPEREF_INT64_ID
+    }
+
+    /// Determines if the type is an `u8`.
+    pub fn is_u8(&self) -> bool {
+        self.instance_of == TYPEREF_UINT8_ID
+    }
+
+    /// Determines if the type is an `u16`.
+    pub fn is_u16(&self) -> bool {
+        self.instance_of == TYPEREF_UINT16_ID
+    }
+
+    /// Determines if the type is an `u32`.
+    pub fn is_u32(&self) -> bool {
+        self.instance_of == TYPEREF_UINT32_ID
+    }
+
+    /// Determines if the type is an `u64`.
+    pub fn is_u64(&self) -> bool {
+        self.instance_of == TYPEREF_UINT64_ID
+    }
+
+    /// Determines if the type is an `f32`.
+    pub fn is_f32(&self) -> bool {
+        self.instance_of == TYPEREF_FLOAT32_ID
+    }
+
+    /// Determines if the type is an `f64`.
+    pub fn is_f64(&self) -> bool {
+        self.instance_of == TYPEREF_FLOAT64_ID
+    }
+
+    /// Determines if the type is an `string`.
+    pub fn is_string(&self) -> bool {
+        self.instance_of == TYPEREF_STRING_ID
     }
 
     /// Determines if the type is unknown.

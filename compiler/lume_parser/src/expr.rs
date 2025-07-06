@@ -135,8 +135,8 @@ impl Parser {
         let start = left.location().start();
         let end = operator.end();
 
-        Expression::Call(Box::new(Call {
-            callee: Some(left),
+        Expression::IntrinsicCall(Box::new(IntrinsicCall {
+            callee: left,
             name: Path {
                 name: PathSegment::callable(Identifier {
                     name: operator.into(),
@@ -196,8 +196,8 @@ impl Parser {
         let start = lhs.location().start();
         let end = rhs.location().end();
 
-        Ok(Expression::Call(Box::new(Call {
-            callee: Some(lhs),
+        Ok(Expression::IntrinsicCall(Box::new(IntrinsicCall {
+            callee: lhs,
             name: Path {
                 name: PathSegment::callable(Identifier {
                     name: operator.into(),

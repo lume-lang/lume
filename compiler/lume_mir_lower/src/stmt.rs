@@ -14,7 +14,6 @@ impl FunctionTransformer<'_> {
             lume_hir::StatementKind::Continue(_) => self.continue_loop(),
             lume_hir::StatementKind::Return(ret) => self.return_value(ret),
             lume_hir::StatementKind::If(cond) => self.if_condition(cond),
-            lume_hir::StatementKind::Unless(_) => todo!("mir: unless conditional"),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_loop(stmt),
             lume_hir::StatementKind::IteratorLoop(_) => todo!("mir: iterator loop"),
             lume_hir::StatementKind::PredicateLoop(_) => todo!("mir: predicate loop"),
@@ -26,9 +25,10 @@ impl FunctionTransformer<'_> {
 
     fn declare_variable(&mut self, stmt: &lume_hir::VariableDeclaration) {
         let value = self.expression(&stmt.value);
-        let local = self.func.declare_value(value);
+        let ty = self.type_of_value(&value);
+        let local = self.func.declare_value(ty, value);
 
-        self.func.variables.insert(stmt.id, local);
+        self.variables.insert(stmt.id, local);
     }
 
     fn break_loop(&mut self) {
@@ -119,7 +119,7 @@ impl FunctionTransformer<'_> {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
-                    let lhs_expr = self.func.declare_value(lhs_val);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::Boolean, lhs_val);
 
                     self.func
                         .current_block_mut()
@@ -128,7 +128,7 @@ impl FunctionTransformer<'_> {
                     self.func.set_current_block(inter_block);
 
                     let rhs_val = self.expression(&comp_expr.rhs);
-                    let rhs_expr = self.func.declare_value(rhs_val);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::Boolean, rhs_val);
 
                     self.func
                         .current_block_mut()
@@ -153,7 +153,7 @@ impl FunctionTransformer<'_> {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
-                    let lhs_expr = self.func.declare_value(lhs_val);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::Boolean, lhs_val);
 
                     self.func
                         .current_block_mut()
@@ -162,7 +162,7 @@ impl FunctionTransformer<'_> {
                     self.func.set_current_block(inter_block);
 
                     let rhs_val = self.expression(&comp_expr.rhs);
-                    let rhs_expr = self.func.declare_value(rhs_val);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::Boolean, rhs_val);
 
                     self.func
                         .current_block_mut()
@@ -171,7 +171,7 @@ impl FunctionTransformer<'_> {
             }
         } else {
             let cond_val = self.expression(expr);
-            let cond_expr = self.func.declare_value(cond_val);
+            let cond_expr = self.func.declare_value(lume_mir::Type::Boolean, cond_val);
 
             self.func
                 .current_block_mut()

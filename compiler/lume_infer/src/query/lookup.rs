@@ -80,6 +80,7 @@ impl TyInferCtx {
         let name = match expr {
             lume_hir::CallExpression::Static(call) => &call.name.name,
             lume_hir::CallExpression::Instanced(call) => &call.name,
+            lume_hir::CallExpression::Intrinsic(call) => &call.name,
         };
 
         let callee_type = match expr {
@@ -87,6 +88,7 @@ impl TyInferCtx {
                 self.find_type_ref(&call.name.clone().parent().unwrap())?.unwrap()
             }
             lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee.id)?,
+            lume_hir::CallExpression::Intrinsic(call) => self.type_of(call.callee().id)?,
         };
 
         let suggestion: Option<Result<error_snippet::Error>> = self
@@ -173,6 +175,18 @@ impl TyInferCtx {
 
                 Ok(Callable::Method(method))
             }
+            expr @ lume_hir::CallExpression::Intrinsic(call) => {
+                let callee_type = self.type_of(call.callee().id)?;
+                let methods = self.lookup_methods_on(&callee_type, call.name.name());
+
+                let Some(method) = methods.first() else {
+                    let missing_method_err = self.fold_method_suggestions(expr)?;
+
+                    return Err(missing_method_err.into());
+                };
+
+                Ok(Callable::Method(method))
+            }
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.name.clone().parent()
                     && callee_ty_name.is_type()
@@ -214,6 +228,20 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.probe_callable(&lume_hir::CallExpression::Instanced(call))
+    }
+
+    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
+    /// signature of the given intrinsic call expression.
+    ///
+    /// Methods returned by this method are checked for validity within the current
+    /// context, including visibility, arguments and type arguments. The look up methods
+    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    ///
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For a static callable
+    /// lookup, see [`TyInferCtx::lookup_callable_static()`].
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn probe_callable_intrinsic(&self, call: &lume_hir::IntrinsicCall) -> Result<Callable<'_>> {
+        self.probe_callable(&lume_hir::CallExpression::Intrinsic(call))
     }
 
     /// Looks up all [`Callable`]s and attempts to find one, which matches the

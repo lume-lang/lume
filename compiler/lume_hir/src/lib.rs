@@ -666,21 +666,6 @@ pub struct EnumDefinitionCase {
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
-pub struct AliasDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
-    pub name: Path,
-    pub definition: Box<Type>,
-    pub location: Location,
-}
-
-impl AliasDefinition {
-    pub fn name(&self) -> &Path {
-        &self.name
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
@@ -1110,6 +1095,13 @@ pub enum ExpressionKind {
     /// a.bar();
     /// ```
     InstanceCall(Box<InstanceCall>),
+
+    /// Defines an intrinsic call which was replaced by a call expression.
+    ///
+    /// ```lume
+    /// let a = 1 + 2;
+    /// ```
+    IntrinsicCall(Box<IntrinsicCall>),
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -1134,6 +1126,13 @@ pub enum CallExpression<'a> {
     /// a.bar();
     /// ```
     Instanced(&'a InstanceCall),
+
+    /// Defines an intrinsic call which was replaced by a call expression.
+    ///
+    /// ```lume
+    /// let a = 1 + 2;
+    /// ```
+    Intrinsic(&'a IntrinsicCall),
 }
 
 impl CallExpression<'_> {
@@ -1142,6 +1141,7 @@ impl CallExpression<'_> {
         match self {
             Self::Instanced(call) => &call.arguments,
             Self::Static(call) => &call.arguments,
+            Self::Intrinsic(call) => &call.arguments,
         }
     }
 
@@ -1150,6 +1150,7 @@ impl CallExpression<'_> {
         match self {
             Self::Instanced(call) => call.type_arguments(),
             Self::Static(call) => call.type_arguments(),
+            Self::Intrinsic(call) => call.type_arguments(),
         }
     }
 }
@@ -1231,6 +1232,29 @@ pub struct InstanceCall {
 }
 
 impl InstanceCall {
+    pub fn type_arguments(&self) -> &[Type] {
+        self.name.type_arguments()
+    }
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct IntrinsicCall {
+    pub id: ExpressionId,
+    pub name: PathSegment,
+    pub arguments: Vec<Expression>,
+    pub location: Location,
+}
+
+impl IntrinsicCall {
+    /// Returns the callee expression of the intrinsic call.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the intrinsic call has no arguments.
+    pub fn callee(&self) -> &Expression {
+        self.arguments.first().unwrap()
+    }
+
     pub fn type_arguments(&self) -> &[Type] {
         self.name.type_arguments()
     }

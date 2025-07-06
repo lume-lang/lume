@@ -808,6 +808,15 @@ impl TyInferCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::IntrinsicCall(s) => {
+                self.define_expr_scope(s.callee(), expr_id)?;
+
+                for arg in &s.arguments {
+                    self.define_expr_scope(arg, expr_id)?;
+                }
+
+                Ok(())
+            }
             lume_hir::ExpressionKind::Logical(s) => {
                 self.define_expr_scope(&s.lhs, expr_id)?;
                 self.define_expr_scope(&s.rhs, expr_id)?;

@@ -32,6 +32,7 @@ impl LowerModule<'_> {
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Cast(e) => self.expr_cast(*e)?,
             ast::Expression::Construct(e) => self.expr_construct(*e)?,
+            ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
             ast::Expression::Logical(e) => self.expr_logical(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
@@ -205,6 +206,27 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         Ok(hir::Field { name, value, location })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_intrinsic_call(&mut self, expr: ast::IntrinsicCall) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let name = self.resolve_symbol_name(&expr.name)?;
+        let location = self.location(expr.location);
+
+        let mut arguments = vec![self.expression(expr.callee)?];
+        arguments.extend_from_slice(&self.expressions(expr.arguments));
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::IntrinsicCall(Box::new(hir::IntrinsicCall {
+                id,
+                name: name.name,
+                arguments,
+                location,
+            })),
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]

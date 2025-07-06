@@ -170,8 +170,11 @@ impl TyCheckCtx {
             (lume_hir::CallExpression::Instanced(call), true) => {
                 &[&[call.callee.clone()][..], &call.arguments[..]].concat()
             }
+            (lume_hir::CallExpression::Intrinsic(call), true) => {
+                &[&[call.callee().clone()][..], &call.arguments[..]].concat()
+            }
             (lume_hir::CallExpression::Static(call), _) => &call.arguments,
-            (lume_hir::CallExpression::Instanced(_), false) => {
+            (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
                 failures.push(CallableCheckError::InstancedCallOnStaticMethod);
 
                 &vec![]
@@ -327,6 +330,12 @@ impl TyCheckCtx {
 
                 Ok(Callable::Method(method))
             }
+            lume_hir::CallExpression::Intrinsic(call) => {
+                let callee_type = self.type_of(call.callee().id)?;
+                let method = self.lookup_methods(expr, &callee_type)?;
+
+                Ok(Callable::Method(method))
+            }
             lume_hir::CallExpression::Static(call) => {
                 if let Some(callee_ty_name) = call.name.clone().parent()
                     && callee_ty_name.is_type()
@@ -358,6 +367,7 @@ impl TyCheckCtx {
     ) -> Result<&'_ Method> {
         let method_name = match &expr {
             lume_hir::CallExpression::Instanced(call) => call.name.name(),
+            lume_hir::CallExpression::Intrinsic(call) => call.name.name(),
             lume_hir::CallExpression::Static(call) => call.name.name.name(),
         };
 

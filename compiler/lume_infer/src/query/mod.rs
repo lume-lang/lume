@@ -97,6 +97,11 @@ impl TyInferCtx {
 
                 Ok(callable.return_type().clone())
             }
+            lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                let callable = self.probe_callable_intrinsic(call)?;
+
+                Ok(callable.return_type().clone())
+            }
             lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
             lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs),
             lume_hir::ExpressionKind::Member(expr) => {

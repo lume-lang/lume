@@ -869,6 +869,7 @@ pub enum Expression {
     Call(Box<Call>),
     Cast(Box<Cast>),
     Construct(Box<Construct>),
+    IntrinsicCall(Box<IntrinsicCall>),
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -887,6 +888,7 @@ impl Node for Expression {
             Self::Call(e) => &e.location,
             Self::Cast(e) => &e.location,
             Self::Construct(e) => &e.location,
+            Self::IntrinsicCall(e) => e.location(),
             Self::Literal(e) => e.location(),
             Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
@@ -948,6 +950,16 @@ pub struct Call {
 }
 
 node_location!(Call);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct IntrinsicCall {
+    pub callee: Expression,
+    pub name: Path,
+    pub arguments: Vec<Expression>,
+    pub location: Location,
+}
+
+node_location!(IntrinsicCall);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cast {

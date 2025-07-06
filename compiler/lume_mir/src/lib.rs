@@ -1,5 +1,3 @@
-use indexmap::IndexMap;
-
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
     pub functions: Vec<Function>,
@@ -61,7 +59,7 @@ impl std::fmt::Display for ModuleMap {
 #[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionId(pub usize);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub id: FunctionId,
     pub name: String,
@@ -70,9 +68,8 @@ pub struct Function {
     pub parameters: Vec<Type>,
     pub return_type: Type,
 
-    pub locals: Vec<Local>,
+    pub registers: Registers,
     pub blocks: Vec<BasicBlock>,
-    pub variables: IndexMap<lume_span::StatementId, Local>,
     current_block: BasicBlockId,
 
     pub(crate) scope: Box<Scope>,
@@ -83,9 +80,8 @@ impl Function {
         Function {
             id,
             name,
-            locals: Vec::new(),
+            registers: Registers::default(),
             blocks: Vec::new(),
-            variables: IndexMap::new(),
             external: false,
             current_block: BasicBlockId(0),
             scope: Box::new(Scope::root_scope()),
@@ -154,48 +150,23 @@ impl Function {
         self.block_mut(block).instructions.push(inst);
     }
 
-    /// Returns a reference to the instruction with the given ID.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn instruction(&self, block: BasicBlockId, id: InstructionId) -> &Instruction {
-        self.block(block).instructions.get(id.0).unwrap()
-    }
-
-    /// Allocates a new instruction and adds it to the basic block with the given ID.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn new_instruction(&mut self, block: BasicBlockId, kind: InstructionKind) -> InstructionId {
-        let block = self.block_mut(block);
-        let id = InstructionId(block.instructions.len());
-
-        block.instructions.push(Instruction { id, kind });
-
-        id
-    }
-
-    /// Allocates a new variable local and returns its ID.
-    pub fn new_local(&mut self) -> Local {
-        let id = Local::var(self.locals.len());
-
-        self.locals.push(id);
-
-        id
+    /// Allocates a new register and returns its ID.
+    pub fn add_register(&mut self, ty: Type) -> RegisterId {
+        self.registers.allocate(ty, self.current_block)
     }
 
     /// Declares a new local with the given declaration in the current block.
-    pub fn declare(&mut self, decl: Declaration) -> Local {
-        let local = self.new_local();
+    pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
+        let register = self.add_register(ty);
 
-        self.current_block_mut().declare(local, decl)
+        self.current_block_mut().declare(register, decl);
+
+        register
     }
 
     /// Declares a new local with the given value in the current block.
-    pub fn declare_value(&mut self, value: Value) -> Local {
-        self.declare(Declaration::Value(value))
+    pub fn declare_value(&mut self, ty: Type, value: Value) -> RegisterId {
+        self.declare(ty, Declaration::Value(value))
     }
 
     /// Enters a new scope with the given scope kind.
@@ -314,8 +285,9 @@ impl std::fmt::Display for BasicBlockId {
 #[derive(Debug, Clone, PartialEq)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
-    pub instructions: Vec<Instruction>,
-    pub terminator: Option<Terminator>,
+
+    instructions: Vec<Instruction>,
+    terminator: Option<Terminator>,
 }
 
 impl BasicBlock {
@@ -327,35 +299,14 @@ impl BasicBlock {
         }
     }
 
-    /// Returns a reference to the instruction with the given ID.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn instruction(&self, id: InstructionId) -> &Instruction {
-        self.instructions.get(id.0).unwrap()
+    /// Gets the instructions of the block.
+    pub fn instructions(&self) -> impl Iterator<Item = &Instruction> {
+        self.instructions.iter()
     }
 
-    /// Adds the given instruction to the block.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn add_instruction(&mut self, inst: Instruction) {
-        self.instructions.push(inst);
-    }
-
-    /// Allocates a new instruction and adds it to the block.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn new_instruction(&mut self, kind: InstructionKind) -> InstructionId {
-        let id = InstructionId(self.instructions.len());
-
-        self.instructions.push(Instruction { id, kind });
-
-        id
+    /// Gets the terminator of the block if one has been set.
+    pub fn terminator(&self) -> Option<&Terminator> {
+        self.terminator.as_ref()
     }
 
     /// Determines if the block has a terminator.
@@ -375,23 +326,14 @@ impl BasicBlock {
         self.terminator = Some(term);
     }
 
-    /// Declares a new local with the given declaration.
-    pub fn declare(&mut self, local: Local, decl: Declaration) -> Local {
-        self.new_instruction(InstructionKind::Declare { local, decl });
-
-        local
+    /// Declares a new register with an initial value.
+    pub fn declare(&mut self, register: RegisterId, decl: Declaration) {
+        self.instructions.push(Instruction::Declare { register, decl });
     }
 
-    /// Declares a new local with the given value.
-    pub fn declare_value(&mut self, local: Local, value: Value) -> Local {
-        self.declare(local, Declaration::Value(value))
-    }
-
-    /// Assigns a new value to an existing local.
-    pub fn assign(&mut self, target: Local, value: Value) -> Local {
-        self.new_instruction(InstructionKind::Store { target, value });
-
-        target
+    /// Assigns a new value to an existing register.
+    pub fn assign(&mut self, target: RegisterId, value: Value) {
+        self.instructions.push(Instruction::Store { target, value });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
@@ -400,7 +342,7 @@ impl BasicBlock {
     }
 
     /// Sets the terminator of the current block to a conditional branch.
-    pub fn conditional_branch(&mut self, cond: Local, then_block: BasicBlockId, else_block: BasicBlockId) {
+    pub fn conditional_branch(&mut self, cond: RegisterId, then_block: BasicBlockId, else_block: BasicBlockId) {
         self.set_terminator(Terminator::ConditionalBranch {
             condition: cond,
             then_block,
@@ -450,60 +392,61 @@ impl std::fmt::Display for BasicBlock {
 }
 
 #[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
-pub enum Local {
-    Variable(usize),
-    Parameter(usize),
-}
+pub struct RegisterId(usize);
 
-impl Local {
-    pub fn var(id: usize) -> Self {
-        Local::Variable(id)
-    }
-
-    pub fn param(id: usize) -> Self {
-        Local::Parameter(id)
+impl RegisterId {
+    pub fn param(index: usize) -> Self {
+        RegisterId(index)
     }
 }
 
-impl std::fmt::Display for Local {
+impl std::fmt::Display for RegisterId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Local::Variable(id) | Local::Parameter(id) => write!(f, "#{id}"),
-        }
+        write!(f, "#{}", self.0)
     }
 }
 
-#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
-pub struct InstructionId(usize);
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+pub struct Register {
+    pub ty: Type,
+    pub block: BasicBlockId,
+}
 
-impl std::fmt::Display for InstructionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "i.{}", self.0)
+#[derive(Default, Debug, Clone)]
+pub struct Registers {
+    regs: Vec<Register>,
+}
+
+impl Registers {
+    pub fn register(&self, id: RegisterId) -> &Register {
+        &self.regs[id.0]
+    }
+
+    pub fn register_mut(&mut self, id: RegisterId) -> &mut Register {
+        &mut self.regs[id.0]
+    }
+
+    pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
+        let id = RegisterId(self.regs.len());
+        self.regs.push(Register { ty, block });
+        id
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (RegisterId, &Register)> {
+        self.regs.iter().enumerate().map(|(i, r)| (RegisterId(i), r))
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Instruction {
-    pub id: InstructionId,
-    pub kind: InstructionKind,
+pub enum Instruction {
+    Declare { register: RegisterId, decl: Declaration },
+    Store { target: RegisterId, value: Value },
 }
 
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.kind.fmt(f)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum InstructionKind {
-    Declare { local: Local, decl: Declaration },
-    Store { target: Local, value: Value },
-}
-
-impl std::fmt::Display for InstructionKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Declare { local, decl } => write!(f, "{local} = {decl}"),
+            Self::Declare { register, decl } => write!(f, "{register} = {decl}"),
             Self::Store { target, value } => write!(f, "&{target} = {value}"),
         }
     }
@@ -512,70 +455,75 @@ impl std::fmt::Display for InstructionKind {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Declaration {
     Value(Value),
-    IntCompare(IntComparison),
-    FloatCompare(FloatComparison),
-    Cast { operand: InstructionId, bits: u8 },
-    Reference { id: Local },
+    Cast { operand: RegisterId, bits: u8 },
+    Intrinsic { name: Intrinsic, args: Vec<RegisterId> },
+    Reference { id: RegisterId },
+}
+
+impl Declaration {
+    pub fn is_pointer_type(&self) -> bool {
+        match self {
+            Self::Value(value) => value.is_pointer_type(),
+            Self::Reference { .. } => true,
+            _ => false,
+        }
+    }
 }
 
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Value(val) => val.fmt(f),
-            Self::IntCompare(val) => val.fmt(f),
-            Self::FloatCompare(val) => val.fmt(f),
             Self::Cast { operand, bits } => write!(f, "{operand} as i{bits}"),
+            Self::Intrinsic { name, args } => write!(
+                f,
+                "{name}({})",
+                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+            ),
             Self::Reference { id } => write!(f, "{id}"),
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum IntComparison {
-    Equal(Value, Value),
-    NotEqual(Value, Value),
-    UnsignedLessThan(Value, Value),
-    UnsignedLessThanEqual(Value, Value),
-    UnsignedGreaterThan(Value, Value),
-    UnsignedGreaterThanEqual(Value, Value),
-    SignedLessThan(Value, Value),
-    SignedLessThanEqual(Value, Value),
-    SignedGreaterThan(Value, Value),
-    SignedGreaterThanEqual(Value, Value),
+pub enum Intrinsic {
+    FloatEq { bits: u8 },
+    FloatNe { bits: u8 },
+    FloatGe { bits: u8 },
+    FloatGt { bits: u8 },
+    FloatLe { bits: u8 },
+    FloatLt { bits: u8 },
+    FloatAdd { bits: u8 },
+    FloatSub { bits: u8 },
+    FloatMul { bits: u8 },
+    FloatDiv { bits: u8 },
+    IntEq { bits: u8, signed: bool },
+    IntNe { bits: u8, signed: bool },
+    IntGe { bits: u8, signed: bool },
+    IntGt { bits: u8, signed: bool },
+    IntLe { bits: u8, signed: bool },
+    IntLt { bits: u8, signed: bool },
+    IntAdd { bits: u8, signed: bool },
+    IntSub { bits: u8, signed: bool },
+    IntMul { bits: u8, signed: bool },
+    IntDiv { bits: u8, signed: bool },
+    BooleanEq,
+    BooleanNe,
 }
 
-impl std::fmt::Display for IntComparison {
+impl std::fmt::Display for Intrinsic {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Equal(a, b) => write!(f, "{a} == {b}"),
-            Self::NotEqual(a, b) => write!(f, "{a} != {b}"),
-            Self::UnsignedLessThan(a, b) | Self::SignedLessThan(a, b) => write!(f, "{a} < {b}"),
-            Self::UnsignedLessThanEqual(a, b) | Self::SignedLessThanEqual(a, b) => write!(f, "{a} <= {b}"),
-            Self::UnsignedGreaterThan(a, b) | Self::SignedGreaterThan(a, b) => write!(f, "{a} > {b}"),
-            Self::UnsignedGreaterThanEqual(a, b) | Self::SignedGreaterThanEqual(a, b) => write!(f, "{a} >= {b}"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum FloatComparison {
-    Equal(Value, Value),
-    NotEqual(Value, Value),
-    LessThan(Value, Value),
-    LessThanEqual(Value, Value),
-    GreaterThan(Value, Value),
-    GreaterThanEqual(Value, Value),
-}
-
-impl std::fmt::Display for FloatComparison {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Self::Equal(a, b) => write!(f, "{a} == {b}"),
-            Self::NotEqual(a, b) => write!(f, "{a} != {b}"),
-            Self::LessThan(a, b) => write!(f, "{a} < {b}"),
-            Self::LessThanEqual(a, b) => write!(f, "{a} <= {b}"),
-            Self::GreaterThan(a, b) => write!(f, "{a} > {b}"),
-            Self::GreaterThanEqual(a, b) => write!(f, "{a} >= {b}"),
+            Self::FloatEq { .. } | Self::IntEq { .. } | Self::BooleanEq => write!(f, "=="),
+            Self::FloatNe { .. } | Self::IntNe { .. } | Self::BooleanNe => write!(f, "!="),
+            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<"),
+            Self::FloatLt { .. } | Self::IntLt { .. } => write!(f, "<="),
+            Self::FloatGe { .. } | Self::IntGe { .. } => write!(f, ">"),
+            Self::FloatGt { .. } | Self::IntGt { .. } => write!(f, ">="),
+            Self::FloatAdd { .. } | Self::IntAdd { .. } => write!(f, "+"),
+            Self::FloatSub { .. } | Self::IntSub { .. } => write!(f, "-"),
+            Self::FloatMul { .. } | Self::IntMul { .. } => write!(f, "*"),
+            Self::FloatDiv { .. } | Self::IntDiv { .. } => write!(f, "/"),
         }
     }
 }
@@ -586,7 +534,13 @@ pub enum Value {
     Integer { bits: u8, signed: bool, value: i64 },
     Float { bits: u8, value: f64 },
     String { value: String },
-    Reference { id: Local },
+    Reference { id: RegisterId },
+}
+
+impl Value {
+    pub fn is_pointer_type(&self) -> bool {
+        matches!(self, Self::String { .. })
+    }
 }
 
 impl std::fmt::Display for Value {
@@ -605,7 +559,7 @@ impl std::fmt::Display for Value {
 pub enum Terminator {
     Return(Option<Value>),
     ConditionalBranch {
-        condition: Local,
+        condition: RegisterId,
         then_block: BasicBlockId,
         else_block: BasicBlockId,
     },
@@ -634,13 +588,13 @@ impl std::fmt::Display for Terminator {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Struct { properties: Vec<Type> },
     Integer { bits: u8, signed: bool },
     Float { bits: u8 },
     Boolean,
-    String { length: usize },
+    String,
     Pointer,
     Void,
 }

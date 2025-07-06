@@ -966,6 +966,7 @@ dependencies = [
  "lume_macros",
  "lume_session",
  "lume_span",
+ "lume_types",
 ]
 
 [[package]]

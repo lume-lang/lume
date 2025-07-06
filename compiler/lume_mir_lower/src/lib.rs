@@ -2,7 +2,8 @@ pub(crate) mod expr;
 pub(crate) mod stmt;
 pub(crate) mod ty;
 
-use lume_mir::{Function, FunctionId, ModuleMap};
+use indexmap::IndexMap;
+use lume_mir::{Function, FunctionId, ModuleMap, RegisterId};
 use lume_typech::TyCheckCtx;
 
 pub struct ModuleTransformer<'tcx> {
@@ -60,6 +61,8 @@ pub(crate) struct FunctionTransformer<'mir> {
 
     /// Defines the MIR function which is being created.
     func: Function,
+
+    variables: IndexMap<lume_span::StatementId, RegisterId>,
 }
 
 impl<'mir> FunctionTransformer<'mir> {
@@ -76,6 +79,7 @@ impl<'mir> FunctionTransformer<'mir> {
             transformer,
             mir,
             func: Function::new(id, name),
+            variables: IndexMap::new(),
         };
 
         transformer.lower_signature(signature);
@@ -105,5 +109,16 @@ impl<'mir> FunctionTransformer<'mir> {
         for statement in &block.statements {
             self.statement(statement);
         }
+
+        // If the current block is not returning, add a return statement so
+        // there's always a valid return value.
+        //
+        // We're assuming it'll be a void return, since the type checker should
+        // have detected a missing return statement in a non-void function.
+        self.func.current_block_mut().return_void();
+    }
+
+    pub(crate) fn tcx(&self) -> &TyCheckCtx {
+        self.transformer.tcx
     }
 }
