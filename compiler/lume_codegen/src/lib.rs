@@ -9,24 +9,27 @@ mod ty;
 mod value;
 pub(crate) mod wrap;
 
+use lume_session::Options;
 pub(crate) use wrap::*;
 
 pub struct Generator<'ctx> {
     package: &'ctx lume_session::Package,
     mir: lume_mir::ModuleMap,
     context: Context,
+    options: &'ctx Options,
 }
 
 impl<'ctx> Generator<'ctx> {
-    pub fn codegen(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap) {
-        Self::new(package, mir).build();
+    pub fn codegen(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap, opts: &'ctx Options) {
+        Self::new(package, mir, opts).build();
     }
 
-    pub fn new(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap) -> Self {
+    pub fn new(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap, opts: &'ctx Options) -> Self {
         Self {
             package,
             mir,
             context: Context::new(),
+            options: opts,
         }
     }
 
@@ -34,7 +37,9 @@ impl<'ctx> Generator<'ctx> {
         let module = self.context.create_module(&self.package.name);
         module.build(&self.mir.functions);
 
-        module.inner.print_to_stderr();
+        if self.options.print_llvm_ir {
+            module.inner.print_to_stderr();
+        }
     }
 }
 

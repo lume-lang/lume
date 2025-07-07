@@ -21,6 +21,12 @@ pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
     /// it's been inferred and type checked.
     pub print_type_context: bool,
+
+    /// Defines whether the generated MIR should be printed to `stdio`.
+    pub print_mir: bool,
+
+    /// Defines whether the generated LLVM IR should be printed to `stdio`.
+    pub print_llvm_ir: bool,
 }
 
 /// Represents a compilation session, invoked by the driver.

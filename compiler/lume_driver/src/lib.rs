@@ -166,7 +166,11 @@ impl<'a> Compiler<'a> {
     fn codegen(&mut self, thir: TyCheckCtx) -> Result<()> {
         let mir = lume_mir_lower::ModuleTransformer::transform(&thir);
 
-        lume_codegen::Generator::codegen(self.package, mir);
+        if self.gcx.session.options.print_mir {
+            println!("{mir}");
+        }
+
+        lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options);
 
         Ok(())
     }

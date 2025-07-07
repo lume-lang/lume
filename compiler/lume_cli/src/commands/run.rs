@@ -15,6 +15,18 @@ pub(crate) fn command() -> Command {
                 .help("Print the type context before analyzing")
                 .action(ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("print-mir")
+                .long("print-mir")
+                .help("Print the generated MIR")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("print-llvm-ir")
+                .long("print-llvm-ir")
+                .help("Print the generated LLVM IR")
+                .action(ArgAction::SetTrue),
+        )
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -35,6 +47,8 @@ pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
 
     let options = Options {
         print_type_context: args.get_flag("print-type-ctx"),
+        print_mir: args.get_flag("print-mir"),
+        print_llvm_ir: args.get_flag("print-llvm-ir"),
     };
 
     let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {

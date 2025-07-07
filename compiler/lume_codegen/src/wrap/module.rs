@@ -4,7 +4,7 @@ use inkwell::values::GlobalValue;
 
 use crate::{Context, Function, FunctionLower};
 
-pub(crate) struct Module<'ctx> {
+pub struct Module<'ctx> {
     pub(crate) name: String,
     pub(crate) context: &'ctx Context,
     pub(crate) inner: inkwell::module::Module<'ctx>,
@@ -12,7 +12,7 @@ pub(crate) struct Module<'ctx> {
 }
 
 impl<'ctx> Module<'ctx> {
-    pub fn new(context: &'ctx Context, name: &str) -> Self {
+    pub(crate) fn new(context: &'ctx Context, name: &str) -> Self {
         let inner = context.inner.create_module(name);
 
         Self {
