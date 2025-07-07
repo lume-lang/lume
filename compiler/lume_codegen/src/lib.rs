@@ -1,6 +1,10 @@
 use std::collections::HashMap;
 
-use inkwell::{basic_block::BasicBlock, types::BasicTypeEnum, values::PointerValue};
+use inkwell::{
+    basic_block::BasicBlock,
+    types::BasicTypeEnum,
+    values::{BasicValue, BasicValueEnum, PointerValue},
+};
 use lume_mir::{Function, RegisterId};
 
 mod inst;
@@ -46,7 +50,7 @@ impl<'ctx> Generator<'ctx> {
 struct FunctionLower<'ctx> {
     builder: Builder<'ctx>,
     func: &'ctx Function,
-    variables: HashMap<RegisterId, PointerValue<'ctx>>,
+    variables: HashMap<RegisterId, BasicValueEnum<'ctx>>,
     variable_types: HashMap<RegisterId, BasicTypeEnum<'ctx>>,
 }
 
@@ -86,7 +90,8 @@ impl<'ctx> FunctionLower<'ctx> {
             let llvm_ty = self.builder.ctx.lower_type(&reg.ty);
 
             self.variable_types.insert(id, llvm_ty);
-            self.variables.insert(id, self.builder.alloca(llvm_ty));
+            self.variables
+                .insert(id, self.builder.alloca(llvm_ty).as_basic_value_enum());
         }
     }
 
@@ -102,7 +107,7 @@ impl<'ctx> FunctionLower<'ctx> {
         }
     }
 
-    pub(crate) fn var(&self, id: RegisterId) -> PointerValue<'ctx> {
+    pub(crate) fn var(&self, id: RegisterId) -> BasicValueEnum<'ctx> {
         self.variables[&id]
     }
 
@@ -110,7 +115,11 @@ impl<'ctx> FunctionLower<'ctx> {
         self.variable_types[&id]
     }
 
-    pub(crate) fn load(&self, id: RegisterId) -> (PointerValue<'ctx>, BasicTypeEnum<'ctx>) {
+    pub(crate) fn load(&self, id: RegisterId) -> (BasicValueEnum<'ctx>, BasicTypeEnum<'ctx>) {
         (self.var(id), self.var_type(id))
+    }
+
+    pub(crate) fn load_ptr(&self, id: RegisterId) -> (PointerValue<'ctx>, BasicTypeEnum<'ctx>) {
+        (self.var(id).into_pointer_value(), self.var_type(id))
     }
 }
