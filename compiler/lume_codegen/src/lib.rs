@@ -42,7 +42,7 @@ impl<'ctx> Generator<'ctx> {
         module.build(&self.mir.functions);
 
         if self.options.print_llvm_ir {
-            module.inner.print_to_stderr();
+            module.print_to_stdout();
         }
     }
 }

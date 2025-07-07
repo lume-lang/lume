@@ -5,10 +5,10 @@ use inkwell::values::GlobalValue;
 use crate::{Context, Function, FunctionLower};
 
 pub struct Module<'ctx> {
-    pub(crate) name: String,
-    pub(crate) context: &'ctx Context,
-    pub(crate) inner: inkwell::module::Module<'ctx>,
-    pub(crate) strings: RwLock<HashMap<String, GlobalValue<'ctx>>>,
+    name: String,
+    inner: inkwell::module::Module<'ctx>,
+    context: &'ctx Context,
+    strings: RwLock<HashMap<String, GlobalValue<'ctx>>>,
 }
 
 impl<'ctx> Module<'ctx> {
@@ -32,6 +32,10 @@ impl<'ctx> Module<'ctx> {
 
             FunctionLower::lower(builder, func);
         }
+    }
+
+    pub(crate) fn print_to_stdout(&self) {
+        println!("{}", self.inner.print_to_string());
     }
 
     #[expect(dead_code)]
