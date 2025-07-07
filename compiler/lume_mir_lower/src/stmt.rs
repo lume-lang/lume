@@ -24,11 +24,16 @@ impl FunctionTransformer<'_> {
     }
 
     fn declare_variable(&mut self, stmt: &lume_hir::VariableDeclaration) {
-        let value = self.expression(&stmt.value);
-        let ty = self.type_of_value(&value);
-        let local = self.func.declare_value(ty, value);
+        let register = match self.expression(&stmt.value) {
+            lume_mir::Value::Reference { id } => id,
+            value => {
+                let ty = self.type_of_value(&value);
 
-        self.variables.insert(stmt.id, local);
+                self.func.declare_value(ty, value)
+            }
+        };
+
+        self.variables.insert(stmt.id, register);
     }
 
     fn break_loop(&mut self) {

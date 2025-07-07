@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
     pub functions: Vec<Function>,
@@ -408,6 +410,7 @@ impl std::fmt::Display for RegisterId {
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
+    pub id: RegisterId,
     pub ty: Type,
     pub block: BasicBlockId,
 }
@@ -426,9 +429,14 @@ impl Registers {
         &mut self.regs[id.0]
     }
 
+    pub fn register_ty(&self, id: RegisterId) -> &Type {
+        &self.register(id).ty
+    }
+
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
         let id = RegisterId(self.regs.len());
-        self.regs.push(Register { ty, block });
+        self.regs.push(Register { id, ty, block });
+
         id
     }
 
@@ -456,7 +464,7 @@ impl std::fmt::Display for Instruction {
 pub enum Declaration {
     Value(Value),
     Cast { operand: RegisterId, bits: u8 },
-    Intrinsic { name: Intrinsic, args: Vec<RegisterId> },
+    Intrinsic { name: Intrinsic, args: Vec<Value> },
     Reference { id: RegisterId },
 }
 
@@ -535,11 +543,23 @@ pub enum Value {
     Float { bits: u8, value: f64 },
     String { value: String },
     Reference { id: RegisterId },
+    Load { id: RegisterId },
 }
 
 impl Value {
     pub fn is_pointer_type(&self) -> bool {
         matches!(self, Self::String { .. })
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn bitsize(&self) -> u8 {
+        match self {
+            Self::Boolean { .. } => 1,
+            Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
+            Self::Reference { .. } | Self::Load { .. } | Self::String { .. } => {
+                std::mem::size_of::<*const u32>() as u8 * 8
+            }
+        }
     }
 }
 
@@ -550,7 +570,8 @@ impl std::fmt::Display for Value {
             Self::Integer { bits, signed, value } => write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" }),
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
             Self::String { value } => write!(f, "\"{value}\""),
-            Self::Reference { id } => write!(f, "&{id}"),
+            Self::Reference { id } => write!(f, "{id}"),
+            Self::Load { id } => write!(f, "&{id}"),
         }
     }
 }

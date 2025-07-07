@@ -4,9 +4,17 @@ impl FunctionTransformer<'_> {
     pub(super) fn expression(&mut self, expr: &lume_hir::Expression) -> lume_mir::Value {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment(expr),
+            lume_hir::ExpressionKind::Binary(_) => todo!("binary MIR lowering"),
+            lume_hir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
+            // lume_hir::ExpressionKind::Construct(_) => todo!("construct MIR lowering"),
+            lume_hir::ExpressionKind::StaticCall(_) => todo!("static call MIR lowering"),
+            lume_hir::ExpressionKind::InstanceCall(_) => todo!("instance call MIR lowering"),
             lume_hir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_hir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
+            lume_hir::ExpressionKind::Logical(_) => todo!("logical MIR lowering"),
+            lume_hir::ExpressionKind::Member(_) => todo!("member MIR lowering"),
             lume_hir::ExpressionKind::Variable(var) => self.variable_reference(var),
+            lume_hir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
             _ => lume_mir::Value::Boolean { value: false },
         }
     }
@@ -24,15 +32,7 @@ impl FunctionTransformer<'_> {
 
     fn intrinsic_call(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_mir::Value {
         let name = self.intrinsic_of(expr);
-        let mut args = Vec::new();
-
-        for arg_expr in &expr.arguments {
-            let arg = self.expression(arg_expr);
-            let ty = self.type_of_value(&arg);
-            let reg = self.func.declare_value(ty, arg);
-
-            args.push(reg);
-        }
+        let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
 
         let decl = lume_mir::Declaration::Intrinsic { name, args };
         let decl_ty = self.type_of_decl(&decl);
