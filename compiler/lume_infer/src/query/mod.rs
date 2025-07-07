@@ -9,7 +9,7 @@ mod diagnostics;
 pub mod hir;
 pub mod lookup;
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Hash, Copy, Clone, PartialEq, Eq)]
 pub enum CallReference {
     /// The call refers to a function.
     Function(FunctionId),
@@ -40,6 +40,10 @@ impl Callable<'_> {
             Self::Method(method) => &method.return_type,
             Self::Function(function) => &function.return_type,
         }
+    }
+
+    pub fn to_call_reference(self) -> CallReference {
+        self.into()
     }
 }
 

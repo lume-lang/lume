@@ -1,6 +1,6 @@
 use crate::FunctionLower;
 
-impl FunctionLower<'_> {
+impl FunctionLower<'_, '_> {
     pub(super) fn terminator(&self, term: &lume_mir::Terminator) {
         match term {
             lume_mir::Terminator::Return(ret) => {

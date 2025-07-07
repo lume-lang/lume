@@ -7,8 +7,8 @@ impl FunctionTransformer<'_> {
             lume_hir::ExpressionKind::Binary(_) => todo!("binary MIR lowering"),
             lume_hir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
             // lume_hir::ExpressionKind::Construct(_) => todo!("construct MIR lowering"),
-            lume_hir::ExpressionKind::StaticCall(_) => todo!("static call MIR lowering"),
-            lume_hir::ExpressionKind::InstanceCall(_) => todo!("instance call MIR lowering"),
+            lume_hir::ExpressionKind::StaticCall(expr) => self.static_call(expr),
+            lume_hir::ExpressionKind::InstanceCall(expr) => self.instance_call(expr),
             lume_hir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_hir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
             lume_hir::ExpressionKind::Logical(_) => todo!("logical MIR lowering"),
@@ -28,6 +28,27 @@ impl FunctionTransformer<'_> {
         self.func.current_block_mut().assign(id, value);
 
         lume_mir::Value::Reference { id }
+    }
+
+    fn static_call(&mut self, expr: &lume_hir::StaticCall) -> lume_mir::Value {
+        let callable = self.tcx().probe_callable_static(expr).unwrap();
+        let func_id = self.mir.new_function_id(callable.to_call_reference());
+
+        let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
+
+        lume_mir::Value::Call { func_id, args }
+    }
+
+    fn instance_call(&mut self, expr: &lume_hir::InstanceCall) -> lume_mir::Value {
+        let callable = self.tcx().probe_callable_instance(expr).unwrap();
+        let func_id = self.mir.new_function_id(callable.to_call_reference());
+
+        let mut args = vec![self.expression(&expr.callee)];
+        for expr_arg in &expr.arguments {
+            args.push(self.expression(expr_arg));
+        }
+
+        lume_mir::Value::Call { func_id, args }
     }
 
     fn intrinsic_call(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_mir::Value {

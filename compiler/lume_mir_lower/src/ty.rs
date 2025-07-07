@@ -27,6 +27,7 @@ impl FunctionTransformer<'_> {
             lume_mir::Value::String { .. } => lume_mir::Type::String,
             lume_mir::Value::Reference { id } => self.func.registers.register_ty(*id).clone(),
             lume_mir::Value::Load { .. } => lume_mir::Type::Pointer,
+            lume_mir::Value::Call { func_id, .. } => self.mir.function(*func_id).return_type.clone(),
         }
     }
 

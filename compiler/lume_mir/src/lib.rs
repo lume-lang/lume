@@ -1,8 +1,11 @@
 use std::hash::Hash;
 
+use indexmap::IndexMap;
+use lume_infer::query::CallReference;
+
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
-    pub functions: Vec<Function>,
+    pub functions: IndexMap<FunctionId, Function>,
 }
 
 impl ModuleMap {
@@ -16,8 +19,8 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
-    pub fn new_function_id(&self) -> FunctionId {
-        FunctionId(self.functions.len())
+    pub fn new_function_id(&self, id: CallReference) -> FunctionId {
+        FunctionId(id)
     }
 
     /// Returns a reference to the function with the given ID.
@@ -26,7 +29,7 @@ impl ModuleMap {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn function(&self, id: FunctionId) -> &Function {
-        self.functions.get(id.0).unwrap()
+        self.functions.get(&id).unwrap()
     }
 
     /// Returns a mutable reference to the function with the given ID.
@@ -35,22 +38,24 @@ impl ModuleMap {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn function_mut(&mut self, id: FunctionId) -> &mut Function {
-        self.functions.get_mut(id.0).unwrap()
+        self.functions.get_mut(&id).unwrap()
     }
 
-    /// Allocates a new function and returns its ID.
-    pub fn new_func(&mut self, name: String) -> FunctionId {
-        let id = self.new_function_id();
+    /// Returns a reference to the function with the given name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given name is invalid or missing.
+    pub fn find_function(&self, name: CallReference) -> &Function {
+        let id = self.new_function_id(name);
 
-        self.functions.push(Function::new(id, name));
-
-        id
+        self.function(id)
     }
 }
 
 impl std::fmt::Display for ModuleMap {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for func in &self.functions {
+        for func in self.functions.values() {
             write!(f, "{func}")?;
         }
 
@@ -58,8 +63,17 @@ impl std::fmt::Display for ModuleMap {
     }
 }
 
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub struct FunctionId(CallReference);
+
+impl std::fmt::Display for FunctionId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0 {
+            CallReference::Function(id) => write!(f, "{:?}", id.0),
+            CallReference::Method(id) => write!(f, "{:?}", id.0),
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Function {
@@ -544,6 +558,7 @@ pub enum Value {
     String { value: String },
     Reference { id: RegisterId },
     Load { id: RegisterId },
+    Call { func_id: FunctionId, args: Vec<Value> },
 }
 
 impl Value {
@@ -551,7 +566,7 @@ impl Value {
         matches!(self, Self::String { .. })
     }
 
-    #[expect(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation, clippy::missing_panics_doc)]
     pub fn bitsize(&self) -> u8 {
         match self {
             Self::Boolean { .. } => 1,
@@ -559,6 +574,7 @@ impl Value {
             Self::Reference { .. } | Self::Load { .. } | Self::String { .. } => {
                 std::mem::size_of::<*const u32>() as u8 * 8
             }
+            Self::Call { .. } => panic!("cannot get bitsize of call expression"),
         }
     }
 }
@@ -572,6 +588,7 @@ impl std::fmt::Display for Value {
             Self::String { value } => write!(f, "\"{value}\""),
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "&{id}"),
+            Self::Call { func_id, args } => write!(f, "{func_id}({args:?})"),
         }
     }
 }
@@ -618,4 +635,10 @@ pub enum Type {
     String,
     Pointer,
     Void,
+}
+
+impl Type {
+    pub fn is_pointer(&self) -> bool {
+        matches!(self, Type::Pointer)
+    }
 }

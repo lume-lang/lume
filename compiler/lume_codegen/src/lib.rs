@@ -39,7 +39,17 @@ impl<'ctx> Generator<'ctx> {
 
     pub fn build(&self) {
         let module = self.context.create_module(&self.package.name);
-        module.build(&self.mir.functions);
+
+        for func in self.mir.functions.values() {
+            module.add_function(func);
+        }
+
+        for func in self.mir.functions.values() {
+            let function_ty = module.find_function(func.id);
+            let builder = self.context.create_builder(function_ty);
+
+            FunctionLower::lower(&module, builder, func);
+        }
 
         if self.options.print_llvm_ir {
             module.print_to_stdout();
@@ -47,23 +57,27 @@ impl<'ctx> Generator<'ctx> {
     }
 }
 
-struct FunctionLower<'ctx> {
+struct FunctionLower<'func, 'ctx> {
+    func: &'func Function,
+
     builder: Builder<'ctx>,
-    func: &'ctx Function,
+    module: &'func Module<'ctx>,
+
     variables: HashMap<RegisterId, BasicValueEnum<'ctx>>,
     variable_types: HashMap<RegisterId, BasicTypeEnum<'ctx>>,
 }
 
-impl<'ctx> FunctionLower<'ctx> {
-    pub fn lower(builder: Builder<'ctx>, func: &'ctx Function) {
-        let mut lower = Self::new(builder, func);
+impl<'func, 'ctx> FunctionLower<'func, 'ctx> {
+    pub fn lower(module: &'func Module<'ctx>, builder: Builder<'ctx>, func: &'func Function) {
+        let mut lower = Self::new(module, builder, func);
         lower.build();
     }
 
-    pub fn new(builder: Builder<'ctx>, func: &'ctx Function) -> Self {
+    pub fn new(module: &'func Module<'ctx>, builder: Builder<'ctx>, func: &'func Function) -> Self {
         Self {
-            builder,
             func,
+            builder,
+            module,
             variables: HashMap::new(),
             variable_types: HashMap::new(),
         }

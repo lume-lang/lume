@@ -1,6 +1,6 @@
 use crate::FunctionLower;
 
-impl FunctionLower<'_> {
+impl FunctionLower<'_, '_> {
     pub(super) fn instruction(&self, inst: &lume_mir::Instruction) {
         match inst {
             lume_mir::Instruction::Declare { register, decl } => {

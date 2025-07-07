@@ -2,7 +2,7 @@ use inkwell::values::{BasicValue, BasicValueEnum, FloatValue, IntValue};
 
 use crate::FunctionLower;
 
-impl<'ctx> FunctionLower<'ctx> {
+impl<'ctx> FunctionLower<'_, 'ctx> {
     pub(super) fn value(&self, val: &lume_mir::Value) -> BasicValueEnum<'ctx> {
         match val {
             lume_mir::Value::Boolean { value } => self.builder.bool_literal(*value).as_basic_value_enum(),
@@ -28,6 +28,12 @@ impl<'ctx> FunctionLower<'ctx> {
                 let (val, _) = self.load_ptr(*id);
 
                 val.as_basic_value_enum()
+            }
+            lume_mir::Value::Call { func_id, args } => {
+                let func = self.module.find_function(*func_id);
+                let args = args.iter().map(|arg| self.value(arg)).collect::<Vec<_>>();
+
+                self.builder.call_with_return(func, &args)
             }
         }
     }
@@ -197,8 +203,7 @@ impl<'ctx> FunctionLower<'ctx> {
     pub(crate) fn load_int_from(&self, value: &lume_mir::Value) -> IntValue<'ctx> {
         match value {
             int @ lume_mir::Value::Integer { .. } => self.value(int).into_int_value(),
-            lume_mir::Value::Reference { id } => self.load(*id).0.into_int_value(),
-            lume_mir::Value::Load { id } => {
+            lume_mir::Value::Load { id } | lume_mir::Value::Reference { id } => {
                 let (ptr, _) = self.load_ptr(*id);
 
                 self.builder.load_int(value.bitsize(), ptr)

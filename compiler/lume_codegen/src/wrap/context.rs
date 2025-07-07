@@ -1,4 +1,4 @@
-use inkwell::values::FunctionValue;
+use inkwell::{attributes::Attribute, values::FunctionValue};
 
 use crate::{Builder, Module};
 
@@ -19,5 +19,10 @@ impl Context {
 
     pub fn create_module(&self, name: &str) -> Module<'_> {
         Module::new(self, name)
+    }
+
+    pub fn attribute_flag(&self, name: &str) -> Attribute {
+        self.inner
+            .create_enum_attribute(Attribute::get_named_enum_kind_id(name), 0)
     }
 }

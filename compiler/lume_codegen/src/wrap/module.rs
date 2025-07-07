@@ -1,14 +1,20 @@
 use std::{collections::HashMap, sync::RwLock};
 
-use inkwell::values::GlobalValue;
+use inkwell::{
+    attributes::AttributeLoc,
+    values::{FunctionValue, GlobalValue},
+};
+use lume_mir::FunctionId;
 
-use crate::{Context, Function, FunctionLower};
+use crate::{Context, Function};
 
 pub struct Module<'ctx> {
-    name: String,
-    inner: inkwell::module::Module<'ctx>,
     context: &'ctx Context,
+    inner: inkwell::module::Module<'ctx>,
+
+    name: String,
     strings: RwLock<HashMap<String, GlobalValue<'ctx>>>,
+    functions: RwLock<HashMap<FunctionId, FunctionValue<'ctx>>>,
 }
 
 impl<'ctx> Module<'ctx> {
@@ -20,22 +26,12 @@ impl<'ctx> Module<'ctx> {
             context,
             inner,
             strings: RwLock::new(HashMap::new()),
-        }
-    }
-
-    pub fn build(&self, funcs: &'ctx [Function]) {
-        for func in funcs {
-            let ret_ty = self.context.lower_fn_type(&func.parameters, &func.return_type, false);
-            let fn_ty = self.inner.add_function(&func.name, ret_ty, None);
-
-            let builder = self.context.create_builder(fn_ty);
-
-            FunctionLower::lower(builder, func);
+            functions: RwLock::new(HashMap::new()),
         }
     }
 
     pub(crate) fn print_to_stdout(&self) {
-        println!("{}", self.inner.print_to_string());
+        self.inner.print_to_stderr();
     }
 
     #[expect(dead_code)]
@@ -56,5 +52,29 @@ impl<'ctx> Module<'ctx> {
 
             global
         }
+    }
+
+    pub(crate) fn add_function(&self, func: &Function) -> FunctionValue<'ctx> {
+        self.inner.get_function(&func.name).unwrap_or_else(|| {
+            let function_type = self.context.lower_fn_type(&func.parameters, &func.return_type, false);
+            let function_value = self.inner.add_function(&func.name, function_type, None);
+
+            for (idx, param_type) in func.parameters.iter().enumerate() {
+                #[allow(clippy::cast_possible_truncation)]
+                let loc = AttributeLoc::Param(idx as u32);
+
+                if param_type.is_pointer() {
+                    function_value.add_attribute(loc, self.context.attribute_flag("nonnull"));
+                }
+            }
+
+            self.functions.write().unwrap().insert(func.id, function_value);
+
+            function_value
+        })
+    }
+
+    pub(crate) fn find_function(&self, id: FunctionId) -> FunctionValue<'ctx> {
+        *self.functions.read().unwrap().get(&id).unwrap()
     }
 }

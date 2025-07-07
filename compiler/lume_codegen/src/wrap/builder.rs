@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::RwLock};
 
 use inkwell::{
     types::BasicType,
-    values::{BasicValue, BasicValueEnum, FloatValue, FunctionValue, IntValue, PointerValue},
+    values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FloatValue, FunctionValue, IntValue, PointerValue},
 };
 use lume_mir::BasicBlockId;
 
@@ -47,43 +47,55 @@ impl<'ctx> Builder<'ctx> {
     }
 
     #[allow(clippy::cast_lossless)]
-    pub fn bool_literal(&self, value: bool) -> inkwell::values::IntValue<'ctx> {
+    pub fn bool_literal(&self, value: bool) -> IntValue<'ctx> {
         self.ctx.bool_type().const_int(value as u64, false)
     }
 
     #[expect(clippy::cast_sign_loss)]
-    pub fn i8_literal(&self, value: i64) -> inkwell::values::IntValue<'ctx> {
+    pub fn i8_literal(&self, value: i64) -> IntValue<'ctx> {
         self.ctx.int_type(8).const_int(value as u64, true)
     }
 
     #[expect(clippy::cast_sign_loss)]
-    pub fn i16_literal(&self, value: i64) -> inkwell::values::IntValue<'ctx> {
+    pub fn i16_literal(&self, value: i64) -> IntValue<'ctx> {
         self.ctx.int_type(16).const_int(value as u64, true)
     }
 
     #[expect(clippy::cast_sign_loss)]
-    pub fn i32_literal(&self, value: i64) -> inkwell::values::IntValue<'ctx> {
+    pub fn i32_literal(&self, value: i64) -> IntValue<'ctx> {
         self.ctx.int_type(32).const_int(value as u64, true)
     }
 
     #[expect(clippy::cast_sign_loss)]
-    pub fn i64_literal(&self, value: i64) -> inkwell::values::IntValue<'ctx> {
+    pub fn i64_literal(&self, value: i64) -> IntValue<'ctx> {
         self.ctx.int_type(64).const_int(value as u64, true)
     }
 
-    pub fn f32_literal(&self, value: f64) -> inkwell::values::FloatValue<'ctx> {
+    pub fn f32_literal(&self, value: f64) -> FloatValue<'ctx> {
         self.ctx.f32_type().const_float(value)
     }
 
-    pub fn f64_literal(&self, value: f64) -> inkwell::values::FloatValue<'ctx> {
+    pub fn f64_literal(&self, value: f64) -> FloatValue<'ctx> {
         self.ctx.f64_type().const_float(value)
     }
 
-    pub fn string_literal(&self, value: &str) -> inkwell::values::PointerValue<'ctx> {
+    pub fn string_literal(&self, value: &str) -> PointerValue<'ctx> {
         self.inner
             .build_global_string_ptr(value, "")
             .unwrap()
             .as_pointer_value()
+    }
+
+    pub fn call_with_return(&self, func: FunctionValue<'ctx>, args: &[BasicValueEnum<'ctx>]) -> BasicValueEnum<'ctx> {
+        let args: Vec<BasicMetadataValueEnum<'ctx>> =
+            args.iter().map(|arg| From::<BasicValueEnum>::from(*arg)).collect();
+
+        self.inner
+            .build_call(func, &args, "")
+            .unwrap()
+            .try_as_basic_value()
+            .left()
+            .unwrap()
     }
 
     pub fn alloca<T: BasicType<'ctx>>(&self, ty: T) -> PointerValue<'ctx> {

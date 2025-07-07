@@ -3,8 +3,10 @@ pub(crate) mod stmt;
 pub(crate) mod ty;
 
 use indexmap::IndexMap;
+use lume_infer::query::CallReference;
 use lume_mir::{Function, FunctionId, ModuleMap, RegisterId};
 use lume_typech::TyCheckCtx;
+use lume_types::TypeDatabaseContext;
 
 pub struct ModuleTransformer<'tcx> {
     tcx: &'tcx TyCheckCtx,
@@ -21,35 +23,66 @@ impl<'tcx> ModuleTransformer<'tcx> {
             mir: ModuleMap::new(),
         };
 
-        for method in &transformer.tcx.tdb().methods {
-            let body = transformer.tcx.hir_body_of(method.hir);
-
-            transformer.transform_method(method, body);
-        }
-
-        for func in &transformer.tcx.tdb().functions {
-            let body = transformer.tcx.hir_body_of(func.hir);
-
-            transformer.transform_function(func, body);
-        }
+        transformer.define_callables(tcx.tdb());
+        transformer.transform_callables(tcx.tdb());
 
         transformer.mir
     }
 
-    fn transform_method(&mut self, method: &lume_types::Method, body: Option<&lume_hir::Block>) {
-        let id = self.mir.new_function_id();
+    fn define_callables(&mut self, tdb: &TypeDatabaseContext) {
+        for method in &tdb.methods {
+            self.define_method(method);
+        }
+
+        for func in &tdb.functions {
+            self.define_function(func);
+        }
+    }
+
+    fn transform_callables(&mut self, tdb: &TypeDatabaseContext) {
+        for method in &tdb.methods {
+            let body = self.tcx.hir_body_of(method.hir);
+
+            self.transform_method(method, body);
+        }
+
+        for func in &tdb.functions {
+            let body = self.tcx.hir_body_of(func.hir);
+
+            self.transform_function(func, body);
+        }
+    }
+
+    fn define_method(&mut self, method: &lume_types::Method) {
+        let id = self.mir.new_function_id(CallReference::Method(method.id));
         let name = method.name.to_string();
 
-        let func = FunctionTransformer::transform(self, &self.mir, id, name, &method.sig(), body);
-        self.mir.functions.push(func);
+        let func = FunctionTransformer::define(self, &self.mir, id, name, &method.sig());
+        self.mir.functions.insert(id, func);
+    }
+
+    fn define_function(&mut self, func: &lume_types::Function) {
+        let id = self.mir.new_function_id(CallReference::Function(func.id));
+        let name = func.name.to_string();
+
+        let func = FunctionTransformer::define(self, &self.mir, id, name, &func.sig());
+        self.mir.functions.insert(id, func);
+    }
+
+    fn transform_method(&mut self, method: &lume_types::Method, body: Option<&lume_hir::Block>) {
+        let id = self.mir.new_function_id(CallReference::Method(method.id));
+        let func = self.mir.function(id).clone();
+
+        let func = FunctionTransformer::transform(self, &self.mir, func, body);
+        self.mir.functions.insert(id, func);
     }
 
     fn transform_function(&mut self, func: &lume_types::Function, body: Option<&lume_hir::Block>) {
-        let id = self.mir.new_function_id();
-        let name = func.name.to_string();
+        let id = self.mir.new_function_id(CallReference::Function(func.id));
+        let func = self.mir.function(id).clone();
 
-        let func = FunctionTransformer::transform(self, &self.mir, id, name, &func.sig(), body);
-        self.mir.functions.push(func);
+        let func = FunctionTransformer::transform(self, &self.mir, func, body);
+        self.mir.functions.insert(id, func);
     }
 }
 
@@ -66,14 +99,13 @@ pub(crate) struct FunctionTransformer<'mir> {
 }
 
 impl<'mir> FunctionTransformer<'mir> {
-    /// Transforms the supplied context into a MIR map.
-    pub fn transform(
+    /// Defines the MIR function which is being created.
+    pub fn define(
         transformer: &'mir ModuleTransformer,
         mir: &'mir ModuleMap,
         id: FunctionId,
         name: String,
         signature: &lume_types::FunctionSig<'mir>,
-        block: Option<&lume_hir::Block>,
     ) -> Function {
         let mut transformer = Self {
             transformer,
@@ -83,6 +115,23 @@ impl<'mir> FunctionTransformer<'mir> {
         };
 
         transformer.lower_signature(signature);
+
+        transformer.func
+    }
+
+    /// Transforms the supplied context into a MIR map.
+    pub fn transform(
+        transformer: &'mir ModuleTransformer,
+        mir: &'mir ModuleMap,
+        func: Function,
+        block: Option<&lume_hir::Block>,
+    ) -> Function {
+        let mut transformer = Self {
+            transformer,
+            mir,
+            func,
+            variables: IndexMap::new(),
+        };
 
         if let Some(body) = block {
             transformer.lower(body);
