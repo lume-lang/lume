@@ -3,7 +3,7 @@ use crate::commands::project_or_cwd;
 use clap::{Arg, ArgAction, ArgMatches, Command};
 use lume_driver::Driver;
 use lume_errors::DiagCtxHandle;
-use lume_session::Options;
+use lume_session::{MirPrinting, Options};
 
 pub(crate) fn command() -> Command {
     Command::new("run")
@@ -19,7 +19,12 @@ pub(crate) fn command() -> Command {
             Arg::new("print-mir")
                 .long("print-mir")
                 .help("Print the generated MIR")
-                .action(ArgAction::SetTrue),
+                .value_parser(["none", "pretty", "verbose"])
+                .default_value("none")
+                .default_missing_value("pretty")
+                .num_args(0..=1)
+                .require_equals(true)
+                .action(ArgAction::Set),
         )
         .arg(
             Arg::new("print-llvm-ir")
@@ -47,7 +52,12 @@ pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
 
     let options = Options {
         print_type_context: args.get_flag("print-type-ctx"),
-        print_mir: args.get_flag("print-mir"),
+        print_mir: match args.get_one::<String>("print-mir").map(std::string::String::as_str) {
+            Some("none") => MirPrinting::None,
+            Some("pretty") => MirPrinting::Pretty,
+            Some("verbose") => MirPrinting::Debug,
+            _ => unreachable!(),
+        },
         print_llvm_ir: args.get_flag("print-llvm-ir"),
     };
 

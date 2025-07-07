@@ -4,7 +4,7 @@ use arc::locate_package;
 use error_snippet::Result;
 use lume_errors::{DiagCtx, DiagCtxHandle};
 use lume_infer::TyInferCtx;
-use lume_session::{GlobalCtx, Options, Package, Session};
+use lume_session::{GlobalCtx, MirPrinting, Options, Package, Session};
 use lume_span::SourceMap;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
@@ -166,8 +166,10 @@ impl<'a> Compiler<'a> {
     fn codegen(&mut self, thir: TyCheckCtx) -> Result<()> {
         let mir = lume_mir_lower::ModuleTransformer::transform(&thir);
 
-        if self.gcx.session.options.print_mir {
-            println!("{mir}");
+        match self.gcx.session.options.print_mir {
+            MirPrinting::None => {}
+            MirPrinting::Pretty => println!("{mir}"),
+            MirPrinting::Debug => println!("{mir:#?}"),
         }
 
         lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options);

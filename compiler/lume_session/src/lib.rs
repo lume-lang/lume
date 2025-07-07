@@ -23,10 +23,18 @@ pub struct Options {
     pub print_type_context: bool,
 
     /// Defines whether the generated MIR should be printed to `stdio`.
-    pub print_mir: bool,
+    pub print_mir: MirPrinting,
 
     /// Defines whether the generated LLVM IR should be printed to `stdio`.
     pub print_llvm_ir: bool,
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MirPrinting {
+    #[default]
+    None,
+    Pretty,
+    Debug,
 }
 
 /// Represents a compilation session, invoked by the driver.
