@@ -1,93 +1,83 @@
 use crate::commands::project_or_cwd;
 
-use clap::{Arg, ArgAction, ArgMatches, Command};
 use lume_driver::Driver;
 use lume_errors::DiagCtxHandle;
-use lume_session::{MirPrinting, Options};
+use lume_session::{MirPrinting, OptimizationLevel, Options};
 
-pub(crate) fn command() -> Command {
-    Command::new("run")
-        .about("Build and run a Lume project")
-        .arg(Arg::new("path").help("Path to the project").action(ArgAction::Set))
-        .arg(
-            Arg::new("print-type-ctx")
-                .long("print-type-ctx")
-                .help("Print the type context before analyzing")
-                .action(ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("print-mir")
-                .long("print-mir")
-                .help("Print the generated MIR")
-                .value_parser(["none", "pretty", "verbose"])
-                .default_value("none")
-                .default_missing_value("pretty")
-                .num_args(0..=1)
-                .require_equals(true)
-                .action(ArgAction::Set),
-        )
-        .arg(
-            Arg::new("print-llvm-ir")
-                .long("print-llvm-ir")
-                .help("Print the generated LLVM IR")
-                .action(ArgAction::SetTrue),
-        )
-        .arg(
-            Arg::new("O")
-                .short('O')
-                .long("opt-level")
-                .help("Optimization level")
-                .value_parser(["0", "1", "2", "3", "s", "z"])
-                .default_value("2")
-                .action(ArgAction::Set),
-        )
+#[derive(Debug, clap::Parser)]
+#[command(name = "run", about = "Build and run a Lume project", long_about = None)]
+pub struct RunCommand {
+    #[arg(help = "Path to the project", value_name = "DIR", value_hint = clap::ValueHint::DirPath)]
+    pub path: Option<std::path::PathBuf>,
+
+    #[arg(long, help = "Print the type context before analyzing")]
+    pub print_type_ctx: bool,
+
+    #[arg(
+        long,
+        default_value = "none",
+        default_missing_value = "pretty",
+        help = "Print the generated MIR",
+        num_args(0..=1),
+        require_equals = true
+    )]
+    pub print_mir: MirPrinting,
+
+    #[arg(long, help = "Print the generated LLVM IR")]
+    pub print_llvm_ir: bool,
+
+    #[arg(
+        short = 'O',
+        long = "optimize",
+        default_value = "2",
+        help = "Optimization level",
+        value_parser = clap::builder::PossibleValuesParser::new(["0", "1", "2", "3", "s", "z"])
+    )]
+    pub optimize: String,
 }
 
-#[allow(clippy::needless_pass_by_value)]
-pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
-    let input = if let Some(v) = args.get_one::<String>("path") {
-        project_or_cwd(Some(v))
-    } else {
-        project_or_cwd(None)
-    };
+impl RunCommand {
+    #[allow(clippy::needless_pass_by_value)]
+    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+        let input = if let Some(v) = self.path.as_ref() {
+            project_or_cwd(Some(v))
+        } else {
+            project_or_cwd(None)
+        };
 
-    let project_path = match input {
-        Ok(path) => path,
-        Err(err) => {
+        let project_path = match input {
+            Ok(path) => path,
+            Err(err) => {
+                dcx.emit(err);
+                return;
+            }
+        };
+
+        let options = Options {
+            print_type_context: self.print_type_ctx,
+            print_mir: self.print_mir,
+            print_llvm_ir: self.print_llvm_ir,
+            optimize: match self.optimize.as_str() {
+                "0" => OptimizationLevel::O0,
+                "1" => OptimizationLevel::O1,
+                "2" => OptimizationLevel::O2,
+                "3" => OptimizationLevel::O3,
+                "s" => OptimizationLevel::Os,
+                "z" => OptimizationLevel::Oz,
+                _ => unreachable!(),
+            },
+        };
+
+        let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
+            Ok(driver) => driver,
+            Err(err) => {
+                dcx.emit(err);
+                return;
+            }
+        };
+
+        if let Err(err) = driver.build(options) {
             dcx.emit(err);
-            return;
         }
-    };
-
-    let options = Options {
-        print_type_context: args.get_flag("print-type-ctx"),
-        print_mir: match args.get_one::<String>("print-mir").map(std::string::String::as_str) {
-            Some("none") => MirPrinting::None,
-            Some("pretty") => MirPrinting::Pretty,
-            Some("verbose") => MirPrinting::Debug,
-            _ => unreachable!(),
-        },
-        print_llvm_ir: args.get_flag("print-llvm-ir"),
-        optimize: match args.get_one::<String>("O").map(std::string::String::as_str) {
-            Some("0") => lume_session::OptimizationLevel::O0,
-            Some("1") => lume_session::OptimizationLevel::O1,
-            Some("2") => lume_session::OptimizationLevel::O2,
-            Some("3") => lume_session::OptimizationLevel::O3,
-            Some("s") => lume_session::OptimizationLevel::Os,
-            Some("z") => lume_session::OptimizationLevel::Oz,
-            _ => unreachable!(),
-        },
-    };
-
-    let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
-        Ok(driver) => driver,
-        Err(err) => {
-            dcx.emit(err);
-            return;
-        }
-    };
-
-    if let Err(err) = driver.build(options) {
-        dcx.emit(err);
     }
 }

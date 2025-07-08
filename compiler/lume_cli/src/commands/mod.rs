@@ -4,10 +4,13 @@ pub(crate) mod run;
 use crate::error::*;
 use error_snippet::{IntoDiagnostic, Result};
 use std::env::current_dir;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+
+pub(crate) use arc::ArcCommand;
+pub(crate) use run::RunCommand;
 
 /// Gets the absolute path of the given project directory, or current working directory if not specified.
-pub fn project_or_cwd(path: Option<&str>) -> Result<String> {
+pub fn project_or_cwd(path: Option<&PathBuf>) -> Result<String> {
     let cwd: PathBuf = match current_dir() {
         Ok(cwd) => cwd,
         Err(err) => {
@@ -19,12 +22,11 @@ pub fn project_or_cwd(path: Option<&str>) -> Result<String> {
     };
 
     // If no path is specified, use the current working directory.
-    if path.is_none() {
+    let Some(path) = path else {
         return Ok(cwd.to_string_lossy().into_owned());
-    }
+    };
 
     // If the path is absolute, return it as-is.
-    let path = Path::new(path.unwrap());
     if path.is_absolute() {
         return Ok(path.to_string_lossy().into_owned());
     }

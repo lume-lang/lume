@@ -1025,6 +1025,7 @@ dependencies = [
 name = "lume_session"
 version = "0.1.0"
 dependencies = [
+ "clap",
  "error_snippet",
  "error_snippet_derive",
  "glob",

@@ -9,6 +9,7 @@ lume_errors = { path = "../lume_errors" }
 lume_query = { path = "../lume_query" }
 lume_span = { path = "../lume_span" }
 
+clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 glob = "^0"
@@ -17,6 +18,9 @@ petgraph = { version = "=0.8.2" }
 rust-embed = { version = "=8.7.0", features = ["interpolate-folder-path"] }
 semver = { version = "^1" }
 tracing = { workspace = true }
+
+[features]
+cli = ["dep:clap"]
 
 [lints]
 workspace = true

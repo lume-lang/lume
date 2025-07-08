@@ -33,6 +33,7 @@ pub struct Options {
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
 pub enum MirPrinting {
     #[default]
     None,
