@@ -12,9 +12,8 @@ impl Context {
                 64 => self.f64_type().as_basic_type_enum(),
                 _ => panic!("unsupported float type: {n}-bits"),
             },
-            lume_mir::Type::String => self.string_type().as_basic_type_enum(),
+            lume_mir::Type::String | lume_mir::Type::Pointer => self.ptr_type().as_basic_type_enum(),
             lume_mir::Type::Struct { properties } => self.struct_type(properties).as_basic_type_enum(),
-            lume_mir::Type::Pointer => self.ptr_type().as_basic_type_enum(),
         }
     }
 
@@ -45,10 +44,6 @@ impl Context {
         self.inner.bool_type()
     }
 
-    pub fn char_type(&self) -> inkwell::types::IntType<'_> {
-        self.int_type(8)
-    }
-
     pub fn f32_type(&self) -> inkwell::types::FloatType<'_> {
         self.inner.f32_type()
     }
@@ -59,11 +54,6 @@ impl Context {
 
     pub fn ptr_type(&self) -> inkwell::types::PointerType<'_> {
         self.inner.ptr_type(inkwell::AddressSpace::default())
-    }
-
-    #[expect(clippy::cast_possible_truncation)]
-    pub fn string_type(&self) -> inkwell::types::ArrayType<'_> {
-        self.char_type().array_type(size_of::<String>() as u32)
     }
 
     pub fn struct_type(&self, properties: &[lume_mir::Type]) -> inkwell::types::StructType<'_> {
