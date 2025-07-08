@@ -19,11 +19,8 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
                 _ => unimplemented!(),
             },
             lume_mir::Operand::String { value } => self.builder.string_literal(value.as_str()).as_basic_value_enum(),
-            lume_mir::Operand::Reference { id } => {
-                let (ptr, ty) = self.retrieve_var_ptr(*id);
-
-                self.builder.load(ptr, ty)
-            }
+            lume_mir::Operand::Load { id } => self.load(*id),
+            lume_mir::Operand::Reference { id } => self.retrieve_var_ptr(*id).0.as_basic_value_enum(),
         }
     }
 
@@ -173,7 +170,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
     pub(crate) fn load_int_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
         match value {
             int @ lume_mir::Operand::Integer { .. } => self.operand(int).into_int_value(),
-            lume_mir::Operand::Reference { id } => self.load(*id).into_int_value(),
+            lume_mir::Operand::Load { id } => self.load(*id).into_int_value(),
             _ => panic!("Unsupported value type for integer loading"),
         }
     }
@@ -181,7 +178,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
     pub(crate) fn load_float_from(&self, value: &lume_mir::Operand) -> FloatValue<'ctx> {
         match value {
             float @ lume_mir::Operand::Float { .. } => self.operand(float).into_float_value(),
-            lume_mir::Operand::Reference { id } => self.load(*id).into_float_value(),
+            lume_mir::Operand::Load { id } => self.load(*id).into_float_value(),
             _ => panic!("Unsupported value type for float loading"),
         }
     }

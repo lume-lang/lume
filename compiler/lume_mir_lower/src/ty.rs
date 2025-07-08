@@ -25,6 +25,7 @@ impl FunctionTransformer<'_> {
             },
             lume_mir::Operand::Float { bits, .. } => lume_mir::Type::Float { bits: *bits },
             lume_mir::Operand::String { .. } => lume_mir::Type::String,
+            lume_mir::Operand::Load { .. } => lume_mir::Type::Pointer,
             lume_mir::Operand::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }

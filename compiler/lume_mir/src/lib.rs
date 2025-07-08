@@ -228,7 +228,7 @@ impl Function {
 
         if let Declaration::Operand(op) = decl {
             match op {
-                Operand::Reference { id } => id,
+                Operand::Load { id } => id,
                 _ if is_ref_type => {
                     let ptr = self.add_register(ty.clone());
                     self.current_block_mut().allocate_heap(ptr, ty);
@@ -712,18 +712,22 @@ pub enum Operand {
     /// Represents a literal string value.
     String { value: String },
 
+    /// Represents a loaded value from an existing register.
+    Load { id: RegisterId },
+
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
 }
 
 impl Operand {
     /// Gets the bitsize of the operand.
-    #[expect(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_truncation, clippy::missing_panics_doc)]
     pub fn bitsize(&self) -> u8 {
         match self {
             Self::Boolean { .. } => 1,
             Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
             Self::Reference { .. } | Self::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
+            Self::Load { .. } => panic!("cannot get bitsize of load operand"),
         }
     }
 }
@@ -735,6 +739,7 @@ impl std::fmt::Display for Operand {
             Self::Integer { bits, signed, value } => write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" }),
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
             Self::Reference { id } => write!(f, "{id}"),
+            Self::Load { id } => write!(f, "*{id}"),
             Self::String { value } => write!(f, "\"{value}\""),
         }
     }

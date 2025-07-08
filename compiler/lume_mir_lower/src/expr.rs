@@ -27,7 +27,7 @@ impl FunctionTransformer<'_> {
         let value = self.expression(&expr.value);
         self.func.current_block_mut().store(id, value);
 
-        lume_mir::Operand::Reference { id }
+        lume_mir::Operand::Load { id }
     }
 
     fn construct(&mut self, expr: &lume_hir::Construct) -> lume_mir::Operand {
@@ -73,7 +73,7 @@ impl FunctionTransformer<'_> {
         let decl = lume_mir::Declaration::Intrinsic { name, args };
         let reg = self.declare(decl);
 
-        lume_mir::Operand::Reference { id: reg }
+        lume_mir::Operand::Load { id: reg }
     }
 
     fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_mir::Intrinsic {
@@ -142,7 +142,7 @@ impl FunctionTransformer<'_> {
             lume_hir::VariableSource::Variable(id) => *self.variables.get(&id.id).unwrap(),
         };
 
-        lume_mir::Operand::Reference { id }
+        lume_mir::Operand::Load { id }
     }
 
     #[expect(clippy::unused_self)]
