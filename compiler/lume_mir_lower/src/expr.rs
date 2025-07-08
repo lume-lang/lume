@@ -32,16 +32,27 @@ impl FunctionTransformer<'_> {
 
     fn construct(&mut self, expr: &lume_hir::Construct) -> lume_mir::Operand {
         let constructed_type = self.tcx().find_type_ref(&expr.path).unwrap().unwrap();
-        let properties = self.tcx().tdb().find_properties(constructed_type.instance_of);
+        let props = self
+            .tcx()
+            .tdb()
+            .find_properties(constructed_type.instance_of)
+            .collect::<Vec<_>>();
 
-        let struct_type = lume_mir::Type::Struct {
-            properties: properties
-                .map(|prop| self.lower_type(&prop.property_type))
-                .collect::<Vec<_>>(),
-        };
+        let prop_types = props
+            .iter()
+            .map(|prop| self.lower_type(&prop.property_type))
+            .collect::<Vec<_>>();
+
+        let struct_type = lume_mir::Type::Struct { properties: prop_types };
 
         let reg = self.func.add_register(struct_type.clone());
         self.func.current_block_mut().allocate_heap(reg, struct_type);
+
+        for (idx, field) in expr.fields.iter().enumerate() {
+            let value = self.expression(&field.value);
+
+            self.func.current_block_mut().store_field(reg, idx, value);
+        }
 
         lume_mir::Operand::Reference { id: reg }
     }

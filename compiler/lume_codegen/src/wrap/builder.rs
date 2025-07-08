@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::RwLock};
 
 use inkwell::{
-    types::BasicType,
+    types::{BasicType, StructType},
     values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FloatValue, FunctionValue, IntValue, PointerValue},
 };
 use lume_mir::BasicBlockId;
@@ -302,8 +302,19 @@ impl<'ctx> Builder<'ctx> {
         self.float_compare(inkwell::FloatPredicate::OLE, lhs, rhs)
     }
 
+    pub fn field_address(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, idx: usize) -> PointerValue<'ctx> {
+        #[allow(clippy::cast_possible_truncation)]
+        self.inner.build_struct_gep(ty, ptr, idx as u32, "").unwrap()
+    }
+
     pub fn store<T: BasicValue<'ctx>>(&self, ptr: PointerValue<'ctx>, val: T) {
         self.inner.build_store(ptr, val).unwrap();
+    }
+
+    pub fn store_field<T: BasicValue<'ctx>>(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, val: T, idx: usize) {
+        let field_ptr = self.field_address(ty, ptr, idx);
+
+        self.store(field_ptr, val);
     }
 
     pub fn branch(&self, block: BasicBlock<'ctx>) {

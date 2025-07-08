@@ -441,6 +441,11 @@ impl BasicBlock {
         self.instructions.push(Instruction::Store { target, value });
     }
 
+    /// Stores a value in a field of an existing register.
+    pub fn store_field(&mut self, target: RegisterId, idx: usize, value: Operand) {
+        self.instructions.push(Instruction::StoreField { target, idx, value });
+    }
+
     /// Sets the terminator of the current block to an unconditional branch.
     pub fn branch(&mut self, block: BasicBlockId) {
         self.set_terminator(Terminator::Branch(block));
@@ -595,6 +600,13 @@ pub enum Instruction {
 
     /// Stores the value into the target register.
     Store { target: RegisterId, value: Operand },
+
+    /// Stores the value into the field of an target register.
+    StoreField {
+        target: RegisterId,
+        idx: usize,
+        value: Operand,
+    },
 }
 
 impl std::fmt::Display for Instruction {
@@ -604,6 +616,7 @@ impl std::fmt::Display for Instruction {
             Self::StackAllocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::HeapAllocate { register, ty } => write!(f, "{register} = malloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
+            Self::StoreField { target, idx, value } => write!(f, "*{target}[{idx}] = {value}"),
         }
     }
 }
