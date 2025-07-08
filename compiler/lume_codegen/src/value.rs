@@ -106,6 +106,24 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
 
                 self.builder.int_le(*signed, lhs, rhs).as_basic_value_enum()
             }
+            lume_mir::Intrinsic::IntAnd { .. } => {
+                let lhs = self.load_int_from(&args[0]);
+                let rhs = self.load_int_from(&args[1]);
+
+                self.builder.int_and(lhs, rhs).as_basic_value_enum()
+            }
+            lume_mir::Intrinsic::IntOr { .. } => {
+                let lhs = self.load_int_from(&args[0]);
+                let rhs = self.load_int_from(&args[1]);
+
+                self.builder.int_or(lhs, rhs).as_basic_value_enum()
+            }
+            lume_mir::Intrinsic::IntXor { .. } => {
+                let lhs = self.load_int_from(&args[0]);
+                let rhs = self.load_int_from(&args[1]);
+
+                self.builder.int_xor(lhs, rhs).as_basic_value_enum()
+            }
             lume_mir::Intrinsic::FloatAdd { .. } => {
                 let lhs = self.load_float_from(&args[0]);
                 let rhs = self.load_float_from(&args[1]);

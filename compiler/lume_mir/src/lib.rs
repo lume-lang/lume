@@ -686,6 +686,9 @@ pub enum Intrinsic {
     IntSub { bits: u8, signed: bool },
     IntMul { bits: u8, signed: bool },
     IntDiv { bits: u8, signed: bool },
+    IntAnd { bits: u8, signed: bool },
+    IntOr { bits: u8, signed: bool },
+    IntXor { bits: u8, signed: bool },
     BooleanEq,
     BooleanNe,
 }
@@ -703,6 +706,9 @@ impl std::fmt::Display for Intrinsic {
             Self::FloatSub { .. } | Self::IntSub { .. } => write!(f, "-"),
             Self::FloatMul { .. } | Self::IntMul { .. } => write!(f, "*"),
             Self::FloatDiv { .. } | Self::IntDiv { .. } => write!(f, "/"),
+            Self::IntAnd { .. } => write!(f, "&"),
+            Self::IntOr { .. } => write!(f, "|"),
+            Self::IntXor { .. } => write!(f, "^"),
         }
     }
 }

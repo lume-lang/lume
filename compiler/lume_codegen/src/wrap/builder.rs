@@ -280,6 +280,18 @@ impl<'ctx> Builder<'ctx> {
         self.int_compare(inkwell::IntPredicate::ULE, lhs, rhs)
     }
 
+    pub fn int_and(&self, lhs: IntValue<'ctx>, rhs: IntValue<'ctx>) -> IntValue<'ctx> {
+        self.inner.build_and(lhs, rhs, "").unwrap()
+    }
+
+    pub fn int_or(&self, lhs: IntValue<'ctx>, rhs: IntValue<'ctx>) -> IntValue<'ctx> {
+        self.inner.build_or(lhs, rhs, "").unwrap()
+    }
+
+    pub fn int_xor(&self, lhs: IntValue<'ctx>, rhs: IntValue<'ctx>) -> IntValue<'ctx> {
+        self.inner.build_xor(lhs, rhs, "").unwrap()
+    }
+
     pub fn float_add(&self, lhs: FloatValue<'ctx>, rhs: FloatValue<'ctx>) -> FloatValue<'ctx> {
         self.inner.build_float_add(lhs, rhs, "").unwrap()
     }

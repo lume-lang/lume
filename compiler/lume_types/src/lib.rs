@@ -734,6 +734,34 @@ impl TypeRef {
         matches!(self.instance_of, TYPEREF_FLOAT32_ID | TYPEREF_FLOAT64_ID)
     }
 
+    /// Determines the bitwidth of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is neither an integer nor a floating-point number.
+    pub fn bitwidth(&self) -> u8 {
+        match self.instance_of {
+            TYPEREF_INT8_ID | TYPEREF_UINT8_ID => 8,
+            TYPEREF_INT16_ID | TYPEREF_UINT16_ID => 16,
+            TYPEREF_INT32_ID | TYPEREF_UINT32_ID | TYPEREF_FLOAT32_ID => 32,
+            TYPEREF_INT64_ID | TYPEREF_UINT64_ID | TYPEREF_FLOAT64_ID => 64,
+            _ => panic!("bitwidth of non-int, non-float type is invalid"),
+        }
+    }
+
+    /// Determines the signedness of the type.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is not an integer.
+    pub fn signed(&self) -> bool {
+        match self.instance_of {
+            TYPEREF_INT8_ID | TYPEREF_INT16_ID | TYPEREF_INT32_ID | TYPEREF_INT64_ID => true,
+            TYPEREF_UINT8_ID | TYPEREF_UINT16_ID | TYPEREF_UINT32_ID | TYPEREF_UINT64_ID => false,
+            _ => panic!("signedness of non-int is invalid"),
+        }
+    }
+
     /// Determines if the type is an `i8`.
     pub fn is_i8(&self) -> bool {
         self.instance_of == TYPEREF_INT8_ID

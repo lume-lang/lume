@@ -4,7 +4,7 @@ impl FunctionTransformer<'_> {
     pub(super) fn expression(&mut self, expr: &lume_hir::Expression) -> lume_mir::Operand {
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment(expr),
-            lume_hir::ExpressionKind::Binary(_) => todo!("binary MIR lowering"),
+            lume_hir::ExpressionKind::Binary(expr) => self.binary(expr),
             lume_hir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
             lume_hir::ExpressionKind::Construct(expr) => self.construct(expr),
             lume_hir::ExpressionKind::StaticCall(expr) => self.static_call(expr),
@@ -28,6 +28,32 @@ impl FunctionTransformer<'_> {
         self.func.current_block_mut().store(id, value);
 
         lume_mir::Operand::Load { id }
+    }
+
+    fn binary(&mut self, expr: &lume_hir::Binary) -> lume_mir::Operand {
+        let lhs = self.expression(&expr.lhs);
+        let rhs = self.expression(&expr.rhs);
+        let args = vec![lhs, rhs];
+
+        let expr_ty = self.tcx().type_of_expr(&expr.lhs).unwrap();
+
+        let name = if expr_ty.is_integer() {
+            let bits = expr_ty.bitwidth();
+            let signed = expr_ty.signed();
+
+            match expr.op.kind {
+                lume_hir::BinaryOperatorKind::And => lume_mir::Intrinsic::IntAnd { bits, signed },
+                lume_hir::BinaryOperatorKind::Or => lume_mir::Intrinsic::IntOr { bits, signed },
+                lume_hir::BinaryOperatorKind::Xor => lume_mir::Intrinsic::IntXor { bits, signed },
+            }
+        } else {
+            unreachable!()
+        };
+
+        let decl = lume_mir::Declaration::Intrinsic { name, args };
+        let reg = self.declare(decl);
+
+        lume_mir::Operand::Load { id: reg }
     }
 
     fn construct(&mut self, expr: &lume_hir::Construct) -> lume_mir::Operand {
@@ -91,17 +117,8 @@ impl FunctionTransformer<'_> {
         let callee_ty = self.tcx().type_of_expr(expr.callee()).unwrap();
 
         if callee_ty.is_integer() {
-            let (bits, signed) = match callee_ty {
-                ty if ty.is_i8() => (8, true),
-                ty if ty.is_i16() => (16, true),
-                ty if ty.is_i32() => (32, true),
-                ty if ty.is_i64() => (64, true),
-                ty if ty.is_u8() => (8, false),
-                ty if ty.is_u16() => (16, false),
-                ty if ty.is_u32() => (32, false),
-                ty if ty.is_u64() => (64, false),
-                _ => unreachable!(),
-            };
+            let bits = callee_ty.bitwidth();
+            let signed = callee_ty.signed();
 
             match expr.name.name().as_str() {
                 "==" => lume_mir::Intrinsic::IntEq { bits, signed },

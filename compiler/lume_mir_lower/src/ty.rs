@@ -53,7 +53,10 @@ impl FunctionTransformer<'_> {
                 lume_mir::Intrinsic::IntAdd { bits, signed }
                 | lume_mir::Intrinsic::IntSub { bits, signed }
                 | lume_mir::Intrinsic::IntMul { bits, signed }
-                | lume_mir::Intrinsic::IntDiv { bits, signed } => lume_mir::Type::Integer {
+                | lume_mir::Intrinsic::IntDiv { bits, signed }
+                | lume_mir::Intrinsic::IntAnd { bits, signed }
+                | lume_mir::Intrinsic::IntOr { bits, signed }
+                | lume_mir::Intrinsic::IntXor { bits, signed } => lume_mir::Type::Integer {
                     bits: *bits,
                     signed: *signed,
                 },
