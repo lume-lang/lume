@@ -150,6 +150,7 @@ impl<'ctx> Module<'ctx> {
 
                 if param_type.is_reference_type() {
                     function_value.add_attribute(loc, self.context.attribute_flag("nonnull"));
+                    function_value.add_attribute(loc, self.context.attribute_flag("noundef"));
                 }
             }
 
