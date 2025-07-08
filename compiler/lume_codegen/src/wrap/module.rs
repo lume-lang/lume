@@ -74,11 +74,11 @@ impl<'ctx> Module<'ctx> {
 
         let passes = match opt {
             OptimizationLevel::O0 => "default<O0>",
-            OptimizationLevel::O1 => "default<O1>",
-            OptimizationLevel::O2 => "default<O2>",
-            OptimizationLevel::O3 => "default<O3>",
-            OptimizationLevel::Os => "default<Os>",
-            OptimizationLevel::Oz => "default<Oz>",
+            OptimizationLevel::O1 => "function(mem2reg),default<O1>",
+            OptimizationLevel::O2 => "function(mem2reg),default<O2>",
+            OptimizationLevel::O3 => "function(mem2reg),default<O3>",
+            OptimizationLevel::Os => "function(mem2reg),default<Os>",
+            OptimizationLevel::Oz => "function(mem2reg),default<Oz>",
         };
 
         self.inner
