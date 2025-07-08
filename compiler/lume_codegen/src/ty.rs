@@ -18,21 +18,17 @@ impl Context {
         }
     }
 
-    pub fn lower_fn_type(
-        &'_ self,
-        params: &[lume_mir::Type],
-        return_ty: &lume_mir::Type,
-        varargs: bool,
-    ) -> inkwell::types::FunctionType<'_> {
-        let params = params
+    pub fn lower_fn_type(&'_ self, signature: &lume_mir::Signature, varargs: bool) -> inkwell::types::FunctionType<'_> {
+        let params = signature
+            .parameters
             .iter()
             .map(|ty| self.lower_type(ty).into())
             .collect::<Vec<inkwell::types::BasicMetadataTypeEnum>>();
 
-        if *return_ty == lume_mir::Type::Void {
+        if signature.return_type == lume_mir::Type::Void {
             self.void_type().fn_type(&params, varargs)
         } else {
-            self.lower_type(return_ty).fn_type(&params, varargs)
+            self.lower_type(&signature.return_type).fn_type(&params, varargs)
         }
     }
 

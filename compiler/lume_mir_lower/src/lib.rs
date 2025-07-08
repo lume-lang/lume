@@ -6,8 +6,9 @@ use indexmap::IndexMap;
 use lume_infer::query::CallReference;
 use lume_mir::{Function, FunctionId, ModuleMap, RegisterId};
 use lume_typech::TyCheckCtx;
-use lume_types::TypeDatabaseContext;
+use lume_types::{FunctionSig, TypeDatabaseContext};
 
+/// Defines a transformer which will lower a typed HIR map into an MIR map.
 pub struct ModuleTransformer<'tcx> {
     tcx: &'tcx TyCheckCtx,
 
@@ -31,57 +32,47 @@ impl<'tcx> ModuleTransformer<'tcx> {
 
     fn define_callables(&mut self, tdb: &TypeDatabaseContext) {
         for method in &tdb.methods {
-            self.define_method(method);
+            let id = self.mir.new_function_id(CallReference::Method(method.id));
+
+            self.define_callable(id, method.name.to_string(), &method.sig());
         }
 
         for func in &tdb.functions {
-            self.define_function(func);
+            let id = self.mir.new_function_id(CallReference::Function(func.id));
+
+            self.define_callable(id, func.name.to_string(), &func.sig());
         }
     }
 
     fn transform_callables(&mut self, tdb: &TypeDatabaseContext) {
         for method in &tdb.methods {
+            let id = self.mir.new_function_id(CallReference::Method(method.id));
             let body = self.tcx.hir_body_of(method.hir);
 
-            self.transform_method(method, body);
+            self.transform_callable(id, body);
         }
 
         for func in &tdb.functions {
+            let id = self.mir.new_function_id(CallReference::Function(func.id));
             let body = self.tcx.hir_body_of(func.hir);
 
-            self.transform_function(func, body);
+            self.transform_callable(id, body);
         }
     }
 
-    fn define_method(&mut self, method: &lume_types::Method) {
-        let id = self.mir.new_function_id(CallReference::Method(method.id));
-        let name = method.name.to_string();
-
-        let func = FunctionTransformer::define(self, &self.mir, id, name, &method.sig());
+    fn define_callable(&mut self, id: FunctionId, name: String, signature: &FunctionSig) {
+        let func = FunctionTransformer::define(self, &self.mir, id, name, signature);
         self.mir.functions.insert(id, func);
     }
 
-    fn define_function(&mut self, func: &lume_types::Function) {
-        let id = self.mir.new_function_id(CallReference::Function(func.id));
-        let name = func.name.to_string();
-
-        let func = FunctionTransformer::define(self, &self.mir, id, name, &func.sig());
-        self.mir.functions.insert(id, func);
-    }
-
-    fn transform_method(&mut self, method: &lume_types::Method, body: Option<&lume_hir::Block>) {
-        let id = self.mir.new_function_id(CallReference::Method(method.id));
+    fn transform_callable(&mut self, id: FunctionId, body: Option<&lume_hir::Block>) {
+        // Grab the existing function from the MIR, which hasn't yet been transformed.
         let func = self.mir.function(id).clone();
 
+        // Transform the function
         let func = FunctionTransformer::transform(self, &self.mir, func, body);
-        self.mir.functions.insert(id, func);
-    }
 
-    fn transform_function(&mut self, func: &lume_types::Function, body: Option<&lume_hir::Block>) {
-        let id = self.mir.new_function_id(CallReference::Function(func.id));
-        let func = self.mir.function(id).clone();
-
-        let func = FunctionTransformer::transform(self, &self.mir, func, body);
+        // Replace the previous function with the transformed one.
         self.mir.functions.insert(id, func);
     }
 }
@@ -136,7 +127,7 @@ impl<'mir> FunctionTransformer<'mir> {
         if let Some(body) = block {
             transformer.lower(body);
         } else {
-            transformer.func.external = true;
+            transformer.func.signature.external = true;
         }
 
         transformer.func
@@ -146,10 +137,13 @@ impl<'mir> FunctionTransformer<'mir> {
         for param in signature.params.inner() {
             let param_ty = self.lower_type(&param.ty);
 
-            self.func.parameters.push(param_ty);
+            self.func.signature.parameters.push(param_ty.clone());
+
+            // Offset the register counter by the number of parameters
+            self.func.registers.allocate_param(param_ty);
         }
 
-        self.func.return_type = self.lower_type(signature.ret_ty);
+        self.func.signature.return_type = self.lower_type(signature.ret_ty);
     }
 
     fn lower(&mut self, block: &lume_hir::Block) {
@@ -169,5 +163,28 @@ impl<'mir> FunctionTransformer<'mir> {
 
     pub(crate) fn tcx(&self) -> &TyCheckCtx {
         self.transformer.tcx
+    }
+
+    pub(crate) fn function(&self, func_id: FunctionId) -> &Function {
+        self.transformer.mir.function(func_id)
+    }
+
+    /// Defines a new declaration in the current function block.
+    fn declare(&mut self, decl: lume_mir::Declaration) -> RegisterId {
+        let ty = self.type_of_decl(&decl);
+
+        self.func.declare(ty, decl)
+    }
+
+    /// Defines a new operand declaration in the current function block.
+    fn declare_value(&mut self, value: lume_mir::Operand) -> RegisterId {
+        self.declare(lume_mir::Declaration::Operand(value))
+    }
+
+    /// Defines a new call instruction in the current function block.
+    fn call(&mut self, func_id: FunctionId, args: Vec<lume_mir::Operand>) -> lume_mir::Operand {
+        let call_inst = self.declare(lume_mir::Declaration::Call { func_id, args });
+
+        lume_mir::Operand::Reference { id: call_inst }
     }
 }

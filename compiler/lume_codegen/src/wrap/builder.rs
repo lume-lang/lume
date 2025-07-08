@@ -16,6 +16,7 @@ pub(crate) struct Builder<'ctx> {
     blocks: RwLock<HashMap<BasicBlockId, BasicBlock<'ctx>>>,
 }
 
+#[allow(dead_code)]
 impl<'ctx> Builder<'ctx> {
     pub fn new(ctx: &'ctx Context, func_value: FunctionValue<'ctx>) -> Self {
         Self {
@@ -100,6 +101,10 @@ impl<'ctx> Builder<'ctx> {
 
     pub fn alloca<T: BasicType<'ctx>>(&self, ty: T) -> PointerValue<'ctx> {
         self.inner.build_alloca(ty, "").unwrap()
+    }
+
+    pub fn malloc<T: BasicType<'ctx>>(&self, ty: T) -> PointerValue<'ctx> {
+        self.inner.build_malloc(ty, "").unwrap()
     }
 
     pub fn load<T: BasicType<'ctx>>(&self, ptr: PointerValue<'ctx>, ty: T) -> BasicValueEnum<'ctx> {

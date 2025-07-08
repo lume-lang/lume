@@ -5,7 +5,7 @@ impl FunctionLower<'_, '_> {
         match term {
             lume_mir::Terminator::Return(ret) => {
                 if let Some(val) = &ret {
-                    self.builder.return_value(&self.value(val));
+                    self.builder.return_value(&self.operand(val));
                 } else {
                     self.builder.return_void();
                 }

@@ -903,6 +903,27 @@ impl TypeDatabaseContext {
         self.types.get_mut(id.0 as usize)
     }
 
+    /// Gets the [`TypeTransport`] of the [`Type`] with the given ID, if any.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn type_transport(&self, id: TypeId) -> Option<TypeTransport> {
+        self.type_(id).map(|ty| ty.kind.transport())
+    }
+
+    /// Gets the whether the given [`Type`] is a reference type.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn is_reference_type(&self, id: TypeId) -> Option<bool> {
+        self.type_transport(id).map(|ty| ty == TypeTransport::Reference)
+    }
+
+    /// Gets the whether the given [`Type`] is a value type.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn is_value_type(&self, id: TypeId) -> Option<bool> {
+        self.type_transport(id).map(|ty| ty == TypeTransport::Copy)
+    }
+
     /// Expects the [`Type`] with the given ID, if it exists.
     ///
     /// # Errors

@@ -3,51 +3,46 @@ use inkwell::values::{BasicValue, BasicValueEnum, FloatValue, IntValue};
 use crate::FunctionLower;
 
 impl<'ctx> FunctionLower<'_, 'ctx> {
-    pub(super) fn value(&self, val: &lume_mir::Value) -> BasicValueEnum<'ctx> {
+    pub(super) fn operand(&self, val: &lume_mir::Operand) -> BasicValueEnum<'ctx> {
         match val {
-            lume_mir::Value::Boolean { value } => self.builder.bool_literal(*value).as_basic_value_enum(),
-            lume_mir::Value::Integer { bits, value, .. } => match *bits {
+            lume_mir::Operand::Boolean { value } => self.builder.bool_literal(*value).as_basic_value_enum(),
+            lume_mir::Operand::Integer { bits, value, .. } => match *bits {
                 8 => self.builder.i8_literal(*value).as_basic_value_enum(),
                 16 => self.builder.i16_literal(*value).as_basic_value_enum(),
                 32 => self.builder.i32_literal(*value).as_basic_value_enum(),
                 64 => self.builder.i64_literal(*value).as_basic_value_enum(),
                 _ => unimplemented!(),
             },
-            lume_mir::Value::Float { bits, value } => match *bits {
+            lume_mir::Operand::Float { bits, value } => match *bits {
                 32 => self.builder.f32_literal(*value).as_basic_value_enum(),
                 64 => self.builder.f64_literal(*value).as_basic_value_enum(),
                 _ => unimplemented!(),
             },
-            lume_mir::Value::String { value } => self.builder.string_literal(value.as_str()).as_basic_value_enum(),
-            lume_mir::Value::Reference { id } => {
-                let (val, _) = self.load(*id);
+            lume_mir::Operand::String { value } => self.builder.string_literal(value.as_str()).as_basic_value_enum(),
+            lume_mir::Operand::Reference { id } => {
+                let (ptr, ty) = self.load_ptr(*id);
 
-                val.as_basic_value_enum()
-            }
-            lume_mir::Value::Load { id } => {
-                let (val, _) = self.load_ptr(*id);
-
-                val.as_basic_value_enum()
-            }
-            lume_mir::Value::Call { func_id, args } => {
-                let func = self.module.find_function(*func_id);
-                let args = args.iter().map(|arg| self.value(arg)).collect::<Vec<_>>();
-
-                self.builder.call_with_return(func, &args)
+                self.builder.load(ptr, ty)
             }
         }
     }
 
     pub(super) fn decl_value(&self, decl: &lume_mir::Declaration) -> BasicValueEnum<'ctx> {
         match decl {
-            lume_mir::Declaration::Value(val) => self.value(val),
+            lume_mir::Declaration::Operand(val) => self.operand(val),
             lume_mir::Declaration::Intrinsic { name, args } => self.intrinsic_value(name, args),
+            lume_mir::Declaration::Call { func_id, args } => {
+                let func = self.module.find_function(*func_id);
+                let args = args.iter().map(|arg| self.operand(arg)).collect::<Vec<_>>();
+
+                self.builder.call_with_return(func, &args)
+            }
             _ => todo!(),
         }
     }
 
     #[expect(clippy::too_many_lines)]
-    fn intrinsic_value(&self, name: &lume_mir::Intrinsic, args: &[lume_mir::Value]) -> BasicValueEnum<'ctx> {
+    fn intrinsic_value(&self, name: &lume_mir::Intrinsic, args: &[lume_mir::Operand]) -> BasicValueEnum<'ctx> {
         match name {
             lume_mir::Intrinsic::IntAdd { .. } => {
                 let lhs = self.load_int_from(&args[0]);
@@ -187,41 +182,27 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
         }
     }
 
-    pub(crate) fn load_bool_from(&self, value: &lume_mir::Value) -> IntValue<'ctx> {
+    pub(crate) fn load_bool_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
         match value {
-            int @ lume_mir::Value::Boolean { .. } => self.value(int).into_int_value(),
-            lume_mir::Value::Reference { id } => self.load(*id).0.into_int_value(),
-            lume_mir::Value::Load { id } => {
-                let (ptr, _) = self.load_ptr(*id);
+            int @ lume_mir::Operand::Boolean { .. } => self.operand(int).into_int_value(),
+            lume_mir::Operand::Reference { id } => self.load(*id).0.into_int_value(),
+            _ => panic!("Unsupported value type for boolean loading"),
+        }
+    }
 
-                self.builder.load_bool(ptr)
-            }
+    pub(crate) fn load_int_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
+        match value {
+            int @ lume_mir::Operand::Integer { .. } => self.operand(int).into_int_value(),
+            lume_mir::Operand::Reference { id } => self.load(*id).0.into_int_value(),
             _ => panic!("Unsupported value type for integer loading"),
         }
     }
 
-    pub(crate) fn load_int_from(&self, value: &lume_mir::Value) -> IntValue<'ctx> {
+    pub(crate) fn load_float_from(&self, value: &lume_mir::Operand) -> FloatValue<'ctx> {
         match value {
-            int @ lume_mir::Value::Integer { .. } => self.value(int).into_int_value(),
-            lume_mir::Value::Load { id } | lume_mir::Value::Reference { id } => {
-                let (ptr, _) = self.load_ptr(*id);
-
-                self.builder.load_int(value.bitsize(), ptr)
-            }
-            _ => panic!("Unsupported value type for integer loading"),
-        }
-    }
-
-    pub(crate) fn load_float_from(&self, value: &lume_mir::Value) -> FloatValue<'ctx> {
-        match value {
-            float @ lume_mir::Value::Float { .. } => self.value(float).into_float_value(),
-            lume_mir::Value::Reference { id } => self.load(*id).0.into_float_value(),
-            lume_mir::Value::Load { id } => {
-                let (ptr, _) = self.load_ptr(*id);
-
-                self.builder.load_float(value.bitsize(), ptr)
-            }
-            _ => panic!("Unsupported value type for integer loading"),
+            float @ lume_mir::Operand::Float { .. } => self.operand(float).into_float_value(),
+            lume_mir::Operand::Reference { id } => self.load(*id).0.into_float_value(),
+            _ => panic!("Unsupported value type for float loading"),
         }
     }
 }

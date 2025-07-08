@@ -77,8 +77,8 @@ pub struct FunctionId(CallReference);
 impl std::fmt::Display for FunctionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.0 {
-            CallReference::Function(id) => write!(f, "{:?}", id.0),
-            CallReference::Method(id) => write!(f, "{:?}", id.0),
+            CallReference::Function(id) => write!(f, "F{:?}", id.0),
+            CallReference::Method(id) => write!(f, "F{:?}", id.0),
         }
     }
 }
@@ -99,6 +99,22 @@ pub struct Signature {
     /// the first parameter will be the `self` parameter.
     pub parameters: Vec<Type>,
     pub return_type: Type,
+}
+
+impl std::fmt::Display for Signature {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({}) -> {}",
+            self.parameters
+                .iter()
+                .enumerate()
+                .map(|(idx, param)| format!("{param} #{idx}"))
+                .collect::<Vec<String>>()
+                .join(", "),
+            self.return_type
+        )
+    }
 }
 
 impl Default for Signature {
@@ -208,11 +224,32 @@ impl Function {
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        let register = self.add_register(ty);
+        let is_ref_type = ty.is_reference_type();
 
-        self.current_block_mut().declare(register, decl);
+        if let Declaration::Operand(op) = decl {
+            match op {
+                Operand::Reference { id } => id,
+                _ if is_ref_type => {
+                    let ptr = self.add_register(ty.clone());
+                    self.current_block_mut().allocate_heap(ptr, ty);
+                    self.current_block_mut().store(ptr, op);
 
-        register
+                    ptr
+                }
+                _ => {
+                    let ptr = self.add_register(ty.clone());
+                    self.current_block_mut().allocate_stack(ptr, ty);
+                    self.current_block_mut().store(ptr, op);
+
+                    ptr
+                }
+            }
+        } else {
+            let ptr = self.add_register(ty.clone());
+            self.current_block_mut().declare(ptr, decl);
+
+            ptr
+        }
     }
 
     /// Declares a new local with the given value in the current block.
@@ -281,11 +318,11 @@ impl Function {
 impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.signature.external {
-            writeln!(f, "declare extern fn {:?}", self.name)?;
+            writeln!(f, "@{} extern fn {:?} {}", self.id, self.name, self.signature)?;
             return writeln!(f);
         }
 
-        writeln!(f, "{:?} {{", self.name)?;
+        writeln!(f, "@{} fn {:?} {} {{", self.id, self.name, self.signature)?;
 
         for block in &self.blocks {
             write!(f, "{block}")?;
@@ -384,7 +421,7 @@ impl BasicBlock {
         self.terminator = Some(term);
     }
 
-    /// Declares a new stack-allocated register with an initial value.
+    /// Declares a new stack-allocated register with the given value.
     pub fn declare(&mut self, register: RegisterId, decl: Declaration) {
         self.instructions.push(Instruction::Let { register, decl });
     }
@@ -397,6 +434,11 @@ impl BasicBlock {
     /// Declares a new heap-allocated register with the given type.
     pub fn allocate_heap(&mut self, register: RegisterId, ty: Type) {
         self.instructions.push(Instruction::HeapAllocate { register, ty });
+    }
+
+    /// Stores a value in an existing register.
+    pub fn store(&mut self, target: RegisterId, value: Operand) {
+        self.instructions.push(Instruction::Store { target, value });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
@@ -461,6 +503,10 @@ impl RegisterId {
     pub fn param(index: usize) -> Self {
         RegisterId(index)
     }
+
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
 }
 
 impl std::fmt::Display for RegisterId {
@@ -482,7 +528,7 @@ pub struct Register {
     pub ty: Type,
 
     /// Defines which block the register belongs to.
-    pub block: BasicBlockId,
+    pub block: Option<BasicBlockId>,
 }
 
 #[derive(Default, Debug, Clone)]
@@ -509,7 +555,19 @@ impl Registers {
     /// Allocates a new register with the given type and block.
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
         let id = RegisterId(self.regs.len());
-        self.regs.push(Register { id, ty, block });
+        self.regs.push(Register {
+            id,
+            ty,
+            block: Some(block),
+        });
+
+        id
+    }
+
+    /// Allocates a new parameter register with the given type.
+    pub fn allocate_param(&mut self, ty: Type) -> RegisterId {
+        let id = RegisterId(self.regs.len());
+        self.regs.push(Register { id, ty, block: None });
 
         id
     }
@@ -534,6 +592,9 @@ pub enum Instruction {
 
     /// Declares a heap-allocated register within the current function.
     HeapAllocate { register: RegisterId, ty: Type },
+
+    /// Stores the value into the target register.
+    Store { target: RegisterId, value: Operand },
 }
 
 impl std::fmt::Display for Instruction {
@@ -542,6 +603,7 @@ impl std::fmt::Display for Instruction {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
             Self::StackAllocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::HeapAllocate { register, ty } => write!(f, "{register} = malloc {ty}"),
+            Self::Store { target, value } => write!(f, "*{target} = {value}"),
         }
     }
 }
@@ -580,7 +642,11 @@ impl std::fmt::Display for Declaration {
             ),
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "&{id}"),
-            Self::Call { func_id, args } => write!(f, "{func_id}({args:?})"),
+            Self::Call { func_id, args } => write!(
+                f,
+                "(call {func_id})({})",
+                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+            ),
         }
     }
 }
@@ -745,6 +811,12 @@ pub enum Type {
 
     /// Defines a void type.
     Void,
+}
+
+impl Type {
+    pub fn is_reference_type(&self) -> bool {
+        matches!(self, Type::Struct { .. } | Type::String | Type::Pointer)
+    }
 }
 
 impl std::fmt::Display for Type {

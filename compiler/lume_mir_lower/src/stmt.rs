@@ -24,13 +24,19 @@ impl FunctionTransformer<'_> {
     }
 
     fn declare_variable(&mut self, stmt: &lume_hir::VariableDeclaration) {
-        let register = match self.expression(&stmt.value) {
-            lume_mir::Value::Reference { id } => id,
-            value => {
-                let ty = self.type_of_value(&value);
+        let value = self.expression(&stmt.value);
 
-                self.func.declare_value(ty, value)
+        let hir_type = self.tcx().type_of_expr(&stmt.value).unwrap();
+        let is_ref_ty = self.tcx().tdb().is_reference_type(hir_type.instance_of).unwrap();
+
+        let register = if is_ref_ty {
+            match value {
+                lume_mir::Operand::Reference { id } => id,
+                lume_mir::Operand::String { .. } => todo!("define global string constants"),
+                _ => self.declare_value(value),
             }
+        } else {
+            self.declare_value(value)
         };
 
         self.variables.insert(stmt.id, register);

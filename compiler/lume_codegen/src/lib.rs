@@ -99,13 +99,21 @@ impl<'func, 'ctx> FunctionLower<'func, 'ctx> {
 
     fn create_func_registers(&mut self) {
         for (id, reg) in self.func.registers.iter() {
-            self.builder.switch_to_block_id(reg.block);
+            if let Some(block) = reg.block {
+                self.builder.switch_to_block_id(block);
 
-            let llvm_ty = self.builder.ctx.lower_type(&reg.ty);
+                let llvm_ty = self.builder.ctx.lower_type(&reg.ty);
 
-            self.variable_types.insert(id, llvm_ty);
-            self.variables
-                .insert(id, self.builder.alloca(llvm_ty).as_basic_value_enum());
+                self.variable_types.insert(id, llvm_ty);
+                self.variables
+                    .insert(id, self.builder.alloca(llvm_ty).as_basic_value_enum());
+            } else {
+                #[allow(clippy::cast_possible_truncation)]
+                let value = self.builder.func_value.get_nth_param(id.as_usize() as u32).unwrap();
+
+                self.variable_types.insert(id, value.get_type());
+                self.variables.insert(id, value);
+            }
         }
     }
 

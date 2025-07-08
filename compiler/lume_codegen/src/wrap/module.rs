@@ -56,14 +56,14 @@ impl<'ctx> Module<'ctx> {
 
     pub(crate) fn add_function(&self, func: &Function) -> FunctionValue<'ctx> {
         self.inner.get_function(&func.name).unwrap_or_else(|| {
-            let function_type = self.context.lower_fn_type(&func.parameters, &func.return_type, false);
+            let function_type = self.context.lower_fn_type(&func.signature, false);
             let function_value = self.inner.add_function(&func.name, function_type, None);
 
-            for (idx, param_type) in func.parameters.iter().enumerate() {
+            for (idx, param_type) in func.signature.parameters.iter().enumerate() {
                 #[allow(clippy::cast_possible_truncation)]
                 let loc = AttributeLoc::Param(idx as u32);
 
-                if param_type.is_pointer() {
+                if param_type.is_reference_type() {
                     function_value.add_attribute(loc, self.context.attribute_flag("nonnull"));
                 }
             }

@@ -11,29 +11,27 @@ impl FunctionTransformer<'_> {
             lume_types::TypeKind::UInt(n) => lume_mir::Type::Integer { bits: n, signed: false },
             lume_types::TypeKind::Float(n) => lume_mir::Type::Float { bits: n },
             lume_types::TypeKind::String => lume_mir::Type::String,
-            _ => lume_mir::Type::Pointer,
+            lume_types::TypeKind::User(_) | lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::Pointer,
         }
     }
 
     #[allow(clippy::unused_self)]
-    pub(super) fn type_of_value(&self, value: &lume_mir::Value) -> lume_mir::Type {
+    pub(super) fn type_of_value(&self, value: &lume_mir::Operand) -> lume_mir::Type {
         match value {
-            lume_mir::Value::Boolean { .. } => lume_mir::Type::Boolean,
-            lume_mir::Value::Integer { bits, signed, .. } => lume_mir::Type::Integer {
+            lume_mir::Operand::Boolean { .. } => lume_mir::Type::Boolean,
+            lume_mir::Operand::Integer { bits, signed, .. } => lume_mir::Type::Integer {
                 bits: *bits,
                 signed: *signed,
             },
-            lume_mir::Value::Float { bits, .. } => lume_mir::Type::Float { bits: *bits },
-            lume_mir::Value::String { .. } => lume_mir::Type::String,
-            lume_mir::Value::Reference { id } => self.func.registers.register_ty(*id).clone(),
-            lume_mir::Value::Load { .. } => lume_mir::Type::Pointer,
-            lume_mir::Value::Call { func_id, .. } => self.mir.function(*func_id).return_type.clone(),
+            lume_mir::Operand::Float { bits, .. } => lume_mir::Type::Float { bits: *bits },
+            lume_mir::Operand::String { .. } => lume_mir::Type::String,
+            lume_mir::Operand::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }
 
     pub(super) fn type_of_decl(&self, decl: &lume_mir::Declaration) -> lume_mir::Type {
         match decl {
-            lume_mir::Declaration::Value(val) => self.type_of_value(val),
+            lume_mir::Declaration::Operand(val) => self.type_of_value(val),
             lume_mir::Declaration::Intrinsic { name, .. } => match name {
                 lume_mir::Intrinsic::IntEq { .. }
                 | lume_mir::Intrinsic::IntNe { .. }
@@ -61,7 +59,14 @@ impl FunctionTransformer<'_> {
                 | lume_mir::Intrinsic::FloatMul { bits }
                 | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::Float { bits: *bits },
             },
+            lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
             _ => todo!(),
         }
+    }
+
+    pub(super) fn type_of_function(&self, func_id: lume_mir::FunctionId) -> lume_mir::Type {
+        let func = self.function(func_id);
+
+        func.signature.return_type.clone()
     }
 }
