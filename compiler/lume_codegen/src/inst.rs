@@ -4,7 +4,7 @@ impl FunctionLower<'_, '_> {
     pub(super) fn instruction(&self, inst: &lume_mir::Instruction) {
         match inst {
             lume_mir::Instruction::Let { register, decl } => {
-                let (ptr, _) = self.load_ptr(*register);
+                let (ptr, _) = self.retrieve_var_ptr(*register);
                 let val = self.decl_value(decl);
 
                 self.builder.store(ptr, val);
@@ -20,7 +20,7 @@ impl FunctionLower<'_, '_> {
                 self.builder.malloc(ty);
             }
             lume_mir::Instruction::Store { target, value } => {
-                let (ptr, _) = self.load_ptr(*target);
+                let (ptr, _) = self.retrieve_var_ptr(*target);
                 let val = self.operand(value);
 
                 self.builder.store(ptr, val);

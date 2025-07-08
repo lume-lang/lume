@@ -20,7 +20,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
             },
             lume_mir::Operand::String { value } => self.builder.string_literal(value.as_str()).as_basic_value_enum(),
             lume_mir::Operand::Reference { id } => {
-                let (ptr, ty) = self.load_ptr(*id);
+                let (ptr, ty) = self.retrieve_var_ptr(*id);
 
                 self.builder.load(ptr, ty)
             }
@@ -72,13 +72,13 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
                     self.builder.int_unsigned_div(lhs, rhs).as_basic_value_enum()
                 }
             }
-            lume_mir::Intrinsic::IntEq { .. } => {
+            lume_mir::Intrinsic::IntEq { .. } | lume_mir::Intrinsic::BooleanEq => {
                 let lhs = self.load_int_from(&args[0]);
                 let rhs = self.load_int_from(&args[1]);
 
                 self.builder.int_eq(lhs, rhs).as_basic_value_enum()
             }
-            lume_mir::Intrinsic::IntNe { .. } => {
+            lume_mir::Intrinsic::IntNe { .. } | lume_mir::Intrinsic::BooleanNe => {
                 let lhs = self.load_int_from(&args[0]);
                 let rhs = self.load_int_from(&args[1]);
 
@@ -167,33 +167,13 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
 
                 self.builder.float_le(lhs, rhs).as_basic_value_enum()
             }
-            lume_mir::Intrinsic::BooleanEq => {
-                let lhs = self.load_bool_from(&args[0]);
-                let rhs = self.load_bool_from(&args[1]);
-
-                self.builder.int_eq(lhs, rhs).as_basic_value_enum()
-            }
-            lume_mir::Intrinsic::BooleanNe => {
-                let lhs = self.load_bool_from(&args[0]);
-                let rhs = self.load_bool_from(&args[1]);
-
-                self.builder.int_ne(lhs, rhs).as_basic_value_enum()
-            }
-        }
-    }
-
-    pub(crate) fn load_bool_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
-        match value {
-            int @ lume_mir::Operand::Boolean { .. } => self.operand(int).into_int_value(),
-            lume_mir::Operand::Reference { id } => self.load(*id).0.into_int_value(),
-            _ => panic!("Unsupported value type for boolean loading"),
         }
     }
 
     pub(crate) fn load_int_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
         match value {
             int @ lume_mir::Operand::Integer { .. } => self.operand(int).into_int_value(),
-            lume_mir::Operand::Reference { id } => self.load(*id).0.into_int_value(),
+            lume_mir::Operand::Reference { id } => self.load(*id).into_int_value(),
             _ => panic!("Unsupported value type for integer loading"),
         }
     }
@@ -201,7 +181,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
     pub(crate) fn load_float_from(&self, value: &lume_mir::Operand) -> FloatValue<'ctx> {
         match value {
             float @ lume_mir::Operand::Float { .. } => self.operand(float).into_float_value(),
-            lume_mir::Operand::Reference { id } => self.load(*id).0.into_float_value(),
+            lume_mir::Operand::Reference { id } => self.load(*id).into_float_value(),
             _ => panic!("Unsupported value type for float loading"),
         }
     }

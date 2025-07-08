@@ -155,11 +155,13 @@ impl<'func, 'ctx> FunctionLower<'func, 'ctx> {
         self.variable_types[&id]
     }
 
-    pub(crate) fn load(&self, id: RegisterId) -> (BasicValueEnum<'ctx>, BasicTypeEnum<'ctx>) {
-        (self.var(id), self.var_type(id))
+    pub(crate) fn retrieve_var_ptr(&self, id: RegisterId) -> (PointerValue<'ctx>, BasicTypeEnum<'ctx>) {
+        (self.var(id).into_pointer_value(), self.var_type(id))
     }
 
-    pub(crate) fn load_ptr(&self, id: RegisterId) -> (PointerValue<'ctx>, BasicTypeEnum<'ctx>) {
-        (self.var(id).into_pointer_value(), self.var_type(id))
+    pub(crate) fn load(&self, id: RegisterId) -> BasicValueEnum<'ctx> {
+        let (ptr, ty) = self.retrieve_var_ptr(id);
+
+        self.builder.load(ptr, ty)
     }
 }

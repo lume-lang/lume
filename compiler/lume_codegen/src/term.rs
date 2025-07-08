@@ -18,7 +18,7 @@ impl FunctionLower<'_, '_> {
                 then_block,
                 else_block,
             } => {
-                let (cond_ptr, cond_type) = self.load_ptr(*condition);
+                let (cond_ptr, cond_type) = self.retrieve_var_ptr(*condition);
                 let condition = self.builder.load(cond_ptr, cond_type);
 
                 let then_block = self.builder.block(*then_block);
