@@ -32,6 +32,15 @@ pub(crate) fn command() -> Command {
                 .help("Print the generated LLVM IR")
                 .action(ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("O")
+                .short('O')
+                .long("opt-level")
+                .help("Optimization level")
+                .value_parser(["0", "1", "2", "3", "s", "z"])
+                .default_value("2")
+                .action(ArgAction::Set),
+        )
 }
 
 #[allow(clippy::needless_pass_by_value)]
@@ -59,6 +68,15 @@ pub(crate) fn run(args: &ArgMatches, dcx: DiagCtxHandle) {
             _ => unreachable!(),
         },
         print_llvm_ir: args.get_flag("print-llvm-ir"),
+        optimize: match args.get_one::<String>("O").map(std::string::String::as_str) {
+            Some("0") => lume_session::OptimizationLevel::O0,
+            Some("1") => lume_session::OptimizationLevel::O1,
+            Some("2") => lume_session::OptimizationLevel::O2,
+            Some("3") => lume_session::OptimizationLevel::O3,
+            Some("s") => lume_session::OptimizationLevel::Os,
+            Some("z") => lume_session::OptimizationLevel::Oz,
+            _ => unreachable!(),
+        },
     };
 
     let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {

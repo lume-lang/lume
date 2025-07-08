@@ -27,6 +27,9 @@ pub struct Options {
 
     /// Defines whether the generated LLVM IR should be printed to `stdio`.
     pub print_llvm_ir: bool,
+
+    /// Defines the optimization level for the generated LLVM IR.
+    pub optimize: OptimizationLevel,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,6 +38,18 @@ pub enum MirPrinting {
     None,
     Pretty,
     Debug,
+}
+
+/// Defines how much the generated LLVM IR should be optimized.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OptimizationLevel {
+    #[default]
+    O0,
+    O1,
+    O2,
+    O3,
+    Os,
+    Oz,
 }
 
 /// Represents a compilation session, invoked by the driver.

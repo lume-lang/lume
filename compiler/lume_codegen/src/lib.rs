@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use inkwell::{
     basic_block::BasicBlock,
+    targets::InitializationConfig,
     types::BasicTypeEnum,
     values::{BasicValue, BasicValueEnum, PointerValue},
 };
@@ -13,19 +14,38 @@ mod ty;
 mod value;
 pub(crate) mod wrap;
 
-use lume_session::Options;
+use lume_session::{OptimizationLevel, Options};
 pub(crate) use wrap::*;
 
 pub struct Generator<'ctx> {
-    package: &'ctx lume_session::Package,
+    pub package: &'ctx lume_session::Package,
+    pub options: &'ctx Options,
+
     mir: lume_mir::ModuleMap,
     context: Context,
-    options: &'ctx Options,
 }
 
 impl<'ctx> Generator<'ctx> {
+    /// Generates LLVM IR for the given package and MIR map.
+    ///
+    /// # Panics
+    ///
+    /// This method panics if the native LLVM target initialization failed.
     pub fn codegen(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap, opts: &'ctx Options) {
-        Self::new(package, mir, opts).build();
+        inkwell::targets::Target::initialize_native(&InitializationConfig::default()).unwrap();
+
+        let generator = Self::new(package, mir, opts);
+        let module = generator.build();
+
+        if opts.optimize != OptimizationLevel::O0 {
+            module.optimize(opts.optimize);
+        }
+
+        if opts.print_llvm_ir {
+            module.print_to_stdout();
+        }
+
+        module.verify();
     }
 
     pub fn new(package: &'ctx lume_session::Package, mir: lume_mir::ModuleMap, opts: &'ctx Options) -> Self {
@@ -37,7 +57,7 @@ impl<'ctx> Generator<'ctx> {
         }
     }
 
-    pub fn build(&self) {
+    pub fn build(&'_ self) -> Module<'_> {
         let module = self.context.create_module(&self.package.name);
 
         for func in self.mir.functions.values() {
@@ -51,9 +71,7 @@ impl<'ctx> Generator<'ctx> {
             FunctionLower::lower(&module, builder, func);
         }
 
-        if self.options.print_llvm_ir {
-            module.print_to_stdout();
-        }
+        module
     }
 }
 
