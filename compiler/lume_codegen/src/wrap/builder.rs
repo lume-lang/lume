@@ -107,8 +107,35 @@ impl<'ctx> Builder<'ctx> {
         self.inner.build_malloc(ty, "").unwrap()
     }
 
+    pub fn field_address(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, idx: usize) -> PointerValue<'ctx> {
+        #[allow(clippy::cast_possible_truncation)]
+        self.inner.build_struct_gep(ty, ptr, idx as u32, "").unwrap()
+    }
+
+    pub fn store<T: BasicValue<'ctx>>(&self, ptr: PointerValue<'ctx>, val: T) {
+        self.inner.build_store(ptr, val).unwrap();
+    }
+
+    pub fn store_field<T: BasicValue<'ctx>>(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, val: T, idx: usize) {
+        let field_ptr = self.field_address(ty, ptr, idx);
+
+        self.store(field_ptr, val);
+    }
+
     pub fn load<T: BasicType<'ctx>>(&self, ptr: PointerValue<'ctx>, ty: T) -> BasicValueEnum<'ctx> {
         self.inner.build_load(ty, ptr, "").unwrap()
+    }
+
+    pub fn load_field<T: BasicType<'ctx>>(
+        &self,
+        struct_type: StructType<'ctx>,
+        ptr: PointerValue<'ctx>,
+        idx: usize,
+        field_ty: T,
+    ) -> BasicValueEnum<'ctx> {
+        let field_ptr = self.field_address(struct_type, ptr, idx);
+
+        self.load(field_ptr, field_ty)
     }
 
     pub fn load_i8(&self, ptr: PointerValue<'ctx>) -> IntValue<'ctx> {
@@ -300,21 +327,6 @@ impl<'ctx> Builder<'ctx> {
 
     pub fn float_le(&self, lhs: FloatValue<'ctx>, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
         self.float_compare(inkwell::FloatPredicate::OLE, lhs, rhs)
-    }
-
-    pub fn field_address(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, idx: usize) -> PointerValue<'ctx> {
-        #[allow(clippy::cast_possible_truncation)]
-        self.inner.build_struct_gep(ty, ptr, idx as u32, "").unwrap()
-    }
-
-    pub fn store<T: BasicValue<'ctx>>(&self, ptr: PointerValue<'ctx>, val: T) {
-        self.inner.build_store(ptr, val).unwrap();
-    }
-
-    pub fn store_field<T: BasicValue<'ctx>>(&self, ty: StructType<'ctx>, ptr: PointerValue<'ctx>, val: T, idx: usize) {
-        let field_ptr = self.field_address(ty, ptr, idx);
-
-        self.store(field_ptr, val);
     }
 
     pub fn branch(&self, block: BasicBlock<'ctx>) {

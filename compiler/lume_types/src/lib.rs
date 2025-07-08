@@ -220,6 +220,7 @@ impl Function {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Property {
     pub id: PropertyId,
+    pub index: usize,
     pub visibility: Visibility,
     pub owner: TypeId,
     pub name: String,
@@ -1191,10 +1192,17 @@ impl TypeDatabaseContext {
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn property_alloc(&mut self, owner: TypeId, name: String, visibility: Visibility) -> Result<PropertyId> {
+    pub fn property_alloc(
+        &mut self,
+        index: usize,
+        owner: TypeId,
+        name: String,
+        visibility: Visibility,
+    ) -> Result<PropertyId> {
         let id = PropertyId(self.properties.len() as u64);
         let prop = Property {
             id,
+            index,
             owner,
             name,
             visibility,

@@ -118,13 +118,13 @@ impl TyInferCtx {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             let type_id = struct_def.type_id.unwrap();
 
-            for property in &mut struct_def.properties_mut() {
+            for (index, property) in struct_def.properties_mut().enumerate() {
                 let property_name = property.name.name.clone();
                 let visibility = property.visibility;
 
                 let property_id = self
                     .tdb_mut()
-                    .property_alloc(type_id, property_name.clone(), visibility)?;
+                    .property_alloc(index, type_id, property_name.clone(), visibility)?;
 
                 property.prop_id = Some(property_id);
             }

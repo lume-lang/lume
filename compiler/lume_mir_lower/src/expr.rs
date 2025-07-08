@@ -12,7 +12,7 @@ impl FunctionTransformer<'_> {
             lume_hir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_hir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
             lume_hir::ExpressionKind::Logical(_) => todo!("logical MIR lowering"),
-            lume_hir::ExpressionKind::Member(_) => todo!("member MIR lowering"),
+            lume_hir::ExpressionKind::Member(expr) => self.member(expr),
             lume_hir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_hir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
             lume_hir::ExpressionKind::Void => unreachable!(),
@@ -147,6 +147,25 @@ impl FunctionTransformer<'_> {
         }
     }
 
+    fn member(&mut self, expr: &lume_hir::Member) -> lume_mir::Operand {
+        let hir_callee = self.tcx().type_of_expr(&expr.callee).unwrap();
+        let hir_property = self
+            .tcx()
+            .tdb()
+            .find_property(hir_callee.instance_of, &expr.name)
+            .unwrap();
+
+        let property_idx = hir_property.index;
+
+        let target_val = self.expression(&expr.callee);
+        let target_reg = self.load_operand(&target_val);
+
+        lume_mir::Operand::LoadField {
+            target: target_reg,
+            field: property_idx,
+        }
+    }
+
     fn variable_reference(&mut self, expr: &lume_hir::Variable) -> lume_mir::Operand {
         let id = match &expr.reference {
             lume_hir::VariableSource::Parameter(id) => lume_mir::RegisterId::param(id.index),
@@ -189,6 +208,14 @@ impl FunctionTransformer<'_> {
             lume_hir::LiteralKind::String(val) => lume_mir::Operand::String {
                 value: val.value.clone(),
             },
+        }
+    }
+
+    fn load_operand(&mut self, op: &lume_mir::Operand) -> lume_mir::RegisterId {
+        if let lume_mir::Operand::Reference { id } = &op {
+            *id
+        } else {
+            self.declare_value(op.clone())
         }
     }
 }

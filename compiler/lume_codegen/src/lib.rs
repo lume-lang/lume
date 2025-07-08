@@ -164,4 +164,14 @@ impl<'func, 'ctx> FunctionLower<'func, 'ctx> {
 
         self.builder.load(ptr, ty)
     }
+
+    #[allow(clippy::cast_possible_truncation)]
+    pub(crate) fn load_field(&self, id: RegisterId, field: usize) -> BasicValueEnum<'ctx> {
+        let (ptr, struct_type) = self.retrieve_var_ptr(id);
+
+        let struct_type = struct_type.into_struct_type();
+        let field_ty = struct_type.get_field_type_at_index(field as u32).unwrap();
+
+        self.builder.load_field(struct_type, ptr, field, field_ty)
+    }
 }

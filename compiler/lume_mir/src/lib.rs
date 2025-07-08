@@ -728,6 +728,9 @@ pub enum Operand {
     /// Represents a loaded value from an existing register.
     Load { id: RegisterId },
 
+    /// Represents a loaded value from an existing register.
+    LoadField { target: RegisterId, field: usize },
+
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
 }
@@ -740,7 +743,7 @@ impl Operand {
             Self::Boolean { .. } => 1,
             Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
             Self::Reference { .. } | Self::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
-            Self::Load { .. } => panic!("cannot get bitsize of load operand"),
+            Self::Load { .. } | Self::LoadField { .. } => panic!("cannot get bitsize of load operand"),
         }
     }
 }
@@ -753,6 +756,7 @@ impl std::fmt::Display for Operand {
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "*{id}"),
+            Self::LoadField { target, field } => write!(f, "&{target}.{field}"),
             Self::String { value } => write!(f, "\"{value}\""),
         }
     }
