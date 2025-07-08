@@ -2,3 +2,8 @@ namespace std
 
 /// Represents an 1-bit boolean value, which can store either `true` or `false`.
 struct builtin Boolean { }
+
+impl Boolean {
+    pub fn external ==(self, other: Boolean) -> Boolean
+    pub fn external !=(self, other: Boolean) -> Boolean
+}

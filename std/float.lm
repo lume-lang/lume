@@ -3,5 +3,35 @@ namespace std
 /// Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
 struct builtin Float { }
 
+impl Float {
+    pub fn external ==(self, other: Float) -> Boolean
+    pub fn external !=(self, other: Float) -> Boolean
+
+    pub fn external <(self, other: Float) -> Boolean
+    pub fn external <=(self, other: Float) -> Boolean
+    pub fn external >(self, other: Float) -> Boolean
+    pub fn external >=(self, other: Float) -> Boolean
+
+    pub fn external +(self, other: Float) -> Float
+    pub fn external -(self, other: Float) -> Float
+    pub fn external *(self, other: Float) -> Float
+    pub fn external /(self, other: Float) -> Float
+}
+
 /// Represents an 64-bit double-precision floating-point number, which is precise to ~16 decimal places.
 struct builtin Double { }
+
+impl Double {
+    pub fn external ==(self, other: Double) -> Boolean
+    pub fn external !=(self, other: Double) -> Boolean
+
+    pub fn external <(self, other: Double) -> Boolean
+    pub fn external <=(self, other: Double) -> Boolean
+    pub fn external >(self, other: Double) -> Boolean
+    pub fn external >=(self, other: Double) -> Boolean
+
+    pub fn external +(self, other: Double) -> Double
+    pub fn external -(self, other: Double) -> Double
+    pub fn external *(self, other: Double) -> Double
+    pub fn external /(self, other: Double) -> Double
+}
