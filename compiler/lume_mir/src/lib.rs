@@ -3,6 +3,9 @@ use std::hash::Hash;
 use indexmap::IndexMap;
 use lume_infer::query::CallReference;
 
+/// Represents a map of all functions within a compilation
+/// module. Functions are identified by their unique ID,
+/// which is referenced by later expressions, such as call sites.
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
     pub functions: IndexMap<FunctionId, Function>,
@@ -63,6 +66,11 @@ impl std::fmt::Display for ModuleMap {
     }
 }
 
+/// Unique identifier for a function within a module.
+///
+/// [`FunctionId`]s refer to the specific HIR function which
+/// is being referred to, so it can be used to optimize call
+/// site expressions.
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionId(CallReference);
 
@@ -75,20 +83,49 @@ impl std::fmt::Display for FunctionId {
     }
 }
 
+/// Defines a function signature, such as parameter types and return type,
+/// as well as any declared modifiers such as `external` or `inline`.
+#[derive(Debug, Clone)]
+pub struct Signature {
+    /// Defines whether the function is externally defined or not.
+    ///
+    /// External functions can be defined outside of the current module,
+    /// either in another module or in an external library.
+    pub external: bool,
+
+    /// Defines an ordered mapping of parameter types.
+    ///
+    /// If the parent function definition refers to an instance method,
+    /// the first parameter will be the `self` parameter.
+    pub parameters: Vec<Type>,
+    pub return_type: Type,
+}
+
+impl Default for Signature {
+    fn default() -> Self {
+        Signature {
+            external: false,
+            parameters: Vec::new(),
+            return_type: Type::Void,
+        }
+    }
+}
+
+/// Defines a function which is declared within the MIR module map.
+///
+/// Even though they're called "functions" in the MIR map, both
+/// functions and methods are represented by this struct.
 #[derive(Debug, Clone)]
 pub struct Function {
     pub id: FunctionId,
     pub name: String,
-    pub external: bool,
-
-    pub parameters: Vec<Type>,
-    pub return_type: Type,
+    pub signature: Signature,
 
     pub registers: Registers,
     pub blocks: Vec<BasicBlock>,
     current_block: BasicBlockId,
 
-    pub(crate) scope: Box<Scope>,
+    scope: Box<Scope>,
 }
 
 impl Function {
@@ -98,11 +135,9 @@ impl Function {
             name,
             registers: Registers::default(),
             blocks: Vec::new(),
-            external: false,
+            signature: Signature::default(),
             current_block: BasicBlockId(0),
             scope: Box::new(Scope::root_scope()),
-            parameters: Vec::new(),
-            return_type: Type::Void,
         }
     }
 
@@ -166,7 +201,7 @@ impl Function {
         self.block_mut(block).instructions.push(inst);
     }
 
-    /// Allocates a new register and returns its ID.
+    /// Allocates a new register with the given type and returns its ID.
     pub fn add_register(&mut self, ty: Type) -> RegisterId {
         self.registers.allocate(ty, self.current_block)
     }
@@ -181,8 +216,8 @@ impl Function {
     }
 
     /// Declares a new local with the given value in the current block.
-    pub fn declare_value(&mut self, ty: Type, value: Value) -> RegisterId {
-        self.declare(ty, Declaration::Value(value))
+    pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
+        self.declare(ty, Declaration::Operand(value))
     }
 
     /// Enters a new scope with the given scope kind.
@@ -245,7 +280,7 @@ impl Function {
 
 impl std::fmt::Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.external {
+        if self.signature.external {
             writeln!(f, "declare extern fn {:?}", self.name)?;
             return writeln!(f);
         }
@@ -298,11 +333,18 @@ impl std::fmt::Display for BasicBlockId {
     }
 }
 
+/// Represents a basic block in the control flow graph.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
 
+    /// Defines all non-terminator instructions in the block.
     instructions: Vec<Instruction>,
+
+    /// Defines the terminator of the block.
+    ///
+    /// Even though the terminator is optional, it is required for the block to be valid.
+    /// If a block does not have a terminator, it will default to returning void.
     terminator: Option<Terminator>,
 }
 
@@ -342,14 +384,19 @@ impl BasicBlock {
         self.terminator = Some(term);
     }
 
-    /// Declares a new register with an initial value.
+    /// Declares a new stack-allocated register with an initial value.
     pub fn declare(&mut self, register: RegisterId, decl: Declaration) {
-        self.instructions.push(Instruction::Declare { register, decl });
+        self.instructions.push(Instruction::Let { register, decl });
     }
 
-    /// Assigns a new value to an existing register.
-    pub fn assign(&mut self, target: RegisterId, value: Value) {
-        self.instructions.push(Instruction::Store { target, value });
+    /// Declares a new stack-allocated register with the given type.
+    pub fn allocate_stack(&mut self, register: RegisterId, ty: Type) {
+        self.instructions.push(Instruction::StackAllocate { register, ty });
+    }
+
+    /// Declares a new heap-allocated register with the given type.
+    pub fn allocate_heap(&mut self, register: RegisterId, ty: Type) {
+        self.instructions.push(Instruction::HeapAllocate { register, ty });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
@@ -367,7 +414,7 @@ impl BasicBlock {
     }
 
     /// Returns the given value, if any is defined. Otherwise, returns `void`.
-    pub fn return_any(&mut self, value: Option<Value>) {
+    pub fn return_any(&mut self, value: Option<Operand>) {
         if let Some(value) = value {
             self.return_value(value);
         } else {
@@ -381,7 +428,7 @@ impl BasicBlock {
     }
 
     /// Returns the the given value from the block.
-    pub fn return_value(&mut self, value: Value) {
+    pub fn return_value(&mut self, value: Operand) {
         self.set_terminator(Terminator::Return(Some(value)));
     }
 
@@ -422,10 +469,19 @@ impl std::fmt::Display for RegisterId {
     }
 }
 
+/// Defines a register within a block, which can hold a value of a specific type.
+///
+/// Registers cannot be altered after they are created, as they follow
+/// the SSA (Single Static Assignment) principle. If register needs to be updated,
+/// it should define an allocation which can be used to store the new value.
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
     pub id: RegisterId,
+
+    /// Defines the type of the register.
     pub ty: Type,
+
+    /// Defines which block the register belongs to.
     pub block: BasicBlockId,
 }
 
@@ -435,18 +491,22 @@ pub struct Registers {
 }
 
 impl Registers {
+    /// Gets a reference to the [`Register`] with the given ID.
     pub fn register(&self, id: RegisterId) -> &Register {
         &self.regs[id.0]
     }
 
+    /// Gets a mutable reference to the [`Register`] with the given ID.
     pub fn register_mut(&mut self, id: RegisterId) -> &mut Register {
         &mut self.regs[id.0]
     }
 
+    /// Gets a reference to the type of the [`Register`] with the given ID.
     pub fn register_ty(&self, id: RegisterId) -> &Type {
         &self.register(id).ty
     }
 
+    /// Allocates a new register with the given type and block.
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
         let id = RegisterId(self.regs.len());
         self.regs.push(Register { id, ty, block });
@@ -454,48 +514,64 @@ impl Registers {
         id
     }
 
+    /// Iterates over all registers.
     pub fn iter(&self) -> impl Iterator<Item = (RegisterId, &Register)> {
         self.regs.iter().enumerate().map(|(i, r)| (RegisterId(i), r))
     }
 }
 
+/// Represents a standalone instruction within a basic block.
+///
+/// Instructions themselves cannot be referenced by other instructions - only registers
+/// they declare can be referenced.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
-    Declare { register: RegisterId, decl: Declaration },
-    Store { target: RegisterId, value: Value },
+    /// Declares an SSA register within the current function.
+    Let { register: RegisterId, decl: Declaration },
+
+    /// Declares a stack-allocated register within the current function.
+    StackAllocate { register: RegisterId, ty: Type },
+
+    /// Declares a heap-allocated register within the current function.
+    HeapAllocate { register: RegisterId, ty: Type },
 }
 
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Declare { register, decl } => write!(f, "{register} = {decl}"),
-            Self::Store { target, value } => write!(f, "&{target} = {value}"),
+            Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
+            Self::StackAllocate { register, ty } => write!(f, "{register} = alloc {ty}"),
+            Self::HeapAllocate { register, ty } => write!(f, "{register} = malloc {ty}"),
         }
     }
 }
 
+/// Represents the right-hand side of a declaration instruction.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Declaration {
-    Value(Value),
-    Cast { operand: RegisterId, bits: u8 },
-    Intrinsic { name: Intrinsic, args: Vec<Value> },
-    Reference { id: RegisterId },
-}
+    /// Represents an operand value.
+    Operand(Operand),
 
-impl Declaration {
-    pub fn is_pointer_type(&self) -> bool {
-        match self {
-            Self::Value(value) => value.is_pointer_type(),
-            Self::Reference { .. } => true,
-            _ => false,
-        }
-    }
+    /// Represents an inline cast from a target register to another type.
+    Cast { operand: RegisterId, bits: u8 },
+
+    /// Defines a call to an intrinsic function.
+    Intrinsic { name: Intrinsic, args: Vec<Operand> },
+
+    /// Represents a reference to an existing register.
+    Reference { id: RegisterId },
+
+    /// Represents a memory load from an existing register, holding a pointer.
+    Load { id: RegisterId },
+
+    /// Represents a call to a function.
+    Call { func_id: FunctionId, args: Vec<Operand> },
 }
 
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Value(val) => val.fmt(f),
+            Self::Operand(op) => op.fmt(f),
             Self::Cast { operand, bits } => write!(f, "{operand} as i{bits}"),
             Self::Intrinsic { name, args } => write!(
                 f,
@@ -503,6 +579,8 @@ impl std::fmt::Display for Declaration {
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
             Self::Reference { id } => write!(f, "{id}"),
+            Self::Load { id } => write!(f, "&{id}"),
+            Self::Call { func_id, args } => write!(f, "{func_id}({args:?})"),
         }
     }
 }
@@ -550,58 +628,73 @@ impl std::fmt::Display for Intrinsic {
     }
 }
 
+/// Represents an operand to a call expression.
+///
+/// Not all values can be used as operands, which means they
+/// must be declared as a stack- or heap-allocated register.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Value {
+pub enum Operand {
+    /// Represents a literal boolean value.
     Boolean { value: bool },
+
+    /// Represents a literal integer value.
     Integer { bits: u8, signed: bool, value: i64 },
+
+    /// Represents a literal floating-point value.
     Float { bits: u8, value: f64 },
+
+    /// Represents a literal string value.
     String { value: String },
+
+    /// Represents a reference to an existing register.
     Reference { id: RegisterId },
-    Load { id: RegisterId },
-    Call { func_id: FunctionId, args: Vec<Value> },
 }
 
-impl Value {
-    pub fn is_pointer_type(&self) -> bool {
-        matches!(self, Self::String { .. })
-    }
-
-    #[expect(clippy::cast_possible_truncation, clippy::missing_panics_doc)]
+impl Operand {
+    /// Gets the bitsize of the operand.
+    #[expect(clippy::cast_possible_truncation)]
     pub fn bitsize(&self) -> u8 {
         match self {
             Self::Boolean { .. } => 1,
             Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
-            Self::Reference { .. } | Self::Load { .. } | Self::String { .. } => {
-                std::mem::size_of::<*const u32>() as u8 * 8
-            }
-            Self::Call { .. } => panic!("cannot get bitsize of call expression"),
+            Self::Reference { .. } | Self::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
         }
     }
 }
 
-impl std::fmt::Display for Value {
+impl std::fmt::Display for Operand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Boolean { value } => write!(f, "{value}"),
             Self::Integer { bits, signed, value } => write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" }),
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
-            Self::String { value } => write!(f, "\"{value}\""),
             Self::Reference { id } => write!(f, "{id}"),
-            Self::Load { id } => write!(f, "&{id}"),
-            Self::Call { func_id, args } => write!(f, "{func_id}({args:?})"),
+            Self::String { value } => write!(f, "\"{value}\""),
         }
     }
 }
 
+/// Represents a terminator of a block, which defines how control flow is
+/// transferred.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Terminator {
-    Return(Option<Value>),
+    /// Returns the given value, if any, from the current function.
+    ///
+    /// If no value is provided, the function returns `void`.
+    Return(Option<Operand>),
+
+    /// Unconditionally transfers control flow to the given block.
+    Branch(BasicBlockId),
+
+    /// Conditionally transfers control flow to one of the given blocks.
     ConditionalBranch {
         condition: RegisterId,
         then_block: BasicBlockId,
         else_block: BasicBlockId,
     },
-    Branch(BasicBlockId),
+
+    /// Defines the terminator as being unreachable, which may happen when
+    /// calling `noret` functions or panic.
     Unreachable,
 }
 
@@ -626,19 +719,52 @@ impl std::fmt::Display for Terminator {
     }
 }
 
+/// Defines a type within the MIR.
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
+    /// Represents a struct type with zero-or-more properties.
     Struct { properties: Vec<Type> },
+
+    /// Defines an integer type with a specified number of bits and signedness.
     Integer { bits: u8, signed: bool },
+
+    /// Defines a floating-point type with a specified number of bits.
     Float { bits: u8 },
+
+    /// Defines a boolean type.
     Boolean,
+
+    /// Defines a string type.
+    ///
+    /// While the [`Type::String`] type is a separate type, it is most often
+    /// lowering into a pointer to a [`Type::Integer`] type.
     String,
+
+    /// Defines a pointer type.
     Pointer,
+
+    /// Defines a void type.
     Void,
 }
 
-impl Type {
-    pub fn is_pointer(&self) -> bool {
-        matches!(self, Type::Pointer)
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            Self::Struct { properties } => write!(
+                f,
+                "{{{}}}",
+                properties
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Self::Integer { bits, signed } => write!(f, "{}{bits}", if *signed { "i" } else { "u" }),
+            Self::Float { bits } => write!(f, "f{bits}"),
+            Self::Boolean => write!(f, "bool"),
+            Self::String => write!(f, "string"),
+            Self::Pointer => write!(f, "ptr"),
+            Self::Void => write!(f, "void"),
+        }
     }
 }
