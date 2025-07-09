@@ -31,7 +31,7 @@ impl<'tcx> ModuleTransformer<'tcx> {
     }
 
     fn define_callables(&mut self, tdb: &TypeDatabaseContext) {
-        for method in &tdb.methods {
+        for method in tdb.methods() {
             let id = self.mir.new_function_id(CallReference::Method(method.id));
 
             self.define_callable(id, method.name.to_string(), &method.sig());
@@ -45,16 +45,16 @@ impl<'tcx> ModuleTransformer<'tcx> {
     }
 
     fn transform_callables(&mut self, tdb: &TypeDatabaseContext) {
-        for method in &tdb.methods {
+        for method in tdb.methods() {
             let id = self.mir.new_function_id(CallReference::Method(method.id));
-            let body = self.tcx.hir_body_of(method.hir);
+            let body = self.tcx.hir_body_of_def(method.hir);
 
             self.transform_callable(id, body);
         }
 
         for func in &tdb.functions {
             let id = self.mir.new_function_id(CallReference::Function(func.id));
-            let body = self.tcx.hir_body_of(func.hir);
+            let body = self.tcx.hir_body_of_item(func.hir);
 
             self.transform_callable(id, body);
         }

@@ -6,7 +6,7 @@ use lume_session::GlobalCtx;
 
 use crate::errors::*;
 use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeId, TypeParameterId, UseId, Visibility};
-use lume_span::{ItemId, Location};
+use lume_span::{DefId, ItemId, Location};
 
 pub mod errors;
 
@@ -270,7 +270,7 @@ pub struct Property {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
     pub id: MethodId,
-    pub hir: ItemId,
+    pub hir: DefId,
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: Path,
@@ -1297,13 +1297,7 @@ impl TypeDatabaseContext {
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn method_alloc(
-        &mut self,
-        hir: ItemId,
-        owner: TypeRef,
-        name: Path,
-        visibility: Visibility,
-    ) -> Result<MethodId> {
+    pub fn method_alloc(&mut self, hir: DefId, owner: TypeRef, name: Path, visibility: Visibility) -> Result<MethodId> {
         let id = MethodId(self.methods.len() as u64);
 
         let method = Method {

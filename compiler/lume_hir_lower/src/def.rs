@@ -1,6 +1,8 @@
 use error_snippet::Result;
-use lume_hir::Item;
+use lume_span::DefId;
 use lume_span::ItemId;
+use lume_span::MethodId;
+use lume_span::PropertyId;
 
 use crate::LowerModule;
 use crate::errors::*;
@@ -32,7 +34,8 @@ impl LowerModule<'_> {
         let properties = expr
             .properties
             .into_iter()
-            .map(|m| self.def_property(m))
+            .enumerate()
+            .map(|(index, m)| self.def_property(index, m))
             .collect::<Result<Vec<hir::Property>>>()?;
 
         self.self_type = None;
@@ -51,13 +54,13 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_property(&mut self, expr: ast::Property) -> Result<hir::Property> {
+    fn def_property(&mut self, idx: usize, expr: ast::Property) -> Result<hir::Property> {
+        let id = DefId::Property(PropertyId::new(self.current_item, idx));
+
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let property_type = self.type_ref(expr.property_type)?;
         let location = self.location(expr.location);
-
-        let id = self.item_id(("__PROP", &name, &self.current_item));
 
         let default_value = if let Some(def) = expr.default_value {
             Some(self.expression(def)?)
@@ -65,19 +68,15 @@ impl LowerModule<'_> {
             None
         };
 
-        let prop = hir::Property {
+        Ok(hir::Property {
             id,
-            prop_id: None,
             name,
+            prop_id: None,
             visibility,
             property_type,
             default_value,
             location,
-        };
-
-        self.map.items.insert(id, Item::Property(Box::new(prop.clone())));
-
-        Ok(prop)
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -86,21 +85,20 @@ impl LowerModule<'_> {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
-        self.current_item = ItemId::from_name(&target.name);
-        let id = self.impl_id(&target);
-
+        self.current_item = self.impl_id(&target);
         self.self_type = Some(target.name.clone());
 
         let methods = expr
             .methods
             .into_iter()
-            .map(|m| self.def_impl_method(m))
+            .enumerate()
+            .map(|(idx, m)| self.def_impl_method(idx, m))
             .collect::<Result<Vec<hir::MethodDefinition>>>()?;
 
         self.self_type = None;
 
         Ok(lume_hir::Item::Impl(Box::new(hir::Implementation {
-            id,
+            id: self.current_item,
             impl_id: None,
             target: Box::new(target),
             methods,
@@ -110,7 +108,9 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_impl_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
+    fn def_impl_method(&mut self, idx: usize, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
+        let id = DefId::Method(MethodId::new(self.current_item, idx));
+
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -118,15 +118,13 @@ impl LowerModule<'_> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
-        let id = self.item_id((&name, &self.current_item));
-
         let block = if expr.external {
             None
         } else {
             Some(self.isolated_block(expr.block, &parameters))
         };
 
-        let method = hir::MethodDefinition {
+        Ok(hir::MethodDefinition {
             id,
             method_id: None,
             name,
@@ -136,11 +134,7 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        };
-
-        self.map.items.insert(id, Item::Method(Box::new(method.clone())));
-
-        Ok(method)
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -148,21 +142,22 @@ impl LowerModule<'_> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
-        let id = self.item_id(&name);
 
+        self.current_item = self.item_id(&name);
         self.self_type = Some(name.clone());
 
         let methods = expr
             .methods
             .into_iter()
-            .map(|m| self.def_trait_methods(m))
+            .enumerate()
+            .map(|(idx, m)| self.def_trait_methods(idx, m))
             .collect::<Result<Vec<hir::TraitMethodDefinition>>>()?;
 
         self.self_type = None;
 
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
-                id,
+                id: self.current_item,
                 type_id: None,
                 name,
                 type_parameters,
@@ -173,18 +168,22 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
+    fn def_trait_methods(
+        &mut self,
+        idx: usize,
+        expr: ast::TraitMethodDefinition,
+    ) -> Result<hir::TraitMethodDefinition> {
+        let id = DefId::Method(MethodId::new(self.current_item, idx));
+
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, true)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
-
-        let id = self.item_id((&name, &self.current_item));
         let block = expr.block.map(|b| self.isolated_block(b, &parameters));
 
-        let method = hir::TraitMethodDefinition {
+        Ok(hir::TraitMethodDefinition {
             id,
             method_id: None,
             name,
@@ -194,13 +193,7 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        };
-
-        self.map
-            .items
-            .insert(id, Item::TraitMethodDef(Box::new(method.clone())));
-
-        Ok(method)
+        })
     }
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
@@ -370,23 +363,28 @@ impl LowerModule<'_> {
     ) -> Result<Vec<hir::TraitMethodImplementation>> {
         methods
             .into_iter()
-            .map(|m| self.def_use_method(m))
+            .enumerate()
+            .map(|(idx, m)| self.def_use_method(idx, m))
             .collect::<Result<Vec<_>>>()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
+    fn def_use_method(
+        &mut self,
+        idx: usize,
+        expr: ast::TraitMethodImplementation,
+    ) -> Result<hir::TraitMethodImplementation> {
+        let id = DefId::Method(MethodId::new(self.current_item, idx));
+
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let block = self.isolated_block(expr.block, &parameters);
-
-        let id = self.item_id((&name, &self.current_item));
         let location = self.location(expr.location);
 
-        let method = hir::TraitMethodImplementation {
+        Ok(hir::TraitMethodImplementation {
             id,
             method_id: None,
             visibility,
@@ -396,13 +394,7 @@ impl LowerModule<'_> {
             return_type,
             block,
             location,
-        };
-
-        self.map
-            .items
-            .insert(id, Item::TraitMethodImpl(Box::new(method.clone())));
-
-        Ok(method)
+        })
     }
 }
 

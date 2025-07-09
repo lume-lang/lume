@@ -145,6 +145,70 @@ impl ItemId {
     }
 }
 
+/// Uniquely identifies a property within a given parent item.
+///
+/// [`PropertyId`] instances are unique within the parent item, referenced
+/// by it's [`ItemId`] in [`PropertyId::item`].
+#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct PropertyId {
+    pub item: ItemId,
+    pub index: Idx,
+}
+
+impl PropertyId {
+    /// Creates a new [`PropertyId`] without a unique ID.
+    ///
+    /// If an [`PropertyId`] with a valid ID is required, see [`PropertyId::next()`].
+    #[inline]
+    pub fn empty(item: ItemId) -> Self {
+        Self {
+            item,
+            index: Idx::new(),
+        }
+    }
+
+    /// Creates a new [`PropertyId`] with the given ID.
+    #[inline]
+    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
+        Self {
+            item,
+            index: index.into(),
+        }
+    }
+}
+
+/// Uniquely identifies a method within a given parent item.
+///
+/// [`MethodId`] instances are unique within the parent item, referenced
+/// by it's [`ItemId`] in [`MethodId::item`].
+#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct MethodId {
+    pub item: ItemId,
+    pub index: Idx,
+}
+
+impl MethodId {
+    /// Creates a new [`MethodId`] without a unique ID.
+    ///
+    /// If an [`MethodId`] with a valid ID is required, see [`MethodId::next()`].
+    #[inline]
+    pub fn empty(item: ItemId) -> Self {
+        Self {
+            item,
+            index: Idx::new(),
+        }
+    }
+
+    /// Creates a new [`MethodId`] with the given ID.
+    #[inline]
+    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
+        Self {
+            item,
+            index: index.into(),
+        }
+    }
+}
+
 /// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
 ///
 /// [`LocalId`] instances are unique within the parent item, referenced by it's [`ItemId`] in [`LocalId::def`].
@@ -261,6 +325,8 @@ impl ExpressionId {
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DefId {
     Item(ItemId),
+    Property(PropertyId),
+    Method(MethodId),
     Statement(StatementId),
     Expression(ExpressionId),
 }

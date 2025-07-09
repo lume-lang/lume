@@ -457,10 +457,6 @@ pub enum Item {
     Type(Box<TypeDefinition>),
     Use(Box<TraitImplementation>),
     Impl(Box<Implementation>),
-    Property(Box<Property>),
-    Method(Box<MethodDefinition>),
-    TraitMethodDef(Box<TraitMethodDefinition>),
-    TraitMethodImpl(Box<TraitMethodImplementation>),
 }
 
 impl Item {
@@ -470,10 +466,6 @@ impl Item {
             Item::Type(symbol) => symbol.id(),
             Item::Use(symbol) => symbol.id,
             Item::Impl(symbol) => symbol.id,
-            Item::Property(symbol) => symbol.id,
-            Item::Method(symbol) => symbol.id,
-            Item::TraitMethodDef(symbol) => symbol.id,
-            Item::TraitMethodImpl(symbol) => symbol.id,
         }
     }
 
@@ -488,10 +480,7 @@ impl Item {
                 TypeDefinition::Enum(_) => &EMPTY,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
-            Item::Method(symbol) => &symbol.type_parameters,
-            Item::TraitMethodDef(symbol) => &symbol.type_parameters,
-            Item::TraitMethodImpl(symbol) => &symbol.type_parameters,
-            _ => &EMPTY,
+            Item::Use(_) => &EMPTY,
         }
     }
 }
@@ -499,6 +488,10 @@ impl Item {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Def<'a> {
     Item(&'a Item),
+    Property(&'a Property),
+    Method(&'a MethodDefinition),
+    TraitMethodDef(&'a TraitMethodDefinition),
+    TraitMethodImpl(&'a TraitMethodImplementation),
     Statement(&'a Statement),
     Expression(&'a Expression),
 }
@@ -507,16 +500,36 @@ impl Def<'_> {
     pub fn id(&self) -> DefId {
         match self {
             Def::Item(def) => DefId::Item(def.id()),
+            Def::Method(def) => def.id,
+            Def::TraitMethodDef(def) => def.id,
+            Def::TraitMethodImpl(def) => def.id,
             Def::Statement(def) => DefId::Statement(def.id),
             Def::Expression(def) => DefId::Expression(def.id),
+            Def::Property(def) => def.id,
+        }
+    }
+
+    pub fn type_parameters(&self) -> &TypeParameters {
+        static EMPTY: TypeParameters = TypeParameters::new();
+
+        match self {
+            Self::Item(item) => item.type_parameters(),
+            Self::Method(def) => &def.type_parameters,
+            Self::TraitMethodDef(def) => &def.type_parameters,
+            Self::TraitMethodImpl(def) => &def.type_parameters,
+            Self::Property(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
         }
     }
 
     pub fn location(&self) -> Location {
         match self {
             Def::Item(def) => def.location(),
-            Def::Statement(def) => def.location,
-            Def::Expression(def) => def.location,
+            Def::Method(def) => def.location(),
+            Def::TraitMethodDef(def) => def.location(),
+            Def::TraitMethodImpl(def) => def.location(),
+            Def::Statement(def) => def.location(),
+            Def::Expression(def) => def.location(),
+            Def::Property(def) => def.location(),
         }
     }
 }
@@ -720,7 +733,7 @@ pub enum StructMember {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Property {
-    pub id: ItemId,
+    pub id: DefId,
     pub prop_id: Option<PropertyId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -731,7 +744,7 @@ pub struct Property {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
-    pub id: ItemId,
+    pub id: DefId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -772,7 +785,7 @@ impl WithTypeParameters for TraitDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
-    pub id: ItemId,
+    pub id: DefId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
@@ -825,7 +838,7 @@ impl WithTypeParameters for TraitImplementation {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
-    pub id: ItemId,
+    pub id: DefId,
     pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,

@@ -28,7 +28,7 @@ impl TyCheckCtx {
             },
             lume_hir::Item::Impl(impl_def) => self.define_impl_type(impl_def),
             lume_hir::Item::Function(func) => self.define_function_scope(func),
-            _ => Ok(()),
+            lume_hir::Item::Use(_) => Ok(()),
         }
     }
 
@@ -37,7 +37,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_params = self.hir_avail_type_params_item(trait_def.id);
+                let type_params = self.hir_avail_type_params(method.id);
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
@@ -52,7 +52,7 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_params = self.hir_avail_type_params_item(impl_def.id);
+                let type_params = self.hir_avail_type_params(method.id);
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
