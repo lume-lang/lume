@@ -691,6 +691,8 @@ pub enum Intrinsic {
     IntXor { bits: u8, signed: bool },
     BooleanEq,
     BooleanNe,
+    BooleanAnd,
+    BooleanOr,
 }
 
 impl std::fmt::Display for Intrinsic {
@@ -709,6 +711,8 @@ impl std::fmt::Display for Intrinsic {
             Self::IntAnd { .. } => write!(f, "&"),
             Self::IntOr { .. } => write!(f, "|"),
             Self::IntXor { .. } => write!(f, "^"),
+            Self::BooleanAnd { .. } => write!(f, "&&"),
+            Self::BooleanOr { .. } => write!(f, "||"),
         }
     }
 }

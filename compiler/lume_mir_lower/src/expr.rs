@@ -11,7 +11,7 @@ impl FunctionTransformer<'_> {
             lume_hir::ExpressionKind::InstanceCall(expr) => self.instance_call(expr),
             lume_hir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_hir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
-            lume_hir::ExpressionKind::Logical(_) => todo!("logical MIR lowering"),
+            lume_hir::ExpressionKind::Logical(expr) => self.logical(expr),
             lume_hir::ExpressionKind::Member(expr) => self.member(expr),
             lume_hir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_hir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
@@ -162,6 +162,28 @@ impl FunctionTransformer<'_> {
         } else {
             unreachable!()
         }
+    }
+
+    fn logical(&mut self, expr: &lume_hir::Logical) -> lume_mir::Operand {
+        let lhs = self.expression(&expr.lhs);
+        let rhs = self.expression(&expr.rhs);
+        let args = vec![lhs, rhs];
+
+        let expr_ty = self.tcx().type_of_expr(&expr.lhs).unwrap();
+
+        let name = if expr_ty.is_bool() {
+            match expr.op.kind {
+                lume_hir::LogicalOperatorKind::And => lume_mir::Intrinsic::BooleanAnd,
+                lume_hir::LogicalOperatorKind::Or => lume_mir::Intrinsic::BooleanOr,
+            }
+        } else {
+            unreachable!()
+        };
+
+        let decl = lume_mir::Declaration::Intrinsic { name, args };
+        let reg = self.declare(decl);
+
+        lume_mir::Operand::Load { id: reg }
     }
 
     fn member(&mut self, expr: &lume_hir::Member) -> lume_mir::Operand {

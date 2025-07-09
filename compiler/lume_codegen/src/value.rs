@@ -106,13 +106,13 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
 
                 self.builder.int_le(*signed, lhs, rhs).as_basic_value_enum()
             }
-            lume_mir::Intrinsic::IntAnd { .. } => {
+            lume_mir::Intrinsic::IntAnd { .. } | lume_mir::Intrinsic::BooleanAnd => {
                 let lhs = self.load_int_from(&args[0]);
                 let rhs = self.load_int_from(&args[1]);
 
                 self.builder.int_and(lhs, rhs).as_basic_value_enum()
             }
-            lume_mir::Intrinsic::IntOr { .. } => {
+            lume_mir::Intrinsic::IntOr { .. } | lume_mir::Intrinsic::BooleanOr => {
                 let lhs = self.load_int_from(&args[0]);
                 let rhs = self.load_int_from(&args[1]);
 
@@ -188,7 +188,9 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
 
     pub(crate) fn load_int_from(&self, value: &lume_mir::Operand) -> IntValue<'ctx> {
         match value {
-            int @ lume_mir::Operand::Integer { .. } => self.operand(int).into_int_value(),
+            int @ (lume_mir::Operand::Integer { .. } | lume_mir::Operand::Boolean { .. }) => {
+                self.operand(int).into_int_value()
+            }
             lume_mir::Operand::Load { id } => self.load(*id).into_int_value(),
             _ => panic!("Unsupported value type for integer loading"),
         }

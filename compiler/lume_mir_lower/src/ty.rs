@@ -49,7 +49,9 @@ impl FunctionTransformer<'_> {
                 | lume_mir::Intrinsic::FloatLt { .. }
                 | lume_mir::Intrinsic::FloatLe { .. }
                 | lume_mir::Intrinsic::BooleanEq
-                | lume_mir::Intrinsic::BooleanNe => lume_mir::Type::Boolean,
+                | lume_mir::Intrinsic::BooleanNe
+                | lume_mir::Intrinsic::BooleanAnd
+                | lume_mir::Intrinsic::BooleanOr => lume_mir::Type::Boolean,
                 lume_mir::Intrinsic::IntAdd { bits, signed }
                 | lume_mir::Intrinsic::IntSub { bits, signed }
                 | lume_mir::Intrinsic::IntMul { bits, signed }
