@@ -1179,7 +1179,8 @@ impl TypeDatabaseContext {
 
     /// Attempts to find a [`Type`] with the given name, if any.
     pub fn find_type(&self, name: &Path) -> Option<&Type> {
-        self.types().find(|ty| ty.name == *name)
+        self.types()
+            .find(|ty| ty.name == *name && !matches!(ty.kind, TypeKind::TypeParameter(_)))
     }
 
     /// Attempts to find a [`Function`] with the given name, if any.

@@ -593,8 +593,10 @@ impl TyInferCtx {
                     .push(name, type_ref, param.vararg);
             }
 
-            self.tdb_mut().method_mut(method_id).unwrap().return_type =
-                self.mk_type_ref_generic(&method.return_type, &method.type_parameters.inner)?;
+            self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
+                &method.return_type,
+                &[&trait_impl.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+            )?;
         }
 
         Ok(())
@@ -622,8 +624,14 @@ impl TyInferCtx {
                     .push(name, type_ref, param.vararg);
             }
 
-            self.tdb_mut().method_mut(method_id).unwrap().return_type =
-                self.mk_type_ref_generic(&method.return_type, &method.type_parameters.inner)?;
+            self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
+                &method.return_type,
+                &[
+                    &implementation.type_parameters.inner[..],
+                    &method.type_parameters.inner[..],
+                ]
+                .concat(),
+            )?;
         }
 
         Ok(())

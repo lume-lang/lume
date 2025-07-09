@@ -1,6 +1,6 @@
 #![feature(map_try_insert)]
 
-use std::{collections::BTreeMap, ops::Deref};
+use std::{collections::BTreeMap, fmt::Debug, ops::Deref};
 
 use error_snippet::Result;
 use lume_errors::DiagCtx;
@@ -138,8 +138,12 @@ impl TyInferCtx {
 
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, loc = %ty.location), err)]
-    pub fn mk_type_ref_generic<T: AsRef<TypeParameter>>(
+    #[tracing::instrument(
+        level = "DEBUG",
+        skip_all, fields(ty = %ty.name, loc = %ty.location, ty_params = ?type_params),
+        err
+    )]
+    pub fn mk_type_ref_generic<T: AsRef<TypeParameter> + Debug>(
         &self,
         ty: &lume_hir::Type,
         type_params: &[T],
@@ -166,7 +170,7 @@ impl TyInferCtx {
 
     /// Lowers the given HIR types into type references.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub fn mk_type_refs_generic<T: AsRef<TypeParameter>>(
+    pub fn mk_type_refs_generic<T: AsRef<TypeParameter> + Debug>(
         &self,
         ty: &[lume_hir::Type],
         type_params: &[T],
