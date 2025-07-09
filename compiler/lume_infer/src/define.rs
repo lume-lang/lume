@@ -606,7 +606,14 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.mk_type_ref_generic(&param.param_type, &implementation.type_parameters.inner)?;
+                let type_ref = self.mk_type_ref_generic(
+                    &param.param_type,
+                    &[
+                        &implementation.type_parameters.inner[..],
+                        &method.type_parameters.inner[..],
+                    ]
+                    .concat(),
+                )?;
 
                 self.tdb_mut()
                     .method_mut(method_id)
