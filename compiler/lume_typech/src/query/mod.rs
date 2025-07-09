@@ -21,6 +21,9 @@ pub(crate) enum CallableCheckError {
     /// The number of type parameters provided does not match the expected number.
     TypeParameterCountMismatch,
 
+    /// The types of the type arguments provided do not meet the expected constraints.
+    TypeParameterConstraintMismatch(usize),
+
     /// The expression which attempted to call the expression is instanced, while the
     /// method itself is statically declared.
     InstancedCallOnStaticMethod,
@@ -32,6 +35,7 @@ impl std::fmt::Display for CallableCheckError {
             Self::NameMismatch => f.write_str("name mismatch"),
             Self::ArgumentCountMismatch => f.write_str("argument count mismatch"),
             Self::ArgumentTypeMismatch(_) => f.write_str("argument type mismatch"),
+            Self::TypeParameterConstraintMismatch(_) => f.write_str("type argument constraint mismatch"),
             Self::TypeParameterCountMismatch => f.write_str("type parameter count mismatch"),
             Self::InstancedCallOnStaticMethod => f.write_str("instanced call to static method"),
         }
@@ -150,10 +154,12 @@ impl TyCheckCtx {
         let mut failures = Vec::new();
         let is_instance_method = method.is_instanced();
 
-        // Verify that the amount of type arguments match the
-        // expected number of type parameters.
-        if method.type_parameters.len() != expr.type_arguments().len() {
-            failures.push(CallableCheckError::TypeParameterCountMismatch);
+        if let CallableCheckResult::Failure(err) =
+            self.check_type_params(&method.type_parameters, expr.type_arguments())?
+        {
+            failures.extend(err.iter());
+
+            return Ok(CallableCheckResult::Failure(failures));
         }
 
         let arguments = match (expr, is_instance_method) {
@@ -211,10 +217,10 @@ impl TyCheckCtx {
     ) -> Result<CallableCheckResult> {
         let mut failures = Vec::new();
 
-        // Verify that the amount of type arguments match the
-        // expected number of type parameters.
-        if function.type_parameters.len() != expr.type_arguments().len() {
-            failures.push(CallableCheckError::TypeParameterCountMismatch);
+        if let CallableCheckResult::Failure(err) =
+            self.check_type_params(&function.type_parameters, expr.type_arguments())?
+        {
+            failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
         }
@@ -223,6 +229,42 @@ impl TyCheckCtx {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
+        }
+
+        if failures.is_empty() {
+            Ok(CallableCheckResult::Success)
+        } else {
+            Ok(CallableCheckResult::Failure(failures))
+        }
+    }
+
+    /// Checks whether the given type arguments matches the signature of the given
+    /// type parameters.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn check_type_params<'a>(
+        &self,
+        type_params: &'a [lume_hir::TypeParameterId],
+        type_args: &'a [lume_hir::Type],
+    ) -> Result<CallableCheckResult> {
+        let mut failures = Vec::new();
+
+        // Verify that the amount of type arguments match the
+        // expected number of type parameters.
+        if type_params.len() != type_args.len() {
+            failures.push(CallableCheckError::TypeParameterCountMismatch);
+
+            return Ok(CallableCheckResult::Failure(failures));
+        }
+
+        for ((idx, param_id), hir_arg) in type_params.iter().enumerate().zip(type_args.iter()) {
+            let param = self.tdb().type_parameter(*param_id).unwrap();
+            let arg = self.mk_type_ref(hir_arg)?;
+
+            for constraint in &param.constraints {
+                if !self.check_type_compatibility(&arg, constraint)? {
+                    failures.push(CallableCheckError::TypeParameterConstraintMismatch(idx));
+                }
+            }
         }
 
         if failures.is_empty() {
@@ -499,8 +541,9 @@ impl TyCheckCtx {
                     CallableCheckError::NameMismatch => 0,
                     CallableCheckError::ArgumentCountMismatch => 1,
                     CallableCheckError::TypeParameterCountMismatch => 2,
-                    CallableCheckError::InstancedCallOnStaticMethod => 3,
-                    CallableCheckError::ArgumentTypeMismatch(_) => 4,
+                    CallableCheckError::TypeParameterConstraintMismatch(_) => 3,
+                    CallableCheckError::InstancedCallOnStaticMethod => 4,
+                    CallableCheckError::ArgumentTypeMismatch(_) => 5,
                 };
             }
 
