@@ -345,13 +345,14 @@ impl Parser {
                 // If we fail to parse the type arguments, move back to the original position
                 // and continue parsing at the fallthrough case.
                 let has_type_args = self.parse_type_arguments().is_ok();
-                let is_call_expr = self.token().kind == TokenKind::LeftParen;
+                let next_token = self.token().kind;
 
                 self.move_to(current_idx);
 
-                match (has_type_args, is_call_expr) {
-                    (_, true) => self.parse_call(None, identifier),
-                    (true, false) => self.parse_path_expression(identifier),
+                match (has_type_args, next_token) {
+                    (_, TokenKind::LeftParen) => self.parse_call(None, identifier),
+                    (_, TokenKind::LeftCurly) => self.parse_construction_expression(identifier),
+                    (true, _) => self.parse_path_expression(identifier),
                     (false, _) => Ok(self.parse_variable(identifier)),
                 }
             }
