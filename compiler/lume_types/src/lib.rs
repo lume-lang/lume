@@ -197,7 +197,7 @@ impl Parameters {
 ///
 /// While the type infers that it's only applicable for functions, this structure
 /// is also used for methods.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
     pub type_params: &'a [TypeParameterId],
@@ -211,6 +211,14 @@ impl FunctionSig<'_> {
 
     pub fn is_vararg(&self) -> bool {
         self.params.is_vararg()
+    }
+
+    pub fn to_owned(&self) -> FunctionSigOwned {
+        FunctionSigOwned {
+            params: self.params.to_owned(),
+            type_params: self.type_params.to_owned(),
+            ret_ty: self.ret_ty.to_owned(),
+        }
     }
 }
 
@@ -232,6 +240,14 @@ impl FunctionSigOwned {
 
     pub fn is_vararg(&self) -> bool {
         self.params.is_vararg()
+    }
+
+    pub fn as_ref(&'_ self) -> FunctionSig<'_> {
+        FunctionSig {
+            params: &self.params,
+            type_params: &self.type_params,
+            ret_ty: &self.ret_ty,
+        }
     }
 }
 

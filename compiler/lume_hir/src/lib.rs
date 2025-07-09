@@ -339,6 +339,16 @@ impl Path {
         self.name.type_arguments()
     }
 
+    /// Gets the all type arguments of all the path segments.
+    pub fn all_type_arguments(&self) -> Vec<Type> {
+        let mut args = self.type_arguments().to_vec();
+        for segment in &self.root {
+            args.extend_from_slice(segment.type_arguments());
+        }
+
+        args
+    }
+
     /// Determines whether the path refers to a type.
     pub fn is_type(&self) -> bool {
         matches!(self.name, PathSegment::Type { .. })
@@ -1253,7 +1263,11 @@ pub struct StaticCall {
 
 impl StaticCall {
     pub fn type_arguments(&self) -> &[Type] {
-        self.name.name.type_arguments()
+        self.name.type_arguments()
+    }
+
+    pub fn all_type_arguments(&self) -> Vec<Type> {
+        self.name.all_type_arguments()
     }
 }
 

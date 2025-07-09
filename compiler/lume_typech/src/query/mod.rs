@@ -4,7 +4,7 @@ use crate::{TyCheckCtx, *};
 use error_snippet::Result;
 use lume_hir::{self, Identifier, Path};
 use lume_infer::query::Callable;
-use lume_types::{Function, Method, TypeRef};
+use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum CallableCheckError {
@@ -140,6 +140,22 @@ impl FunctionLookupError<'_> {
 }
 
 impl TyCheckCtx {
+    /// Gets the expanded signature of the given [`Callable`].
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn signature_of<'a>(&self, callable: Callable<'a>) -> Result<FunctionSigOwned> {
+        match callable {
+            Callable::Method(method) => {
+                let mut signature = method.sig().to_owned();
+                signature
+                    .type_params
+                    .extend(self.tdb().type_params_of(method.callee.instance_of)?);
+
+                Ok(signature)
+            }
+            Callable::Function(function) => Ok(function.sig().to_owned()),
+        }
+    }
+
     /// Checks whether the given [`Method`] is valid, in terms of provided
     /// arguments, type arguments, visibility and type of callee.
     ///
@@ -151,9 +167,7 @@ impl TyCheckCtx {
         method: &'a Method,
         expr: lume_hir::CallExpression,
     ) -> Result<CallableCheckResult> {
-        let signature = method.sig();
-
-        self.check_signature(signature, expr)
+        self.check_signature(Callable::Method(method), expr)
     }
 
     /// Checks whether the given [`Function`] is valid, in terms of provided
@@ -167,9 +181,7 @@ impl TyCheckCtx {
         function: &'a Function,
         expr: &'a lume_hir::StaticCall,
     ) -> Result<CallableCheckResult> {
-        let signature = function.sig();
-
-        self.check_signature(signature, lume_hir::CallExpression::Static(expr))
+        self.check_signature(Callable::Function(function), lume_hir::CallExpression::Static(expr))
     }
 
     /// Checks whether the given invocation signature matches the signature of the
@@ -177,21 +189,24 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_signature<'a>(
         &self,
-        signature: lume_types::FunctionSig<'a>,
+        callable: Callable<'a>,
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<CallableCheckResult> {
         let mut failures = Vec::new();
-        let is_instance_method = signature.is_instanced();
+
+        let narrow_signature = callable.signature();
+        let is_instance_method = narrow_signature.is_instanced();
 
         if let CallableCheckResult::Failure(err) =
-            self.check_type_params(signature.type_params, expr.type_arguments())?
+            self.check_type_params(narrow_signature.type_params, expr.type_arguments())?
         {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        let signature = self.instantiate_call_expression(signature, expr)?;
+        let full_signature = self.signature_of(callable)?;
+        let signature = self.instantiate_call_expression(full_signature.as_ref(), expr)?;
 
         let arguments = match (expr, is_instance_method) {
             // For any instanced call where the method is also instanced, we

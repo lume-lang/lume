@@ -267,7 +267,12 @@ impl TyInferCtx {
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
         let type_parameters_hir = self.hir_avail_type_params_expr(expr.id());
-        let type_arguments = self.mk_type_refs_generic(expr.type_arguments(), &type_parameters_hir)?;
+        let type_arguments_hir = match &expr {
+            lume_hir::CallExpression::Static(call) => &call.all_type_arguments(),
+            _ => expr.type_arguments(),
+        };
+
+        let type_arguments = self.mk_type_refs_generic(type_arguments_hir, &type_parameters_hir)?;
 
         Ok(self.instantiate_function(signature, &type_arguments))
     }
