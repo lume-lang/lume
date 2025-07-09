@@ -288,7 +288,7 @@ fn query_check_method_empty() -> Result<()> {
     };
 
     assert_eq!(
-        tcx.check_method(method, &lume_hir::CallExpression::Static(&expr)),
+        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
         Ok(CallableCheckResult::Success)
     );
 
@@ -321,7 +321,7 @@ fn query_check_method_arg_count() -> Result<()> {
     };
 
     assert_eq!(
-        tcx.check_method(method, &lume_hir::CallExpression::Static(&expr)),
+        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
         Ok(CallableCheckResult::Failure(vec![
             CallableCheckError::ArgumentCountMismatch
         ]))
@@ -356,7 +356,7 @@ fn query_check_method_arg_type() -> Result<()> {
     };
 
     assert_eq!(
-        tcx.check_method(method, &lume_hir::CallExpression::Static(&expr)),
+        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
         Ok(CallableCheckResult::Failure(vec![
             CallableCheckError::ArgumentTypeMismatch(0)
         ]))
@@ -391,7 +391,7 @@ fn query_check_method_type_arg_count() -> Result<()> {
     };
 
     assert_eq!(
-        tcx.check_method(method, &lume_hir::CallExpression::Static(&expr)),
+        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
         Ok(CallableCheckResult::Failure(vec![
             CallableCheckError::TypeParameterCountMismatch
         ]))
@@ -433,7 +433,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
     };
 
     assert_eq!(
-        tcx.check_method(method, &lume_hir::CallExpression::Static(&expr)),
+        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
         Ok(CallableCheckResult::Success)
     );
 

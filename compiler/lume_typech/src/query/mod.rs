@@ -149,14 +149,41 @@ impl TyCheckCtx {
     pub(crate) fn check_method<'a>(
         &self,
         method: &'a Method,
-        expr: &'a lume_hir::CallExpression,
+        expr: lume_hir::CallExpression,
+    ) -> Result<CallableCheckResult> {
+        let signature = method.sig();
+
+        self.check_signature(signature, expr)
+    }
+
+    /// Checks whether the given [`Function`] is valid, in terms of provided
+    /// arguments, type arguments and visibility.
+    ///
+    /// If the [`Function`] is not valid for the given expression, returns
+    /// [`CallableCheckResult::Failure`] with one-or-more reasons.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub(crate) fn check_function<'a>(
+        &self,
+        function: &'a Function,
+        expr: &'a lume_hir::StaticCall,
+    ) -> Result<CallableCheckResult> {
+        let signature = function.sig();
+
+        self.check_signature(signature, lume_hir::CallExpression::Static(expr))
+    }
+
+    /// Checks whether the given invocation signature matches the signature of the
+    /// corresponding callable.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    fn check_signature<'a>(
+        &self,
+        sig: lume_types::FunctionSig<'a>,
+        expr: lume_hir::CallExpression<'a>,
     ) -> Result<CallableCheckResult> {
         let mut failures = Vec::new();
-        let is_instance_method = method.is_instanced();
+        let is_instance_method = sig.is_instanced();
 
-        if let CallableCheckResult::Failure(err) =
-            self.check_type_params(&method.type_parameters, expr.type_arguments())?
-        {
+        if let CallableCheckResult::Failure(err) = self.check_type_params(sig.type_params, expr.type_arguments())? {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
@@ -191,41 +218,7 @@ impl TyCheckCtx {
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        if let CallableCheckResult::Failure(err) = self.check_params(&method.parameters, arguments)? {
-            failures.extend(err.iter());
-
-            return Ok(CallableCheckResult::Failure(failures));
-        }
-
-        if failures.is_empty() {
-            Ok(CallableCheckResult::Success)
-        } else {
-            Ok(CallableCheckResult::Failure(failures))
-        }
-    }
-
-    /// Checks whether the given [`Function`] is valid, in terms of provided
-    /// arguments, type arguments and visibility.
-    ///
-    /// If the [`Function`] is not valid for the given expression, returns
-    /// [`CallableCheckResult::Failure`] with one-or-more reasons.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn check_function<'a>(
-        &self,
-        function: &'a Function,
-        expr: &'a lume_hir::StaticCall,
-    ) -> Result<CallableCheckResult> {
-        let mut failures = Vec::new();
-
-        if let CallableCheckResult::Failure(err) =
-            self.check_type_params(&function.type_parameters, expr.type_arguments())?
-        {
-            failures.extend(err.iter());
-
-            return Ok(CallableCheckResult::Failure(failures));
-        }
-
-        if let CallableCheckResult::Failure(err) = self.check_params(&function.parameters, &expr.arguments)? {
+        if let CallableCheckResult::Failure(err) = self.check_params(sig.params, arguments)? {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
@@ -364,7 +357,7 @@ impl TyCheckCtx {
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
+    pub(crate) fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match &expr {
             lume_hir::CallExpression::Instanced(call) => {
                 let callee_type = self.type_of(call.callee.id)?;
@@ -404,7 +397,7 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_methods(
         &self,
-        expr: &lume_hir::CallExpression,
+        expr: lume_hir::CallExpression,
         callee_type: &lume_types::TypeRef,
     ) -> Result<&'_ Method> {
         let method_name = expr.name();
@@ -555,7 +548,7 @@ impl TyCheckCtx {
     /// lookup, see [`ThirBuildCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
-        self.lookup_callable(&lume_hir::CallExpression::Instanced(call))
+        self.lookup_callable(lume_hir::CallExpression::Instanced(call))
     }
 
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
@@ -569,7 +562,7 @@ impl TyCheckCtx {
     /// lookup, see [`ThirBuildCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
-        self.lookup_callable(&lume_hir::CallExpression::Static(call))
+        self.lookup_callable(lume_hir::CallExpression::Static(call))
     }
 
     /// Ensures that the return type of a block matches the expected type.

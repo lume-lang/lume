@@ -202,9 +202,9 @@ impl TyCheckCtx {
             lume_hir::ExpressionKind::Cast(cast) => self.cast_expression(cast),
             lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr),
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                self.call_expression(&lume_hir::CallExpression::Instanced(call))
+                self.call_expression(lume_hir::CallExpression::Instanced(call))
             }
-            lume_hir::ExpressionKind::StaticCall(call) => self.call_expression(&lume_hir::CallExpression::Static(call)),
+            lume_hir::ExpressionKind::StaticCall(call) => self.call_expression(lume_hir::CallExpression::Static(call)),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr),
             _ => Ok(()),
         }
@@ -279,7 +279,7 @@ impl TyCheckCtx {
     /// Asserts that the resolved function/method which is invoked by the expression
     /// is valid for the given context it is in. This includes whether the method exists,
     /// takes the correct amount of parameters, as well as their parameter types.
-    fn call_expression(&self, expr: &lume_hir::CallExpression) -> Result<()> {
+    fn call_expression(&self, expr: lume_hir::CallExpression) -> Result<()> {
         let _ = self.lookup_callable(expr)?;
 
         Ok(())

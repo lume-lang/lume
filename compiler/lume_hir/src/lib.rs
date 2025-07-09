@@ -1110,7 +1110,7 @@ pub enum ExpressionKind {
     Void,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CallExpression<'a> {
     /// Defines a call which was invoked without any callee or receiver.
     ///

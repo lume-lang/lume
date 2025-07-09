@@ -179,6 +179,15 @@ impl Parameters {
         self.params.is_empty()
     }
 
+    // /// Determines whether the method is instanced, as opposed to static.
+    pub fn is_instanced(&self) -> bool {
+        if let Some(param) = self.params.first() {
+            &param.name == "self"
+        } else {
+            false
+        }
+    }
+
     pub fn is_vararg(&self) -> bool {
         self.params.iter().any(|param| param.vararg)
     }
@@ -193,6 +202,37 @@ pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
     pub type_params: &'a [TypeParameterId],
     pub ret_ty: &'a TypeRef,
+}
+
+impl FunctionSig<'_> {
+    pub fn is_instanced(&self) -> bool {
+        self.params.is_instanced()
+    }
+
+    pub fn is_vararg(&self) -> bool {
+        self.params.is_vararg()
+    }
+}
+
+/// Defines the signature of a function or method, with parameters and return type.
+///
+/// While the type infers that it's only applicable for functions, this structure
+/// is also used for methods.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FunctionSigOwned {
+    pub params: Parameters,
+    pub type_params: Vec<TypeParameterId>,
+    pub ret_ty: TypeRef,
+}
+
+impl FunctionSigOwned {
+    pub fn is_instanced(&self) -> bool {
+        self.params.is_instanced()
+    }
+
+    pub fn is_vararg(&self) -> bool {
+        self.params.is_vararg()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -251,11 +291,7 @@ impl Method {
 
     // /// Determines whether the method is instanced, as opposed to static.
     pub fn is_instanced(&self) -> bool {
-        if let Some(param) = self.parameters.params.first() {
-            &param.name == "self" && param.ty == self.callee
-        } else {
-            false
-        }
+        self.parameters.is_instanced()
     }
 }
 
