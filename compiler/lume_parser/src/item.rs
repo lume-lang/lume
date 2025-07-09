@@ -27,6 +27,11 @@ impl Parser {
 
         match self.token().kind {
             TokenKind::Fn => self.parse_fn_visibility(visibility),
+            TokenKind::Impl => self.parse_impl_visibility(visibility),
+            TokenKind::Struct => self.parse_struct_visibility(visibility),
+            TokenKind::Trait => self.parse_trait_visibility(visibility),
+            TokenKind::Enum => self.parse_enum_visibility(visibility),
+            TokenKind::Use => self.parse_use_visibility(visibility),
             k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
         }
     }
@@ -190,6 +195,13 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_struct(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_struct_visibility(visibility)
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    fn parse_struct_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Struct)?.start();
 
         let builtin = self.consume_if(TokenKind::Builtin).is_some();
@@ -201,6 +213,7 @@ impl Parser {
         let end = self.previous_token().end();
 
         let struct_def = StructDefinition {
+            visibility,
             name,
             builtin,
             properties,
@@ -316,6 +329,13 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_trait(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_trait_visibility(visibility)
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    fn parse_trait_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Trait)?.start();
 
         let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
@@ -325,6 +345,7 @@ impl Parser {
         let end = self.previous_token().end();
 
         let trait_def = TraitDefinition {
+            visibility,
             name,
             methods,
             type_parameters,
@@ -371,6 +392,13 @@ impl Parser {
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    fn parse_enum(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_enum_visibility(visibility)
+    }
+
     /// Parses a single enum type definition, such as:
     ///
     /// ```lm
@@ -380,7 +408,7 @@ impl Parser {
     /// }
     /// ```
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_enum(&mut self) -> Result<TopLevelExpression> {
+    fn parse_enum_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Enum)?.start();
 
         let name = self.parse_identifier()?;
@@ -390,6 +418,7 @@ impl Parser {
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Enum(
             Box::new(EnumDefinition {
+                visibility,
                 name,
                 cases,
                 location: (start..end).into(),
@@ -426,6 +455,13 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_use(&mut self) -> Result<TopLevelExpression> {
+        let visibility = self.parse_visibility()?;
+
+        self.parse_use_visibility(visibility)
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    fn parse_use_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
         let start = self.consume(TokenKind::Use)?.start();
         let type_parameters = self.parse_type_parameters()?;
 
@@ -438,6 +474,7 @@ impl Parser {
         let end = self.previous_token().end();
 
         let use_trait = UseTrait {
+            visibility,
             type_parameters,
             name: Box::new(name),
             target: Box::new(target),

@@ -610,6 +610,7 @@ impl TypeDefinition {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
+    pub visibility: Visibility,
     pub name: Identifier,
     pub builtin: bool,
     pub properties: Vec<Property>,
@@ -649,6 +650,7 @@ node_location!(MethodDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
+    pub visibility: Visibility,
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,
     pub methods: Vec<TraitMethodDefinition>,
@@ -674,6 +676,7 @@ node_location!(TraitMethodDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
+    pub visibility: Visibility,
     pub name: Identifier,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
@@ -705,22 +708,6 @@ impl std::fmt::Display for EnumDefinitionCase {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct AliasDefinition {
-    pub name: Identifier,
-    pub definition: Box<Type>,
-    pub location: Location,
-    pub documentation: Option<String>,
-}
-
-node_location!(AliasDefinition);
-
-impl std::fmt::Display for AliasDefinition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.name.to_string())
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub visibility: Visibility,
     pub name: Box<Type>,
@@ -733,6 +720,7 @@ node_location!(Implementation);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct UseTrait {
+    pub visibility: Visibility,
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,

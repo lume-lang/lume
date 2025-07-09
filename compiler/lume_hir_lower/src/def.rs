@@ -25,6 +25,7 @@ impl LowerModule<'_> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         self.current_item = ItemId::from_name(&name);
 
+        let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
         let id = self.item_id(&name);
@@ -45,6 +46,7 @@ impl LowerModule<'_> {
                 id,
                 type_id: None,
                 name,
+                visibility,
                 builtin: expr.builtin,
                 type_parameters,
                 properties,
@@ -140,6 +142,7 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
+        let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
@@ -160,6 +163,7 @@ impl LowerModule<'_> {
                 id: self.current_item,
                 type_id: None,
                 name,
+                visibility,
                 type_parameters,
                 methods,
                 location,
@@ -198,6 +202,7 @@ impl LowerModule<'_> {
 
     fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
+        let visibility = lower_visibility(&expr.visibility);
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
@@ -212,6 +217,7 @@ impl LowerModule<'_> {
                 id,
                 type_id: None,
                 name,
+                visibility,
                 cases,
                 location,
             },
@@ -334,6 +340,7 @@ impl LowerModule<'_> {
     pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
 
+        let visibility = lower_visibility(&expr.visibility);
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
 
@@ -350,6 +357,7 @@ impl LowerModule<'_> {
             use_id: None,
             name: Box::new(name),
             target: Box::new(target),
+            visibility,
             methods,
             type_parameters,
             location,
