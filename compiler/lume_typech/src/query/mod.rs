@@ -407,12 +407,7 @@ impl TyCheckCtx {
         expr: &lume_hir::CallExpression,
         callee_type: &lume_types::TypeRef,
     ) -> Result<&'_ Method> {
-        let method_name = match &expr {
-            lume_hir::CallExpression::Instanced(call) => call.name.name(),
-            lume_hir::CallExpression::Intrinsic(call) => call.name.name(),
-            lume_hir::CallExpression::Static(call) => call.name.name.name(),
-        };
-
+        let method_name = expr.name();
         let mut suggestions = Vec::new();
 
         for method in self.lookup_methods_on(callee_type, method_name) {
@@ -427,12 +422,7 @@ impl TyCheckCtx {
 
         for suggestion in self.lookup_method_suggestions(callee_type, method_name) {
             let failures = if let CallableCheckResult::Failure(failures) = self.check_method(suggestion, expr)? {
-                // We're explicitly removing name mismatches, as they should
-                // not have matching names in suggested methods.
                 failures
-                    .into_iter()
-                    .filter(|f| matches!(f, CallableCheckError::NameMismatch))
-                    .collect()
             } else {
                 vec![]
             };
@@ -489,12 +479,7 @@ impl TyCheckCtx {
 
         for suggestion in self.lookup_function_suggestions(function_name) {
             let failures = if let CallableCheckResult::Failure(failures) = self.check_function(suggestion, expr)? {
-                // We're explicitly removing name mismatches, as they should
-                // not have matching names in suggested methods.
                 failures
-                    .into_iter()
-                    .filter(|f| matches!(f, CallableCheckError::NameMismatch))
-                    .collect()
             } else {
                 vec![]
             };

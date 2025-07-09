@@ -1137,6 +1137,15 @@ pub enum CallExpression<'a> {
 
 impl CallExpression<'_> {
     #[inline]
+    pub fn name(&self) -> &Identifier {
+        match self {
+            Self::Instanced(call) => call.name.name(),
+            Self::Static(call) => call.name.name(),
+            Self::Intrinsic(call) => call.name.name(),
+        }
+    }
+
+    #[inline]
     pub fn arguments(&self) -> &[Expression] {
         match self {
             Self::Instanced(call) => &call.arguments,

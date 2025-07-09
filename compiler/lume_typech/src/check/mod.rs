@@ -67,7 +67,7 @@ impl TyCheckCtx {
 
         // If `to` refers to a trait where `from` implements `to`, they can
         // be downcast correctly.
-        if self.is_trait(to)? && self.trait_impl_by(to, from)? {
+        if self.is_trait(to)? {
             if self.trait_impl_by(to, from)? {
                 return Ok(());
             }
