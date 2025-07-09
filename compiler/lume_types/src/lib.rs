@@ -989,6 +989,18 @@ impl TypeDatabaseContext {
         self.type_transport(id).map(|ty| ty == TypeTransport::Copy)
     }
 
+    /// Gets the [`Type`] with the given ID, if any, as a type parameter. If the
+    /// type is not a type parameter, returns `None`.
+    ///
+    /// Returns `None` if the [`Type`] is not found.
+    pub fn type_as_param(&self, id: TypeId) -> Option<&TypeParameter> {
+        if let Some(TypeKind::TypeParameter(param_id)) = self.type_(id).map(|ty| &ty.kind) {
+            self.type_parameter(*param_id)
+        } else {
+            None
+        }
+    }
+
     /// Expects the [`Type`] with the given ID, if it exists.
     ///
     /// # Errors

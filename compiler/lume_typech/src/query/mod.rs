@@ -177,17 +177,21 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_signature<'a>(
         &self,
-        sig: lume_types::FunctionSig<'a>,
+        signature: lume_types::FunctionSig<'a>,
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<CallableCheckResult> {
         let mut failures = Vec::new();
-        let is_instance_method = sig.is_instanced();
+        let is_instance_method = signature.is_instanced();
 
-        if let CallableCheckResult::Failure(err) = self.check_type_params(sig.type_params, expr.type_arguments())? {
+        if let CallableCheckResult::Failure(err) =
+            self.check_type_params(signature.type_params, expr.type_arguments())?
+        {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));
         }
+
+        let signature = self.instantiate_call_expression(signature, expr)?;
 
         let arguments = match (expr, is_instance_method) {
             // For any instanced call where the method is also instanced, we
@@ -218,7 +222,7 @@ impl TyCheckCtx {
             return Ok(CallableCheckResult::Failure(failures));
         }
 
-        if let CallableCheckResult::Failure(err) = self.check_params(sig.params, arguments)? {
+        if let CallableCheckResult::Failure(err) = self.check_params(&signature.params, arguments)? {
             failures.extend(err.iter());
 
             return Ok(CallableCheckResult::Failure(failures));

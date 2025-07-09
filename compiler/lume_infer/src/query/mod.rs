@@ -102,7 +102,17 @@ impl TyInferCtx {
                 })
             }
             lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs),
-            lume_hir::ExpressionKind::StaticCall(call) => Ok(self.probe_callable_static(call)?.return_type().clone()),
+            lume_hir::ExpressionKind::StaticCall(call) => {
+                let callable = self.probe_callable_static(call)?;
+
+                let signature = callable.signature();
+                let type_arguments_hir = self.hir_avail_type_params(DefId::Expression(call.id));
+                let type_arguments = self.mk_type_refs_generic(call.type_arguments(), &type_arguments_hir)?;
+
+                let instantiated = self.instantiate_function(signature, &type_arguments);
+
+                Ok(instantiated.ret_ty)
+            }
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callable = self.probe_callable_instance(call)?;
 

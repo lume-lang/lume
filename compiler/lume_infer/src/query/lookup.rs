@@ -2,7 +2,7 @@ use crate::{TyInferCtx, query::Callable};
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
-use lume_types::{Function, Method};
+use lume_types::{Function, Method, TypeRef};
 
 use super::diagnostics::{self};
 
@@ -256,6 +256,73 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.probe_callable(&lume_hir::CallExpression::Static(call))
+    }
+
+    /// Instantiates a call expression against the given function signature, resolving
+    /// any type arguments within and returning the instantiated signature.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn instantiate_call_expression<'a>(
+        &self,
+        signature: lume_types::FunctionSig<'a>,
+        expr: lume_hir::CallExpression<'a>,
+    ) -> Result<lume_types::FunctionSigOwned> {
+        let type_arguments_hir = self.hir_avail_type_params_expr(expr.id());
+        let type_arguments = self.mk_type_refs_generic(expr.type_arguments(), &type_arguments_hir)?;
+
+        Ok(self.instantiate_function(signature, &type_arguments))
+    }
+
+    /// Instantiates a function signature against the given type arguments, resolving
+    /// the parameters and return type within the signature.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_function<'a>(
+        &self,
+        sig: lume_types::FunctionSig<'a>,
+        type_args: &[TypeRef],
+    ) -> lume_types::FunctionSigOwned {
+        let mut inst = lume_types::FunctionSigOwned {
+            params: lume_types::Parameters::new(),
+            ret_ty: TypeRef::unknown(),
+            type_params: Vec::new(),
+        };
+
+        for param in sig.params.inner() {
+            let param_ty = self.instantiate_type_from(&param.ty, sig.type_params, type_args);
+
+            inst.params.params.push(lume_types::Parameter {
+                idx: param.idx,
+                name: param.name.clone(),
+                ty: param_ty.clone(),
+                vararg: param.vararg,
+            });
+        }
+
+        inst.ret_ty = self
+            .instantiate_type_from(sig.ret_ty, sig.type_params, type_args)
+            .clone();
+
+        inst
+    }
+
+    /// Instantiates a a single type reference against the given type arguments,
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_type_from<'a>(
+        &self,
+        ty: &'a lume_types::TypeRef,
+        type_params: &[lume_hir::TypeParameterId],
+        type_args: &'a [TypeRef],
+    ) -> &'a lume_types::TypeRef {
+        let Some(ty_as_param) = self.db().type_as_param(ty.instance_of) else {
+            return ty;
+        };
+
+        for (type_param, type_arg) in type_params.iter().zip(type_args.iter()) {
+            if *type_param == ty_as_param.id {
+                return type_arg;
+            }
+        }
+
+        ty
     }
 
     /// Returns all the methods defined directly within the given type.
