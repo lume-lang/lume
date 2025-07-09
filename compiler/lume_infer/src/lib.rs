@@ -139,7 +139,7 @@ impl TyInferCtx {
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
     #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, loc = %ty.location), err)]
-    pub(crate) fn mk_type_ref_generic<T: AsRef<TypeParameter>>(
+    pub fn mk_type_ref_generic<T: AsRef<TypeParameter>>(
         &self,
         ty: &lume_hir::Type,
         type_params: &[T],
@@ -156,6 +156,22 @@ impl TyInferCtx {
         }
 
         Ok(type_ref)
+    }
+
+    /// Lowers the given HIR types into type references.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub fn mk_type_refs(&self, ty: &[lume_hir::Type]) -> Result<Vec<TypeRef>> {
+        ty.iter().map(|t| self.mk_type_ref(t)).collect()
+    }
+
+    /// Lowers the given HIR types into type references.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub fn mk_type_refs_generic<T: AsRef<TypeParameter>>(
+        &self,
+        ty: &[lume_hir::Type],
+        type_params: &[T],
+    ) -> Result<Vec<TypeRef>> {
+        ty.iter().map(|t| self.mk_type_ref_generic(t, type_params)).collect()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]

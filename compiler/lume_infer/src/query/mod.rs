@@ -35,6 +35,13 @@ impl Callable<'_> {
         }
     }
 
+    pub fn signature(&'_ self) -> lume_types::FunctionSig<'_> {
+        match self {
+            Self::Method(method) => method.sig(),
+            Self::Function(function) => function.sig(),
+        }
+    }
+
     pub fn return_type(&self) -> &lume_types::TypeRef {
         match self {
             Self::Method(method) => &method.return_type,
@@ -129,7 +136,11 @@ impl TyInferCtx {
                 Ok(property.property_type.clone())
             }
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
-                lume_hir::VariableSource::Parameter(param) => self.mk_type_ref(&param.param_type),
+                lume_hir::VariableSource::Parameter(param) => {
+                    let type_params = self.hir_avail_type_params_expr(var.id);
+
+                    self.mk_type_ref_generic(&param.param_type, &type_params)
+                }
                 lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var),
             },
             lume_hir::ExpressionKind::Variant(var) => {

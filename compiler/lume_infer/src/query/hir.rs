@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_query::cached_query;
-use lume_span::{DefId, ItemId};
+use lume_span::{DefId, ExpressionId, ItemId};
 
 use crate::TyInferCtx;
 
@@ -162,6 +162,18 @@ impl TyInferCtx {
         }
 
         acc
+    }
+
+    /// Returns all the type parameters available for the [`lume_hir::Item`] with the given ID.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_avail_type_params_item(&self, item: ItemId) -> Vec<&'_ lume_hir::TypeParameter> {
+        self.hir_avail_type_params(DefId::Item(item))
+    }
+
+    /// Returns all the type parameters available for the [`lume_hir::Expression`] with the given ID.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_avail_type_params_expr(&self, expr: ExpressionId) -> Vec<&'_ lume_hir::TypeParameter> {
+        self.hir_avail_type_params(DefId::Expression(expr))
     }
 
     /// Returns the expected return type within the context where the given [`DefId`] is

@@ -37,7 +37,10 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                self.ensure_block_ty_match(block, &self.mk_type_ref(&method.return_type)?)?;
+                let type_params = self.hir_avail_type_params_item(trait_def.id);
+                let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
+
+                self.ensure_block_ty_match(block, &return_type)?;
             }
         }
 
@@ -49,7 +52,10 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                self.ensure_block_ty_match(block, &self.mk_type_ref(&method.return_type)?)?;
+                let type_params = self.hir_avail_type_params_item(impl_def.id);
+                let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
+
+                self.ensure_block_ty_match(block, &return_type)?;
             }
         }
 
@@ -60,7 +66,10 @@ impl TyCheckCtx {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
 
-            self.ensure_block_ty_match(block, &self.mk_type_ref(&func.return_type)?)?;
+            let type_params = self.hir_avail_type_params_item(func.id);
+            let return_type = self.mk_type_ref_generic(&func.return_type, &type_params)?;
+
+            self.ensure_block_ty_match(block, &return_type)?;
         }
 
         Ok(())
