@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                             },
                             type_arguments: [],
                             location: Location(
-                                14..19,
+                                14..17,
                             ),
                         },
                         location: Location(
-                            14..19,
+                            14..17,
                         ),
                     },
                 },
@@ -66,11 +66,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            48..55,
+                                            48..53,
                                         ),
                                     },
                                     location: Location(
-                                        48..55,
+                                        48..53,
                                     ),
                                 },
                             },

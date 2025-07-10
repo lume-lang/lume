@@ -38,11 +38,11 @@ expression: "parse_expr(\"let _ = call<T>(a, b);\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    13..15,
+                                                    13..14,
                                                 ),
                                             },
                                             location: Location(
-                                                13..15,
+                                                13..14,
                                             ),
                                         },
                                     },

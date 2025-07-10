@@ -44,11 +44,11 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    18..25,
+                                    18..23,
                                 ),
                             },
                             location: Location(
-                                18..25,
+                                18..23,
                             ),
                         },
                     },

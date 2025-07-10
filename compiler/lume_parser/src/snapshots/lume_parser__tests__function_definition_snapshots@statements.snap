@@ -35,11 +35,11 @@ expression: "parse(\"fn main() -> void { let a = 0; let b = 1; }\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    13..19,
+                                    13..17,
                                 ),
                             },
                             location: Location(
-                                13..19,
+                                13..17,
                             ),
                         },
                     },

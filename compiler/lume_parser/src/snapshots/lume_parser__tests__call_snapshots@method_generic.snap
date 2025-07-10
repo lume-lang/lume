@@ -49,11 +49,11 @@ expression: "parse_expr(\"let _ = a.call<T>(a, b);\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    15..17,
+                                                    15..16,
                                                 ),
                                             },
                                             location: Location(
-                                                15..17,
+                                                15..16,
                                             ),
                                         },
                                     },

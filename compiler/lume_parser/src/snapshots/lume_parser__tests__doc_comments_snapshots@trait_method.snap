@@ -51,11 +51,11 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                78..84,
+                                                78..82,
                                             ),
                                         },
                                         location: Location(
-                                            78..84,
+                                            78..82,
                                         ),
                                     },
                                 },

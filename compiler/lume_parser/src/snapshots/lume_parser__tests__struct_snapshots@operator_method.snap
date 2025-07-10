@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
                             },
                             type_arguments: [],
                             location: Location(
-                                14..19,
+                                14..17,
                             ),
                         },
                         location: Location(
-                            14..19,
+                            14..17,
                         ),
                     },
                 },
@@ -66,11 +66,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            47..56,
+                                            47..54,
                                         ),
                                     },
                                     location: Location(
-                                        47..56,
+                                        47..54,
                                     ),
                                 },
                             },

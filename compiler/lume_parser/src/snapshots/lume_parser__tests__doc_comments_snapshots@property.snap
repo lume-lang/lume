@@ -48,11 +48,11 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            72..79,
+                                            72..77,
                                         ),
                                     },
                                     location: Location(
-                                        72..79,
+                                        72..77,
                                     ),
                                 },
                             },

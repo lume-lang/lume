@@ -25,11 +25,11 @@ expression: "parse(\"use Add in Int32 {}\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                4..10,
+                                4..7,
                             ),
                         },
                         location: Location(
-                            4..10,
+                            4..7,
                         ),
                     },
                 },
@@ -47,11 +47,11 @@ expression: "parse(\"use Add in Int32 {}\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                11..18,
+                                11..16,
                             ),
                         },
                         location: Location(
-                            11..18,
+                            11..16,
                         ),
                     },
                 },

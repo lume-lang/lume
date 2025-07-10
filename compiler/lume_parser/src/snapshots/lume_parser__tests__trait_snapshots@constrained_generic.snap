@@ -41,11 +41,11 @@ expression: "parse(\"trait Add<T: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                13..21,
+                                                13..20,
                                             ),
                                         },
                                         location: Location(
-                                            13..21,
+                                            13..20,
                                         ),
                                     },
                                 },

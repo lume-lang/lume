@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
                             },
                             type_arguments: [],
                             location: Location(
-                                14..19,
+                                14..17,
                             ),
                         },
                         location: Location(
-                            14..19,
+                            14..17,
                         ),
                     },
                 },
@@ -66,11 +66,11 @@ expression: "parse(\"\n        impl Foo {\n            fn external bar() -> Int3
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            53..68,
+                                            53..58,
                                         ),
                                     },
                                     location: Location(
-                                        53..68,
+                                        53..58,
                                     ),
                                 },
                             },

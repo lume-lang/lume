@@ -48,11 +48,11 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            37..43,
+                                            37..42,
                                         ),
                                     },
                                     location: Location(
-                                        37..43,
+                                        37..42,
                                     ),
                                 },
                             },

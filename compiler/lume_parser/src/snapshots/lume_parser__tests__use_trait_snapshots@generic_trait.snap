@@ -37,22 +37,22 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    27..29,
+                                                    27..28,
                                                 ),
                                             },
                                             location: Location(
-                                                27..29,
+                                                27..28,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                16..32,
+                                16..29,
                             ),
                         },
                         location: Location(
-                            16..32,
+                            16..29,
                         ),
                     },
                 },
@@ -82,22 +82,22 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    40..42,
+                                                    40..41,
                                                 ),
                                             },
                                             location: Location(
-                                                40..42,
+                                                40..41,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                33..44,
+                                33..42,
                             ),
                         },
                         location: Location(
-                            33..44,
+                            33..42,
                         ),
                     },
                 },
@@ -133,11 +133,11 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            74..77,
+                                            74..75,
                                         ),
                                     },
                                     location: Location(
-                                        74..77,
+                                        74..75,
                                     ),
                                 },
                             },

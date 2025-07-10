@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                             },
                             type_arguments: [],
                             location: Location(
-                                5..11,
+                                5..9,
                             ),
                         },
                         location: Location(
-                            5..11,
+                            5..9,
                         ),
                     },
                 },
@@ -73,11 +73,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    24..32,
+                                                    24..31,
                                                 ),
                                             },
                                             location: Location(
-                                                24..32,
+                                                24..31,
                                             ),
                                         },
                                     },
@@ -105,11 +105,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    37..45,
+                                                    37..44,
                                                 ),
                                             },
                                             location: Location(
-                                                37..45,
+                                                37..44,
                                             ),
                                         },
                                     },
@@ -131,11 +131,11 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            51..57,
+                                            51..55,
                                         ),
                                     },
                                     location: Location(
-                                        51..57,
+                                        51..55,
                                     ),
                                 },
                             },

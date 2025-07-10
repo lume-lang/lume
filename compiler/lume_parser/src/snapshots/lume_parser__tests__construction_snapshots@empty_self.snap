@@ -17,11 +17,11 @@ expression: "parse_expr(\"Self { };\")"
                         },
                         type_arguments: [],
                         location: Location(
-                            0..6,
+                            0..4,
                         ),
                     },
                     location: Location(
-                        0..6,
+                        0..4,
                     ),
                 },
                 fields: [],

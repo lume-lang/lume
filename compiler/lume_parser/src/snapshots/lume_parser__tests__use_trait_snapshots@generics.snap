@@ -37,11 +37,11 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    17..23,
+                                                    17..22,
                                                 ),
                                             },
                                             location: Location(
-                                                17..23,
+                                                17..22,
                                             ),
                                         },
                                     },
@@ -59,22 +59,22 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    24..30,
+                                                    24..29,
                                                 ),
                                             },
                                             location: Location(
-                                                24..30,
+                                                24..29,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                13..33,
+                                13..30,
                             ),
                         },
                         location: Location(
-                            13..33,
+                            13..30,
                         ),
                     },
                 },
@@ -92,11 +92,11 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                             },
                             type_arguments: [],
                             location: Location(
-                                34..41,
+                                34..39,
                             ),
                         },
                         location: Location(
-                            34..41,
+                            34..39,
                         ),
                     },
                 },
@@ -137,18 +137,18 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                72..78,
+                                                72..77,
                                             ),
                                         },
                                         location: Location(
-                                            72..78,
+                                            72..77,
                                         ),
                                     },
                                 },
                             ),
                             vararg: false,
                             location: Location(
-                                65..78,
+                                65..77,
                             ),
                         },
                     ],
@@ -167,11 +167,11 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            82..89,
+                                            82..87,
                                         ),
                                     },
                                     location: Location(
-                                        82..89,
+                                        82..87,
                                     ),
                                 },
                             },

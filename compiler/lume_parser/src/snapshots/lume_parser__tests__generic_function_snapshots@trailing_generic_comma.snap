@@ -45,11 +45,11 @@ expression: "parse(\"fn test<T1,>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    18..24,
+                                    18..22,
                                 ),
                             },
                             location: Location(
-                                18..24,
+                                18..22,
                             ),
                         },
                     },

@@ -25,11 +25,11 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                             },
                             type_arguments: [],
                             location: Location(
-                                13..19,
+                                13..16,
                             ),
                         },
                         location: Location(
-                            13..19,
+                            13..16,
                         ),
                     },
                 },
@@ -47,11 +47,11 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                             },
                             type_arguments: [],
                             location: Location(
-                                20..27,
+                                20..25,
                             ),
                         },
                         location: Location(
-                            20..27,
+                            20..25,
                         ),
                     },
                 },
@@ -92,18 +92,18 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                54..60,
+                                                54..59,
                                             ),
                                         },
                                         location: Location(
-                                            54..60,
+                                            54..59,
                                         ),
                                     },
                                 },
                             ),
                             vararg: false,
                             location: Location(
-                                47..60,
+                                47..59,
                             ),
                         },
                     ],

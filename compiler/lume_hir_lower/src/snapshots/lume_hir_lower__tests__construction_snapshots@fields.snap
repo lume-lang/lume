@@ -40,9 +40,9 @@ description: "Foo { bar: 0, baz: 1 };"
                                     location: <internal>:0:3,
                                 },
                                 type_arguments: [],
-                                location: <internal>:0:5,
+                                location: <internal>:0:3,
                             },
-                            location: <internal>:0:5,
+                            location: <internal>:0:3,
                         },
                         fields: [
                             Field {

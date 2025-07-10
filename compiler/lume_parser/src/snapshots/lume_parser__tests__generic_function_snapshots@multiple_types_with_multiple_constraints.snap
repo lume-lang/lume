@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            12..21,
+                                            12..19,
                                         ),
                                     },
                                     location: Location(
-                                        12..21,
+                                        12..19,
                                     ),
                                 },
                             },
@@ -64,11 +64,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            22..31,
+                                            22..30,
                                         ),
                                     },
                                     location: Location(
-                                        22..31,
+                                        22..30,
                                     ),
                                 },
                             },
@@ -96,11 +96,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            36..45,
+                                            36..43,
                                         ),
                                     },
                                     location: Location(
-                                        36..45,
+                                        36..43,
                                     ),
                                 },
                             },
@@ -118,11 +118,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            46..55,
+                                            46..54,
                                         ),
                                     },
                                     location: Location(
-                                        46..55,
+                                        46..54,
                                     ),
                                 },
                             },
@@ -144,11 +144,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    61..67,
+                                    61..65,
                                 ),
                             },
                             location: Location(
-                                61..67,
+                                61..65,
                             ),
                         },
                     },

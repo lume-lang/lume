@@ -34,7 +34,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    13..21,
+                                    13..19,
                                 ),
                             },
                         ],
@@ -59,22 +59,22 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    26..28,
+                                                    26..27,
                                                 ),
                                             },
                                             location: Location(
-                                                26..28,
+                                                26..27,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                21..29,
+                                21..28,
                             ),
                         },
                         location: Location(
-                            21..29,
+                            21..28,
                         ),
                     },
                     arguments: [
@@ -100,7 +100,7 @@ expression: "parse_expr(\"let _ = std::Buffer::call<T>(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        21..29,
+                        21..28,
                     ),
                 },
             ),

@@ -38,7 +38,7 @@ Map {
                         },
                         location: <internal>:0:0,
                     },
-                    location: <internal>:5:12,
+                    location: <internal>:5:10,
                 },
                 methods: [],
                 type_parameters: TypeParameters {

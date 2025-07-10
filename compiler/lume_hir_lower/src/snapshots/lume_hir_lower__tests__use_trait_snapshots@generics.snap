@@ -50,7 +50,7 @@ Map {
                                         },
                                         location: <internal>:0:0,
                                     },
-                                    location: <internal>:21:27,
+                                    location: <internal>:21:26,
                                 },
                                 Type {
                                     id: ItemId(
@@ -75,14 +75,14 @@ Map {
                                         },
                                         location: <internal>:0:0,
                                     },
-                                    location: <internal>:28:34,
+                                    location: <internal>:28:33,
                                 },
                             ],
-                            location: <internal>:17:37,
+                            location: <internal>:17:34,
                         },
-                        location: <internal>:17:37,
+                        location: <internal>:17:34,
                     },
-                    location: <internal>:17:37,
+                    location: <internal>:17:34,
                 },
                 target: Type {
                     id: ItemId(
@@ -107,7 +107,7 @@ Map {
                         },
                         location: <internal>:0:0,
                     },
-                    location: <internal>:38:45,
+                    location: <internal>:38:43,
                 },
                 visibility: Private,
                 methods: [
@@ -158,10 +158,10 @@ Map {
                                         },
                                         location: <internal>:0:0,
                                     },
-                                    location: <internal>:80:86,
+                                    location: <internal>:80:85,
                                 },
                                 vararg: false,
-                                location: <internal>:73:86,
+                                location: <internal>:73:85,
                             },
                         ],
                         type_parameters: TypeParameters {
@@ -190,7 +190,7 @@ Map {
                                 },
                                 location: <internal>:0:0,
                             },
-                            location: <internal>:90:97,
+                            location: <internal>:90:95,
                         },
                         block: Block {
                             statements: [],

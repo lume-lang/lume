@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                5..11,
+                                5..9,
                             ),
                         },
                         location: Location(
-                            5..11,
+                            5..9,
                         ),
                     },
                 },
@@ -73,11 +73,11 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    23..31,
+                                                    23..30,
                                                 ),
                                             },
                                             location: Location(
-                                                23..31,
+                                                23..30,
                                             ),
                                         },
                                     },
@@ -99,11 +99,11 @@ expression: "parse(\"impl Test { fn test<T: Numeric>() -> void {} }\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            37..43,
+                                            37..41,
                                         ),
                                     },
                                     location: Location(
-                                        37..43,
+                                        37..41,
                                     ),
                                 },
                             },

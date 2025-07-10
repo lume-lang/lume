@@ -37,22 +37,22 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    17..23,
+                                                    17..22,
                                                 ),
                                             },
                                             location: Location(
-                                                17..23,
+                                                17..22,
                                             ),
                                         },
                                     },
                                 ),
                             ],
                             location: Location(
-                                13..26,
+                                13..23,
                             ),
                         },
                         location: Location(
-                            13..26,
+                            13..23,
                         ),
                     },
                 },
@@ -70,11 +70,11 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                             },
                             type_arguments: [],
                             location: Location(
-                                27..34,
+                                27..32,
                             ),
                         },
                         location: Location(
-                            27..34,
+                            27..32,
                         ),
                     },
                 },
@@ -115,18 +115,18 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                65..71,
+                                                65..70,
                                             ),
                                         },
                                         location: Location(
-                                            65..71,
+                                            65..70,
                                         ),
                                     },
                                 },
                             ),
                             vararg: false,
                             location: Location(
-                                58..71,
+                                58..70,
                             ),
                         },
                     ],
@@ -145,11 +145,11 @@ expression: "parse(\"\n        use Add<Int32> in Int32 {\n            pub fn add
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            75..82,
+                                            75..80,
                                         ),
                                     },
                                     location: Location(
-                                        75..82,
+                                        75..80,
                                     ),
                                 },
                             },

@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            12..20,
+                                            12..19,
                                         ),
                                     },
                                     location: Location(
-                                        12..20,
+                                        12..19,
                                     ),
                                 },
                             },
@@ -74,11 +74,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            25..33,
+                                            25..32,
                                         ),
                                     },
                                     location: Location(
-                                        25..33,
+                                        25..32,
                                     ),
                                 },
                             },
@@ -100,11 +100,11 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    39..45,
+                                    39..43,
                                 ),
                             },
                             location: Location(
-                                39..45,
+                                39..43,
                             ),
                         },
                     },

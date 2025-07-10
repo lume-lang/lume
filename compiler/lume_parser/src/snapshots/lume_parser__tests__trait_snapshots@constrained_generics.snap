@@ -41,11 +41,11 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                14..22,
+                                                14..21,
                                             ),
                                         },
                                         location: Location(
-                                            14..22,
+                                            14..21,
                                         ),
                                     },
                                 },
@@ -73,11 +73,11 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                27..35,
+                                                27..34,
                                             ),
                                         },
                                         location: Location(
-                                            27..35,
+                                            27..34,
                                         ),
                                     },
                                 },

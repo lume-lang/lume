@@ -56,18 +56,18 @@ expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    26..32,
+                                                    26..31,
                                                 ),
                                             },
                                             location: Location(
-                                                26..32,
+                                                26..31,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    19..32,
+                                    19..31,
                                 ),
                             },
                         ],
@@ -86,11 +86,11 @@ expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..42,
+                                                36..41,
                                             ),
                                         },
                                         location: Location(
-                                            36..42,
+                                            36..41,
                                         ),
                                     },
                                 },

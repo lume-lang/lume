@@ -41,11 +41,11 @@ expression: "parse_expr(\"self.invoke<T>();\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                12..14,
+                                                12..13,
                                             ),
                                         },
                                         location: Location(
-                                            12..14,
+                                            12..13,
                                         ),
                                     },
                                 },

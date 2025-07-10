@@ -56,18 +56,18 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) { } }\")"
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    30..36,
+                                                    30..35,
                                                 ),
                                             },
                                             location: Location(
-                                                30..36,
+                                                30..35,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    23..36,
+                                    23..35,
                                 ),
                             },
                         ],

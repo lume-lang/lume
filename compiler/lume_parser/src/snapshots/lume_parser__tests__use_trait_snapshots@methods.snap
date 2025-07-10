@@ -25,11 +25,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             },
                             type_arguments: [],
                             location: Location(
-                                13..20,
+                                13..17,
                             ),
                         },
                         location: Location(
-                            13..20,
+                            13..17,
                         ),
                     },
                 },
@@ -47,11 +47,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             },
                             type_arguments: [],
                             location: Location(
-                                21..28,
+                                21..26,
                             ),
                         },
                         location: Location(
-                            21..28,
+                            21..26,
                         ),
                     },
                 },
@@ -87,11 +87,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            63..71,
+                                            63..69,
                                         ),
                                     },
                                     location: Location(
-                                        63..71,
+                                        63..69,
                                     ),
                                 },
                             },
@@ -157,11 +157,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            147..154,
+                                            147..152,
                                         ),
                                     },
                                     location: Location(
-                                        147..154,
+                                        147..152,
                                     ),
                                 },
                             },

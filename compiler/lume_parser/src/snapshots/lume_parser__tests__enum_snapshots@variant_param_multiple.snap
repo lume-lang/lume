@@ -41,11 +41,11 @@ expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n      
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..42,
+                                                36..41,
                                             ),
                                         },
                                         location: Location(
-                                            36..42,
+                                            36..41,
                                         ),
                                     },
                                 },
@@ -63,11 +63,11 @@ expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n      
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                43..49,
+                                                43..48,
                                             ),
                                         },
                                         location: Location(
-                                            43..49,
+                                            43..48,
                                         ),
                                     },
                                 },

@@ -35,11 +35,11 @@ expression: "parse(\"fn test() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    13..19,
+                                    13..17,
                                 ),
                             },
                             location: Location(
-                                13..19,
+                                13..17,
                             ),
                         },
                     },

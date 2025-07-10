@@ -27,11 +27,11 @@ Map {
                                 location: <internal>:17:20,
                             },
                             type_arguments: [],
-                            location: <internal>:17:23,
+                            location: <internal>:17:20,
                         },
-                        location: <internal>:17:23,
+                        location: <internal>:17:20,
                     },
-                    location: <internal>:17:23,
+                    location: <internal>:17:20,
                 },
                 target: Type {
                     id: ItemId(
@@ -56,7 +56,7 @@ Map {
                         },
                         location: <internal>:0:0,
                     },
-                    location: <internal>:24:31,
+                    location: <internal>:24:29,
                 },
                 visibility: Private,
                 methods: [
@@ -107,10 +107,10 @@ Map {
                                         },
                                         location: <internal>:0:0,
                                     },
-                                    location: <internal>:62:68,
+                                    location: <internal>:62:67,
                                 },
                                 vararg: false,
-                                location: <internal>:55:68,
+                                location: <internal>:55:67,
                             },
                         ],
                         type_parameters: TypeParameters {
@@ -139,7 +139,7 @@ Map {
                                 },
                                 location: <internal>:0:0,
                             },
-                            location: <internal>:72:79,
+                            location: <internal>:72:77,
                         },
                         block: Block {
                             statements: [],

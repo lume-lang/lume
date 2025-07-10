@@ -66,11 +66,11 @@ Map {
                                             location: <internal>:78:82,
                                         },
                                         type_arguments: [],
-                                        location: <internal>:78:84,
+                                        location: <internal>:78:82,
                                     },
-                                    location: <internal>:78:84,
+                                    location: <internal>:78:82,
                                 },
-                                location: <internal>:78:84,
+                                location: <internal>:78:82,
                             },
                             block: Some(
                                 Block {

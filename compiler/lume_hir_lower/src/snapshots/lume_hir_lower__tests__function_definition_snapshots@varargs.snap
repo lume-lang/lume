@@ -58,10 +58,10 @@ Map {
                                 },
                                 location: <internal>:0:0,
                             },
-                            location: <internal>:16:22,
+                            location: <internal>:16:21,
                         },
                         vararg: true,
-                        location: <internal>:10:22,
+                        location: <internal>:10:21,
                     },
                 ],
                 type_parameters: TypeParameters {

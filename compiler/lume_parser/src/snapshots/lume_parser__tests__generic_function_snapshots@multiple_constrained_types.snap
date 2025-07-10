@@ -42,11 +42,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            11..20,
+                                            11..18,
                                         ),
                                     },
                                     location: Location(
-                                        11..20,
+                                        11..18,
                                     ),
                                 },
                             },
@@ -64,11 +64,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            21..30,
+                                            21..29,
                                         ),
                                     },
                                     location: Location(
-                                        21..30,
+                                        21..29,
                                     ),
                                 },
                             },
@@ -90,11 +90,11 @@ expression: "parse(\"fn test<T: Numeric + Floating>() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    36..42,
+                                    36..40,
                                 ),
                             },
                             location: Location(
-                                36..42,
+                                36..40,
                             ),
                         },
                     },

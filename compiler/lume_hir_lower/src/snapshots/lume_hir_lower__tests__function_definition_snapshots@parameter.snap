@@ -70,11 +70,11 @@ Map {
                                 location: <internal>:21:25,
                             },
                             type_arguments: [],
-                            location: <internal>:21:27,
+                            location: <internal>:21:25,
                         },
-                        location: <internal>:21:27,
+                        location: <internal>:21:25,
                     },
-                    location: <internal>:21:27,
+                    location: <internal>:21:25,
                 },
                 block: Some(
                     Block {

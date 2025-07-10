@@ -35,7 +35,7 @@ impl Parser {
             // which can only be defined on function calls.
             if self.peek(TokenKind::Less) || self.peek(TokenKind::LeftParen) {
                 let type_arguments = self.parse_type_arguments()?;
-                let end = self.token().end();
+                let end = self.previous_token().end();
 
                 return Ok(PathSegment::Callable {
                     name,
@@ -50,7 +50,7 @@ impl Parser {
         // If the name starts with an upper case, it refers to a type.
         else {
             let type_arguments = self.parse_type_arguments()?;
-            let end = self.token().end();
+            let end = self.previous_token().end();
 
             Ok(PathSegment::Type {
                 name,

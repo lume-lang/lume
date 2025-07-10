@@ -26,7 +26,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    8..13,
+                                    8..11,
                                 ),
                             },
                         ],
@@ -39,11 +39,11 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                13..18,
+                                13..17,
                             ),
                         },
                         location: Location(
-                            13..18,
+                            13..17,
                         ),
                     },
                     arguments: [
@@ -69,7 +69,7 @@ expression: "parse_expr(\"let _ = Foo::call(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        13..18,
+                        13..17,
                     ),
                 },
             ),

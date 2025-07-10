@@ -35,11 +35,11 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    102..108,
+                                    102..106,
                                 ),
                             },
                             location: Location(
-                                102..108,
+                                102..106,
                             ),
                         },
                     },

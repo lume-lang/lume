@@ -40,18 +40,18 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                     },
                                     type_arguments: [],
                                     location: Location(
-                                        14..20,
+                                        14..19,
                                     ),
                                 },
                                 location: Location(
-                                    14..20,
+                                    14..19,
                                 ),
                             },
                         },
                     ),
                     vararg: false,
                     location: Location(
-                        8..20,
+                        8..19,
                     ),
                 },
                 Parameter {
@@ -76,11 +76,11 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                28..35,
+                                                28..34,
                                             ),
                                         },
                                         location: Location(
-                                            28..35,
+                                            28..34,
                                         ),
                                     },
                                 },
@@ -111,11 +111,11 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    40..46,
+                                    40..44,
                                 ),
                             },
                             location: Location(
-                                40..46,
+                                40..44,
                             ),
                         },
                     },

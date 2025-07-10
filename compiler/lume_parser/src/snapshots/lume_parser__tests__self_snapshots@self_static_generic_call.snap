@@ -18,7 +18,7 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                0..6,
+                                0..4,
                             ),
                         },
                     ],
@@ -43,27 +43,27 @@ expression: "parse_expr(\"self::invoke<T>();\")"
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                13..15,
+                                                13..14,
                                             ),
                                         },
                                         location: Location(
-                                            13..15,
+                                            13..14,
                                         ),
                                     },
                                 },
                             ),
                         ],
                         location: Location(
-                            6..16,
+                            6..15,
                         ),
                     },
                     location: Location(
-                        6..16,
+                        6..15,
                     ),
                 },
                 arguments: [],
                 location: Location(
-                    6..16,
+                    6..15,
                 ),
             },
         ),

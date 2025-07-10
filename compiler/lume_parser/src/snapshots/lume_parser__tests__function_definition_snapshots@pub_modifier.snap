@@ -35,11 +35,11 @@ expression: "parse(\"pub fn main() -> void {}\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    17..23,
+                                    17..21,
                                 ),
                             },
                             location: Location(
-                                17..23,
+                                17..21,
                             ),
                         },
                     },

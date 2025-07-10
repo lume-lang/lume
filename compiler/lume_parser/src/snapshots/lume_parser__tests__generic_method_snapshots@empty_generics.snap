@@ -25,11 +25,11 @@ expression: "parse(\"impl Test { fn test<>() -> void {} }\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                5..11,
+                                5..9,
                             ),
                         },
                         location: Location(
-                            5..11,
+                            5..9,
                         ),
                     },
                 },
@@ -66,11 +66,11 @@ expression: "parse(\"impl Test { fn test<>() -> void {} }\")"
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            27..33,
+                                            27..31,
                                         ),
                                     },
                                     location: Location(
-                                        27..33,
+                                        27..31,
                                     ),
                                 },
                             },

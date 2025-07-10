@@ -25,11 +25,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             },
                             type_arguments: [],
                             location: Location(
-                                13..20,
+                                13..17,
                             ),
                         },
                         location: Location(
-                            13..20,
+                            13..17,
                         ),
                     },
                 },
@@ -47,11 +47,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             },
                             type_arguments: [],
                             location: Location(
-                                21..28,
+                                21..26,
                             ),
                         },
                         location: Location(
-                            21..28,
+                            21..26,
                         ),
                     },
                 },
@@ -87,11 +87,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            59..68,
+                                            59..66,
                                         ),
                                     },
                                     location: Location(
-                                        59..68,
+                                        59..66,
                                     ),
                                 },
                             },

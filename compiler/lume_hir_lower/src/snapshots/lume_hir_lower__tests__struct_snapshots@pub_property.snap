@@ -71,7 +71,7 @@ Map {
                                     },
                                     location: <internal>:0:0,
                                 },
-                                location: <internal>:49:56,
+                                location: <internal>:49:54,
                             },
                             default_value: Some(
                                 Expression {

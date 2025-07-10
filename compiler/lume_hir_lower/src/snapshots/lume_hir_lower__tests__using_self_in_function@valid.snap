@@ -44,11 +44,11 @@ Map {
                                 location: <internal>:12:16,
                             },
                             type_arguments: [],
-                            location: <internal>:12:18,
+                            location: <internal>:12:16,
                         },
-                        location: <internal>:12:18,
+                        location: <internal>:12:16,
                     },
-                    location: <internal>:12:18,
+                    location: <internal>:12:16,
                 },
                 block: Some(
                     Block {

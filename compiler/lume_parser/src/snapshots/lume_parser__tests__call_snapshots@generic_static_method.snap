@@ -38,18 +38,18 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                                                     },
                                                     type_arguments: [],
                                                     location: Location(
-                                                        12..14,
+                                                        12..13,
                                                     ),
                                                 },
                                                 location: Location(
-                                                    12..14,
+                                                    12..13,
                                                 ),
                                             },
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    8..16,
+                                    8..14,
                                 ),
                             },
                         ],
@@ -62,11 +62,11 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                16..21,
+                                16..20,
                             ),
                         },
                         location: Location(
-                            16..21,
+                            16..20,
                         ),
                     },
                     arguments: [
@@ -92,7 +92,7 @@ expression: "parse_expr(\"let _ = Foo<T>::call(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        16..21,
+                        16..20,
                     ),
                 },
             ),

@@ -102,7 +102,7 @@ Map {
                                                 },
                                                 location: <internal>:0:0,
                                             },
-                                            location: <internal>:25:32,
+                                            location: <internal>:25:31,
                                         },
                                     ],
                                     location: <internal>:24:32,
@@ -130,11 +130,11 @@ Map {
                                 location: <internal>:37:41,
                             },
                             type_arguments: [],
-                            location: <internal>:37:43,
+                            location: <internal>:37:41,
                         },
-                        location: <internal>:37:43,
+                        location: <internal>:37:41,
                     },
-                    location: <internal>:37:43,
+                    location: <internal>:37:41,
                 },
                 block: Some(
                     Block {

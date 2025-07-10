@@ -25,11 +25,11 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                             },
                             type_arguments: [],
                             location: Location(
-                                14..19,
+                                14..17,
                             ),
                         },
                         location: Location(
-                            14..19,
+                            14..17,
                         ),
                     },
                 },

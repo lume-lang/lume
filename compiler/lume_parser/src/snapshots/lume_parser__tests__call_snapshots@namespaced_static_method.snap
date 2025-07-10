@@ -42,7 +42,7 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                                 },
                                 type_arguments: [],
                                 location: Location(
-                                    17..25,
+                                    17..23,
                                 ),
                             },
                         ],
@@ -55,11 +55,11 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                             },
                             type_arguments: [],
                             location: Location(
-                                25..30,
+                                25..29,
                             ),
                         },
                         location: Location(
-                            25..30,
+                            25..29,
                         ),
                     },
                     arguments: [
@@ -85,7 +85,7 @@ expression: "parse_expr(\"let _ = std::io::Buffer::call(a, b);\")"
                         ),
                     ],
                     location: Location(
-                        25..30,
+                        25..29,
                     ),
                 },
             ),

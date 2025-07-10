@@ -27,11 +27,11 @@ Map {
                                 location: <internal>:5:9,
                             },
                             type_arguments: [],
-                            location: <internal>:5:11,
+                            location: <internal>:5:9,
                         },
-                        location: <internal>:5:11,
+                        location: <internal>:5:9,
                     },
-                    location: <internal>:5:11,
+                    location: <internal>:5:9,
                 },
                 methods: [
                     MethodDefinition {
@@ -88,11 +88,11 @@ Map {
                                         location: <internal>:33:37,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:33:39,
+                                    location: <internal>:33:37,
                                 },
-                                location: <internal>:33:39,
+                                location: <internal>:33:37,
                             },
-                            location: <internal>:33:39,
+                            location: <internal>:33:37,
                         },
                         block: Some(
                             Block {

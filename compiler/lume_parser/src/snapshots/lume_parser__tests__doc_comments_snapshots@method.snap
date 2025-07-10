@@ -25,11 +25,11 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                             },
                             type_arguments: [],
                             location: Location(
-                                5..10,
+                                5..8,
                             ),
                         },
                         location: Location(
-                            5..10,
+                            5..8,
                         ),
                     },
                 },
@@ -66,11 +66,11 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            77..83,
+                                            77..81,
                                         ),
                                     },
                                     location: Location(
-                                        77..83,
+                                        77..81,
                                     ),
                                 },
                             },
