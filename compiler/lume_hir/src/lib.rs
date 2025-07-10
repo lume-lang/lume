@@ -357,8 +357,10 @@ impl Path {
 
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for segment in &self.root {
-            write!(f, "{segment}::")?;
+        if f.sign_plus() {
+            for segment in &self.root {
+                write!(f, "{segment}::")?;
+            }
         }
 
         write!(f, "{}", self.name)
