@@ -1,8 +1,6 @@
 use lume_hir::{Path, PathSegment};
-use lume_span::Location;
+use lume_span::{Internable, Location};
 use lume_types::TypeRef;
-
-use crate::query::{CallableCheckError, CallableCheckResult};
 
 use super::*;
 
@@ -42,10 +40,17 @@ fn query_function_check_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo();")),
+            index: 0..6,
+        }
+        .intern(),
     };
 
-    assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -60,13 +65,17 @@ fn query_function_check_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo();")),
+            index: 0..6,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_function(func, &expr)?,
-        CallableCheckResult::Failure(vec![CallableCheckError::ArgumentCountMismatch])
-    );
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -80,14 +89,26 @@ fn query_function_check_arg_type() -> Result<()> {
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![lume_hir::Expression::lit_bool(false)],
-        location: Location::empty(),
+        arguments: vec![
+            lume_hir::Expression::lit_bool(false).with_location(
+                lume_span::source::Location {
+                    file: Arc::new(SourceFile::internal("foo(false);")),
+                    index: 4..9,
+                }
+                .intern(),
+            ),
+        ],
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo(false);")),
+            index: 0..10,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_function(func, &expr)?,
-        CallableCheckResult::Failure(vec![CallableCheckError::ArgumentTypeMismatch(0)])
-    );
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -102,16 +123,32 @@ fn query_function_check_arg_type_second() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: vec![
-            lume_hir::Expression::lit_bool(false),
-            lume_hir::Expression::lit_bool(false),
+            lume_hir::Expression::lit_bool(false).with_location(
+                lume_span::source::Location {
+                    file: Arc::new(SourceFile::internal("foo(false, false);")),
+                    index: 4..9,
+                }
+                .intern(),
+            ),
+            lume_hir::Expression::lit_bool(false).with_location(
+                lume_span::source::Location {
+                    file: Arc::new(SourceFile::internal("foo(false, false);")),
+                    index: 11..16,
+                }
+                .intern(),
+            ),
         ],
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo(false, false);")),
+            index: 0..18,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_function(func, &expr)?,
-        CallableCheckResult::Failure(vec![CallableCheckError::ArgumentTypeMismatch(1)])
-    );
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -129,7 +166,10 @@ fn query_function_check_arg_type_match() -> Result<()> {
         location: Location::empty(),
     };
 
-    assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -144,13 +184,17 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo();")),
+            index: 0..6,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_function(func, &expr)?,
-        CallableCheckResult::Failure(vec![CallableCheckError::TypeParameterCountMismatch])
-    );
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -172,7 +216,10 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
         location: Location::empty(),
     };
 
-    assert_eq!(tcx.check_function(func, &expr)?, CallableCheckResult::Success);
+    tcx.check_function(func, &expr)?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -284,13 +331,17 @@ fn query_check_method_empty() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("A::foo();")),
+            index: 0..9,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
-        Ok(CallableCheckResult::Success)
-    );
+    tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -317,15 +368,17 @@ fn query_check_method_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("A::foo();")),
+            index: 0..9,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
-        Ok(CallableCheckResult::Failure(vec![
-            CallableCheckError::ArgumentCountMismatch
-        ]))
-    );
+    tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -351,16 +404,26 @@ fn query_check_method_arg_type() -> Result<()> {
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
-        arguments: vec![lume_hir::Expression::lit_bool(false)],
-        location: Location::empty(),
+        arguments: vec![
+            lume_hir::Expression::lit_bool(false).with_location(
+                lume_span::source::Location {
+                    file: Arc::new(SourceFile::internal("A::foo(false);")),
+                    index: 7..13,
+                }
+                .intern(),
+            ),
+        ],
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("A::foo(false);")),
+            index: 0..13,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
-        Ok(CallableCheckResult::Failure(vec![
-            CallableCheckError::ArgumentTypeMismatch(0)
-        ]))
-    );
+    tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -387,15 +450,17 @@ fn query_check_method_type_arg_count() -> Result<()> {
         id: lume_span::ExpressionId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
-        location: Location::empty(),
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("A::foo();")),
+            index: 0..9,
+        }
+        .intern(),
     };
 
-    assert_eq!(
-        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
-        Ok(CallableCheckResult::Failure(vec![
-            CallableCheckError::TypeParameterCountMismatch
-        ]))
-    );
+    tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
+    tcx.dcx().drain()?;
+
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -432,10 +497,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
         location: Location::empty(),
     };
 
-    assert_eq!(
-        tcx.check_method(method, lume_hir::CallExpression::Static(&expr)),
-        Ok(CallableCheckResult::Success)
-    );
+    assert!(tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?);
 
     Ok(())
 }
@@ -514,11 +576,10 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
         location: Location::empty(),
     };
 
-    let func = tcx.lookup_functions(&expr);
-    assert!(func.is_err());
+    tcx.lookup_functions(&expr)?;
+    tcx.dcx().drain()?;
 
-    let err = func.unwrap_err();
-    insta::assert_debug_snapshot!(err);
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -530,15 +591,26 @@ fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
     let expr = lume_hir::StaticCall {
         id: lume_span::ExpressionId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![lume_hir::Expression::lit_bool(false)],
-        location: Location::empty(),
+        arguments: vec![
+            lume_hir::Expression::lit_bool(false).with_location(
+                lume_span::source::Location {
+                    file: Arc::new(SourceFile::internal("foo(false);")),
+                    index: 4..9,
+                }
+                .intern(),
+            ),
+        ],
+        location: lume_span::source::Location {
+            file: Arc::new(SourceFile::internal("foo(false);")),
+            index: 0..11,
+        }
+        .intern(),
     };
 
-    let func = tcx.lookup_functions(&expr);
-    assert!(func.is_err());
+    tcx.lookup_functions(&expr)?;
+    tcx.dcx().drain()?;
 
-    let err = func.unwrap_err();
-    insta::assert_debug_snapshot!(err);
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }
@@ -554,11 +626,10 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
         location: Location::empty(),
     };
 
-    let func = tcx.lookup_functions(&expr);
-    assert!(func.is_err());
+    tcx.lookup_functions(&expr)?;
+    tcx.dcx().drain()?;
 
-    let err = func.unwrap_err();
-    insta::assert_debug_snapshot!(err);
+    crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
     Ok(())
 }

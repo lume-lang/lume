@@ -3,4 +3,6 @@ source: compiler/lume_typech/src/tests/query.rs
 ---
 × error[LM4116]: argument count mismatch
    ╭───────────
+ 1 │ foo();
+   │ ^^^^^^ expected 1 arguments, but got 0
    ╰──

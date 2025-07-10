@@ -6,7 +6,7 @@ description: "fn foo() -> Boolean {\n            return false;\n        }\n\n   
    ╭───────────
  5 │         fn bar() -> Int32 {
  6 │             return foo();
-   │                    ^^^^^^ expected type std::Int32, but found type std::Boolean...
+   │                    ^^^^^^ expected type Int32, but found type Boolean...
  7 │         }
    ∶ 
  4 │ 
@@ -14,5 +14,5 @@ description: "fn foo() -> Boolean {\n            return false;\n        }\n\n   
    │                     ^^^^^^^ ...because of type defined here
  6 │             return foo();
    ╰──
-   help: expected type std::Int32
-            found type std::Boolean
+   help: expected type Int32
+            found type Boolean

@@ -1,5 +1,6 @@
 ---
 source: compiler/lume_typech/src/tests/query.rs
+assertion_line: 490
 expression: err
 ---
 MissingFunction {
@@ -10,7 +11,20 @@ MissingFunction {
     },
     suggestions: [
         SuggestedFunction {
-            source: <internal>:3:7,
+            source: SourceFile {
+                id: SourceFileId(
+                    PackageId(
+                        0,
+                    ),
+                    0,
+                ),
+                name: Internal,
+                content: "fn foo_() { }",
+                package: PackageId(
+                    0,
+                ),
+            },
+            range: 3..7,
             function_name: Type {
                 name: Identifier {
                     name: "foo_",
@@ -19,7 +33,6 @@ MissingFunction {
                 type_arguments: [],
                 location: <internal>:3:7,
             },
-            reason: NameMismatch,
         },
     ],
 }

@@ -6,7 +6,7 @@ description: "fn foo() {\n        let _: Int32 = false;\n    }"
    ╭───────────
  1 │ fn foo() {
  2 │         let _: Int32 = false;
-   │                        ^^^^^ expected type std::Int32, but found type std::Boolean...
+   │                        ^^^^^ expected type Int32, but found type Boolean...
  3 │     }
    ∶ 
  1 │ fn foo() {
@@ -14,5 +14,5 @@ description: "fn foo() {\n        let _: Int32 = false;\n    }"
    │                ^^^^^^^ ...because of type defined here
  3 │     }
    ╰──
-   help: expected type std::Int32
-            found type std::Boolean
+   help: expected type Int32
+            found type Boolean

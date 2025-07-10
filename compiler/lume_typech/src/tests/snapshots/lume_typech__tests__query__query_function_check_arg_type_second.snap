@@ -3,11 +3,9 @@ source: compiler/lume_typech/src/tests/query.rs
 ---
 × error[LM4001]: mismatched types
    ╭───────────
- 1 │ foo(false);
-   │     ^^^^^ expected type Int32, but found type Boolean...
+ 1 │ foo(false, false);
+   │            ^^^^^ expected type Int32, but found type Boolean...
    ∶ 
- 1 │ foo(false);
-   │           ^ ...because of type defined here
    ╰──
    help: expected type Int32
             found type Boolean
