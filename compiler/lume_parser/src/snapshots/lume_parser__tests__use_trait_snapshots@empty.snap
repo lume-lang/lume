@@ -5,6 +5,13 @@ expression: "parse(\"use Add in Int32 {}\")"
 [
     Use(
         UseTrait {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        0..3,
+                    ),
+                },
+            ),
             name: Named(
                 NamedType {
                     name: Path {

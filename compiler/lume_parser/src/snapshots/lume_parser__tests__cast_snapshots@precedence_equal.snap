@@ -4,45 +4,43 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
 ---
 [
     Expression(
-        Call(
-            Call {
-                callee: Some(
-                    Cast(
-                        Cast {
-                            source: Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            0..1,
-                                        ),
-                                        kind: I32,
-                                    },
-                                ),
-                            ),
-                            target_type: Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Namespace {
-                                            name: Identifier {
-                                                name: "u64",
-                                                location: Location(
-                                                    5..8,
-                                                ),
-                                            },
-                                        },
-                                        location: Location(
-                                            5..8,
-                                        ),
-                                    },
+        IntrinsicCall(
+            IntrinsicCall {
+                callee: Cast(
+                    Cast {
+                        source: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        0..1,
+                                    ),
+                                    kind: I32,
                                 },
                             ),
-                            location: Location(
-                                0..8,
-                            ),
-                        },
-                    ),
+                        ),
+                        target_type: Named(
+                            NamedType {
+                                name: Path {
+                                    root: [],
+                                    name: Namespace {
+                                        name: Identifier {
+                                            name: "u64",
+                                            location: Location(
+                                                5..8,
+                                            ),
+                                        },
+                                    },
+                                    location: Location(
+                                        5..8,
+                                    ),
+                                },
+                            },
+                        ),
+                        location: Location(
+                            0..8,
+                        ),
+                    },
                 ),
                 name: Path {
                     root: [],

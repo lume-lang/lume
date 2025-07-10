@@ -1,11 +1,18 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"/// This is a doc comment\n        trait Foo { }\"#)"
+expression: "parse(\"/// This is a doc comment\n        trait Foo { }\")"
 ---
 [
     TypeDefinition(
         Trait(
             TraitDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            34..39,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Foo",
                     location: Location(

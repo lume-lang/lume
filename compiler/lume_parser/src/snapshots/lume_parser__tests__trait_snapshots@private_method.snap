@@ -6,6 +6,13 @@ expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
     TypeDefinition(
         Trait(
             TraitDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            0..5,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Add",
                     location: Location(

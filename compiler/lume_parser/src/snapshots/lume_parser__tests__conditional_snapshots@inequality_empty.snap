@@ -8,19 +8,17 @@ expression: "parse_expr(\"if a != 1 { }\")"
             cases: [
                 Condition {
                     condition: Some(
-                        Call(
-                            Call {
-                                callee: Some(
-                                    Variable(
-                                        Variable {
-                                            name: Identifier {
-                                                name: "a",
-                                                location: Location(
-                                                    3..4,
-                                                ),
-                                            },
+                        IntrinsicCall(
+                            IntrinsicCall {
+                                callee: Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "a",
+                                            location: Location(
+                                                3..4,
+                                            ),
                                         },
-                                    ),
+                                    },
                                 ),
                                 name: Path {
                                     root: [],

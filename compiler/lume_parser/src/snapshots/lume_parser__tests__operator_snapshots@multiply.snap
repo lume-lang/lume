@@ -4,19 +4,17 @@ expression: "parse_expr(\"a * b;\")"
 ---
 [
     Expression(
-        Call(
-            Call {
-                callee: Some(
-                    Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "a",
-                                location: Location(
-                                    0..1,
-                                ),
-                            },
+        IntrinsicCall(
+            IntrinsicCall {
+                callee: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                0..1,
+                            ),
                         },
-                    ),
+                    },
                 ),
                 name: Path {
                     root: [],

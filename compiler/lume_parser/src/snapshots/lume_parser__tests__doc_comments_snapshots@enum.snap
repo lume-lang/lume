@@ -1,11 +1,18 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"/// This is a doc comment\n        enum Foo {\n            Bar\n        }\"#)"
+expression: "parse(\"/// This is a doc comment\n        enum Foo {\n            Bar\n        }\")"
 ---
 [
     TypeDefinition(
         Enum(
             EnumDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            34..38,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Foo",
                     location: Location(

@@ -6,6 +6,13 @@ expression: "parse(\"trait Add<T1: Numeric, T2: Numeric> {}\")"
     TypeDefinition(
         Trait(
             TraitDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            0..5,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Add",
                     location: Location(

@@ -14,19 +14,17 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
             variable_type: None,
             value: Range(
                 Range {
-                    lower: Call(
-                        Call {
-                            callee: Some(
-                                Variable(
-                                    Variable {
-                                        name: Identifier {
-                                            name: "a",
-                                            location: Location(
-                                                10..11,
-                                            ),
-                                        },
+                    lower: IntrinsicCall(
+                        IntrinsicCall {
+                            callee: Variable(
+                                Variable {
+                                    name: Identifier {
+                                        name: "a",
+                                        location: Location(
+                                            10..11,
+                                        ),
                                     },
-                                ),
+                                },
                             ),
                             name: Path {
                                 root: [],
@@ -63,58 +61,54 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                             ),
                         },
                     ),
-                    upper: Call(
-                        Call {
-                            callee: Some(
-                                Call(
-                                    Call {
-                                        callee: Some(
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "a",
-                                                        location: Location(
-                                                            20..21,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ),
-                                        name: Path {
-                                            root: [],
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "+",
-                                                    location: Location(
-                                                        22..23,
-                                                    ),
-                                                },
-                                                type_arguments: [],
+                    upper: IntrinsicCall(
+                        IntrinsicCall {
+                            callee: IntrinsicCall(
+                                IntrinsicCall {
+                                    callee: Variable(
+                                        Variable {
+                                            name: Identifier {
+                                                name: "a",
+                                                location: Location(
+                                                    20..21,
+                                                ),
+                                            },
+                                        },
+                                    ),
+                                    name: Path {
+                                        root: [],
+                                        name: Callable {
+                                            name: Identifier {
+                                                name: "+",
                                                 location: Location(
                                                     22..23,
                                                 ),
                                             },
+                                            type_arguments: [],
                                             location: Location(
                                                 22..23,
                                             ),
                                         },
-                                        arguments: [
-                                            Variable(
-                                                Variable {
-                                                    name: Identifier {
-                                                        name: "b",
-                                                        location: Location(
-                                                            24..25,
-                                                        ),
-                                                    },
-                                                },
-                                            ),
-                                        ],
                                         location: Location(
-                                            20..25,
+                                            22..23,
                                         ),
                                     },
-                                ),
+                                    arguments: [
+                                        Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "b",
+                                                    location: Location(
+                                                        24..25,
+                                                    ),
+                                                },
+                                            },
+                                        ),
+                                    ],
+                                    location: Location(
+                                        20..25,
+                                    ),
+                                },
                             ),
                             name: Path {
                                 root: [],

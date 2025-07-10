@@ -5,6 +5,13 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            pub
 [
     Use(
         UseTrait {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        9..12,
+                    ),
+                },
+            ),
             name: Named(
                 NamedType {
                     name: Path {

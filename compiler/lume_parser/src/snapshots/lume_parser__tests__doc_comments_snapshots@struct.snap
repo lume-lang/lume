@@ -1,11 +1,18 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(r#\"/// This is a doc comment\n        struct Foo { }\"#)"
+expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
 ---
 [
     TypeDefinition(
         Struct(
             StructDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            34..40,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Foo",
                     location: Location(

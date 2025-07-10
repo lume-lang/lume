@@ -4,19 +4,17 @@ expression: "parse_expr(\"self + self;\")"
 ---
 [
     Expression(
-        Call(
-            Call {
-                callee: Some(
-                    Variable(
-                        Variable {
-                            name: Identifier {
-                                name: "self",
-                                location: Location(
-                                    0..4,
-                                ),
-                            },
+        IntrinsicCall(
+            IntrinsicCall {
+                callee: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "self",
+                            location: Location(
+                                0..4,
+                            ),
                         },
-                    ),
+                    },
                 ),
                 name: Path {
                     root: [],

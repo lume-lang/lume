@@ -6,6 +6,13 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
     TypeDefinition(
         Trait(
             TraitDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            0..5,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Add",
                     location: Location(
@@ -95,19 +102,17 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                     Return(
                                         Return {
                                             value: Some(
-                                                Call(
-                                                    Call {
-                                                        callee: Some(
-                                                            Variable(
-                                                                Variable {
-                                                                    name: Identifier {
-                                                                        name: "self",
-                                                                        location: Location(
-                                                                            55..59,
-                                                                        ),
-                                                                    },
+                                                IntrinsicCall(
+                                                    IntrinsicCall {
+                                                        callee: Variable(
+                                                            Variable {
+                                                                name: Identifier {
+                                                                    name: "self",
+                                                                    location: Location(
+                                                                        55..59,
+                                                                    ),
                                                                 },
-                                                            ),
+                                                            },
                                                         ),
                                                         name: Path {
                                                             root: [],

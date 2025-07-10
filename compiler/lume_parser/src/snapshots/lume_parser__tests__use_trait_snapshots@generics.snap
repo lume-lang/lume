@@ -5,6 +5,13 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
 [
     Use(
         UseTrait {
+            visibility: Private(
+                Private {
+                    location: Location(
+                        9..12,
+                    ),
+                },
+            ),
             name: Named(
                 NamedType {
                     name: Path {
@@ -175,19 +182,17 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                             Return(
                                 Return {
                                     value: Some(
-                                        Call(
-                                            Call {
-                                                callee: Some(
-                                                    Variable(
-                                                        Variable {
-                                                            name: Identifier {
-                                                                name: "self",
-                                                                location: Location(
-                                                                    113..117,
-                                                                ),
-                                                            },
+                                        IntrinsicCall(
+                                            IntrinsicCall {
+                                                callee: Variable(
+                                                    Variable {
+                                                        name: Identifier {
+                                                            name: "self",
+                                                            location: Location(
+                                                                113..117,
+                                                            ),
                                                         },
-                                                    ),
+                                                    },
                                                 ),
                                                 name: Path {
                                                     root: [],

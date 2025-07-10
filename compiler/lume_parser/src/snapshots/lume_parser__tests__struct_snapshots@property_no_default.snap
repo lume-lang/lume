@@ -6,6 +6,13 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")
     TypeDefinition(
         Struct(
             StructDefinition {
+                visibility: Private(
+                    Private {
+                        location: Location(
+                            9..15,
+                        ),
+                    },
+                ),
                 name: Identifier {
                     name: "Foo",
                     location: Location(
