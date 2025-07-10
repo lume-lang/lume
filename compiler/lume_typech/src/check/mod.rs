@@ -116,15 +116,19 @@ impl TyCheckCtx {
             return Ok(());
         }
 
-        if log::log_enabled!(log::Level::Debug) {
-            log::debug!(
-                "type-checking failed: {} => {}",
-                self.new_named_type(from)?,
-                self.new_named_type(to)?
+        if tracing::event_enabled!(tracing::Level::DEBUG) {
+            let named_from = self.new_named_type(from)?;
+            let named_to = self.new_named_type(to)?;
+
+            tracing::debug!(
+                target: "type_compat",
+                %named_from,
+                %named_to,
+                "type-checking failed",
             );
 
-            if log::log_enabled!(log::Level::Trace) {
-                log::trace!("expanded type info: {from:?} => {to:?}");
+            if tracing::event_enabled!(tracing::Level::TRACE) {
+                tracing::trace!(target: "type_compat", ?from, ?to, "expanded type info");
             }
         }
 
