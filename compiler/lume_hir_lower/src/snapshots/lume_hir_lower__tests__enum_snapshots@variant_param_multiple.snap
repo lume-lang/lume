@@ -28,6 +28,7 @@ Map {
                         },
                         location: <internal>:18:21,
                     },
+                    visibility: Private,
                     cases: [
                         EnumDefinitionCase {
                             name: Path {

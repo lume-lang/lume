@@ -8,48 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            17893834130320319815,
-        ): TraitMethodImpl(
-            TraitMethodImplementation {
-                id: ItemId(
-                    17893834130320319815,
-                ),
-                method_id: None,
-                visibility: Public,
-                name: Identifier {
-                    name: "next",
-                    location: <internal>:72:76,
-                },
-                parameters: [],
-                type_parameters: TypeParameters {
-                    inner: [],
-                },
-                return_type: Type {
-                    id: ItemId(
-                        8901637729188007634,
-                    ),
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "T",
-                                location: <internal>:82:83,
-                            },
-                            type_arguments: [],
-                            location: <internal>:82:85,
-                        },
-                        location: <internal>:82:85,
-                    },
-                    location: <internal>:82:85,
-                },
-                block: Block {
-                    statements: [],
-                    location: <internal>:84:87,
-                },
-                location: <internal>:65:87,
-            },
-        ),
-        ItemId(
             14353073384594717167,
         ): Use(
             TraitImplementation {
@@ -131,10 +89,18 @@ Map {
                     },
                     location: <internal>:37:48,
                 },
+                visibility: Private,
                 methods: [
                     TraitMethodImplementation {
-                        id: ItemId(
-                            17893834130320319815,
+                        id: Method(
+                            MethodId {
+                                item: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                         ),
                         method_id: None,
                         visibility: Public,

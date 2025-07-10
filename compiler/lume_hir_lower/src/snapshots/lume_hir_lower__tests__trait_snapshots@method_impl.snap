@@ -8,74 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            4915573846357939171,
-        ): TraitMethodDef(
-            TraitMethodDefinition {
-                id: ItemId(
-                    4915573846357939171,
-                ),
-                method_id: None,
-                visibility: Public,
-                name: Identifier {
-                    name: "add",
-                    location: <internal>:19:22,
-                },
-                parameters: [
-                    Parameter {
-                        index: 0,
-                        name: Identifier {
-                            name: "other",
-                            location: <internal>:23:28,
-                        },
-                        param_type: Type {
-                            id: ItemId(
-                                7468397361300629741,
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Namespace {
-                                    name: Identifier {
-                                        name: "int",
-                                        location: <internal>:30:33,
-                                    },
-                                },
-                                location: <internal>:30:33,
-                            },
-                            location: <internal>:30:33,
-                        },
-                        vararg: false,
-                        location: <internal>:23:33,
-                    },
-                ],
-                type_parameters: TypeParameters {
-                    inner: [],
-                },
-                return_type: Type {
-                    id: ItemId(
-                        7468397361300629741,
-                    ),
-                    name: Path {
-                        root: [],
-                        name: Namespace {
-                            name: Identifier {
-                                name: "int",
-                                location: <internal>:38:41,
-                            },
-                        },
-                        location: <internal>:38:41,
-                    },
-                    location: <internal>:38:41,
-                },
-                block: Some(
-                    Block {
-                        statements: [],
-                        location: <internal>:42:45,
-                    },
-                ),
-                location: <internal>:16:45,
-            },
-        ),
-        ItemId(
             14895811466431262429,
         ): Type(
             Trait(
@@ -96,13 +28,21 @@ Map {
                         },
                         location: <internal>:6:9,
                     },
+                    visibility: Private,
                     type_parameters: TypeParameters {
                         inner: [],
                     },
                     methods: [
                         TraitMethodDefinition {
-                            id: ItemId(
-                                4915573846357939171,
+                            id: Method(
+                                MethodId {
+                                    item: ItemId(
+                                        14895811466431262429,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                             ),
                             method_id: None,
                             visibility: Public,

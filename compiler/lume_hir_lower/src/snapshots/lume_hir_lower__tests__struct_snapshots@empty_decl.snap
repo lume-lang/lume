@@ -28,6 +28,7 @@ Map {
                         },
                         location: <internal>:7:12,
                     },
+                    visibility: Private,
                     builtin: false,
                     properties: [],
                     type_parameters: TypeParameters {

@@ -58,6 +58,7 @@ Map {
                     },
                     location: <internal>:11:18,
                 },
+                visibility: Private,
                 methods: [],
                 type_parameters: TypeParameters {
                     inner: [],

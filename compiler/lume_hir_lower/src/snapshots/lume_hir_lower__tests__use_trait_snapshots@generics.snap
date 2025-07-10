@@ -8,90 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            4915573846357939171,
-        ): TraitMethodImpl(
-            TraitMethodImplementation {
-                id: ItemId(
-                    4915573846357939171,
-                ),
-                method_id: None,
-                visibility: Public,
-                name: Identifier {
-                    name: "add",
-                    location: <internal>:69:72,
-                },
-                parameters: [
-                    Parameter {
-                        index: 0,
-                        name: Identifier {
-                            name: "other",
-                            location: <internal>:73:78,
-                        },
-                        param_type: Type {
-                            id: ItemId(
-                                6143724420395906933,
-                            ),
-                            name: Path {
-                                root: [
-                                    Namespace {
-                                        name: Identifier {
-                                            name: "std",
-                                            location: <internal>:0:0,
-                                        },
-                                    },
-                                ],
-                                name: Type {
-                                    name: Identifier {
-                                        name: "Int32",
-                                        location: <internal>:0:0,
-                                    },
-                                    type_arguments: [],
-                                    location: <internal>:0:0,
-                                },
-                                location: <internal>:0:0,
-                            },
-                            location: <internal>:80:86,
-                        },
-                        vararg: false,
-                        location: <internal>:73:86,
-                    },
-                ],
-                type_parameters: TypeParameters {
-                    inner: [],
-                },
-                return_type: Type {
-                    id: ItemId(
-                        6005476461629404090,
-                    ),
-                    name: Path {
-                        root: [
-                            Namespace {
-                                name: Identifier {
-                                    name: "std",
-                                    location: <internal>:0:0,
-                                },
-                            },
-                        ],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int64",
-                                location: <internal>:0:0,
-                            },
-                            type_arguments: [],
-                            location: <internal>:0:0,
-                        },
-                        location: <internal>:0:0,
-                    },
-                    location: <internal>:90:97,
-                },
-                block: Block {
-                    statements: [],
-                    location: <internal>:96:98,
-                },
-                location: <internal>:62:98,
-            },
-        ),
-        ItemId(
             4643913508931576779,
         ): Use(
             TraitImplementation {
@@ -193,10 +109,18 @@ Map {
                     },
                     location: <internal>:38:45,
                 },
+                visibility: Private,
                 methods: [
                     TraitMethodImplementation {
-                        id: ItemId(
-                            4915573846357939171,
+                        id: Method(
+                            MethodId {
+                                item: ItemId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                         ),
                         method_id: None,
                         visibility: Public,

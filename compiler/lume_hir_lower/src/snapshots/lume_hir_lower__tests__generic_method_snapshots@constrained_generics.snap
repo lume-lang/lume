@@ -8,109 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            4609697254383574920,
-        ): Method(
-            MethodDefinition {
-                id: ItemId(
-                    4609697254383574920,
-                ),
-                method_id: None,
-                visibility: Private,
-                name: Identifier {
-                    name: "test",
-                    location: <internal>:15:19,
-                },
-                parameters: [],
-                type_parameters: TypeParameters {
-                    inner: [
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T1",
-                                location: <internal>:20:22,
-                            },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [
-                                Type {
-                                    id: ItemId(
-                                        12406655113887153806,
-                                    ),
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: <internal>:24:31,
-                                            },
-                                            type_arguments: [],
-                                            location: <internal>:24:32,
-                                        },
-                                        location: <internal>:24:32,
-                                    },
-                                    location: <internal>:24:32,
-                                },
-                            ],
-                            location: <internal>:20:22,
-                        },
-                        TypeParameter {
-                            name: Identifier {
-                                name: "T2",
-                                location: <internal>:33:35,
-                            },
-                            type_id: None,
-                            type_param_id: None,
-                            constraints: [
-                                Type {
-                                    id: ItemId(
-                                        12406655113887153806,
-                                    ),
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Numeric",
-                                                location: <internal>:37:44,
-                                            },
-                                            type_arguments: [],
-                                            location: <internal>:37:45,
-                                        },
-                                        location: <internal>:37:45,
-                                    },
-                                    location: <internal>:37:45,
-                                },
-                            ],
-                            location: <internal>:33:35,
-                        },
-                    ],
-                },
-                return_type: Type {
-                    id: ItemId(
-                        17666474489655347949,
-                    ),
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "void",
-                                location: <internal>:51:55,
-                            },
-                            type_arguments: [],
-                            location: <internal>:51:57,
-                        },
-                        location: <internal>:51:57,
-                    },
-                    location: <internal>:51:57,
-                },
-                block: Some(
-                    Block {
-                        statements: [],
-                        location: <internal>:56:58,
-                    },
-                ),
-                location: <internal>:12:58,
-            },
-        ),
-        ItemId(
             9685703253129516901,
         ): Impl(
             Implementation {
@@ -138,8 +35,15 @@ Map {
                 },
                 methods: [
                     MethodDefinition {
-                        id: ItemId(
-                            4609697254383574920,
+                        id: Method(
+                            MethodId {
+                                item: ItemId(
+                                    9685703253129516901,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                         ),
                         method_id: None,
                         visibility: Private,

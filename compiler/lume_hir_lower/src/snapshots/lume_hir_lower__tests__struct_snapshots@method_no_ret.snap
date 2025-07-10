@@ -8,50 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            6128482084880861643,
-        ): Method(
-            MethodDefinition {
-                id: ItemId(
-                    6128482084880861643,
-                ),
-                method_id: None,
-                visibility: Private,
-                name: Identifier {
-                    name: "bar",
-                    location: <internal>:43:46,
-                },
-                parameters: [],
-                type_parameters: TypeParameters {
-                    inner: [],
-                },
-                return_type: Type {
-                    id: ItemId(
-                        0,
-                    ),
-                    name: Path {
-                        root: [],
-                        name: Type {
-                            name: Identifier {
-                                name: "Void",
-                                location: <internal>:0:0,
-                            },
-                            type_arguments: [],
-                            location: <internal>:0:0,
-                        },
-                        location: <internal>:0:0,
-                    },
-                    location: <internal>:0:0,
-                },
-                block: Some(
-                    Block {
-                        statements: [],
-                        location: <internal>:49:52,
-                    },
-                ),
-                location: <internal>:40:52,
-            },
-        ),
-        ItemId(
             15584863814090437165,
         ): Impl(
             Implementation {
@@ -79,8 +35,15 @@ Map {
                 },
                 methods: [
                     MethodDefinition {
-                        id: ItemId(
-                            6128482084880861643,
+                        id: Method(
+                            MethodId {
+                                item: ItemId(
+                                    15584863814090437165,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                         ),
                         method_id: None,
                         visibility: Private,

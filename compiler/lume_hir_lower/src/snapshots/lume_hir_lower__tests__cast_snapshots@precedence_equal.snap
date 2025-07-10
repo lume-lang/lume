@@ -22,8 +22,8 @@ description: 0 as u64 == 0;
                         1,
                     ),
                 },
-                kind: InstanceCall(
-                    InstanceCall {
+                kind: IntrinsicCall(
+                    IntrinsicCall {
                         id: ExpressionId {
                             def: ItemId(
                                 0,
@@ -31,84 +31,6 @@ description: 0 as u64 == 0;
                             index: Idx(
                                 1,
                             ),
-                        },
-                        callee: Expression {
-                            id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
-                                index: Idx(
-                                    3,
-                                ),
-                            },
-                            kind: Cast(
-                                Cast {
-                                    id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
-                                        index: Idx(
-                                            3,
-                                        ),
-                                    },
-                                    source: Expression {
-                                        id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
-                                            index: Idx(
-                                                4,
-                                            ),
-                                        },
-                                        kind: Literal(
-                                            Literal {
-                                                id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
-                                                    index: Idx(
-                                                        4,
-                                                    ),
-                                                },
-                                                kind: Int(
-                                                    IntLiteral {
-                                                        id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
-                                                            index: Idx(
-                                                                4,
-                                                            ),
-                                                        },
-                                                        value: 0,
-                                                        kind: I32,
-                                                    },
-                                                ),
-                                                location: <internal>:0:1,
-                                            },
-                                        ),
-                                        location: <internal>:0:1,
-                                    },
-                                    target: Type {
-                                        id: ItemId(
-                                            13902787388289951280,
-                                        ),
-                                        name: Path {
-                                            root: [],
-                                            name: Namespace {
-                                                name: Identifier {
-                                                    name: "u64",
-                                                    location: <internal>:5:8,
-                                                },
-                                            },
-                                            location: <internal>:5:8,
-                                        },
-                                        location: <internal>:5:8,
-                                    },
-                                    location: <internal>:0:8,
-                                },
-                            ),
-                            location: <internal>:0:8,
                         },
                         name: Callable {
                             name: Identifier {
@@ -128,6 +50,84 @@ description: 0 as u64 == 0;
                                         2,
                                     ),
                                 },
+                                kind: Cast(
+                                    Cast {
+                                        id: ExpressionId {
+                                            def: ItemId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                2,
+                                            ),
+                                        },
+                                        source: Expression {
+                                            id: ExpressionId {
+                                                def: ItemId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    3,
+                                                ),
+                                            },
+                                            kind: Literal(
+                                                Literal {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            3,
+                                                        ),
+                                                    },
+                                                    kind: Int(
+                                                        IntLiteral {
+                                                            id: ExpressionId {
+                                                                def: ItemId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    3,
+                                                                ),
+                                                            },
+                                                            value: 0,
+                                                            kind: I32,
+                                                        },
+                                                    ),
+                                                    location: <internal>:0:1,
+                                                },
+                                            ),
+                                            location: <internal>:0:1,
+                                        },
+                                        target: Type {
+                                            id: ItemId(
+                                                13902787388289951280,
+                                            ),
+                                            name: Path {
+                                                root: [],
+                                                name: Namespace {
+                                                    name: Identifier {
+                                                        name: "u64",
+                                                        location: <internal>:5:8,
+                                                    },
+                                                },
+                                                location: <internal>:5:8,
+                                            },
+                                            location: <internal>:5:8,
+                                        },
+                                        location: <internal>:0:8,
+                                    },
+                                ),
+                                location: <internal>:0:8,
+                            },
+                            Expression {
+                                id: ExpressionId {
+                                    def: ItemId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        4,
+                                    ),
+                                },
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
@@ -135,7 +135,7 @@ description: 0 as u64 == 0;
                                                 0,
                                             ),
                                             index: Idx(
-                                                2,
+                                                4,
                                             ),
                                         },
                                         kind: Int(
@@ -145,7 +145,7 @@ description: 0 as u64 == 0;
                                                         0,
                                                     ),
                                                     index: Idx(
-                                                        2,
+                                                        4,
                                                     ),
                                                 },
                                                 value: 0,

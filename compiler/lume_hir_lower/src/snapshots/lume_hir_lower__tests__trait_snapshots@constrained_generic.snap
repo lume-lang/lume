@@ -28,6 +28,7 @@ Map {
                         },
                         location: <internal>:6:9,
                     },
+                    visibility: Private,
                     type_parameters: TypeParameters {
                         inner: [
                             TypeParameter {

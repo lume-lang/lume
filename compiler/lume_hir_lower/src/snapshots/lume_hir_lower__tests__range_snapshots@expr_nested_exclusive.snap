@@ -217,8 +217,8 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                             6,
                                         ),
                                     },
-                                    kind: InstanceCall(
-                                        InstanceCall {
+                                    kind: IntrinsicCall(
+                                        IntrinsicCall {
                                             id: ExpressionId {
                                                 def: ItemId(
                                                     0,
@@ -226,90 +226,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                 index: Idx(
                                                     6,
                                                 ),
-                                            },
-                                            callee: Expression {
-                                                id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
-                                                    index: Idx(
-                                                        8,
-                                                    ),
-                                                },
-                                                kind: Variable(
-                                                    Variable {
-                                                        id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
-                                                            index: Idx(
-                                                                8,
-                                                            ),
-                                                        },
-                                                        reference: Variable(
-                                                            VariableDeclaration {
-                                                                id: StatementId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
-                                                                    index: Idx(
-                                                                        0,
-                                                                    ),
-                                                                },
-                                                                name: Identifier {
-                                                                    name: "a",
-                                                                    location: <internal>:13:14,
-                                                                },
-                                                                declared_type: None,
-                                                                value: Expression {
-                                                                    id: ExpressionId {
-                                                                        def: ItemId(
-                                                                            0,
-                                                                        ),
-                                                                        index: Idx(
-                                                                            1,
-                                                                        ),
-                                                                    },
-                                                                    kind: Literal(
-                                                                        Literal {
-                                                                            id: ExpressionId {
-                                                                                def: ItemId(
-                                                                                    0,
-                                                                                ),
-                                                                                index: Idx(
-                                                                                    1,
-                                                                                ),
-                                                                            },
-                                                                            kind: Int(
-                                                                                IntLiteral {
-                                                                                    id: ExpressionId {
-                                                                                        def: ItemId(
-                                                                                            0,
-                                                                                        ),
-                                                                                        index: Idx(
-                                                                                            1,
-                                                                                        ),
-                                                                                    },
-                                                                                    value: 0,
-                                                                                    kind: I32,
-                                                                                },
-                                                                            ),
-                                                                            location: <internal>:17:18,
-                                                                        },
-                                                                    ),
-                                                                    location: <internal>:17:18,
-                                                                },
-                                                                location: <internal>:9:19,
-                                                            },
-                                                        ),
-                                                        name: Identifier {
-                                                            name: "a",
-                                                            location: <internal>:57:58,
-                                                        },
-                                                        location: <internal>:57:58,
-                                                    },
-                                                ),
-                                                location: <internal>:57:58,
                                             },
                                             name: Callable {
                                                 name: Identifier {
@@ -337,6 +253,90 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                 ),
                                                                 index: Idx(
                                                                     7,
+                                                                ),
+                                                            },
+                                                            reference: Variable(
+                                                                VariableDeclaration {
+                                                                    id: StatementId {
+                                                                        def: ItemId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
+                                                                    name: Identifier {
+                                                                        name: "a",
+                                                                        location: <internal>:13:14,
+                                                                    },
+                                                                    declared_type: None,
+                                                                    value: Expression {
+                                                                        id: ExpressionId {
+                                                                            def: ItemId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                1,
+                                                                            ),
+                                                                        },
+                                                                        kind: Literal(
+                                                                            Literal {
+                                                                                id: ExpressionId {
+                                                                                    def: ItemId(
+                                                                                        0,
+                                                                                    ),
+                                                                                    index: Idx(
+                                                                                        1,
+                                                                                    ),
+                                                                                },
+                                                                                kind: Int(
+                                                                                    IntLiteral {
+                                                                                        id: ExpressionId {
+                                                                                            def: ItemId(
+                                                                                                0,
+                                                                                            ),
+                                                                                            index: Idx(
+                                                                                                1,
+                                                                                            ),
+                                                                                        },
+                                                                                        value: 0,
+                                                                                        kind: I32,
+                                                                                    },
+                                                                                ),
+                                                                                location: <internal>:17:18,
+                                                                            },
+                                                                        ),
+                                                                        location: <internal>:17:18,
+                                                                    },
+                                                                    location: <internal>:9:19,
+                                                                },
+                                                            ),
+                                                            name: Identifier {
+                                                                name: "a",
+                                                                location: <internal>:57:58,
+                                                            },
+                                                            location: <internal>:57:58,
+                                                        },
+                                                    ),
+                                                    location: <internal>:57:58,
+                                                },
+                                                Expression {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            8,
+                                                        ),
+                                                    },
+                                                    kind: Variable(
+                                                        Variable {
+                                                            id: ExpressionId {
+                                                                def: ItemId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    8,
                                                                 ),
                                                             },
                                                             reference: Variable(
@@ -419,8 +419,8 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                             9,
                                         ),
                                     },
-                                    kind: InstanceCall(
-                                        InstanceCall {
+                                    kind: IntrinsicCall(
+                                        IntrinsicCall {
                                             id: ExpressionId {
                                                 def: ItemId(
                                                     0,
@@ -428,208 +428,6 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                 index: Idx(
                                                     9,
                                                 ),
-                                            },
-                                            callee: Expression {
-                                                id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
-                                                    index: Idx(
-                                                        11,
-                                                    ),
-                                                },
-                                                kind: InstanceCall(
-                                                    InstanceCall {
-                                                        id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
-                                                            index: Idx(
-                                                                11,
-                                                            ),
-                                                        },
-                                                        callee: Expression {
-                                                            id: ExpressionId {
-                                                                def: ItemId(
-                                                                    0,
-                                                                ),
-                                                                index: Idx(
-                                                                    13,
-                                                                ),
-                                                            },
-                                                            kind: Variable(
-                                                                Variable {
-                                                                    id: ExpressionId {
-                                                                        def: ItemId(
-                                                                            0,
-                                                                        ),
-                                                                        index: Idx(
-                                                                            13,
-                                                                        ),
-                                                                    },
-                                                                    reference: Variable(
-                                                                        VariableDeclaration {
-                                                                            id: StatementId {
-                                                                                def: ItemId(
-                                                                                    0,
-                                                                                ),
-                                                                                index: Idx(
-                                                                                    0,
-                                                                                ),
-                                                                            },
-                                                                            name: Identifier {
-                                                                                name: "a",
-                                                                                location: <internal>:13:14,
-                                                                            },
-                                                                            declared_type: None,
-                                                                            value: Expression {
-                                                                                id: ExpressionId {
-                                                                                    def: ItemId(
-                                                                                        0,
-                                                                                    ),
-                                                                                    index: Idx(
-                                                                                        1,
-                                                                                    ),
-                                                                                },
-                                                                                kind: Literal(
-                                                                                    Literal {
-                                                                                        id: ExpressionId {
-                                                                                            def: ItemId(
-                                                                                                0,
-                                                                                            ),
-                                                                                            index: Idx(
-                                                                                                1,
-                                                                                            ),
-                                                                                        },
-                                                                                        kind: Int(
-                                                                                            IntLiteral {
-                                                                                                id: ExpressionId {
-                                                                                                    def: ItemId(
-                                                                                                        0,
-                                                                                                    ),
-                                                                                                    index: Idx(
-                                                                                                        1,
-                                                                                                    ),
-                                                                                                },
-                                                                                                value: 0,
-                                                                                                kind: I32,
-                                                                                            },
-                                                                                        ),
-                                                                                        location: <internal>:17:18,
-                                                                                    },
-                                                                                ),
-                                                                                location: <internal>:17:18,
-                                                                            },
-                                                                            location: <internal>:9:19,
-                                                                        },
-                                                                    ),
-                                                                    name: Identifier {
-                                                                        name: "a",
-                                                                        location: <internal>:66:67,
-                                                                    },
-                                                                    location: <internal>:66:67,
-                                                                },
-                                                            ),
-                                                            location: <internal>:66:67,
-                                                        },
-                                                        name: Callable {
-                                                            name: Identifier {
-                                                                name: "+",
-                                                                location: <internal>:68:69,
-                                                            },
-                                                            type_arguments: [],
-                                                            location: <internal>:68:69,
-                                                        },
-                                                        arguments: [
-                                                            Expression {
-                                                                id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
-                                                                    index: Idx(
-                                                                        12,
-                                                                    ),
-                                                                },
-                                                                kind: Variable(
-                                                                    Variable {
-                                                                        id: ExpressionId {
-                                                                            def: ItemId(
-                                                                                0,
-                                                                            ),
-                                                                            index: Idx(
-                                                                                12,
-                                                                            ),
-                                                                        },
-                                                                        reference: Variable(
-                                                                            VariableDeclaration {
-                                                                                id: StatementId {
-                                                                                    def: ItemId(
-                                                                                        0,
-                                                                                    ),
-                                                                                    index: Idx(
-                                                                                        2,
-                                                                                    ),
-                                                                                },
-                                                                                name: Identifier {
-                                                                                    name: "b",
-                                                                                    location: <internal>:32:33,
-                                                                                },
-                                                                                declared_type: None,
-                                                                                value: Expression {
-                                                                                    id: ExpressionId {
-                                                                                        def: ItemId(
-                                                                                            0,
-                                                                                        ),
-                                                                                        index: Idx(
-                                                                                            3,
-                                                                                        ),
-                                                                                    },
-                                                                                    kind: Literal(
-                                                                                        Literal {
-                                                                                            id: ExpressionId {
-                                                                                                def: ItemId(
-                                                                                                    0,
-                                                                                                ),
-                                                                                                index: Idx(
-                                                                                                    3,
-                                                                                                ),
-                                                                                            },
-                                                                                            kind: Int(
-                                                                                                IntLiteral {
-                                                                                                    id: ExpressionId {
-                                                                                                        def: ItemId(
-                                                                                                            0,
-                                                                                                        ),
-                                                                                                        index: Idx(
-                                                                                                            3,
-                                                                                                        ),
-                                                                                                    },
-                                                                                                    value: 1,
-                                                                                                    kind: I32,
-                                                                                                },
-                                                                                            ),
-                                                                                            location: <internal>:36:37,
-                                                                                        },
-                                                                                    ),
-                                                                                    location: <internal>:36:37,
-                                                                                },
-                                                                                location: <internal>:28:38,
-                                                                            },
-                                                                        ),
-                                                                        name: Identifier {
-                                                                            name: "b",
-                                                                            location: <internal>:70:71,
-                                                                        },
-                                                                        location: <internal>:70:71,
-                                                                    },
-                                                                ),
-                                                                location: <internal>:70:71,
-                                                            },
-                                                        ],
-                                                        location: <internal>:66:71,
-                                                    },
-                                                ),
-                                                location: <internal>:66:71,
                                             },
                                             name: Callable {
                                                 name: Identifier {
@@ -649,6 +447,208 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                             10,
                                                         ),
                                                     },
+                                                    kind: IntrinsicCall(
+                                                        IntrinsicCall {
+                                                            id: ExpressionId {
+                                                                def: ItemId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    10,
+                                                                ),
+                                                            },
+                                                            name: Callable {
+                                                                name: Identifier {
+                                                                    name: "+",
+                                                                    location: <internal>:68:69,
+                                                                },
+                                                                type_arguments: [],
+                                                                location: <internal>:68:69,
+                                                            },
+                                                            arguments: [
+                                                                Expression {
+                                                                    id: ExpressionId {
+                                                                        def: ItemId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            11,
+                                                                        ),
+                                                                    },
+                                                                    kind: Variable(
+                                                                        Variable {
+                                                                            id: ExpressionId {
+                                                                                def: ItemId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    11,
+                                                                                ),
+                                                                            },
+                                                                            reference: Variable(
+                                                                                VariableDeclaration {
+                                                                                    id: StatementId {
+                                                                                        def: ItemId(
+                                                                                            0,
+                                                                                        ),
+                                                                                        index: Idx(
+                                                                                            0,
+                                                                                        ),
+                                                                                    },
+                                                                                    name: Identifier {
+                                                                                        name: "a",
+                                                                                        location: <internal>:13:14,
+                                                                                    },
+                                                                                    declared_type: None,
+                                                                                    value: Expression {
+                                                                                        id: ExpressionId {
+                                                                                            def: ItemId(
+                                                                                                0,
+                                                                                            ),
+                                                                                            index: Idx(
+                                                                                                1,
+                                                                                            ),
+                                                                                        },
+                                                                                        kind: Literal(
+                                                                                            Literal {
+                                                                                                id: ExpressionId {
+                                                                                                    def: ItemId(
+                                                                                                        0,
+                                                                                                    ),
+                                                                                                    index: Idx(
+                                                                                                        1,
+                                                                                                    ),
+                                                                                                },
+                                                                                                kind: Int(
+                                                                                                    IntLiteral {
+                                                                                                        id: ExpressionId {
+                                                                                                            def: ItemId(
+                                                                                                                0,
+                                                                                                            ),
+                                                                                                            index: Idx(
+                                                                                                                1,
+                                                                                                            ),
+                                                                                                        },
+                                                                                                        value: 0,
+                                                                                                        kind: I32,
+                                                                                                    },
+                                                                                                ),
+                                                                                                location: <internal>:17:18,
+                                                                                            },
+                                                                                        ),
+                                                                                        location: <internal>:17:18,
+                                                                                    },
+                                                                                    location: <internal>:9:19,
+                                                                                },
+                                                                            ),
+                                                                            name: Identifier {
+                                                                                name: "a",
+                                                                                location: <internal>:66:67,
+                                                                            },
+                                                                            location: <internal>:66:67,
+                                                                        },
+                                                                    ),
+                                                                    location: <internal>:66:67,
+                                                                },
+                                                                Expression {
+                                                                    id: ExpressionId {
+                                                                        def: ItemId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            12,
+                                                                        ),
+                                                                    },
+                                                                    kind: Variable(
+                                                                        Variable {
+                                                                            id: ExpressionId {
+                                                                                def: ItemId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    12,
+                                                                                ),
+                                                                            },
+                                                                            reference: Variable(
+                                                                                VariableDeclaration {
+                                                                                    id: StatementId {
+                                                                                        def: ItemId(
+                                                                                            0,
+                                                                                        ),
+                                                                                        index: Idx(
+                                                                                            2,
+                                                                                        ),
+                                                                                    },
+                                                                                    name: Identifier {
+                                                                                        name: "b",
+                                                                                        location: <internal>:32:33,
+                                                                                    },
+                                                                                    declared_type: None,
+                                                                                    value: Expression {
+                                                                                        id: ExpressionId {
+                                                                                            def: ItemId(
+                                                                                                0,
+                                                                                            ),
+                                                                                            index: Idx(
+                                                                                                3,
+                                                                                            ),
+                                                                                        },
+                                                                                        kind: Literal(
+                                                                                            Literal {
+                                                                                                id: ExpressionId {
+                                                                                                    def: ItemId(
+                                                                                                        0,
+                                                                                                    ),
+                                                                                                    index: Idx(
+                                                                                                        3,
+                                                                                                    ),
+                                                                                                },
+                                                                                                kind: Int(
+                                                                                                    IntLiteral {
+                                                                                                        id: ExpressionId {
+                                                                                                            def: ItemId(
+                                                                                                                0,
+                                                                                                            ),
+                                                                                                            index: Idx(
+                                                                                                                3,
+                                                                                                            ),
+                                                                                                        },
+                                                                                                        value: 1,
+                                                                                                        kind: I32,
+                                                                                                    },
+                                                                                                ),
+                                                                                                location: <internal>:36:37,
+                                                                                            },
+                                                                                        ),
+                                                                                        location: <internal>:36:37,
+                                                                                    },
+                                                                                    location: <internal>:28:38,
+                                                                                },
+                                                                            ),
+                                                                            name: Identifier {
+                                                                                name: "b",
+                                                                                location: <internal>:70:71,
+                                                                            },
+                                                                            location: <internal>:70:71,
+                                                                        },
+                                                                    ),
+                                                                    location: <internal>:70:71,
+                                                                },
+                                                            ],
+                                                            location: <internal>:66:71,
+                                                        },
+                                                    ),
+                                                    location: <internal>:66:71,
+                                                },
+                                                Expression {
+                                                    id: ExpressionId {
+                                                        def: ItemId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            13,
+                                                        ),
+                                                    },
                                                     kind: Literal(
                                                         Literal {
                                                             id: ExpressionId {
@@ -656,7 +656,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                     0,
                                                                 ),
                                                                 index: Idx(
-                                                                    10,
+                                                                    13,
                                                                 ),
                                                             },
                                                             kind: Int(
@@ -666,7 +666,7 @@ description: "\n        let a = 0;\n        let b = 1;\n        let _ = ((a + b)
                                                                             0,
                                                                         ),
                                                                         index: Idx(
-                                                                            10,
+                                                                            13,
                                                                         ),
                                                                     },
                                                                     value: 1,

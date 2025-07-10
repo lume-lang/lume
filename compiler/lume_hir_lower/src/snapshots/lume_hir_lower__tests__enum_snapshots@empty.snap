@@ -28,6 +28,7 @@ Map {
                         },
                         location: <internal>:5:8,
                     },
+                    visibility: Private,
                     cases: [],
                     location: <internal>:0:11,
                 },

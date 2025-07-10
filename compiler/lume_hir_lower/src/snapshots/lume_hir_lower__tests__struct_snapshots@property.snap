@@ -8,87 +8,6 @@ Map {
     ),
     items: {
         ItemId(
-            9709258240062959104,
-        ): Property(
-            Property {
-                id: ItemId(
-                    9709258240062959104,
-                ),
-                prop_id: None,
-                visibility: Private,
-                name: Identifier {
-                    name: "x",
-                    location: <internal>:42:43,
-                },
-                property_type: Type {
-                    id: ItemId(
-                        6143724420395906933,
-                    ),
-                    name: Path {
-                        root: [
-                            Namespace {
-                                name: Identifier {
-                                    name: "std",
-                                    location: <internal>:0:0,
-                                },
-                            },
-                        ],
-                        name: Type {
-                            name: Identifier {
-                                name: "Int32",
-                                location: <internal>:0:0,
-                            },
-                            type_arguments: [],
-                            location: <internal>:0:0,
-                        },
-                        location: <internal>:0:0,
-                    },
-                    location: <internal>:45:52,
-                },
-                default_value: Some(
-                    Expression {
-                        id: ExpressionId {
-                            def: ItemId(
-                                5175167619020667705,
-                            ),
-                            index: Idx(
-                                0,
-                            ),
-                        },
-                        kind: Literal(
-                            Literal {
-                                id: ExpressionId {
-                                    def: ItemId(
-                                        5175167619020667705,
-                                    ),
-                                    index: Idx(
-                                        0,
-                                    ),
-                                },
-                                kind: Int(
-                                    IntLiteral {
-                                        id: ExpressionId {
-                                            def: ItemId(
-                                                5175167619020667705,
-                                            ),
-                                            index: Idx(
-                                                0,
-                                            ),
-                                        },
-                                        value: 0,
-                                        kind: I32,
-                                    },
-                                ),
-                                location: <internal>:53:54,
-                            },
-                        ),
-                        location: <internal>:53:54,
-                    },
-                ),
-                location: <internal>:42:55,
-            },
-        ),
-        ItemId(
             5175167619020667705,
         ): Type(
             Struct(
@@ -109,11 +28,19 @@ Map {
                         },
                         location: <internal>:20:23,
                     },
+                    visibility: Private,
                     builtin: false,
                     properties: [
                         Property {
-                            id: ItemId(
-                                9709258240062959104,
+                            id: Property(
+                                PropertyId {
+                                    item: ItemId(
+                                        5175167619020667705,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                             ),
                             prop_id: None,
                             visibility: Private,
