@@ -20,6 +20,20 @@ pub struct MismatchedTypes {
     pub found: NamedTypeRef,
 }
 
+#[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
+#[diagnostic(
+    message = "mismatched types",
+    code = "LM4001",
+    help = "expected type {expected}\n   found type {found}"
+)]
+pub struct MismatchedTypesBoolean {
+    #[label(source, "expected type {expected}, but found type {found}")]
+    pub source: Location,
+
+    pub expected: NamedTypeRef,
+    pub found: NamedTypeRef,
+}
+
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "trait is not implemented", code = "LM4002")]
 pub struct TraitNotImplemented {

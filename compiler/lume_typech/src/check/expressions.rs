@@ -101,6 +101,17 @@ impl TyCheckCtx {
             lume_hir::StatementKind::If(cond) => {
                 for case in &cond.cases {
                     if let Some(expr) = &case.condition {
+                        let ty = self.type_of_expr(expr)?;
+
+                        if !self.check_type_compatibility(&ty, &TypeRef::bool())? {
+                            return Err(super::errors::MismatchedTypesBoolean {
+                                source: expr.location,
+                                found: self.new_named_type(&ty)?,
+                                expected: self.new_named_type(&TypeRef::bool())?,
+                            }
+                            .into());
+                        }
+
                         self.expression(expr)?;
                     }
 
