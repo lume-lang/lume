@@ -72,19 +72,55 @@ impl TyCheckCtx {
                 return Ok(());
             }
 
+            tracing::debug!(target: "type_compat", ?from, ?to, "trait not implemented");
+
             return Err(errors::TraitNotImplemented {
                 location: from.location,
-                trait_name: self.infer.new_named_type(from)?,
-                type_name: self.infer.new_named_type(to)?,
+                trait_name: self.new_named_type(to)?,
+                type_name: self.new_named_type(from)?,
             }
             .into());
+        }
+
+        // If `to` refers to a type parameter, check if `from` satisfies the constraints.
+        if let Some(to_arg) = self.as_type_parameter(to)? {
+            tracing::debug!(target: "type_compat", ?from, ?to_arg, "checking type parameter constraints");
+
+            for constraint in &to_arg.constraints {
+                if !self.check_type_compatibility(from, constraint)? {
+                    return Err(crate::query::diagnostics::TypeParameterConstraintUnsatisfied {
+                        source: from.location,
+                        constraint_loc: constraint.location,
+                        param_name: to_arg.name.clone(),
+                        type_name: self.new_named_type(from)?,
+                        constraint_name: self.new_named_type(constraint)?,
+                    }
+                    .into());
+                }
+            }
+
+            tracing::debug!(target: "type_compat", "type parameter constraints valid");
+            return Ok(());
+        }
+
+        // If the two types share the same elemental type, the type arguments
+        // may be compatible.
+        if from.instance_of == to.instance_of && from.type_arguments.len() == to.type_arguments.len() {
+            tracing::debug!(target: "type_compat", ?from, ?to, "checking type argument downcast");
+
+            for (from_arg, to_arg) in from.type_arguments.iter().zip(to.type_arguments.iter()) {
+                self.ensure_type_compatibility(from_arg, to_arg)?;
+            }
+
+            tracing::debug!(target: "type_compat", "type downcast to type parameter");
+            return Ok(());
         }
 
         if log::log_enabled!(log::Level::Debug) {
             log::debug!(
                 "type-checking failed: {} => {}",
-                self.infer.new_named_type(from)?,
-                self.infer.new_named_type(to)?
+                self.new_named_type(from)?,
+                self.new_named_type(to)?
             );
 
             if log::log_enabled!(log::Level::Trace) {

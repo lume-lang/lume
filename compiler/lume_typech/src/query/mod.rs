@@ -1,4 +1,4 @@
-mod diagnostics;
+pub(crate) mod diagnostics;
 
 use crate::TyCheckCtx;
 use error_snippet::Result;

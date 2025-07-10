@@ -13,6 +13,15 @@ impl TyCheckCtx {
         }
     }
 
+    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub(crate) fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
+        match self.tdb().ty_expect(ty.instance_of)?.kind {
+            TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
+            _ => Ok(None),
+        }
+    }
+
     /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Void`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn is_void(&self, ty: &TypeRef) -> Result<bool> {
