@@ -91,22 +91,30 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
             lume_hir::ExpressionKind::Construct(e) => {
-                let ty_opt = self.find_type_ref(&e.path)?;
-
-                ty_opt.ok_or_else(|| {
-                    self.missing_type_err(&lume_hir::Type {
+                let Some(ty_opt) = self.find_type_ref(&e.path)? else {
+                    return Err(self.missing_type_err(&lume_hir::Type {
                         id: lume_span::ItemId::empty(),
                         name: e.path.clone(),
                         location: e.path.location,
-                    })
-                })
+                    }));
+                };
+
+                let type_parameters_hir = self.hir_avail_type_params_expr(e.id);
+                let type_args = self.mk_type_refs_generic(e.path.type_arguments(), &type_parameters_hir)?;
+
+                let type_parameters_id: Vec<lume_hir::TypeParameterId> =
+                    type_parameters_hir.iter().map(|p| p.type_param_id.unwrap()).collect();
+
+                let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
+
+                Ok(instantiated.clone())
             }
             lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs),
             lume_hir::ExpressionKind::StaticCall(call) => {
                 let callable = self.probe_callable_static(call)?;
 
                 let signature = callable.signature();
-                let type_arguments_hir = self.hir_avail_type_params(DefId::Expression(call.id));
+                let type_arguments_hir = self.hir_avail_type_params_expr(call.id);
                 let type_arguments = self.mk_type_refs_generic(call.type_arguments(), &type_arguments_hir)?;
 
                 let instantiated = self.instantiate_function(signature, &type_arguments);

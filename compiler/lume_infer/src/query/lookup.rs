@@ -307,7 +307,7 @@ impl TyInferCtx {
         inst
     }
 
-    /// Instantiates a a single type reference against the given type arguments,
+    /// Instantiates a a single type reference against the given type arguments.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn instantiate_type_from<'a>(
         &self,
