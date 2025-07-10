@@ -1,8 +1,6 @@
-use std::{ops::Range, sync::Arc};
-
 use error_snippet_derive::Diagnostic;
 use lume_hir::{SignatureOwned, Visibility};
-use lume_span::{Location, SourceFile};
+use lume_span::Location;
 use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
@@ -15,7 +13,7 @@ pub struct MismatchedTypes {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    #[label(source, "...because of type defined here")]
+    #[label(source, note, "...because of type defined here")]
     pub reason_loc: Location,
 
     pub expected: NamedTypeRef,
@@ -39,11 +37,8 @@ pub struct TraitNotImplemented {
     help = "to allow casting, add the `Cast<{to}>` trait to {from}"
 )]
 pub struct UnavailableCast {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("cannot cast {from} to type {to}")]
-    pub range: Range<usize>,
+    #[label(source, "cannot cast {from} to type {to}")]
+    pub source: Location,
 
     pub from: NamedTypeRef,
     pub to: NamedTypeRef,
@@ -52,11 +47,8 @@ pub struct UnavailableCast {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "missing method in implementation", code = "LM4161")]
 pub struct TraitImplMissingMethod {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("trait implementation does not implement method {name}")]
-    pub range: Range<usize>,
+    #[label(source, "trait implementation does not implement method {name}")]
+    pub source: Location,
 
     pub name: lume_hir::Identifier,
 }
@@ -64,11 +56,11 @@ pub struct TraitImplMissingMethod {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "implemented trait does not match trait definition", code = "LM4165")]
 pub struct TraitImplTypeParameterCountMismatch {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("trait has {found} type parameters, but expected {expected} from trait definition")]
-    pub range: Range<usize>,
+    #[label(
+        source,
+        "trait has {found} type parameters, but expected {expected} from trait definition"
+    )]
+    pub source: Location,
 
     pub expected: usize,
     pub found: usize,
@@ -77,11 +69,8 @@ pub struct TraitImplTypeParameterCountMismatch {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "implemented method does not match definition visibility", code = "LM4168")]
 pub struct TraitMethodVisibilityMismatch {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("expected method to be {expected}, found {found}")]
-    pub range: Range<usize>,
+    #[label(source, "expected method to be {expected}, found {found}")]
+    pub source: Location,
 
     pub expected: Visibility,
     pub found: Visibility,
@@ -90,11 +79,8 @@ pub struct TraitMethodVisibilityMismatch {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "implemented method does not match definition signature", code = "LM4169")]
 pub struct TraitMethodSignatureMismatch {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("expected signature {expected}, found {found}")]
-    pub range: Range<usize>,
+    #[label(source, "expected signature {expected}, found {found}")]
+    pub source: Location,
 
     pub expected: SignatureOwned,
     pub found: SignatureOwned,
@@ -106,10 +92,10 @@ pub(crate) struct NonMatchingBinaryOp {
     #[label(source, "cannot perform binary operation between non-matching types")]
     pub source: lume_span::Location,
 
-    #[label(source, "found type {lhs_ty} on left-hand side...")]
+    #[label(source, note, "found type {lhs_ty} on left-hand side...")]
     pub lhs: lume_span::Location,
 
-    #[label(source, "...and found type {rhs_ty} on right-hand side")]
+    #[label(source, note, "...and found type {rhs_ty} on right-hand side")]
     pub rhs: lume_span::Location,
 
     pub lhs_ty: String,
@@ -137,7 +123,7 @@ pub struct MismatchedTypesBranches {
     #[label(source, "expected type {expected}, but found type {found}...")]
     pub found_loc: Location,
 
-    #[label(source, "...because of type defined here")]
+    #[label(source, note, "...because of type defined here")]
     pub reason_loc: Location,
 
     pub expected: NamedTypeRef,

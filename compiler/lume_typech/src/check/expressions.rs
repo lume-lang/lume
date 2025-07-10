@@ -255,7 +255,7 @@ impl TyCheckCtx {
         let source_named = self.new_named_type(&source_type)?;
         let dest_named = self.new_named_type(&dest_type)?;
 
-        let expr_location = &self.hir_expect_expr(expr.id).location;
+        let expr_location = self.hir_expect_expr(expr.id).location;
 
         // Resolve the `Cast` type from the type context
         let cast_ref = self.find_type_ref(&Path::cast())?.unwrap();
@@ -265,8 +265,7 @@ impl TyCheckCtx {
 
         if !self.trait_impl_by(&cast_trait, &source_type)? {
             return Err(UnavailableCast {
-                source: expr_location.file.clone(),
-                range: expr_location.index.clone(),
+                source: expr_location,
                 from: source_named,
                 to: dest_named,
             }

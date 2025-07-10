@@ -33,8 +33,7 @@ impl TyCheckCtx {
 
         if trait_impl.type_parameters.len() != trait_def.type_parameters.len() {
             return Err(crate::check::errors::TraitImplTypeParameterCountMismatch {
-                source: trait_impl.location.file.clone(),
-                range: trait_impl.location.index.clone(),
+                source: trait_impl.location,
                 expected: trait_def.type_parameters.len(),
                 found: trait_impl.type_parameters.len(),
             }
@@ -55,8 +54,7 @@ impl TyCheckCtx {
 
                 // Otherwise, the trait impl is missing a method implementation.
                 return Err(crate::check::errors::TraitImplMissingMethod {
-                    source: trait_impl.location.file.clone(),
-                    range: trait_impl.location.index.clone(),
+                    source: trait_impl.location,
                     name: method_def.name.clone(),
                 }
                 .into());
@@ -76,8 +74,7 @@ impl TyCheckCtx {
     ) -> Result<()> {
         if method_def.visibility != method_impl.visibility {
             return Err(crate::check::errors::TraitMethodVisibilityMismatch {
-                source: method_impl.location.file.clone(),
-                range: method_impl.location.index.clone(),
+                source: method_impl.location,
                 expected: method_def.visibility,
                 found: method_impl.visibility,
             }
@@ -86,8 +83,7 @@ impl TyCheckCtx {
 
         if method_def.signature() != method_impl.signature() {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {
-                source: method_impl.location.file.clone(),
-                range: method_impl.location.index.clone(),
+                source: method_impl.location,
                 expected: method_def.signature().to_owned(),
                 found: method_impl.signature().to_owned(),
             }
