@@ -87,9 +87,9 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
-        match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id),
-            lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target),
+        let ty = match &expr.kind {
+            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id)?,
+            lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref(&e.path)? else {
                     return Err(self.missing_type_err(&lume_hir::Type {
@@ -107,9 +107,9 @@ impl TyInferCtx {
 
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
 
-                Ok(instantiated.clone())
+                instantiated.clone()
             }
-            lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs),
+            lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs)?,
             lume_hir::ExpressionKind::StaticCall(call) => {
                 let callable = self.probe_callable_static(call)?;
 
@@ -119,7 +119,7 @@ impl TyInferCtx {
 
                 let instantiated = self.instantiate_function(signature, &type_arguments);
 
-                Ok(instantiated.ret_ty)
+                instantiated.ret_ty
             }
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 let callable = self.probe_callable_instance(call)?;
@@ -130,7 +130,7 @@ impl TyInferCtx {
 
                 let instantiated = self.instantiate_function(signature, &type_arguments);
 
-                Ok(instantiated.ret_ty)
+                instantiated.ret_ty
             }
             lume_hir::ExpressionKind::IntrinsicCall(call) => {
                 let callable = self.probe_callable_intrinsic(call)?;
@@ -141,10 +141,10 @@ impl TyInferCtx {
 
                 let instantiated = self.instantiate_function(signature, &type_arguments);
 
-                Ok(instantiated.ret_ty)
+                instantiated.ret_ty
             }
-            lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e).with_location(expr.location)),
-            lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs),
+            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
+            lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee.id)?;
 
@@ -163,15 +163,15 @@ impl TyInferCtx {
                     .into());
                 };
 
-                Ok(property.property_type.clone())
+                property.property_type.clone()
             }
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
                 lume_hir::VariableSource::Parameter(param) => {
                     let type_params = self.hir_avail_type_params_expr(var.id);
 
-                    self.mk_type_ref_generic(&param.param_type, &type_params)
+                    self.mk_type_ref_generic(&param.param_type, &type_params)?
                 }
-                lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var),
+                lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var)?,
             },
             lume_hir::ExpressionKind::Variant(var) => {
                 let enum_segment = var.name.clone().parent().unwrap();
@@ -183,10 +183,12 @@ impl TyInferCtx {
                         name: enum_segment.clone(),
                         location: enum_segment.location,
                     })
-                })
+                })?
             }
-            lume_hir::ExpressionKind::Void => Ok(TypeRef::void().with_location(expr.location)),
-        }
+            lume_hir::ExpressionKind::Void => TypeRef::void(),
+        };
+
+        Result::Ok(ty.with_location(expr.location))
     }
 
     /// Attempts to get the type of a literal expression.
