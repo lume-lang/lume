@@ -1024,6 +1024,14 @@ pub struct Expression {
 }
 
 impl Expression {
+    /// Sets the location of the expression.
+    #[inline]
+    #[must_use]
+    pub fn with_location(mut self, location: Location) -> Self {
+        self.location = location;
+        self
+    }
+
     /// Creates a new [`Expression`] with a [`LiteralKind::Void`] value.
     pub fn void() -> Self {
         Self {
@@ -1198,6 +1206,15 @@ impl CallExpression<'_> {
             Self::Instanced(call) => call.type_arguments(),
             Self::Static(call) => call.type_arguments(),
             Self::Intrinsic(call) => call.type_arguments(),
+        }
+    }
+
+    #[inline]
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Instanced(call) => call.location,
+            Self::Static(call) => call.location,
+            Self::Intrinsic(call) => call.location,
         }
     }
 }

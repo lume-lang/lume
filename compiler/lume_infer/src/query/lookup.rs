@@ -1,5 +1,5 @@
 use crate::{TyInferCtx, query::Callable};
-use error_snippet::{IntoDiagnostic, Result};
+use error_snippet::Result;
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
 use lume_types::{Function, Method, TypeRef};
@@ -56,7 +56,7 @@ impl TyInferCtx {
                     range: function_name.location.index.clone(),
                     function_name: function_name.name,
                 }
-                .into_diagnostic())
+                .into())
             });
 
         let suggestions = if let Some(suggested) = suggestion {
@@ -66,8 +66,7 @@ impl TyInferCtx {
         };
 
         Ok(diagnostics::MissingFunction {
-            source: expr.name.location.file.clone(),
-            range: expr.name.location.index.clone(),
+            source: expr.name.location,
             function_name: expr.name.name().clone(),
             suggestions,
         })
@@ -76,7 +75,7 @@ impl TyInferCtx {
     /// Folds all the methods which could be suggested from the given call expression
     /// into a single, emittable error message.
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn fold_method_suggestions<'a>(&self, expr: &lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
+    fn fold_method_suggestions<'a>(&self, expr: lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
         let name = match expr {
             lume_hir::CallExpression::Static(call) => &call.name.name,
             lume_hir::CallExpression::Instanced(call) => &call.name,
@@ -100,9 +99,8 @@ impl TyInferCtx {
                 Ok(diagnostics::SuggestedMethod {
                     source: method_name.location,
                     method_name: method_name.name,
-                    type_name: self.new_named_type(&callee_type)?,
                 }
-                .into_diagnostic())
+                .into())
             });
 
         let suggestions = if let Some(suggested) = suggestion {
@@ -161,8 +159,8 @@ impl TyInferCtx {
     /// Functions returned by this method are not checked for validity within the current
     /// context, such as visibility, arguments or type arguments.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn probe_callable(&self, expr: &lume_hir::CallExpression) -> Result<Callable<'_>> {
-        match &expr {
+    pub fn probe_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
+        match expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
                 let callee_type = self.type_of(call.callee.id)?;
                 let methods = self.lookup_methods_on(&callee_type, call.name.name());
@@ -227,7 +225,7 @@ impl TyInferCtx {
     /// lookup, see [`TyInferCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
-        self.probe_callable(&lume_hir::CallExpression::Instanced(call))
+        self.probe_callable(lume_hir::CallExpression::Instanced(call))
     }
 
     /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
@@ -241,7 +239,7 @@ impl TyInferCtx {
     /// lookup, see [`TyInferCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_intrinsic(&self, call: &lume_hir::IntrinsicCall) -> Result<Callable<'_>> {
-        self.probe_callable(&lume_hir::CallExpression::Intrinsic(call))
+        self.probe_callable(lume_hir::CallExpression::Intrinsic(call))
     }
 
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
@@ -255,7 +253,7 @@ impl TyInferCtx {
     /// lookup, see [`TyInferCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
-        self.probe_callable(&lume_hir::CallExpression::Static(call))
+        self.probe_callable(lume_hir::CallExpression::Static(call))
     }
 
     /// Instantiates a call expression against the given function signature, resolving

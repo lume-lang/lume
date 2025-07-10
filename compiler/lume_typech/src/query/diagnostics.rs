@@ -1,59 +1,57 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, Path, PathSegment};
+use lume_hir::Path;
 use lume_span::Location;
-
-use crate::query::CallableCheckError;
+use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no such method was found", code = "LM4113")]
-pub(crate) struct MissingMethod {
-    #[label(source, "could not find method {method_name} on type {type_name}")]
+#[diagnostic(message = "argument count mismatch", code = "LM4116")]
+pub(crate) struct ArgumentCountMismatch {
+    #[label(source, "expected {expected} arguments, but got {actual}")]
     pub source: Location,
 
-    pub type_name: Path,
-    pub method_name: Identifier,
-
-    #[related(collection)]
-    pub suggestions: Vec<error_snippet::Error>,
+    pub expected: usize,
+    pub actual: usize,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "similar method found",
-    code = "LM4118",
-    severity = Help,
-    help = "incompatible because of {reason}")]
-pub(crate) struct SuggestedMethod {
-    #[label(source, "found similar method {method_name} on type {type_name}")]
+#[diagnostic(message = "argument count mismatch", code = "LM4116")]
+pub(crate) struct VariableArgumentCountMismatch {
+    #[label(source, "expected at least {expected} arguments, but got {actual}")]
     pub source: Location,
 
-    pub method_name: PathSegment,
-    pub type_name: Path,
-    pub reason: CallableCheckError,
+    pub expected: usize,
+    pub actual: usize,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no such function was found", code = "LM4113")]
-pub struct MissingFunction {
-    #[label(source, "could not find function {function_name}")]
+#[diagnostic(message = "type argument mismatch", code = "LM4119")]
+pub(crate) struct TypeArgumentCountMismatch {
+    #[label(source, "expected {expected} type arguments, but got {actual}")]
     pub source: Location,
 
-    pub function_name: Identifier,
-
-    #[related(collection)]
-    pub suggestions: Vec<error_snippet::Error>,
+    pub expected: usize,
+    pub actual: usize,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "similar function found",
-    code = "LM4118",
-    severity = Help,
-    help = "incompatible because of {reason}")]
-pub(crate) struct SuggestedFunction {
-    #[label(source, "found similar function {function_name}")]
+#[diagnostic(message = "type constraint not satisfied", code = "LM4120")]
+pub(crate) struct TypeParameterConstraintUnsatisfied {
+    #[label(source, "type {type_name} does not implement {constraint_name}...")]
     pub source: Location,
 
-    pub function_name: PathSegment,
-    pub reason: CallableCheckError,
+    #[label(source, "...which is required by the type parameter {param_name}")]
+    pub constraint_loc: Location,
+
+    pub param_name: String,
+    pub type_name: NamedTypeRef,
+    pub constraint_name: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "attempted instance call on static method", code = "LM4124")]
+pub(crate) struct InstanceCallOnStaticMethod {
+    #[label(source, "cannot call static method {method_name} on an instance")]
+    pub source: Location,
+
+    pub method_name: Path,
 }

@@ -5,7 +5,7 @@ use lume_hir::{SignatureOwned, Visibility};
 use lume_span::{Location, SourceFile};
 use lume_types::NamedTypeRef;
 
-#[derive(Diagnostic, Debug)]
+#[derive(Diagnostic, Clone, Debug, PartialEq, Eq)]
 #[diagnostic(
     message = "mismatched types",
     code = "LM4001",

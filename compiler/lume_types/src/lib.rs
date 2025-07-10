@@ -629,6 +629,14 @@ impl TypeRef {
         }
     }
 
+    /// Assigns a new location to the [`TypeRef`].
+    #[inline]
+    #[must_use]
+    pub fn with_location(mut self, location: Location) -> Self {
+        self.location = location;
+        self
+    }
+
     /// Creates a new [`TypeRef`] with an inner type of [`TypeKindRef::Void`].
     pub fn void() -> Self {
         Self {
@@ -890,7 +898,7 @@ impl std::hash::Hash for TypeRef {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedTypeRef {
     pub name: String,
     pub type_arguments: Vec<NamedTypeRef>,

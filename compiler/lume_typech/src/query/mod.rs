@@ -1,143 +1,9 @@
 mod diagnostics;
 
-use crate::{TyCheckCtx, *};
+use crate::TyCheckCtx;
 use error_snippet::Result;
-use lume_hir::{self, Identifier, Path};
 use lume_infer::query::Callable;
 use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum CallableCheckError {
-    /// The name of the callable does not match the expected name, but it
-    /// was similar enough to be considered a typo or a mistake.
-    NameMismatch,
-
-    /// The number of arguments provided does not match the expected number.
-    ArgumentCountMismatch,
-
-    /// The types of the arguments provided do not match the expected types.
-    ArgumentTypeMismatch(usize),
-
-    /// The number of type parameters provided does not match the expected number.
-    TypeParameterCountMismatch,
-
-    /// The types of the type arguments provided do not meet the expected constraints.
-    TypeParameterConstraintMismatch(usize),
-
-    /// The expression which attempted to call the expression is instanced, while the
-    /// method itself is statically declared.
-    InstancedCallOnStaticMethod,
-}
-
-impl std::fmt::Display for CallableCheckError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::NameMismatch => f.write_str("name mismatch"),
-            Self::ArgumentCountMismatch => f.write_str("argument count mismatch"),
-            Self::ArgumentTypeMismatch(_) => f.write_str("argument type mismatch"),
-            Self::TypeParameterConstraintMismatch(_) => f.write_str("type argument constraint mismatch"),
-            Self::TypeParameterCountMismatch => f.write_str("type parameter count mismatch"),
-            Self::InstancedCallOnStaticMethod => f.write_str("instanced call to static method"),
-        }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) enum CallableCheckResult {
-    /// The [`Callable`] is valid within the context and
-    /// is a suitable candiate for the given expression.
-    Success,
-
-    /// The [`Callable`] is invalid for one-or-more reasons, which
-    /// are defined within the variant.
-    Failure(Vec<CallableCheckError>),
-}
-
-#[derive(Clone, Debug)]
-pub(crate) struct CallableLookupSuggestion<'a> {
-    /// Defines the callable definition.
-    pub def: Callable<'a>,
-
-    /// Defines the reason for disqualification.
-    pub reason: CallableCheckError,
-}
-
-#[derive(Debug)]
-pub(crate) struct MethodLookupError<'a> {
-    /// Defines the name of the type on which the method was being looked up.
-    pub type_name: Path,
-
-    /// Defines the name of the method that was being looked up.
-    pub method_name: Identifier,
-
-    /// Defines a list of possible suggestions for the method lookup.
-    pub suggestions: Vec<CallableLookupSuggestion<'a>>,
-}
-
-impl MethodLookupError<'_> {
-    /// Compound the error and inner suggestions, if any, into a suitable error.
-    pub fn into_compound_err(self) -> error_snippet::Error {
-        let suggestions = self
-            .suggestions
-            .into_iter()
-            .map(|suggestion| {
-                let method_name = suggestion.def.name().clone();
-
-                diagnostics::SuggestedMethod {
-                    source: method_name.location,
-                    type_name: self.type_name.clone(),
-                    method_name: method_name.name,
-                    reason: suggestion.reason,
-                }
-                .into()
-            })
-            .collect::<Vec<error_snippet::Error>>();
-
-        diagnostics::MissingMethod {
-            source: self.method_name.location,
-            type_name: self.type_name,
-            method_name: self.method_name,
-            suggestions,
-        }
-        .into()
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct FunctionLookupError<'a> {
-    /// Defines the name of the function that was being looked up.
-    pub function_name: Path,
-
-    /// Defines a list of possible suggestions for the function lookup.
-    pub suggestions: Vec<CallableLookupSuggestion<'a>>,
-}
-
-impl FunctionLookupError<'_> {
-    /// Compound the error and inner suggestions, if any, into a suitable error.
-    pub fn into_compound_err(self) -> error_snippet::Error {
-        let suggestions = self
-            .suggestions
-            .into_iter()
-            .map(|suggestion| {
-                let function_name = suggestion.def.name().clone();
-
-                diagnostics::SuggestedFunction {
-                    source: function_name.location,
-                    function_name: function_name.name,
-                    reason: suggestion.reason,
-                }
-                .into()
-            })
-            .collect::<Vec<error_snippet::Error>>();
-
-        diagnostics::MissingFunction {
-            source: self.function_name.location,
-            function_name: self.function_name.name().clone(),
-            suggestions,
-        }
-        .into()
-    }
-}
 
 impl TyCheckCtx {
     /// Gets the expanded signature of the given [`Callable`].
@@ -162,11 +28,7 @@ impl TyCheckCtx {
     /// If the [`Method`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn check_method<'a>(
-        &self,
-        method: &'a Method,
-        expr: lume_hir::CallExpression,
-    ) -> Result<CallableCheckResult> {
+    pub(crate) fn check_method<'a>(&self, method: &'a Method, expr: lume_hir::CallExpression) -> Result<bool> {
         self.check_signature(Callable::Method(method), expr)
     }
 
@@ -176,33 +38,19 @@ impl TyCheckCtx {
     /// If the [`Function`] is not valid for the given expression, returns
     /// [`CallableCheckResult::Failure`] with one-or-more reasons.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn check_function<'a>(
-        &self,
-        function: &'a Function,
-        expr: &'a lume_hir::StaticCall,
-    ) -> Result<CallableCheckResult> {
+    pub(crate) fn check_function<'a>(&self, function: &'a Function, expr: &'a lume_hir::StaticCall) -> Result<bool> {
         self.check_signature(Callable::Function(function), lume_hir::CallExpression::Static(expr))
     }
 
     /// Checks whether the given invocation signature matches the signature of the
     /// corresponding callable.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    fn check_signature<'a>(
-        &self,
-        callable: Callable<'a>,
-        expr: lume_hir::CallExpression<'a>,
-    ) -> Result<CallableCheckResult> {
-        let mut failures = Vec::new();
-
+    fn check_signature<'a>(&self, callable: Callable<'a>, expr: lume_hir::CallExpression<'a>) -> Result<bool> {
         let narrow_signature = callable.signature();
         let is_instance_method = narrow_signature.is_instanced();
 
-        if let CallableCheckResult::Failure(err) =
-            self.check_type_params(narrow_signature.type_params, expr.type_arguments())?
-        {
-            failures.extend(err.iter());
-
-            return Ok(CallableCheckResult::Failure(failures));
+        if !self.check_type_params(expr, narrow_signature.type_params, expr.type_arguments())? {
+            return Ok(false);
         }
 
         let full_signature = self.signature_of(callable)?;
@@ -227,84 +75,110 @@ impl TyCheckCtx {
             }
             (lume_hir::CallExpression::Static(call), _) => &call.arguments,
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
-                failures.push(CallableCheckError::InstancedCallOnStaticMethod);
+                self.dcx().emit(
+                    diagnostics::InstanceCallOnStaticMethod {
+                        source: expr.location(),
+                        method_name: callable.name().clone(),
+                    }
+                    .into(),
+                );
 
-                &vec![]
+                return Ok(false);
             }
         };
 
-        if !failures.is_empty() {
-            return Ok(CallableCheckResult::Failure(failures));
-        }
-
-        if let CallableCheckResult::Failure(err) = self.check_params(&signature.params, arguments)? {
-            failures.extend(err.iter());
-
-            return Ok(CallableCheckResult::Failure(failures));
-        }
-
-        if failures.is_empty() {
-            Ok(CallableCheckResult::Success)
-        } else {
-            Ok(CallableCheckResult::Failure(failures))
-        }
+        self.check_params(expr, &signature.params, arguments)
     }
 
     /// Checks whether the given type arguments matches the signature of the given
     /// type parameters.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn check_type_params<'a>(
+    fn check_type_params<'a>(
         &self,
+        expr: lume_hir::CallExpression<'a>,
         type_params: &'a [lume_hir::TypeParameterId],
         type_args: &'a [lume_hir::Type],
-    ) -> Result<CallableCheckResult> {
-        let mut failures = Vec::new();
-
+    ) -> Result<bool> {
         // Verify that the amount of type arguments match the
         // expected number of type parameters.
         if type_params.len() != type_args.len() {
-            failures.push(CallableCheckError::TypeParameterCountMismatch);
+            self.dcx().emit(
+                diagnostics::TypeArgumentCountMismatch {
+                    source: expr.location(),
+                    expected: type_params.len(),
+                    actual: type_args.len(),
+                }
+                .into(),
+            );
 
-            return Ok(CallableCheckResult::Failure(failures));
+            return Ok(false);
         }
 
-        for ((idx, param_id), hir_arg) in type_params.iter().enumerate().zip(type_args.iter()) {
+        let mut success = true;
+
+        for (param_id, hir_arg) in type_params.iter().zip(type_args.iter()) {
             let param = self.tdb().type_parameter(*param_id).unwrap();
             let arg = self.mk_type_ref(hir_arg)?;
 
             for constraint in &param.constraints {
                 if !self.check_type_compatibility(&arg, constraint)? {
-                    failures.push(CallableCheckError::TypeParameterConstraintMismatch(idx));
+                    success = false;
+
+                    self.dcx().emit(
+                        diagnostics::TypeParameterConstraintUnsatisfied {
+                            source: arg.location,
+                            constraint_loc: constraint.location,
+                            param_name: param.name.clone(),
+                            type_name: self.new_named_type(&arg)?,
+                            constraint_name: self.new_named_type(constraint)?,
+                        }
+                        .into(),
+                    );
                 }
             }
         }
 
-        if failures.is_empty() {
-            Ok(CallableCheckResult::Success)
-        } else {
-            Ok(CallableCheckResult::Failure(failures))
-        }
+        Ok(success)
     }
 
     /// Checks whether the given arguments matches the signature of the given
     /// parameters.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn check_params<'a>(
+    fn check_params<'a>(
         &self,
+        expr: lume_hir::CallExpression<'a>,
         parameters: &'a lume_types::Parameters,
         arguments: &'a [lume_hir::Expression],
-    ) -> Result<CallableCheckResult> {
-        let mut failures = Vec::new();
-
+    ) -> Result<bool> {
         // Verify that the expected argument count is met, as defined
         // by the parameter definition.
         if (parameters.is_vararg() && parameters.len() - 1 > arguments.len())
             || (!parameters.is_vararg() && parameters.len() != arguments.len())
         {
-            failures.push(CallableCheckError::ArgumentCountMismatch);
+            if parameters.is_vararg() {
+                self.dcx().emit(
+                    diagnostics::VariableArgumentCountMismatch {
+                        source: expr.location(),
+                        expected: parameters.len(),
+                        actual: arguments.len(),
+                    }
+                    .into(),
+                );
+            } else {
+                self.dcx().emit(
+                    diagnostics::ArgumentCountMismatch {
+                        source: expr.location(),
+                        expected: parameters.len(),
+                        actual: arguments.len(),
+                    }
+                    .into(),
+                );
+            }
 
-            return Ok(CallableCheckResult::Failure(failures));
+            return Ok(false);
         }
+
+        let mut success = true;
 
         if parameters.is_vararg() {
             // If the parameter count is variable, expect at least
@@ -313,9 +187,16 @@ impl TyCheckCtx {
             // If a function/method takes N parameters + 1 vararg parameter,
             // we expect at least N arguments.
             if parameters.len() - 1 > arguments.len() {
-                failures.push(CallableCheckError::ArgumentCountMismatch);
+                self.dcx().emit(
+                    diagnostics::VariableArgumentCountMismatch {
+                        source: expr.location(),
+                        expected: parameters.len(),
+                        actual: arguments.len(),
+                    }
+                    .into(),
+                );
 
-                return Ok(CallableCheckResult::Failure(failures));
+                return Ok(false);
             }
 
             let fixed_param_count = parameters.len() - 1;
@@ -328,8 +209,9 @@ impl TyCheckCtx {
             for (param, arg) in fixed_params.iter().zip(fixed_args.iter()) {
                 let arg_type = self.type_of_expr(arg)?;
 
-                if !self.check_type_compatibility(&arg_type, &param.ty)? {
-                    failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
+                if let Err(err) = self.ensure_type_compatibility(&arg_type, &param.ty) {
+                    self.dcx().emit(err);
+                    success = false;
                 }
             }
 
@@ -338,17 +220,25 @@ impl TyCheckCtx {
             for arg in vararg_args {
                 let arg_type = self.type_of_expr(arg)?;
 
-                if !self.check_type_compatibility(&arg_type, &vararg_param.ty)? {
-                    failures.push(CallableCheckError::ArgumentTypeMismatch(vararg_param.idx));
+                if let Err(err) = self.ensure_type_compatibility(&arg_type, &vararg_param.ty) {
+                    self.dcx().emit(err);
+                    success = false;
                 }
             }
         } else {
             // If the parameter count is fixed, we need exactly
             // that amount of arguments.
             if parameters.len() != arguments.len() {
-                failures.push(CallableCheckError::ArgumentCountMismatch);
+                self.dcx().emit(
+                    diagnostics::ArgumentCountMismatch {
+                        source: expr.location(),
+                        expected: parameters.len(),
+                        actual: arguments.len(),
+                    }
+                    .into(),
+                );
 
-                return Ok(CallableCheckResult::Failure(failures));
+                return Ok(false);
             }
 
             // Verify that all the parameters are compatible with the arguments
@@ -356,17 +246,14 @@ impl TyCheckCtx {
             for (param, arg) in parameters.inner().iter().zip(arguments.iter()) {
                 let arg_type = self.type_of_expr(arg)?;
 
-                if !self.check_type_compatibility(&arg_type, &param.ty)? {
-                    failures.push(CallableCheckError::ArgumentTypeMismatch(param.idx));
+                if let Err(err) = self.ensure_type_compatibility(&arg_type, &param.ty) {
+                    self.dcx().emit(err);
+                    success = false;
                 }
             }
         }
 
-        if failures.is_empty() {
-            Ok(CallableCheckResult::Success)
-        } else {
-            Ok(CallableCheckResult::Failure(failures))
-        }
+        Ok(success)
     }
 
     /// Looks up all [`Method`]s and [`Function`]s and attempts to find one, which matches the
@@ -377,25 +264,17 @@ impl TyCheckCtx {
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
-        match &expr {
-            lume_hir::CallExpression::Instanced(call) => {
-                let callee_type = self.type_of(call.callee.id)?;
-                let method = self.lookup_methods(expr, &callee_type)?;
-
-                Ok(Callable::Method(method))
-            }
-            lume_hir::CallExpression::Intrinsic(call) => {
-                let callee_type = self.type_of(call.callee().id)?;
-                let method = self.lookup_methods(expr, &callee_type)?;
+        match expr {
+            lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
+                let method = self.lookup_methods(expr)?;
 
                 Ok(Callable::Method(method))
             }
             lume_hir::CallExpression::Static(call) => {
-                if let Some(callee_ty_name) = call.name.clone().parent()
-                    && callee_ty_name.is_type()
+                if let Some(callee_ty) = call.name.clone().parent()
+                    && callee_ty.is_type()
                 {
-                    let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
-                    let method = self.lookup_methods(expr, &callee_type)?;
+                    let method = self.lookup_methods(expr)?;
 
                     Ok(Callable::Method(method))
                 } else {
@@ -414,58 +293,14 @@ impl TyCheckCtx {
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_methods(
-        &self,
-        expr: lume_hir::CallExpression,
-        callee_type: &lume_types::TypeRef,
-    ) -> Result<&'_ Method> {
-        let method_name = expr.name();
-        let mut suggestions = Vec::new();
+    pub(crate) fn lookup_methods(&self, expr: lume_hir::CallExpression) -> Result<&'_ Method> {
+        let Callable::Method(probed_method) = self.probe_callable(expr)? else {
+            panic!("bug!: expected expression to yield a method, found function: {expr:#?}");
+        };
 
-        for method in self.lookup_methods_on(callee_type, method_name) {
-            if let CallableCheckResult::Failure(failures) = self.check_method(method, expr)? {
-                suggestions.push((CallReference::Method(method.id), failures));
+        self.check_method(probed_method, expr)?;
 
-                continue;
-            }
-
-            return Ok(method);
-        }
-
-        for suggestion in self.lookup_method_suggestions(callee_type, method_name) {
-            let failures = if let CallableCheckResult::Failure(failures) = self.check_method(suggestion, expr)? {
-                failures
-            } else {
-                vec![]
-            };
-
-            suggestions.push((CallReference::Method(suggestion.id), failures));
-        }
-
-        // Sort the suggestions, so the most plausible method is reported
-        // to the user.
-        self.sort_callable_suggestions(&mut suggestions);
-
-        let diagnostic_suggestions = suggestions
-            .into_iter()
-            .map(|(call, errors)| {
-                let CallReference::Method(method_id) = call else {
-                    panic!();
-                };
-
-                CallableLookupSuggestion {
-                    def: Callable::Method(self.tdb().method(method_id).unwrap()),
-                    reason: *errors.first().unwrap_or(&CallableCheckError::NameMismatch),
-                }
-            })
-            .collect::<Vec<_>>();
-
-        Err(MethodLookupError {
-            type_name: self.infer.type_ref_name(callee_type)?.clone(),
-            method_name: method_name.clone(),
-            suggestions: diagnostic_suggestions,
-        }
-        .into_compound_err())
+        Ok(probed_method)
     }
 
     /// Looks up all [`Function`]s and attempts to find one, which matches the
@@ -476,84 +311,13 @@ impl TyCheckCtx {
     /// which only match function name, see [`ThirBuildCtx::probe_functions()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
-        let function_name = &expr.name;
-        let mut suggestions = Vec::new();
+        let Callable::Function(probed_func) = self.probe_callable(lume_hir::CallExpression::Static(expr))? else {
+            panic!("bug!: expected expression to yield a function, found method: {expr:#?}");
+        };
 
-        for function in self.probe_functions(function_name) {
-            if let CallableCheckResult::Failure(failures) = self.check_function(function, expr)? {
-                suggestions.push((CallReference::Function(function.id), failures));
+        self.check_function(probed_func, expr)?;
 
-                continue;
-            }
-
-            return Ok(function);
-        }
-
-        for suggestion in self.lookup_function_suggestions(function_name) {
-            let failures = if let CallableCheckResult::Failure(failures) = self.check_function(suggestion, expr)? {
-                failures
-            } else {
-                vec![]
-            };
-
-            suggestions.push((CallReference::Function(suggestion.id), failures));
-        }
-
-        // Sort the suggestions, so the most plausible method is reported
-        // to the user.
-        self.sort_callable_suggestions(&mut suggestions);
-
-        let diagnostic_suggestions = suggestions
-            .into_iter()
-            .map(|(call, errors)| {
-                let CallReference::Function(function_id) = call else {
-                    panic!();
-                };
-
-                CallableLookupSuggestion {
-                    def: Callable::Function(self.tdb().function(function_id).unwrap()),
-                    reason: *errors.first().unwrap_or(&CallableCheckError::NameMismatch),
-                }
-            })
-            .collect::<Vec<_>>();
-
-        Err(FunctionLookupError {
-            function_name: function_name.clone(),
-            suggestions: diagnostic_suggestions,
-        }
-        .into_compound_err())
-    }
-
-    /// Sorts the given [`Callable`] suggestions after which [`Callable`] seems the most
-    /// "plausable", given the reasons for disqualification. The array is sorted
-    /// so the first lement is the most plausible [`Callable`] and the last element is
-    /// the least plausible.
-    #[allow(clippy::unused_self)]
-    fn sort_callable_suggestions(&self, suggestions: &mut Vec<(CallReference, Vec<CallableCheckError>)>) {
-        fn score_of_callable(_: CallReference, errors: &[CallableCheckError]) -> usize {
-            let mut score = 0;
-
-            for error in errors {
-                score += match error {
-                    CallableCheckError::NameMismatch => 0,
-                    CallableCheckError::ArgumentCountMismatch => 1,
-                    CallableCheckError::TypeParameterCountMismatch => 2,
-                    CallableCheckError::TypeParameterConstraintMismatch(_) => 3,
-                    CallableCheckError::InstancedCallOnStaticMethod => 4,
-                    CallableCheckError::ArgumentTypeMismatch(_) => 5,
-                };
-            }
-
-            score
-        }
-
-        // Sort the suggestions themselves
-        suggestions.sort_by(|a, b| score_of_callable(a.0, &a.1).cmp(&score_of_callable(b.0, &b.1)));
-
-        // And sort the errors, as well.
-        for (_, errors) in suggestions {
-            errors.sort();
-        }
+        Ok(probed_func)
     }
 
     /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the

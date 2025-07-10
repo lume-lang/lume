@@ -173,7 +173,7 @@ impl TyInferCtx {
     /// Returns the parent of the given HIR element, if any is found.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_parent_iter(&self, def: DefId) -> impl Iterator<Item = lume_hir::Def<'_>> {
-        self.hir_parent_id_iter(def).map(move |id| self.hir_expect_def(id))
+        self.hir_parent_id_iter(def).filter_map(move |id| self.hir_def(id))
     }
 
     /// Returns all the type parameters available for the [`lume_hir::Def`] with the given ID.

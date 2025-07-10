@@ -6,8 +6,8 @@ use lume_span::{Location, SourceFile};
 use lume_types::NamedTypeRef;
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no such method was found", code = "LM4113")]
-pub struct MissingMethod {
+#[diagnostic(message = "could not find method", code = "LM4113")]
+pub(crate) struct MissingMethod {
     #[label(source, "could not find method {method_name} on type {type_name}")]
     pub source: Location,
 
@@ -19,26 +19,19 @@ pub struct MissingMethod {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "similar method found",
-    code = "LM4118",
-    severity = Help)]
+#[diagnostic(message = "did you mean to call {method_name}?", severity = Help)]
 pub struct SuggestedMethod {
-    #[label(source, "found similar method {method_name} on type {type_name}")]
+    #[label(source, "found method with similar name")]
     pub source: Location,
 
     pub method_name: PathSegment,
-    pub type_name: NamedTypeRef,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no such function was found", code = "LM4113")]
+#[diagnostic(message = "could not find function", code = "LM4113")]
 pub struct MissingFunction {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("could not find function {function_name}")]
-    pub range: Range<usize>,
+    #[label(source, "could not find function {function_name}")]
+    pub source: Location,
 
     pub function_name: Identifier,
 
@@ -47,15 +40,12 @@ pub struct MissingFunction {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(
-    message = "similar function found",
-    code = "LM4118",
-    severity = Help)]
+#[diagnostic(message = "did you mean to call {function_name}?", severity = Help)]
 pub struct SuggestedFunction {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("found similar function {function_name}")]
+    #[label("found function with similar name")]
     pub range: Range<usize>,
 
     pub function_name: PathSegment,

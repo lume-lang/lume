@@ -135,7 +135,7 @@ impl TyInferCtx {
 
                 Ok(instantiated.ret_ty)
             }
-            lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e)),
+            lume_hir::ExpressionKind::Literal(e) => Ok(self.type_of_lit(e).with_location(expr.location)),
             lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs),
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee.id)?;
@@ -177,14 +177,14 @@ impl TyInferCtx {
                     })
                 })
             }
-            lume_hir::ExpressionKind::Void => Ok(TypeRef::void()),
+            lume_hir::ExpressionKind::Void => Ok(TypeRef::void().with_location(expr.location)),
         }
     }
 
     /// Attempts to get the type of a literal expression.
     #[cached_query]
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
-        match &lit.kind {
+        let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => match &k.kind {
                 lume_hir::IntKind::I8 => TypeRef::i8(),
                 lume_hir::IntKind::U8 => TypeRef::u8(),
@@ -201,7 +201,9 @@ impl TyInferCtx {
             },
             lume_hir::LiteralKind::String(_) => TypeRef::string(),
             lume_hir::LiteralKind::Boolean(_) => TypeRef::bool(),
-        }
+        };
+
+        ty.with_location(lit.location)
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
