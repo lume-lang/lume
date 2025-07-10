@@ -325,20 +325,21 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "error_snippet"
-version = "0.1.13"
+version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "008bc6d2442dd4025932af55b39732f582fb4ca9f2eb6baaa676fe90f46be396"
+checksum = "1f5124d1df0180b53c2cfd6056c99ac4a0c0867841a3fff02fdc7699bfe049ca"
 dependencies = [
  "error_snippet_derive",
+ "fxhash",
  "indexmap",
  "owo-colors",
 ]
 
 [[package]]
 name = "error_snippet_derive"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc51494a06adfe121c7d2b85171542b8f7c554e7010deec0f85d22f976fdcf50"
+checksum = "8910881899874fe71c4608c5eef0481ed3fc6eaf626ae95cd43a89b628e410f1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -870,6 +871,7 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "lume_span",
+ "owo-colors",
 ]
 
 [[package]]
@@ -1155,9 +1157,9 @@ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "owo-colors"
-version = "4.2.1"
+version = "4.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26995317201fa17f3656c36716aed4a7c81743a9634ac4c99c0eeda495db0cec"
+checksum = "48dd4f4a2c8405440fd0462561f0e5806bd0f77e86f51c761481bdd4018b545e"
 dependencies = [
  "supports-color 2.1.0",
  "supports-color 3.0.2",

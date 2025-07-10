@@ -9,6 +9,7 @@ lume_span = { path = "../lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+owo-colors = { workspace = true }
 
 [lints]
 workspace = true

@@ -11,7 +11,7 @@ use std::sync::{
 
 /// Defines the different options for outputting diagnostics,
 /// once they've been drained from the the diagnostic context ([`DiagCtx`]).
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum DiagOutputFormat {
     /// The output should be graphical, i.e. should be forwarded
     /// to the user, so errors and warnings are easy to understand and read.
@@ -26,6 +26,9 @@ pub enum DiagOutputFormat {
 /// The struct is only defined on [`DiagCtx`]-instances, and is only meant to
 /// be shared with handles created by them (via the [`DiagCtx::handle()`] and [`DiagCtx::with()`] methods).
 struct DiagCtxInner {
+    /// Defines whether the context should request the renderer to use colors.
+    use_colors: bool,
+
     /// The inner handler for diagnostics, which holds all the
     /// reporting diagnostics.
     handler: Box<dyn Handler>,
@@ -38,8 +41,16 @@ struct DiagCtxInner {
 impl DiagCtxInner {
     /// Creates a new [`DiagCtxInner`] instance using the given output format.
     fn new(fmt: DiagOutputFormat) -> Self {
+        let use_colors = fmt == DiagOutputFormat::Graphical;
+
         let renderer: Box<dyn Renderer + Send + Sync> = match fmt {
-            DiagOutputFormat::Graphical => Box::new(GraphicalRenderer::new()),
+            DiagOutputFormat::Graphical => {
+                let mut renderer = GraphicalRenderer::default();
+                renderer.use_colors = use_colors;
+                renderer.highlight_source = true;
+
+                Box::new(renderer)
+            }
             DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
         };
 
@@ -50,6 +61,7 @@ impl DiagCtxInner {
         handler.exit_on_error();
 
         DiagCtxInner {
+            use_colors,
             handler: Box::new(handler),
             tainted: AtomicBool::new(false),
         }
@@ -63,6 +75,7 @@ impl DiagCtxInner {
         let handler = BufferedDiagnosticHandler::with_renderer(capacity, Box::new(renderer));
 
         DiagCtxInner {
+            use_colors: false,
             handler: Box::new(handler),
             tainted: AtomicBool::new(false),
         }
@@ -72,11 +85,15 @@ impl DiagCtxInner {
     ///
     /// For more information, read the documentation on [`DiagCtxHandle::drain()`].
     fn drain(&mut self) -> Result<()> {
-        let encountered_errors = match self.handler.drain() {
-            Ok(()) => return Ok(()),
+        let encountered_errors = owo_colors::with_override(self.use_colors, || match self.handler.drain() {
+            Ok(()) => 0,
             Err(error_snippet::DrainError::Fmt(e)) => panic!("{e:?}"),
             Err(error_snippet::DrainError::CompoundError(cnt)) => cnt,
-        };
+        });
+
+        if encountered_errors == 0 {
+            return Ok(());
+        }
 
         // Mark the context as tainted.
         self.tainted.store(true, Ordering::Release);
