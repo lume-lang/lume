@@ -27,10 +27,10 @@ pub(crate) struct LumeCli {
     #[clap(subcommand)]
     pub subcommand: LumeSubcommands,
 
-    #[arg(long = "trace", help = "Enables tracing of the compiler")]
+    #[arg(long = "trace", help = "Enables tracing of the compiler", global = true)]
     pub trace: bool,
 
-    #[arg(value_enum, long = "tracer", help = "Defines which tracer to use")]
+    #[arg(value_enum, long = "tracer", help = "Defines which tracer to use", global = true)]
     pub tracer: Option<tracing::Tracer>,
 }
 
