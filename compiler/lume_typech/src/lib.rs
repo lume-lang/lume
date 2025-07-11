@@ -6,8 +6,8 @@ use lume_errors::DiagCtx;
 use lume_infer::TyInferCtx;
 use lume_types::TypeDatabaseContext;
 
-mod check;
-pub(crate) mod query;
+pub mod check;
+pub mod query;
 #[cfg(test)]
 mod tests;
 

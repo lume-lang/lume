@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_query::cached_query;
-use lume_span::{DefId, ExpressionId, ItemId};
+use lume_span::{DefId, ExpressionId, ItemId, StatementId};
 
 use crate::TyInferCtx;
 
@@ -174,6 +174,28 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_parent_iter(&self, def: DefId) -> impl Iterator<Item = lume_hir::Def<'_>> {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_def(id))
+    }
+
+    /// Attempts to find the closes loop from the given definition.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_loop_target(&self, source: DefId) -> Option<&lume_hir::Statement> {
+        for parent in self.hir_parent_iter(source) {
+            let lume_hir::Def::Statement(stmt) = parent else {
+                continue;
+            };
+
+            if stmt.is_loop() {
+                return Some(stmt);
+            }
+        }
+
+        None
+    }
+
+    /// Attempts to find the closes loop from the given statement.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_loop_target_stmt(&self, id: StatementId) -> Option<&lume_hir::Statement> {
+        self.hir_loop_target(DefId::Statement(id))
     }
 
     /// Returns all the type parameters available for the [`lume_hir::Def`] with the given ID.

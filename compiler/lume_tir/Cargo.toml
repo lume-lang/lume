@@ -1,0 +1,15 @@
+[package]
+name = "lume_tir"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+indexmap = { version = "^2.9" }
+
+lume_session = { path = "../lume_session" }
+lume_span = { path = "../lume_span" }
+lume_types = { path = "../lume_types" }
+
+[lints]
+workspace = true

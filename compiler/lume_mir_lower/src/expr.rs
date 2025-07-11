@@ -15,7 +15,6 @@ impl FunctionTransformer<'_> {
             lume_hir::ExpressionKind::Member(expr) => self.member(expr),
             lume_hir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_hir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
-            lume_hir::ExpressionKind::Void => unreachable!(),
         }
     }
 

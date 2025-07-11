@@ -1,23 +1,19 @@
 [package]
-name = "lume_mir_lower"
+name = "lume_tir_lower"
 version.workspace = true
-edition = "2024"
+edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+error_snippet = { workspace = true }
+indexmap = { version = "^2.9" }
+
 lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
-lume_infer = { path = "../lume_infer" }
-lume_mir = { path = "../lume_mir" }
-lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 lume_tir = { path = "../lume_tir" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
-
-error_snippet = { workspace = true }
-error_snippet_derive = { workspace = true }
-indexmap = { version = "^2.9" }
 
 [lints]
 workspace = true
