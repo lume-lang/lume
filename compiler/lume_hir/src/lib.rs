@@ -247,6 +247,7 @@ impl Path {
 
     pub fn with_root(base: Path, name: PathSegment) -> Self {
         let mut root = base.root;
+        root.reserve(1);
         root.push(base.name);
 
         Self {
@@ -1477,7 +1478,7 @@ pub struct TypeParameter {
     pub name: Identifier,
     pub type_id: Option<TypeId>,
     pub type_param_id: Option<TypeParameterId>,
-    pub constraints: Vec<Box<Type>>,
+    pub constraints: Vec<Type>,
     pub location: Location,
 }
 

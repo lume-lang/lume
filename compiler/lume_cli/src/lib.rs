@@ -3,7 +3,6 @@
 pub(crate) mod commands;
 pub(crate) mod error;
 
-#[cfg(debug_assertions)]
 mod tracing;
 
 use std::env;
@@ -43,7 +42,6 @@ pub enum LumeSubcommands {
 pub fn lume_cli_entry() {
     let matches = LumeCli::parse();
 
-    #[cfg(debug_assertions)]
     if matches.trace {
         tracing::register_global_tracer(tracing::Tracer::default());
     } else if let Some(val) = matches.tracer {

@@ -32,12 +32,10 @@ impl LowerModule<'_> {
 
         self.self_type = Some(name.clone());
 
-        let properties = expr
-            .properties
-            .into_iter()
-            .enumerate()
-            .map(|(index, m)| self.def_property(index, m))
-            .collect::<Result<Vec<hir::Property>>>()?;
+        let mut properties = Vec::with_capacity(expr.properties.len());
+        for (idx, property) in expr.properties.into_iter().enumerate() {
+            properties.push(self.def_property(idx, property)?);
+        }
 
         self.self_type = None;
 
@@ -90,12 +88,10 @@ impl LowerModule<'_> {
         self.current_item = self.impl_id(&target);
         self.self_type = Some(target.name.clone());
 
-        let methods = expr
-            .methods
-            .into_iter()
-            .enumerate()
-            .map(|(idx, m)| self.def_impl_method(idx, m))
-            .collect::<Result<Vec<hir::MethodDefinition>>>()?;
+        let mut methods = Vec::with_capacity(expr.methods.len());
+        for (idx, method) in expr.methods.into_iter().enumerate() {
+            methods.push(self.def_impl_method(idx, method)?);
+        }
 
         self.self_type = None;
 
@@ -149,12 +145,10 @@ impl LowerModule<'_> {
         self.current_item = self.item_id(&name);
         self.self_type = Some(name.clone());
 
-        let methods = expr
-            .methods
-            .into_iter()
-            .enumerate()
-            .map(|(idx, m)| self.def_trait_methods(idx, m))
-            .collect::<Result<Vec<hir::TraitMethodDefinition>>>()?;
+        let mut methods = Vec::with_capacity(expr.methods.len());
+        for (idx, method) in expr.methods.into_iter().enumerate() {
+            methods.push(self.def_trait_methods(idx, method)?);
+        }
 
         self.self_type = None;
 
@@ -206,11 +200,10 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
         let id = self.item_id(&name);
 
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.def_enum_case(c))
-            .collect::<Result<Vec<hir::EnumDefinitionCase>>>()?;
+        let mut cases = Vec::with_capacity(expr.cases.len());
+        for case in expr.cases {
+            cases.push(self.def_enum_case(case)?);
+        }
 
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
             hir::EnumDefinition {
@@ -229,11 +222,10 @@ impl LowerModule<'_> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
 
-        let parameters = expr
-            .parameters
-            .into_iter()
-            .map(|c| self.type_ref(*c))
-            .collect::<Result<Vec<hir::Type>>>()?;
+        let mut parameters = Vec::with_capacity(expr.parameters.len());
+        for param in expr.parameters {
+            parameters.push(self.type_ref(*param)?);
+        }
 
         let symbol = hir::EnumDefinitionCase {
             name,
@@ -278,47 +270,46 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
         let param_len = params.len();
+        let mut parameters = Vec::with_capacity(param_len);
 
-        params
-            .into_iter()
-            .enumerate()
-            .map(|(index, param)| {
-                // Make sure that `self` is the first parameter.
-                //
-                // While it doesn't change must in the view of the compiler,
-                // using `self` as the first parameter is a best practice, since it's
-                // so much easier to see whether a method is an instance method or a static method.
-                if index > 0 && param.param_type.is_self() {
-                    return Err(SelfNotFirstParameter {
-                        source: self.file.clone(),
-                        range: param.location.0.clone(),
-                        ty: String::from(SELF_TYPE_NAME),
-                    }
-                    .into());
+        for (index, param) in params.into_iter().enumerate() {
+            // Make sure that `self` is the first parameter.
+            //
+            // While it doesn't change must in the view of the compiler,
+            // using `self` as the first parameter is a best practice, since it's
+            // so much easier to see whether a method is an instance method or a static method.
+            if index > 0 && param.param_type.is_self() {
+                return Err(SelfNotFirstParameter {
+                    source: self.file.clone(),
+                    range: param.location.0.clone(),
+                    ty: String::from(SELF_TYPE_NAME),
                 }
+                .into());
+            }
 
-                // Using `self` outside of an object context is not allowed, such as functions.
-                if !allow_self && param.param_type.is_self() {
-                    return Err(SelfOutsideObjectContext {
-                        source: self.file.clone(),
-                        range: param.location.0.clone(),
-                        ty: String::from(SELF_TYPE_NAME),
-                    }
-                    .into());
+            // Using `self` outside of an object context is not allowed, such as functions.
+            if !allow_self && param.param_type.is_self() {
+                return Err(SelfOutsideObjectContext {
+                    source: self.file.clone(),
+                    range: param.location.0.clone(),
+                    ty: String::from(SELF_TYPE_NAME),
                 }
+                .into());
+            }
 
-                // Make sure that any vararg parameters exist only on the last position.
-                if param.vararg && index + 1 < param_len {
-                    return Err(VarargNotLastParameter {
-                        source: self.file.clone(),
-                        range: param.location.0.clone(),
-                    }
-                    .into());
+            // Make sure that any vararg parameters exist only on the last position.
+            if param.vararg && index + 1 < param_len {
+                return Err(VarargNotLastParameter {
+                    source: self.file.clone(),
+                    range: param.location.0.clone(),
                 }
+                .into());
+            }
 
-                self.parameter(index, param)
-            })
-            .collect::<Result<Vec<_>>>()
+            parameters.push(self.parameter(index, param)?);
+        }
+
+        Ok(parameters)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -345,7 +336,12 @@ impl LowerModule<'_> {
         let target = self.type_ref(*expr.target)?;
 
         self.self_type = Some(name.name.clone());
-        let methods = self.def_use_methods(expr.methods)?;
+
+        let mut methods = Vec::with_capacity(expr.methods.len());
+        for (idx, method) in expr.methods.into_iter().enumerate() {
+            methods.push(self.def_use_method(idx, method)?);
+        }
+
         let location = self.location(expr.location);
 
         self.self_type = None;
@@ -362,18 +358,6 @@ impl LowerModule<'_> {
             type_parameters,
             location,
         })))
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_use_methods(
-        &mut self,
-        methods: Vec<ast::TraitMethodImplementation>,
-    ) -> Result<Vec<hir::TraitMethodImplementation>> {
-        methods
-            .into_iter()
-            .enumerate()
-            .map(|(idx, m)| self.def_use_method(idx, m))
-            .collect::<Result<Vec<_>>>()
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
