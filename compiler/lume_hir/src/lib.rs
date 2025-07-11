@@ -7,25 +7,25 @@ pub mod symbols;
 pub const SELF_TYPE_NAME: &str = "self";
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub u64);
+pub struct FunctionId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeId(pub u64);
+pub struct TypeId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ImplId(pub u64);
+pub struct ImplId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UseId(pub u64);
+pub struct UseId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct PropertyId(pub u64);
+pub struct PropertyId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MethodId(pub u64);
+pub struct MethodId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeParameterId(pub u64);
+pub struct TypeParameterId(pub usize);
 
 #[derive(Debug, Clone, Eq)]
 pub struct Identifier {
@@ -902,6 +902,14 @@ impl Statement {
             StatementKind::Variable(_) | StatementKind::Break(_) | StatementKind::Expression(_) => false,
         }
     }
+
+    /// Determines whether the given statement is a loop statement.
+    pub fn is_loop(&self) -> bool {
+        matches!(
+            &self.kind,
+            StatementKind::InfiniteLoop(_) | StatementKind::IteratorLoop(_) | StatementKind::PredicateLoop(_)
+        )
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1032,15 +1040,6 @@ impl Expression {
         self
     }
 
-    /// Creates a new [`Expression`] with a [`LiteralKind::Void`] value.
-    pub fn void() -> Self {
-        Self {
-            id: ExpressionId::default(),
-            location: Location::empty(),
-            kind: ExpressionKind::Void,
-        }
-    }
-
     /// Creates a new [`Expression`] with the given [`LiteralKind`] value.
     pub fn lit(kind: LiteralKind) -> Self {
         Self {
@@ -1144,7 +1143,6 @@ pub enum ExpressionKind {
     Member(Box<Member>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
-    Void,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

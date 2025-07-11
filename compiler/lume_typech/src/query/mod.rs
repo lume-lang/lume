@@ -2,7 +2,7 @@ pub(crate) mod diagnostics;
 
 use crate::TyCheckCtx;
 use error_snippet::Result;
-use lume_infer::query::Callable;
+pub use lume_infer::query::Callable;
 use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
 
 impl TyCheckCtx {
@@ -263,7 +263,7 @@ impl TyCheckCtx {
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
+    pub fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
                 let method = self.lookup_methods(expr)?;
@@ -293,7 +293,7 @@ impl TyCheckCtx {
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_methods(&self, expr: lume_hir::CallExpression) -> Result<&'_ Method> {
+    pub fn lookup_methods(&self, expr: lume_hir::CallExpression) -> Result<&'_ Method> {
         let Callable::Method(probed_method) = self.probe_callable(expr)? else {
             panic!("bug!: expected expression to yield a method, found function: {expr:#?}");
         };
@@ -310,7 +310,7 @@ impl TyCheckCtx {
     /// context, including visibility, arguments and type arguments. To look up functions
     /// which only match function name, see [`ThirBuildCtx::probe_functions()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
+    pub fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
         let Callable::Function(probed_func) = self.probe_callable(lume_hir::CallExpression::Static(expr))? else {
             panic!("bug!: expected expression to yield a function, found method: {expr:#?}");
         };
@@ -330,7 +330,7 @@ impl TyCheckCtx {
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For a static callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
+    pub fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Instanced(call))
     }
 
@@ -344,7 +344,7 @@ impl TyCheckCtx {
     /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For an instance callable
     /// lookup, see [`ThirBuildCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
+    pub fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Static(call))
     }
 

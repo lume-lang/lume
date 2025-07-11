@@ -811,6 +811,8 @@ dependencies = [
  "lume_mir_lower",
  "lume_session",
  "lume_span",
+ "lume_tir",
+ "lume_tir_lower",
  "lume_typech",
  "lume_types",
  "tracing",
@@ -936,6 +938,7 @@ dependencies = [
  "lume_mir",
  "lume_session",
  "lume_span",
+ "lume_tir",
  "lume_typech",
  "lume_types",
 ]
@@ -1000,6 +1003,30 @@ dependencies = [
  "error_snippet_derive",
  "fxhash",
  "indexmap",
+]
+
+[[package]]
+name = "lume_tir"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "lume_session",
+ "lume_span",
+ "lume_types",
+]
+
+[[package]]
+name = "lume_tir_lower"
+version = "0.1.0"
+dependencies = [
+ "error_snippet",
+ "indexmap",
+ "lume_errors",
+ "lume_hir",
+ "lume_span",
+ "lume_tir",
+ "lume_typech",
+ "lume_types",
 ]
 
 [[package]]

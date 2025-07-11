@@ -197,7 +197,7 @@ impl Parameters {
 ///
 /// While the type infers that it's only applicable for functions, this structure
 /// is also used for methods.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
     pub type_params: &'a [TypeParameterId],
@@ -898,6 +898,26 @@ impl std::hash::Hash for TypeRef {
     }
 }
 
+impl std::fmt::Display for TypeRef {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.instance_of)?;
+
+        if !self.type_arguments.is_empty() {
+            write!(
+                f,
+                "<{}>",
+                self.type_arguments
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NamedTypeRef {
     pub name: String,
@@ -982,14 +1002,14 @@ impl TypeDatabaseContext {
     ///
     /// Returns `None` if the [`Type`] is not found.
     pub fn type_(&self, id: TypeId) -> Option<&Type> {
-        self.types.get(id.0 as usize)
+        self.types.get(id.0)
     }
 
     /// Gets the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
     pub fn type_mut(&mut self, id: TypeId) -> Option<&mut Type> {
-        self.types.get_mut(id.0 as usize)
+        self.types.get_mut(id.0)
     }
 
     /// Gets the [`TypeTransport`] of the [`Type`] with the given ID, if any.
@@ -1073,14 +1093,14 @@ impl TypeDatabaseContext {
     ///
     /// Returns `None` if the [`Property`] is not found.
     pub fn property(&self, id: PropertyId) -> Option<&Property> {
-        self.properties.get(id.0 as usize)
+        self.properties.get(id.0)
     }
 
     /// Gets the [`Property`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Property`] is not found.
     pub fn property_mut(&mut self, id: PropertyId) -> Option<&mut Property> {
-        self.properties.get_mut(id.0 as usize)
+        self.properties.get_mut(id.0)
     }
 
     /// Gets an iterator which iterates all [`Method`]-instances within
@@ -1111,28 +1131,28 @@ impl TypeDatabaseContext {
     ///
     /// Returns `None` if the [`Use`] is not found.
     pub fn use_(&self, id: UseId) -> Option<&Use> {
-        self.uses.get(id.0 as usize)
+        self.uses.get(id.0)
     }
 
     /// Gets the [`Use`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Use`] is not found.
     pub fn use_mut(&mut self, id: UseId) -> Option<&mut Use> {
-        self.uses.get_mut(id.0 as usize)
+        self.uses.get_mut(id.0)
     }
 
     /// Gets the [`Method`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Method`] is not found.
     pub fn method(&self, id: MethodId) -> Option<&Method> {
-        self.methods.get(id.0 as usize)
+        self.methods.get(id.0)
     }
 
     /// Gets the [`Method`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Method`] is not found.
     pub fn method_mut(&mut self, id: MethodId) -> Option<&mut Method> {
-        self.methods.get_mut(id.0 as usize)
+        self.methods.get_mut(id.0)
     }
 
     /// Gets an iterator which iterates all [`Function`]-instances within
@@ -1151,42 +1171,42 @@ impl TypeDatabaseContext {
     ///
     /// Returns `None` if the [`Function`] is not found.
     pub fn function(&self, id: FunctionId) -> Option<&Function> {
-        self.functions.get(id.0 as usize)
+        self.functions.get(id.0)
     }
 
     /// Gets the [`Function`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Function`] is not found.
     pub fn function_mut(&mut self, id: FunctionId) -> Option<&mut Function> {
-        self.functions.get_mut(id.0 as usize)
+        self.functions.get_mut(id.0)
     }
 
     /// Gets the [`TypeParameter`] with the given ID, if any.
     ///
     /// Returns `None` if the [`TypeParameter`] is not found.
     pub fn type_parameter(&self, id: TypeParameterId) -> Option<&TypeParameter> {
-        self.type_parameters.get(id.0 as usize)
+        self.type_parameters.get(id.0)
     }
 
     /// Gets the [`TypeParameter`] with the given ID, if any.
     ///
     /// Returns `None` if the [`TypeParameter`] is not found.
     pub fn type_parameter_mut(&mut self, id: TypeParameterId) -> Option<&mut TypeParameter> {
-        self.type_parameters.get_mut(id.0 as usize)
+        self.type_parameters.get_mut(id.0)
     }
 
     /// Gets the [`Implementation`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Implementation`] is not found.
     pub fn implementation(&self, id: ImplId) -> Option<&Implementation> {
-        self.implementations.get(id.0 as usize)
+        self.implementations.get(id.0)
     }
 
     /// Gets the [`Implementation`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Implementation`] is not found.
     pub fn implementation_mut(&mut self, id: ImplId) -> Option<&mut Implementation> {
-        self.implementations.get_mut(id.0 as usize)
+        self.implementations.get_mut(id.0)
     }
 
     /// Gets an iterator which iterates all [`Item`]-instances where
@@ -1230,7 +1250,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
     pub fn func_alloc(&mut self, hir: ItemId, name: Path, visibility: Visibility) -> FunctionId {
-        let id = FunctionId(self.functions.len() as u64);
+        let id = FunctionId(self.functions.len());
 
         let func = Function {
             id,
@@ -1249,7 +1269,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
     pub fn type_alloc(&mut self, name: Path, kind: TypeKind) -> TypeId {
-        let id = TypeId(self.types.len() as u64);
+        let id = TypeId(self.types.len());
         let ty = Type { id, kind, name };
 
         self.types.push(ty);
@@ -1259,7 +1279,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Implementation`] with the target.
     #[inline]
     pub fn impl_alloc(&mut self, target: Path) -> ImplId {
-        let id = ImplId(self.implementations.len() as u64);
+        let id = ImplId(self.implementations.len());
 
         let implementation = Implementation {
             id,
@@ -1274,7 +1294,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Use`] with the target.
     #[inline]
     pub fn use_alloc(&mut self) -> UseId {
-        let id = UseId(self.uses.len() as u64);
+        let id = UseId(self.uses.len());
 
         self.uses.push(Use {
             id,
@@ -1300,7 +1320,7 @@ impl TypeDatabaseContext {
         name: String,
         visibility: Visibility,
     ) -> Result<PropertyId> {
-        let id = PropertyId(self.properties.len() as u64);
+        let id = PropertyId(self.properties.len());
         let prop = Property {
             id,
             index,
@@ -1323,7 +1343,7 @@ impl TypeDatabaseContext {
     /// is not a type.
     #[inline]
     pub fn method_alloc(&mut self, hir: DefId, owner: TypeRef, name: Path, visibility: Visibility) -> Result<MethodId> {
-        let id = MethodId(self.methods.len() as u64);
+        let id = MethodId(self.methods.len());
 
         let method = Method {
             id,
@@ -1344,7 +1364,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`TypeParameter`] with the given name and kind.
     #[inline]
     pub fn type_param_alloc(&mut self, name: String) -> TypeParameterId {
-        let id = TypeParameterId(self.type_parameters.len() as u64);
+        let id = TypeParameterId(self.type_parameters.len());
         let param = TypeParameter {
             id,
             name,

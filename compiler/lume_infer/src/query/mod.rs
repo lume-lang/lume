@@ -185,7 +185,6 @@ impl TyInferCtx {
                     })
                 })?
             }
-            lume_hir::ExpressionKind::Void => TypeRef::void(),
         };
 
         Result::Ok(ty.with_location(expr.location))

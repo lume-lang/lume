@@ -6,7 +6,7 @@ use crate::TyCheckCtx;
 impl TyCheckCtx {
     /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Trait`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub(crate) fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
+    pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
             TypeKind::User(UserType::Trait(_)) => Ok(true),
             _ => Ok(false),
@@ -15,7 +15,7 @@ impl TyCheckCtx {
 
     /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub(crate) fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
+    pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
             TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
             _ => Ok(None),
@@ -24,7 +24,7 @@ impl TyCheckCtx {
 
     /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Void`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub(crate) fn is_void(&self, ty: &TypeRef) -> Result<bool> {
+    pub fn is_void(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
             TypeKind::Void => Ok(true),
             _ => Ok(false),
@@ -33,7 +33,7 @@ impl TyCheckCtx {
 
     /// Determines whether the given [`TypeRef`], `ty`, implements the given trait, `trait_id`.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub(crate) fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
+    pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
         for use_ in self.tdb().uses_on(ty) {
             if &use_.trait_ == trait_id {
                 // Make sure the given "trait" is actually a trait.

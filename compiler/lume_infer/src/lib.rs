@@ -217,6 +217,36 @@ impl TyInferCtx {
         }))
     }
 
+    /// Attempts to find a [`TypeRef`] with the given name, if any.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if one-or-more typed path segments include invalid references
+    /// to type IDs.
+    pub fn find_type_ref_generic<T: AsRef<TypeParameter> + Debug>(
+        &self,
+        name: &Path,
+        ty_params: &[T],
+    ) -> Result<Option<TypeRef>> {
+        let Some(ty) = self.tdb().find_type(name) else {
+            return Ok(None);
+        };
+
+        let location = name.location;
+
+        let args = name
+            .type_arguments()
+            .iter()
+            .map(|arg| self.mk_type_ref_generic(arg, ty_params))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(Some(TypeRef {
+            instance_of: ty.id,
+            type_arguments: args,
+            location,
+        }))
+    }
+
     /// Returns an error indicating that the given type was not found.
     #[allow(clippy::unused_self)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
