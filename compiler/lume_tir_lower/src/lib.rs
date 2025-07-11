@@ -4,7 +4,7 @@ pub(crate) mod stmt;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_span::Internable;
+use lume_span::{Internable, hash_id};
 use lume_tir::{FunctionId, FunctionKind, TypedIR, VariableId, VariableSource};
 use lume_typech::TyCheckCtx;
 
@@ -52,7 +52,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            let id = FunctionId(FunctionKind::Method, method.id.0);
+            let id = Self::func_id_of(FunctionKind::Method, method.id.0);
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(id, method.hir, &method.name, method.sig())?;
@@ -61,7 +61,7 @@ impl<'tcx> Lower<'tcx> {
         }
 
         for func in self.tcx.tdb().functions() {
-            let id = FunctionId(FunctionKind::Function, func.id.0);
+            let id = Self::func_id_of(FunctionKind::Function, func.id.0);
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(id, lume_span::DefId::Item(func.hir), &func.name, func.sig())?;
@@ -74,13 +74,13 @@ impl<'tcx> Lower<'tcx> {
 
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            let id = FunctionId(FunctionKind::Method, method.id.0);
+            let id = Self::func_id_of(FunctionKind::Method, method.id.0);
 
             self.lower_block(id, method.hir)?;
         }
 
         for func in self.tcx.tdb().functions() {
-            let id = FunctionId(FunctionKind::Function, func.id.0);
+            let id = Self::func_id_of(FunctionKind::Function, func.id.0);
 
             self.lower_block(id, lume_span::DefId::Item(func.hir))?;
         }
@@ -100,6 +100,10 @@ impl<'tcx> Lower<'tcx> {
         self.ir.functions.get_mut(&id).unwrap().block = block;
 
         Ok(())
+    }
+
+    fn func_id_of(kind: FunctionKind, id: usize) -> FunctionId {
+        FunctionId(hash_id(&(kind, id)))
     }
 }
 

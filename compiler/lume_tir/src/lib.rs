@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use lume_span::{ExpressionId, Interned, StatementId};
-use lume_types::TypeRef;
+use lume_types::{Property, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
@@ -126,10 +126,8 @@ pub struct Path {
 
 impl std::fmt::Display for Path {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if f.sign_plus() {
-            for segment in &self.root {
-                write!(f, "{segment}::")?;
-            }
+        for segment in &self.root {
+            write!(f, "{segment}::")?;
         }
 
         write!(f, "{}", self.name)
@@ -143,7 +141,7 @@ pub enum FunctionKind {
 }
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub FunctionKind, pub usize);
+pub struct FunctionId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct VariableId(pub usize);
@@ -261,6 +259,11 @@ impl If {
     pub fn is_returning(&self) -> bool {
         self.cases.iter().all(|branch| branch.block.is_returning())
     }
+
+    /// Gets the `else` branch, if any is defined
+    pub fn else_branch(&self) -> Option<&Conditional> {
+        self.cases.iter().find(|case| case.condition.is_none())
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -311,7 +314,13 @@ impl PredicateLoop {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
-pub enum Expression {
+pub struct Expression {
+    pub kind: ExpressionKind,
+    pub ty: TypeRef,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub enum ExpressionKind {
     Assignment(Box<Assignment>),
     Binary(Box<Binary>),
     Cast(Box<Cast>),
@@ -439,27 +448,26 @@ pub enum LiteralKind {
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum IntLiteral {
-    I8(i8),
-    U8(u8),
-    I16(i16),
-    U16(u16),
-    I32(i32),
-    U32(u32),
+    I8(i64),
+    U8(i64),
+    I16(i64),
+    U16(i64),
+    I32(i64),
+    U32(i64),
     I64(i64),
-    U64(u64),
+    U64(i64),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FloatLiteral {
-    F32(f32),
+    F32(f64),
     F64(f64),
 }
 
 impl std::hash::Hash for FloatLiteral {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
-            Self::F32(val) => val.to_bits().hash(state),
-            Self::F64(val) => val.to_bits().hash(state),
+            Self::F32(val) | Self::F64(val) => val.to_bits().hash(state),
         }
     }
 }
@@ -482,6 +490,7 @@ pub struct Logical {
 pub struct Member {
     pub id: ExpressionId,
     pub callee: Expression,
+    pub property: Property,
     pub name: Interned<String>,
 }
 

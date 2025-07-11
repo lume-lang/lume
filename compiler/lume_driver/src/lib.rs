@@ -6,6 +6,7 @@ use lume_errors::{DiagCtx, DiagCtxHandle};
 use lume_infer::TyInferCtx;
 use lume_session::{GlobalCtx, MirPrinting, Options, Package, Session};
 use lume_span::SourceMap;
+use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
 
@@ -119,9 +120,9 @@ impl<'a> Compiler<'a> {
         };
 
         let sources = compiler.parse()?;
-        let thir_ctx = compiler.type_check(sources)?;
+        let (tcx, typed_ir) = compiler.type_check(sources)?;
 
-        compiler.codegen(thir_ctx)?;
+        compiler.codegen(&tcx, typed_ir)?;
         compiler.link()?;
 
         Ok(())
@@ -143,7 +144,7 @@ impl<'a> Compiler<'a> {
 
     /// Type checks all the given source files.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<TyCheckCtx> {
+    fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<(TyCheckCtx, TypedIR)> {
         let tcx = TyCtx::new(self.gcx.clone());
 
         // Defines the types of all nodes within the HIR maps.
@@ -158,13 +159,15 @@ impl<'a> Compiler<'a> {
             println!("{:#?}", tccx.tdb());
         }
 
-        Ok(tccx)
+        let typed_ir = lume_tir_lower::Lower::build(&tccx)?;
+
+        Ok((tccx, typed_ir))
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn codegen(&mut self, thir: TyCheckCtx) -> Result<()> {
-        let mir = lume_mir_lower::ModuleTransformer::transform(&thir);
+    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<()> {
+        let mir = lume_mir_lower::ModuleTransformer::transform(tcx, &tir);
 
         match self.gcx.session.options.print_mir {
             MirPrinting::None => {}

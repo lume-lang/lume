@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::IndexMap;
-use lume_infer::query::CallReference;
+use lume_span::Interned;
 
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
@@ -15,15 +15,6 @@ impl ModuleMap {
     /// Creates a new empty [`ModuleMap`].
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Returns the next available function ID.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given ID is invalid or out of bounds.
-    pub fn new_function_id(&self, id: CallReference) -> FunctionId {
-        FunctionId(id)
     }
 
     /// Returns a reference to the function with the given ID.
@@ -43,17 +34,6 @@ impl ModuleMap {
     pub fn function_mut(&mut self, id: FunctionId) -> &mut Function {
         self.functions.get_mut(&id).unwrap()
     }
-
-    /// Returns a reference to the function with the given name.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the given name is invalid or missing.
-    pub fn find_function(&self, name: CallReference) -> &Function {
-        let id = self.new_function_id(name);
-
-        self.function(id)
-    }
 }
 
 impl std::fmt::Display for ModuleMap {
@@ -68,18 +48,15 @@ impl std::fmt::Display for ModuleMap {
 
 /// Unique identifier for a function within a module.
 ///
-/// [`FunctionId`]s refer to the specific HIR function which
+/// [`FunctionId`]s refer to the specific MIR function which
 /// is being referred to, so it can be used to optimize call
 /// site expressions.
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct FunctionId(CallReference);
+pub struct FunctionId(pub usize);
 
 impl std::fmt::Display for FunctionId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.0 {
-            CallReference::Function(id) => write!(f, "F{:?}", id.0),
-            CallReference::Method(id) => write!(f, "F{:?}", id.0),
-        }
+        write!(f, "F{:?}", self.0)
     }
 }
 
@@ -733,7 +710,7 @@ pub enum Operand {
     Float { bits: u8, value: f64 },
 
     /// Represents a literal string value.
-    String { value: String },
+    String { value: Interned<String> },
 
     /// Represents a loaded value from an existing register.
     Load { id: RegisterId },

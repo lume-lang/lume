@@ -1,24 +1,25 @@
+use lume_mir::FunctionId;
+
 use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_> {
-    pub(super) fn expression(&mut self, expr: &lume_hir::Expression) -> lume_mir::Operand {
+    pub(super) fn expression(&mut self, expr: &lume_tir::Expression) -> lume_mir::Operand {
         match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(expr) => self.assignment(expr),
-            lume_hir::ExpressionKind::Binary(expr) => self.binary(expr),
-            lume_hir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
-            lume_hir::ExpressionKind::Construct(expr) => self.construct(expr),
-            lume_hir::ExpressionKind::StaticCall(expr) => self.static_call(expr),
-            lume_hir::ExpressionKind::InstanceCall(expr) => self.instance_call(expr),
-            lume_hir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
-            lume_hir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
-            lume_hir::ExpressionKind::Logical(expr) => self.logical(expr),
-            lume_hir::ExpressionKind::Member(expr) => self.member(expr),
-            lume_hir::ExpressionKind::Variable(var) => self.variable_reference(var),
-            lume_hir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
+            lume_tir::ExpressionKind::Assignment(expr) => self.assignment(expr),
+            lume_tir::ExpressionKind::Binary(expr) => self.binary(expr),
+            lume_tir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
+            lume_tir::ExpressionKind::Construct(expr) => self.construct(expr),
+            lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
+            lume_tir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
+            lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
+            lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
+            lume_tir::ExpressionKind::Member(expr) => self.member(expr),
+            lume_tir::ExpressionKind::Variable(var) => self.variable_reference(var),
+            lume_tir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
         }
     }
 
-    fn assignment(&mut self, expr: &lume_hir::Assignment) -> lume_mir::Operand {
+    fn assignment(&mut self, expr: &lume_tir::Assignment) -> lume_mir::Operand {
         let lume_mir::Operand::Reference { id } = self.expression(&expr.target) else {
             todo!()
         };
@@ -29,21 +30,21 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Load { id }
     }
 
-    fn binary(&mut self, expr: &lume_hir::Binary) -> lume_mir::Operand {
+    fn binary(&mut self, expr: &lume_tir::Binary) -> lume_mir::Operand {
         let lhs = self.expression(&expr.lhs);
         let rhs = self.expression(&expr.rhs);
         let args = vec![lhs, rhs];
 
-        let expr_ty = self.tcx().type_of_expr(&expr.lhs).unwrap();
+        let expr_ty = &expr.lhs.ty;
 
         let name = if expr_ty.is_integer() {
             let bits = expr_ty.bitwidth();
             let signed = expr_ty.signed();
 
-            match expr.op.kind {
-                lume_hir::BinaryOperatorKind::And => lume_mir::Intrinsic::IntAnd { bits, signed },
-                lume_hir::BinaryOperatorKind::Or => lume_mir::Intrinsic::IntOr { bits, signed },
-                lume_hir::BinaryOperatorKind::Xor => lume_mir::Intrinsic::IntXor { bits, signed },
+            match expr.op {
+                lume_tir::BinaryOperator::And => lume_mir::Intrinsic::IntAnd { bits, signed },
+                lume_tir::BinaryOperator::Or => lume_mir::Intrinsic::IntOr { bits, signed },
+                lume_tir::BinaryOperator::Xor => lume_mir::Intrinsic::IntXor { bits, signed },
             }
         } else {
             unreachable!()
@@ -55,12 +56,11 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Load { id: reg }
     }
 
-    fn construct(&mut self, expr: &lume_hir::Construct) -> lume_mir::Operand {
-        let constructed_type = self.tcx().find_type_ref(&expr.path).unwrap().unwrap();
+    fn construct(&mut self, expr: &lume_tir::Construct) -> lume_mir::Operand {
         let props = self
             .tcx()
             .tdb()
-            .find_properties(constructed_type.instance_of)
+            .find_properties(expr.ty.instance_of)
             .collect::<Vec<_>>();
 
         let prop_types = props
@@ -82,28 +82,20 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Reference { id: reg }
     }
 
-    fn static_call(&mut self, expr: &lume_hir::StaticCall) -> lume_mir::Operand {
-        let callable = self.tcx().probe_callable_static(expr).unwrap();
-        let func_id = self.mir.new_function_id(callable.to_call_reference());
-        let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
+    fn call_expression(&mut self, expr: &lume_tir::Call) -> lume_mir::Operand {
+        let func_id = FunctionId(expr.function.0);
+
+        let args = expr
+            .arguments
+            .iter()
+            .map(|arg| self.expression(arg))
+            .collect::<Vec<_>>();
 
         self.call(func_id, args)
     }
 
-    fn instance_call(&mut self, expr: &lume_hir::InstanceCall) -> lume_mir::Operand {
-        let callable = self.tcx().probe_callable_instance(expr).unwrap();
-        let func_id = self.mir.new_function_id(callable.to_call_reference());
-
-        let mut args = vec![self.expression(&expr.callee)];
-        for expr_arg in &expr.arguments {
-            args.push(self.expression(expr_arg));
-        }
-
-        self.call(func_id, args)
-    }
-
-    fn intrinsic_call(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_mir::Operand {
-        let name = self.intrinsic_of(expr);
+    fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
+        let name = Self::intrinsic_of(&expr.kind);
         let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
 
         let decl = lume_mir::Declaration::Intrinsic { name, args };
@@ -112,68 +104,88 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Load { id: reg }
     }
 
-    fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_mir::Intrinsic {
-        let callee_ty = self.tcx().type_of_expr(expr.callee()).unwrap();
-
-        if callee_ty.is_integer() {
-            let bits = callee_ty.bitwidth();
-            let signed = callee_ty.signed();
-
-            match expr.name.name().as_str() {
-                "==" => lume_mir::Intrinsic::IntEq { bits, signed },
-                "!=" => lume_mir::Intrinsic::IntNe { bits, signed },
-                ">" => lume_mir::Intrinsic::IntGt { bits, signed },
-                ">=" => lume_mir::Intrinsic::IntGe { bits, signed },
-                "<" => lume_mir::Intrinsic::IntLt { bits, signed },
-                "<=" => lume_mir::Intrinsic::IntLe { bits, signed },
-                "+" => lume_mir::Intrinsic::IntAdd { bits, signed },
-                "-" => lume_mir::Intrinsic::IntSub { bits, signed },
-                "*" => lume_mir::Intrinsic::IntMul { bits, signed },
-                "/" => lume_mir::Intrinsic::IntDiv { bits, signed },
-                _ => unreachable!(),
-            }
-        } else if callee_ty.is_float() {
-            let bits = match callee_ty {
-                ty if ty.is_f32() => 32,
-                ty if ty.is_f64() => 64,
-                _ => unreachable!(),
-            };
-
-            match expr.name.name().as_str() {
-                "==" => lume_mir::Intrinsic::FloatEq { bits },
-                "!=" => lume_mir::Intrinsic::FloatNe { bits },
-                ">" => lume_mir::Intrinsic::FloatGt { bits },
-                ">=" => lume_mir::Intrinsic::FloatGe { bits },
-                "<" => lume_mir::Intrinsic::FloatLt { bits },
-                "<=" => lume_mir::Intrinsic::FloatLe { bits },
-                "+" => lume_mir::Intrinsic::FloatAdd { bits },
-                "-" => lume_mir::Intrinsic::FloatSub { bits },
-                "*" => lume_mir::Intrinsic::FloatMul { bits },
-                "/" => lume_mir::Intrinsic::FloatDiv { bits },
-                _ => unreachable!(),
-            }
-        } else if callee_ty.is_bool() {
-            match expr.name.name().as_str() {
-                "==" => lume_mir::Intrinsic::BooleanEq,
-                "!=" => lume_mir::Intrinsic::BooleanNe,
-                _ => unreachable!(),
-            }
-        } else {
-            unreachable!()
+    fn intrinsic_of(expr: &lume_tir::IntrinsicKind) -> lume_mir::Intrinsic {
+        match expr {
+            lume_tir::IntrinsicKind::FloatEq { bits } => lume_mir::Intrinsic::FloatEq { bits: *bits },
+            lume_tir::IntrinsicKind::FloatNe { bits } => lume_mir::Intrinsic::FloatNe { bits: *bits },
+            lume_tir::IntrinsicKind::FloatGe { bits } => lume_mir::Intrinsic::FloatGe { bits: *bits },
+            lume_tir::IntrinsicKind::FloatGt { bits } => lume_mir::Intrinsic::FloatGt { bits: *bits },
+            lume_tir::IntrinsicKind::FloatLe { bits } => lume_mir::Intrinsic::FloatLe { bits: *bits },
+            lume_tir::IntrinsicKind::FloatLt { bits } => lume_mir::Intrinsic::FloatLt { bits: *bits },
+            lume_tir::IntrinsicKind::FloatAdd { bits } => lume_mir::Intrinsic::FloatAdd { bits: *bits },
+            lume_tir::IntrinsicKind::FloatSub { bits } => lume_mir::Intrinsic::FloatSub { bits: *bits },
+            lume_tir::IntrinsicKind::FloatMul { bits } => lume_mir::Intrinsic::FloatMul { bits: *bits },
+            lume_tir::IntrinsicKind::FloatDiv { bits } => lume_mir::Intrinsic::FloatDiv { bits: *bits },
+            lume_tir::IntrinsicKind::IntEq { bits, signed } => lume_mir::Intrinsic::IntEq {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntNe { bits, signed } => lume_mir::Intrinsic::IntNe {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntGe { bits, signed } => lume_mir::Intrinsic::IntGe {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntGt { bits, signed } => lume_mir::Intrinsic::IntGt {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntLe { bits, signed } => lume_mir::Intrinsic::IntLe {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntLt { bits, signed } => lume_mir::Intrinsic::IntLt {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntAdd { bits, signed } => lume_mir::Intrinsic::IntAdd {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntSub { bits, signed } => lume_mir::Intrinsic::IntSub {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntMul { bits, signed } => lume_mir::Intrinsic::IntMul {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntDiv { bits, signed } => lume_mir::Intrinsic::IntDiv {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntAnd { bits, signed } => lume_mir::Intrinsic::IntAnd {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntOr { bits, signed } => lume_mir::Intrinsic::IntOr {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::IntXor { bits, signed } => lume_mir::Intrinsic::IntXor {
+                bits: *bits,
+                signed: *signed,
+            },
+            lume_tir::IntrinsicKind::BooleanEq => lume_mir::Intrinsic::BooleanEq,
+            lume_tir::IntrinsicKind::BooleanNe => lume_mir::Intrinsic::BooleanNe,
+            lume_tir::IntrinsicKind::BooleanAnd => lume_mir::Intrinsic::BooleanAnd,
+            lume_tir::IntrinsicKind::BooleanOr => lume_mir::Intrinsic::BooleanOr,
         }
     }
 
-    fn logical(&mut self, expr: &lume_hir::Logical) -> lume_mir::Operand {
+    fn logical(&mut self, expr: &lume_tir::Logical) -> lume_mir::Operand {
         let lhs = self.expression(&expr.lhs);
         let rhs = self.expression(&expr.rhs);
         let args = vec![lhs, rhs];
 
-        let expr_ty = self.tcx().type_of_expr(&expr.lhs).unwrap();
+        let expr_ty = &expr.lhs.ty;
 
         let name = if expr_ty.is_bool() {
-            match expr.op.kind {
-                lume_hir::LogicalOperatorKind::And => lume_mir::Intrinsic::BooleanAnd,
-                lume_hir::LogicalOperatorKind::Or => lume_mir::Intrinsic::BooleanOr,
+            match expr.op {
+                lume_tir::LogicalOperator::And => lume_mir::Intrinsic::BooleanAnd,
+                lume_tir::LogicalOperator::Or => lume_mir::Intrinsic::BooleanOr,
             }
         } else {
             unreachable!()
@@ -185,18 +197,11 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Load { id: reg }
     }
 
-    fn member(&mut self, expr: &lume_hir::Member) -> lume_mir::Operand {
-        let hir_callee = self.tcx().type_of_expr(&expr.callee).unwrap();
-        let hir_property = self
-            .tcx()
-            .tdb()
-            .find_property(hir_callee.instance_of, &expr.name)
-            .unwrap();
-
-        let property_idx = hir_property.index;
-
+    fn member(&mut self, expr: &lume_tir::Member) -> lume_mir::Operand {
         let target_val = self.expression(&expr.callee);
         let target_reg = self.load_operand(&target_val);
+
+        let property_idx = expr.property.index;
 
         lume_mir::Operand::LoadField {
             target: target_reg,
@@ -204,48 +209,42 @@ impl FunctionTransformer<'_> {
         }
     }
 
-    fn variable_reference(&mut self, expr: &lume_hir::Variable) -> lume_mir::Operand {
-        let id = match &expr.reference {
-            lume_hir::VariableSource::Parameter(id) => lume_mir::RegisterId::param(id.index),
-            lume_hir::VariableSource::Variable(id) => *self.variables.get(&id.id).unwrap(),
+    fn variable_reference(&mut self, expr: &lume_tir::VariableReference) -> lume_mir::Operand {
+        let id = match &expr.source {
+            lume_tir::VariableSource::Parameter => lume_mir::RegisterId::param(expr.reference.0),
+            lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 
         lume_mir::Operand::Load { id }
     }
 
     #[expect(clippy::unused_self)]
-    fn literal(&self, expr: &lume_hir::LiteralKind) -> lume_mir::Operand {
+    fn literal(&self, expr: &lume_tir::LiteralKind) -> lume_mir::Operand {
         match expr {
-            lume_hir::LiteralKind::Boolean(val) => lume_mir::Operand::Boolean { value: val.value },
-            lume_hir::LiteralKind::Int(val) => {
-                let (bits, signed) = match val.kind {
-                    lume_hir::IntKind::I8 => (8, true),
-                    lume_hir::IntKind::I16 => (16, true),
-                    lume_hir::IntKind::I32 => (32, true),
-                    lume_hir::IntKind::I64 => (64, true),
-                    lume_hir::IntKind::U8 => (8, false),
-                    lume_hir::IntKind::U16 => (16, false),
-                    lume_hir::IntKind::U32 => (32, false),
-                    lume_hir::IntKind::U64 => (64, false),
+            lume_tir::LiteralKind::Boolean(val) => lume_mir::Operand::Boolean { value: *val },
+            lume_tir::LiteralKind::Int(val) => {
+                let (bits, signed, value) = match val {
+                    lume_tir::IntLiteral::I8(val) => (8, true, *val),
+                    lume_tir::IntLiteral::I16(val) => (16, true, *val),
+                    lume_tir::IntLiteral::I32(val) => (32, true, *val),
+                    lume_tir::IntLiteral::I64(val) => (64, true, *val),
+                    lume_tir::IntLiteral::U8(val) => (8, false, *val),
+                    lume_tir::IntLiteral::U16(val) => (16, false, *val),
+                    lume_tir::IntLiteral::U32(val) => (32, false, *val),
+                    lume_tir::IntLiteral::U64(val) => (64, false, *val),
                 };
 
-                lume_mir::Operand::Integer {
-                    value: val.value,
-                    bits,
-                    signed,
-                }
+                lume_mir::Operand::Integer { value, bits, signed }
             }
-            lume_hir::LiteralKind::Float(val) => {
-                let bits = match val.kind {
-                    lume_hir::FloatKind::F32 => 32,
-                    lume_hir::FloatKind::F64 => 64,
+            lume_tir::LiteralKind::Float(val) => {
+                let (bits, value) = match val {
+                    lume_tir::FloatLiteral::F32(val) => (32, *val),
+                    lume_tir::FloatLiteral::F64(val) => (64, *val),
                 };
 
-                lume_mir::Operand::Float { value: val.value, bits }
+                lume_mir::Operand::Float { value, bits }
             }
-            lume_hir::LiteralKind::String(val) => lume_mir::Operand::String {
-                value: val.value.clone(),
-            },
+            lume_tir::LiteralKind::String(val) => lume_mir::Operand::String { value: *val },
         }
     }
 
