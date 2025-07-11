@@ -446,12 +446,19 @@ pub struct Lexer {
 
     /// Defines the current position in the source.
     position: usize,
+
+    /// Defines the total length of the source code.
+    length: usize,
 }
 
 impl Lexer {
     /// Creates a new lexer instance.
     pub fn new(source: Arc<SourceFile>) -> Self {
-        Lexer { source, position: 0 }
+        Lexer {
+            length: source.content.len(),
+            source,
+            position: 0,
+        }
     }
 
     #[inline]
@@ -465,7 +472,7 @@ impl Lexer {
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn current_char(&self) -> Option<char> {
-        self.source.content.chars().nth(self.position)
+        self.source.content.as_bytes().get(self.position).map(|c| *c as char)
     }
 
     /// Tries to get the character at the current cursor position.
@@ -474,7 +481,7 @@ impl Lexer {
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn current_char_or_eof(&self) -> char {
-        self.source.content.chars().nth(self.position).unwrap_or('\0')
+        self.current_char().unwrap_or('\0')
     }
 
     /// Tries to get the character which is at the current cursor position, offset by `offset`.
@@ -726,13 +733,8 @@ impl Lexer {
     /// Parses a symbol token at the current cursor position.
     #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
     fn symbol(&mut self) -> Result<Token> {
-        let slice = self
-            .source
-            .content
-            .chars()
-            .skip(self.position)
-            .take(3)
-            .collect::<String>();
+        let max_len = (self.position + 3).min(self.length);
+        let slice = &self.source.content[self.position..max_len];
 
         let chars: Vec<char> = slice.chars().collect();
         let (kind, len) = match self.symbol_value(&chars) {

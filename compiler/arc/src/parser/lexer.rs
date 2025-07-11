@@ -319,13 +319,15 @@ impl Lexer {
     /// Tries to get the character at the given cursor position.
     ///
     /// Returns `None` if the cursor is at the end of the source.
+    #[inline]
     fn at(&self, pos: usize) -> Option<char> {
-        self.source.content.chars().nth(pos)
+        self.source.content.as_bytes().get(pos).map(|c| *c as char)
     }
 
     /// Tries to get the character at the current cursor position.
     ///
     /// Returns `None` if the cursor is at the end of the source.
+    #[inline]
     fn current_char(&self) -> Option<char> {
         self.at(self.position)
     }
@@ -335,6 +337,7 @@ impl Lexer {
     /// # Errors
     ///
     /// Returns `Err` if the cursor is at the end of the source.
+    #[inline]
     fn current_char_or_eof(&self) -> Result<char> {
         self.current_char().ok_or_else(|| {
             #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
@@ -347,6 +350,7 @@ impl Lexer {
     }
 
     /// Advances the cursor position of the lexer to the next line.
+    #[inline]
     fn skip(&mut self) {
         self.position += 1;
     }
@@ -356,6 +360,7 @@ impl Lexer {
     /// # Errors
     ///
     /// Returns `Err` if the cursor is at the end of the source.
+    #[inline]
     fn consume(&mut self) -> Result<char> {
         let c = self.current_char_or_eof()?;
 
