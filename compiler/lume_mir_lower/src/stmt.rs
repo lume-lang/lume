@@ -1,33 +1,31 @@
 use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_> {
-    pub(super) fn block(&mut self, block: &lume_hir::Block) {
+    pub(super) fn block(&mut self, block: &lume_tir::Block) {
         for stmt in &block.statements {
             self.statement(stmt);
         }
     }
 
-    pub(super) fn statement(&mut self, stmt: &lume_hir::Statement) {
-        match &stmt.kind {
-            lume_hir::StatementKind::Variable(decl) => self.declare_variable(decl),
-            lume_hir::StatementKind::Break(_) => self.break_loop(),
-            lume_hir::StatementKind::Continue(_) => self.continue_loop(),
-            lume_hir::StatementKind::Return(ret) => self.return_value(ret),
-            lume_hir::StatementKind::If(cond) => self.if_condition(cond),
-            lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_loop(stmt),
-            lume_hir::StatementKind::IteratorLoop(_) => todo!("mir: iterator loop"),
-            lume_hir::StatementKind::PredicateLoop(_) => todo!("mir: predicate loop"),
-            lume_hir::StatementKind::Expression(expr) => {
+    pub(super) fn statement(&mut self, stmt: &lume_tir::Statement) {
+        match stmt {
+            lume_tir::Statement::Variable(decl) => self.declare_variable(decl),
+            lume_tir::Statement::Break(_) => self.break_loop(),
+            lume_tir::Statement::Continue(_) => self.continue_loop(),
+            lume_tir::Statement::Return(ret) => self.return_value(ret),
+            lume_tir::Statement::If(cond) => self.if_condition(cond),
+            lume_tir::Statement::InfiniteLoop(stmt) => self.infinite_loop(stmt),
+            lume_tir::Statement::IteratorLoop(_) => todo!("mir: iterator loop"),
+            lume_tir::Statement::PredicateLoop(_) => todo!("mir: predicate loop"),
+            lume_tir::Statement::Expression(expr) => {
                 self.expression(expr);
             }
         }
     }
 
-    fn declare_variable(&mut self, stmt: &lume_hir::VariableDeclaration) {
+    fn declare_variable(&mut self, stmt: &lume_tir::VariableDeclaration) {
         let value = self.expression(&stmt.value);
-
-        let hir_type = self.tcx().type_of_expr(&stmt.value).unwrap();
-        let is_ref_ty = self.tcx().tdb().is_reference_type(hir_type.instance_of).unwrap();
+        let is_ref_ty = self.tcx().tdb().is_reference_type(stmt.value.ty.instance_of).unwrap();
 
         let register = if is_ref_ty {
             match value {
@@ -39,7 +37,7 @@ impl FunctionTransformer<'_> {
             self.declare_value(value)
         };
 
-        self.variables.insert(stmt.id, register);
+        self.variables.insert(stmt.var, register);
     }
 
     fn break_loop(&mut self) {
@@ -54,13 +52,13 @@ impl FunctionTransformer<'_> {
         self.func.current_block_mut().branch(body);
     }
 
-    fn return_value(&mut self, stmt: &lume_hir::Return) {
+    fn return_value(&mut self, stmt: &lume_tir::Return) {
         let value = stmt.value.clone().map(|val| self.expression(&val));
 
         self.func.current_block_mut().return_any(value);
     }
 
-    fn if_condition(&mut self, stmt: &lume_hir::If) {
+    fn if_condition(&mut self, stmt: &lume_tir::If) {
         let merge_block = if stmt.is_returning() {
             None
         } else {
@@ -106,12 +104,12 @@ impl FunctionTransformer<'_> {
 
     fn build_conditional_graph(
         &mut self,
-        expr: &lume_hir::Expression,
+        expr: &lume_tir::Expression,
         then_block: lume_mir::BasicBlockId,
         else_block: lume_mir::BasicBlockId,
     ) {
-        if let lume_hir::ExpressionKind::Logical(comp_expr) = &expr.kind {
-            match comp_expr.op.kind {
+        if let lume_tir::ExpressionKind::Logical(comp_expr) = &expr.kind {
+            match comp_expr.op {
                 // Build graph for logical AND expressions
                 //
                 // For example, given an expression such as `x < 10 && x > 5`, the graph
@@ -126,7 +124,7 @@ impl FunctionTransformer<'_> {
                 //       false   true
                 //
                 // where `BB0` is the entry block and `BB1` is an intermediary block.
-                lume_hir::LogicalOperatorKind::And => {
+                lume_tir::LogicalOperator::And => {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
@@ -160,7 +158,7 @@ impl FunctionTransformer<'_> {
                 //       true     false
                 //
                 // where `BB0` is the entry block and `BB1` is an intermediary block.
-                lume_hir::LogicalOperatorKind::Or => {
+                lume_tir::LogicalOperator::Or => {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
@@ -190,7 +188,7 @@ impl FunctionTransformer<'_> {
         }
     }
 
-    fn infinite_loop(&mut self, stmt: &lume_hir::InfiniteLoop) {
+    fn infinite_loop(&mut self, stmt: &lume_tir::InfiniteLoop) {
         let body_block = self.func.new_block();
 
         let merge_block = if stmt.is_returning() {

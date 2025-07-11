@@ -273,7 +273,7 @@ impl Function {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Property {
     pub id: PropertyId,
     pub index: usize,

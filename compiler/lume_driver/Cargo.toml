@@ -15,6 +15,8 @@ lume_mir = { path = "../lume_mir" }
 lume_mir_lower = { path = "../lume_mir_lower" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
+lume_tir = { path = "../lume_tir" }
+lume_tir_lower = { path = "../lume_tir_lower" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
 

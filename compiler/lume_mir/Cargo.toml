@@ -5,15 +5,11 @@ edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
+indexmap = { version = "^2.9" }
+
 lume_errors = { path = "../lume_errors" }
-lume_hir = { path = "../lume_hir" }
-lume_infer = { path = "../lume_infer" }
-lume_macros = { path = "../lume_macros" }
-lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 lume_types = { path = "../lume_types" }
-
-indexmap = { version = "^2.9" }
 
 [lints]
 workspace = true

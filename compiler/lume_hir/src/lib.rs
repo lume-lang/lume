@@ -577,7 +577,7 @@ impl ExternalSymbol {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Visibility {
     // Order matters here, since `Ord` and `PartialOrd` determines
     // the order of enums by the order of their variants!
