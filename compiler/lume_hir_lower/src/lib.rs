@@ -327,7 +327,11 @@ impl<'a> LowerModule<'a> {
             //     File::from_path("foo.txt");
             // ```
             else if path.name.name().name == *import {
-                return Ok(Some(symbol.clone()));
+                return Ok(Some(Path {
+                    root: symbol.root.clone(),
+                    name: self.path_segment(path.name.clone())?,
+                    location: self.location(path.location.clone()),
+                }));
             }
         }
 
