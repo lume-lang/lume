@@ -665,9 +665,9 @@ impl TyInferCtx {
         let parent = DefId::Item(struct_def.id);
 
         for property in &struct_def.properties {
-            if let Some(default) = &property.default_value {
-                let _ = self.ancestry.try_insert(property.id, parent);
+            let _ = self.ancestry.try_insert(property.id, parent);
 
+            if let Some(default) = &property.default_value {
                 self.define_expr_scope(default, property.id)?;
             }
         }
@@ -679,9 +679,9 @@ impl TyInferCtx {
         let parent = DefId::Item(trait_def.id);
 
         for method in &trait_def.methods {
-            if let Some(block) = &method.block {
-                let _ = self.ancestry.try_insert(method.id, parent);
+            let _ = self.ancestry.try_insert(method.id, parent);
 
+            if let Some(block) = &method.block {
                 self.define_block_scope(block, method.id)?;
             }
         }
@@ -693,9 +693,9 @@ impl TyInferCtx {
         let parent = DefId::Item(implementation.id);
 
         for method in &implementation.methods {
-            if let Some(block) = &method.block {
-                let _ = self.ancestry.try_insert(method.id, parent);
+            let _ = self.ancestry.try_insert(method.id, parent);
 
+            if let Some(block) = &method.block {
                 self.define_block_scope(block, method.id)?;
             }
         }
