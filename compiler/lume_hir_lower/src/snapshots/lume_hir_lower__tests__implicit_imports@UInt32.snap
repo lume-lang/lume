@@ -48,12 +48,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "UInt32",
-                                location: <internal>:0:0,
+                                location: <internal>:12:18,
                             },
                             type_arguments: [],
-                            location: <internal>:0:0,
+                            location: <internal>:12:18,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:12:18,
                     },
                     location: <internal>:12:18,
                 },

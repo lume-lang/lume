@@ -34,7 +34,7 @@ Map {
                 },
                 return_type: Type {
                     id: ItemId(
-                        15735424279370630411,
+                        16107097090408334998,
                     ),
                     name: Path {
                         root: [
@@ -48,12 +48,38 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "RangeInclusive",
-                                location: <internal>:0:0,
+                                location: <internal>:12:26,
                             },
-                            type_arguments: [],
-                            location: <internal>:0:0,
+                            type_arguments: [
+                                Type {
+                                    id: ItemId(
+                                        6143724420395906933,
+                                    ),
+                                    name: Path {
+                                        root: [
+                                            Namespace {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: <internal>:0:0,
+                                                },
+                                            },
+                                        ],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Int32",
+                                                location: <internal>:27:32,
+                                            },
+                                            type_arguments: [],
+                                            location: <internal>:27:32,
+                                        },
+                                        location: <internal>:27:32,
+                                    },
+                                    location: <internal>:27:32,
+                                },
+                            ],
+                            location: <internal>:12:33,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:12:33,
                     },
                     location: <internal>:12:33,
                 },

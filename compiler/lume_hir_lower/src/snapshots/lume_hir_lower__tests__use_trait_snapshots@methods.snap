@@ -49,12 +49,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Int32",
-                                location: <internal>:0:0,
+                                location: <internal>:25:30,
                             },
                             type_arguments: [],
-                            location: <internal>:0:0,
+                            location: <internal>:25:30,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:25:30,
                     },
                     location: <internal>:25:30,
                 },
@@ -97,12 +97,12 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "String",
-                                        location: <internal>:0:0,
+                                        location: <internal>:71:77,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:0:0,
+                                    location: <internal>:71:77,
                                 },
-                                location: <internal>:0:0,
+                                location: <internal>:71:77,
                             },
                             location: <internal>:71:77,
                         },
@@ -149,12 +149,12 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "Int32",
-                                        location: <internal>:0:0,
+                                        location: <internal>:117:122,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:0:0,
+                                    location: <internal>:117:122,
                                 },
-                                location: <internal>:0:0,
+                                location: <internal>:117:122,
                             },
                             location: <internal>:117:122,
                         },

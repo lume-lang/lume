@@ -49,12 +49,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Int32",
-                                location: <internal>:0:0,
+                                location: <internal>:24:29,
                             },
                             type_arguments: [],
-                            location: <internal>:0:0,
+                            location: <internal>:24:29,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:24:29,
                     },
                     location: <internal>:24:29,
                 },
@@ -100,12 +100,12 @@ Map {
                                         name: Type {
                                             name: Identifier {
                                                 name: "Int32",
-                                                location: <internal>:0:0,
+                                                location: <internal>:66:71,
                                             },
                                             type_arguments: [],
-                                            location: <internal>:0:0,
+                                            location: <internal>:66:71,
                                         },
-                                        location: <internal>:0:0,
+                                        location: <internal>:66:71,
                                     },
                                     location: <internal>:66:71,
                                 },
@@ -132,12 +132,12 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "Int32",
-                                        location: <internal>:0:0,
+                                        location: <internal>:76:81,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:0:0,
+                                    location: <internal>:76:81,
                                 },
-                                location: <internal>:0:0,
+                                location: <internal>:76:81,
                             },
                             location: <internal>:76:81,
                         },

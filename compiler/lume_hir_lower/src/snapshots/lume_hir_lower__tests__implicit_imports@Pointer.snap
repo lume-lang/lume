@@ -48,12 +48,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Pointer",
-                                location: <internal>:0:0,
+                                location: <internal>:12:19,
                             },
                             type_arguments: [],
-                            location: <internal>:0:0,
+                            location: <internal>:12:19,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:12:19,
                     },
                     location: <internal>:12:19,
                 },

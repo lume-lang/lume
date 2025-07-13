@@ -82,12 +82,12 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "Int32",
-                                        location: <internal>:0:0,
+                                        location: <internal>:55:60,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:0:0,
+                                    location: <internal>:55:60,
                                 },
-                                location: <internal>:0:0,
+                                location: <internal>:55:60,
                             },
                             location: <internal>:55:60,
                         },

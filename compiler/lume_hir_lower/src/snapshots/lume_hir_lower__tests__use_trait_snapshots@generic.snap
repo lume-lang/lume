@@ -43,12 +43,12 @@ Map {
                                         name: Type {
                                             name: Identifier {
                                                 name: "Int32",
-                                                location: <internal>:0:0,
+                                                location: <internal>:21:26,
                                             },
                                             type_arguments: [],
-                                            location: <internal>:0:0,
+                                            location: <internal>:21:26,
                                         },
-                                        location: <internal>:0:0,
+                                        location: <internal>:21:26,
                                     },
                                     location: <internal>:21:26,
                                 },
@@ -75,12 +75,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Int32",
-                                location: <internal>:0:0,
+                                location: <internal>:31:36,
                             },
                             type_arguments: [],
-                            location: <internal>:0:0,
+                            location: <internal>:31:36,
                         },
-                        location: <internal>:0:0,
+                        location: <internal>:31:36,
                     },
                     location: <internal>:31:36,
                 },
@@ -126,12 +126,12 @@ Map {
                                         name: Type {
                                             name: Identifier {
                                                 name: "Int32",
-                                                location: <internal>:0:0,
+                                                location: <internal>:73:78,
                                             },
                                             type_arguments: [],
-                                            location: <internal>:0:0,
+                                            location: <internal>:73:78,
                                         },
-                                        location: <internal>:0:0,
+                                        location: <internal>:73:78,
                                     },
                                     location: <internal>:73:78,
                                 },
@@ -158,12 +158,12 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "Int32",
-                                        location: <internal>:0:0,
+                                        location: <internal>:83:88,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:0:0,
+                                    location: <internal>:83:88,
                                 },
-                                location: <internal>:0:0,
+                                location: <internal>:83:88,
                             },
                             location: <internal>:83:88,
                         },
