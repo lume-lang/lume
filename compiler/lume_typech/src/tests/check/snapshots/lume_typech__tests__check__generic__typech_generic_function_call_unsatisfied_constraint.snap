@@ -1,0 +1,15 @@
+---
+source: compiler/lume_typech/src/tests/check/generic.rs
+description: "trait A {}\n\n        fn foo<T: A>() { }\n\n        fn bar() {\n            foo<Boolean>();\n        }"
+---
+× error[LM4120]: type constraint not satisfied
+   ╭───────────
+ 5 │         fn bar() {
+ 6 │             foo<Boolean>();
+   │                 ^^^^^^^ type Boolean does not implement A...
+ 7 │         }
+   ∶ 
+ 2 │ 
+ 3 │         fn foo<T: A>() { }
+   │                   ^ ...which is required by the type parameter T
+   ╰──

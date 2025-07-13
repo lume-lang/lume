@@ -1,0 +1,18 @@
+---
+source: compiler/lume_typech/src/tests/check/generic.rs
+description: "fn foo<T>(val: T) -> T {\n            return val;\n        }\n\n        fn bar() {\n            let _: Int32 = foo<Boolean>(false);\n        }"
+---
+× error[LM4001]: mismatched types
+   ╭───────────
+ 5 │         fn bar() {
+ 6 │             let _: Int32 = foo<Boolean>(false);
+   │                            ^^^^^^^^^^^^^^^^^^^^ expected type Int32, but found type Boolean...
+ 7 │         }
+   ∶ 
+ 5 │         fn bar() {
+ 6 │             let _: Int32 = foo<Boolean>(false);
+   │                    ^^^^^ ...because of type defined here
+ 7 │         }
+   ╰──
+   help: expected type Int32
+            found type Boolean

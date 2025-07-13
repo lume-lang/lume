@@ -1,0 +1,16 @@
+---
+source: compiler/lume_typech/src/tests/check/generic.rs
+description: "trait A {}\n\n        struct Foo { }\n\n        impl Foo {\n            pub fn bar<T: A>(val: T) -> T {\n                return val;\n            }\n        }\n\n        fn bar() {\n            Foo::bar<Boolean>(false);\n        }"
+---
+× error[LM4120]: type constraint not satisfied
+    ╭───────────
+ 11 │         fn bar() {
+ 12 │             Foo::bar<Boolean>(false);
+    │                      ^^^^^^^ type Boolean does not implement A...
+ 13 │         }
+    ∶ 
+ 5  │         impl Foo {
+ 6  │             pub fn bar<T: A>(val: T) -> T {
+    │                           ^ ...which is required by the type parameter T
+ 7  │                 return val;
+    ╰──

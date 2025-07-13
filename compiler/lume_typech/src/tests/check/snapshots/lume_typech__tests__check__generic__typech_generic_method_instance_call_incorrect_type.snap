@@ -1,0 +1,18 @@
+---
+source: compiler/lume_typech/src/tests/check/generic.rs
+description: "struct A {}\n\n        impl A {\n            pub fn bar<T>(self, val:  T) { }\n        }\n\n        fn bar() {\n            let a: A = A { };\n\n            a.bar<Boolean>(0);\n        }"
+---
+× error[LM4001]: mismatched types
+    ╭───────────
+ 9  │ 
+ 10 │             a.bar<Boolean>(0);
+    │                            ^ expected type Boolean, but found type Int32...
+ 11 │         }
+    ∶ 
+ 9  │ 
+ 10 │             a.bar<Boolean>(0);
+    │                   ^^^^^^^ ...because of type defined here
+ 11 │         }
+    ╰──
+   help: expected type Boolean
+            found type Int32

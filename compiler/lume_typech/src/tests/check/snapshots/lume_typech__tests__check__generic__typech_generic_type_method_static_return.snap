@@ -1,0 +1,5 @@
+---
+source: compiler/lume_typech/src/tests/check/generic.rs
+description: "struct A<T> {}\n\n        impl<T> A<T> {\n            pub fn bar(val:  T) -> T {\n                return val;\n            }\n        }"
+---
+
