@@ -18,7 +18,6 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_methods_on<'a>(&self, ty: &'a lume_types::TypeRef, name: &'a Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
-            .into_iter()
             .filter(|method| method.name.name() == name)
             .collect()
     }
@@ -32,7 +31,6 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
-            .into_iter()
             .filter(|method| {
                 let expected = &name.name;
                 let actual = &method.name.name.name().name;
@@ -334,7 +332,7 @@ impl TyInferCtx {
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> Vec<&'_ Method> {
-        self.tdb().methods_on(self_ty.instance_of).collect::<Vec<&Method>>()
+    pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> impl Iterator<Item = &'_ Method> {
+        self.tdb().methods_on(self_ty.instance_of)
     }
 }

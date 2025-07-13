@@ -128,7 +128,7 @@ impl FunctionTransformer<'_> {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
-                    let lhs_expr = self.func.declare_value(lume_mir::Type::Boolean, lhs_val);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
 
                     self.func
                         .current_block_mut()
@@ -137,7 +137,7 @@ impl FunctionTransformer<'_> {
                     self.func.set_current_block(inter_block);
 
                     let rhs_val = self.expression(&comp_expr.rhs);
-                    let rhs_expr = self.func.declare_value(lume_mir::Type::Boolean, rhs_val);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
 
                     self.func
                         .current_block_mut()
@@ -162,7 +162,7 @@ impl FunctionTransformer<'_> {
                     let inter_block = self.func.new_block();
 
                     let lhs_val = self.expression(&comp_expr.lhs);
-                    let lhs_expr = self.func.declare_value(lume_mir::Type::Boolean, lhs_val);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
 
                     self.func
                         .current_block_mut()
@@ -171,7 +171,7 @@ impl FunctionTransformer<'_> {
                     self.func.set_current_block(inter_block);
 
                     let rhs_val = self.expression(&comp_expr.rhs);
-                    let rhs_expr = self.func.declare_value(lume_mir::Type::Boolean, rhs_val);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
 
                     self.func
                         .current_block_mut()
@@ -180,7 +180,7 @@ impl FunctionTransformer<'_> {
             }
         } else {
             let cond_val = self.expression(expr);
-            let cond_expr = self.func.declare_value(lume_mir::Type::Boolean, cond_val);
+            let cond_expr = self.func.declare_value(lume_mir::Type::boolean(), cond_val);
 
             self.func
                 .current_block_mut()

@@ -4,28 +4,36 @@ impl FunctionTransformer<'_> {
     pub(super) fn lower_type(&self, type_ref: &lume_types::TypeRef) -> lume_mir::Type {
         let ty = self.tcx().db().type_(type_ref.instance_of).unwrap();
 
-        match ty.kind {
-            lume_types::TypeKind::Void => lume_mir::Type::Void,
-            lume_types::TypeKind::Bool => lume_mir::Type::Boolean,
-            lume_types::TypeKind::Int(n) => lume_mir::Type::Integer { bits: n, signed: true },
-            lume_types::TypeKind::UInt(n) => lume_mir::Type::Integer { bits: n, signed: false },
-            lume_types::TypeKind::Float(n) => lume_mir::Type::Float { bits: n },
-            lume_types::TypeKind::String => lume_mir::Type::String,
-            lume_types::TypeKind::User(_) | lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::Pointer,
+        match &ty.kind {
+            lume_types::TypeKind::Void => lume_mir::Type::void(),
+            lume_types::TypeKind::Bool => lume_mir::Type::boolean(),
+            lume_types::TypeKind::Int(n) => lume_mir::Type::integer(*n, true),
+            lume_types::TypeKind::UInt(n) => lume_mir::Type::integer(*n, false),
+            lume_types::TypeKind::Float(n) => lume_mir::Type::float(*n),
+            lume_types::TypeKind::String => lume_mir::Type::string(),
+            lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
+                let ty_props = self.tcx().db().find_properties(type_ref.instance_of);
+                let props = ty_props.map(|p| self.lower_type(&p.property_type)).collect::<Vec<_>>();
+
+                lume_mir::Type::structure(type_ref.clone(), props)
+            }
+            lume_types::TypeKind::User(lume_types::UserType::Trait(_) | lume_types::UserType::Enum(_))
+            | lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::pointer(lume_mir::Type::void()),
         }
     }
 
     #[allow(clippy::unused_self)]
     pub(super) fn type_of_value(&self, value: &lume_mir::Operand) -> lume_mir::Type {
         match value {
-            lume_mir::Operand::Boolean { .. } => lume_mir::Type::Boolean,
-            lume_mir::Operand::Integer { bits, signed, .. } => lume_mir::Type::Integer {
-                bits: *bits,
-                signed: *signed,
-            },
-            lume_mir::Operand::Float { bits, .. } => lume_mir::Type::Float { bits: *bits },
-            lume_mir::Operand::String { .. } => lume_mir::Type::String,
-            lume_mir::Operand::Load { .. } => lume_mir::Type::Pointer,
+            lume_mir::Operand::Boolean { .. } => lume_mir::Type::boolean(),
+            lume_mir::Operand::Integer { bits, signed, .. } => lume_mir::Type::integer(*bits, *signed),
+            lume_mir::Operand::Float { bits, .. } => lume_mir::Type::float(*bits),
+            lume_mir::Operand::String { .. } => lume_mir::Type::string(),
+            lume_mir::Operand::Load { id } => {
+                let elemental = self.func.registers.register_ty(*id).clone();
+
+                lume_mir::Type::pointer(elemental)
+            }
             lume_mir::Operand::LoadField { target, .. } | lume_mir::Operand::Reference { id: target } => {
                 self.func.registers.register_ty(*target).clone()
             }
@@ -51,21 +59,18 @@ impl FunctionTransformer<'_> {
                 | lume_mir::Intrinsic::BooleanEq
                 | lume_mir::Intrinsic::BooleanNe
                 | lume_mir::Intrinsic::BooleanAnd
-                | lume_mir::Intrinsic::BooleanOr => lume_mir::Type::Boolean,
+                | lume_mir::Intrinsic::BooleanOr => lume_mir::Type::boolean(),
                 lume_mir::Intrinsic::IntAdd { bits, signed }
                 | lume_mir::Intrinsic::IntSub { bits, signed }
                 | lume_mir::Intrinsic::IntMul { bits, signed }
                 | lume_mir::Intrinsic::IntDiv { bits, signed }
                 | lume_mir::Intrinsic::IntAnd { bits, signed }
                 | lume_mir::Intrinsic::IntOr { bits, signed }
-                | lume_mir::Intrinsic::IntXor { bits, signed } => lume_mir::Type::Integer {
-                    bits: *bits,
-                    signed: *signed,
-                },
+                | lume_mir::Intrinsic::IntXor { bits, signed } => lume_mir::Type::integer(*bits, *signed),
                 lume_mir::Intrinsic::FloatAdd { bits }
                 | lume_mir::Intrinsic::FloatSub { bits }
                 | lume_mir::Intrinsic::FloatMul { bits }
-                | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::Float { bits: *bits },
+                | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::float(*bits),
             },
             lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
             _ => todo!(),

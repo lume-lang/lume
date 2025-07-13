@@ -4,16 +4,16 @@ use crate::Context;
 
 impl Context {
     pub fn lower_type(&'_ self, ty: &lume_mir::Type) -> inkwell::types::BasicTypeEnum<'_> {
-        match &ty {
-            lume_mir::Type::Void | lume_mir::Type::Boolean => self.bool_type().as_basic_type_enum(),
-            lume_mir::Type::Integer { bits: n, .. } => self.int_type(*n).as_basic_type_enum(),
-            lume_mir::Type::Float { bits: n } => match n {
+        match &ty.kind {
+            lume_mir::TypeKind::Void | lume_mir::TypeKind::Boolean => self.bool_type().as_basic_type_enum(),
+            lume_mir::TypeKind::Integer { bits: n, .. } => self.int_type(*n).as_basic_type_enum(),
+            lume_mir::TypeKind::Float { bits: n } => match n {
                 32 => self.f32_type().as_basic_type_enum(),
                 64 => self.f64_type().as_basic_type_enum(),
                 _ => panic!("unsupported float type: {n}-bits"),
             },
-            lume_mir::Type::String | lume_mir::Type::Pointer => self.ptr_type().as_basic_type_enum(),
-            lume_mir::Type::Struct { properties } => self.struct_type(properties).as_basic_type_enum(),
+            lume_mir::TypeKind::String | lume_mir::TypeKind::Pointer { .. } => self.ptr_type().as_basic_type_enum(),
+            lume_mir::TypeKind::Struct { properties } => self.struct_type(properties).as_basic_type_enum(),
         }
     }
 
@@ -24,7 +24,7 @@ impl Context {
             .map(|ty| self.lower_type(ty).into())
             .collect::<Vec<inkwell::types::BasicMetadataTypeEnum>>();
 
-        if signature.return_type == lume_mir::Type::Void {
+        if signature.return_type.kind == lume_mir::TypeKind::Void {
             self.void_type().fn_type(&params, varargs)
         } else {
             self.lower_type(&signature.return_type).fn_type(&params, varargs)

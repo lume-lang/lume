@@ -1,8 +1,11 @@
 #![allow(clippy::arc_with_non_send_sync)]
 #![feature(negative_impls)]
 
+pub use error_snippet::Error;
+pub use error_snippet::Result;
+
 use error_snippet::{
-    BufferedDiagnosticHandler, DiagnosticHandler, GraphicalRenderer, Handler, Renderer, Result, SimpleDiagnostic,
+    BufferedDiagnosticHandler, DiagnosticHandler, GraphicalRenderer, Handler, Renderer, SimpleDiagnostic,
 };
 use std::sync::{
     Arc, Mutex, MutexGuard,

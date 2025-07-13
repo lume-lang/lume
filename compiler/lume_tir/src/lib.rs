@@ -143,6 +143,12 @@ pub enum FunctionKind {
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct FunctionId(pub usize);
 
+impl FunctionId {
+    pub fn new(kind: FunctionKind, id: usize) -> Self {
+        Self(lume_span::hash_id(&(kind, id)))
+    }
+}
+
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct VariableId(pub usize);
 

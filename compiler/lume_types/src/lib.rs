@@ -5,7 +5,8 @@ use lume_errors::DiagCtx;
 use lume_session::GlobalCtx;
 
 use crate::errors::*;
-use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeId, TypeParameterId, UseId, Visibility};
+pub use lume_hir::TypeId;
+use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeParameterId, UseId, Visibility};
 use lume_span::{DefId, ItemId, Location};
 
 pub mod errors;
@@ -116,20 +117,22 @@ impl WithTypeParameters for TypeId {
     }
 }
 
-const TYPEREF_VOID_ID: TypeId = TypeId(0x0000_00000);
-const TYPEREF_BOOL_ID: TypeId = TypeId(0x0000_00001);
-const TYPEREF_INT8_ID: TypeId = TypeId(0x0000_00002);
-const TYPEREF_INT16_ID: TypeId = TypeId(0x0000_00003);
-const TYPEREF_INT32_ID: TypeId = TypeId(0x0000_00004);
-const TYPEREF_INT64_ID: TypeId = TypeId(0x0000_00005);
-const TYPEREF_UINT8_ID: TypeId = TypeId(0x0000_00006);
-const TYPEREF_UINT16_ID: TypeId = TypeId(0x0000_00007);
-const TYPEREF_UINT32_ID: TypeId = TypeId(0x0000_00008);
-const TYPEREF_UINT64_ID: TypeId = TypeId(0x0000_00009);
-const TYPEREF_FLOAT32_ID: TypeId = TypeId(0x0000_0000A);
-const TYPEREF_FLOAT64_ID: TypeId = TypeId(0x0000_0000B);
-const TYPEREF_STRING_ID: TypeId = TypeId(0x0000_0000C);
-const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
+pub const TYPEREF_VOID_ID: TypeId = TypeId(0x0000_00000);
+pub const TYPEREF_BOOL_ID: TypeId = TypeId(0x0000_00001);
+pub const TYPEREF_INT8_ID: TypeId = TypeId(0x0000_00002);
+pub const TYPEREF_INT16_ID: TypeId = TypeId(0x0000_00003);
+pub const TYPEREF_INT32_ID: TypeId = TypeId(0x0000_00004);
+pub const TYPEREF_INT64_ID: TypeId = TypeId(0x0000_00005);
+pub const TYPEREF_UINT8_ID: TypeId = TypeId(0x0000_00006);
+pub const TYPEREF_UINT16_ID: TypeId = TypeId(0x0000_00007);
+pub const TYPEREF_UINT32_ID: TypeId = TypeId(0x0000_00008);
+pub const TYPEREF_UINT64_ID: TypeId = TypeId(0x0000_00009);
+pub const TYPEREF_FLOAT32_ID: TypeId = TypeId(0x0000_0000A);
+pub const TYPEREF_FLOAT64_ID: TypeId = TypeId(0x0000_0000B);
+pub const TYPEREF_STRING_ID: TypeId = TypeId(0x0000_0000C);
+pub const TYPEREF_POINTER_ID: TypeId = TypeId(0x0000_0000D);
+pub const TYPEREF_ARRAY_ID: TypeId = TypeId(0x0000_0000E);
+pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
@@ -610,6 +613,32 @@ impl Type {
             name: Path::string(),
         }
     }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
+    pub fn pointer() -> Self {
+        Self {
+            id: TYPEREF_POINTER_ID,
+            kind: TypeKind::User(UserType::Struct(Box::new(Struct {
+                id: ItemId::from_name(&Path::pointer()),
+                name: Path::pointer(),
+                type_parameters: vec![TypeParameterId(0)],
+            }))),
+            name: Path::pointer(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
+    pub fn array() -> Self {
+        Self {
+            id: TYPEREF_ARRAY_ID,
+            kind: TypeKind::User(UserType::Struct(Box::new(Struct {
+                id: ItemId::from_name(&Path::array()),
+                name: Path::array(),
+                type_parameters: vec![TypeParameterId(1)],
+            }))),
+            name: Path::array(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -750,6 +779,24 @@ impl TypeRef {
         Self {
             instance_of: TYPEREF_STRING_ID,
             type_arguments: vec![],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
+    pub fn pointer(elemental: TypeRef) -> Self {
+        Self {
+            instance_of: TYPEREF_POINTER_ID,
+            type_arguments: vec![elemental],
+            location: Location::empty(),
+        }
+    }
+
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
+    pub fn array(elemental: TypeRef) -> Self {
+        Self {
+            instance_of: TYPEREF_ARRAY_ID,
+            type_arguments: vec![elemental],
             location: Location::empty(),
         }
     }
@@ -1415,11 +1462,24 @@ impl Default for TypeDatabaseContext {
                 Type::f32(),
                 Type::f64(),
                 Type::string(),
+                Type::pointer(),
+                Type::array(),
             ],
             properties: Vec::new(),
             methods: Vec::new(),
             functions: Vec::new(),
-            type_parameters: Vec::new(),
+            type_parameters: vec![
+                TypeParameter {
+                    id: TypeParameterId(0),
+                    name: String::from("T"),
+                    constraints: Vec::new(),
+                },
+                TypeParameter {
+                    id: TypeParameterId(1),
+                    name: String::from("T"),
+                    constraints: Vec::new(),
+                },
+            ],
             implementations: Vec::new(),
             uses: Vec::new(),
         }

@@ -1015,6 +1015,7 @@ dependencies = [
  "lume_tir",
  "lume_typech",
  "lume_types",
+ "tracing",
 ]
 
 [[package]]

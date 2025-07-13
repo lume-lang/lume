@@ -229,7 +229,9 @@ fn query_methods_on_type_empty() -> Result<()> {
     let tcx = type_infer("struct A {} impl A {}")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
+    let methods = tcx
+        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
+        .collect::<Vec<_>>();
 
     assert_eq!(methods.len(), 0);
 
@@ -241,7 +243,9 @@ fn query_methods_on_type_single() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
+    let methods = tcx
+        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
+        .collect::<Vec<_>>();
 
     assert_eq!(methods.len(), 1);
 
@@ -262,7 +266,9 @@ fn query_methods_on_type_single_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } pub fn bar() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
+    let methods = tcx
+        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
+        .collect::<Vec<_>>();
 
     assert_eq!(methods.len(), 2);
 
@@ -288,7 +294,9 @@ fn query_methods_on_type_multiple_impl() -> Result<()> {
     let tcx = type_infer("struct A {} impl A { pub fn foo() { } } impl A { pub fn bar() { } }")?;
 
     let ty = tcx.tdb().find_type(&Path::rooted(PathSegment::ty("A"))).unwrap();
-    let methods = tcx.methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()));
+    let methods = tcx
+        .methods_defined_on(&lume_types::TypeRef::new(ty.id, Location::empty()))
+        .collect::<Vec<_>>();
 
     assert_eq!(methods.len(), 2);
 

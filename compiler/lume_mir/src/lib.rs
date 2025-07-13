@@ -99,7 +99,7 @@ impl Default for Signature {
         Signature {
             external: false,
             parameters: Vec::new(),
-            return_type: Type::Void,
+            return_type: Type::void(),
         }
     }
 }
@@ -794,9 +794,169 @@ impl std::fmt::Display for Terminator {
     }
 }
 
+pub type TypeId = lume_types::TypeId;
+
+pub type TypeRef = lume_types::TypeRef;
+
 /// Defines a type within the MIR.
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum Type {
+pub struct Type {
+    pub id: TypeRef,
+    pub kind: TypeKind,
+}
+
+impl Type {
+    pub fn void() -> Self {
+        Self {
+            id: TypeRef::void(),
+            kind: TypeKind::Void,
+        }
+    }
+
+    pub fn boolean() -> Self {
+        Self {
+            id: TypeRef::bool(),
+            kind: TypeKind::Boolean,
+        }
+    }
+
+    pub fn string() -> Self {
+        Self {
+            id: TypeRef::string(),
+            kind: TypeKind::String,
+        }
+    }
+
+    pub fn pointer(elemental: Type) -> Self {
+        Self {
+            id: TypeRef::pointer(elemental.id.clone()),
+            kind: TypeKind::Pointer {
+                elemental: Box::new(elemental),
+            },
+        }
+    }
+
+    pub fn integer(bits: u8, signed: bool) -> Self {
+        match (bits, signed) {
+            (8, true) => Self::i8(),
+            (8, false) => Self::u8(),
+            (16, true) => Self::i16(),
+            (16, false) => Self::u16(),
+            (32, true) => Self::i32(),
+            (32, false) => Self::u32(),
+            (64, true) => Self::i64(),
+            (64, false) => Self::u64(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn i8() -> Self {
+        Self {
+            id: TypeRef::i8(),
+            kind: TypeKind::Integer { bits: 8, signed: true },
+        }
+    }
+
+    pub fn u8() -> Self {
+        Self {
+            id: TypeRef::u8(),
+            kind: TypeKind::Integer { bits: 8, signed: false },
+        }
+    }
+
+    pub fn i16() -> Self {
+        Self {
+            id: TypeRef::i16(),
+            kind: TypeKind::Integer { bits: 16, signed: true },
+        }
+    }
+
+    pub fn u16() -> Self {
+        Self {
+            id: TypeRef::u16(),
+            kind: TypeKind::Integer {
+                bits: 16,
+                signed: false,
+            },
+        }
+    }
+
+    pub fn i32() -> Self {
+        Self {
+            id: TypeRef::i32(),
+            kind: TypeKind::Integer { bits: 32, signed: true },
+        }
+    }
+
+    pub fn u32() -> Self {
+        Self {
+            id: TypeRef::u32(),
+            kind: TypeKind::Integer {
+                bits: 32,
+                signed: false,
+            },
+        }
+    }
+
+    pub fn i64() -> Self {
+        Self {
+            id: TypeRef::i64(),
+            kind: TypeKind::Integer { bits: 64, signed: true },
+        }
+    }
+
+    pub fn u64() -> Self {
+        Self {
+            id: TypeRef::u64(),
+            kind: TypeKind::Integer {
+                bits: 64,
+                signed: false,
+            },
+        }
+    }
+
+    pub fn float(bits: u8) -> Self {
+        match bits {
+            32 => Self::f32(),
+            64 => Self::f64(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn f32() -> Self {
+        Self {
+            id: TypeRef::f32(),
+            kind: TypeKind::Float { bits: 32 },
+        }
+    }
+
+    pub fn f64() -> Self {
+        Self {
+            id: TypeRef::f64(),
+            kind: TypeKind::Float { bits: 64 },
+        }
+    }
+
+    pub fn structure(id: TypeRef, props: Vec<Type>) -> Self {
+        Self {
+            id,
+            kind: TypeKind::Struct { properties: props },
+        }
+    }
+
+    pub fn is_reference_type(&self) -> bool {
+        self.kind.is_reference_type()
+    }
+}
+
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.kind.fmt(f)
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub enum TypeKind {
     /// Represents a struct type with zero-or-more properties.
     Struct { properties: Vec<Type> },
 
@@ -816,19 +976,19 @@ pub enum Type {
     String,
 
     /// Defines a pointer type.
-    Pointer,
+    Pointer { elemental: Box<Type> },
 
     /// Defines a void type.
     Void,
 }
 
-impl Type {
+impl TypeKind {
     pub fn is_reference_type(&self) -> bool {
-        matches!(self, Type::Struct { .. } | Type::String | Type::Pointer)
+        matches!(self, Self::Struct { .. } | Self::String | Self::Pointer { .. })
     }
 }
 
-impl std::fmt::Display for Type {
+impl std::fmt::Display for TypeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Struct { properties } => write!(
@@ -844,7 +1004,7 @@ impl std::fmt::Display for Type {
             Self::Float { bits } => write!(f, "f{bits}"),
             Self::Boolean => write!(f, "bool"),
             Self::String => write!(f, "string"),
-            Self::Pointer => write!(f, "ptr"),
+            Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
             Self::Void => write!(f, "void"),
         }
     }

@@ -120,6 +120,8 @@ impl<'a> Compiler<'a> {
         };
 
         let sources = compiler.parse()?;
+        tracing::debug!(target: "driver", "finished parsing");
+
         let (tcx, typed_ir) = compiler.type_check(sources)?;
 
         compiler.codegen(&tcx, typed_ir)?;
@@ -150,16 +152,19 @@ impl<'a> Compiler<'a> {
         // Defines the types of all nodes within the HIR maps.
         let mut ticx = TyInferCtx::new(tcx, hir);
         ticx.infer()?;
+        tracing::debug!(target: "driver", "finished type inference");
 
         // Then, make sure they're all valid.
         let mut tccx = TyCheckCtx::new(ticx);
         tccx.typecheck()?;
+        tracing::debug!(target: "driver", "finished typechecking");
 
         if self.gcx.session.options.print_type_context {
             println!("{:#?}", tccx.tdb());
         }
 
         let typed_ir = lume_tir_lower::Lower::build(&tccx)?;
+        tracing::debug!(target: "driver", "finished lowering to TIR");
 
         Ok((tccx, typed_ir))
     }

@@ -68,7 +68,7 @@ impl FunctionTransformer<'_> {
             .map(|prop| self.lower_type(&prop.property_type))
             .collect::<Vec<_>>();
 
-        let struct_type = lume_mir::Type::Struct { properties: prop_types };
+        let struct_type = lume_mir::Type::structure(expr.ty.clone(), prop_types);
 
         let reg = self.func.add_register(struct_type.clone());
         self.func.current_block_mut().allocate_heap(reg, struct_type);

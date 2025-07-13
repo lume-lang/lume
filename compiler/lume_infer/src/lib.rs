@@ -114,6 +114,8 @@ impl TyInferCtx {
         self.define_method_bodies()?;
         self.define_scopes()?;
 
+        tracing::debug!(target: "inference", "finished inference");
+
         Ok(())
     }
 
