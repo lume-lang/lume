@@ -1154,7 +1154,7 @@ pub enum ExpressionKind {
     Variant(Box<Variant>),
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq)]
 pub enum CallExpression<'a> {
     /// Defines a call which was invoked without any callee or receiver.
     ///

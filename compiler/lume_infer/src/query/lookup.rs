@@ -2,7 +2,7 @@ use crate::{TyInferCtx, query::Callable};
 use error_snippet::Result;
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
-use lume_types::{Function, Method, TypeRef};
+use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
 
 use super::diagnostics::{self};
 
@@ -262,13 +262,7 @@ impl TyInferCtx {
         signature: lume_types::FunctionSig<'a>,
         expr: lume_hir::CallExpression<'a>,
     ) -> Result<lume_types::FunctionSigOwned> {
-        let type_parameters_hir = self.hir_avail_type_params_expr(expr.id());
-        let type_arguments_hir = match &expr {
-            lume_hir::CallExpression::Static(call) => &call.all_type_arguments(),
-            _ => expr.type_arguments(),
-        };
-
-        let type_arguments = self.mk_type_refs_generic(type_arguments_hir, &type_parameters_hir)?;
+        let type_arguments = self.type_args_in_call(expr)?;
 
         Ok(self.instantiate_function(signature, &type_arguments))
     }
@@ -324,6 +318,88 @@ impl TyInferCtx {
         }
 
         ty
+    }
+
+    /// Gets all the type arguments defined within the given call expression.
+    ///
+    /// Type arguments are fetched from the expression itself, as well as type arguments
+    /// defined on the callee of the exprssion, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
+        let type_parameters_hir = self.hir_avail_type_params_expr(expr.id());
+
+        match &expr {
+            lume_hir::CallExpression::Static(call) => {
+                let hir_type_args = &call.all_type_arguments();
+
+                self.mk_type_refs_generic(hir_type_args, &type_parameters_hir)
+            }
+            lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
+                let callee = match expr {
+                    lume_hir::CallExpression::Instanced(call) => &call.callee,
+                    lume_hir::CallExpression::Intrinsic(call) => call.callee(),
+                    lume_hir::CallExpression::Static(_) => unreachable!(),
+                };
+
+                let hir_type_args = expr.type_arguments();
+                let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters_hir)?;
+
+                let callee_type = self.type_of_expr(callee)?;
+                type_args.extend(callee_type.type_arguments.into_iter());
+
+                Ok(type_args)
+            }
+        }
+    }
+
+    /// Gets the expanded signature of the given [`Callable`].
+    ///
+    /// The expanded signature of a [`Callable`] will include all the type parameters
+    /// defined on parent definitions, such as on implementation blocks.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
+        match callable {
+            Callable::Method(method) => {
+                let mut signature = method.sig().to_owned();
+
+                // Append all the type parameters which are available on the method,
+                // such as the type parameters on the implementation.
+                signature.type_params.extend(
+                    self.hir_avail_type_params(method.hir)
+                        .into_iter()
+                        .filter_map(|param| param.type_param_id),
+                );
+
+                Ok(signature)
+            }
+            Callable::Function(function) => Ok(function.sig().to_owned()),
+        }
+    }
+
+    /// Gets the instantiated signature of the given [`Callable`], w.r.t the given expression.
+    ///
+    /// The instantiated signature is a version of a signature where all resolvable type
+    /// arguments within the expression have been resolved. For example, given an expression:
+    ///
+    /// ```lm
+    /// fn foo<T>(val: T) -> T {
+    ///     return val;
+    /// }
+    ///
+    /// let a = foo<Boolean>(false);
+    /// ```
+    ///
+    /// The resulting variable `a` will have the type of `Boolean`, since it was resolved from the
+    /// type arguments on the callable expression.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn signature_of_instantiated(
+        &self,
+        callable: Callable,
+        expr: lume_hir::CallExpression,
+    ) -> Result<FunctionSigOwned> {
+        let full_signature = self.signature_of(callable)?;
+
+        self.instantiate_call_expression(full_signature.as_ref(), expr)
     }
 
     /// Returns all the methods defined directly within the given type.

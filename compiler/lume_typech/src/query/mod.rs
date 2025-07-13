@@ -3,25 +3,9 @@ pub(crate) mod diagnostics;
 use crate::TyCheckCtx;
 use error_snippet::Result;
 pub use lume_infer::query::Callable;
-use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
+use lume_types::{Function, Method, TypeRef};
 
 impl TyCheckCtx {
-    /// Gets the expanded signature of the given [`Callable`].
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
-    pub(crate) fn signature_of<'a>(&self, callable: Callable<'a>) -> Result<FunctionSigOwned> {
-        match callable {
-            Callable::Method(method) => {
-                let mut signature = method.sig().to_owned();
-                signature
-                    .type_params
-                    .extend(self.tdb().type_params_of(method.callee.instance_of)?);
-
-                Ok(signature)
-            }
-            Callable::Function(function) => Ok(function.sig().to_owned()),
-        }
-    }
-
     /// Checks whether the given [`Method`] is valid, in terms of provided
     /// arguments, type arguments, visibility and type of callee.
     ///
@@ -53,9 +37,6 @@ impl TyCheckCtx {
             return Ok(false);
         }
 
-        let full_signature = self.signature_of(callable)?;
-        let signature = self.instantiate_call_expression(full_signature.as_ref(), expr)?;
-
         let arguments = match (expr, is_instance_method) {
             // For any instanced call where the method is also instanced, we
             // combine the callee and arguments list into one, such that:
@@ -86,6 +67,8 @@ impl TyCheckCtx {
                 return Ok(false);
             }
         };
+
+        let signature = self.signature_of_instantiated(callable, expr)?;
 
         self.check_params(expr, &signature.params, arguments)
     }

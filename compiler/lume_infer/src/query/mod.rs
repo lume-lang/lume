@@ -110,38 +110,12 @@ impl TyInferCtx {
                 instantiated.clone()
             }
             lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs)?,
-            lume_hir::ExpressionKind::StaticCall(call) => {
-                let callable = self.probe_callable_static(call)?;
-
-                let signature = callable.signature();
-                let type_arguments_hir = self.hir_avail_type_params_expr(call.id);
-                let type_arguments = self.mk_type_refs_generic(call.type_arguments(), &type_arguments_hir)?;
-
-                let instantiated = self.instantiate_function(signature, &type_arguments);
-
-                instantiated.ret_ty
-            }
+            lume_hir::ExpressionKind::StaticCall(call) => self.type_of_call(lume_hir::CallExpression::Static(call))?,
             lume_hir::ExpressionKind::InstanceCall(call) => {
-                let callable = self.probe_callable_instance(call)?;
-
-                let signature = callable.signature();
-                let type_arguments_hir = self.hir_avail_type_params(DefId::Expression(call.id));
-                let type_arguments = self.mk_type_refs_generic(call.type_arguments(), &type_arguments_hir)?;
-
-                let instantiated = self.instantiate_function(signature, &type_arguments);
-
-                instantiated.ret_ty
+                self.type_of_call(lume_hir::CallExpression::Instanced(call))?
             }
             lume_hir::ExpressionKind::IntrinsicCall(call) => {
-                let callable = self.probe_callable_intrinsic(call)?;
-
-                let signature = callable.signature();
-                let type_arguments_hir = self.hir_avail_type_params(DefId::Expression(call.id));
-                let type_arguments = self.mk_type_refs_generic(call.type_arguments(), &type_arguments_hir)?;
-
-                let instantiated = self.instantiate_function(signature, &type_arguments);
-
-                instantiated.ret_ty
+                self.type_of_call(lume_hir::CallExpression::Intrinsic(call))?
             }
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
             lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs)?,
@@ -292,6 +266,16 @@ impl TyInferCtx {
         };
 
         self.type_of_stmt(last_statement)
+    }
+
+    /// Returns the return type of the given [`lume_hir::CallExpression`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
+        let callable = self.probe_callable(expr)?;
+        let signature = self.signature_of_instantiated(callable, expr)?;
+
+        Result::Ok(signature.ret_ty)
     }
 
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
