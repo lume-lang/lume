@@ -305,6 +305,14 @@ impl Path {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("String"))
     }
 
+    pub fn pointer() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Pointer"))
+    }
+
+    pub fn array() -> Self {
+        Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Array"))
+    }
+
     pub fn boolean() -> Self {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Boolean"))
     }
