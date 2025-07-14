@@ -127,6 +127,22 @@ pub(crate) struct BooleanOperationOnNonBoolean {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "mismatching types in assignment", code = "LM4376")]
+pub(crate) struct NonMatchingAssignment {
+    #[label(source, "cannot assign value of type {value_ty} to {target_ty}")]
+    pub source: lume_span::Location,
+
+    #[label(source, note, "found type {target_ty} on right-hand side...")]
+    pub target_loc: lume_span::Location,
+
+    #[label(source, note, "...and found type {value_ty} on left-hand side")]
+    pub value_loc: lume_span::Location,
+
+    pub target_ty: String,
+    pub value_ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "mismatched types in branch",
     code = "LM4384",

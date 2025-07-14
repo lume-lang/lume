@@ -209,6 +209,7 @@ impl TyCheckCtx {
         let _ = self.type_of_expr(expr)?;
 
         match &expr.kind {
+            lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr),
             lume_hir::ExpressionKind::Binary(expr) => self.binary_expression(expr),
             lume_hir::ExpressionKind::Cast(cast) => self.cast_expression(cast),
             lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr),
@@ -219,6 +220,35 @@ impl TyCheckCtx {
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr),
             _ => Ok(()),
         }
+    }
+
+    /// Asserts that an assignment expression assigns a value which is valid for the
+    /// target expression. For instance, given the following statement:
+    ///
+    /// ```lm
+    /// let a: Boolean = false;
+    ///
+    /// a = 16;
+    /// ```
+    ///
+    /// this method would raise an error, since `a` is a type of `Boolean` which cannot
+    /// be assigned a value other than `Boolean`.
+    fn assignment_expression(&self, expr: &lume_hir::Assignment) -> Result<()> {
+        let target = self.type_of_expr(&expr.target)?;
+        let value = self.type_of_expr(&expr.value)?;
+
+        if !self.check_type_compatibility(&value, &target)? {
+            return Err(NonMatchingAssignment {
+                source: expr.location,
+                target_loc: expr.target.location,
+                value_loc: expr.value.location,
+                target_ty: self.new_named_type(&target)?.to_string(),
+                value_ty: self.new_named_type(&value)?.to_string(),
+            }
+            .into());
+        }
+
+        Ok(())
     }
 
     /// Asserts that the binary expression is performed on values, which actually
