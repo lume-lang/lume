@@ -3,6 +3,7 @@ use lume_span::DefId;
 use lume_span::MethodId;
 use lume_span::PropertyId;
 
+use crate::DefinedItem;
 use crate::LowerModule;
 use crate::errors::*;
 
@@ -27,6 +28,8 @@ impl LowerModule<'_> {
         let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
+
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
 
         self.self_type = Some(name.clone());
 
@@ -143,6 +146,8 @@ impl LowerModule<'_> {
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
+
         self.self_type = Some(name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
@@ -201,6 +206,8 @@ impl LowerModule<'_> {
         let visibility = lower_visibility(&expr.visibility);
         let location = self.location(expr.location);
 
+        self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
+
         let mut cases = Vec::with_capacity(expr.cases.len());
         for case in expr.cases {
             cases.push(self.def_enum_case(case)?);
@@ -247,6 +254,8 @@ impl LowerModule<'_> {
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
+
+        self.ensure_item_undefined(DefinedItem::Function(name.clone()))?;
 
         let block = if expr.external {
             None

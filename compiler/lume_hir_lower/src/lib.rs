@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet::Result;
@@ -139,6 +140,24 @@ impl<'a> LowerState<'a> {
     }
 }
 
+#[derive(Hash, Debug, PartialEq, Eq)]
+enum DefinedItem {
+    Function(Path),
+    Type(Path),
+}
+
+impl DefinedItem {
+    pub fn path(&self) -> &Path {
+        match self {
+            Self::Function(path) | Self::Type(path) => path,
+        }
+    }
+
+    pub fn location(&self) -> &Range<usize> {
+        &self.path().location.index
+    }
+}
+
 pub struct LowerModule<'a> {
     /// Defines the file is being lowered.
     file: Arc<SourceFile>,
@@ -148,6 +167,9 @@ pub struct LowerModule<'a> {
 
     /// Defines the type map to register types to.
     map: &'a mut Map,
+
+    /// List of all defined items in the current file.
+    defined: HashSet<DefinedItem>,
 
     /// Defines all the local symbols within the current scope.
     locals: SymbolTable<String, lume_hir::VariableSource>,
@@ -175,6 +197,7 @@ impl<'a> LowerModule<'a> {
             file,
             map,
             dcx,
+            defined: HashSet::new(),
             locals: SymbolTable::new(),
             imports: HashMap::new(),
             namespace: None,
@@ -252,6 +275,27 @@ impl<'a> LowerModule<'a> {
         self.local_id_counter += 1;
 
         StatementId::from_id(self.current_item, id)
+    }
+
+    /// Ensure that the item with the given name is undefined within the file.
+    ///
+    /// If the item is not defined, it is added into the list of defined items.
+    /// If the item is defined, raises an error to reflect it.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn ensure_item_undefined(&mut self, item: DefinedItem) -> Result<()> {
+        if let Some(existing) = self.defined.get(&item) {
+            return Err(crate::errors::DuplicateDefinition {
+                source: self.file.clone(),
+                duplicate_range: item.location().clone(),
+                original_range: existing.location().clone(),
+                name: item.path().to_string(),
+            }
+            .into());
+        }
+
+        self.defined.insert(item);
+
+        Ok(())
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.

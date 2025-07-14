@@ -84,3 +84,33 @@ pub struct UndeclaredVariable {
 
     pub name: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate definition", code = "LM3028")]
+pub struct DuplicateDefinition {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("item {name} is already defined within this file")]
+    pub duplicate_range: Range<usize>,
+
+    #[label(note, "original definition found here")]
+    pub original_range: Range<usize>,
+
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate type parameter", code = "LM3029")]
+pub struct DuplicateTypeParameter {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("type parameter {name} is already defined")]
+    pub duplicate_range: Range<usize>,
+
+    #[label(note, "original type parameter found here")]
+    pub original_range: Range<usize>,
+
+    pub name: String,
+}
