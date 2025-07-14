@@ -1,0 +1,22 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "struct Foo {} trait Foo { }"
+---
+DuplicateDefinition {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "struct Foo {} trait Foo { }",
+        package: PackageId(
+            0,
+        ),
+    },
+    duplicate_range: 20..23,
+    original_range: 7..10,
+    name: "Foo",
+}

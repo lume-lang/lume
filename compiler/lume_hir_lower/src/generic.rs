@@ -18,15 +18,13 @@ impl LowerModule<'_> {
             let name = self.identifier(param.name);
 
             if let Some(existing) = names.get(&name) {
-                self.dcx.emit(
-                    crate::errors::DuplicateTypeParameter {
-                        source: self.file.clone(),
-                        duplicate_range: location.index.clone(),
-                        original_range: existing.location.index.clone(),
-                        name: name.name.clone(),
-                    }
-                    .into(),
-                );
+                return Err(crate::errors::DuplicateTypeParameter {
+                    source: self.file.clone(),
+                    duplicate_range: location.index.clone(),
+                    original_range: existing.location.index.clone(),
+                    name: name.name.clone(),
+                }
+                .into());
             }
 
             names.insert(name.clone());

@@ -1,0 +1,101 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn foo<T1, T2>() { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
+            FunctionDefinition {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                func_id: None,
+                visibility: Private,
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "foo",
+                            location: <internal>:3:6,
+                        },
+                        type_arguments: [],
+                        location: <internal>:3:6,
+                    },
+                    location: <internal>:3:6,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: <internal>:7:9,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:7:9,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: <internal>:11:13,
+                            },
+                            type_id: None,
+                            type_param_id: None,
+                            constraints: [],
+                            location: <internal>:11:13,
+                        },
+                    ],
+                },
+                return_type: Type {
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Void",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:17:20,
+                    },
+                ),
+                location: <internal>:0:20,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

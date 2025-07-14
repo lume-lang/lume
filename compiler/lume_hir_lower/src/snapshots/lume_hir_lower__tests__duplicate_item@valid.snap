@@ -1,0 +1,147 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn foo() { } fn bar() { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
+            FunctionDefinition {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                func_id: None,
+                visibility: Private,
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "foo",
+                            location: <internal>:3:6,
+                        },
+                        type_arguments: [],
+                        location: <internal>:3:6,
+                    },
+                    location: <internal>:3:6,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Void",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:9:12,
+                    },
+                ),
+                location: <internal>:0:12,
+            },
+        ),
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                2,
+            ),
+        }: Function(
+            FunctionDefinition {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        2,
+                    ),
+                },
+                func_id: None,
+                visibility: Private,
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "bar",
+                            location: <internal>:16:19,
+                        },
+                        type_arguments: [],
+                        location: <internal>:16:19,
+                    },
+                    location: <internal>:16:19,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Void",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:22:25,
+                    },
+                ),
+                location: <internal>:13:25,
+            },
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

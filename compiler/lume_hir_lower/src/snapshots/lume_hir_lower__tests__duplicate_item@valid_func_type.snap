@@ -1,0 +1,120 @@
+---
+source: compiler/lume_hir_lower/src/tests.rs
+description: "fn Foo() {} trait Foo { }"
+---
+Map {
+    package: PackageId(
+        0,
+    ),
+    items: {
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
+            FunctionDefinition {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
+                func_id: None,
+                visibility: Private,
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: <internal>:3:6,
+                        },
+                        type_arguments: [],
+                        location: <internal>:3:6,
+                    },
+                    location: <internal>:3:6,
+                },
+                parameters: [],
+                type_parameters: TypeParameters {
+                    inner: [],
+                },
+                return_type: Type {
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Void",
+                                location: <internal>:0:0,
+                            },
+                            type_arguments: [],
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                block: Some(
+                    Block {
+                        statements: [],
+                        location: <internal>:9:11,
+                    },
+                ),
+                location: <internal>:0:11,
+            },
+        ),
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                2,
+            ),
+        }: Type(
+            Trait(
+                TraitDefinition {
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            2,
+                        ),
+                    },
+                    type_id: None,
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Foo",
+                                location: <internal>:18:21,
+                            },
+                            type_arguments: [],
+                            location: <internal>:18:21,
+                        },
+                        location: <internal>:18:21,
+                    },
+                    visibility: Private,
+                    type_parameters: TypeParameters {
+                        inner: [],
+                    },
+                    methods: [],
+                    location: <internal>:12:25,
+                },
+            ),
+        ),
+    },
+    statements: {},
+    expressions: {},
+}

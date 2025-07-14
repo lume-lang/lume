@@ -651,3 +651,18 @@ fn test_using_self_in_function() {
 
     assert_err_snap_eq!("fn foo(self) -> void { }", "invalid");
 }
+
+#[test]
+fn test_duplicate_item() {
+    assert_snap_eq!("fn foo() { } fn bar() { }", "valid");
+    assert_err_snap_eq!("fn foo() { } fn foo() { }", "duplicate_func");
+    assert_err_snap_eq!("struct Foo {} struct Foo { }", "duplicate_struct");
+    assert_err_snap_eq!("struct Foo {} trait Foo { }", "duplicate_type");
+    assert_snap_eq!("fn Foo() {} trait Foo { }", "valid_func_type");
+}
+
+#[test]
+fn test_duplicate_type_param() {
+    assert_snap_eq!("fn foo<T1, T2>() { }", "valid");
+    assert_err_snap_eq!("fn foo<T, T>() { }", "duplicate");
+}
