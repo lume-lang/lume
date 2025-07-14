@@ -7,14 +7,24 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            13825029388148061585,
-        ): Type(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Type(
             Struct(
                 StructDefinition {
-                    id: ItemId(
-                        13825029388148061585,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     type_id: None,
                     name: Path {
                         root: [],
@@ -42,9 +52,14 @@ Map {
                                 type_param_id: None,
                                 constraints: [
                                     Type {
-                                        id: ItemId(
-                                            12406655113887153806,
-                                        ),
+                                        id: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                12406655113887153806,
+                                            ),
+                                        },
                                         name: Path {
                                             root: [],
                                             name: Type {
@@ -71,9 +86,14 @@ Map {
                                 type_param_id: None,
                                 constraints: [
                                     Type {
-                                        id: ItemId(
-                                            12406655113887153806,
-                                        ),
+                                        id: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                12406655113887153806,
+                                            ),
+                                        },
                                         name: Path {
                                             root: [],
                                             name: Type {

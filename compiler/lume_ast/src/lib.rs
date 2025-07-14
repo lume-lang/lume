@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Location(pub std::ops::Range<usize>);
 
 macro_rules! node_location {
@@ -241,7 +241,7 @@ impl PartialEq for NamespacePath {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum PathSegment {
     /// Denotes a segment which refers to a namespace.
     ///
@@ -373,7 +373,7 @@ impl Node for PathSegment {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Path {
     pub root: Vec<PathSegment>,
     pub name: PathSegment,
@@ -1125,7 +1125,7 @@ impl Node for TypeParameter {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     Named(Box<NamedType>),
     Array(Box<ArrayType>),
@@ -1162,7 +1162,7 @@ impl std::fmt::Display for Type {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct NamedType {
     pub name: Path,
 }
@@ -1191,7 +1191,7 @@ impl std::fmt::Display for NamedType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct ArrayType {
     pub element_type: Box<Type>,
     pub location: Location,
@@ -1205,7 +1205,7 @@ impl std::fmt::Display for ArrayType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct SelfType {
     pub location: Location,
 }

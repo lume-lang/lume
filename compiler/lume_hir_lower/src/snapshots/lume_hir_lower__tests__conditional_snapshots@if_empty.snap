@@ -5,9 +5,14 @@ description: "if true { }"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "if true { }"
         kind: If(
             If {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -27,9 +37,14 @@ description: "if true { }"
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         1,
                                     ),
@@ -37,9 +52,14 @@ description: "if true { }"
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 1,
                                             ),
@@ -47,9 +67,14 @@ description: "if true { }"
                                         kind: Boolean(
                                             BooleanLiteral {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         1,
                                                     ),

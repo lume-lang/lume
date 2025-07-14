@@ -5,9 +5,14 @@ description: "Foo { bar: 0, };"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "Foo { bar: 0, };"
         kind: Expression(
             Expression {
                 id: ExpressionId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         1,
                     ),
@@ -25,9 +35,14 @@ description: "Foo { bar: 0, };"
                 kind: Construct(
                     Construct {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),
@@ -52,9 +67,14 @@ description: "Foo { bar: 0, };"
                                 },
                                 value: Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -62,9 +82,14 @@ description: "Foo { bar: 0, };"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     2,
                                                 ),
@@ -72,9 +97,14 @@ description: "Foo { bar: 0, };"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             2,
                                                         ),

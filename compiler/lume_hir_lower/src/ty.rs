@@ -30,7 +30,8 @@ impl LowerModule<'_> {
     fn type_named(&self, expr: ast::NamedType) -> Result<hir::Type> {
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
-        let id = self.item_id(&name);
+
+        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
 
         Ok(hir::Type { id, name, location })
     }
@@ -59,18 +60,18 @@ impl LowerModule<'_> {
             }
         };
 
-        let id = self.item_id(&name);
+        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
 
         Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_std(&self, name: ast::PathSegment) -> Result<hir::Type> {
+        let id = lume_span::ItemId::from_name(lume_span::PackageId::empty(), &name);
         let location = self.location(name.location().clone());
 
         let name = self.path_segment(name)?;
         let path = hir::Path::from_parts(Some(vec![hir::PathSegment::namespace("std")]), name);
-        let id = self.item_id(&path);
 
         Ok(hir::Type {
             id,

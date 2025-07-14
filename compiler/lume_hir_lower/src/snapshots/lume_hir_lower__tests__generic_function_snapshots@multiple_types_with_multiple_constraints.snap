@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            13811513517830038765,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    13811513517830038765,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -40,9 +50,14 @@ Map {
                             type_param_id: None,
                             constraints: [
                                 Type {
-                                    id: ItemId(
-                                        12406655113887153806,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            12406655113887153806,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -58,9 +73,14 @@ Map {
                                     location: <internal>:12:19,
                                 },
                                 Type {
-                                    id: ItemId(
-                                        13994877160783099392,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            13994877160783099392,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -87,9 +107,14 @@ Map {
                             type_param_id: None,
                             constraints: [
                                 Type {
-                                    id: ItemId(
-                                        12406655113887153806,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            12406655113887153806,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -105,9 +130,14 @@ Map {
                                     location: <internal>:36:43,
                                 },
                                 Type {
-                                    id: ItemId(
-                                        13994877160783099392,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            13994877160783099392,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -128,9 +158,14 @@ Map {
                     ],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        17666474489655347949,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            17666474489655347949,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {

@@ -5,9 +5,14 @@ description: false;
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: false;
         kind: Expression(
             Expression {
                 id: ExpressionId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         1,
                     ),
@@ -25,9 +35,14 @@ description: false;
                 kind: Literal(
                     Literal {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),
@@ -35,9 +50,14 @@ description: false;
                         kind: Boolean(
                             BooleanLiteral {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         1,
                                     ),

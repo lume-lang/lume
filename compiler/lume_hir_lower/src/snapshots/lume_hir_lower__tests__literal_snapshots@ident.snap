@@ -5,9 +5,14 @@ description: let ident = 0;
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: let ident = 0;
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -29,9 +39,14 @@ description: let ident = 0;
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -39,9 +54,14 @@ description: let ident = 0;
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -49,9 +69,14 @@ description: let ident = 0;
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             1,
                                         ),

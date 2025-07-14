@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            14135399907963487766,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    14135399907963487766,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -33,9 +43,14 @@ Map {
                     inner: [],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        7170527230754303665,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            7170527230754303665,
+                        ),
+                    },
                     name: Path {
                         root: [
                             Namespace {
@@ -52,9 +67,14 @@ Map {
                             },
                             type_arguments: [
                                 Type {
-                                    id: ItemId(
-                                        6143724420395906933,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            6143724420395906933,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [
                                             Namespace {

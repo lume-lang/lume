@@ -5,9 +5,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -29,9 +39,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -39,9 +54,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -76,9 +96,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -86,9 +111,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     2,
                                                 ),
@@ -96,9 +126,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             2,
                                                         ),
@@ -114,9 +149,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                 },
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             3,
                                         ),
@@ -124,9 +164,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     3,
                                                 ),
@@ -134,9 +179,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             3,
                                                         ),
@@ -152,9 +202,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                 },
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             4,
                                         ),
@@ -162,9 +217,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     4,
                                                 ),
@@ -172,9 +232,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             4,
                                                         ),
@@ -201,9 +266,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
     },
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 5,
             ),
@@ -211,18 +281,28 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
         kind: IteratorLoop(
             IteratorLoop {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         5,
                     ),
                 },
                 collection: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             6,
                         ),
@@ -230,9 +310,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                     kind: Variable(
                         Variable {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     6,
                                 ),
@@ -240,9 +325,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                             reference: Variable(
                                 VariableDeclaration {
                                     id: StatementId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             0,
                                         ),
@@ -254,9 +344,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                     declared_type: None,
                                     value: Expression {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 1,
                                             ),
@@ -264,9 +359,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                         kind: StaticCall(
                                             StaticCall {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         1,
                                                     ),
@@ -301,9 +401,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                 arguments: [
                                                     Expression {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 2,
                                                             ),
@@ -311,9 +416,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                         kind: Literal(
                                                             Literal {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         2,
                                                                     ),
@@ -321,9 +431,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                                 kind: Int(
                                                                     IntLiteral {
                                                                         id: ExpressionId {
-                                                                            def: ItemId(
-                                                                                0,
-                                                                            ),
+                                                                            def: ItemId {
+                                                                                package: PackageId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    0,
+                                                                                ),
+                                                                            },
                                                                             index: Idx(
                                                                                 2,
                                                                             ),
@@ -339,9 +454,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                     },
                                                     Expression {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 3,
                                                             ),
@@ -349,9 +469,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                         kind: Literal(
                                                             Literal {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         3,
                                                                     ),
@@ -359,9 +484,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                                 kind: Int(
                                                                     IntLiteral {
                                                                         id: ExpressionId {
-                                                                            def: ItemId(
-                                                                                0,
-                                                                            ),
+                                                                            def: ItemId {
+                                                                                package: PackageId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    0,
+                                                                                ),
+                                                                            },
                                                                             index: Idx(
                                                                                 3,
                                                                             ),
@@ -377,9 +507,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                     },
                                                     Expression {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 4,
                                                             ),
@@ -387,9 +522,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                         kind: Literal(
                                                             Literal {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         4,
                                                                     ),
@@ -397,9 +537,14 @@ description: "\n        let collection = [1, 2, 3];\n        for pattern in coll
                                                                 kind: Int(
                                                                     IntLiteral {
                                                                         id: ExpressionId {
-                                                                            def: ItemId(
-                                                                                0,
-                                                                            ),
+                                                                            def: ItemId {
+                                                                                package: PackageId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    0,
+                                                                                ),
+                                                                            },
                                                                             index: Idx(
                                                                                 4,
                                                                             ),

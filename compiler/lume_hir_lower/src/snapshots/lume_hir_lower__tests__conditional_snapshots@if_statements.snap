@@ -5,9 +5,14 @@ description: "if true { let a = 0; let b = 0; }"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "if true { let a = 0; let b = 0; }"
         kind: If(
             If {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -27,9 +37,14 @@ description: "if true { let a = 0; let b = 0; }"
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         1,
                                     ),
@@ -37,9 +52,14 @@ description: "if true { let a = 0; let b = 0; }"
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 1,
                                             ),
@@ -47,9 +67,14 @@ description: "if true { let a = 0; let b = 0; }"
                                         kind: Boolean(
                                             BooleanLiteral {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         1,
                                                     ),
@@ -67,9 +92,14 @@ description: "if true { let a = 0; let b = 0; }"
                             statements: [
                                 Statement {
                                     id: StatementId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -77,9 +107,14 @@ description: "if true { let a = 0; let b = 0; }"
                                     kind: Variable(
                                         VariableDeclaration {
                                             id: StatementId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     2,
                                                 ),
@@ -91,9 +126,14 @@ description: "if true { let a = 0; let b = 0; }"
                                             declared_type: None,
                                             value: Expression {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         3,
                                                     ),
@@ -101,9 +141,14 @@ description: "if true { let a = 0; let b = 0; }"
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 3,
                                                             ),
@@ -111,9 +156,14 @@ description: "if true { let a = 0; let b = 0; }"
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         3,
                                                                     ),
@@ -134,9 +184,14 @@ description: "if true { let a = 0; let b = 0; }"
                                 },
                                 Statement {
                                     id: StatementId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             4,
                                         ),
@@ -144,9 +199,14 @@ description: "if true { let a = 0; let b = 0; }"
                                     kind: Variable(
                                         VariableDeclaration {
                                             id: StatementId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     4,
                                                 ),
@@ -158,9 +218,14 @@ description: "if true { let a = 0; let b = 0; }"
                                             declared_type: None,
                                             value: Expression {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         5,
                                                     ),
@@ -168,9 +233,14 @@ description: "if true { let a = 0; let b = 0; }"
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 5,
                                                             ),
@@ -178,9 +248,14 @@ description: "if true { let a = 0; let b = 0; }"
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         5,
                                                                     ),

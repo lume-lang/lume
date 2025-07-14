@@ -8,8 +8,8 @@ impl Idx {
     ///
     /// If an [`Idx`] with a valid ID is required, see [`Idx::next()`].
     #[inline]
-    pub fn new() -> Self {
-        Self::default()
+    pub const fn new() -> Self {
+        Self(0)
     }
 
     /// Creates a new [`Idx`] with a unique ID.
@@ -101,47 +101,47 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
 
 /// Uniquely identifies a top-level item within the package [`ItemId::package`].
 #[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct ItemId(usize);
+pub struct ItemId {
+    pub package: PackageId,
+    pub index: Idx,
+}
 
 impl ItemId {
-    /// Creates a new [`ItemId`] from the given name.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use lume_span::ItemId;
-    ///
-    /// let _ = ItemId::new("lume");
-    /// let _ = ItemId::new(&String::from("lume"));
-    /// ```
+    /// Creates a new [`ItemId`].
     #[inline]
-    pub fn new(name: &'_ str) -> Self {
-        Self::from_name(name)
+    pub fn new(package: PackageId) -> Self {
+        Self {
+            package,
+            index: Idx::new(),
+        }
+    }
+    /// Creates a new [`ItemId`] from the given value.
+    #[inline]
+    pub fn from_name<T: std::hash::Hash + ?Sized>(package: PackageId, value: &T) -> Self {
+        Self {
+            package,
+            index: Idx::from_usize(crate::hash_id(value)),
+        }
     }
 
-    /// Gets the [`ItemId`] as a value of `usize`.
+    /// Creates a new [`ItemId`] from the next item in the sequence.
     #[inline]
-    pub const fn as_usize(self) -> usize {
-        self.0
-    }
-
-    /// Creates a new [`PackageId`] from the given `usize` value.
-    #[inline]
-    pub const fn from_usize(val: usize) -> Self {
-        Self(val)
-    }
-
-    /// Creates a new [`ItemId`] with the hash of the given value.
-    #[inline]
-    pub fn from_name<T: std::hash::Hash + ?Sized>(value: &T) -> Self {
-        Self(crate::hash_id(value))
+    #[must_use]
+    pub fn next(self) -> Self {
+        Self {
+            package: self.package,
+            index: self.index.next(),
+        }
     }
 
     /// Creates an empty [`ItemId`] without a valid ID.
     #[inline]
     #[must_use]
     pub const fn empty() -> Self {
-        Self::from_usize(0)
+        Self {
+            package: PackageId::empty(),
+            index: Idx::new(),
+        }
     }
 }
 
@@ -279,7 +279,7 @@ impl StatementId {
     /// Converts the [`StatementId`] into a [`usize`].
     #[inline]
     pub fn as_usize(&self) -> usize {
-        crate::hash_id(&[self.def.as_usize(), self.index.as_usize()])
+        crate::hash_id(&(self.def, self.index))
     }
 }
 

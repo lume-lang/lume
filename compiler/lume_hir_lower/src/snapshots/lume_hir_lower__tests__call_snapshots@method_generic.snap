@@ -5,9 +5,14 @@ description: "let _ = 1.call<T>(0, 1);"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "let _ = 1.call<T>(0, 1);"
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -29,9 +39,14 @@ description: "let _ = 1.call<T>(0, 1);"
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -39,18 +54,28 @@ description: "let _ = 1.call<T>(0, 1);"
                     kind: InstanceCall(
                         InstanceCall {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
                             },
                             callee: Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         4,
                                     ),
@@ -58,9 +83,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 4,
                                             ),
@@ -68,9 +98,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         4,
                                                     ),
@@ -91,9 +126,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                 },
                                 type_arguments: [
                                     Type {
-                                        id: ItemId(
-                                            8901637729188007634,
-                                        ),
+                                        id: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                8901637729188007634,
+                                            ),
+                                        },
                                         name: Path {
                                             root: [],
                                             name: Type {
@@ -114,9 +154,14 @@ description: "let _ = 1.call<T>(0, 1);"
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -124,9 +169,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     2,
                                                 ),
@@ -134,9 +184,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             2,
                                                         ),
@@ -152,9 +207,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                 },
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             3,
                                         ),
@@ -162,9 +222,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     3,
                                                 ),
@@ -172,9 +237,14 @@ description: "let _ = 1.call<T>(0, 1);"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             3,
                                                         ),

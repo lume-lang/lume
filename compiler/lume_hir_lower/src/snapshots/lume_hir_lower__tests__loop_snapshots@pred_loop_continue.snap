@@ -5,9 +5,14 @@ description: "while true { continue; }"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,18 +20,28 @@ description: "while true { continue; }"
         kind: PredicateLoop(
             PredicateLoop {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
                 },
                 condition: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -34,9 +49,14 @@ description: "while true { continue; }"
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -44,9 +64,14 @@ description: "while true { continue; }"
                             kind: Boolean(
                                 BooleanLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             1,
                                         ),
@@ -63,9 +88,14 @@ description: "while true { continue; }"
                     statements: [
                         Statement {
                             id: StatementId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     2,
                                 ),
@@ -73,9 +103,14 @@ description: "while true { continue; }"
                             kind: Continue(
                                 Continue {
                                     id: StatementId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),

@@ -5,9 +5,14 @@ description: call() as u64;
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: call() as u64;
         kind: Expression(
             Expression {
                 id: ExpressionId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         1,
                     ),
@@ -25,18 +35,28 @@ description: call() as u64;
                 kind: Cast(
                     Cast {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),
                         },
                         source: Expression {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     2,
                                 ),
@@ -44,9 +64,14 @@ description: call() as u64;
                             kind: StaticCall(
                                 StaticCall {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -70,9 +95,14 @@ description: call() as u64;
                             location: <internal>:0:9,
                         },
                         target: Type {
-                            id: ItemId(
-                                13902787388289951280,
-                            ),
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    13902787388289951280,
+                                ),
+                            },
                             name: Path {
                                 root: [],
                                 name: Namespace {

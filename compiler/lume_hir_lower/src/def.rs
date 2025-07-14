@@ -1,6 +1,5 @@
 use error_snippet::Result;
 use lume_span::DefId;
-use lume_span::ItemId;
 use lume_span::MethodId;
 use lume_span::PropertyId;
 
@@ -22,13 +21,12 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<lume_hir::Item> {
-        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
-        self.current_item = ItemId::from_name(&name);
+        let id = self.next_item_id();
 
+        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
-        let id = self.item_id(&name);
 
         self.self_type = Some(name.clone());
 
@@ -81,11 +79,12 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_impl(&mut self, expr: ast::Implementation) -> Result<lume_hir::Item> {
+        let id = self.next_item_id();
+
         let target = self.type_ref(*expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
-        self.current_item = self.impl_id(&target);
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
@@ -96,7 +95,7 @@ impl LowerModule<'_> {
         self.self_type = None;
 
         Ok(lume_hir::Item::Impl(Box::new(hir::Implementation {
-            id: self.current_item,
+            id,
             impl_id: None,
             target: Box::new(target),
             methods,
@@ -137,12 +136,13 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
+        let id = self.next_item_id();
+
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
-        self.current_item = self.item_id(&name);
         self.self_type = Some(name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
@@ -154,7 +154,7 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
-                id: self.current_item,
+                id,
                 type_id: None,
                 name,
                 visibility,
@@ -194,11 +194,12 @@ impl LowerModule<'_> {
         })
     }
 
-    fn def_enum(&self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
+    fn def_enum(&mut self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
+        let id = self.next_item_id();
+
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(&expr.visibility);
         let location = self.location(expr.location);
-        let id = self.item_id(&name);
 
         let mut cases = Vec::with_capacity(expr.cases.len());
         for case in expr.cases {
@@ -238,15 +239,14 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<lume_hir::Item> {
+        let id = self.next_item_id();
+
         let visibility = lower_visibility(&expr.visibility);
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, false)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
-
-        self.current_item = ItemId::from_name(&name);
-        let id = self.item_id(&name);
 
         let block = if expr.external {
             None
@@ -329,6 +329,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
+        let id = self.next_item_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
 
         let visibility = lower_visibility(&expr.visibility);
@@ -345,8 +346,6 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         self.self_type = None;
-        self.current_item = ItemId::from_name(&[&name.name, &target.name]);
-        let id = self.item_id((&target, &name));
 
         Ok(lume_hir::Item::Use(Box::new(hir::TraitImplementation {
             id,

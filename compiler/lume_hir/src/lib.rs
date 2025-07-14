@@ -1631,7 +1631,7 @@ pub struct Type {
 impl Type {
     pub fn void() -> Type {
         Self {
-            id: ItemId::from_usize(0),
+            id: ItemId::new(PackageId::empty()),
             name: Path::void(),
             location: Location::empty(),
         }

@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            18378013473329591206,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    18378013473329591206,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -36,9 +46,14 @@ Map {
                             location: <internal>:8:12,
                         },
                         param_type: Type {
-                            id: ItemId(
-                                16901111566601906630,
-                            ),
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    16901111566601906630,
+                                ),
+                            },
                             name: Path {
                                 root: [],
                                 name: Namespace {
@@ -59,9 +74,14 @@ Map {
                     inner: [],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        17666474489655347949,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            17666474489655347949,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {

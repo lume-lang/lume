@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            13811513517830038765,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    13811513517830038765,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -54,9 +64,14 @@ Map {
                     ],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        17666474489655347949,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            17666474489655347949,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {

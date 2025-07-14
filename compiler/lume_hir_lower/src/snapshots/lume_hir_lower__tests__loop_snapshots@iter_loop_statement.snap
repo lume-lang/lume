@@ -5,9 +5,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,18 +20,28 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
         kind: IteratorLoop(
             IteratorLoop {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
                 },
                 collection: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -34,9 +49,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                     kind: StaticCall(
                         StaticCall {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -71,9 +91,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                             arguments: [
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             2,
                                         ),
@@ -81,9 +106,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     2,
                                                 ),
@@ -91,9 +121,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             2,
                                                         ),
@@ -109,9 +144,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                 },
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             3,
                                         ),
@@ -119,9 +159,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     3,
                                                 ),
@@ -129,9 +174,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             3,
                                                         ),
@@ -147,9 +197,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                 },
                                 Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             4,
                                         ),
@@ -157,9 +212,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                     kind: Literal(
                                         Literal {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     4,
                                                 ),
@@ -167,9 +227,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                             kind: Int(
                                                 IntLiteral {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             4,
                                                         ),
@@ -193,9 +258,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                     statements: [
                         Statement {
                             id: StatementId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     5,
                                 ),
@@ -203,9 +273,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                             kind: Variable(
                                 VariableDeclaration {
                                     id: StatementId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             5,
                                         ),
@@ -217,9 +292,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                     declared_type: None,
                                     value: Expression {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 6,
                                             ),
@@ -227,9 +307,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                         kind: Literal(
                                             Literal {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         6,
                                                     ),
@@ -237,9 +322,14 @@ description: "for pattern in [1, 2, 3] { let a = 0; }"
                                                 kind: Int(
                                                     IntLiteral {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 6,
                                                             ),

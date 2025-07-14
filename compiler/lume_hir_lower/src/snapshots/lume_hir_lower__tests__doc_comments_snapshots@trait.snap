@@ -7,14 +7,24 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            5175167619020667705,
-        ): Type(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Type(
             Trait(
                 TraitDefinition {
-                    id: ItemId(
-                        5175167619020667705,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     type_id: None,
                     name: Path {
                         root: [],

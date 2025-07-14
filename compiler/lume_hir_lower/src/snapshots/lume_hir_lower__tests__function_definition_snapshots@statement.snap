@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            18378013473329591206,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    18378013473329591206,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -33,9 +43,14 @@ Map {
                     inner: [],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        17666474489655347949,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            17666474489655347949,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {
@@ -55,9 +70,14 @@ Map {
                         statements: [
                             Statement {
                                 id: StatementId {
-                                    def: ItemId(
-                                        18378013473329591206,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     index: Idx(
                                         0,
                                     ),
@@ -65,9 +85,14 @@ Map {
                                 kind: Variable(
                                     VariableDeclaration {
                                         id: StatementId {
-                                            def: ItemId(
-                                                18378013473329591206,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    1,
+                                                ),
+                                            },
                                             index: Idx(
                                                 0,
                                             ),
@@ -79,9 +104,14 @@ Map {
                                         declared_type: None,
                                         value: Expression {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    18378013473329591206,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        1,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     1,
                                                 ),
@@ -89,9 +119,14 @@ Map {
                                             kind: Literal(
                                                 Literal {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            18378013473329591206,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                1,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             1,
                                                         ),
@@ -99,9 +134,14 @@ Map {
                                                     kind: Int(
                                                         IntLiteral {
                                                             id: ExpressionId {
-                                                                def: ItemId(
-                                                                    18378013473329591206,
-                                                                ),
+                                                                def: ItemId {
+                                                                    package: PackageId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        1,
+                                                                    ),
+                                                                },
                                                                 index: Idx(
                                                                     1,
                                                                 ),
@@ -130,17 +170,27 @@ Map {
     },
     statements: {
         StatementId {
-            def: ItemId(
-                18378013473329591206,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    1,
+                ),
+            },
             index: Idx(
                 0,
             ),
         }: Statement {
             id: StatementId {
-                def: ItemId(
-                    18378013473329591206,
-                ),
+                def: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 index: Idx(
                     0,
                 ),
@@ -148,9 +198,14 @@ Map {
             kind: Variable(
                 VariableDeclaration {
                     id: StatementId {
-                        def: ItemId(
-                            18378013473329591206,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
                         index: Idx(
                             0,
                         ),
@@ -162,9 +217,14 @@ Map {
                     declared_type: None,
                     value: Expression {
                         id: ExpressionId {
-                            def: ItemId(
-                                18378013473329591206,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    1,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),
@@ -172,9 +232,14 @@ Map {
                         kind: Literal(
                             Literal {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        18378013473329591206,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     index: Idx(
                                         1,
                                     ),
@@ -182,9 +247,14 @@ Map {
                                 kind: Int(
                                     IntLiteral {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                18378013473329591206,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    1,
+                                                ),
+                                            },
                                             index: Idx(
                                                 1,
                                             ),
@@ -206,17 +276,27 @@ Map {
     },
     expressions: {
         ExpressionId {
-            def: ItemId(
-                18378013473329591206,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    1,
+                ),
+            },
             index: Idx(
                 1,
             ),
         }: Expression {
             id: ExpressionId {
-                def: ItemId(
-                    18378013473329591206,
-                ),
+                def: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 index: Idx(
                     1,
                 ),
@@ -224,9 +304,14 @@ Map {
             kind: Literal(
                 Literal {
                     id: ExpressionId {
-                        def: ItemId(
-                            18378013473329591206,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                1,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -234,9 +319,14 @@ Map {
                     kind: Int(
                         IntLiteral {
                             id: ExpressionId {
-                                def: ItemId(
-                                    18378013473329591206,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        1,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),

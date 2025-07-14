@@ -5,9 +5,14 @@ description: "Foo { };"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "Foo { };"
         kind: Expression(
             Expression {
                 id: ExpressionId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         1,
                     ),
@@ -25,9 +35,14 @@ description: "Foo { };"
                 kind: Construct(
                     Construct {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),

@@ -5,9 +5,14 @@ description: "let a = 0; if a != 1 { }"
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "let a = 0; if a != 1 { }"
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -29,9 +39,14 @@ description: "let a = 0; if a != 1 { }"
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -39,9 +54,14 @@ description: "let a = 0; if a != 1 { }"
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -49,9 +69,14 @@ description: "let a = 0; if a != 1 { }"
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             1,
                                         ),
@@ -72,9 +97,14 @@ description: "let a = 0; if a != 1 { }"
     },
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 2,
             ),
@@ -82,9 +112,14 @@ description: "let a = 0; if a != 1 { }"
         kind: If(
             If {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         2,
                     ),
@@ -94,9 +129,14 @@ description: "let a = 0; if a != 1 { }"
                         condition: Some(
                             Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         3,
                                     ),
@@ -104,9 +144,14 @@ description: "let a = 0; if a != 1 { }"
                                 kind: IntrinsicCall(
                                     IntrinsicCall {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 3,
                                             ),
@@ -122,9 +167,14 @@ description: "let a = 0; if a != 1 { }"
                                         arguments: [
                                             Expression {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         4,
                                                     ),
@@ -132,9 +182,14 @@ description: "let a = 0; if a != 1 { }"
                                                 kind: Variable(
                                                     Variable {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 4,
                                                             ),
@@ -142,9 +197,14 @@ description: "let a = 0; if a != 1 { }"
                                                         reference: Variable(
                                                             VariableDeclaration {
                                                                 id: StatementId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         0,
                                                                     ),
@@ -156,9 +216,14 @@ description: "let a = 0; if a != 1 { }"
                                                                 declared_type: None,
                                                                 value: Expression {
                                                                     id: ExpressionId {
-                                                                        def: ItemId(
-                                                                            0,
-                                                                        ),
+                                                                        def: ItemId {
+                                                                            package: PackageId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                0,
+                                                                            ),
+                                                                        },
                                                                         index: Idx(
                                                                             1,
                                                                         ),
@@ -166,9 +231,14 @@ description: "let a = 0; if a != 1 { }"
                                                                     kind: Literal(
                                                                         Literal {
                                                                             id: ExpressionId {
-                                                                                def: ItemId(
-                                                                                    0,
-                                                                                ),
+                                                                                def: ItemId {
+                                                                                    package: PackageId(
+                                                                                        0,
+                                                                                    ),
+                                                                                    index: Idx(
+                                                                                        0,
+                                                                                    ),
+                                                                                },
                                                                                 index: Idx(
                                                                                     1,
                                                                                 ),
@@ -176,9 +246,14 @@ description: "let a = 0; if a != 1 { }"
                                                                             kind: Int(
                                                                                 IntLiteral {
                                                                                     id: ExpressionId {
-                                                                                        def: ItemId(
-                                                                                            0,
-                                                                                        ),
+                                                                                        def: ItemId {
+                                                                                            package: PackageId(
+                                                                                                0,
+                                                                                            ),
+                                                                                            index: Idx(
+                                                                                                0,
+                                                                                            ),
+                                                                                        },
                                                                                         index: Idx(
                                                                                             1,
                                                                                         ),
@@ -206,9 +281,14 @@ description: "let a = 0; if a != 1 { }"
                                             },
                                             Expression {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         5,
                                                     ),
@@ -216,9 +296,14 @@ description: "let a = 0; if a != 1 { }"
                                                 kind: Literal(
                                                     Literal {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 5,
                                                             ),
@@ -226,9 +311,14 @@ description: "let a = 0; if a != 1 { }"
                                                         kind: Int(
                                                             IntLiteral {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         5,
                                                                     ),

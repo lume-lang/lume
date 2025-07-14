@@ -7,14 +7,24 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            5175167619020667705,
-        ): Type(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Type(
             Enum(
                 EnumDefinition {
-                    id: ItemId(
-                        5175167619020667705,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     type_id: None,
                     name: Path {
                         root: [],
@@ -45,9 +55,14 @@ Map {
                             },
                             parameters: [
                                 Type {
-                                    id: ItemId(
-                                        7468397361300629741,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7468397361300629741,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Namespace {
@@ -61,9 +76,14 @@ Map {
                                     location: <internal>:44:47,
                                 },
                                 Type {
-                                    id: ItemId(
-                                        7468397361300629741,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7468397361300629741,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Namespace {
@@ -94,9 +114,14 @@ Map {
                             },
                             parameters: [
                                 Type {
-                                    id: ItemId(
-                                        7468397361300629741,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7468397361300629741,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Namespace {
@@ -110,9 +135,14 @@ Map {
                                     location: <internal>:75:78,
                                 },
                                 Type {
-                                    id: ItemId(
-                                        7468397361300629741,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            7468397361300629741,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Namespace {

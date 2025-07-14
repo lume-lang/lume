@@ -5,9 +5,14 @@ description: 0 as u64 == 0;
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: 0 as u64 == 0;
         kind: Expression(
             Expression {
                 id: ExpressionId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         1,
                     ),
@@ -25,9 +35,14 @@ description: 0 as u64 == 0;
                 kind: IntrinsicCall(
                     IntrinsicCall {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 1,
                             ),
@@ -43,9 +58,14 @@ description: 0 as u64 == 0;
                         arguments: [
                             Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         2,
                                     ),
@@ -53,18 +73,28 @@ description: 0 as u64 == 0;
                                 kind: Cast(
                                     Cast {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 2,
                                             ),
                                         },
                                         source: Expression {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     3,
                                                 ),
@@ -72,9 +102,14 @@ description: 0 as u64 == 0;
                                             kind: Literal(
                                                 Literal {
                                                     id: ExpressionId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             3,
                                                         ),
@@ -82,9 +117,14 @@ description: 0 as u64 == 0;
                                                     kind: Int(
                                                         IntLiteral {
                                                             id: ExpressionId {
-                                                                def: ItemId(
-                                                                    0,
-                                                                ),
+                                                                def: ItemId {
+                                                                    package: PackageId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        0,
+                                                                    ),
+                                                                },
                                                                 index: Idx(
                                                                     3,
                                                                 ),
@@ -99,9 +139,14 @@ description: 0 as u64 == 0;
                                             location: <internal>:0:1,
                                         },
                                         target: Type {
-                                            id: ItemId(
-                                                13902787388289951280,
-                                            ),
+                                            id: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    13902787388289951280,
+                                                ),
+                                            },
                                             name: Path {
                                                 root: [],
                                                 name: Namespace {
@@ -121,9 +166,14 @@ description: 0 as u64 == 0;
                             },
                             Expression {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         4,
                                     ),
@@ -131,9 +181,14 @@ description: 0 as u64 == 0;
                                 kind: Literal(
                                     Literal {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 4,
                                             ),
@@ -141,9 +196,14 @@ description: 0 as u64 == 0;
                                         kind: Int(
                                             IntLiteral {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         4,
                                                     ),

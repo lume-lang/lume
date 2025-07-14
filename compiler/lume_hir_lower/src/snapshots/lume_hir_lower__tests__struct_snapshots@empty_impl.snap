@@ -7,18 +7,33 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            12541700452115798297,
-        ): Impl(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Impl(
             Implementation {
-                id: ItemId(
-                    12541700452115798297,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 impl_id: None,
                 target: Type {
-                    id: ItemId(
-                        6143724420395906933,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            6143724420395906933,
+                        ),
+                    },
                     name: Path {
                         root: [
                             Namespace {

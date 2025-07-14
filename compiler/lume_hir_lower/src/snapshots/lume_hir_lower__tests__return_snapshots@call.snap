@@ -5,9 +5,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
 [
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 0,
             ),
@@ -15,9 +20,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         0,
                     ),
@@ -29,9 +39,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             1,
                         ),
@@ -39,9 +54,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     1,
                                 ),
@@ -49,9 +69,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             1,
                                         ),
@@ -72,9 +97,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
     },
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 2,
             ),
@@ -82,9 +112,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         2,
                     ),
@@ -96,9 +131,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             3,
                         ),
@@ -106,9 +146,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     3,
                                 ),
@@ -116,9 +161,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             3,
                                         ),
@@ -139,9 +189,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
     },
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 4,
             ),
@@ -149,9 +204,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
         kind: Variable(
             VariableDeclaration {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         4,
                     ),
@@ -163,9 +223,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                 declared_type: None,
                 value: Expression {
                     id: ExpressionId {
-                        def: ItemId(
-                            0,
-                        ),
+                        def: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                0,
+                            ),
+                        },
                         index: Idx(
                             5,
                         ),
@@ -173,9 +238,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                     kind: Literal(
                         Literal {
                             id: ExpressionId {
-                                def: ItemId(
-                                    0,
-                                ),
+                                def: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        0,
+                                    ),
+                                },
                                 index: Idx(
                                     5,
                                 ),
@@ -183,9 +253,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                             kind: Int(
                                 IntLiteral {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             5,
                                         ),
@@ -206,9 +281,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
     },
     Statement {
         id: StatementId {
-            def: ItemId(
-                0,
-            ),
+            def: ItemId {
+                package: PackageId(
+                    0,
+                ),
+                index: Idx(
+                    0,
+                ),
+            },
             index: Idx(
                 6,
             ),
@@ -216,9 +296,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
         kind: Return(
             Return {
                 id: StatementId {
-                    def: ItemId(
-                        0,
-                    ),
+                    def: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     index: Idx(
                         6,
                     ),
@@ -226,9 +311,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                 value: Some(
                     Expression {
                         id: ExpressionId {
-                            def: ItemId(
-                                0,
-                            ),
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    0,
+                                ),
+                            },
                             index: Idx(
                                 7,
                             ),
@@ -236,18 +326,28 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                         kind: InstanceCall(
                             InstanceCall {
                                 id: ExpressionId {
-                                    def: ItemId(
-                                        0,
-                                    ),
+                                    def: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            0,
+                                        ),
+                                    },
                                     index: Idx(
                                         7,
                                     ),
                                 },
                                 callee: Expression {
                                     id: ExpressionId {
-                                        def: ItemId(
-                                            0,
-                                        ),
+                                        def: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                0,
+                                            ),
+                                        },
                                         index: Idx(
                                             9,
                                         ),
@@ -255,9 +355,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                     kind: Variable(
                                         Variable {
                                             id: ExpressionId {
-                                                def: ItemId(
-                                                    0,
-                                                ),
+                                                def: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        0,
+                                                    ),
+                                                },
                                                 index: Idx(
                                                     9,
                                                 ),
@@ -265,9 +370,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                             reference: Variable(
                                                 VariableDeclaration {
                                                     id: StatementId {
-                                                        def: ItemId(
-                                                            0,
-                                                        ),
+                                                        def: ItemId {
+                                                            package: PackageId(
+                                                                0,
+                                                            ),
+                                                            index: Idx(
+                                                                0,
+                                                            ),
+                                                        },
                                                         index: Idx(
                                                             0,
                                                         ),
@@ -279,9 +389,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                     declared_type: None,
                                                     value: Expression {
                                                         id: ExpressionId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 1,
                                                             ),
@@ -289,9 +404,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                         kind: Literal(
                                                             Literal {
                                                                 id: ExpressionId {
-                                                                    def: ItemId(
-                                                                        0,
-                                                                    ),
+                                                                    def: ItemId {
+                                                                        package: PackageId(
+                                                                            0,
+                                                                        ),
+                                                                        index: Idx(
+                                                                            0,
+                                                                        ),
+                                                                    },
                                                                     index: Idx(
                                                                         1,
                                                                     ),
@@ -299,9 +419,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                                 kind: Int(
                                                                     IntLiteral {
                                                                         id: ExpressionId {
-                                                                            def: ItemId(
-                                                                                0,
-                                                                            ),
+                                                                            def: ItemId {
+                                                                                package: PackageId(
+                                                                                    0,
+                                                                                ),
+                                                                                index: Idx(
+                                                                                    0,
+                                                                                ),
+                                                                            },
                                                                             index: Idx(
                                                                                 1,
                                                                             ),
@@ -338,9 +463,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                 arguments: [
                                     Expression {
                                         id: ExpressionId {
-                                            def: ItemId(
-                                                0,
-                                            ),
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
                                             index: Idx(
                                                 8,
                                             ),
@@ -348,9 +478,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                         kind: Variable(
                                             Variable {
                                                 id: ExpressionId {
-                                                    def: ItemId(
-                                                        0,
-                                                    ),
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
                                                     index: Idx(
                                                         8,
                                                     ),
@@ -358,9 +493,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                 reference: Variable(
                                                     VariableDeclaration {
                                                         id: StatementId {
-                                                            def: ItemId(
-                                                                0,
-                                                            ),
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
                                                             index: Idx(
                                                                 4,
                                                             ),
@@ -372,9 +512,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                         declared_type: None,
                                                         value: Expression {
                                                             id: ExpressionId {
-                                                                def: ItemId(
-                                                                    0,
-                                                                ),
+                                                                def: ItemId {
+                                                                    package: PackageId(
+                                                                        0,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        0,
+                                                                    ),
+                                                                },
                                                                 index: Idx(
                                                                     5,
                                                                 ),
@@ -382,9 +527,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                             kind: Literal(
                                                                 Literal {
                                                                     id: ExpressionId {
-                                                                        def: ItemId(
-                                                                            0,
-                                                                        ),
+                                                                        def: ItemId {
+                                                                            package: PackageId(
+                                                                                0,
+                                                                            ),
+                                                                            index: Idx(
+                                                                                0,
+                                                                            ),
+                                                                        },
                                                                         index: Idx(
                                                                             5,
                                                                         ),
@@ -392,9 +542,14 @@ description: "\n        let a = 1;\n        let b = 1;\n        let c = 1;\n\n  
                                                                     kind: Int(
                                                                         IntLiteral {
                                                                             id: ExpressionId {
-                                                                                def: ItemId(
-                                                                                    0,
-                                                                                ),
+                                                                                def: ItemId {
+                                                                                    package: PackageId(
+                                                                                        0,
+                                                                                    ),
+                                                                                    index: Idx(
+                                                                                        0,
+                                                                                    ),
+                                                                                },
                                                                                 index: Idx(
                                                                                     5,
                                                                                 ),

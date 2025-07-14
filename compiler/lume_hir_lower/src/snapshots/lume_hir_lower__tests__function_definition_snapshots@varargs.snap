@@ -7,13 +7,23 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            14135399907963487766,
-        ): Function(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Function(
             FunctionDefinition {
-                id: ItemId(
-                    14135399907963487766,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 func_id: None,
                 visibility: Private,
                 name: Path {
@@ -36,9 +46,14 @@ Map {
                             location: <internal>:10:14,
                         },
                         param_type: Type {
-                            id: ItemId(
-                                6143724420395906933,
-                            ),
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    6143724420395906933,
+                                ),
+                            },
                             name: Path {
                                 root: [
                                     Namespace {
@@ -68,9 +83,14 @@ Map {
                     inner: [],
                 },
                 return_type: Type {
-                    id: ItemId(
-                        0,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            0,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {

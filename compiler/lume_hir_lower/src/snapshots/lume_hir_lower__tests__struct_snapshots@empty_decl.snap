@@ -7,14 +7,24 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            12629599239576135137,
-        ): Type(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Type(
             Struct(
                 StructDefinition {
-                    id: ItemId(
-                        12629599239576135137,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     type_id: None,
                     name: Path {
                         root: [],

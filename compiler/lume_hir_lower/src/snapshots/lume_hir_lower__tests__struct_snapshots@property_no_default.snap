@@ -7,14 +7,24 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            5175167619020667705,
-        ): Type(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Type(
             Struct(
                 StructDefinition {
-                    id: ItemId(
-                        5175167619020667705,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            1,
+                        ),
+                    },
                     type_id: None,
                     name: Path {
                         root: [],
@@ -34,9 +44,14 @@ Map {
                         Property {
                             id: Property(
                                 PropertyId {
-                                    item: ItemId(
-                                        5175167619020667705,
-                                    ),
+                                    item: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            1,
+                                        ),
+                                    },
                                     index: Idx(
                                         0,
                                     ),
@@ -49,9 +64,14 @@ Map {
                                 location: <internal>:42:43,
                             },
                             property_type: Type {
-                                id: ItemId(
-                                    6143724420395906933,
-                                ),
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6143724420395906933,
+                                    ),
+                                },
                                 name: Path {
                                     root: [
                                         Namespace {

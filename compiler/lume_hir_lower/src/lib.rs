@@ -7,7 +7,7 @@ use lume_errors::DiagCtxHandle;
 use lume_hir::{Identifier, Path, PathSegment, map::Map, symbols::*};
 use lume_parser::Parser;
 use lume_session::Package;
-use lume_span::{ExpressionId, Internable, ItemId, Location, SourceFile, SourceMap, StatementId, hash_id};
+use lume_span::{ExpressionId, Internable, ItemId, Location, SourceFile, SourceMap, StatementId};
 
 mod errors;
 
@@ -119,6 +119,7 @@ impl<'a> LowerState<'a> {
     pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
+        let mut item_idx = ItemId::new(self.package.id);
 
         for source_file in self.package.files.clone() {
             // Register source file in the state.
@@ -131,7 +132,7 @@ impl<'a> LowerState<'a> {
 
             // Lowers the parsed module expressions down to HIR.
             self.dcx
-                .with(|handle| LowerModule::lower(&mut lume_hir, source_file, handle, expressions))?;
+                .with(|handle| LowerModule::lower(&mut lume_hir, &mut item_idx, source_file, handle, expressions))?;
         }
 
         Ok(lume_hir)
@@ -165,16 +166,11 @@ pub struct LowerModule<'a> {
 
     /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
     local_id_counter: usize,
-
-    /// Defines the current counter for [`ItemId`] instances, which refer to implementation blocks.
-    impl_id_counter: usize,
 }
 
 impl<'a> LowerModule<'a> {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &'_ mut Map, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'_> {
-        let package_id = map.package;
-
+    pub fn new(map: &'a mut Map, item_idx: ItemId, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'a> {
         LowerModule {
             file,
             map,
@@ -183,9 +179,8 @@ impl<'a> LowerModule<'a> {
             imports: HashMap::new(),
             namespace: None,
             self_type: None,
-            current_item: ItemId::from_usize(package_id.as_usize()),
+            current_item: item_idx,
             local_id_counter: 0,
-            impl_id_counter: 0,
         }
     }
 
@@ -204,16 +199,19 @@ impl<'a> LowerModule<'a> {
     )]
     pub fn lower(
         map: &'a mut Map,
+        item_idx: &'a mut ItemId,
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<ast::TopLevelExpression>,
     ) -> Result<()> {
-        let mut lower = LowerModule::new(map, file, dcx);
+        let mut lower = LowerModule::new(map, *item_idx, file, dcx);
         lower.insert_implicit_imports()?;
 
         for expr in expressions {
             lower.top_level_expression(expr)?;
         }
+
+        *item_idx = lower.current_item;
 
         Ok(())
     }
@@ -226,31 +224,12 @@ impl<'a> LowerModule<'a> {
         self.top_import(import_item)
     }
 
-    /// Converts the given value into an [`ItemId`].
+    /// Gets the next [`ItemId`] in the sequence.
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn item_id<T: std::hash::Hash + Sized + std::fmt::Debug>(&self, value: T) -> ItemId {
-        ItemId::from_name(&value)
-    }
+    fn next_item_id(&mut self) -> ItemId {
+        self.current_item = self.current_item.next();
 
-    /// Converts the given value into an [`ItemId`].
-    ///
-    /// Since implementations often use the parent type as the hash value,
-    /// there *will* be key collisions where an implementation will get the same [`ItemId`]
-    /// as the parent type, which would override the original type. So, the given Lume file:
-    ///
-    /// ```lm
-    /// // uses `Foo` as it's hash value
-    /// struct Foo {}
-    ///
-    /// // also uses `Foo` as it's hash value (!!!)
-    /// impl Foo {}
-    /// ```
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn impl_id<T: std::hash::Hash + Sized + std::fmt::Debug>(&mut self, value: T) -> ItemId {
-        let id = hash_id(&hash_id(&value).wrapping_add(self.impl_id_counter));
-        self.impl_id_counter += 1;
-
-        ItemId::from_usize(id)
+        self.current_item
     }
 
     /// Generates the next [`ExpressionId`] instance in the chain.

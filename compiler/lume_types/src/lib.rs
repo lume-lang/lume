@@ -7,7 +7,7 @@ use lume_session::GlobalCtx;
 use crate::errors::*;
 pub use lume_hir::TypeId;
 use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeParameterId, UseId, Visibility};
-use lume_span::{DefId, ItemId, Location};
+use lume_span::{DefId, ItemId, Location, PackageId};
 
 pub mod errors;
 
@@ -619,7 +619,7 @@ impl Type {
         Self {
             id: TYPEREF_POINTER_ID,
             kind: TypeKind::User(UserType::Struct(Box::new(Struct {
-                id: ItemId::from_name(&Path::pointer()),
+                id: ItemId::from_name(PackageId::empty(), &Path::pointer()),
                 name: Path::pointer(),
                 type_parameters: vec![TypeParameterId(0)],
             }))),
@@ -632,7 +632,7 @@ impl Type {
         Self {
             id: TYPEREF_ARRAY_ID,
             kind: TypeKind::User(UserType::Struct(Box::new(Struct {
-                id: ItemId::from_name(&Path::array()),
+                id: ItemId::from_name(PackageId::empty(), &Path::array()),
                 name: Path::array(),
                 type_parameters: vec![TypeParameterId(1)],
             }))),

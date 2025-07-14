@@ -7,18 +7,33 @@ Map {
         0,
     ),
     items: {
-        ItemId(
-            14353073384594717167,
-        ): Use(
+        ItemId {
+            package: PackageId(
+                0,
+            ),
+            index: Idx(
+                1,
+            ),
+        }: Use(
             TraitImplementation {
-                id: ItemId(
-                    14353073384594717167,
-                ),
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        1,
+                    ),
+                },
                 use_id: None,
                 name: Type {
-                    id: ItemId(
-                        13380267704548414892,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            13380267704548414892,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {
@@ -28,9 +43,14 @@ Map {
                             },
                             type_arguments: [
                                 Type {
-                                    id: ItemId(
-                                        8901637729188007634,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            8901637729188007634,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -53,9 +73,14 @@ Map {
                     location: <internal>:17:30,
                 },
                 target: Type {
-                    id: ItemId(
-                        7484320765453361402,
-                    ),
+                    id: ItemId {
+                        package: PackageId(
+                            0,
+                        ),
+                        index: Idx(
+                            7484320765453361402,
+                        ),
+                    },
                     name: Path {
                         root: [],
                         name: Type {
@@ -65,9 +90,14 @@ Map {
                             },
                             type_arguments: [
                                 Type {
-                                    id: ItemId(
-                                        8901637729188007634,
-                                    ),
+                                    id: ItemId {
+                                        package: PackageId(
+                                            0,
+                                        ),
+                                        index: Idx(
+                                            8901637729188007634,
+                                        ),
+                                    },
                                     name: Path {
                                         root: [],
                                         name: Type {
@@ -94,9 +124,14 @@ Map {
                     TraitMethodImplementation {
                         id: Method(
                             MethodId {
-                                item: ItemId(
-                                    0,
-                                ),
+                                item: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        1,
+                                    ),
+                                },
                                 index: Idx(
                                     0,
                                 ),
@@ -113,9 +148,14 @@ Map {
                             inner: [],
                         },
                         return_type: Type {
-                            id: ItemId(
-                                8901637729188007634,
-                            ),
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    8901637729188007634,
+                                ),
+                            },
                             name: Path {
                                 root: [],
                                 name: Type {
