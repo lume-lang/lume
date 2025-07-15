@@ -122,6 +122,8 @@ impl<'a> LowerState<'a> {
         let mut lume_hir = Map::empty(self.package.id);
         let mut item_idx = ItemId::new(self.package.id);
 
+        let use_std = !self.package.dependencies.no_std;
+
         for source_file in self.package.files.clone() {
             // Register source file in the state.
             self.source_map.insert(source_file.clone());
@@ -132,8 +134,9 @@ impl<'a> LowerState<'a> {
                 .with(|handle| Parser::parse_src(self.source_map, source_file.id, handle))?;
 
             // Lowers the parsed module expressions down to HIR.
-            self.dcx
-                .with(|handle| LowerModule::lower(&mut lume_hir, &mut item_idx, source_file, handle, expressions))?;
+            self.dcx.with(|handle| {
+                LowerModule::lower(&mut lume_hir, &mut item_idx, source_file, handle, expressions, use_std)
+            })?;
         }
 
         Ok(lume_hir)
@@ -226,9 +229,13 @@ impl<'a> LowerModule<'a> {
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<ast::TopLevelExpression>,
+        import_std: bool,
     ) -> Result<()> {
         let mut lower = LowerModule::new(map, *item_idx, file, dcx);
-        lower.insert_implicit_imports()?;
+
+        if import_std {
+            lower.insert_implicit_imports()?;
+        }
 
         for expr in expressions {
             lower.top_level_expression(expr)?;

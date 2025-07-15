@@ -18,7 +18,7 @@ fn lower(input: &str) -> Result<Map> {
     let mut map = Map::empty(module_id);
     let mut item_id = ItemId::empty();
 
-    dcx.with(|handle| LowerModule::lower(&mut map, &mut item_id, source, handle, expressions))?;
+    dcx.with(|handle| LowerModule::lower(&mut map, &mut item_id, source, handle, expressions, true))?;
 
     Ok(map)
 }
