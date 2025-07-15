@@ -1,6 +1,8 @@
-/main.rb
 /main.lm
 **/.DS_Store
 
 /target
 /**/snapshots/*.snap.new
+
+/samples/playground/*
+!/samples/playground/.gitkeep
