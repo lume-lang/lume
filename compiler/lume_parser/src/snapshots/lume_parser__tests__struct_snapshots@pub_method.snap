@@ -8,7 +8,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
             visibility: Private(
                 Private {
                     location: Location(
-                        9..13,
+                        0..0,
                     ),
                 },
             ),
@@ -111,7 +111,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
             ],
             type_parameters: [],
             location: Location(
-                9..105,
+                0..105,
             ),
         },
     ),

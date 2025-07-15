@@ -27,6 +27,7 @@ tracing-tracy = ["lume_cli/tracing-tracy"]
 pedantic = { level = "warn", priority = -1 }
 must_use_candidate = "allow"
 wildcard_imports = "allow"
+range_plus_one = "allow"
 
 [dependencies]
 lume_cli = { path = "compiler/lume_cli" }

@@ -9,7 +9,7 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                 visibility: Private(
                     Private {
                         location: Location(
-                            9..15,
+                            0..0,
                         ),
                     },
                 ),

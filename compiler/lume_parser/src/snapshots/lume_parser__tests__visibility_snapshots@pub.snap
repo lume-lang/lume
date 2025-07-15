@@ -1,22 +1,22 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn empty?() {}\")"
+expression: "parse(\"pub fn foo {}\")"
 ---
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private(
-                Private {
+            visibility: Public(
+                Public {
                     location: Location(
-                        0..0,
+                        0..3,
                     ),
                 },
             ),
             external: false,
             name: Identifier {
-                name: "empty?",
+                name: "foo",
                 location: Location(
-                    3..9,
+                    7..10,
                 ),
             },
             parameters: [],
@@ -25,11 +25,11 @@ expression: "parse(\"fn empty?() {}\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    12..14,
+                    11..13,
                 ),
             },
             location: Location(
-                0..14,
+                0..13,
             ),
             documentation: None,
         },

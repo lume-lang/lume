@@ -9,7 +9,7 @@ expression: "parse(\"/// This is a doc comment\n        enum Foo {\n            
                 visibility: Private(
                     Private {
                         location: Location(
-                            34..38,
+                            34..34,
                         ),
                     },
                 ),

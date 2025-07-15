@@ -146,7 +146,6 @@ impl Lexer {
     ///
     /// This method will return `Err` if the expected token was formatted incorrectly,
     /// or if the lexer unexpectedly encountered end-of-file.
-    #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
     pub fn all(&mut self) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
 
@@ -170,7 +169,6 @@ impl Lexer {
     /// This method will return `Err` if the expected token was formatted incorrectly,
     /// or if the lexer unexpectedly encountered end-of-file.
     #[allow(clippy::too_many_lines)]
-    #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
     pub fn next(&mut self) -> Result<Token> {
         let start_idx = self.position;
         let source = self.source.clone();
@@ -340,7 +338,6 @@ impl Lexer {
     #[inline]
     fn current_char_or_eof(&self) -> Result<char> {
         self.current_char().ok_or_else(|| {
-            #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
             UnexpectedEndOfFile {
                 source: self.source.clone(),
                 range: self.position..self.position + 1,

@@ -8,11 +8,11 @@ impl Parser {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     pub(super) fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         match self.token().kind {
+            TokenKind::Pub | TokenKind::Priv => self.parse_top_level_expression_visibility(),
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
             TokenKind::Impl => self.parse_impl(),
             TokenKind::Fn => self.parse_fn(),
-            TokenKind::Pub => self.parse_pub_top_level_expression(),
             TokenKind::Struct => self.parse_struct(),
             TokenKind::Trait => self.parse_trait(),
             TokenKind::Enum => self.parse_enum(),
@@ -22,7 +22,7 @@ impl Parser {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_pub_top_level_expression(&mut self) -> Result<TopLevelExpression> {
+    fn parse_top_level_expression_visibility(&mut self) -> Result<TopLevelExpression> {
         let visibility = self.parse_visibility()?;
 
         match self.token().kind {
@@ -229,20 +229,16 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_visibility(&mut self) -> Result<Visibility> {
-        // If the member is marked as public, make it so.
-        if let TokenKind::Pub = self.token().kind {
-            let location = self.consume(TokenKind::Pub)?.index;
-
-            Ok(Visibility::Public(Box::new(Public {
-                location: location.into(),
-            })))
-        // By default, make it private.
-        } else {
-            let location = self.token().index;
-
-            Ok(Visibility::Private(Box::new(Private {
-                location: location.into(),
-            })))
+        match self.token().kind {
+            TokenKind::Pub => Ok(Visibility::Public(Box::new(Public {
+                location: self.consume(TokenKind::Pub)?.index.into(),
+            }))),
+            TokenKind::Priv => Ok(Visibility::Private(Box::new(Private {
+                location: self.consume(TokenKind::Priv)?.index.into(),
+            }))),
+            _ => Ok(Visibility::Private(Box::new(Private {
+                location: (self.position..self.position).into(),
+            }))),
         }
     }
 

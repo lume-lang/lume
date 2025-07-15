@@ -8,7 +8,7 @@ expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..4,
+                        0..0,
                     ),
                 },
             ),
@@ -39,7 +39,7 @@ expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
                     visibility: Private(
                         Private {
                             location: Location(
-                                12..14,
+                                12..12,
                             ),
                         },
                     ),

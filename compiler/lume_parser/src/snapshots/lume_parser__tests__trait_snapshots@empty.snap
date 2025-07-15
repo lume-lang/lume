@@ -9,7 +9,7 @@ expression: "parse(\"trait Add { }\")"
                 visibility: Private(
                     Private {
                         location: Location(
-                            0..5,
+                            0..0,
                         ),
                     },
                 ),

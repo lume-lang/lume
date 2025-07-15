@@ -612,6 +612,13 @@ fn test_enum_snapshots() {
 }
 
 #[test]
+fn test_visibility_snapshots() {
+    assert_snap_eq!("fn foo {}", "default");
+    assert_snap_eq!("priv fn foo {}", "priv");
+    assert_snap_eq!("pub fn foo {}", "pub");
+}
+
+#[test]
 fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { }", "empty");
     assert_snap_eq!("trait Add { pub fn add(other: Int32) -> Int32; }", "method");

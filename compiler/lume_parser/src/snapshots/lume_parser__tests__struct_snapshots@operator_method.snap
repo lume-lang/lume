@@ -8,7 +8,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
             visibility: Private(
                 Private {
                     location: Location(
-                        9..13,
+                        0..0,
                     ),
                 },
             ),
@@ -110,7 +110,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
             ],
             type_parameters: [],
             location: Location(
-                9..109,
+                0..109,
             ),
         },
     ),

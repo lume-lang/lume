@@ -8,7 +8,7 @@ expression: "parse(\"impl Int32 {}\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..4,
+                        0..0,
                     ),
                 },
             ),

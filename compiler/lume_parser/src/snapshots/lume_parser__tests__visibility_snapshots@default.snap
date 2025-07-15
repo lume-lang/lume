@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn empty?() {}\")"
+expression: "parse(\"fn foo {}\")"
 ---
 [
     FunctionDefinition(
@@ -14,9 +14,9 @@ expression: "parse(\"fn empty?() {}\")"
             ),
             external: false,
             name: Identifier {
-                name: "empty?",
+                name: "foo",
                 location: Location(
-                    3..9,
+                    3..6,
                 ),
             },
             parameters: [],
@@ -25,11 +25,11 @@ expression: "parse(\"fn empty?() {}\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    12..14,
+                    7..9,
                 ),
             },
             location: Location(
-                0..14,
+                0..9,
             ),
             documentation: None,
         },

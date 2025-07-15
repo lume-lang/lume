@@ -8,7 +8,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
             visibility: Private(
                 Private {
                     location: Location(
-                        9..12,
+                        0..0,
                     ),
                 },
             ),
@@ -61,7 +61,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                     visibility: Private(
                         Private {
                             location: Location(
-                                40..42,
+                                40..40,
                             ),
                         },
                     ),

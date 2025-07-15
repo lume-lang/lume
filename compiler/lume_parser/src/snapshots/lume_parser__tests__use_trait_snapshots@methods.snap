@@ -8,7 +8,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
             visibility: Private(
                 Private {
                     location: Location(
-                        9..12,
+                        0..0,
                     ),
                 },
             ),

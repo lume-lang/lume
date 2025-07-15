@@ -116,6 +116,7 @@ pub enum TokenKind {
     Namespace,
     NotEqual,
     PathSeparator,
+    Priv,
     Pub,
     Question,
     Or,
@@ -155,6 +156,7 @@ impl TokenKind {
                 | TokenKind::In
                 | TokenKind::Loop
                 | TokenKind::Namespace
+                | TokenKind::Priv
                 | TokenKind::Pub
                 | TokenKind::Return
                 | TokenKind::SelfRef
@@ -275,6 +277,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::NotEqual => "!=",
             TokenKind::Integer(_) => "integer",
             TokenKind::PathSeparator => "::",
+            TokenKind::Priv => "priv",
             TokenKind::Pub => "pub",
             TokenKind::Question => "?",
             TokenKind::Or => "||",
@@ -490,7 +493,11 @@ impl Lexer {
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn at_offset(&self, offset: usize) -> char {
-        self.source.content.chars().nth(self.position + offset).unwrap_or('\0')
+        self.source
+            .content
+            .as_bytes()
+            .get(self.position + offset)
+            .map_or('\0', |c| *c as char)
     }
 
     /// Advances the cursor position of the lexer to the next line.
@@ -618,7 +625,6 @@ impl Lexer {
                 return self.next_token();
             }
             _ => {
-                #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
                 return Err(UnexpectedCharacter {
                     source: self.source.clone(),
                     range: self.position..self.position + 1,
@@ -718,6 +724,7 @@ impl Lexer {
             "let" => Token::empty(TokenKind::Let),
             "loop" => Token::empty(TokenKind::Loop),
             "namespace" => Token::empty(TokenKind::Namespace),
+            "priv" => Token::empty(TokenKind::Priv),
             "pub" => Token::empty(TokenKind::Pub),
             "return" => Token::empty(TokenKind::Return),
             "self" => Token::empty(TokenKind::SelfRef),
@@ -813,7 +820,6 @@ impl Lexer {
             }
         }
 
-        #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
         Err(UnexpectedCharacter {
             source: self.source.clone(),
             range: self.position..self.position + 1,
@@ -970,7 +976,6 @@ impl Lexer {
             match c {
                 '"' => break,
                 '\0' => {
-                    #[allow(clippy::range_plus_one, reason = "type only accepts `Range<usize>`")]
                     return Err(MissingEndingQuote {
                         source: self.source.clone(),
                         range: self.position..self.position + 1,
@@ -1098,6 +1103,8 @@ mod tests {
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
+        assert_token!("priv", TokenKind::Priv, None::<String>, 0, 4);
+        assert_token!("pub", TokenKind::Pub, None::<String>, 0, 3);
         assert_token!("use", TokenKind::Use, None::<String>, 0, 3);
         assert_token!("while", TokenKind::While, None::<String>, 0, 5);
     }

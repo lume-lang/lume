@@ -9,7 +9,7 @@ expression: "parse(\"struct Int32 {}\")"
                 visibility: Private(
                     Private {
                         location: Location(
-                            0..6,
+                            0..0,
                         ),
                     },
                 ),

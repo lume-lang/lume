@@ -8,7 +8,7 @@ expression: "parse(\"fn main(argc: UInt8) -> void { }\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..2,
+                        0..0,
                     ),
                 },
             ),

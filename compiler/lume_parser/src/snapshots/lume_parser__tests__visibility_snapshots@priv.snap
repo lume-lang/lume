@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"fn empty?() {}\")"
+expression: "parse(\"priv fn foo {}\")"
 ---
 [
     FunctionDefinition(
@@ -8,15 +8,15 @@ expression: "parse(\"fn empty?() {}\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..0,
+                        0..4,
                     ),
                 },
             ),
             external: false,
             name: Identifier {
-                name: "empty?",
+                name: "foo",
                 location: Location(
-                    3..9,
+                    8..11,
                 ),
             },
             parameters: [],

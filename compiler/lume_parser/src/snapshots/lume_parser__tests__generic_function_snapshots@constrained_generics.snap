@@ -8,7 +8,7 @@ expression: "parse(\"fn test<T1: Numeric, T2: Numeric>() -> void {}\")"
             visibility: Private(
                 Private {
                     location: Location(
-                        0..2,
+                        0..0,
                     ),
                 },
             ),

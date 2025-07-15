@@ -9,7 +9,7 @@ expression: "parse(\"enum Foo { Bar, Baz }\")"
                 visibility: Private(
                     Private {
                         location: Location(
-                            0..4,
+                            0..0,
                         ),
                     },
                 ),

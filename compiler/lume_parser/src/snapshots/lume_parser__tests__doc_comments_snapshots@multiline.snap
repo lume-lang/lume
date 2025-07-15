@@ -8,7 +8,7 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
             visibility: Private(
                 Private {
                     location: Location(
-                        90..92,
+                        90..90,
                     ),
                 },
             ),
