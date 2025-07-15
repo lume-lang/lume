@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
-use lume_span::DefId;
+use lume_span::{DefId, PackageId};
 use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
 
 use crate::TyInferCtx;
@@ -24,21 +24,21 @@ impl TyInferCtx {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
                 let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(name, kind);
+                let type_id = self.tdb_mut().type_alloc(struct_def.id.package, name, kind);
 
                 struct_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
                 let kind = TypeKind::User(UserType::Trait(Box::new(Trait::new(trait_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(name, kind);
+                let type_id = self.tdb_mut().type_alloc(trait_def.id.package, name, kind);
 
                 trait_def.type_id = Some(type_id);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
                 let kind = TypeKind::User(UserType::Enum(Box::new(Enum::new(enum_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(name, kind);
+                let type_id = self.tdb_mut().type_alloc(enum_def.id.package, name, kind);
 
                 enum_def.type_id = Some(type_id);
             }
@@ -220,6 +220,8 @@ impl TyInferCtx {
     }
 
     fn define_type_type_params(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+        let package_id = ty.id().package;
+
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let type_id = struct_def.type_id.unwrap();
@@ -228,7 +230,7 @@ impl TyInferCtx {
                     let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(self.wrap_type_param(type_param_id));
+                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
                     self.tdb_mut().push_type_param(type_id, type_param_id)?;
                 }
@@ -240,7 +242,7 @@ impl TyInferCtx {
                     let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(self.wrap_type_param(type_param_id));
+                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
                     self.tdb_mut().push_type_param(type_id, type_param_id)?;
                 }
@@ -252,7 +254,7 @@ impl TyInferCtx {
                         let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                         type_param.type_param_id = Some(type_param_id);
-                        type_param.type_id = Some(self.wrap_type_param(type_param_id));
+                        type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
                         self.tdb_mut().push_type_param(method_id, type_param_id)?;
                     }
@@ -266,12 +268,13 @@ impl TyInferCtx {
 
     fn define_impl_type_params(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.impl_id.unwrap();
+        let package_id = implementation.id.package;
 
         for type_param in &mut implementation.type_parameters.iter_mut() {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
             self.tdb_mut().push_type_param(impl_id, type_param_id)?;
         }
@@ -299,7 +302,7 @@ impl TyInferCtx {
                 let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
-                type_param.type_id = Some(self.wrap_type_param(type_param_id));
+                type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
                 self.tdb_mut().push_type_param(method_id, type_param_id)?;
             }
@@ -310,12 +313,13 @@ impl TyInferCtx {
 
     fn define_trait_impl_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.use_id.unwrap();
+        let package_id = trait_impl.id.package;
 
         for type_param in &mut trait_impl.type_parameters.iter_mut() {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
             self.tdb_mut().push_type_param(use_id, type_param_id)?;
         }
@@ -335,7 +339,7 @@ impl TyInferCtx {
                 let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
                 type_param.type_param_id = Some(type_param_id);
-                type_param.type_id = Some(self.wrap_type_param(type_param_id));
+                type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
 
                 self.tdb_mut().push_type_param(method_id, type_param_id)?;
             }
@@ -351,7 +355,7 @@ impl TyInferCtx {
             let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(func.id.package, type_param_id));
 
             self.tdb_mut().push_type_param(func_id, type_param_id)?;
         }
@@ -359,7 +363,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn wrap_type_param(&mut self, type_param_id: TypeParameterId) -> TypeId {
+    fn wrap_type_param(&mut self, pkg: PackageId, type_param_id: TypeParameterId) -> TypeId {
         let name = self.tdb().type_parameter(type_param_id).unwrap().name.clone();
 
         let symbol_name = Path {
@@ -369,7 +373,7 @@ impl TyInferCtx {
         };
 
         self.tdb_mut()
-            .type_alloc(symbol_name, TypeKind::TypeParameter(type_param_id))
+            .type_alloc(pkg, symbol_name, TypeKind::TypeParameter(type_param_id))
     }
 }
 

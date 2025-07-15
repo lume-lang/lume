@@ -1,5 +1,5 @@
 use lume_macros::Node;
-use lume_span::{DefId, ExpressionId, ItemId, Location, PackageId, StatementId};
+use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, StatementId};
 
 pub mod map;
 pub mod symbols;
@@ -7,10 +7,25 @@ pub mod symbols;
 pub const SELF_TYPE_NAME: &str = "self";
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
+pub struct FunctionId {
+    pub package: PackageId,
+    pub index: Idx,
+}
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeId(pub usize);
+pub struct TypeId {
+    pub package: PackageId,
+    pub index: Idx,
+}
+
+impl TypeId {
+    pub const fn new(package: PackageId, idx: usize) -> Self {
+        Self {
+            package,
+            index: Idx::from_usize(idx),
+        }
+    }
+}
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct ImplId(pub usize);

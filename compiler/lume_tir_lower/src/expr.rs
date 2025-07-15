@@ -96,7 +96,9 @@ impl LowerFunction<'_> {
 
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let function = match self.lower.tcx.lookup_callable(expr)? {
-            lume_typech::query::Callable::Function(call) => FunctionId::new(FunctionKind::Function, call.id.0),
+            lume_typech::query::Callable::Function(call) => {
+                FunctionId::new(FunctionKind::Function, call.id.index.as_usize())
+            }
             lume_typech::query::Callable::Method(call) => FunctionId::new(FunctionKind::Method, call.id.0),
         };
 

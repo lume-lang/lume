@@ -64,7 +64,7 @@ impl<'tcx> Lower<'tcx> {
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "defining function {:+}", func.name);
 
-            let id = FunctionId::new(FunctionKind::Function, func.id.0);
+            let id = FunctionId::new(FunctionKind::Function, func.id.index.as_usize());
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(id, lume_span::DefId::Item(func.hir), &func.name, func.sig())?;
 
@@ -85,7 +85,7 @@ impl<'tcx> Lower<'tcx> {
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "lowering function {:+}", func.name);
 
-            let id = FunctionId::new(FunctionKind::Function, func.id.0);
+            let id = FunctionId::new(FunctionKind::Function, func.id.index.as_usize());
             self.lower_block(id, lume_span::DefId::Item(func.hir))?;
         }
 

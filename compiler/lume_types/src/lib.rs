@@ -1,6 +1,7 @@
 use std::{fmt::Write, ops::Deref, sync::Arc};
 
 use error_snippet::Result;
+use indexmap::IndexMap;
 use lume_errors::DiagCtx;
 use lume_session::GlobalCtx;
 
@@ -117,22 +118,22 @@ impl WithTypeParameters for TypeId {
     }
 }
 
-pub const TYPEREF_VOID_ID: TypeId = TypeId(0x0000_00000);
-pub const TYPEREF_BOOL_ID: TypeId = TypeId(0x0000_00001);
-pub const TYPEREF_INT8_ID: TypeId = TypeId(0x0000_00002);
-pub const TYPEREF_INT16_ID: TypeId = TypeId(0x0000_00003);
-pub const TYPEREF_INT32_ID: TypeId = TypeId(0x0000_00004);
-pub const TYPEREF_INT64_ID: TypeId = TypeId(0x0000_00005);
-pub const TYPEREF_UINT8_ID: TypeId = TypeId(0x0000_00006);
-pub const TYPEREF_UINT16_ID: TypeId = TypeId(0x0000_00007);
-pub const TYPEREF_UINT32_ID: TypeId = TypeId(0x0000_00008);
-pub const TYPEREF_UINT64_ID: TypeId = TypeId(0x0000_00009);
-pub const TYPEREF_FLOAT32_ID: TypeId = TypeId(0x0000_0000A);
-pub const TYPEREF_FLOAT64_ID: TypeId = TypeId(0x0000_0000B);
-pub const TYPEREF_STRING_ID: TypeId = TypeId(0x0000_0000C);
-pub const TYPEREF_POINTER_ID: TypeId = TypeId(0x0000_0000D);
-pub const TYPEREF_ARRAY_ID: TypeId = TypeId(0x0000_0000E);
-pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId(0xFFFF_FFFF);
+pub const TYPEREF_VOID_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00000);
+pub const TYPEREF_BOOL_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00001);
+pub const TYPEREF_INT8_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00002);
+pub const TYPEREF_INT16_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00003);
+pub const TYPEREF_INT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00004);
+pub const TYPEREF_INT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00005);
+pub const TYPEREF_UINT8_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00006);
+pub const TYPEREF_UINT16_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00007);
+pub const TYPEREF_UINT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00008);
+pub const TYPEREF_UINT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00009);
+pub const TYPEREF_FLOAT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000A);
+pub const TYPEREF_FLOAT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000B);
+pub const TYPEREF_STRING_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000C);
+pub const TYPEREF_POINTER_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000D);
+pub const TYPEREF_ARRAY_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000E);
+pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId::new(PackageId::empty(), 0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
@@ -1018,10 +1019,10 @@ pub enum TypeArgument {
 
 #[derive(Debug)]
 pub struct TypeDatabaseContext {
-    pub types: Vec<Type>,
+    pub types: IndexMap<TypeId, Type>,
     pub properties: Vec<Property>,
     pub methods: Vec<Method>,
-    pub functions: Vec<Function>,
+    pub functions: IndexMap<FunctionId, Function>,
     pub type_parameters: Vec<TypeParameter>,
     pub implementations: Vec<Implementation>,
     pub uses: Vec<Use>,
@@ -1036,27 +1037,27 @@ impl TypeDatabaseContext {
     /// Gets an iterator which iterates all [`Type`]-instances within
     /// the database context.
     pub fn types(&self) -> impl Iterator<Item = &Type> {
-        self.types.iter()
+        self.types.values()
     }
 
     /// Gets an iterator which iterates all [`Type`]-instances within
     /// the database context.
     pub fn types_mut(&mut self) -> impl Iterator<Item = &mut Type> {
-        self.types.iter_mut()
+        self.types.values_mut()
     }
 
     /// Gets the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
     pub fn type_(&self, id: TypeId) -> Option<&Type> {
-        self.types.get(id.0)
+        self.types.get(&id)
     }
 
     /// Gets the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
     pub fn type_mut(&mut self, id: TypeId) -> Option<&mut Type> {
-        self.types.get_mut(id.0)
+        self.types.get_mut(&id)
     }
 
     /// Gets the [`TypeTransport`] of the [`Type`] with the given ID, if any.
@@ -1205,27 +1206,27 @@ impl TypeDatabaseContext {
     /// Gets an iterator which iterates all [`Function`]-instances within
     /// the database context.
     pub fn functions(&self) -> impl Iterator<Item = &Function> {
-        self.functions.iter()
+        self.functions.values()
     }
 
     /// Gets an iterator which iterates all [`Function`]-instances within
     /// the database context.
     pub fn functions_mut(&mut self) -> impl Iterator<Item = &mut Function> {
-        self.functions.iter_mut()
+        self.functions.values_mut()
     }
 
     /// Gets the [`Function`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Function`] is not found.
     pub fn function(&self, id: FunctionId) -> Option<&Function> {
-        self.functions.get(id.0)
+        self.functions.get(&id)
     }
 
     /// Gets the [`Function`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Function`] is not found.
     pub fn function_mut(&mut self, id: FunctionId) -> Option<&mut Function> {
-        self.functions.get_mut(id.0)
+        self.functions.get_mut(&id)
     }
 
     /// Gets the [`TypeParameter`] with the given ID, if any.
@@ -1297,7 +1298,10 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
     pub fn func_alloc(&mut self, hir: ItemId, name: Path, visibility: Visibility) -> FunctionId {
-        let id = FunctionId(self.functions.len());
+        let id = FunctionId {
+            package: hir.package,
+            index: lume_span::Idx::from_usize(self.functions.len()),
+        };
 
         let func = Function {
             id,
@@ -1309,17 +1313,21 @@ impl TypeDatabaseContext {
             return_type: TypeRef::unknown(),
         };
 
-        self.functions.push(func);
+        self.functions.insert(id, func);
         id
     }
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, name: Path, kind: TypeKind) -> TypeId {
-        let id = TypeId(self.types.len());
+    pub fn type_alloc(&mut self, package: PackageId, name: Path, kind: TypeKind) -> TypeId {
+        let id = TypeId {
+            package,
+            index: lume_span::Idx::from_usize(self.types.len()),
+        };
+
         let ty = Type { id, kind, name };
 
-        self.types.push(ty);
+        self.types.insert(id, ty);
         id
     }
 
@@ -1448,26 +1456,26 @@ impl TypeDatabaseContext {
 impl Default for TypeDatabaseContext {
     fn default() -> Self {
         Self {
-            types: vec![
-                Type::void(),
-                Type::bool(),
-                Type::i8(),
-                Type::i16(),
-                Type::i32(),
-                Type::i64(),
-                Type::u8(),
-                Type::u16(),
-                Type::u32(),
-                Type::u64(),
-                Type::f32(),
-                Type::f64(),
-                Type::string(),
-                Type::pointer(),
-                Type::array(),
-            ],
+            types: indexmap::indexmap! {
+                TYPEREF_VOID_ID => Type::void(),
+                TYPEREF_BOOL_ID => Type::bool(),
+                TYPEREF_INT8_ID => Type::i8(),
+                TYPEREF_INT16_ID => Type::i16(),
+                TYPEREF_INT32_ID => Type::i32(),
+                TYPEREF_INT64_ID => Type::i64(),
+                TYPEREF_UINT8_ID => Type::u8(),
+                TYPEREF_UINT16_ID => Type::u16(),
+                TYPEREF_UINT32_ID => Type::u32(),
+                TYPEREF_UINT64_ID => Type::u64(),
+                TYPEREF_FLOAT32_ID => Type::f32(),
+                TYPEREF_FLOAT64_ID => Type::f64(),
+                TYPEREF_STRING_ID => Type::string(),
+                TYPEREF_POINTER_ID => Type::pointer(),
+                TYPEREF_ARRAY_ID => Type::array(),
+            },
             properties: Vec::new(),
             methods: Vec::new(),
-            functions: Vec::new(),
+            functions: IndexMap::new(),
             type_parameters: vec![
                 TypeParameter {
                     id: TypeParameterId(0),
