@@ -233,8 +233,6 @@ impl Package {
     /// This method will return `Err` if the current path to the `Arcfile` exists
     /// outside of any directory.
     pub fn add_package_sources_recursive(&mut self) -> Result<()> {
-        self.add_package_sources()?;
-
         for dependency in self.dependencies.graph.all_mut() {
             dependency.add_package_sources()?;
         }
