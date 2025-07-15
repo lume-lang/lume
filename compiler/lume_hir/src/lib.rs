@@ -1551,6 +1551,10 @@ impl TypeParameters {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeParameter> {
         self.inner.iter_mut()
     }
+
+    pub fn as_refs(&self) -> Vec<&TypeParameter> {
+        self.iter().map(AsRef::as_ref).collect::<Vec<_>>()
+    }
 }
 
 impl From<Vec<TypeParameter>> for TypeParameters {

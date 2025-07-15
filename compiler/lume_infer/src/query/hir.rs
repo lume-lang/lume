@@ -253,7 +253,8 @@ impl TyInferCtx {
     /// If no matching ancestor is found, returns [`Err`].
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn hir_ctx_return_type(&self, def: DefId) -> Result<lume_types::TypeRef> {
-        let type_params = self.hir_avail_type_params(def);
+        let type_params_hir = self.hir_avail_type_params(def);
+        let type_params = type_params_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
         for parent in self.hir_parent_iter(def) {
             let Some(return_type) = self.hir_def_return_type(parent) else {

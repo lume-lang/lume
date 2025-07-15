@@ -327,12 +327,13 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params_expr(expr.id());
+        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
         match &expr {
             lume_hir::CallExpression::Static(call) => {
                 let hir_type_args = &call.all_type_arguments();
 
-                self.mk_type_refs_generic(hir_type_args, &type_parameters_hir)
+                self.mk_type_refs_generic(hir_type_args, &type_parameters)
             }
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
                 let callee = match expr {
@@ -342,7 +343,7 @@ impl TyInferCtx {
                 };
 
                 let hir_type_args = expr.type_arguments();
-                let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters_hir)?;
+                let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters)?;
 
                 let callee_type = self.type_of_expr(callee)?;
                 type_args.extend(callee_type.type_arguments.into_iter());

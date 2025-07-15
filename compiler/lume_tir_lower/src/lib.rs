@@ -132,6 +132,7 @@ impl<'tcx> LowerFunction<'tcx> {
         signature: lume_types::FunctionSig,
     ) -> Result<lume_tir::Function> {
         let type_params = self.lower.tcx.hir_avail_type_params(hir_id);
+        let type_params = type_params.iter().map(AsRef::as_ref).collect::<Vec<_>>();
         let name = self.path_generic(name, &type_params)?;
 
         let parameters = self.parameters(signature.params);

@@ -99,11 +99,11 @@ impl TyInferCtx {
                     }));
                 };
 
-                let type_parameters_hir = self.hir_avail_type_params_expr(e.id);
-                let type_args = self.mk_type_refs_generic(e.path.type_arguments(), &type_parameters_hir)?;
+                let type_parameters = self.hir_avail_type_params_expr(e.id);
+                let type_args = self.mk_type_refs_from(e.path.type_arguments(), DefId::Expression(e.id))?;
 
                 let type_parameters_id: Vec<lume_hir::TypeParameterId> =
-                    type_parameters_hir.iter().map(|p| p.type_param_id.unwrap()).collect();
+                    type_parameters.iter().map(|p| p.type_param_id.unwrap()).collect();
 
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
 
@@ -141,9 +141,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
                 lume_hir::VariableSource::Parameter(param) => {
-                    let type_params = self.hir_avail_type_params_expr(var.id);
-
-                    self.mk_type_ref_generic(&param.param_type, &type_params)?
+                    self.mk_type_ref_from(&param.param_type, DefId::Expression(var.id))?
                 }
                 lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var)?,
             },
@@ -229,10 +227,8 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
-        let type_params = self.hir_avail_type_params(DefId::Statement(stmt.id));
-
         if let Some(declared_type) = &stmt.declared_type {
-            self.mk_type_ref_generic(declared_type, &type_params)
+            self.mk_type_ref_from(declared_type, DefId::Statement(stmt.id))
         } else {
             self.type_of_expr(&stmt.value)
         }

@@ -1,6 +1,7 @@
 use error_snippet::Result;
 use indexmap::IndexSet;
 use lume_hir::Path;
+use lume_span::DefId;
 use lume_types::TypeRef;
 
 use crate::TyCheckCtx;
@@ -37,8 +38,10 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_params = self.hir_avail_type_params(method.id);
-                let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
+                let type_parameters_hir = self.hir_avail_type_params(method.id);
+                let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
+                let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
             }
@@ -52,7 +55,9 @@ impl TyCheckCtx {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
-                let type_params = self.hir_avail_type_params(method.id);
+                let type_params_hir = self.hir_avail_type_params(method.id);
+                let type_params = type_params_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
                 let return_type = self.mk_type_ref_generic(&method.return_type, &type_params)?;
 
                 self.ensure_block_ty_match(block, &return_type)?;
@@ -66,8 +71,7 @@ impl TyCheckCtx {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
 
-            let type_params = self.hir_avail_type_params_item(func.id);
-            let return_type = self.mk_type_ref_generic(&func.return_type, &type_params)?;
+            let return_type = self.mk_type_ref_from(&func.return_type, DefId::Item(func.id))?;
 
             self.ensure_block_ty_match(block, &return_type)?;
         }

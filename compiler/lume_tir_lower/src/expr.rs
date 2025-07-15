@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_span::Internable;
+use lume_span::{DefId, Internable};
 use lume_tir::{FunctionId, FunctionKind, VariableId};
 
 use crate::LowerFunction;
@@ -61,9 +61,7 @@ impl LowerFunction<'_> {
 
     fn cast_expression(&mut self, expr: &lume_hir::Cast) -> Result<lume_tir::ExpressionKind> {
         let source = self.expression(&expr.source)?;
-
-        let type_params = self.lower.tcx.hir_avail_type_params_expr(expr.id);
-        let target = self.lower.tcx.mk_type_ref_generic(&expr.target, &type_params)?;
+        let target = self.lower.tcx.mk_type_ref_from_expr(&expr.target, expr.id)?;
 
         Ok(lume_tir::ExpressionKind::Cast(Box::new(lume_tir::Cast {
             id: expr.id,
@@ -73,8 +71,11 @@ impl LowerFunction<'_> {
     }
 
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
-        let type_params = self.lower.tcx.hir_avail_type_params_expr(expr.id);
-        let ty = self.lower.tcx.find_type_ref_generic(&expr.path, &type_params)?.unwrap();
+        let ty = self
+            .lower
+            .tcx
+            .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
+            .unwrap();
 
         let fields = expr
             .fields
@@ -267,9 +268,11 @@ impl LowerFunction<'_> {
 
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
         let name = self.path(&expr.name)?;
-
-        let type_params = self.lower.tcx.hir_avail_type_params_expr(expr.id);
-        let ty = self.lower.tcx.find_type_ref_generic(&expr.name, &type_params)?.unwrap();
+        let ty = self
+            .lower
+            .tcx
+            .find_type_ref_from(&expr.name, DefId::Expression(expr.id))?
+            .unwrap();
 
         Ok(lume_tir::ExpressionKind::Variant(Box::new(lume_tir::Variant {
             id: expr.id,

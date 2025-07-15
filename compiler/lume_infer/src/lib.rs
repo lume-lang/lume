@@ -145,11 +145,7 @@ impl TyInferCtx {
         skip_all, fields(ty = %ty.name, loc = %ty.location, ty_params = ?type_params),
         err
     )]
-    pub fn mk_type_ref_generic<T: AsRef<TypeParameter> + Debug>(
-        &self,
-        ty: &lume_hir::Type,
-        type_params: &[T],
-    ) -> Result<TypeRef> {
+    pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[&TypeParameter]) -> Result<TypeRef> {
         let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
             return Err(self.missing_type_err(ty));
         };
@@ -172,12 +168,43 @@ impl TyInferCtx {
 
     /// Lowers the given HIR types into type references.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub fn mk_type_refs_generic<T: AsRef<TypeParameter> + Debug>(
-        &self,
-        ty: &[lume_hir::Type],
-        type_params: &[T],
-    ) -> Result<Vec<TypeRef>> {
+    pub fn mk_type_refs_generic(&self, ty: &[lume_hir::Type], type_params: &[&TypeParameter]) -> Result<Vec<TypeRef>> {
         ty.iter().map(|t| self.mk_type_ref_generic(t, type_params)).collect()
+    }
+
+    /// Lowers the given HIR type, with respect to the type parameters available from
+    /// the given definition.
+    #[tracing::instrument(
+        level = "DEBUG",
+        skip_all, fields(ty = %ty.name, loc = %ty.location, def = ?def),
+        err
+    )]
+    pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: lume_span::DefId) -> Result<TypeRef> {
+        let type_parameters_hir = self.hir_avail_type_params(def);
+        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
+        self.mk_type_ref_generic(ty, &type_parameters)
+    }
+
+    /// Lowers the given HIR type, with respect to the type parameters available from
+    /// the given expression.
+    #[tracing::instrument(
+        level = "DEBUG",
+        skip_all, fields(ty = %ty.name, loc = %ty.location, expr = ?expr),
+        err
+    )]
+    pub fn mk_type_ref_from_expr(&self, ty: &lume_hir::Type, expr: lume_span::ExpressionId) -> Result<TypeRef> {
+        self.mk_type_ref_from(ty, DefId::Expression(expr))
+    }
+
+    /// Lowers the given HIR types, with respect to the type parameters available from
+    /// the given definition.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: lume_span::DefId) -> Result<Vec<TypeRef>> {
+        let type_parameters_hir = self.hir_avail_type_params(def);
+        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
+        self.mk_type_refs_generic(ty, &type_parameters)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]
@@ -225,11 +252,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid references
     /// to type IDs.
-    pub fn find_type_ref_generic<T: AsRef<TypeParameter> + Debug>(
-        &self,
-        name: &Path,
-        ty_params: &[T],
-    ) -> Result<Option<TypeRef>> {
+    pub fn find_type_ref_generic(&self, name: &Path, ty_params: &[&TypeParameter]) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);
         };
@@ -247,6 +270,20 @@ impl TyInferCtx {
             type_arguments: args,
             location,
         }))
+    }
+
+    /// Attempts to find a [`TypeRef`] with the given name, if any.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if one-or-more typed path segments include invalid references
+    /// to type IDs.
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    pub fn find_type_ref_from(&self, name: &Path, def: lume_span::DefId) -> Result<Option<TypeRef>> {
+        let type_parameters_hir = self.hir_avail_type_params(def);
+        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
+        self.find_type_ref_generic(name, &type_parameters)
     }
 
     /// Returns an error indicating that the given type was not found.

@@ -279,8 +279,10 @@ impl TyInferCtx {
             self.tdb_mut().push_type_param(impl_id, type_param_id)?;
         }
 
-        let type_ref =
-            self.mk_type_ref_generic(implementation.target.as_ref(), &implementation.type_parameters.inner)?;
+        let type_ref = self.mk_type_ref_generic(
+            implementation.target.as_ref(),
+            &implementation.type_parameters.as_refs(),
+        )?;
 
         for method in &mut implementation.methods {
             let method_name = method.name.clone();
@@ -324,9 +326,9 @@ impl TyInferCtx {
             self.tdb_mut().push_type_param(use_id, type_param_id)?;
         }
 
-        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.inner)?;
+        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.as_refs())?;
 
-        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.inner)?;
+        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.as_refs())?;
 
         let trait_impl_ref = self.tdb_mut().use_mut(use_id).unwrap();
         trait_impl_ref.trait_ = trait_ref;
@@ -501,7 +503,8 @@ impl TyInferCtx {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             for property in struct_def.properties() {
                 let property_id = property.prop_id.unwrap();
-                let type_ref = self.mk_type_ref_generic(&property.property_type, &struct_def.type_parameters.inner)?;
+                let type_ref =
+                    self.mk_type_ref_generic(&property.property_type, &struct_def.type_parameters.as_refs())?;
 
                 self.tdb_mut().property_mut(property_id).unwrap().property_type = type_ref;
             }
@@ -539,7 +542,11 @@ impl TyInferCtx {
                     let name = param.name.name.clone();
                     let type_ref = self.mk_type_ref_generic(
                         &param.param_type,
-                        &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                        &[
+                            &trait_def.type_parameters.as_refs()[..],
+                            &method.type_parameters.as_refs()[..],
+                        ]
+                        .concat(),
                     )?;
 
                     self.tdb_mut()
@@ -551,7 +558,11 @@ impl TyInferCtx {
 
                 self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
                     &method.return_type,
-                    &[&trait_def.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                    &[
+                        &trait_def.type_parameters.as_refs()[..],
+                        &method.type_parameters.as_refs()[..],
+                    ]
+                    .concat(),
                 )?;
             }
         }
@@ -564,7 +575,7 @@ impl TyInferCtx {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.mk_type_ref_generic(&param.param_type, &func.type_parameters.inner)?;
+            let type_ref = self.mk_type_ref_generic(&param.param_type, &func.type_parameters.as_refs())?;
 
             self.tdb_mut()
                 .function_mut(func_id)
@@ -574,7 +585,7 @@ impl TyInferCtx {
         }
 
         self.tdb_mut().function_mut(func_id).unwrap().return_type =
-            self.mk_type_ref_generic(&func.return_type, &func.type_parameters.inner)?;
+            self.mk_type_ref_generic(&func.return_type, &func.type_parameters.as_refs())?;
 
         Ok(())
     }
@@ -587,7 +598,11 @@ impl TyInferCtx {
                 let name = param.name.name.clone();
                 let type_ref = self.mk_type_ref_generic(
                     &param.param_type,
-                    &[&trait_impl.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                    &[
+                        &trait_impl.type_parameters.as_refs()[..],
+                        &method.type_parameters.as_refs()[..],
+                    ]
+                    .concat(),
                 )?;
 
                 self.tdb_mut()
@@ -599,7 +614,11 @@ impl TyInferCtx {
 
             self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
                 &method.return_type,
-                &[&trait_impl.type_parameters.inner[..], &method.type_parameters.inner[..]].concat(),
+                &[
+                    &trait_impl.type_parameters.as_refs()[..],
+                    &method.type_parameters.as_refs()[..],
+                ]
+                .concat(),
             )?;
         }
 
@@ -615,8 +634,8 @@ impl TyInferCtx {
                 let type_ref = self.mk_type_ref_generic(
                     &param.param_type,
                     &[
-                        &implementation.type_parameters.inner[..],
-                        &method.type_parameters.inner[..],
+                        &implementation.type_parameters.as_refs()[..],
+                        &method.type_parameters.as_refs()[..],
                     ]
                     .concat(),
                 )?;
@@ -631,8 +650,8 @@ impl TyInferCtx {
             self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
                 &method.return_type,
                 &[
-                    &implementation.type_parameters.inner[..],
-                    &method.type_parameters.inner[..],
+                    &implementation.type_parameters.as_refs()[..],
+                    &method.type_parameters.as_refs()[..],
                 ]
                 .concat(),
             )?;

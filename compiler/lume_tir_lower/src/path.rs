@@ -1,20 +1,16 @@
-use std::fmt::Debug;
-
 use error_snippet::Result;
 
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     pub(crate) fn path(&self, path: &lume_hir::Path) -> Result<lume_tir::Path> {
-        let params: &[&lume_hir::TypeParameter] = &[];
-
-        self.path_generic(path, params)
+        self.path_generic(path, &[])
     }
 
-    pub(crate) fn path_generic<T: AsRef<lume_hir::TypeParameter> + Debug>(
+    pub(crate) fn path_generic(
         &self,
         path: &lume_hir::Path,
-        type_params: &[T],
+        type_params: &[&lume_hir::TypeParameter],
     ) -> Result<lume_tir::Path> {
         let root = path
             .root
@@ -27,10 +23,10 @@ impl LowerFunction<'_> {
         Ok(lume_tir::Path { root, name })
     }
 
-    fn path_segment<T: AsRef<lume_hir::TypeParameter> + Debug>(
+    fn path_segment(
         &self,
         path: &lume_hir::PathSegment,
-        type_params: &[T],
+        type_params: &[&lume_hir::TypeParameter],
     ) -> Result<lume_tir::PathSegment> {
         match path {
             lume_hir::PathSegment::Namespace { name } => {
