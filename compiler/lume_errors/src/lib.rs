@@ -262,6 +262,9 @@ impl DiagCtx {
     }
 }
 
+unsafe impl Send for DiagCtx {}
+unsafe impl Sync for DiagCtx {}
+
 /// A handle to a parent [`DiagCtx`], which can be used in
 /// distinct sequential "stages", where each stage can only progress
 /// forward if no halting diagnostics were reporting in any of the previous
