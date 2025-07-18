@@ -57,20 +57,20 @@ impl DiagCtxInner {
             DiagOutputFormat::Stubbed => Box::new(StubRenderer {}),
         };
 
-        Self::with_renderer(renderer, use_colors)
-    }
-
-    /// Creates a new [`DiagCtxInner`] instance using the given [`Renderer`] implementation.
-    fn with_renderer(renderer: Box<dyn Renderer + Send + Sync>, use_colors: bool) -> Self {
         let mut handler = DiagnosticHandler::with_renderer(renderer);
 
         // If we drain an error to the handler, propagate the error count upwards, so
         // we can handle it at a higher level, instead of exiting the application.
         handler.exit_on_error();
 
+        Self::with_handler(Box::new(handler), use_colors)
+    }
+
+    /// Creates a new [`DiagCtxInner`] instance using the given [`Handler`] implementation.
+    fn with_handler(handler: Box<dyn Handler>, use_colors: bool) -> Self {
         DiagCtxInner {
             use_colors,
-            handler: Box::new(handler),
+            handler,
             tainted: AtomicBool::new(false),
         }
     }
@@ -150,9 +150,9 @@ impl DiagCtx {
         }
     }
 
-    /// Creates a new [`DiagCtxInner`] instance using the given [`Renderer`] implementation.
-    pub fn with_renderer(renderer: Box<dyn Renderer + Send + Sync>, use_colors: bool) -> Self {
-        let inner = DiagCtxInner::with_renderer(renderer, use_colors);
+    /// Creates a new [`DiagCtx`] instance using the given [`Handler`] implementation.
+    pub fn with_handler(handler: Box<dyn Handler>, use_colors: bool) -> Self {
+        let inner = DiagCtxInner::with_handler(handler, use_colors);
 
         DiagCtx {
             inner: Arc::new(Mutex::new(inner)),
