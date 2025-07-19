@@ -28,7 +28,7 @@ pub enum DiagOutputFormat {
 ///
 /// The struct is only defined on [`DiagCtx`]-instances, and is only meant to
 /// be shared with handles created by them (via the [`DiagCtx::handle()`] and [`DiagCtx::with()`] methods).
-struct DiagCtxInner {
+pub struct DiagCtxInner {
     /// Defines whether the context should request the renderer to use colors.
     use_colors: bool,
 
@@ -125,6 +125,18 @@ impl DiagCtxInner {
             .downcast_ref::<error_snippet::BufferedDiagnosticHandler>()
             .map(|buf| buf.buffer().to_owned())
     }
+
+    /// Returns the emitted diagnostics of the diagnostics context.
+    ///
+    /// This method only returns drained diagnostics. Reported diagnostics which have
+    /// not yet been drained are not returned.
+    pub fn emitted(&self) -> impl Iterator<Item = &Box<dyn error_snippet::Diagnostic>> {
+        let handler = self.handler.as_ref() as &dyn std::any::Any;
+
+        handler
+            .downcast_ref::<StubHandler>()
+            .map_or_else(|| [].iter(), |handler| handler.drained.iter())
+    }
 }
 
 /// A context to deal with diagnostics, which is meant to
@@ -171,7 +183,11 @@ impl DiagCtx {
 
     /// Retrives the instance of the parent [`DiagCtxInner`], which
     /// is contained within the context.
-    fn handler(&self) -> MutexGuard<'_, DiagCtxInner> {
+    ///
+    /// # Panics
+    ///
+    /// Panics if the inner diagnostics context has been locked by another thread.
+    pub fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
         self.inner.lock().unwrap()
     }
 
@@ -191,7 +207,7 @@ impl DiagCtx {
     /// they will be counted towards a [`error_snippet::DrainError::CompoundError`], which will be
     /// raised when draining has finished.
     pub fn drain(&mut self) -> Result<()> {
-        self.handler().drain()
+        self.inner().drain()
     }
 
     /// Emits the given diagnostic to the context directly, without
@@ -200,7 +216,7 @@ impl DiagCtx {
     /// The diagnostic will not be drained from the handler immediately. To
     /// drain the diagnostic, see [`DiagCtx::drain()`].
     pub fn emit(&self, diag: error_snippet::Error) {
-        self.handler().handler.report(diag);
+        self.inner().handler.report(diag);
     }
 
     /// Creates a new handle, which is only valid within the given closure,
@@ -215,7 +231,7 @@ impl DiagCtx {
         let handle = self.handle();
         let res = f(handle);
 
-        self.handler().drain()?;
+        self.inner().drain()?;
 
         Ok(res)
     }
@@ -232,7 +248,7 @@ impl DiagCtx {
         let handle = self.handle();
         let res = f(handle);
 
-        self.handler().drain()?;
+        self.inner().drain()?;
 
         res
     }
@@ -264,7 +280,7 @@ impl DiagCtx {
     /// calling the [`DiagCtxHandle::drain()`] method manually, or when the handle
     /// is dropped.
     pub fn tainted(&self) -> bool {
-        self.handler().tainted.load(Ordering::Acquire)
+        self.inner().tainted.load(Ordering::Acquire)
     }
 
     /// Returns the buffered content of the diagnostics context.
@@ -272,7 +288,7 @@ impl DiagCtx {
     /// If the context is not buffered, returns [`None`]. Otherwise, returns the buffer
     /// as a [`Some(String)`]. To create a buffered context, see [`DiagCtx::new_buffered()`].
     pub fn buffer(&self) -> Option<String> {
-        self.handler().buffer()
+        self.inner().buffer()
     }
 }
 
@@ -397,6 +413,31 @@ impl Renderer for StubRenderer {
         _f: &mut error_snippet::Formatter,
         _diagnostic: &dyn error_snippet::Diagnostic,
     ) -> std::fmt::Result {
+        Ok(())
+    }
+}
+
+/// Defines a [`Handler`] which doesn't report any errors.
+/// Instead, it saves the reported diagnostics into an internal buffer, so they
+/// can be read back later.
+#[derive(Default)]
+pub struct StubHandler {
+    /// Defines all diagnostics which have been reported, but not drained.
+    reported: Vec<Box<dyn error_snippet::Diagnostic>>,
+
+    /// Defines all diagnostics which have been reported and drained.
+    drained: Vec<Box<dyn error_snippet::Diagnostic>>,
+}
+
+impl Handler for StubHandler {
+    fn report(&mut self, diagnostic: Box<dyn error_snippet::Diagnostic>) {
+        self.reported.push(diagnostic);
+    }
+
+    fn drain(&mut self) -> std::result::Result<(), error_snippet::DrainError> {
+        self.drained.reserve(self.reported.len());
+        self.drained.extend(std::mem::take(&mut self.reported));
+
         Ok(())
     }
 }
