@@ -1601,45 +1601,6 @@ impl std::fmt::Display for TypeArgument {
     }
 }
 
-#[derive(Hash, Clone, Debug, PartialEq, Eq)]
-pub struct TypeArguments {
-    pub inner: Vec<TypeArgument>,
-}
-
-impl TypeArguments {
-    pub const fn new() -> Self {
-        Self { inner: Vec::new() }
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &TypeArgument> {
-        self.inner.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeArgument> {
-        self.inner.iter_mut()
-    }
-}
-
-impl Default for TypeArguments {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl From<Vec<TypeArgument>> for TypeArguments {
-    fn from(value: Vec<TypeArgument>) -> Self {
-        Self { inner: value }
-    }
-}
-
 #[derive(Node, Debug, Clone, Eq)]
 pub struct Type {
     pub id: ItemId,

@@ -699,18 +699,6 @@ impl Parser {
         Ok(Block::from_location(self.token().index))
     }
 
-    /// Returns a block, if the next token is a left curly bracket (`{`), as a `Some(block)`.
-    ///
-    /// Otherwise, returns `None`.
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_opt_block(&mut self) -> Result<Option<Block>> {
-        if self.peek(TokenKind::LeftCurly) {
-            return Ok(Some(self.parse_block()?));
-        }
-
-        Ok(None)
-    }
-
     /// Returns an empty block for external functions and an actual block for non-external functions.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_opt_external_block(&mut self, external: bool) -> Result<Block> {

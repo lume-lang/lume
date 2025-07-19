@@ -121,6 +121,7 @@ impl TyInferCtx {
 
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
     #[tracing::instrument(level = "DEBUG", skip(self))]
+    #[allow(dead_code, reason = "expected used in future")]
     pub(crate) fn hir_expect_var_stmt(&self, id: StatementId) -> &lume_hir::VariableDeclaration {
         let stmt = self.hir_expect_stmt(id);
 

@@ -2,7 +2,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use arc::locate_package;
 use error_snippet::Result;
-use lume_errors::{DiagCtx, DiagCtxHandle};
+use lume_errors::DiagCtxHandle;
 use lume_infer::TyInferCtx;
 use lume_session::{GlobalCtx, MirPrinting, Options, Package, Session};
 use lume_span::{PackageId, SourceMap};
@@ -204,12 +204,6 @@ impl<'a> Compiler<'a> {
             package: package.id,
             tcx,
         })
-    }
-
-    /// Returns the diagnostics context.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn dcx(&self) -> DiagCtx {
-        self.gcx.dcx.clone()
     }
 
     /// Parses all the source files within the current [`Package`] into HIR.
