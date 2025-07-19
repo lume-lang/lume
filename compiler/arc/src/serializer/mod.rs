@@ -11,6 +11,7 @@ use lume_errors::DiagCtxHandle;
 use lume_session::{Dependencies, Package};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
+use url::Url;
 
 pub(crate) mod dep;
 mod prop;
@@ -166,12 +167,21 @@ impl PackageParser {
     /// - the located `Arcfile` doesn't refer to a file
     /// - or if the given `Arcfile` is otherwise invalid
     pub fn locate(root: &Path, dcx: DiagCtxHandle) -> Result<Manifest> {
-        let path = root.join(DEFAULT_ARCFILE);
-        if !path.is_file() {
-            return Err(ArcfileMissing {
-                dir: root.to_path_buf(),
-            }
+        let url = normalize_path_url(root)?;
+
+        if url.scheme() != "file" {
+            return Err(error_snippet::SimpleDiagnostic::new(format!(
+                "only file:// URIs are supported, found {}",
+                url.scheme()
+            ))
             .into());
+        }
+
+        let root = url.to_file_path().unwrap();
+        let path = root.join(DEFAULT_ARCFILE);
+
+        if !path.is_file() {
+            return Err(ArcfileMissing { dir: root }.into());
         }
 
         Self::new(&path, dcx)?.parse()
@@ -287,4 +297,18 @@ impl PackageParser {
 
         Ok(manifest)
     }
+}
+
+fn normalize_path_url(path: &Path) -> Result<Url> {
+    let path_str = path.as_os_str().to_str().unwrap();
+
+    if let Ok(url) = url::Url::parse(path_str) {
+        return Ok(url);
+    }
+
+    if let Ok(url) = url::Url::parse(&format!("file://{path_str}")) {
+        return Ok(url);
+    }
+
+    Err(error_snippet::SimpleDiagnostic::new(format!("invalid file URI: {}", path.display())).into())
 }
