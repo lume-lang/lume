@@ -4,7 +4,7 @@ use arc::locate_package;
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
 use lume_infer::TyInferCtx;
-use lume_session::{GlobalCtx, MirPrinting, Options, Package, Session};
+use lume_session::{GlobalCtx, Options, Package, Session};
 use lume_span::{PackageId, SourceMap};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
@@ -172,10 +172,14 @@ impl<'a> Compiler<'a> {
         let sources = compiler.parse()?;
         tracing::debug!(target: "driver", "finished parsing");
 
+        #[allow(unused)]
         let (tcx, typed_ir) = compiler.type_check(sources)?;
 
-        compiler.codegen(&tcx, typed_ir)?;
-        compiler.link()?;
+        #[cfg(feature = "codegen")]
+        {
+            compiler.codegen(&tcx, typed_ir)?;
+            compiler.link()?;
+        }
 
         Ok(())
     }
@@ -240,14 +244,15 @@ impl<'a> Compiler<'a> {
     }
 
     /// Generates LLVM IR for all the modules within the given state object.
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<()> {
         let mir = lume_mir_lower::ModuleTransformer::transform(tcx, &tir);
 
         match self.gcx.session.options.print_mir {
-            MirPrinting::None => {}
-            MirPrinting::Pretty => println!("{mir}"),
-            MirPrinting::Debug => println!("{mir:#?}"),
+            lume_session::MirPrinting::None => {}
+            lume_session::MirPrinting::Pretty => println!("{mir}"),
+            lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
         lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options);
@@ -256,6 +261,7 @@ impl<'a> Compiler<'a> {
     }
 
     /// Links all the modules within the given state object into a single executable or library.
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn link(&mut self) -> Result<()> {
         Ok(())
