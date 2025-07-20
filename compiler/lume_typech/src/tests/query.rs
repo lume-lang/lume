@@ -48,7 +48,6 @@ fn query_function_check_empty() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -73,7 +72,6 @@ fn query_function_check_arg_count() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -106,7 +104,6 @@ fn query_function_check_arg_type() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -146,7 +143,6 @@ fn query_function_check_arg_type_second() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -167,7 +163,6 @@ fn query_function_check_arg_type_match() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -192,7 +187,6 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -217,7 +211,6 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
     };
 
     tcx.check_function(func, &expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -347,7 +340,6 @@ fn query_check_method_empty() -> Result<()> {
     };
 
     tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -384,7 +376,6 @@ fn query_check_method_arg_count() -> Result<()> {
     };
 
     tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -429,7 +420,6 @@ fn query_check_method_arg_type() -> Result<()> {
     };
 
     tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -466,7 +456,6 @@ fn query_check_method_type_arg_count() -> Result<()> {
     };
 
     tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -585,7 +574,6 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
     };
 
     tcx.lookup_functions(&expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -616,7 +604,6 @@ fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
     };
 
     tcx.lookup_functions(&expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 
@@ -635,7 +622,6 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
     };
 
     tcx.lookup_functions(&expr)?;
-    tcx.dcx().drain()?;
 
     crate::tests::assert_dcx_snapshot!(tcx.dcx());
 

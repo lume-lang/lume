@@ -238,8 +238,12 @@ impl<'a> LowerModule<'a> {
         }
 
         for expr in expressions {
-            lower.top_level_expression(expr)?;
+            if let Err(err) = lower.top_level_expression(expr) {
+                lower.dcx.emit(err);
+            }
         }
+
+        lower.dcx.ensure_untainted()?;
 
         *item_idx = lower.current_item;
 

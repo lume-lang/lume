@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use error_snippet::Result;
-use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_errors::DiagCtx;
 use lume_hir::map::Map;
 use lume_hir_lower::LowerState;
 use lume_session::{GlobalCtx, Package};
@@ -26,7 +26,7 @@ fn package_with_src(input: &str) -> Package {
 
 #[track_caller]
 fn lower_into_hir(input: &str) -> Result<Map> {
-    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new().handle();
     let mut source_map = SourceMap::new();
 
     let package = package_with_src(input);

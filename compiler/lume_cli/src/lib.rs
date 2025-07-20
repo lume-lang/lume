@@ -8,7 +8,7 @@ mod tracing;
 use std::env;
 
 use clap::Parser;
-use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_errors::DiagCtx;
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -48,10 +48,17 @@ pub fn lume_cli_entry() {
         tracing::register_global_tracer(val);
     }
 
-    let dcx = DiagCtx::new(DiagOutputFormat::Graphical);
+    let dcx = DiagCtx::new();
 
-    let _ = dcx.with_res(|dcx| match matches.subcommand {
+    dcx.with_none(|dcx| match matches.subcommand {
         LumeSubcommands::Arc(cmd) => cmd.run(dcx),
         LumeSubcommands::Run(cmd) => cmd.run(dcx),
     });
+
+    let mut renderer = error_snippet::GraphicalRenderer::new();
+    renderer.use_colors = true;
+    renderer.highlight_source = true;
+
+    dcx.render_stderr(&mut renderer);
+    dcx.clear();
 }

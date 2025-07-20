@@ -13,7 +13,7 @@ impl TyCheckCtx {
             }
         }
 
-        self.dcx().drain()
+        Ok(())
     }
 
     fn typech_item(&self, symbol: &lume_hir::Item) -> Result<()> {

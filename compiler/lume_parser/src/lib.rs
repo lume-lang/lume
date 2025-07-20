@@ -219,6 +219,8 @@ impl Parser {
             expressions.push(self.parse_top_level_expression()?);
         }
 
+        self.dcx.ensure_untainted()?;
+
         Ok(expressions)
     }
 

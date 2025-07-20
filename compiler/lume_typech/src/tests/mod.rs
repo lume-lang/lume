@@ -5,7 +5,7 @@ mod query;
 use std::sync::Arc;
 
 use error_snippet::Result;
-use lume_errors::{DiagCtx, DiagOutputFormat};
+use lume_errors::DiagCtx;
 use lume_errors_test::assert_dcx_snapshot;
 use lume_hir::map::Map;
 use lume_hir_lower::LowerState;
@@ -30,7 +30,7 @@ fn package_with_src(input: &str) -> Package {
 
 #[track_caller]
 fn lower_into_hir(input: &str) -> Result<Map> {
-    let dcx = DiagCtx::new(DiagOutputFormat::Stubbed);
+    let dcx = DiagCtx::new().handle();
     let mut source_map = SourceMap::new();
 
     let package = package_with_src(input);
@@ -61,10 +61,7 @@ fn empty_tcx() -> TyCheckCtx {
 #[macro_export]
 macro_rules! assert_typech_snapshot {
     ($input:expr) => {
-        let gcx = lume_session::GlobalCtx::new(
-            lume_session::Session::default(),
-            lume_errors::DiagCtx::new_buffered(512),
-        );
+        let gcx = lume_session::GlobalCtx::new(lume_session::Session::default(), lume_errors::DiagCtx::new());
         let tcx = lume_types::TyCtx::new(std::sync::Arc::new(gcx));
 
         let hir = $crate::tests::lower_into_hir($input).unwrap();

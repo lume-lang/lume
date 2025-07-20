@@ -70,6 +70,7 @@ unsafe impl Sync for Session {}
 /// [`GlobalCtx`] also functions as a lookup table for options and session-variables,
 /// which have been defined in some previous stage, such as the options passed to the
 /// compiler, callbacks to invoke during execution, etc.
+#[derive(Default)]
 pub struct GlobalCtx {
     pub session: Session,
     pub dcx: DiagCtx,
@@ -81,16 +82,6 @@ impl GlobalCtx {
         Self {
             session,
             dcx,
-            store: CacheStore::new(),
-        }
-    }
-}
-
-impl Default for GlobalCtx {
-    fn default() -> Self {
-        Self {
-            dcx: DiagCtx::new_buffered(512),
-            session: Session::default(),
             store: CacheStore::new(),
         }
     }
