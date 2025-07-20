@@ -8,7 +8,7 @@ Here's a quick glimpse of Lume's capabilities:
 
 A simple hello-world application:
 ```lm
-import std.io (print)
+import std::io (print)
 
 fn main() {
   print("Hello, World!");
@@ -17,15 +17,15 @@ fn main() {
 
 Types can also be defined with `struct`:
 ```lm
-import std.io (print)
+import std::io (print)
 
 struct Counter {
   value: Int32;
 }
 
 impl Counter {
-  pub fn new() {
-    Counter { value: 0 }
+  pub fn new() -> Counter {
+    return Counter { value: 0 };
   }
 
   pub fn increment(self) {
@@ -45,10 +45,10 @@ fn main() {
   let counter = Counter::new();
   counter.increment();
 
-  print("Value: {}", counter.value());
+  print("Value: {0}", counter.value());
 
   counter.decrement();
-  print("Value: {}", counter.value());
+  print("Value: {0}", counter.value());
 }
 ```
 
