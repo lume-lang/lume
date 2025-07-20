@@ -25,7 +25,7 @@ error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
 
 [features]
-codegen = ["dep:lume_codegen"]
+codegen = ["dep:lume_codegen", "lume_codegen/llvm"]
 
 [lints]
 workspace = true

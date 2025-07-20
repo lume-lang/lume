@@ -16,8 +16,11 @@ inkwell = { version = "=0.6.0", features = [
     "llvm18-1",
     "target-x86",
     "target-arm",
-] }
+], optional = true }
 tracing = { workspace = true }
+
+[features]
+llvm = ["dep:inkwell"]
 
 [lints]
 workspace = true

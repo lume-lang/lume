@@ -11,7 +11,7 @@ test = false
 
 [dependencies]
 arc = { path = "../arc" }
-lume_driver = { path = "../lume_driver" }
+lume_driver = { path = "../lume_driver", features = ["codegen"] }
 lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session", features = ["cli"] }
 
