@@ -919,6 +919,7 @@ dependencies = [
  "indexmap",
  "lume_errors",
  "lume_span",
+ "lume_type_metadata",
  "lume_types",
 ]
 
@@ -926,6 +927,7 @@ dependencies = [
 name = "lume_mir_lower"
 version = "0.1.0"
 dependencies = [
+ "lume_hir",
  "lume_mir",
  "lume_tir",
  "lume_typech",
@@ -1001,6 +1003,7 @@ dependencies = [
  "indexmap",
  "lume_session",
  "lume_span",
+ "lume_type_metadata",
  "lume_types",
 ]
 
@@ -1014,9 +1017,20 @@ dependencies = [
  "lume_hir",
  "lume_span",
  "lume_tir",
+ "lume_type_metadata",
  "lume_typech",
  "lume_types",
  "tracing",
+]
+
+[[package]]
+name = "lume_type_metadata"
+version = "0.1.0"
+dependencies = [
+ "indexmap",
+ "lume_hir",
+ "lume_span",
+ "lume_types",
 ]
 
 [[package]]

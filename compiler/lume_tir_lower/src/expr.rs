@@ -1,6 +1,7 @@
 use error_snippet::Result;
 use lume_span::{DefId, Internable};
-use lume_tir::{FunctionId, FunctionKind, VariableId};
+use lume_tir::VariableId;
+use lume_type_metadata::{FunctionId, FunctionKind};
 
 use crate::LowerFunction;
 
@@ -109,10 +110,17 @@ impl LowerFunction<'_> {
             .map(|arg| self.expression(arg))
             .collect::<Result<Vec<_>>>()?;
 
+        let type_arguments = expr
+            .type_arguments()
+            .iter()
+            .map(|arg| self.lower.tcx.mk_type_ref_from_expr(arg, expr.id()))
+            .collect::<Result<Vec<_>>>()?;
+
         Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
             id: expr.id(),
             function,
             arguments,
+            type_arguments,
         })))
     }
 

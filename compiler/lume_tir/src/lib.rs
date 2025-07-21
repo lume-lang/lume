@@ -1,9 +1,11 @@
 use indexmap::IndexMap;
 use lume_span::{ExpressionId, Interned, StatementId};
+use lume_type_metadata::{FunctionId, StaticMetadata, TypeMetadataId};
 use lume_types::{Property, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
+    pub metadata: StaticMetadata,
     pub functions: IndexMap<FunctionId, Function>,
 }
 
@@ -135,21 +137,6 @@ impl std::fmt::Display for Path {
 }
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum FunctionKind {
-    Function,
-    Method,
-}
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
-
-impl FunctionId {
-    pub fn new(kind: FunctionKind, id: usize) -> Self {
-        Self(lume_span::hash_id(&(kind, id)))
-    }
-}
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct VariableId(pub usize);
 
 #[derive(Debug, Clone, PartialEq)]
@@ -157,6 +144,7 @@ pub struct Function {
     pub id: FunctionId,
     pub name: Path,
     pub parameters: Vec<Parameter>,
+    pub type_params: TypeParameters,
     pub return_type: TypeRef,
     pub block: Option<Block>,
 }
@@ -184,6 +172,40 @@ impl PartialEq for Parameter {
     fn eq(&self, other: &Self) -> bool {
         self.ty == other.ty
     }
+}
+
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+pub struct TypeParameters {
+    pub inner: Vec<TypeParameter>,
+}
+
+impl TypeParameters {
+    pub const fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &TypeParameter> {
+        self.inner.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut TypeParameter> {
+        self.inner.iter_mut()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TypeParameter {
+    pub var: VariableId,
+    pub name: String,
+    pub constraints: Vec<TypeRef>,
 }
 
 #[derive(Hash, Default, Debug, Clone, PartialEq)]
@@ -387,6 +409,7 @@ pub struct Call {
     pub id: ExpressionId,
     pub function: FunctionId,
     pub arguments: Vec<Expression>,
+    pub type_arguments: Vec<TypeRef>,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -436,6 +459,7 @@ pub enum IntrinsicKind {
     BooleanNe,
     BooleanAnd,
     BooleanOr,
+    Metadata { id: TypeMetadataId },
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

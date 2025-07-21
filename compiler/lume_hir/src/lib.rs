@@ -12,7 +12,7 @@ pub struct FunctionId {
     pub index: Idx,
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct TypeId {
     pub package: PackageId,
     pub index: Idx,

@@ -198,6 +198,33 @@ impl TyInferCtx {
         self.hir_loop_target(DefId::Statement(id))
     }
 
+    /// Returns the parameters available for the [`lume_hir::Def`] with the given ID.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_avail_params(&self, def: DefId) -> Vec<lume_hir::Parameter> {
+        let mut acc = Vec::new();
+
+        for parent in self.hir_parent_iter(def) {
+            let params = match parent {
+                lume_hir::Def::Item(item) => {
+                    if let lume_hir::Item::Function(func) = item {
+                        &func.parameters
+                    } else {
+                        continue;
+                    }
+                }
+                lume_hir::Def::Method(method) => &method.parameters,
+                lume_hir::Def::TraitMethodDef(method) => &method.parameters,
+                lume_hir::Def::TraitMethodImpl(method) => &method.parameters,
+                _ => continue,
+            };
+
+            acc.extend_from_slice(params);
+        }
+
+        acc
+    }
+
     /// Returns all the type parameters available for the [`lume_hir::Def`] with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_avail_type_params(&self, def: DefId) -> Vec<lume_hir::TypeParameter> {

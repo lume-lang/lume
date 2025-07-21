@@ -1,12 +1,18 @@
 pub(crate) mod expr;
+pub(crate) mod generic;
 pub(crate) mod path;
 pub(crate) mod stmt;
+
+pub mod reitify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_span::Internable;
-use lume_tir::{FunctionId, FunctionKind, TypedIR, VariableId, VariableSource};
+use lume_tir::{TypedIR, VariableId, VariableSource};
+use lume_type_metadata::{FunctionId, FunctionKind};
 use lume_typech::TyCheckCtx;
+
+pub use lume_type_metadata::StaticMetadata;
 
 pub struct Lower<'tcx> {
     /// Defines the type context which will be lowering into `TypedIR`.
@@ -34,6 +40,14 @@ impl<'tcx> Lower<'tcx> {
     pub fn lower(mut self) -> Result<TypedIR> {
         self.define_callables()?;
         self.lower_callables()?;
+
+        let mut reitify_pass = reitify::ReificationPass::new(self.tcx);
+
+        for function in self.ir.functions.values_mut() {
+            reitify_pass.execute(function)?;
+        }
+
+        self.ir.metadata = reitify_pass.static_metadata;
 
         Ok(self.ir)
     }
@@ -131,17 +145,17 @@ impl<'tcx> LowerFunction<'tcx> {
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
     ) -> Result<lume_tir::Function> {
-        let type_params = self.lower.tcx.hir_avail_type_params(hir_id);
-        let type_params = type_params.iter().map(AsRef::as_ref).collect::<Vec<_>>();
-        let name = self.path_generic(name, &type_params)?;
+        let name = self.path_generic_hir(name, hir_id)?;
 
         let parameters = self.parameters(signature.params);
+        let type_params = self.type_parameters(signature.type_params);
         let return_type = signature.ret_ty.clone();
 
         Ok(lume_tir::Function {
             id,
             name,
             parameters,
+            type_params,
             return_type,
             block: None,
         })
