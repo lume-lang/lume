@@ -22,7 +22,13 @@ namespace std
 /// let a: [Int32] = [10, 20, 30];
 /// ```
 struct Array<T>
-{ }
+{
+    /// Defines the amount of items currently stored within the array.
+    length: UInt64;
+
+    /// Pointer to the memory allocated for the array items.
+    ptr: Pointer;
+}
 
 impl<T> Array<T> {
     /// Allocates a new array with the given items.
