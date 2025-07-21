@@ -27,6 +27,8 @@ impl TyCheckCtx {
         self.typech_expressions()?;
         self.typech_traits()?;
 
+        self.dcx().ensure_untainted()?;
+
         Ok(())
     }
 

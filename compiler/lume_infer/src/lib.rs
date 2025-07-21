@@ -116,6 +116,8 @@ impl TyInferCtx {
 
         tracing::debug!(target: "inference", "finished inference");
 
+        self.dcx().ensure_untainted()?;
+
         Ok(())
     }
 
