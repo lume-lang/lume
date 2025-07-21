@@ -54,8 +54,8 @@ impl TyCheckCtx {
                 return Err(errors::MismatchedTypes {
                     reason_loc: to.location,
                     found_loc: from.location,
-                    expected: self.infer.new_named_type(to)?,
-                    found: self.infer.new_named_type(from)?,
+                    expected: self.infer.new_named_type(to, false)?,
+                    found: self.infer.new_named_type(from, false)?,
                 }
                 .into());
             }
@@ -78,8 +78,8 @@ impl TyCheckCtx {
 
             return Err(errors::TraitNotImplemented {
                 location: from.location,
-                trait_name: self.new_named_type(to)?,
-                type_name: self.new_named_type(from)?,
+                trait_name: self.new_named_type(to, false)?,
+                type_name: self.new_named_type(from, false)?,
             }
             .into());
         }
@@ -94,8 +94,8 @@ impl TyCheckCtx {
                         source: from.location,
                         constraint_loc: constraint.location,
                         param_name: to_arg.name.clone(),
-                        type_name: self.new_named_type(from)?,
-                        constraint_name: self.new_named_type(constraint)?,
+                        type_name: self.new_named_type(from, false)?,
+                        constraint_name: self.new_named_type(constraint, false)?,
                     }
                     .into());
                 }
@@ -119,8 +119,8 @@ impl TyCheckCtx {
         }
 
         if tracing::event_enabled!(tracing::Level::DEBUG) {
-            let named_from = self.new_named_type(from)?;
-            let named_to = self.new_named_type(to)?;
+            let named_from = self.new_named_type(from, false)?;
+            let named_to = self.new_named_type(to, false)?;
 
             tracing::debug!(
                 target: "type_compat",
@@ -137,8 +137,8 @@ impl TyCheckCtx {
         Err(errors::MismatchedTypes {
             reason_loc: to.location,
             found_loc: from.location,
-            expected: self.infer.new_named_type(to)?,
-            found: self.infer.new_named_type(from)?,
+            expected: self.infer.new_named_type(to, false)?,
+            found: self.infer.new_named_type(from, false)?,
         }
         .into())
     }

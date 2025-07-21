@@ -109,7 +109,7 @@ impl TyInferCtx {
 
         Ok(diagnostics::MissingMethod {
             source: name.location(),
-            type_name: self.new_named_type(&callee_type)?,
+            type_name: self.new_named_type(&callee_type, false)?,
             method_name: name.name().clone(),
             suggestions,
         })

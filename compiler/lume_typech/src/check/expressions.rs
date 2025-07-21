@@ -110,8 +110,8 @@ impl TyCheckCtx {
                         if !self.check_type_compatibility(&ty, &TypeRef::bool())? {
                             return Err(super::errors::MismatchedTypesBoolean {
                                 source: expr.location,
-                                found: self.new_named_type(&ty)?,
-                                expected: self.new_named_type(&TypeRef::bool())?,
+                                found: self.new_named_type(&ty, false)?,
+                                expected: self.new_named_type(&TypeRef::bool(), false)?,
                             }
                             .into());
                         }
@@ -159,8 +159,8 @@ impl TyCheckCtx {
             return Err(MismatchedTypes {
                 found_loc: stmt.value.location,
                 reason_loc: declared_type.location,
-                expected: self.new_named_type(&resolved_type)?,
-                found: self.new_named_type(&value_expr)?,
+                expected: self.new_named_type(&resolved_type, false)?,
+                found: self.new_named_type(&value_expr, false)?,
             }
             .into());
         }
@@ -196,8 +196,8 @@ impl TyCheckCtx {
             return Err(MismatchedTypes {
                 found_loc,
                 reason_loc: expected.location,
-                expected: self.new_named_type(&expected)?,
-                found: self.new_named_type(&actual)?,
+                expected: self.new_named_type(&expected, false)?,
+                found: self.new_named_type(&actual, false)?,
             }
             .into());
         }
@@ -246,8 +246,8 @@ impl TyCheckCtx {
                 source: expr.location,
                 target_loc: expr.target.location,
                 value_loc: expr.value.location,
-                target_ty: self.new_named_type(&target)?.to_string(),
-                value_ty: self.new_named_type(&value)?.to_string(),
+                target_ty: self.new_named_type(&target, false)?.to_string(),
+                value_ty: self.new_named_type(&value, false)?.to_string(),
             }
             .into());
         }
@@ -275,8 +275,8 @@ impl TyCheckCtx {
                 source: expr.location,
                 lhs: lhs.location,
                 rhs: rhs.location,
-                lhs_ty: self.new_named_type(&lhs)?.to_string(),
-                rhs_ty: self.new_named_type(&rhs)?.to_string(),
+                lhs_ty: self.new_named_type(&lhs, false)?.to_string(),
+                rhs_ty: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
         }
@@ -297,8 +297,8 @@ impl TyCheckCtx {
         let source_type = self.type_of_expr(&expr.source)?;
         let dest_type = self.mk_type_ref(&expr.target)?;
 
-        let source_named = self.new_named_type(&source_type)?;
-        let dest_named = self.new_named_type(&dest_type)?;
+        let source_named = self.new_named_type(&source_type, false)?;
+        let dest_named = self.new_named_type(&dest_type, false)?;
 
         let expr_location = self.hir_expect_expr(expr.id).location;
 
@@ -378,7 +378,7 @@ impl TyCheckCtx {
             self.dcx().emit(
                 UnknownPropertyField {
                     source: field_left.location,
-                    ty: self.new_named_type(&constructed_type)?,
+                    ty: self.new_named_type(&constructed_type, false)?,
                     field: field_left.to_string(),
                 }
                 .into(),
@@ -399,7 +399,7 @@ impl TyCheckCtx {
             return Err(BooleanOperationOnNonBoolean {
                 source: expr.lhs.location,
                 expected: Path::boolean().to_string(),
-                found: self.new_named_type(&lhs)?.to_string(),
+                found: self.new_named_type(&lhs, false)?.to_string(),
             }
             .into());
         }
@@ -408,7 +408,7 @@ impl TyCheckCtx {
             return Err(BooleanOperationOnNonBoolean {
                 source: expr.rhs.location,
                 expected: Path::boolean().to_string(),
-                found: self.new_named_type(&rhs)?.to_string(),
+                found: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
         }

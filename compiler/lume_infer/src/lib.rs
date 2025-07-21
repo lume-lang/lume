@@ -317,13 +317,14 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if any types referenced by the given [`TypeRef`], or any child
     /// instances, are missing from the type context.
-    pub fn new_named_type(&self, type_ref: &TypeRef) -> Result<NamedTypeRef> {
-        let name = self.type_ref_name(type_ref)?.to_string();
+    pub fn new_named_type(&self, type_ref: &TypeRef, expand: bool) -> Result<NamedTypeRef> {
+        let path = self.type_ref_name(type_ref)?;
+        let name = if expand { format!("{path:+}") } else { format!("{path}") };
 
         let type_arguments = type_ref
             .type_arguments
             .iter()
-            .map(|arg| self.new_named_type(arg))
+            .map(|arg| self.new_named_type(arg, expand))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(NamedTypeRef { name, type_arguments })

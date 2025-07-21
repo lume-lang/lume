@@ -112,8 +112,8 @@ impl TyCheckCtx {
                             source: arg.location,
                             constraint_loc: constraint.location,
                             param_name: param.name.clone(),
-                            type_name: self.new_named_type(&arg)?,
-                            constraint_name: self.new_named_type(constraint)?,
+                            type_name: self.new_named_type(&arg, false)?,
+                            constraint_name: self.new_named_type(constraint, false)?,
                         }
                         .into(),
                     );
@@ -405,8 +405,8 @@ impl TyCheckCtx {
 
             if found_type != expected_type {
                 return Err(crate::check::errors::MismatchedTypesBranches {
-                    found: self.new_named_type(&found_type)?,
-                    expected: self.new_named_type(&expected_type)?,
+                    found: self.new_named_type(&found_type, false)?,
+                    expected: self.new_named_type(&expected_type, false)?,
                     found_loc: found_type.location,
                     reason_loc: expected_type.location,
                 }
@@ -419,7 +419,7 @@ impl TyCheckCtx {
             let Some(else_block) = cases.iter().rfind(|case| case.condition.is_none()) else {
                 return Err(crate::check::errors::MissingReturnBranch {
                     source: last_case.location,
-                    expected: self.new_named_type(&expected_type)?,
+                    expected: self.new_named_type(&expected_type, false)?,
                 }
                 .into());
             };
