@@ -261,15 +261,18 @@ impl Path {
     }
 
     pub fn with_root(base: Path, name: PathSegment) -> Self {
-        let mut root = base.root;
-        root.reserve(1);
-        root.push(base.name);
+        let location = base.location;
+        let root = base.as_root();
 
-        Self {
-            root,
-            name,
-            location: base.location,
-        }
+        Self { root, name, location }
+    }
+
+    pub fn as_root(self) -> Vec<PathSegment> {
+        let mut root = self.root;
+        root.reserve(1);
+        root.push(self.name);
+
+        root
     }
 
     pub fn void() -> Self {

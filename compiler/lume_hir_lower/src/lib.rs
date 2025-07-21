@@ -315,10 +315,18 @@ impl<'a> LowerModule<'a> {
             return Ok(symbol.clone());
         }
 
+        let root = if let Some(namespace) = &self.namespace
+            && path.root.is_empty()
+        {
+            namespace.clone().as_root()
+        } else {
+            self.path_root(path.root.clone())?
+        };
+
         // Since all names hash to the same value, we can compute what the item ID
         // would be, if the symbol is registered within the module.
         Ok(Path {
-            root: self.path_root(path.root.clone())?,
+            root,
             name: self.path_segment(path.name.clone())?,
             location: self.location(path.location.clone()),
         })
