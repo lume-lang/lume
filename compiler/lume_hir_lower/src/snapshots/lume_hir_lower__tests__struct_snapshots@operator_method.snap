@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "\n            impl Foo {\n                pub fn ==() -> bool {\n                    return true;\n                }\n            }"
+description: "impl Foo {\n            pub fn ==() -> bool {\n                return true;\n            }\n        }"
 ---
 Map {
     package: PackageId(
@@ -39,14 +39,14 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Foo",
-                                location: <internal>:18:21,
+                                location: <internal>:5:8,
                             },
                             type_arguments: [],
-                            location: <internal>:18:21,
+                            location: <internal>:5:8,
                         },
-                        location: <internal>:18:21,
+                        location: <internal>:5:8,
                     },
-                    location: <internal>:18:21,
+                    location: <internal>:5:8,
                 },
                 methods: [
                     MethodDefinition {
@@ -69,7 +69,7 @@ Map {
                         visibility: Public,
                         name: Identifier {
                             name: "==",
-                            location: <internal>:47:49,
+                            location: <internal>:30:32,
                         },
                         parameters: [],
                         type_parameters: TypeParameters {
@@ -89,12 +89,12 @@ Map {
                                 name: Namespace {
                                     name: Identifier {
                                         name: "bool",
-                                        location: <internal>:55:59,
+                                        location: <internal>:38:42,
                                     },
                                 },
-                                location: <internal>:55:59,
+                                location: <internal>:38:42,
                             },
-                            location: <internal>:55:59,
+                            location: <internal>:38:42,
                         },
                         block: Some(
                             Block {
@@ -176,28 +176,28 @@ Map {
                                                                         value: true,
                                                                     },
                                                                 ),
-                                                                location: <internal>:89:93,
+                                                                location: <internal>:68:72,
                                                             },
                                                         ),
-                                                        location: <internal>:89:93,
+                                                        location: <internal>:68:72,
                                                     },
                                                 ),
-                                                location: <internal>:82:94,
+                                                location: <internal>:61:73,
                                             },
                                         ),
-                                        location: <internal>:82:94,
+                                        location: <internal>:61:73,
                                     },
                                 ],
-                                location: <internal>:60:112,
+                                location: <internal>:43:87,
                             },
                         ),
-                        location: <internal>:40:112,
+                        location: <internal>:23:87,
                     },
                 ],
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                location: <internal>:13:126,
+                location: <internal>:0:97,
             },
         ),
     },
@@ -291,16 +291,16 @@ Map {
                                             value: true,
                                         },
                                     ),
-                                    location: <internal>:89:93,
+                                    location: <internal>:68:72,
                                 },
                             ),
-                            location: <internal>:89:93,
+                            location: <internal>:68:72,
                         },
                     ),
-                    location: <internal>:82:94,
+                    location: <internal>:61:73,
                 },
             ),
-            location: <internal>:82:94,
+            location: <internal>:61:73,
         },
     },
     expressions: {
@@ -363,10 +363,10 @@ Map {
                             value: true,
                         },
                     ),
-                    location: <internal>:89:93,
+                    location: <internal>:68:72,
                 },
             ),
-            location: <internal>:89:93,
+            location: <internal>:68:72,
         },
     },
 }

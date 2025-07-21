@@ -1,4 +1,5 @@
 pub use error_snippet;
+pub use owo_colors;
 
 /// Asserts that the given [`DiagCtx`] renders the same output as
 /// has been saved and snapshot in a previous iteration.
@@ -12,6 +13,7 @@ macro_rules! assert_dcx_snapshot {
         let mut renderer = $crate::error_snippet::GraphicalRenderer::new();
         renderer.use_colors = false;
 
+        $crate::owo_colors::set_override(false);
         let buffer = $dcx.render_buffer(&mut renderer).unwrap_or_default();
 
         insta::with_settings!({ omit_expression => true }, {
@@ -22,6 +24,7 @@ macro_rules! assert_dcx_snapshot {
         let mut renderer = $crate::error_snippet::GraphicalRenderer::new();
         renderer.use_colors = false;
 
+        $crate::owo_colors::set_override(false);
         let buffer = $dcx.render_buffer(&mut renderer).unwrap_or_default();
 
         insta::with_settings!({

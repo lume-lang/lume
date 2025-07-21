@@ -5,10 +5,9 @@ use lume_span::PackageId;
 use super::*;
 
 #[track_caller]
-fn lower(input: &str) -> Result<Map> {
-    let dcx = DiagCtx::new().handle();
+#[allow(clippy::needless_pass_by_value)]
+fn lower(input: &str, dcx: DiagCtxHandle) -> Result<Map> {
     let source = Arc::new(SourceFile::internal(input));
-
     let expressions = Parser::new(source.clone(), dcx.clone()).parse().unwrap();
 
     let module_id = PackageId::empty();
@@ -21,8 +20,8 @@ fn lower(input: &str) -> Result<Map> {
 }
 
 #[track_caller]
-fn lower_expr(input: &str) -> Result<Vec<lume_hir::Statement>> {
-    let dcx = DiagCtx::new().handle();
+#[allow(clippy::needless_pass_by_value)]
+fn lower_expr(input: &str, dcx: DiagCtxHandle) -> Result<Vec<lume_hir::Statement>> {
     let source = Arc::new(SourceFile::internal(input));
 
     let mut parser = Parser::new_with_str(input);
@@ -58,7 +57,8 @@ macro_rules! assert_snap_eq {
             description => $input,
             omit_expression => true
         }, {
-            insta::assert_debug_snapshot!(lower($input).unwrap());
+            let dcx = DiagCtx::new().handle();
+            insta::assert_debug_snapshot!(lower($input, dcx).unwrap());
         });
     };
 }
@@ -70,12 +70,10 @@ macro_rules! assert_err_snap_eq {
     ) => {
         set_snapshot_suffix!( $($expr),+ );
 
-        insta::with_settings!({
-            description => $input,
-            omit_expression => true
-        }, {
-            insta::assert_debug_snapshot!(lower($input).unwrap_err());
-        });
+        let dcx = DiagCtx::new();
+        let _ = lower($input, dcx.handle());
+
+        lume_errors_test::assert_dcx_snapshot!($input, &dcx);
     };
 }
 
@@ -90,7 +88,8 @@ macro_rules! assert_expr_snap_eq {
             description => $input,
             omit_expression => true
         }, {
-            insta::assert_debug_snapshot!(lower_expr($input).unwrap());
+            let dcx = DiagCtx::new().handle();
+            insta::assert_debug_snapshot!(lower_expr($input, dcx).unwrap());
         });
     };
 }
@@ -339,80 +338,71 @@ fn test_struct_snapshots() {
     assert_snap_eq!("impl Int32 {}", "empty_impl");
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                fn bar() -> Int32 {
-                    return 0;
-                }
-            }",
+        "impl Foo {
+            fn bar() -> Int32 {
+                return 0;
+            }
+        }",
         "method"
     );
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                fn bar() { }
-            }",
+        "impl Foo {
+            fn bar() { }
+        }",
         "method_no_ret"
     );
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                pub fn bar() -> Int32 {
-                    return 0;
-                }
-            }",
+        "impl Foo {
+            pub fn bar() -> Int32 {
+                return 0;
+            }
+        }",
         "pub_method"
     );
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                fn external bar() -> Int32
-            }",
+        "impl Foo {
+            fn external bar() -> Int32
+        }",
         "ext_method"
     );
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                pub fn ==() -> bool {
-                    return true;
-                }
-            }",
+        "impl Foo {
+            pub fn ==() -> bool {
+                return true;
+            }
+        }",
         "operator_method"
     );
 
     assert_snap_eq!(
-        "
-            impl Foo {
-                fn bar<T>() -> Int32 { }
-            }",
+        "impl Foo {
+            fn bar<T>() -> Int32 { }
+        }",
         "generic_method"
     );
 
     assert_snap_eq!(
-        "
-            struct Foo {
-                x: Int32 = 0;
-            }",
+        "struct Foo {
+            x: Int32 = 0;
+        }",
         "property"
     );
 
     assert_snap_eq!(
-        "
-            struct Foo {
-                x: Int32;
-            }",
+        "struct Foo {
+            x: Int32;
+        }",
         "property_no_default"
     );
 
     assert_snap_eq!(
-        "
-            struct Foo {
-                pub x: Int32 = 1;
-            }",
+        "struct Foo {
+            pub x: Int32 = 1;
+        }",
         "pub_property"
     );
 }

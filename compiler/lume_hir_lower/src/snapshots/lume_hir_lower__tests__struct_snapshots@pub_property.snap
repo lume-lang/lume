@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "\n            struct Foo {\n                pub x: Int32 = 1;\n            }"
+description: "struct Foo {\n            pub x: Int32 = 1;\n        }"
 ---
 Map {
     package: PackageId(
@@ -31,12 +31,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Foo",
-                                location: <internal>:20:23,
+                                location: <internal>:7:10,
                             },
                             type_arguments: [],
-                            location: <internal>:20:23,
+                            location: <internal>:7:10,
                         },
-                        location: <internal>:20:23,
+                        location: <internal>:7:10,
                     },
                     visibility: Private,
                     builtin: false,
@@ -61,7 +61,7 @@ Map {
                             visibility: Public,
                             name: Identifier {
                                 name: "x",
-                                location: <internal>:46:47,
+                                location: <internal>:29:30,
                             },
                             property_type: Type {
                                 id: ItemId {
@@ -84,14 +84,14 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: <internal>:49:54,
+                                            location: <internal>:32:37,
                                         },
                                         type_arguments: [],
-                                        location: <internal>:49:54,
+                                        location: <internal>:32:37,
                                     },
-                                    location: <internal>:49:54,
+                                    location: <internal>:32:37,
                                 },
-                                location: <internal>:49:54,
+                                location: <internal>:32:37,
                             },
                             default_value: Some(
                                 Expression {
@@ -142,19 +142,19 @@ Map {
                                                     kind: I32,
                                                 },
                                             ),
-                                            location: <internal>:57:58,
+                                            location: <internal>:40:41,
                                         },
                                     ),
-                                    location: <internal>:57:58,
+                                    location: <internal>:40:41,
                                 },
                             ),
-                            location: <internal>:42:59,
+                            location: <internal>:25:42,
                         },
                     ],
                     type_parameters: TypeParameters {
                         inner: [],
                     },
-                    location: <internal>:13:73,
+                    location: <internal>:0:52,
                 },
             ),
         ),
@@ -221,10 +221,10 @@ Map {
                             kind: I32,
                         },
                     ),
-                    location: <internal>:57:58,
+                    location: <internal>:40:41,
                 },
             ),
-            location: <internal>:57:58,
+            location: <internal>:40:41,
         },
     },
 }

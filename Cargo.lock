@@ -825,7 +825,6 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "lume_span",
- "owo-colors",
 ]
 
 [[package]]
@@ -835,6 +834,7 @@ dependencies = [
  "error_snippet",
  "insta",
  "lume_errors",
+ "owo-colors",
 ]
 
 [[package]]
@@ -862,6 +862,7 @@ dependencies = [
  "insta",
  "lume_ast",
  "lume_errors",
+ "lume_errors_test",
  "lume_hir",
  "lume_parser",
  "lume_session",

@@ -9,6 +9,7 @@ lume_errors = { path = "../lume_errors" }
 
 error_snippet = { workspace = true }
 insta = { version = "=1.43.1" }
+owo-colors = { workspace = true }
 
 [lints]
 workspace = true

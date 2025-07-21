@@ -18,6 +18,7 @@ error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+lume_errors_test = { path = "../lume_errors_test" }
 lume_parser = { path = "../lume_parser" }
 insta = { version = "1.42.2", features = ["yaml"] }
 

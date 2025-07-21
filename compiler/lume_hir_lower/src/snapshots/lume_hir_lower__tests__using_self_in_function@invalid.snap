@@ -1,21 +1,10 @@
 ---
-source: compiler/lume_hir/src/lower/tests.rs
+source: compiler/lume_hir_lower/src/tests.rs
 description: "fn foo(self) -> void { }"
 ---
-SelfOutsideObjectContext {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "fn foo(self) -> void { }",
-        package: PackageId(
-            0,
-        ),
-    },
-    range: 7..11,
-    ty: "self",
-}
+× error[LM3015]: self cannot be used in functions
+   ╭───────────
+ 1 │ fn foo(self) -> void { }
+   │        ^^^^ self cannot be used in functions; they must only be used in traits and classes
+   ╰──
+   help: since functions have no instance, remove the self parameter

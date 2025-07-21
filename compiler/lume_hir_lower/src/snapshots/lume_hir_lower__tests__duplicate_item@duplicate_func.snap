@@ -2,21 +2,11 @@
 source: compiler/lume_hir_lower/src/tests.rs
 description: "fn foo() { } fn foo() { }"
 ---
-DuplicateDefinition {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "fn foo() { } fn foo() { }",
-        package: PackageId(
-            0,
-        ),
-    },
-    duplicate_range: 16..19,
-    original_range: 3..6,
-    name: "foo",
-}
+× error[LM3028]: duplicate definition
+   ╭───────────
+ 1 │ fn foo() { } fn foo() { }
+   │                 ^^^ item foo is already defined within this file
+   ∶ 
+ 1 │ fn foo() { } fn foo() { }
+   │    ^^^ original definition found here
+   ╰──

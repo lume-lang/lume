@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "\n            struct Foo {\n                x: Int32;\n            }"
+description: "struct Foo {\n            x: Int32;\n        }"
 ---
 Map {
     package: PackageId(
@@ -31,12 +31,12 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Foo",
-                                location: <internal>:20:23,
+                                location: <internal>:7:10,
                             },
                             type_arguments: [],
-                            location: <internal>:20:23,
+                            location: <internal>:7:10,
                         },
-                        location: <internal>:20:23,
+                        location: <internal>:7:10,
                     },
                     visibility: Private,
                     builtin: false,
@@ -61,7 +61,7 @@ Map {
                             visibility: Private,
                             name: Identifier {
                                 name: "x",
-                                location: <internal>:42:43,
+                                location: <internal>:25:26,
                             },
                             property_type: Type {
                                 id: ItemId {
@@ -84,23 +84,23 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: <internal>:45:50,
+                                            location: <internal>:28:33,
                                         },
                                         type_arguments: [],
-                                        location: <internal>:45:50,
+                                        location: <internal>:28:33,
                                     },
-                                    location: <internal>:45:50,
+                                    location: <internal>:28:33,
                                 },
-                                location: <internal>:45:50,
+                                location: <internal>:28:33,
                             },
                             default_value: None,
-                            location: <internal>:42:51,
+                            location: <internal>:25:34,
                         },
                     ],
                     type_parameters: TypeParameters {
                         inner: [],
                     },
-                    location: <internal>:13:65,
+                    location: <internal>:0:44,
                 },
             ),
         ),

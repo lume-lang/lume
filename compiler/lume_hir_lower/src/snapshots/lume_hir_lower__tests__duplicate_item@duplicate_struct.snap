@@ -2,21 +2,11 @@
 source: compiler/lume_hir_lower/src/tests.rs
 description: "struct Foo {} struct Foo { }"
 ---
-DuplicateDefinition {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "struct Foo {} struct Foo { }",
-        package: PackageId(
-            0,
-        ),
-    },
-    duplicate_range: 21..24,
-    original_range: 7..10,
-    name: "Foo",
-}
+× error[LM3028]: duplicate definition
+   ╭───────────
+ 1 │ struct Foo {} struct Foo { }
+   │                      ^^^ item Foo is already defined within this file
+   ∶ 
+ 1 │ struct Foo {} struct Foo { }
+   │        ^^^ original definition found here
+   ╰──

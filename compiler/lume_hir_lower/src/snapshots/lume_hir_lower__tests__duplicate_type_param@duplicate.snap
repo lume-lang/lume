@@ -2,21 +2,11 @@
 source: compiler/lume_hir_lower/src/tests.rs
 description: "fn foo<T, T>() { }"
 ---
-DuplicateTypeParameter {
-    source: SourceFile {
-        id: SourceFileId(
-            PackageId(
-                0,
-            ),
-            0,
-        ),
-        name: Internal,
-        content: "fn foo<T, T>() { }",
-        package: PackageId(
-            0,
-        ),
-    },
-    duplicate_range: 10..11,
-    original_range: 7..8,
-    name: "T",
-}
+× error[LM3029]: duplicate type parameter
+   ╭───────────
+ 1 │ fn foo<T, T>() { }
+   │           ^ type parameter T is already defined
+   ∶ 
+ 1 │ fn foo<T, T>() { }
+   │        ^ original type parameter found here
+   ╰──

@@ -215,9 +215,9 @@ fn test_imports() {
         }))]
     );
 
-    assert_err_eq!("import std::io", "Invalid import path");
-    assert_err_eq!("import std::io::", "Expected identifier");
-    assert_err_eq!("import ::std::io", "Expected identifier");
+    assert_err_eq!("import std::io", "invalid import path");
+    assert_err_eq!("import std::io::", "expected identifier");
+    assert_err_eq!("import ::std::io", "expected identifier");
 }
 
 #[test]
@@ -226,9 +226,9 @@ fn test_namespace_snapshots() {
     assert_snap_eq!("namespace std::io", "path_2");
     assert_snap_eq!("namespace std::io::path", "path_3");
     assert_snap_eq!("namespace System::IO", "path_casing");
-    assert_err_eq!("namespace", "Expected identifier");
-    assert_err_eq!("namespace ::std", "Expected identifier");
-    assert_err_eq!("namespace std::io::", "Expected identifier");
+    assert_err_eq!("namespace", "expected identifier");
+    assert_err_eq!("namespace ::std", "expected identifier");
+    assert_err_eq!("namespace std::io::", "expected identifier");
 }
 
 #[test]

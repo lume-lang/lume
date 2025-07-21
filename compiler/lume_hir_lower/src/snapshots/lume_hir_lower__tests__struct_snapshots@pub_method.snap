@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "\n            impl Foo {\n                pub fn bar() -> Int32 {\n                    return 0;\n                }\n            }"
+description: "impl Foo {\n            pub fn bar() -> Int32 {\n                return 0;\n            }\n        }"
 ---
 Map {
     package: PackageId(
@@ -39,14 +39,14 @@ Map {
                         name: Type {
                             name: Identifier {
                                 name: "Foo",
-                                location: <internal>:18:21,
+                                location: <internal>:5:8,
                             },
                             type_arguments: [],
-                            location: <internal>:18:21,
+                            location: <internal>:5:8,
                         },
-                        location: <internal>:18:21,
+                        location: <internal>:5:8,
                     },
-                    location: <internal>:18:21,
+                    location: <internal>:5:8,
                 },
                 methods: [
                     MethodDefinition {
@@ -69,7 +69,7 @@ Map {
                         visibility: Public,
                         name: Identifier {
                             name: "bar",
-                            location: <internal>:47:50,
+                            location: <internal>:30:33,
                         },
                         parameters: [],
                         type_parameters: TypeParameters {
@@ -96,14 +96,14 @@ Map {
                                 name: Type {
                                     name: Identifier {
                                         name: "Int32",
-                                        location: <internal>:56:61,
+                                        location: <internal>:39:44,
                                     },
                                     type_arguments: [],
-                                    location: <internal>:56:61,
+                                    location: <internal>:39:44,
                                 },
-                                location: <internal>:56:61,
+                                location: <internal>:39:44,
                             },
-                            location: <internal>:56:61,
+                            location: <internal>:39:44,
                         },
                         block: Some(
                             Block {
@@ -186,28 +186,28 @@ Map {
                                                                         kind: I32,
                                                                     },
                                                                 ),
-                                                                location: <internal>:91:92,
+                                                                location: <internal>:70:71,
                                                             },
                                                         ),
-                                                        location: <internal>:91:92,
+                                                        location: <internal>:70:71,
                                                     },
                                                 ),
-                                                location: <internal>:84:93,
+                                                location: <internal>:63:72,
                                             },
                                         ),
-                                        location: <internal>:84:93,
+                                        location: <internal>:63:72,
                                     },
                                 ],
-                                location: <internal>:62:111,
+                                location: <internal>:45:86,
                             },
                         ),
-                        location: <internal>:40:111,
+                        location: <internal>:23:86,
                     },
                 ],
                 type_parameters: TypeParameters {
                     inner: [],
                 },
-                location: <internal>:13:125,
+                location: <internal>:0:96,
             },
         ),
     },
@@ -302,16 +302,16 @@ Map {
                                             kind: I32,
                                         },
                                     ),
-                                    location: <internal>:91:92,
+                                    location: <internal>:70:71,
                                 },
                             ),
-                            location: <internal>:91:92,
+                            location: <internal>:70:71,
                         },
                     ),
-                    location: <internal>:84:93,
+                    location: <internal>:63:72,
                 },
             ),
-            location: <internal>:84:93,
+            location: <internal>:63:72,
         },
     },
     expressions: {
@@ -375,10 +375,10 @@ Map {
                             kind: I32,
                         },
                     ),
-                    location: <internal>:91:92,
+                    location: <internal>:70:71,
                 },
             ),
-            location: <internal>:91:92,
+            location: <internal>:70:71,
         },
     },
 }
