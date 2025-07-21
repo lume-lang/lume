@@ -28,7 +28,7 @@ impl DependencyFetcher for GitDependencyFetcher {
             Some(seg) => seg.as_os_str().to_string_lossy().to_string(),
             None => {
                 return Err(SimpleDiagnostic::new(format!(
-                    "failed to clone repository: could not find repository name from `{}`",
+                    "failed to clone repository: could not find repository name from {}",
                     url.path()
                 ))
                 .into());

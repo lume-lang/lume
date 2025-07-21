@@ -1,13 +1,21 @@
-use std::{ops::Range, path::PathBuf, sync::Arc};
+use std::{fmt::Debug, ops::Range, sync::Arc};
 
 use error_snippet::Error;
 use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
 
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "missing Arcfile within {dir:?}", code = "ARC0101")]
+#[derive(Diagnostic)]
+#[diagnostic(message = "missing Arcfile within {dir}", code = "ARC0101")]
 pub struct ArcfileMissing {
-    pub dir: PathBuf,
+    pub dir: String,
+}
+
+impl Debug for ArcfileMissing {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ArcfileMissing")
+            .field("dir", &self.dir.to_string())
+            .finish()
+    }
 }
 
 #[derive(Diagnostic, Debug)]
@@ -23,7 +31,7 @@ pub struct ArcfileMissingProperty {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected block to have property `name`")]
+    #[label("expected block to have property {name}")]
     pub range: Range<usize>,
 
     pub name: String,
@@ -94,7 +102,7 @@ pub struct ArcfileInvalidVersion {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Invalid version `{version}` for field `{field}`")]
+    #[label("Invalid version {version} for field {field}")]
     pub range: Range<usize>,
 
     pub version: String,

@@ -21,7 +21,7 @@ pub struct UnexpectedCharacter {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("unexpected character '{char}'")]
+    #[label("unexpected character {char}")]
     pub range: Range<usize>,
 
     pub char: char,
@@ -33,7 +33,7 @@ pub struct InvalidInteger {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("the integer value '{value:?}' is invalid")]
+    #[label("the integer value {value:?} is invalid")]
     pub range: Range<usize>,
 
     pub value: String,

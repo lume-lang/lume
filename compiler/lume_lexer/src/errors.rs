@@ -9,7 +9,7 @@ pub struct UnexpectedCharacter {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("unexpected character '{char}'")]
+    #[label("unexpected character {char}")]
     pub range: Range<usize>,
 
     pub char: char,

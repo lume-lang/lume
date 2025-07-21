@@ -74,12 +74,12 @@ pub struct VarargNotLastParameter {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Undeclared variable", code = "LM3024")]
+#[diagnostic(message = "undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Could not find a variable named '{name}' in the current scope")]
+    #[label("could not find a variable named {name} in the current scope")]
     pub range: Range<usize>,
 
     pub name: String,

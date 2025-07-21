@@ -30,24 +30,24 @@ pub struct UnexpectedType {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected top-level statement", code = "LM1055")]
+#[diagnostic(message = "unexpected top-level statement", code = "LM1055")]
 pub struct InvalidTopLevelStatement {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a top-level statement, got {actual:?} instead")]
+    #[label("expected a top-level statement, got {actual:?} instead")]
     pub range: Range<usize>,
 
     pub actual: TokenKind,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Expected identifier", code = "LM1056")]
+#[diagnostic(message = "expected identifier", code = "LM1056")]
 pub struct ExpectedIdentifier {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected identifier, found {actual:?} instead")]
+    #[label("expected identifier, found {actual:?} instead")]
     pub range: Range<usize>,
 
     pub actual: TokenKind,
@@ -55,15 +55,15 @@ pub struct ExpectedIdentifier {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Unexpected function name",
+    message = "unexpected function name",
     code = "LM1057",
-    help = "Function names only allow alphanumeric characters and underscores"
+    help = "function names only allow alphanumeric characters and underscores"
 )]
 pub struct ExpectedFunctionName {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a function name")]
+    #[label("expected a function name")]
     pub range: Range<usize>,
 }
 
@@ -83,15 +83,15 @@ pub struct ExpectedStructName {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Unexpected trait name",
+    message = "unexpected trait name",
     code = "LM1059",
-    help = "Trait names only allow alphanumeric characters and underscores"
+    help = "trait names only allow alphanumeric characters and underscores"
 )]
 pub struct ExpectedTraitName {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a trait name")]
+    #[label("expected a trait name")]
     pub range: Range<usize>,
 }
 
@@ -134,12 +134,12 @@ pub struct MethodInStruct {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unexpected expression", code = "LM1071")]
+#[diagnostic(message = "unexpected expression", code = "LM1071")]
 pub struct InvalidExpression {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected expression, got {actual:?} instead")]
+    #[label("expected expression, got {actual:?} instead")]
     pub range: Range<usize>,
 
     pub actual: TokenKind,
@@ -170,12 +170,12 @@ pub struct ExpectedValueNamespace {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Invalid literal value", code = "LM1078")]
+#[diagnostic(message = "invalid literal value", code = "LM1078")]
 pub struct InvalidLiteral {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Failed to parse literal value `{value}` as {target:?}")]
+    #[label("failed to parse literal value {value} as {target:?}")]
     pub range: Range<usize>,
 
     pub value: String,
@@ -183,12 +183,12 @@ pub struct InvalidLiteral {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Invalid literal type", code = "LM1079")]
+#[diagnostic(message = "invalid literal type", code = "LM1079")]
 pub struct InvalidLiteralType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Invalid literal type suffix '{found}'")]
+    #[label("invalid literal type suffix {found}")]
     pub range: Range<usize>,
 
     pub found: String,
@@ -208,41 +208,41 @@ pub struct MissingDelimiterInSequence {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Unexpected function body",
+    message = "unexpected function body",
     code = "LM1090",
-    help = "Either remove the body or change the function to not be external"
+    help = "either remove the body or change the function to not be external"
 )]
 pub struct ExternalFunctionBody {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("External functions cannot declare a body")]
+    #[label("external functions cannot declare a body")]
     pub range: Range<usize>,
 }
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "Invalid import path",
+    message = "invalid import path",
     code = "LM1100",
-    help = "Imports can be defined as `import std.io (File, Buffer)`"
+    help = "imports can be defined as `import std::io (File, Buffer)`"
 )]
 pub struct InvalidImportPath {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Expected a one or more identifiers to import, found `{found}`.")]
+    #[label("expected a one or more identifiers to import, found {found}")]
     pub range: Range<usize>,
 
     pub found: TokenKind,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "Unimplemented", code = "LM9999")]
+#[diagnostic(message = "unimplemented", code = "LM9999")]
 pub struct Unimplemented {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("Unimplemented functionality: {desc}")]
+    #[label("unimplemented functionality: {desc}")]
     pub range: Range<usize>,
 
     pub desc: String,

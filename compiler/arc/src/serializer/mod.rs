@@ -181,7 +181,10 @@ impl PackageParser {
         let path = root.join(DEFAULT_ARCFILE);
 
         if !path.is_file() {
-            return Err(ArcfileMissing { dir: root }.into());
+            return Err(ArcfileMissing {
+                dir: root.display().to_string(),
+            }
+            .into());
         }
 
         Self::new(&path, dcx)?.parse()
