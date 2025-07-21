@@ -17,10 +17,10 @@ pub struct ModuleTransformer<'tcx> {
 
 impl<'tcx> ModuleTransformer<'tcx> {
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(tcx: &'tcx TyCheckCtx, tir: &'tcx lume_tir::TypedIR) -> ModuleMap {
+    pub fn transform(tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR) -> ModuleMap {
         let mut transformer = Self {
             tcx,
-            mir: ModuleMap::new(),
+            mir: ModuleMap::new(tir.metadata),
         };
 
         for func in tir.functions.values() {

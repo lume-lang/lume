@@ -95,7 +95,7 @@ impl FunctionTransformer<'_> {
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
-        let name = Self::intrinsic_of(&expr.kind);
+        let name = self.intrinsic_of(&expr.kind);
         let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
 
         let decl = lume_mir::Declaration::Intrinsic { name, args };
@@ -104,7 +104,7 @@ impl FunctionTransformer<'_> {
         lume_mir::Operand::Load { id: reg }
     }
 
-    fn intrinsic_of(expr: &lume_tir::IntrinsicKind) -> lume_mir::Intrinsic {
+    fn intrinsic_of(&self, expr: &lume_tir::IntrinsicKind) -> lume_mir::Intrinsic {
         match expr {
             lume_tir::IntrinsicKind::FloatEq { bits } => lume_mir::Intrinsic::FloatEq { bits: *bits },
             lume_tir::IntrinsicKind::FloatNe { bits } => lume_mir::Intrinsic::FloatNe { bits: *bits },
@@ -172,6 +172,14 @@ impl FunctionTransformer<'_> {
             lume_tir::IntrinsicKind::BooleanNe => lume_mir::Intrinsic::BooleanNe,
             lume_tir::IntrinsicKind::BooleanAnd => lume_mir::Intrinsic::BooleanAnd,
             lume_tir::IntrinsicKind::BooleanOr => lume_mir::Intrinsic::BooleanOr,
+            lume_tir::IntrinsicKind::Metadata { id } => {
+                let metadata_store = &self.transformer.mir.metadata.metadata;
+                let metadata_entry = metadata_store.get(id).unwrap();
+
+                lume_mir::Intrinsic::Metadata {
+                    metadata: metadata_entry.clone(),
+                }
+            }
         }
     }
 

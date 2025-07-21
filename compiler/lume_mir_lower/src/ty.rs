@@ -71,6 +71,16 @@ impl FunctionTransformer<'_> {
                 | lume_mir::Intrinsic::FloatSub { bits }
                 | lume_mir::Intrinsic::FloatMul { bits }
                 | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::float(*bits),
+                lume_mir::Intrinsic::Metadata { metadata } => {
+                    let id = self.tcx().std_type();
+
+                    lume_mir::Type {
+                        id,
+                        kind: lume_mir::TypeKind::Metadata {
+                            inner: metadata.clone(),
+                        },
+                    }
+                }
             },
             lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
             _ => todo!(),

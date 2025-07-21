@@ -14,6 +14,7 @@ impl Context {
             },
             lume_mir::TypeKind::String | lume_mir::TypeKind::Pointer { .. } => self.ptr_type().as_basic_type_enum(),
             lume_mir::TypeKind::Struct { properties } => self.struct_type(properties).as_basic_type_enum(),
+            lume_mir::TypeKind::Metadata { .. } => todo!(),
         }
     }
 

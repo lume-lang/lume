@@ -5,6 +5,7 @@ edition = "2024"
 rust-version.workspace = true
 
 [dependencies]
+lume_hir = { path = "../lume_hir" }
 lume_mir = { path = "../lume_mir" }
 lume_tir = { path = "../lume_tir" }
 lume_typech = { path = "../lume_typech" }

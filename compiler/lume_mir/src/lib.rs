@@ -2,19 +2,24 @@ use std::hash::Hash;
 
 use indexmap::IndexMap;
 use lume_span::Interned;
+use lume_type_metadata::{StaticMetadata, TypeMetadata};
 
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
 /// which is referenced by later expressions, such as call sites.
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
+    pub metadata: StaticMetadata,
     pub functions: IndexMap<FunctionId, Function>,
 }
 
 impl ModuleMap {
     /// Creates a new empty [`ModuleMap`].
-    pub fn new() -> Self {
-        Self::default()
+    pub fn new(metadata: StaticMetadata) -> Self {
+        Self {
+            metadata,
+            ..Default::default()
+        }
     }
 
     /// Returns a reference to the function with the given ID.
@@ -670,6 +675,7 @@ pub enum Intrinsic {
     BooleanNe,
     BooleanAnd,
     BooleanOr,
+    Metadata { metadata: TypeMetadata },
 }
 
 impl std::fmt::Display for Intrinsic {
@@ -690,6 +696,7 @@ impl std::fmt::Display for Intrinsic {
             Self::IntXor { .. } => write!(f, "^"),
             Self::BooleanAnd { .. } => write!(f, "&&"),
             Self::BooleanOr { .. } => write!(f, "||"),
+            Self::Metadata { metadata } => write!(f, "metadata {}", metadata.full_name),
         }
     }
 }
@@ -978,6 +985,9 @@ pub enum TypeKind {
     /// Defines a pointer type.
     Pointer { elemental: Box<Type> },
 
+    /// Defines a metadata type.
+    Metadata { inner: TypeMetadata },
+
     /// Defines a void type.
     Void,
 }
@@ -1005,6 +1015,7 @@ impl std::fmt::Display for TypeKind {
             Self::Boolean => write!(f, "bool"),
             Self::String => write!(f, "string"),
             Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
+            Self::Metadata { inner } => write!(f, "metadata {}", inner.full_name),
             Self::Void => write!(f, "void"),
         }
     }

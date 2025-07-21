@@ -183,6 +183,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
 
                 self.builder.float_le(lhs, rhs).as_basic_value_enum()
             }
+            lume_mir::Intrinsic::Metadata { .. } => todo!(),
         }
     }
 

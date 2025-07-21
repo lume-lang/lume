@@ -247,7 +247,7 @@ impl<'a> Compiler<'a> {
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<()> {
-        let mir = lume_mir_lower::ModuleTransformer::transform(tcx, &tir);
+        let mir = lume_mir_lower::ModuleTransformer::transform(tcx, tir);
 
         match self.gcx.session.options.print_mir {
             lume_session::MirPrinting::None => {}
