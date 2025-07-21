@@ -101,7 +101,7 @@ impl TyCheckCtx {
 
         for (param_id, hir_arg) in type_params.iter().zip(type_args.iter()) {
             let param = self.tdb().type_parameter(*param_id).unwrap();
-            let arg = self.mk_type_ref(hir_arg)?;
+            let arg = self.mk_type_ref_from_expr(hir_arg, expr.id())?;
 
             for constraint in &param.constraints {
                 if !self.check_type_compatibility(&arg, constraint)? {
