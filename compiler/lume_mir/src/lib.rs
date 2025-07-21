@@ -365,6 +365,9 @@ pub struct BasicBlock {
     /// Even though the terminator is optional, it is required for the block to be valid.
     /// If a block does not have a terminator, it will default to returning void.
     terminator: Option<Terminator>,
+
+    predecessors: Vec<BasicBlockId>,
+    successors: Vec<BasicBlockId>,
 }
 
 impl BasicBlock {
@@ -373,6 +376,8 @@ impl BasicBlock {
             id,
             instructions: Vec::new(),
             terminator: None,
+            predecessors: Vec::new(),
+            successors: Vec::new(),
         }
     }
 
@@ -401,6 +406,18 @@ impl BasicBlock {
     /// Sets the terminator of the block, whether one has been set already or not.
     pub fn set_terminator_full(&mut self, term: Terminator) {
         self.terminator = Some(term);
+    }
+
+    /// Pushes the given block to be a predecessor to the current block.
+    pub fn push_predecessor(&mut self, block: BasicBlockId) {
+        self.predecessors.reserve_exact(1);
+        self.predecessors.push(block);
+    }
+
+    /// Pushes the given block to be a successor to the current block.
+    pub fn push_successor(&mut self, block: BasicBlockId) {
+        self.successors.reserve_exact(1);
+        self.successors.push(block);
     }
 
     /// Declares a new stack-allocated register with the given value.
@@ -469,7 +486,17 @@ impl BasicBlock {
 
 impl std::fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}:", self.id)?;
+        write!(f, "{}:", self.id)?;
+
+        writeln!(
+            f,
+            "  {}",
+            self.predecessors
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect::<Vec<_>>()
+                .join(", ")
+        )?;
 
         for stmt in &self.instructions {
             writeln!(f, "    {stmt}")?;

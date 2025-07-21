@@ -44,12 +44,14 @@ impl FunctionTransformer<'_> {
         let (_, end) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(end);
+        self.add_edge(self.func.current_block().id, end);
     }
 
     fn continue_loop(&mut self) {
         let (body, _) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(body);
+        self.add_edge(self.func.current_block().id, body);
     }
 
     fn return_value(&mut self, stmt: &lume_tir::Return) {
@@ -73,15 +75,21 @@ impl FunctionTransformer<'_> {
             let cond_then = self.func.new_block();
             let cond_else = self.func.new_block();
 
+            self.add_edge(self.func.current_block().id, cond_then);
+            self.add_edge(self.func.current_block().id, cond_else);
+
             self.build_conditional_graph(condition, cond_then, cond_else);
 
             self.func.set_current_block(cond_then);
             self.block(&case.block);
 
-            if let Some(merge_block) = merge_block
-                && !self.func.current_block().has_terminator()
-            {
-                self.func.current_block_mut().branch(merge_block);
+            if let Some(merge_block) = merge_block {
+                if !self.func.current_block().has_terminator() {
+                    self.func.current_block_mut().branch(merge_block);
+                }
+
+                self.add_edge(cond_then, merge_block);
+                self.add_edge(cond_else, merge_block);
             }
 
             self.func.set_current_block(cond_else);
@@ -197,9 +205,11 @@ impl FunctionTransformer<'_> {
             Some(self.func.new_block())
         };
 
+        self.add_edge(self.func.current_block().id, body_block);
         self.func.current_block_mut().branch(body_block);
 
         if let Some(merge_block) = merge_block {
+            self.add_edge(body_block, body_block);
             self.func.enter_loop_scope(body_block, merge_block);
         }
 
@@ -211,9 +221,12 @@ impl FunctionTransformer<'_> {
         }
 
         // Loop back to the start of the loop body
+        self.add_edge(self.func.current_block().id, body_block);
         self.func.current_block_mut().branch(body_block);
 
         if let Some(merge_block) = merge_block {
+            self.add_edge(self.func.current_block().id, merge_block);
+
             self.func.current_block_mut().branch(merge_block);
             self.func.set_current_block(merge_block);
         }

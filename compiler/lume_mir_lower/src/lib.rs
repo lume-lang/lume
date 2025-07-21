@@ -134,6 +134,12 @@ impl<'mir> FunctionTransformer<'mir> {
         self.func.declare(ty, decl)
     }
 
+    /// Adds a new edge between the two blocks.
+    fn add_edge(&mut self, from: lume_mir::BasicBlockId, to: lume_mir::BasicBlockId) {
+        self.func.block_mut(to).push_predecessor(from);
+        self.func.block_mut(from).push_successor(to);
+    }
+
     /// Defines a new operand declaration in the current function block.
     fn declare_value(&mut self, value: lume_mir::Operand) -> RegisterId {
         self.declare(lume_mir::Declaration::Operand(value))
