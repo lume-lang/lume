@@ -1,0 +1,65 @@
+namespace std
+
+pub struct Type {
+    /// Gets the fully qualified name of the type, including namespace.
+    pub full_name: String;
+
+    /// Gets the canonical size of the type, in bytes.
+    pub size: UInt64;
+
+    /// Gets the canonical alignment of the type, in bytes.
+    pub alignment: UInt64;
+
+    /// Gets the unique ID of the type, used mostly for internal referencing.
+    pub type_id: UInt64;
+
+    /// Gets all the fields defined on the type, in the order that they're declared.
+    pub fields: Array<Field>;
+
+    /// Gets all the methods defined on the type, in the order that they're declared.
+    pub methods: Array<Method>;
+
+    /// Gets all the type arguments defined on the type, in the order
+    /// that they're declared.
+    pub type_arguments: Array<Type>;
+}
+
+pub struct Field {
+    /// Gets the name of the field.
+    pub name: String;
+
+    /// Gets the type of the field.
+    pub type: Type;
+}
+
+pub struct Method {
+    /// Gets the fully-qualified name of the method, including namespace and type name.
+    pub full_name: String;
+
+    /// Gets all the parameters defined on the method, in the order that they're declared.
+    pub parameters: Array<Parameter>;
+
+    /// Gets the return type of the method.
+    pub return_type: Type;
+}
+
+pub struct Parameter {
+    /// Gets the name of the parameter.
+    pub name: String;
+
+    /// Gets the type of the field.
+    pub type: Type;
+
+    /// Gets all the type parameters defined on the method, in the order
+    /// that they're declared.
+    pub type_parameters: Array<TypeParameter>;
+}
+
+pub struct TypeParameter {
+    /// Gets the name of the type parameter.
+    pub name: String;
+
+    /// Gets all the constraints defined on the type parameter, in the order
+    /// that they're declared.
+    pub constraints: Array<Type>;
+}
