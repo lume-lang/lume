@@ -116,7 +116,9 @@ impl<'func, 'ctx> FunctionLower<'func, 'ctx> {
     }
 
     fn create_func_registers(&mut self) {
-        for (id, reg) in self.func.registers.iter() {
+        for reg in self.func.registers.iter() {
+            let id = reg.id;
+
             if let Some(block) = reg.block {
                 self.builder.switch_to_block_id(block);
 

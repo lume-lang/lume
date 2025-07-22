@@ -357,6 +357,10 @@ impl std::fmt::Display for BasicBlockId {
 pub struct BasicBlock {
     pub id: BasicBlockId,
 
+    /// Defines all the input registers, which the block takes
+    /// as input from predecessor blocks.
+    pub parameters: Vec<RegisterId>,
+
     /// Defines all non-terminator instructions in the block.
     instructions: Vec<Instruction>,
 
@@ -366,7 +370,10 @@ pub struct BasicBlock {
     /// If a block does not have a terminator, it will default to returning void.
     terminator: Option<Terminator>,
 
+    /// Gets all the predecessor blocks, which branch to this block.
     predecessors: Vec<BasicBlockId>,
+
+    /// Gets all the successor blocks, which this block branches to.
     successors: Vec<BasicBlockId>,
 }
 
@@ -374,6 +381,7 @@ impl BasicBlock {
     pub fn new(id: BasicBlockId) -> Self {
         BasicBlock {
             id,
+            parameters: Vec::new(),
             instructions: Vec::new(),
             terminator: None,
             predecessors: Vec::new(),
@@ -386,9 +394,19 @@ impl BasicBlock {
         self.instructions.iter()
     }
 
+    /// Gets the instructions of the block.
+    pub fn instructions_mut(&mut self) -> impl Iterator<Item = &mut Instruction> {
+        self.instructions.iter_mut()
+    }
+
     /// Gets the terminator of the block if one has been set.
     pub fn terminator(&self) -> Option<&Terminator> {
         self.terminator.as_ref()
+    }
+
+    /// Gets the terminator of the block if one has been set.
+    pub fn terminator_mut(&mut self) -> Option<&mut Terminator> {
+        self.terminator.as_mut()
     }
 
     /// Determines if the block has a terminator.
@@ -406,6 +424,16 @@ impl BasicBlock {
     /// Sets the terminator of the block, whether one has been set already or not.
     pub fn set_terminator_full(&mut self, term: Terminator) {
         self.terminator = Some(term);
+    }
+
+    /// Gets an iterator for all the predecessors of the current block.
+    pub fn predecessors(&self) -> impl Iterator<Item = BasicBlockId> {
+        self.predecessors.iter().copied()
+    }
+
+    /// Gets an iterator for all the successors of the current block.
+    pub fn successors(&self) -> impl Iterator<Item = BasicBlockId> {
+        self.successors.iter().copied()
     }
 
     /// Pushes the given block to be a predecessor to the current block.
@@ -447,15 +475,15 @@ impl BasicBlock {
 
     /// Sets the terminator of the current block to an unconditional branch.
     pub fn branch(&mut self, block: BasicBlockId) {
-        self.set_terminator(Terminator::Branch(block));
+        self.set_terminator(Terminator::Branch(BlockBranchSite::new(block)));
     }
 
     /// Sets the terminator of the current block to a conditional branch.
     pub fn conditional_branch(&mut self, cond: RegisterId, then_block: BasicBlockId, else_block: BasicBlockId) {
         self.set_terminator(Terminator::ConditionalBranch {
             condition: cond,
-            then_block,
-            else_block,
+            then_block: BlockBranchSite::new(then_block),
+            else_block: BlockBranchSite::new(else_block),
         });
     }
 
@@ -486,11 +514,23 @@ impl BasicBlock {
 
 impl std::fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}:", self.id)?;
+        write!(f, "{}", self.id)?;
+
+        if !self.parameters.is_empty() {
+            write!(
+                f,
+                "({})",
+                self.parameters
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
+        }
 
         writeln!(
             f,
-            "  {}",
+            ":  {}",
             self.predecessors
                 .iter()
                 .map(std::string::ToString::to_string)
@@ -514,7 +554,7 @@ impl std::fmt::Display for BasicBlock {
 pub struct RegisterId(usize);
 
 impl RegisterId {
-    pub fn param(index: usize) -> Self {
+    pub fn new(index: usize) -> Self {
         RegisterId(index)
     }
 
@@ -587,8 +627,13 @@ impl Registers {
     }
 
     /// Iterates over all registers.
-    pub fn iter(&self) -> impl Iterator<Item = (RegisterId, &Register)> {
-        self.regs.iter().enumerate().map(|(i, r)| (RegisterId(i), r))
+    pub fn iter(&self) -> impl Iterator<Item = &Register> {
+        self.regs.iter()
+    }
+
+    /// Iterates over all registers.
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Register> {
+        self.regs.iter_mut()
     }
 }
 
@@ -616,6 +661,15 @@ pub enum Instruction {
         idx: usize,
         value: Operand,
     },
+}
+
+impl Instruction {
+    pub fn register_refs(&self) -> Vec<RegisterId> {
+        match self {
+            Self::Let { .. } | Self::StackAllocate { .. } | Self::HeapAllocate { .. } => Vec::new(),
+            Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
+        }
+    }
 }
 
 impl std::fmt::Display for Instruction {
@@ -767,6 +821,18 @@ impl Operand {
             Self::Load { .. } | Self::LoadField { .. } => panic!("cannot get bitsize of load operand"),
         }
     }
+
+    pub fn register_refs(&self) -> Vec<RegisterId> {
+        match self {
+            Self::Load { id } | Self::Reference { id } => {
+                vec![*id]
+            }
+            Self::LoadField { target, .. } => {
+                vec![*target]
+            }
+            Self::Boolean { .. } | Self::Integer { .. } | Self::Float { .. } | Self::String { .. } => Vec::new(),
+        }
+    }
 }
 
 impl std::fmt::Display for Operand {
@@ -793,18 +859,36 @@ pub enum Terminator {
     Return(Option<Operand>),
 
     /// Unconditionally transfers control flow to the given block.
-    Branch(BasicBlockId),
+    Branch(BlockBranchSite),
 
     /// Conditionally transfers control flow to one of the given blocks.
     ConditionalBranch {
         condition: RegisterId,
-        then_block: BasicBlockId,
-        else_block: BasicBlockId,
+        then_block: BlockBranchSite,
+        else_block: BlockBranchSite,
     },
 
     /// Defines the terminator as being unreachable, which may happen when
     /// calling `noret` functions or panic.
     Unreachable,
+}
+
+impl Terminator {
+    pub fn register_refs(&self) -> Vec<RegisterId> {
+        match self {
+            Self::Return(operand) => {
+                if let Some(operand) = operand {
+                    operand.register_refs()
+                } else {
+                    Vec::new()
+                }
+            }
+            Self::ConditionalBranch { condition, .. } => {
+                vec![*condition]
+            }
+            Self::Branch { .. } | Self::Unreachable => Vec::new(),
+        }
+    }
 }
 
 impl std::fmt::Display for Terminator {
@@ -825,6 +909,43 @@ impl std::fmt::Display for Terminator {
             Self::Branch(block_id) => write!(f, "goto {block_id}"),
             Self::Unreachable => write!(f, "unreachable"),
         }
+    }
+}
+
+/// Represents a call site for a branch instruction, branching to a block
+/// with a set of arguments.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BlockBranchSite {
+    pub block: BasicBlockId,
+    pub arguments: Vec<RegisterId>,
+}
+
+impl BlockBranchSite {
+    pub fn new(block: BasicBlockId) -> Self {
+        Self {
+            block,
+            arguments: Vec::new(),
+        }
+    }
+}
+
+impl std::fmt::Display for BlockBranchSite {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.block)?;
+
+        if !self.arguments.is_empty() {
+            write!(
+                f,
+                "({})",
+                self.arguments
+                    .iter()
+                    .map(|arg| format!("{arg}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            )?;
+        }
+
+        Ok(())
     }
 }
 

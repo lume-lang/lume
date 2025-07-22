@@ -1,4 +1,5 @@
 pub(crate) mod expr;
+pub(crate) mod passes;
 pub(crate) mod stmt;
 pub(crate) mod ty;
 
@@ -87,6 +88,8 @@ impl<'mir> FunctionTransformer<'mir> {
         } else {
             transformer.func.signature.external = true;
         }
+
+        transformer.run_passes();
 
         transformer.func
     }

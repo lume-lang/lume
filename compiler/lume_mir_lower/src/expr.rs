@@ -20,7 +20,8 @@ impl FunctionTransformer<'_> {
     }
 
     fn assignment(&mut self, expr: &lume_tir::Assignment) -> lume_mir::Operand {
-        let lume_mir::Operand::Reference { id } = self.expression(&expr.target) else {
+        let (lume_mir::Operand::Reference { id } | lume_mir::Operand::Load { id }) = self.expression(&expr.target)
+        else {
             todo!()
         };
 
@@ -219,7 +220,7 @@ impl FunctionTransformer<'_> {
 
     fn variable_reference(&mut self, expr: &lume_tir::VariableReference) -> lume_mir::Operand {
         let id = match &expr.source {
-            lume_tir::VariableSource::Parameter => lume_mir::RegisterId::param(expr.reference.0),
+            lume_tir::VariableSource::Parameter => lume_mir::RegisterId::new(expr.reference.0),
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 

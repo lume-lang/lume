@@ -10,8 +10,8 @@ impl FunctionLower<'_, '_> {
                     self.builder.return_void();
                 }
             }
-            lume_mir::Terminator::Branch(id) => {
-                self.builder.branch(self.builder.block(*id));
+            lume_mir::Terminator::Branch(site) => {
+                self.builder.branch(self.builder.block(site.block));
             }
             lume_mir::Terminator::ConditionalBranch {
                 condition,
@@ -21,8 +21,8 @@ impl FunctionLower<'_, '_> {
                 let (cond_ptr, cond_type) = self.retrieve_var_ptr(*condition);
                 let condition = self.builder.load(cond_ptr, cond_type);
 
-                let then_block = self.builder.block(*then_block);
-                let else_block = self.builder.block(*else_block);
+                let then_block = self.builder.block(then_block.block);
+                let else_block = self.builder.block(else_block.block);
 
                 self.builder
                     .conditional_branch(condition.into_int_value(), then_block, else_block);
