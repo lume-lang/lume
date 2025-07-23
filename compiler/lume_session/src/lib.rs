@@ -25,8 +25,8 @@ pub struct Options {
     /// Defines whether the generated MIR should be printed to `stdio`.
     pub print_mir: MirPrinting,
 
-    /// Defines whether the generated LLVM IR should be printed to `stdio`.
-    pub print_llvm_ir: bool,
+    /// Defines whether the generated codegen IR should be printed to `stdio`.
+    pub print_codegen_ir: bool,
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,

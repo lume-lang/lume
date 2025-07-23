@@ -23,8 +23,8 @@ pub struct RunCommand {
     )]
     pub print_mir: MirPrinting,
 
-    #[arg(long, help = "Print the generated LLVM IR")]
-    pub print_llvm_ir: bool,
+    #[arg(long, help = "Print the generated codegen IR")]
+    pub print_codegen_ir: bool,
 
     #[arg(
         short = 'O',
@@ -56,7 +56,7 @@ impl RunCommand {
         let options = Options {
             print_type_context: self.print_type_ctx,
             print_mir: self.print_mir,
-            print_llvm_ir: self.print_llvm_ir,
+            print_codegen_ir: self.print_codegen_ir,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,

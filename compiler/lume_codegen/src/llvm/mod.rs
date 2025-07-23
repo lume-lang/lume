@@ -61,7 +61,7 @@ impl<'ctx> crate::Backend<'ctx> for LlvmBackend<'ctx> {
             module.optimize(self.codegen_context.options.optimize);
         }
 
-        if self.codegen_context.options.print_llvm_ir {
+        if self.codegen_context.options.print_codegen_ir {
             module.print_to_stdout();
         }
 
