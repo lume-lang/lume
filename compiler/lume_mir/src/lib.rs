@@ -208,20 +208,19 @@ impl Function {
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
         let is_ref_type = ty.is_reference_type();
 
-        if let Declaration::Operand(op) = decl {
+        if let Declaration::Operand(op) = &decl {
             match op {
-                Operand::Load { id } => id,
+                Operand::Load { id } => *id,
                 _ if is_ref_type => {
                     let ptr = self.add_register(ty.clone());
-                    self.current_block_mut().allocate_heap(ptr, ty);
-                    self.current_block_mut().store(ptr, op);
+                    self.current_block_mut().allocate(ptr, ty);
+                    self.current_block_mut().store(ptr, op.clone());
 
                     ptr
                 }
                 _ => {
                     let ptr = self.add_register(ty.clone());
-                    self.current_block_mut().allocate_stack(ptr, ty);
-                    self.current_block_mut().store(ptr, op);
+                    self.current_block_mut().declare(ptr, decl);
 
                     ptr
                 }
@@ -453,14 +452,9 @@ impl BasicBlock {
         self.instructions.push(Instruction::Let { register, decl });
     }
 
-    /// Declares a new stack-allocated register with the given type.
-    pub fn allocate_stack(&mut self, register: RegisterId, ty: Type) {
-        self.instructions.push(Instruction::StackAllocate { register, ty });
-    }
-
     /// Declares a new heap-allocated register with the given type.
-    pub fn allocate_heap(&mut self, register: RegisterId, ty: Type) {
-        self.instructions.push(Instruction::HeapAllocate { register, ty });
+    pub fn allocate(&mut self, register: RegisterId, ty: Type) {
+        self.instructions.push(Instruction::Allocate { register, ty });
     }
 
     /// Stores a value in an existing register.
@@ -646,11 +640,8 @@ pub enum Instruction {
     /// Declares an SSA register within the current function.
     Let { register: RegisterId, decl: Declaration },
 
-    /// Declares a stack-allocated register within the current function.
-    StackAllocate { register: RegisterId, ty: Type },
-
     /// Declares a heap-allocated register within the current function.
-    HeapAllocate { register: RegisterId, ty: Type },
+    Allocate { register: RegisterId, ty: Type },
 
     /// Stores the value into the target register.
     Store { target: RegisterId, value: Operand },
@@ -666,7 +657,7 @@ pub enum Instruction {
 impl Instruction {
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match self {
-            Self::Let { .. } | Self::StackAllocate { .. } | Self::HeapAllocate { .. } => Vec::new(),
+            Self::Let { .. } | Self::Allocate { .. } => Vec::new(),
             Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
         }
     }
@@ -676,8 +667,7 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
-            Self::StackAllocate { register, ty } => write!(f, "{register} = alloc {ty}"),
-            Self::HeapAllocate { register, ty } => write!(f, "{register} = malloc {ty}"),
+            Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
             Self::StoreField { target, idx, value } => write!(f, "*{target}[{idx}] = {value}"),
         }

@@ -72,7 +72,7 @@ impl FunctionTransformer<'_> {
         let struct_type = lume_mir::Type::structure(expr.ty.clone(), prop_types);
 
         let reg = self.func.add_register(struct_type.clone());
-        self.func.current_block_mut().allocate_heap(reg, struct_type);
+        self.func.current_block_mut().allocate(reg, struct_type);
 
         for (idx, field) in expr.fields.iter().enumerate() {
             let value = self.expression(&field.value);
@@ -224,7 +224,7 @@ impl FunctionTransformer<'_> {
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 
-        lume_mir::Operand::Load { id }
+        lume_mir::Operand::Reference { id }
     }
 
     #[expect(clippy::unused_self)]

@@ -130,7 +130,7 @@ impl RenameSsaVariables {
 
                 Self::update_regs_decl(decl, mapping);
             }
-            Instruction::StackAllocate { register, .. } | Instruction::HeapAllocate { register, .. } => {
+            Instruction::Allocate { register, .. } => {
                 self.rename_register_index(register, mapping);
             }
             Instruction::Store { target, value } | Instruction::StoreField { target, value, .. } => {

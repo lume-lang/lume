@@ -9,15 +9,15 @@ impl FunctionLower<'_, '_> {
 
                 self.builder.store(ptr, val);
             }
-            lume_mir::Instruction::StackAllocate { ty, .. } => {
+            lume_mir::Instruction::Allocate { ty, .. } => {
+                let is_ref_ty = ty.is_reference_type();
                 let ty = self.builder.ctx.lower_type(ty);
 
-                self.builder.alloca(ty);
-            }
-            lume_mir::Instruction::HeapAllocate { ty, .. } => {
-                let ty = self.builder.ctx.lower_type(ty);
-
-                self.builder.malloc(ty);
+                if is_ref_ty {
+                    self.builder.malloc(ty);
+                } else {
+                    self.builder.alloca(ty);
+                }
             }
             lume_mir::Instruction::Store { target, value } => {
                 let (ptr, _) = self.retrieve_var_ptr(*target);
