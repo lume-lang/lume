@@ -10,7 +10,7 @@ use inkwell::{
 use lume_mir::FunctionId;
 use lume_session::OptimizationLevel;
 
-use crate::{Context, Function};
+use crate::llvm::{Context, Function};
 
 pub struct Module<'ctx> {
     context: &'ctx Context,

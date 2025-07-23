@@ -1,12 +1,13 @@
 use std::{collections::HashMap, sync::RwLock};
 
 use inkwell::{
+    basic_block::BasicBlock,
     types::{BasicType, StructType},
     values::{BasicMetadataValueEnum, BasicValue, BasicValueEnum, FloatValue, FunctionValue, IntValue, PointerValue},
 };
 use lume_mir::BasicBlockId;
 
-use crate::{BasicBlock, Context};
+use crate::llvm::Context;
 
 pub(crate) struct Builder<'ctx> {
     inner: inkwell::builder::Builder<'ctx>,

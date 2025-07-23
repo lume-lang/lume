@@ -255,7 +255,12 @@ impl<'a> Compiler<'a> {
             lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
-        lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options);
+        lume_codegen::Generator::codegen(
+            lume_codegen::BackendKind::Llvm,
+            self.package,
+            mir,
+            &self.gcx.session.options,
+        )?;
 
         Ok(())
     }

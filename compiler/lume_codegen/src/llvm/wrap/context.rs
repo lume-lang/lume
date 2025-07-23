@@ -1,6 +1,6 @@
 use inkwell::{attributes::Attribute, values::FunctionValue};
 
-use crate::{Builder, Module};
+use crate::llvm::{Builder, Module};
 
 pub(crate) struct Context {
     pub(crate) inner: inkwell::context::Context,

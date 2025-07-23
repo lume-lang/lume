@@ -1,4 +1,4 @@
-use crate::FunctionLower;
+use crate::llvm::FunctionLower;
 
 impl FunctionLower<'_, '_> {
     pub(super) fn instruction(&self, inst: &lume_mir::Instruction) {

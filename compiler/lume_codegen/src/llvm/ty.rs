@@ -1,6 +1,6 @@
 use inkwell::types::BasicType;
 
-use crate::Context;
+use crate::llvm::Context;
 
 impl Context {
     pub fn lower_type(&'_ self, ty: &lume_mir::Type) -> inkwell::types::BasicTypeEnum<'_> {

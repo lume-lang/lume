@@ -1,6 +1,6 @@
 use inkwell::values::{BasicValue, BasicValueEnum, FloatValue, IntValue};
 
-use crate::FunctionLower;
+use crate::llvm::FunctionLower;
 
 impl<'ctx> FunctionLower<'_, 'ctx> {
     pub(super) fn operand(&self, val: &lume_mir::Operand) -> BasicValueEnum<'ctx> {
