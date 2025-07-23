@@ -3,6 +3,7 @@ mod errors;
 pub mod stdlib;
 
 use std::{
+    fmt::Display,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -15,6 +16,23 @@ use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
 pub use crate::dep_graph::DependencyGraph;
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+pub enum Backend {
+    #[default]
+    Llvm,
+    Cranelift,
+}
+
+impl Display for Backend {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Llvm => write!(f, "llvm"),
+            Self::Cranelift => write!(f, "cranelift"),
+        }
+    }
+}
 
 #[derive(Default)]
 pub struct Options {
@@ -30,6 +48,9 @@ pub struct Options {
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
+
+    /// Defines which codegen backend to use.
+    pub backend: Backend,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
