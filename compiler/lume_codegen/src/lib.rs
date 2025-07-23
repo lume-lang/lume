@@ -7,14 +7,6 @@ mod cranelift;
 #[cfg(feature = "codegen_llvm")]
 mod llvm;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum BackendKind {
-    #[cfg(feature = "codegen_cranelift")]
-    Cranelift,
-    #[cfg(feature = "codegen_llvm")]
-    Llvm,
-}
-
 pub struct Generator<'ctx> {
     backend: Box<dyn Backend<'ctx> + 'ctx>,
 }
@@ -25,14 +17,14 @@ impl<'ctx> Generator<'ctx> {
     /// # Errors
     ///
     /// Returns `Err` if the selected backend returned an error while generating object files.
-    pub fn codegen(backend: BackendKind, package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<()> {
+    pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<()> {
         let context = Context { package, mir, options };
 
-        let backend: Box<dyn Backend<'_>> = match backend {
+        let backend: Box<dyn Backend<'_>> = match options.backend {
             #[cfg(feature = "codegen_cranelift")]
-            BackendKind::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)),
+            lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)),
             #[cfg(feature = "codegen_llvm")]
-            BackendKind::Llvm => Box::new(llvm::LlvmBackend::new(context)),
+            lume_session::Backend::Llvm => Box::new(llvm::LlvmBackend::new(context)),
         };
 
         let mut generator = Generator { backend };
