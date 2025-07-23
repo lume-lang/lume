@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use indexmap::IndexSet;
 use lume_mir::{BasicBlock, BlockBranchSite, Declaration, Function, Instruction, Operand, RegisterId, Terminator};
 
 use crate::FunctionTransformer;
@@ -8,6 +9,10 @@ impl FunctionTransformer<'_> {
     pub(crate) fn run_passes(&mut self) {
         DefineBlockParameters::execute(&mut self.func);
         PassBlockArguments::execute(&mut self.func);
+
+        DefineBlockParameters::execute(&mut self.func);
+        PassBlockArguments::execute(&mut self.func);
+
         RenameSsaVariables::default().execute(&mut self.func);
     }
 }
@@ -19,7 +24,8 @@ impl DefineBlockParameters {
     pub fn execute(func: &mut Function) {
         for block in &mut func.blocks {
             // Skip blocks which don't have any predecessors, since they cannot
-            // have any input parameters.
+            // have any input parameters. This is mostly for entry blocks, as they
+            // get their parameters implictly from the function itself.
             if block.predecessors().count() == 0 {
                 continue;
             }
@@ -29,8 +35,10 @@ impl DefineBlockParameters {
     }
 
     fn find_required_input_registers(block: &BasicBlock) -> Vec<RegisterId> {
-        let mut regs = Vec::new();
+        let mut regs = IndexSet::new();
 
+        // Find all referenced registers within the block from all the instructions
+        // and the block terminator...
         for inst in block.instructions() {
             regs.extend(inst.register_refs());
         }
@@ -39,7 +47,16 @@ impl DefineBlockParameters {
             regs.extend(terminator.register_refs());
         }
 
-        regs
+        // ...and scoop away all registers which were referenced within the block, but were
+        // also defined within the block.
+        for inst in block.instructions() {
+            if let Some(def) = inst.register_def() {
+                regs.shift_remove(&def);
+            }
+        }
+
+        // TODO: is there maybe a better way to convert an `IndexSet` to a `Vec`?
+        regs.into_iter().collect()
     }
 }
 
@@ -129,6 +146,19 @@ impl RenameSsaVariables {
                 self.rename_register_index(register, mapping);
 
                 Self::update_regs_decl(decl, mapping);
+            }
+            Instruction::Assign { target, value } => {
+                self.rename_register_index(target, mapping);
+
+                Self::update_regs_op(value, mapping);
+
+                // After the registers of the assignment instruction have been converted
+                // to SSA registers, we transform the instruction itself to declare a new register
+                // instead of attempting to assign a non-existent register.
+                *inst = Instruction::Let {
+                    register: *target,
+                    decl: Declaration::Operand(value.clone()),
+                };
             }
             Instruction::Allocate { register, .. } => {
                 self.rename_register_index(register, mapping);

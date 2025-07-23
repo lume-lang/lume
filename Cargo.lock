@@ -1144,6 +1144,7 @@ dependencies = [
 name = "lume_mir_lower"
 version = "0.1.0"
 dependencies = [
+ "indexmap",
  "lume_hir",
  "lume_mir",
  "lume_tir",

@@ -452,6 +452,11 @@ impl BasicBlock {
         self.instructions.push(Instruction::Let { register, decl });
     }
 
+    /// Assigns a new value to an existing register.
+    pub fn assign(&mut self, target: RegisterId, value: Operand) {
+        self.instructions.push(Instruction::Assign { target, value });
+    }
+
     /// Declares a new heap-allocated register with the given type.
     pub fn allocate(&mut self, register: RegisterId, ty: Type) {
         self.instructions.push(Instruction::Allocate { register, ty });
@@ -640,6 +645,9 @@ pub enum Instruction {
     /// Declares an SSA register within the current function.
     Let { register: RegisterId, decl: Declaration },
 
+    /// Assigns the value into the target register.
+    Assign { target: RegisterId, value: Operand },
+
     /// Declares a heap-allocated register within the current function.
     Allocate { register: RegisterId, ty: Type },
 
@@ -655,9 +663,23 @@ pub enum Instruction {
 }
 
 impl Instruction {
+    pub fn register_def(&self) -> Option<RegisterId> {
+        match self {
+            Self::Let { register, .. } | Self::Allocate { register, .. } => Some(*register),
+            Self::Assign { .. } | Self::Store { .. } | Self::StoreField { .. } => None,
+        }
+    }
+
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match self {
-            Self::Let { .. } | Self::Allocate { .. } => Vec::new(),
+            Self::Let { decl, .. } => decl.register_refs(),
+            Self::Assign { target, value } => {
+                let mut refs = vec![*target];
+                refs.extend(value.register_refs());
+
+                refs
+            }
+            Self::Allocate { .. } => Vec::new(),
             Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
         }
     }
@@ -667,6 +689,7 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
+            Self::Assign { target, value } => write!(f, "{target} = {value}"),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
             Self::StoreField { target, idx, value } => write!(f, "*{target}[{idx}] = {value}"),
@@ -694,6 +717,19 @@ pub enum Declaration {
 
     /// Represents a call to a function.
     Call { func_id: FunctionId, args: Vec<Operand> },
+}
+
+impl Declaration {
+    pub fn register_refs(&self) -> Vec<RegisterId> {
+        match self {
+            Self::Operand(op) => op.register_refs(),
+            Self::Cast { operand, .. } => vec![*operand],
+            Self::Intrinsic { args, .. } | Self::Call { args, .. } => {
+                args.iter().flat_map(Operand::register_refs).collect()
+            }
+            Self::Reference { id } | Self::Load { id } => vec![*id],
+        }
+    }
 }
 
 impl std::fmt::Display for Declaration {
@@ -873,10 +909,19 @@ impl Terminator {
                     Vec::new()
                 }
             }
-            Self::ConditionalBranch { condition, .. } => {
-                vec![*condition]
+            Self::ConditionalBranch {
+                condition,
+                then_block,
+                else_block,
+            } => {
+                let mut refs = vec![*condition];
+                refs.extend(&then_block.arguments);
+                refs.extend(&else_block.arguments);
+
+                refs
             }
-            Self::Branch { .. } | Self::Unreachable => Vec::new(),
+            Self::Branch(site) => site.arguments.clone(),
+            Self::Unreachable => Vec::new(),
         }
     }
 }

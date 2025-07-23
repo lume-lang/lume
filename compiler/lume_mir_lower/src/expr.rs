@@ -24,18 +24,14 @@ impl FunctionTransformer<'_> {
 
         match self.expression(&expr.target) {
             lume_mir::Operand::Reference { id } => {
-                let promoted = self.promote_register(id);
-                self.func
-                    .current_block_mut()
-                    .declare(promoted, lume_mir::Declaration::Operand(value));
+                self.func.current_block_mut().assign(id, value);
 
-                lume_mir::Operand::Reference { id: promoted }
+                lume_mir::Operand::Reference { id }
             }
             lume_mir::Operand::Load { id } => {
-                let promoted = self.promote_register(id);
-                self.func.current_block_mut().store(promoted, value);
+                self.func.current_block_mut().store(id, value);
 
-                lume_mir::Operand::Load { id: promoted }
+                lume_mir::Operand::Load { id }
             }
             _ => todo!(),
         }

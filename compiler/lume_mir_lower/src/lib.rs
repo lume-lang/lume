@@ -134,38 +134,6 @@ impl<'mir> FunctionTransformer<'mir> {
         self.transformer.mir.function(func_id)
     }
 
-    /// Promotes the given register to a new register.
-    ///
-    /// Promoted registers are meant to replace the original register with a new register,
-    /// so an instruction, such as an assignment, turns to valid SSA.
-    ///
-    /// For example, given the following non-SSA IR:
-    ///
-    /// ```mir
-    /// let #0 = 0_i32
-    /// #0 = *(#0, 2_i32)
-    /// return #0
-    /// ```
-    /// would not be valid SSA form since `#0` is reassigned, which isn't allowed in SSA. For the IR
-    /// to be valid SSA, it would have to promote `#0` to a new register, which will replace
-    /// the usage of `#0` in future references:
-    ///
-    /// ```mir
-    /// let #0 = 0_i32
-    /// let #1 = *(#0, 2_i32)
-    /// return #1
-    /// ```
-    ///
-    /// Here, `#0` is never reassigned, but rather "promoted" to `#1`, making the IR have valid SSA form.
-    fn promote_register(&mut self, prev: RegisterId) -> RegisterId {
-        let prev_ty = self.func.registers.register_ty(prev);
-        let next = self.func.add_register(prev_ty.clone());
-
-        self.promoted_regs.insert(prev, next);
-
-        next
-    }
-
     /// Defines a new declaration in the current function block.
     fn declare(&mut self, decl: lume_mir::Declaration) -> RegisterId {
         let ty = self.type_of_decl(&decl);

@@ -11,5 +11,7 @@ lume_tir = { path = "../lume_tir" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
 
+indexmap = { version = "^2.9" }
+
 [lints]
 workspace = true
