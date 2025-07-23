@@ -24,14 +24,18 @@ impl FunctionTransformer<'_> {
 
         match self.expression(&expr.target) {
             lume_mir::Operand::Reference { id } => {
-                self.func.current_block_mut().assign(id, value);
+                let promoted = self.promote_register(id);
+                self.func
+                    .current_block_mut()
+                    .declare(promoted, lume_mir::Declaration::Operand(value));
 
-                lume_mir::Operand::Reference { id }
+                lume_mir::Operand::Reference { id: promoted }
             }
             lume_mir::Operand::Load { id } => {
-                self.func.current_block_mut().store(id, value);
+                let promoted = self.promote_register(id);
+                self.func.current_block_mut().store(promoted, value);
 
-                lume_mir::Operand::Load { id }
+                lume_mir::Operand::Load { id: promoted }
             }
             _ => todo!(),
         }
@@ -108,7 +112,7 @@ impl FunctionTransformer<'_> {
         let decl = lume_mir::Declaration::Intrinsic { name, args };
         let reg = self.declare(decl);
 
-        lume_mir::Operand::Load { id: reg }
+        lume_mir::Operand::Reference { id: reg }
     }
 
     fn intrinsic_of(&self, expr: &lume_tir::IntrinsicKind) -> lume_mir::Intrinsic {
@@ -229,6 +233,10 @@ impl FunctionTransformer<'_> {
             lume_tir::VariableSource::Parameter => lume_mir::RegisterId::new(expr.reference.0),
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
+
+        if let Some(promoted) = self.promoted_regs.get(&id) {
+            return lume_mir::Operand::Reference { id: *promoted };
+        }
 
         lume_mir::Operand::Reference { id }
     }
