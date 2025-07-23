@@ -458,6 +458,11 @@ impl BasicBlock {
     }
 
     /// Stores a value in an existing register.
+    pub fn assign(&mut self, target: RegisterId, value: Operand) {
+        self.instructions.push(Instruction::Assign { target, value });
+    }
+
+    /// Stores a value in an existing register.
     pub fn store(&mut self, target: RegisterId, value: Operand) {
         self.instructions.push(Instruction::Store { target, value });
     }
@@ -640,6 +645,9 @@ pub enum Instruction {
     /// Declares an SSA register within the current function.
     Let { register: RegisterId, decl: Declaration },
 
+    /// Assigns the value into the target register.
+    Assign { target: RegisterId, value: Operand },
+
     /// Declares a heap-allocated register within the current function.
     Allocate { register: RegisterId, ty: Type },
 
@@ -657,7 +665,7 @@ pub enum Instruction {
 impl Instruction {
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match self {
-            Self::Let { .. } | Self::Allocate { .. } => Vec::new(),
+            Self::Let { .. } | Self::Assign { .. } | Self::Allocate { .. } => Vec::new(),
             Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
         }
     }
@@ -667,6 +675,7 @@ impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
+            Self::Assign { target, value } => write!(f, "{target} = {value}"),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
             Self::StoreField { target, idx, value } => write!(f, "*{target}[{idx}] = {value}"),

@@ -19,7 +19,7 @@ impl FunctionLower<'_, '_> {
                     self.builder.alloca(ty);
                 }
             }
-            lume_mir::Instruction::Store { target, value } => {
+            lume_mir::Instruction::Assign { target, value } | lume_mir::Instruction::Store { target, value } => {
                 let (ptr, _) = self.retrieve_var_ptr(*target);
                 let val = self.operand(value);
 

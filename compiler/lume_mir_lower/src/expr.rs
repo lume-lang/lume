@@ -20,15 +20,21 @@ impl FunctionTransformer<'_> {
     }
 
     fn assignment(&mut self, expr: &lume_tir::Assignment) -> lume_mir::Operand {
-        let (lume_mir::Operand::Reference { id } | lume_mir::Operand::Load { id }) = self.expression(&expr.target)
-        else {
-            todo!()
-        };
-
         let value = self.expression(&expr.value);
-        self.func.current_block_mut().store(id, value);
 
-        lume_mir::Operand::Load { id }
+        match self.expression(&expr.target) {
+            lume_mir::Operand::Reference { id } => {
+                self.func.current_block_mut().assign(id, value);
+
+                lume_mir::Operand::Reference { id }
+            }
+            lume_mir::Operand::Load { id } => {
+                self.func.current_block_mut().store(id, value);
+
+                lume_mir::Operand::Load { id }
+            }
+            _ => todo!(),
+        }
     }
 
     fn binary(&mut self, expr: &lume_tir::Binary) -> lume_mir::Operand {

@@ -130,6 +130,9 @@ impl RenameSsaVariables {
 
                 Self::update_regs_decl(decl, mapping);
             }
+            Instruction::Assign { target, .. } => {
+                *target = *mapping.get(target).unwrap();
+            }
             Instruction::Allocate { register, .. } => {
                 self.rename_register_index(register, mapping);
             }
