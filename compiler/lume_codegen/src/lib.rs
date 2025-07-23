@@ -2,13 +2,17 @@ use lume_errors::Result;
 use lume_mir::ModuleMap;
 use lume_session::{Options, Package};
 
+#[cfg(feature = "codegen_cranelift")]
 mod cranelift;
+#[cfg(feature = "codegen_llvm")]
 mod llvm;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum BackendKind {
-    Llvm,
+    #[cfg(feature = "codegen_cranelift")]
     Cranelift,
+    #[cfg(feature = "codegen_llvm")]
+    Llvm,
 }
 
 pub struct Generator<'ctx> {
@@ -25,8 +29,10 @@ impl<'ctx> Generator<'ctx> {
         let context = Context { package, mir, options };
 
         let backend: Box<dyn Backend<'_>> = match backend {
-            BackendKind::Llvm => Box::new(llvm::LlvmBackend::new(context)),
+            #[cfg(feature = "codegen_cranelift")]
             BackendKind::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)),
+            #[cfg(feature = "codegen_llvm")]
+            BackendKind::Llvm => Box::new(llvm::LlvmBackend::new(context)),
         };
 
         let mut generator = Generator { backend };
