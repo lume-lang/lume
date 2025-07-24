@@ -78,6 +78,7 @@ pub enum OptimizationLevel {
 #[derive(Default)]
 pub struct Session {
     pub options: Options,
+    pub workspace_root: PathBuf,
     pub dep_graph: DependencyGraph,
 }
 

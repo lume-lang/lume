@@ -91,6 +91,7 @@ impl Driver {
     pub fn build(mut self, options: Options) -> Result<()> {
         let session = Session {
             dep_graph: std::mem::take(&mut self.package.dependencies.graph),
+            workspace_root: self.package.path.clone(),
             options,
         };
 
@@ -119,6 +120,7 @@ impl Driver {
     pub fn check(mut self, options: Options) -> Result<CheckedPackageGraph> {
         let session = Session {
             dep_graph: std::mem::take(&mut self.package.dependencies.graph),
+            workspace_root: self.package.path.clone(),
             options,
         };
 
