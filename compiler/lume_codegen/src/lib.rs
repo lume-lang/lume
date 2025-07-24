@@ -7,6 +7,17 @@ mod cranelift;
 #[cfg(feature = "codegen_llvm")]
 mod llvm;
 
+#[derive(Default, Clone)]
+pub struct CodegenResult {
+    pub modules: Vec<CompiledModule>,
+}
+
+#[derive(Clone)]
+pub struct CompiledModule {
+    pub name: String,
+    pub bytecode: Vec<u8>,
+}
+
 pub struct Generator<'ctx> {
     backend: Box<dyn Backend<'ctx> + 'ctx>,
 }
@@ -17,12 +28,12 @@ impl<'ctx> Generator<'ctx> {
     /// # Errors
     ///
     /// Returns `Err` if the selected backend returned an error while generating object files.
-    pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<()> {
+    pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<CompiledModule> {
         let context = Context { package, mir, options };
 
         let backend: Box<dyn Backend<'_>> = match options.backend {
             #[cfg(feature = "codegen_cranelift")]
-            lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)),
+            lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)?),
             #[cfg(feature = "codegen_llvm")]
             lume_session::Backend::Llvm => Box::new(llvm::LlvmBackend::new(context)),
         };
@@ -30,9 +41,7 @@ impl<'ctx> Generator<'ctx> {
         let mut generator = Generator { backend };
 
         generator.backend.initialize()?;
-        generator.backend.generate()?;
-
-        Ok(())
+        generator.backend.generate()
     }
 }
 
@@ -47,5 +56,5 @@ pub(crate) trait Backend<'ctx> {
     fn initialize(&mut self) -> Result<()>;
 
     /// Initializes the backend, if required.
-    fn generate(&mut self) -> Result<()>;
+    fn generate(&mut self) -> Result<CompiledModule>;
 }

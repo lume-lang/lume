@@ -96,6 +96,16 @@ impl<'ctx> Module<'ctx> {
         self.inner.print_to_stderr();
     }
 
+    /// Gets the compiled object bytecode from the module.
+    pub(crate) fn to_bytecode(&self) -> Vec<u8> {
+        let machine = Self::target_machine(OptimizationLevel::O0);
+        let buffer = machine
+            .write_to_memory_buffer(&self.inner, inkwell::targets::FileType::Object)
+            .unwrap();
+
+        buffer.as_slice().to_vec()
+    }
+
     /// Evaluates the function with the given name using LLVMs JIT execution engine.
     pub(crate) fn jit_execution_engine(&'_ self) -> ExecutionEngine<'_> {
         self.inner

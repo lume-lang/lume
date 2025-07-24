@@ -16,6 +16,8 @@ pub(crate) mod wrap;
 use lume_session::OptimizationLevel;
 pub(crate) use wrap::*;
 
+use crate::CompiledModule;
+
 pub struct LlvmBackend<'ctx> {
     codegen_context: crate::Context<'ctx>,
     llvm_context: Context,
@@ -54,7 +56,7 @@ impl<'ctx> crate::Backend<'ctx> for LlvmBackend<'ctx> {
         Ok(())
     }
 
-    fn generate(&mut self) -> lume_errors::Result<()> {
+    fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
         let module = self.build();
 
         if self.codegen_context.options.optimize != OptimizationLevel::O0 {
@@ -67,7 +69,12 @@ impl<'ctx> crate::Backend<'ctx> for LlvmBackend<'ctx> {
 
         module.verify();
 
-        Ok(())
+        let bytecode = module.to_bytecode();
+
+        Ok(CompiledModule {
+            name: self.codegen_context.package.name.clone(),
+            bytecode,
+        })
     }
 }
 
