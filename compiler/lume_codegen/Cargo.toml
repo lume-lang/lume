@@ -12,6 +12,7 @@ lume_span = { path = "../lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+indexmap = { version = "^2.9" }
 tracing = { workspace = true }
 
 # codegen_llvm

@@ -49,6 +49,7 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - an error occured while linking the package
     /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[cfg(feature = "codegen")]
     #[allow(clippy::needless_pass_by_value)]
     pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<()> {
         let driver = Self::from_root(root, dcx.clone())?;
@@ -87,6 +88,7 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - an error occured while linking the package
     /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
     pub fn build(mut self, options: Options) -> Result<()> {
         let session = Session {
@@ -102,9 +104,15 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
+        let mut codegen_mods = lume_codegen::CodegenResult::default();
+        codegen_mods.modules.reserve_exact(dependencies.len());
+
         for dependency in dependencies {
-            Compiler::build_package(dependency, gcx.clone())?;
+            let module = Compiler::build_package(dependency, gcx.clone())?;
+            codegen_mods.modules.push(module);
         }
+
+        Self::write_object_files(gcx, codegen_mods)?;
 
         Ok(())
     }
@@ -141,6 +149,42 @@ impl Driver {
 
         Ok(graph)
     }
+
+    /// Writes the object files of the given codegen result to disk in
+    /// the current workspace directory.
+    #[cfg(feature = "codegen")]
+    #[allow(clippy::needless_pass_by_value)]
+    fn write_object_files(gcx: Arc<GlobalCtx>, result: lume_codegen::CodegenResult) -> Result<()> {
+        use error_snippet::IntoDiagnostic;
+        use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+        let obj_path = gcx.session.workspace_root.join("obj");
+        let obj_bc_path = obj_path.join("bc");
+
+        std::fs::create_dir_all(&obj_path).map_err(IntoDiagnostic::into_diagnostic)?;
+        std::fs::create_dir_all(&obj_bc_path).map_err(IntoDiagnostic::into_diagnostic)?;
+
+        result
+            .modules
+            .into_par_iter()
+            .map(|module| {
+                use std::io::Write;
+
+                let output_file_path = obj_bc_path.join(format!("{}.o", module.name));
+
+                let mut output_file =
+                    std::fs::File::create(output_file_path).map_err(IntoDiagnostic::into_diagnostic)?;
+
+                output_file
+                    .write_all(&module.bytecode)
+                    .map_err(IntoDiagnostic::into_diagnostic)?;
+
+                Ok(())
+            })
+            .collect::<Result<()>>()?;
+
+        Ok(())
+    }
 }
 
 pub struct Compiler<'a> {
@@ -163,8 +207,9 @@ impl<'a> Compiler<'a> {
     /// - an error occured while compiling the project,
     /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<()> {
+    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<lume_codegen::CompiledModule> {
         let mut compiler = Self {
             package,
             gcx,
@@ -177,13 +222,7 @@ impl<'a> Compiler<'a> {
         #[allow(unused)]
         let (tcx, typed_ir) = compiler.type_check(sources)?;
 
-        #[cfg(feature = "codegen")]
-        {
-            compiler.codegen(&tcx, typed_ir)?;
-            compiler.link()?;
-        }
-
-        Ok(())
+        compiler.codegen(&tcx, typed_ir)
     }
 
     /// Checks the given [`Package`] for errors, such as parsing-, semantic- or configuration errors.
@@ -248,7 +287,7 @@ impl<'a> Compiler<'a> {
     /// Generates LLVM IR for all the modules within the given state object.
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<()> {
+    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_codegen::CompiledModule> {
         let mir = lume_mir_lower::ModuleTransformer::transform(tcx, tir);
 
         match self.gcx.session.options.print_mir {
@@ -257,9 +296,7 @@ impl<'a> Compiler<'a> {
             lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
-        lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options)?;
-
-        Ok(())
+        lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options)
     }
 
     /// Links all the modules within the given state object into a single executable or library.
