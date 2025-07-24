@@ -8,6 +8,7 @@ rust-version.workspace = true
 arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver", features = ["codegen"] }
 lume_errors = { path = "../lume_errors" }
+lume_linker = { path = "../lume_linker", features = ["cli"] }
 lume_session = { path = "../lume_session", features = ["cli"] }
 
 clap = { workspace = true }

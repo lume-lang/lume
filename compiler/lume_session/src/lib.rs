@@ -34,6 +34,22 @@ impl Display for Backend {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+pub enum LinkerPreference {
+    Clang,
+    Gcc,
+}
+
+impl Display for LinkerPreference {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Clang => write!(f, "clang"),
+            Self::Gcc => write!(f, "gcc"),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
@@ -51,6 +67,9 @@ pub struct Options {
 
     /// Defines which codegen backend to use.
     pub backend: Backend,
+
+    /// Defines which linker to use.
+    pub linker: Option<LinkerPreference>,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]

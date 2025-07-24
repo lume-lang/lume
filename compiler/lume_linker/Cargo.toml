@@ -8,7 +8,6 @@ rust-version.workspace = true
 lume_codegen = { path = "../lume_codegen" }
 lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session" }
-lume_span = { path = "../lume_span" }
 
 clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }

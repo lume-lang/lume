@@ -1013,6 +1013,7 @@ dependencies = [
  "error_snippet_derive",
  "lume_driver",
  "lume_errors",
+ "lume_linker",
  "lume_session",
  "tracing",
  "tracing-subscriber",
@@ -1157,7 +1158,6 @@ dependencies = [
  "lume_codegen",
  "lume_errors",
  "lume_session",
- "lume_span",
 ]
 
 [[package]]

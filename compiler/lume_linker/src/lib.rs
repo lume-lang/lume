@@ -6,15 +6,7 @@ use std::{
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_codegen::CodegenObjects;
 use lume_errors::Result;
-
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
-pub enum LinkerPreference {
-    #[default]
-    None,
-    Clang,
-    Gcc,
-}
+use lume_session::LinkerPreference;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Linker {
@@ -70,11 +62,11 @@ fn detect_linker() -> Result<Linker> {
 /// Returns `Err` if the linker binary could not be found, the linker fails to invoke or fails
 /// to generate a valid output binary.
 #[allow(clippy::missing_panics_doc)]
-pub fn link_objects(objects: &CodegenObjects, output: PathBuf, linker: LinkerPreference) -> Result<()> {
+pub fn link_objects(objects: &CodegenObjects, output: PathBuf, linker: Option<LinkerPreference>) -> Result<()> {
     let linker = match linker {
-        LinkerPreference::Clang => Linker::Clang,
-        LinkerPreference::Gcc => Linker::Gcc,
-        LinkerPreference::None => detect_linker()?,
+        Some(LinkerPreference::Clang) => Linker::Clang,
+        Some(LinkerPreference::Gcc) => Linker::Gcc,
+        None => detect_linker()?,
     };
 
     ensure_command_available(linker.command())?;

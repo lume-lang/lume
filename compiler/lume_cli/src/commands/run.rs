@@ -2,7 +2,7 @@ use crate::commands::project_or_cwd;
 
 use lume_driver::Driver;
 use lume_errors::DiagCtxHandle;
-use lume_session::{Backend, MirPrinting, OptimizationLevel, Options};
+use lume_session::{Backend, LinkerPreference, MirPrinting, OptimizationLevel, Options};
 
 #[derive(Debug, clap::Parser)]
 #[command(name = "run", about = "Build and run a Lume project", long_about = None)]
@@ -34,6 +34,9 @@ pub struct RunCommand {
         value_parser = clap::builder::PossibleValuesParser::new(["0", "1", "2", "3", "s", "z"])
     )]
     pub optimize: String,
+
+    #[arg(long, default_value = None, help = "Linker to use when linking objects")]
+    pub linker: Option<LinkerPreference>,
 
     #[arg(
         long = "codegen-backend",
@@ -75,6 +78,7 @@ impl RunCommand {
                 _ => unreachable!(),
             },
             backend: self.backend,
+            linker: self.linker,
         };
 
         let driver = match Driver::from_root(&std::path::PathBuf::from(project_path), dcx.clone()) {
