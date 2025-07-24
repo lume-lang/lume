@@ -8,10 +8,17 @@ edition = { workspace = true }
 members = ["compiler/lume_cli"]
 resolver = "3"
 
+[[bin]]
+name = "lume"
+path = "src/main.rs"
+test = false
+
 [workspace.package]
 version = "0.1.0"
 rust-version = "1.88.0"
 edition = "2024"
+authors = ["Max T. Kristiansen <me@maxtrier.dk>"]
+license = "MIT"
 
 [workspace.dependencies]
 clap = { version = "=4.5.39", features = ["derive"] }
