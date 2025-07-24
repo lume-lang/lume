@@ -87,11 +87,12 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
 
 impl<'ctx> CraneliftBackend<'ctx> {
     pub fn new(context: Context<'ctx>) -> Result<Self> {
+        let mut settings = cranelift::codegen::settings::builder();
+        settings.enable("is_pic").unwrap();
+
         let isa = cranelift_native::builder()
             .unwrap()
-            .finish(cranelift::codegen::settings::Flags::new(
-                cranelift::codegen::settings::builder(),
-            ))
+            .finish(cranelift::codegen::settings::Flags::new(settings))
             .unwrap();
 
         let builder = ObjectBuilder::new(
