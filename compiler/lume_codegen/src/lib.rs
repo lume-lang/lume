@@ -44,11 +44,18 @@ impl<'ctx> Generator<'ctx> {
     pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<CompiledModule> {
         let context = Context { package, mir, options };
 
-        let backend: Box<dyn Backend<'_>> = match options.backend {
+        let backend: Box<dyn Backend<'_>> = match context.options.backend {
             #[cfg(feature = "codegen_cranelift")]
             lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)?),
             #[cfg(feature = "codegen_llvm")]
             lume_session::Backend::Llvm => Box::new(llvm::LlvmBackend::new(context)),
+            _ => {
+                return Err(error_snippet::SimpleDiagnostic::new(format!(
+                    "selected backend not enabled in build: {}",
+                    context.options.backend
+                ))
+                .into());
+            }
         };
 
         let mut generator = Generator { backend };

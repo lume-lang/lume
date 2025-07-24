@@ -27,11 +27,8 @@ rayon = { version = "1.10.0" }
 tracing = { workspace = true }
 
 [features]
-codegen = [
-    "dep:lume_codegen",
-    "lume_codegen/codegen_cranelift",
-    "lume_codegen/codegen_llvm",
-]
+codegen = ["dep:lume_codegen", "lume_codegen/codegen_cranelift"]
+codegen_llvm = ["lume_codegen/codegen_llvm"]
 
 [lints]
 workspace = true
