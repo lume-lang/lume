@@ -11,6 +11,7 @@ lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }
 lume_hir_lower = { path = "../lume_hir_lower" }
 lume_infer = { path = "../lume_infer" }
+lume_linker = { path = "../lume_linker" }
 lume_mir = { path = "../lume_mir" }
 lume_mir_lower = { path = "../lume_mir_lower" }
 lume_session = { path = "../lume_session" }

@@ -107,6 +107,22 @@ impl GlobalCtx {
             store: CacheStore::new(),
         }
     }
+
+    pub fn obj_path(&self) -> PathBuf {
+        self.session.workspace_root.join("obj")
+    }
+
+    pub fn bin_path(&self) -> PathBuf {
+        self.obj_path().join("bin")
+    }
+
+    pub fn obj_bc_path(&self) -> PathBuf {
+        self.obj_path().join("bc")
+    }
+
+    pub fn binary_output_path(&self, bin_name: &str) -> PathBuf {
+        self.bin_path().join(bin_name)
+    }
 }
 
 impl CacheContext for GlobalCtx {

@@ -1050,6 +1050,7 @@ dependencies = [
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
+ "lume_linker",
  "lume_mir",
  "lume_mir_lower",
  "lume_session",
@@ -1145,6 +1146,18 @@ dependencies = [
  "lume_ast",
  "lume_span",
  "tracing",
+]
+
+[[package]]
+name = "lume_linker"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "error_snippet",
+ "lume_codegen",
+ "lume_errors",
+ "lume_session",
+ "lume_span",
 ]
 
 [[package]]

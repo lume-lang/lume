@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use lume_errors::Result;
 use lume_mir::ModuleMap;
 use lume_session::{Options, Package};
@@ -16,6 +18,17 @@ pub struct CodegenResult {
 pub struct CompiledModule {
     pub name: String,
     pub bytecode: Vec<u8>,
+}
+
+#[derive(Default, Clone)]
+pub struct CodegenObjects {
+    pub objects: Vec<CodegenObject>,
+}
+
+#[derive(Clone)]
+pub struct CodegenObject {
+    pub name: String,
+    pub path: PathBuf,
 }
 
 pub struct Generator<'ctx> {

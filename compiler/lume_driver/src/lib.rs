@@ -112,7 +112,10 @@ impl Driver {
             codegen_mods.modules.push(module);
         }
 
-        Self::write_object_files(gcx, codegen_mods)?;
+        let objects = Self::write_object_files(&gcx, codegen_mods)?;
+        let output_file_path = gcx.binary_output_path(&self.package.name);
+
+        lume_linker::link_objects(&objects, output_file_path, lume_linker::LinkerPreference::None)?;
 
         Ok(())
     }
@@ -153,37 +156,38 @@ impl Driver {
     /// Writes the object files of the given codegen result to disk in
     /// the current workspace directory.
     #[cfg(feature = "codegen")]
-    #[allow(clippy::needless_pass_by_value)]
-    fn write_object_files(gcx: Arc<GlobalCtx>, result: lume_codegen::CodegenResult) -> Result<()> {
+    fn write_object_files(
+        gcx: &Arc<GlobalCtx>,
+        result: lume_codegen::CodegenResult,
+    ) -> Result<lume_codegen::CodegenObjects> {
         use error_snippet::IntoDiagnostic;
         use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
-        let obj_path = gcx.session.workspace_root.join("obj");
-        let obj_bc_path = obj_path.join("bc");
+        std::fs::create_dir_all(gcx.obj_path()).map_err(IntoDiagnostic::into_diagnostic)?;
+        std::fs::create_dir_all(gcx.obj_bc_path()).map_err(IntoDiagnostic::into_diagnostic)?;
 
-        std::fs::create_dir_all(&obj_path).map_err(IntoDiagnostic::into_diagnostic)?;
-        std::fs::create_dir_all(&obj_bc_path).map_err(IntoDiagnostic::into_diagnostic)?;
-
-        result
+        let objects = result
             .modules
             .into_par_iter()
             .map(|module| {
                 use std::io::Write;
 
-                let output_file_path = obj_bc_path.join(format!("{}.o", module.name));
-
+                let output_file_path = gcx.obj_bc_path().join(format!("{}.o", module.name));
                 let mut output_file =
-                    std::fs::File::create(output_file_path).map_err(IntoDiagnostic::into_diagnostic)?;
+                    std::fs::File::create(&output_file_path).map_err(IntoDiagnostic::into_diagnostic)?;
 
                 output_file
                     .write_all(&module.bytecode)
                     .map_err(IntoDiagnostic::into_diagnostic)?;
 
-                Ok(())
+                Ok(lume_codegen::CodegenObject {
+                    name: module.name,
+                    path: output_file_path,
+                })
             })
-            .collect::<Result<()>>()?;
+            .collect::<Result<Vec<lume_codegen::CodegenObject>>>()?;
 
-        Ok(())
+        Ok(lume_codegen::CodegenObjects { objects })
     }
 }
 
