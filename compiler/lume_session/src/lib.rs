@@ -20,8 +20,8 @@ pub use crate::dep_graph::DependencyGraph;
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
 pub enum Backend {
-    #[default]
     Llvm,
+    #[default]
     Cranelift,
 }
 
