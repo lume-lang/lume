@@ -468,8 +468,9 @@ impl BasicBlock {
     }
 
     /// Stores a value in a field of an existing register.
-    pub fn store_field(&mut self, target: RegisterId, idx: usize, value: Operand) {
-        self.instructions.push(Instruction::StoreField { target, idx, value });
+    pub fn store_field(&mut self, target: RegisterId, offset: usize, value: Operand) {
+        self.instructions
+            .push(Instruction::StoreField { target, offset, value });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
@@ -657,7 +658,7 @@ pub enum Instruction {
     /// Stores the value into the field of an target register.
     StoreField {
         target: RegisterId,
-        idx: usize,
+        offset: usize,
         value: Operand,
     },
 }
@@ -692,7 +693,7 @@ impl std::fmt::Display for Instruction {
             Self::Assign { target, value } => write!(f, "{target} = {value}"),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
-            Self::StoreField { target, idx, value } => write!(f, "*{target}[{idx}] = {value}"),
+            Self::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
         }
     }
 }
@@ -830,7 +831,11 @@ pub enum Operand {
     Load { id: RegisterId },
 
     /// Represents a loaded value from an existing register.
-    LoadField { target: RegisterId, field: usize },
+    LoadField {
+        target: RegisterId,
+        offset: usize,
+        index: usize,
+    },
 
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
@@ -869,7 +874,7 @@ impl std::fmt::Display for Operand {
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "*{id}"),
-            Self::LoadField { target, field } => write!(f, "&{target}.{field}"),
+            Self::LoadField { target, offset, .. } => write!(f, "&{target}[+0x{offset}]"),
             Self::String { value } => write!(f, "\"{value}\""),
         }
     }
@@ -1136,6 +1141,18 @@ impl Type {
 
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
+    }
+
+    pub fn bytesize(&self) -> usize {
+        match &self.kind {
+            TypeKind::Struct { properties } => properties.iter().map(Type::bytesize).sum(),
+            TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
+            TypeKind::Boolean => 1,
+            TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => {
+                std::mem::size_of::<*const u32>()
+            }
+            TypeKind::Void => 0,
+        }
     }
 }
 

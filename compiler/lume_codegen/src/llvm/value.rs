@@ -20,7 +20,7 @@ impl<'ctx> FunctionLower<'_, 'ctx> {
             },
             lume_mir::Operand::String { value } => self.builder.string_literal(value.as_str()).as_basic_value_enum(),
             lume_mir::Operand::Load { id } => self.load(*id),
-            lume_mir::Operand::LoadField { target, field } => self.load_field(*target, *field),
+            lume_mir::Operand::LoadField { target, index, .. } => self.load_field(*target, *index),
             lume_mir::Operand::Reference { id } => self.retrieve_var_ptr(*id).0.as_basic_value_enum(),
         }
     }

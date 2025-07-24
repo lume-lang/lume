@@ -25,11 +25,12 @@ impl FunctionLower<'_, '_> {
 
                 self.builder.store(ptr, val);
             }
-            lume_mir::Instruction::StoreField { target, idx, value } => {
+            lume_mir::Instruction::StoreField { target, offset, value } => {
                 let (ptr, struct_ty) = self.retrieve_var_ptr(*target);
                 let val = self.operand(value);
 
-                self.builder.store_field(struct_ty.into_struct_type(), ptr, val, *idx);
+                self.builder
+                    .store_field(struct_ty.into_struct_type(), ptr, val, *offset);
             }
         }
     }

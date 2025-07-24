@@ -75,15 +75,21 @@ impl FunctionTransformer<'_> {
             .map(|prop| self.lower_type(&prop.property_type))
             .collect::<Vec<_>>();
 
+        let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
+
         let struct_type = lume_mir::Type::structure(expr.ty.clone(), prop_types);
 
         let reg = self.func.add_register(struct_type.clone());
         self.func.current_block_mut().allocate(reg, struct_type);
 
-        for (idx, field) in expr.fields.iter().enumerate() {
+        let mut offset = 0;
+
+        for (field, size) in expr.fields.iter().zip(prop_sizes) {
             let value = self.expression(&field.value);
 
-            self.func.current_block_mut().store_field(reg, idx, value);
+            self.func.current_block_mut().store_field(reg, offset, value);
+
+            offset += size;
         }
 
         lume_mir::Operand::Reference { id: reg }
@@ -216,11 +222,13 @@ impl FunctionTransformer<'_> {
         let target_val = self.expression(&expr.callee);
         let target_reg = self.load_operand(&target_val);
 
-        let property_idx = expr.property.index;
+        let index = expr.property.index;
+        let offset = self.property_offset(&expr.property);
 
         lume_mir::Operand::LoadField {
             target: target_reg,
-            field: property_idx,
+            offset,
+            index,
         }
     }
 
@@ -273,5 +281,20 @@ impl FunctionTransformer<'_> {
         } else {
             self.declare_value(op.clone())
         }
+    }
+
+    fn property_offset(&self, property: &lume_types::Property) -> usize {
+        let mut offset = 0;
+
+        for (idx, prop) in self.tcx().tdb().find_properties(property.owner).enumerate() {
+            if idx == prop.index {
+                break;
+            }
+
+            let prop_ty = self.lower_type(&prop.property_type);
+            offset += prop_ty.bytesize();
+        }
+
+        offset
     }
 }
