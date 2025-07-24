@@ -635,6 +635,11 @@ impl Registers {
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Register> {
         self.regs.iter_mut()
     }
+
+    /// Replaces all the existing registers within the function.
+    pub fn replace_all(&mut self, replacement: impl Iterator<Item = Register>) {
+        self.regs = replacement.collect();
+    }
 }
 
 /// Represents a standalone instruction within a basic block.
@@ -966,6 +971,10 @@ impl BlockBranchSite {
             block,
             arguments: Vec::new(),
         }
+    }
+
+    pub fn arg_operands(&self) -> impl Iterator<Item = Operand> {
+        self.arguments.iter().map(|arg| Operand::Reference { id: *arg })
     }
 }
 

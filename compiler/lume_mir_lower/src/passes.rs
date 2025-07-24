@@ -100,6 +100,13 @@ struct RenameSsaVariables {
 
 impl RenameSsaVariables {
     pub fn execute(&mut self, func: &mut Function) {
+        let mut new_registers = func
+            .registers
+            .iter()
+            .filter(|reg| reg.block.is_none())
+            .cloned()
+            .collect::<Vec<lume_mir::Register>>();
+
         let mut register_mapping = HashMap::new();
 
         for block in &mut func.blocks {
@@ -121,8 +128,20 @@ impl RenameSsaVariables {
                 Self::update_regs_term(term, &mut register_mapping);
             }
 
+            for (old, new) in &register_mapping {
+                let old_reg = func.registers.register(*old);
+
+                new_registers.push(lume_mir::Register {
+                    id: *new,
+                    ty: old_reg.ty.clone(),
+                    block: Some(block.id),
+                });
+            }
+
             register_mapping.clear();
         }
+
+        func.registers.replace_all(new_registers.into_iter());
     }
 
     fn rename_register_index(
