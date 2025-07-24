@@ -62,7 +62,7 @@ fn detect_linker() -> Result<Linker> {
 /// Returns `Err` if the linker binary could not be found, the linker fails to invoke or fails
 /// to generate a valid output binary.
 #[allow(clippy::missing_panics_doc)]
-pub fn link_objects(objects: &CodegenObjects, output: PathBuf, linker: Option<LinkerPreference>) -> Result<()> {
+pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, linker: Option<LinkerPreference>) -> Result<()> {
     let linker = match linker {
         Some(LinkerPreference::Clang) => Linker::Clang,
         Some(LinkerPreference::Gcc) => Linker::Gcc,

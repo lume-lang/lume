@@ -10,6 +10,11 @@ use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CompiledExecutable {
+    pub binary: PathBuf,
+}
+
 pub struct Driver {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
@@ -51,14 +56,10 @@ impl Driver {
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[cfg(feature = "codegen")]
     #[allow(clippy::needless_pass_by_value)]
-    pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<()> {
+    pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
         let driver = Self::from_root(root, dcx.clone())?;
 
-        if let Err(err) = driver.build(opts) {
-            dcx.emit(err);
-        }
-
-        Ok(())
+        driver.build(opts)
     }
 
     /// Locates the [`Package`] from the given path and checks it for errors.
@@ -74,7 +75,7 @@ impl Driver {
         let driver = Self::from_root(root, dcx.clone())?;
 
         if let Err(err) = driver.check(opts) {
-            dcx.emit(err);
+            dcx.emit_and_push(err);
         }
 
         Ok(())
@@ -90,7 +91,7 @@ impl Driver {
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[cfg(feature = "codegen")]
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
-    pub fn build(mut self, options: Options) -> Result<()> {
+    pub fn build(mut self, options: Options) -> Result<CompiledExecutable> {
         let session = Session {
             dep_graph: std::mem::take(&mut self.package.dependencies.graph),
             workspace_root: self.package.path.clone(),
@@ -115,9 +116,11 @@ impl Driver {
         let objects = Self::write_object_files(&gcx, codegen_mods)?;
         let output_file_path = gcx.binary_output_path(&self.package.name);
 
-        lume_linker::link_objects(&objects, output_file_path, gcx.session.options.linker)?;
+        lume_linker::link_objects(&objects, &output_file_path, gcx.session.options.linker)?;
 
-        Ok(())
+        Ok(CompiledExecutable {
+            binary: output_file_path,
+        })
     }
 
     /// Checks the packages within the current compiler state for errors.
