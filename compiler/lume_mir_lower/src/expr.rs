@@ -238,10 +238,6 @@ impl FunctionTransformer<'_> {
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 
-        if let Some(promoted) = self.promoted_regs.get(&id) {
-            return lume_mir::Operand::Reference { id: *promoted };
-        }
-
         lume_mir::Operand::Reference { id }
     }
 

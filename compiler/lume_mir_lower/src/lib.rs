@@ -57,8 +57,6 @@ pub(crate) struct FunctionTransformer<'mir> {
     func: Function,
 
     variables: HashMap<lume_tir::VariableId, RegisterId>,
-
-    promoted_regs: HashMap<RegisterId, RegisterId>,
 }
 
 impl<'mir> FunctionTransformer<'mir> {
@@ -68,7 +66,6 @@ impl<'mir> FunctionTransformer<'mir> {
             transformer,
             func: Function::new(id, func.name.to_string()),
             variables: HashMap::new(),
-            promoted_regs: HashMap::new(),
         };
 
         transformer.lower_signature(func);
@@ -82,7 +79,6 @@ impl<'mir> FunctionTransformer<'mir> {
             transformer,
             func: Function::new(id, func.name.to_string()),
             variables: HashMap::new(),
-            promoted_regs: HashMap::new(),
         };
 
         transformer.lower_signature(func);
