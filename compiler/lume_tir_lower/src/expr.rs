@@ -286,12 +286,19 @@ impl LowerFunction<'_> {
 
         let index = self.lower.tcx.enum_case_with_name(&expr.name)?.idx;
 
+        let arguments = expr
+            .arguments
+            .iter()
+            .map(|arg| self.expression(arg))
+            .collect::<Result<Vec<_>>>()?;
+
         #[allow(clippy::cast_possible_truncation)]
         Ok(lume_tir::ExpressionKind::Variant(Box::new(lume_tir::Variant {
             id: expr.id,
             index: index as u8,
             name,
             ty,
+            arguments,
         })))
     }
 }

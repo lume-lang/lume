@@ -15,7 +15,7 @@ impl FunctionTransformer<'_> {
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
             lume_tir::ExpressionKind::Member(expr) => self.member(expr),
             lume_tir::ExpressionKind::Variable(var) => self.variable_reference(var),
-            lume_tir::ExpressionKind::Variant(_) => todo!("enum variant MIR lowering"),
+            lume_tir::ExpressionKind::Variant(var) => self.variant(var),
         }
     }
 
@@ -232,6 +232,59 @@ impl FunctionTransformer<'_> {
         };
 
         lume_mir::Operand::Reference { id }
+    }
+
+    fn variant(&mut self, expr: &lume_tir::Variant) -> lume_mir::Operand {
+        let variant = self.tcx().enum_case_expr(expr.id).unwrap();
+
+        let discriminant = lume_mir::Operand::Integer {
+            bits: 8,
+            signed: false,
+            value: i64::from(expr.index),
+        };
+
+        // If the variant only consists of a discriminant, we skip
+        // the allocation and only pass an 8-bit integer around.
+        if variant.parameters.is_empty() {
+            return discriminant;
+        }
+
+        let enum_ty = self.tcx().type_of(expr.id).unwrap();
+        let enum_def = self.tcx().enum_def_type(enum_ty.instance_of).unwrap();
+        let def = lume_span::DefId::Item(enum_def.id);
+
+        let mut union_cases = Vec::new();
+
+        for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
+            let params = &variant.parameters;
+            let case_refs = self.tcx().mk_type_refs_from(params, def).unwrap();
+
+            union_cases.reserve_exact(case_refs.len());
+            for case_ref in case_refs {
+                union_cases.push(self.lower_type(&case_ref));
+            }
+        }
+
+        let union_type = lume_mir::Type::union(expr.ty.clone(), union_cases);
+        let reg = self.func.add_register(union_type.clone());
+        self.func.current_block_mut().allocate(reg, union_type);
+
+        let mut offset = 0;
+
+        // Store the discriminant of the variant first
+        self.func.current_block_mut().store_field(reg, offset, discriminant);
+        offset += 1;
+
+        for argument in &expr.arguments {
+            let value = self.expression(argument);
+            let operand_size = usize::from(value.bitsize() / 8);
+
+            self.func.current_block_mut().store_field(reg, offset, value);
+
+            offset += operand_size;
+        }
+
+        lume_mir::Operand::Reference { id: reg }
     }
 
     #[expect(clippy::unused_self)]

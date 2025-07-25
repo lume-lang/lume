@@ -732,7 +732,7 @@ impl EnumDefinition {
 pub struct EnumDefinitionCase {
     pub idx: usize,
     pub name: Path,
-    pub parameters: Vec<Box<Type>>,
+    pub parameters: Vec<Type>,
     pub location: Location,
 }
 

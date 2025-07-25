@@ -555,7 +555,8 @@ pub enum VariableSource {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Variant {
     pub id: ExpressionId,
-    pub name: Path,
-    pub ty: TypeRef,
     pub index: u8,
+    pub ty: TypeRef,
+    pub name: Path,
+    pub arguments: Vec<Expression>,
 }

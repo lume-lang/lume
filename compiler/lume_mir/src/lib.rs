@@ -1148,6 +1148,13 @@ impl Type {
         }
     }
 
+    pub fn union(id: TypeRef, cases: Vec<Type>) -> Self {
+        Self {
+            id,
+            kind: TypeKind::Union { cases },
+        }
+    }
+
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
     }
@@ -1155,6 +1162,12 @@ impl Type {
     pub fn bytesize(&self) -> usize {
         match &self.kind {
             TypeKind::Struct { properties } => properties.iter().map(Type::bytesize).sum(),
+            TypeKind::Union { cases } => {
+                let discriminator_size = Self::i8().bytesize();
+                let max_case_size = cases.iter().map(Type::bytesize).max().unwrap_or_default();
+
+                discriminator_size + max_case_size
+            }
             TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
             TypeKind::Boolean => 1,
             TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => {
@@ -1175,6 +1188,9 @@ impl std::fmt::Display for Type {
 pub enum TypeKind {
     /// Represents a struct type with zero-or-more properties.
     Struct { properties: Vec<Type> },
+
+    /// Represents a union type with zero-or-more cases.
+    Union { cases: Vec<Type> },
 
     /// Defines an integer type with a specified number of bits and signedness.
     Integer { bits: u8, signed: bool },
@@ -1214,6 +1230,15 @@ impl std::fmt::Display for TypeKind {
                 f,
                 "{{{}}}",
                 properties
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Self::Union { cases } => write!(
+                f,
+                "[{}]",
+                cases
                     .iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()

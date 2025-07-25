@@ -238,7 +238,7 @@ impl LowerModule<'_> {
         let symbol = hir::EnumDefinitionCase {
             idx,
             name,
-            parameters: parameters.into_iter().map(Box::new).collect(),
+            parameters,
             location,
         };
 
