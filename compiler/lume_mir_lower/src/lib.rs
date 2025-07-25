@@ -36,14 +36,14 @@ impl<'tcx> ModuleTransformer<'tcx> {
     }
 
     fn define_callable(&mut self, func: &lume_tir::Function) {
-        let id = lume_mir::FunctionId(func.id.0);
+        let id = lume_mir::FunctionId(func.id.as_usize());
         let func = FunctionTransformer::define(self, id, func);
 
         self.mir.functions.insert(id, func);
     }
 
     fn transform_callable(&mut self, func: &lume_tir::Function) {
-        let id = lume_mir::FunctionId(func.id.0);
+        let id = lume_mir::FunctionId(func.id.as_usize());
         let func = FunctionTransformer::transform(self, id, func);
 
         self.mir.functions.insert(id, func);

@@ -8,11 +8,20 @@ pub enum FunctionKind {
 }
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
+pub struct FunctionId(usize);
 
 impl FunctionId {
     pub fn new(kind: FunctionKind, id: usize) -> Self {
-        Self(lume_span::hash_id(&(kind, id)))
+        // Used to prevent `hash_id` from creating a value of 0 when the kind is
+        // `FunctionKind::Function` and the ID is 0. A function ID of 0 can look
+        // wrong or misleading, so we're explicitly removing that possiblity.
+        static HASH_OFFSET: usize = 0x4D6B_0189;
+
+        Self(lume_span::hash_id(&(kind, id + HASH_OFFSET)))
+    }
+
+    pub fn as_usize(self) -> usize {
+        self.0
     }
 }
 

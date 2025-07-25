@@ -111,7 +111,7 @@ impl FunctionTransformer<'_> {
     }
 
     fn call_expression(&mut self, expr: &lume_tir::Call) -> lume_mir::Operand {
-        let func_id = FunctionId(expr.function.0);
+        let func_id = FunctionId(expr.function.as_usize());
 
         let args = expr
             .arguments
