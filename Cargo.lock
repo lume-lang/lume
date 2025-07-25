@@ -517,9 +517,9 @@ checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
 
 [[package]]
 name = "error_snippet"
-version = "0.1.16"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d43622a706ab36a539665177f4187f4c9f81383b57321b5b8a4ed86a93302622"
+checksum = "48340aec92f72fdc45d62dde80f336c8429aacb48981dcc66ffdf8bd9447539d"
 dependencies = [
  "error_snippet_derive",
  "fxhash",
