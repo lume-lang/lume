@@ -57,9 +57,7 @@ impl LowerFunction<'_> {
             lume_mir::Instruction::Allocate { register, ty } => {
                 let ptr_ty = self.backend.cl_ptr_type();
                 let var = self.declare_var(*register, ptr_ty);
-
-                let cl_type = self.backend.cl_type_of(ty);
-                let ptr = self.alloc(cl_type);
+                let ptr = self.cg_alloc_type(ty);
 
                 self.builder.def_var(var, ptr);
             }
@@ -116,6 +114,27 @@ impl LowerFunction<'_> {
 
                 self.builder.ins().trap(code);
             }
+        }
+    }
+
+    pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type) -> Value {
+        match &ty.kind {
+            lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } => {
+                let size = ty.bytesize();
+
+                self.alloca(size)
+            }
+            lume_mir::TypeKind::Integer { .. }
+            | lume_mir::TypeKind::Float { .. }
+            | lume_mir::TypeKind::Boolean
+            | lume_mir::TypeKind::String
+            | lume_mir::TypeKind::Pointer { .. } => {
+                let cl_type = self.backend.cl_type_of(ty);
+
+                self.alloc(cl_type)
+            }
+            lume_mir::TypeKind::Metadata { .. } => todo!(),
+            lume_mir::TypeKind::Void => unreachable!(),
         }
     }
 }
