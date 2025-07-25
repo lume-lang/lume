@@ -102,6 +102,10 @@ impl<'mir> FunctionTransformer<'mir> {
 
             // Offset the register counter by the number of parameters
             self.func.registers.allocate_param(param_ty);
+
+            if param.vararg {
+                self.func.signature.vararg = true;
+            }
         }
 
         self.func.signature.return_type = self.lower_type(&func.return_type);

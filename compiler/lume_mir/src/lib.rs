@@ -75,6 +75,10 @@ pub struct Signature {
     /// either in another module or in an external library.
     pub external: bool,
 
+    /// Defines whether the function supports a variable amount of
+    /// arguments.
+    pub vararg: bool,
+
     /// Defines an ordered mapping of parameter types.
     ///
     /// If the parent function definition refers to an instance method,
@@ -91,7 +95,11 @@ impl std::fmt::Display for Signature {
             self.parameters
                 .iter()
                 .enumerate()
-                .map(|(idx, param)| format!("{param} #{idx}"))
+                .map(|(idx, param)| {
+                    let is_last = idx == self.parameters.len() - 1;
+
+                    format!("{}{param} #{idx}", if is_last && self.vararg { "..." } else { "" })
+                })
                 .collect::<Vec<String>>()
                 .join(", "),
             self.return_type
@@ -103,6 +111,7 @@ impl Default for Signature {
     fn default() -> Self {
         Signature {
             external: false,
+            vararg: false,
             parameters: Vec::new(),
             return_type: Type::void(),
         }
