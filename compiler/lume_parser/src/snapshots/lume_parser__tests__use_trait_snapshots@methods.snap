@@ -65,6 +65,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "to_string",
                         location: Location(
@@ -135,6 +136,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "to_int",
                         location: Location(

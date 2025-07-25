@@ -110,6 +110,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "add",
                         location: Location(

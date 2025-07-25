@@ -111,6 +111,7 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            pub
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "next",
                         location: Location(

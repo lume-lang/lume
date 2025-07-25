@@ -65,6 +65,7 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "zero?",
                         location: Location(

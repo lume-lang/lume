@@ -65,6 +65,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                             ),
                         },
                     ),
+                    external: false,
                     name: Identifier {
                         name: "add",
                         location: Location(
