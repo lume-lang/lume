@@ -152,6 +152,6 @@ impl<'mir> FunctionTransformer<'mir> {
     fn call(&mut self, func_id: FunctionId, args: Vec<lume_mir::Operand>) -> lume_mir::Operand {
         let call_inst = self.declare(lume_mir::Declaration::Call { func_id, args });
 
-        lume_mir::Operand::Load { id: call_inst }
+        lume_mir::Operand::Reference { id: call_inst }
     }
 }
