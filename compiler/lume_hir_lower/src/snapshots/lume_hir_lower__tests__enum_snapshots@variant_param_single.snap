@@ -41,6 +41,7 @@ Map {
                     visibility: Private,
                     cases: [
                         EnumDefinitionCase {
+                            idx: 0,
                             name: Path {
                                 root: [],
                                 name: Type {
