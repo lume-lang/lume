@@ -15,7 +15,9 @@ impl FunctionTransformer<'_> {
                 let ty_props = self.tcx().db().find_properties(type_ref.instance_of);
                 let props = ty_props.map(|p| self.lower_type(&p.property_type)).collect::<Vec<_>>();
 
-                lume_mir::Type::structure(type_ref.clone(), props)
+                let struct_ty = lume_mir::Type::structure(type_ref.clone(), props);
+
+                lume_mir::Type::pointer(struct_ty)
             }
             lume_types::TypeKind::User(lume_types::UserType::Trait(_) | lume_types::UserType::Enum(_))
             | lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::pointer(lume_mir::Type::void()),
