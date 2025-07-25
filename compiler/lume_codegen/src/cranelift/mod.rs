@@ -5,11 +5,15 @@ pub(crate) mod value;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use cranelift::{
-    codegen::ir::{BlockArg, immediates::Offset32},
+    codegen::{
+        ir::{BlockArg, immediates::Offset32},
+        verify_function,
+    },
     prelude::*,
 };
 use cranelift_module::Module;
 use cranelift_object::{ObjectBuilder, ObjectModule};
+use error_snippet::SimpleDiagnostic;
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::{BlockBranchSite, RegisterId};
@@ -186,7 +190,24 @@ impl<'ctx> CraneliftBackend<'ctx> {
         let builder = FunctionBuilder::new(&mut ctx.func, builder_ctx);
         LowerFunction::new(self, func, builder).define();
 
-        self.module_mut().define_function(declared_func.id, ctx).map_error()?;
+        let verify_flags = settings::Flags::new(settings::builder());
+        if let Err(err) = verify_function(&ctx.func, &verify_flags) {
+            let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
+                .add_cause(SimpleDiagnostic::new(err.to_string()));
+
+            return Err(diagnostic.into());
+        }
+
+        if let Err(err) = self.module_mut().define_function(declared_func.id, ctx) {
+            tracing::error!(name: "verify", "error caused by function:\n{}", ctx.func);
+
+            // Displaying verifier errors directly gives a really useless error, so to
+            // actually know the issue, we're using the debug output of the error in the error.
+            let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
+                .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
+
+            return Err(diagnostic.into());
+        }
 
         Ok(())
     }
