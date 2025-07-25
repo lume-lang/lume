@@ -49,6 +49,17 @@ impl Parser {
         }
         // If the name starts with an upper case, it refers to a type.
         else {
+            // If we spot a `(` token, we know it's the start of an argument list,
+            // which can only be defined on variant expressions.
+            if self.peek(TokenKind::LeftParen) {
+                let end = self.previous_token().end();
+
+                return Ok(PathSegment::Variant {
+                    name,
+                    location: (start..end).into(),
+                });
+            }
+
             let type_arguments = self.parse_type_arguments()?;
             let end = self.previous_token().end();
 

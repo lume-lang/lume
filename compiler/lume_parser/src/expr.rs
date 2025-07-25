@@ -495,7 +495,11 @@ impl Parser {
                 actual: name.to_string(),
             }
             .into()),
-            PathSegment::Type { .. } if subtyped => Ok(Expression::Variant(Box::new(Variant { name: path }))),
+            PathSegment::Type { .. } if subtyped => Ok(Expression::Variant(Box::new(Variant {
+                location: path.location.clone(),
+                name: path,
+                arguments: Vec::new(),
+            }))),
             PathSegment::Type { location, .. } => Err(crate::errors::ExpectedValueType {
                 source: self.source.clone(),
                 range: location.0.clone(),
@@ -508,6 +512,15 @@ impl Parser {
                 Ok(Expression::Call(Box::new(Call {
                     location: (location.start()..location.end()).into(),
                     callee: None,
+                    name: path,
+                    arguments,
+                })))
+            }
+            PathSegment::Variant { location, .. } => {
+                let arguments = self.parse_call_arguments()?;
+
+                Ok(Expression::Variant(Box::new(Variant {
+                    location: (location.start()..location.end()).into(),
                     name: path,
                     arguments,
                 })))

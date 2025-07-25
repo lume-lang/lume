@@ -442,6 +442,12 @@ impl<'a> LowerModule<'a> {
                     location,
                 })
             }
+            ast::PathSegment::Variant { name, location } => {
+                let name = self.identifier(name);
+                let location = self.location(location);
+
+                Ok(PathSegment::Variant { name, location })
+            }
         }
     }
 

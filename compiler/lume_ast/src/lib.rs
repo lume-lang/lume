@@ -1,3 +1,5 @@
+use std::hash::Hash;
+
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Location(pub std::ops::Range<usize>);
 
@@ -277,6 +279,17 @@ pub enum PathSegment {
         type_arguments: Vec<Type>,
         location: Location,
     },
+
+    /// Denotes a segment which refers to an enum variant, with or without parameters.
+    ///
+    /// ```lm
+    /// Option::None
+    ///         ^^^^ variant segment
+    ///
+    /// Option::Some(false)
+    ///         ^^^^^^^^^^^ variant segment
+    /// ```
+    Variant { name: Identifier, location: Location },
 }
 
 impl PathSegment {
@@ -312,14 +325,17 @@ impl PathSegment {
     /// Gets the name of the path segment.
     pub fn name(&self) -> &Identifier {
         match self {
-            Self::Namespace { name } | Self::Type { name, .. } | Self::Callable { name, .. } => name,
+            Self::Namespace { name }
+            | Self::Type { name, .. }
+            | Self::Callable { name, .. }
+            | Self::Variant { name, .. } => name,
         }
     }
 
     /// Gets the type arguments of the path segment.
     pub fn type_arguments(&self) -> &[Type] {
         match self {
-            Self::Namespace { .. } => &[],
+            Self::Namespace { .. } | Self::Variant { .. } => &[],
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
         }
     }
@@ -327,7 +343,7 @@ impl PathSegment {
     /// Takes the type arguments from the path segment.
     pub fn take_type_arguments(self) -> Vec<Type> {
         match self {
-            Self::Namespace { .. } => Vec::new(),
+            Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
         }
     }
@@ -359,6 +375,7 @@ impl std::fmt::Display for PathSegment {
 
                 Ok(())
             }
+            Self::Variant { name, .. } => f.write_fmt(format_args!("{name}")),
         }
     }
 }
@@ -368,7 +385,7 @@ impl Node for PathSegment {
     fn location(&self) -> &Location {
         match self {
             Self::Namespace { name } => &name.location,
-            Self::Type { location, .. } | Self::Callable { location, .. } => location,
+            Self::Type { location, .. } | Self::Callable { location, .. } | Self::Variant { location, .. } => location,
         }
     }
 }
@@ -850,7 +867,7 @@ pub struct PredicateLoop {
 
 node_location!(PredicateLoop);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
@@ -888,7 +905,7 @@ impl Node for Expression {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Array {
     pub values: Vec<Expression>,
     pub location: Location,
@@ -896,7 +913,7 @@ pub struct Array {
 
 node_location!(Array);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Assignment {
     pub target: Expression,
     pub value: Expression,
@@ -905,14 +922,14 @@ pub struct Assignment {
 
 node_location!(Assignment);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BinaryOperatorKind {
     And,
     Or,
     Xor,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub location: Location,
@@ -920,7 +937,7 @@ pub struct BinaryOperator {
 
 node_location!(BinaryOperator);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Binary {
     pub lhs: Expression,
     pub op: BinaryOperator,
@@ -930,7 +947,7 @@ pub struct Binary {
 
 node_location!(Binary);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub callee: Option<Expression>,
     pub name: Path,
@@ -940,7 +957,7 @@ pub struct Call {
 
 node_location!(Call);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IntrinsicCall {
     pub callee: Expression,
     pub name: Path,
@@ -950,7 +967,7 @@ pub struct IntrinsicCall {
 
 node_location!(IntrinsicCall);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Cast {
     pub source: Expression,
     pub target_type: Type,
@@ -959,7 +976,7 @@ pub struct Cast {
 
 node_location!(Cast);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Construct {
     pub path: Path,
     pub fields: Vec<Field>,
@@ -968,7 +985,7 @@ pub struct Construct {
 
 node_location!(Construct);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Field {
     pub name: Identifier,
     pub value: Expression,
@@ -977,7 +994,7 @@ pub struct Field {
 
 node_location!(Field);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Literal {
     Int(Box<IntLiteral>),
     Float(Box<FloatLiteral>),
@@ -997,7 +1014,7 @@ impl Node for Literal {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IntLiteral {
     pub value: i64,
     pub location: Location,
@@ -1006,7 +1023,7 @@ pub struct IntLiteral {
 
 node_location!(IntLiteral);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum IntKind {
     I8,
     U8,
@@ -1027,13 +1044,23 @@ pub struct FloatLiteral {
 
 node_location!(FloatLiteral);
 
-#[derive(Debug, Clone, PartialEq)]
+impl Hash for FloatLiteral {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.value.to_bits().hash(state);
+        self.location.hash(state);
+        self.kind.hash(state);
+    }
+}
+
+impl Eq for FloatLiteral {}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum FloatKind {
     F32,
     F64,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct StringLiteral {
     pub value: String,
     pub location: Location,
@@ -1041,7 +1068,7 @@ pub struct StringLiteral {
 
 node_location!(StringLiteral);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct BooleanLiteral {
     pub value: bool,
     pub location: Location,
@@ -1049,13 +1076,13 @@ pub struct BooleanLiteral {
 
 node_location!(BooleanLiteral);
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogicalOperatorKind {
     And,
     Or,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct LogicalOperator {
     pub kind: LogicalOperatorKind,
     pub location: Location,
@@ -1063,7 +1090,7 @@ pub struct LogicalOperator {
 
 node_location!(LogicalOperator);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Logical {
     pub lhs: Expression,
     pub op: LogicalOperator,
@@ -1073,7 +1100,7 @@ pub struct Logical {
 
 node_location!(Logical);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Member {
     pub callee: Expression,
     pub name: String,
@@ -1082,7 +1109,7 @@ pub struct Member {
 
 node_location!(Member);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Range {
     pub lower: Expression,
     pub upper: Expression,
@@ -1092,7 +1119,7 @@ pub struct Range {
 
 node_location!(Range);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     pub name: Identifier,
 }
@@ -1103,18 +1130,16 @@ impl Node for Variable {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Variant {
     pub name: Path,
+    pub arguments: Vec<Expression>,
+    pub location: Location,
 }
 
-impl Node for Variant {
-    fn location(&self) -> &Location {
-        &self.name.location
-    }
-}
+node_location!(Variant);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
     pub name: Identifier,
     pub constraints: Vec<Box<Type>>,

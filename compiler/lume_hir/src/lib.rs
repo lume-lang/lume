@@ -118,6 +118,17 @@ pub enum PathSegment {
         type_arguments: Vec<Type>,
         location: Location,
     },
+
+    /// Denotes a segment which refers to an enum variant, with or without parameters.
+    ///
+    /// ```lm
+    /// Option::None
+    ///         ^^^^ variant segment
+    ///
+    /// Option::Some(false)
+    ///         ^^^^^^^^^^^ variant segment
+    /// ```
+    Variant { name: Identifier, location: Location },
 }
 
 impl PathSegment {
@@ -153,14 +164,17 @@ impl PathSegment {
     /// Gets the name of the path segment.
     pub fn name(&self) -> &Identifier {
         match self {
-            Self::Namespace { name } | Self::Type { name, .. } | Self::Callable { name, .. } => name,
+            Self::Namespace { name }
+            | Self::Type { name, .. }
+            | Self::Callable { name, .. }
+            | Self::Variant { name, .. } => name,
         }
     }
 
     /// Gets the type arguments of the path segment.
     pub fn type_arguments(&self) -> &[Type] {
         match self {
-            Self::Namespace { .. } => &[],
+            Self::Namespace { .. } | Self::Variant { .. } => &[],
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
         }
     }
@@ -168,7 +182,7 @@ impl PathSegment {
     /// Takes the type arguments from the path segment.
     pub fn take_type_arguments(self) -> Vec<Type> {
         match self {
-            Self::Namespace { .. } => Vec::new(),
+            Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
         }
     }
@@ -200,6 +214,9 @@ impl std::fmt::Display for PathSegment {
 
                 Ok(())
             }
+            Self::Variant { name, .. } => {
+                write!(f, "{name}")
+            }
         }
     }
 }
@@ -209,7 +226,7 @@ impl Node for PathSegment {
     fn location(&self) -> Location {
         match self {
             Self::Namespace { name } => name.location,
-            Self::Type { location, .. } | Self::Callable { location, .. } => *location,
+            Self::Type { location, .. } | Self::Callable { location, .. } | Self::Variant { location, .. } => *location,
         }
     }
 }
@@ -713,6 +730,7 @@ impl EnumDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
+    pub idx: usize,
     pub name: Path,
     pub parameters: Vec<Box<Type>>,
     pub location: Location,

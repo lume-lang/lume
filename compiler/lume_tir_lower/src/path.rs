@@ -59,6 +59,9 @@ impl LowerFunction<'_> {
                     type_arguments,
                 })
             }
+            lume_hir::PathSegment::Variant { name, .. } => {
+                Ok(lume_tir::PathSegment::Variant { name: name.to_string() })
+            }
         }
     }
 }

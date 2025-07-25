@@ -37,6 +37,17 @@ pub enum PathSegment {
     ///          ^^^^^^^^^ callable segment
     /// ```
     Callable { name: String, type_arguments: Vec<TypeRef> },
+
+    /// Denotes a segment which refers to an enum variant, with or without parameters.
+    ///
+    /// ```lm
+    /// Option::None
+    ///         ^^^^ variant segment
+    ///
+    /// Option::Some(false)
+    ///         ^^^^^^^^^^^ variant segment
+    /// ```
+    Variant { name: String },
 }
 
 impl PathSegment {
@@ -64,7 +75,10 @@ impl PathSegment {
     /// Gets the name of the path segment.
     pub fn name(&self) -> &str {
         match self {
-            Self::Namespace { name } | Self::Type { name, .. } | Self::Callable { name, .. } => name.as_str(),
+            Self::Namespace { name }
+            | Self::Type { name, .. }
+            | Self::Callable { name, .. }
+            | Self::Variant { name, .. } => name.as_str(),
         }
     }
 
@@ -80,7 +94,7 @@ impl PathSegment {
 impl std::fmt::Display for PathSegment {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Namespace { name } => f.write_str(name.as_str()),
+            Self::Namespace { name } | Self::Variant { name } => f.write_str(name.as_str()),
             Self::Type {
                 name, type_arguments, ..
             }
