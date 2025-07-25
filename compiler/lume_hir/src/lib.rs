@@ -1509,12 +1509,8 @@ pub enum VariableSource {
 pub struct Variant {
     pub id: ExpressionId,
     pub name: Path,
-}
-
-impl Node for Variant {
-    fn location(&self) -> Location {
-        self.name.location
-    }
+    pub arguments: Vec<Expression>,
+    pub location: Location,
 }
 
 #[derive(Node, Debug, Clone, Eq)]

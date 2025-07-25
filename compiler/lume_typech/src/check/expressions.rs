@@ -222,6 +222,7 @@ impl TyCheckCtx {
             }
             lume_hir::ExpressionKind::StaticCall(call) => self.call_expression(lume_hir::CallExpression::Static(call)),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr),
+            lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr),
             _ => Ok(()),
         }
     }
@@ -411,6 +412,33 @@ impl TyCheckCtx {
                 found: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the variant exists on the enum type, as well as asserting
+    /// the types of passed parameters, if any.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
+        let enum_case_def = self.enum_case_with_name(&expr.name)?;
+
+        if expr.arguments.len() != enum_case_def.parameters.len() {
+            return Err(crate::query::diagnostics::ArgumentCountMismatch {
+                source: expr.location,
+                expected: enum_case_def.parameters.len(),
+                actual: expr.arguments.len(),
+            }
+            .into());
+        }
+
+        for (arg, param) in expr.arguments.iter().zip(enum_case_def.parameters.iter()) {
+            let arg_type = self.type_of_expr(arg)?;
+            let param_ty = self.mk_type_ref_from_expr(param, expr.id)?;
+
+            if let Err(err) = self.ensure_type_compatibility(&arg_type, &param_ty) {
+                self.dcx().emit(err);
+            }
         }
 
         Ok(())

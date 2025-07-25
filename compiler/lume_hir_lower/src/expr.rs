@@ -347,11 +347,17 @@ impl LowerModule<'_> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
+        let arguments = self.expressions(expr.arguments);
 
         Ok(hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Variant(Box::new(hir::Variant { id, name })),
+            kind: hir::ExpressionKind::Variant(Box::new(hir::Variant {
+                id,
+                name,
+                arguments,
+                location,
+            })),
         })
     }
 }
