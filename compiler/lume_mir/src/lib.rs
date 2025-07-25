@@ -1237,7 +1237,7 @@ impl std::fmt::Display for TypeKind {
             ),
             Self::Union { cases } => write!(
                 f,
-                "[{}]",
+                "(u8, {})",
                 cases
                     .iter()
                     .map(std::string::ToString::to_string)
