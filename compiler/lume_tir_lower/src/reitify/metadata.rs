@@ -1,5 +1,5 @@
 use lume_errors::Result;
-use lume_span::hash_id;
+use lume_span::{DefId, hash_id};
 use lume_type_metadata::*;
 
 use crate::reitify::ReificationPass;
@@ -74,8 +74,20 @@ impl ReificationPass<'_> {
 
                 size
             }
-            lume_types::TypeKind::User(lume_types::UserType::Enum(_)) => {
-                todo!("size of enums")
+            lume_types::TypeKind::User(lume_types::UserType::Enum(def)) => {
+                // We start with 1 byte for the discriminant.
+                let mut size = 1;
+
+                for variant in self.tcx.enum_cases_of_name(&def.name)? {
+                    for param in &variant.parameters {
+                        let param_type_ref = self.tcx.mk_type_ref_from(param, DefId::Item(def.id))?;
+                        let param_ty = self.tcx.tdb().ty_expect(param_type_ref.instance_of)?;
+
+                        size += self.size_of_ty(param_ty)?;
+                    }
+                }
+
+                size
             }
         };
 
