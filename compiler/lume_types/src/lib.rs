@@ -458,6 +458,7 @@ pub enum TypeKind {
 }
 
 impl TypeKind {
+    #[inline]
     pub fn transport(&self) -> TypeTransport {
         match self {
             TypeKind::Void | TypeKind::Bool | TypeKind::Int(_) | TypeKind::UInt(_) | TypeKind::Float(_) => {
@@ -465,6 +466,11 @@ impl TypeKind {
             }
             TypeKind::User(_) | TypeKind::String | TypeKind::TypeParameter(_) => TypeTransport::Reference,
         }
+    }
+
+    #[inline]
+    pub fn is_ref_type(&self) -> bool {
+        self.transport() == TypeTransport::Reference
     }
 
     pub fn as_kind_ref(&self) -> TypeKindRef {

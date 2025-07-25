@@ -69,7 +69,11 @@ impl ReificationPass<'_> {
                 for prop in self.tcx.tdb().find_properties(ty.id) {
                     let prop_ty = self.tcx.tdb().ty_expect(prop.property_type.instance_of)?;
 
-                    size += self.size_of_ty(prop_ty)?;
+                    size += if prop_ty.kind.is_ref_type() {
+                        PTR_SIZE
+                    } else {
+                        self.size_of_ty(prop_ty)?
+                    };
                 }
 
                 size
@@ -119,7 +123,13 @@ impl ReificationPass<'_> {
                 let mut max_alignment = 1;
 
                 for prop in self.tcx.tdb().find_properties(ty.id) {
-                    max_alignment = self.alignment_of_ty(&prop.property_type)?.max(max_alignment);
+                    let prop_ty = &prop.property_type;
+
+                    max_alignment = if self.tcx.tdb().is_reference_type(prop_ty.instance_of).unwrap() {
+                        PTR_SIZE.max(max_alignment)
+                    } else {
+                        self.alignment_of_ty(prop_ty)?.max(max_alignment)
+                    };
                 }
 
                 Ok(max_alignment)
