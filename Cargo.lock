@@ -1036,6 +1036,7 @@ dependencies = [
  "lume_mir",
  "lume_session",
  "lume_span",
+ "lume_type_metadata",
  "tracing",
 ]
 

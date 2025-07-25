@@ -1,4 +1,5 @@
 pub(crate) mod inst;
+pub(crate) mod metadata;
 pub(crate) mod ty;
 pub(crate) mod value;
 
@@ -52,6 +53,8 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
+        self.declare_type_metadata();
+
         let functions = std::mem::take(&mut self.context.mir.functions);
 
         for func in functions.values() {
@@ -218,7 +221,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         Ok(())
     }
 
-    pub(crate) fn declare_static_data(&self, key: &str, value: &[u8]) -> DataId {
+    pub(crate) fn declare_static_data_ctx(&self, key: &str, ctx: &DataDescription) -> DataId {
         if let Some(global) = self.static_data.read().unwrap().get(key) {
             *global
         } else {
@@ -230,15 +233,19 @@ impl<'ctx> CraneliftBackend<'ctx> {
                 .declare_data(&name, Linkage::Local, false, false)
                 .unwrap();
 
-            let mut data_ctx = DataDescription::new();
-            data_ctx.define(value.to_vec().into_boxed_slice());
-
-            self.module_mut().define_data(data_id, &data_ctx).unwrap();
+            self.module_mut().define_data(data_id, ctx).unwrap();
 
             self.static_data.write().unwrap().insert(key.to_owned(), data_id);
 
             data_id
         }
+    }
+
+    pub(crate) fn declare_static_data(&self, key: &str, value: &[u8]) -> DataId {
+        let mut data_ctx = DataDescription::new();
+        data_ctx.define(value.to_vec().into_boxed_slice());
+
+        self.declare_static_data_ctx(key, &data_ctx)
     }
 
     pub(crate) fn reference_static_data(&self, key: &str) -> Option<DataId> {

@@ -25,7 +25,7 @@ impl LowerFunction<'_> {
                     ret[0]
                 }
             }
-            lume_mir::Declaration::Intrinsic { name, args } => match *name {
+            lume_mir::Declaration::Intrinsic { name, args } => match name {
                 // Floating-pointer comparison
                 lume_mir::Intrinsic::FloatEq { .. } => self.fcmp(FloatCC::Equal, &args[0], &args[1]),
                 lume_mir::Intrinsic::FloatNe { .. } => self.fcmp(FloatCC::NotEqual, &args[0], &args[1]),
@@ -79,7 +79,13 @@ impl LowerFunction<'_> {
                 lume_mir::Intrinsic::IntOr { .. } | lume_mir::Intrinsic::BooleanOr => self.or(&args[0], &args[1]),
                 lume_mir::Intrinsic::IntXor { .. } => self.xor(&args[0], &args[1]),
 
-                lume_mir::Intrinsic::Metadata { .. } => todo!(),
+                lume_mir::Intrinsic::Metadata { metadata } => {
+                    let Some(value) = self.reference_static_data(&metadata.full_name) else {
+                        panic!("bug!: no type metadata allocated for `{}`", metadata.full_name);
+                    };
+
+                    value
+                }
             },
             lume_mir::Declaration::Reference { id } => self.use_var(*id),
             lume_mir::Declaration::Load { id } => self.load_var(*id),

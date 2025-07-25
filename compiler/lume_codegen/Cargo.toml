@@ -9,6 +9,7 @@ lume_errors = { path = "../lume_errors" }
 lume_mir = { path = "../lume_mir" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
+lume_type_metadata = { path = "../lume_type_metadata" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

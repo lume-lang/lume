@@ -133,8 +133,7 @@ impl LowerFunction<'_> {
 
                 self.alloc(cl_type)
             }
-            lume_mir::TypeKind::Metadata { .. } => todo!(),
-            lume_mir::TypeKind::Void => unreachable!(),
+            lume_mir::TypeKind::Metadata { .. } | lume_mir::TypeKind::Void => unreachable!(),
         }
     }
 }
