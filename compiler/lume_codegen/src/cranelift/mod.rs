@@ -217,6 +217,37 @@ impl<'ctx> CraneliftBackend<'ctx> {
 
         Ok(())
     }
+
+    pub(crate) fn declare_static_data(&self, key: &str, value: &[u8]) -> DataId {
+        if let Some(global) = self.static_data.read().unwrap().get(key) {
+            *global
+        } else {
+            let len = self.static_data.read().unwrap().len();
+            let name = format!("@__SYM_STATIC_{len}");
+
+            let data_id = self
+                .module_mut()
+                .declare_data(&name, Linkage::Local, false, false)
+                .unwrap();
+
+            let mut data_ctx = DataDescription::new();
+            data_ctx.define(value.to_vec().into_boxed_slice());
+
+            self.module_mut().define_data(data_id, &data_ctx).unwrap();
+
+            self.static_data.write().unwrap().insert(key.to_owned(), data_id);
+
+            data_id
+        }
+    }
+
+    pub(crate) fn reference_static_data(&self, key: &str) -> Option<DataId> {
+        self.static_data.read().unwrap().get(key).copied()
+    }
+
+    pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
+        self.declare_static_data(value, value.as_bytes())
+    }
 }
 
 trait MapModuleResult<T> {
@@ -509,40 +540,15 @@ impl<'ctx> LowerFunction<'ctx> {
         self.backend.module_mut().declare_data_in_func(data, self.builder.func)
     }
 
-    pub(crate) fn declare_static_data(&mut self, key: &str, value: &[u8]) -> DataId {
-        if let Some(global) = self.backend.static_data.read().unwrap().get(key) {
-            *global
-        } else {
-            let len = self.backend.static_data.read().unwrap().len();
-            let name = format!("@__SYM_STATIC_{len}");
+    pub(crate) fn reference_static_data(&mut self, key: &str) -> Option<Value> {
+        let data_id = self.backend.reference_static_data(key)?;
+        let local_id = self.declare_data_in_func(data_id);
 
-            let data_id = self
-                .backend
-                .module_mut()
-                .declare_data(&name, Linkage::Local, false, false)
-                .unwrap();
-
-            let mut data_ctx = DataDescription::new();
-            data_ctx.define(value.to_vec().into_boxed_slice());
-
-            self.backend.module_mut().define_data(data_id, &data_ctx).unwrap();
-
-            self.backend
-                .static_data
-                .write()
-                .unwrap()
-                .insert(key.to_owned(), data_id);
-
-            data_id
-        }
-    }
-
-    pub(crate) fn declare_static_string(&mut self, value: &str) -> DataId {
-        self.declare_static_data(value, value.as_bytes())
+        Some(self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id))
     }
 
     pub(crate) fn reference_static_string(&mut self, value: &str) -> Value {
-        let data_id = self.declare_static_string(value);
+        let data_id = self.backend.declare_static_string(value);
         let local_id = self.declare_data_in_func(data_id);
 
         self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id)
