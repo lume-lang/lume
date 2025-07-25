@@ -1262,7 +1262,16 @@ impl TypeDatabaseContext {
     /// Gets an iterator which iterates all [`Item`]-instances where
     /// the item refers to a [`Method`], which are defined on the given [`Item`].
     pub fn methods_on(&self, id: TypeId) -> impl Iterator<Item = &Method> {
-        self.methods().filter(move |m| m.callee.instance_of == id)
+        let mut methods: Vec<Box<dyn Iterator<Item = &Method>>> =
+            vec![Box::new(self.methods().filter(move |m| m.callee.instance_of == id))];
+
+        if let Some(type_param) = self.type_as_param(id) {
+            for constraint in &type_param.constraints {
+                methods.push(Box::new(self.methods_on(constraint.instance_of)));
+            }
+        }
+
+        methods.into_iter().flatten()
     }
 
     /// Gets an iterator which iterates all [`Item`]-instances where

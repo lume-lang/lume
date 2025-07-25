@@ -43,6 +43,14 @@ impl TyCheckCtx {
     /// Determines whether the given [`TypeRef`], `ty`, implements the given trait, `trait_id`.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
+        if let Some(type_param) = self.tdb().type_as_param(ty.instance_of) {
+            for constraint in &type_param.constraints {
+                if self.check_type_compatibility(constraint, trait_id)? {
+                    return Ok(true);
+                }
+            }
+        }
+
         for use_ in self.tdb().uses_on(ty) {
             if &use_.trait_ == trait_id {
                 // Make sure the given "trait" is actually a trait.
