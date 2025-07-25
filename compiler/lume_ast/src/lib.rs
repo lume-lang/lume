@@ -733,6 +733,7 @@ node_location!(UseTrait);
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub visibility: Visibility,
+    pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,

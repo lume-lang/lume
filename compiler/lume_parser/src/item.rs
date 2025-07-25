@@ -487,6 +487,7 @@ impl Parser {
         self.expect_fn()?;
 
         let start = visibility.location().start();
+        let external = self.check_external();
 
         let Ok(name) = self.parse_callable_name() else {
             return Err(err!(self, ExpectedFunctionName));
@@ -495,12 +496,13 @@ impl Parser {
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-        let block = self.parse_block()?;
+        let block = self.parse_opt_external_block(external)?;
 
         let end = block.location.end();
 
         Ok(TraitMethodImplementation {
             visibility,
+            external,
             name,
             parameters,
             type_parameters,
