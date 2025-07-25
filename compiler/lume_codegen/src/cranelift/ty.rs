@@ -50,7 +50,12 @@ impl LowerFunction<'_> {
             },
             lume_mir::Declaration::Call { func_id, .. } => {
                 let func = self.declared_func(*func_id);
-                let ret = func.sig.returns.first().unwrap();
+
+                // If the function has no return type, we assume a pointer
+                // type is fine.
+                let Some(ret) = func.sig.returns.first() else {
+                    return self.backend.cl_ptr_type();
+                };
 
                 ret.value_type
             }
