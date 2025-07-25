@@ -351,12 +351,14 @@ impl Trait {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
+    pub id: ItemId,
     pub name: Path,
 }
 
 impl Enum {
     pub fn new(reference: &lume_hir::EnumDefinition) -> Self {
         Self {
+            id: reference.id,
             name: reference.name.clone(),
         }
     }

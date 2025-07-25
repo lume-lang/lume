@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{FunctionId, ImplId, MethodId, PropertyId, TypeId, UseId};
+use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeId, UseId};
 
 use crate::{Item, TypeKindRef};
 
@@ -37,6 +37,18 @@ pub struct UseNotFound {
 #[diagnostic(message = "could not find item {id:?} in context")]
 pub struct TypeNotFound {
     pub id: TypeId,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find item {name:+} in context")]
+pub struct TypeNameNotFound {
+    pub name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "expected path {path:+} to have a parent")]
+pub struct PathWithoutParent {
+    pub path: Path,
 }
 
 #[derive(Diagnostic, Debug)]

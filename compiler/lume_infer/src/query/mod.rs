@@ -289,4 +289,78 @@ impl TyInferCtx {
 
         self.tdb().ty_expect_trait(use_ref.trait_.instance_of)
     }
+
+    /// Returns the enum definition with the given type ID.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_def_type(&self, ty: TypeId) -> Result<&lume_hir::EnumDefinition> {
+        let Some(parent_ty) = self.tdb().type_(ty) else {
+            return Err(lume_types::errors::TypeNotFound { id: ty }.into());
+        };
+
+        let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
+            return Err(lume_types::errors::UnexpectedTypeKind {
+                found: parent_ty.kind.as_kind_ref(),
+                expected: lume_types::TypeKindRef::Trait,
+            }
+            .into());
+        };
+
+        Ok(self.hir_expect_enum(enum_ty.id))
+    }
+
+    /// Returns the enum case definitions on the enum type with the given ID.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_cases_of(&self, ty: TypeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
+        Result::Ok(&self.enum_def_type(ty)?.cases)
+    }
+
+    /// Returns the enum case definitions, which is being referred to by the given expression.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_cases_expr(&self, id: ExpressionId) -> Result<&[lume_hir::EnumDefinitionCase]> {
+        self.enum_cases_of(self.type_of(id)?.instance_of)
+    }
+
+    /// Returns the enum case definitions on the enum type with the given name.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_cases_of_name(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {
+        let Some(parent_ty_ref) = self.find_type_ref(name)? else {
+            return Err(lume_types::errors::TypeNameNotFound { name: name.clone() }.into());
+        };
+
+        self.enum_cases_of(parent_ty_ref.instance_of)
+    }
+
+    /// Returns the enum case definition, which is being referred to by the given expression.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_case_expr(&self, id: ExpressionId) -> Result<&lume_hir::EnumDefinitionCase> {
+        let expr = self.hir_expect_expr(id);
+
+        if let lume_hir::ExpressionKind::Variant(var) = &expr.kind {
+            self.enum_case_with_name(&var.name)
+        } else {
+            panic!("bug!: attempted to find enum variant of non-variant expression")
+        }
+    }
+
+    /// Returns the enum case definition, which uses the given variant path.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_case_with_name(&self, variant: &Path) -> Result<&lume_hir::EnumDefinitionCase> {
+        let Some(parent_ty_path) = variant.clone().parent() else {
+            return Err(lume_types::errors::PathWithoutParent { path: variant.clone() }.into());
+        };
+
+        for case in self.enum_cases_of_name(&parent_ty_path)? {
+            if case.name.name() == variant.name() {
+                return Ok(case);
+            }
+        }
+
+        Err(diagnostics::MissingVariant {
+            source: variant.location,
+            type_name: parent_ty_path,
+            name: variant.clone(),
+        }
+        .into())
+    }
 }

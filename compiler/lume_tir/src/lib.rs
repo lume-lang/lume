@@ -85,7 +85,7 @@ impl PathSegment {
     /// Gets the type arguments of the path segment.
     pub fn type_arguments(&self) -> &[TypeRef] {
         match self {
-            Self::Namespace { .. } => &[],
+            Self::Namespace { .. } | Self::Variant { .. } => &[],
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments.as_slice(),
         }
     }
@@ -557,4 +557,5 @@ pub struct Variant {
     pub id: ExpressionId,
     pub name: Path,
     pub ty: TypeRef,
+    pub index: u8,
 }

@@ -276,14 +276,20 @@ impl LowerFunction<'_> {
 
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
         let name = self.path(&expr.name)?;
+        let enum_type = expr.name.clone().parent().unwrap();
+
         let ty = self
             .lower
             .tcx
-            .find_type_ref_from(&expr.name, DefId::Expression(expr.id))?
+            .find_type_ref_from(&enum_type, DefId::Expression(expr.id))?
             .unwrap();
 
+        let index = self.lower.tcx.enum_case_with_name(&expr.name)?.idx;
+
+        #[allow(clippy::cast_possible_truncation)]
         Ok(lume_tir::ExpressionKind::Variant(Box::new(lume_tir::Variant {
             id: expr.id,
+            index: index as u8,
             name,
             ty,
         })))

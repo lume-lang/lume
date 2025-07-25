@@ -209,8 +209,8 @@ impl LowerModule<'_> {
         self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
 
         let mut cases = Vec::with_capacity(expr.cases.len());
-        for case in expr.cases {
-            cases.push(self.def_enum_case(case)?);
+        for (idx, case) in expr.cases.into_iter().enumerate() {
+            cases.push(self.def_enum_case(idx, case)?);
         }
 
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
@@ -226,7 +226,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_enum_case(&self, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
+    fn def_enum_case(&self, idx: usize, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
 
@@ -236,6 +236,7 @@ impl LowerModule<'_> {
         }
 
         let symbol = hir::EnumDefinitionCase {
+            idx,
             name,
             parameters: parameters.into_iter().map(Box::new).collect(),
             location,

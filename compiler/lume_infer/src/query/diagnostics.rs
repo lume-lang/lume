@@ -1,7 +1,7 @@
 use std::{ops::Range, sync::Arc};
 
 use error_snippet_derive::Diagnostic;
-use lume_hir::{Identifier, PathSegment};
+use lume_hir::{Identifier, Path, PathSegment};
 use lume_span::{Location, SourceFile};
 use lume_types::NamedTypeRef;
 
@@ -49,6 +49,16 @@ pub struct SuggestedFunction {
     pub range: Range<usize>,
 
     pub function_name: PathSegment,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find variant", code = "LM4134")]
+pub struct MissingVariant {
+    #[label(source, "could not find variant {name} in type {type_name:+}")]
+    pub source: Location,
+
+    pub name: Path,
+    pub type_name: Path,
 }
 
 #[derive(Diagnostic, Debug)]

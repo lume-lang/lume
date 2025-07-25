@@ -115,6 +115,20 @@ impl TyInferCtx {
         ty
     }
 
+    /// Returns the [`lume_hir::EnumDefinition`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::EnumDefinition`] with the given ID was found.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_enum(&self, id: ItemId) -> &lume_hir::EnumDefinition {
+        let lume_hir::TypeDefinition::Enum(ty) = self.hir_expect_type(id) else {
+            panic!("expected HIR enum with ID of {id:?}")
+        };
+
+        ty
+    }
+
     /// Returns the [`lume_hir::Expression`] with the given ID, if any.
     ///
     /// # Panics
