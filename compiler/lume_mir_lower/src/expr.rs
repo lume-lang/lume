@@ -201,21 +201,14 @@ impl FunctionTransformer<'_> {
         let rhs = self.expression(&expr.rhs);
         let args = vec![lhs, rhs];
 
-        let expr_ty = &expr.lhs.ty;
-
-        let name = if expr_ty.is_bool() {
-            match expr.op {
-                lume_tir::LogicalOperator::And => lume_mir::Intrinsic::BooleanAnd,
-                lume_tir::LogicalOperator::Or => lume_mir::Intrinsic::BooleanOr,
-            }
-        } else {
-            unreachable!()
+        let name = match expr.op {
+            lume_tir::LogicalOperator::And => lume_mir::Intrinsic::BooleanAnd,
+            lume_tir::LogicalOperator::Or => lume_mir::Intrinsic::BooleanOr,
         };
 
         let decl = lume_mir::Declaration::Intrinsic { name, args };
-        let reg = self.declare(decl);
 
-        lume_mir::Operand::Load { id: reg }
+        lume_mir::Operand::Reference { id: self.declare(decl) }
     }
 
     fn member(&mut self, expr: &lume_tir::Member) -> lume_mir::Operand {
