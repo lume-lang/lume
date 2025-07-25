@@ -7,7 +7,7 @@ impl FunctionTransformer<'_> {
         match &expr.kind {
             lume_tir::ExpressionKind::Assignment(expr) => self.assignment(expr),
             lume_tir::ExpressionKind::Binary(expr) => self.binary(expr),
-            lume_tir::ExpressionKind::Cast(_) => todo!("cast MIR lowering"),
+            lume_tir::ExpressionKind::Cast(expr) => self.cast(expr),
             lume_tir::ExpressionKind::Construct(expr) => self.construct(expr),
             lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
             lume_tir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
@@ -61,6 +61,21 @@ impl FunctionTransformer<'_> {
         let reg = self.declare(decl);
 
         lume_mir::Operand::Load { id: reg }
+    }
+
+    fn cast(&mut self, expr: &lume_tir::Cast) -> lume_mir::Operand {
+        let expr_ty = &expr.source.ty;
+        debug_assert!(expr_ty.is_integer());
+
+        let source = self.expression(&expr.source);
+        let operand = self.declare(lume_mir::Declaration::Operand(source));
+
+        let decl = lume_mir::Declaration::Cast {
+            operand,
+            bits: expr.target.bitwidth(),
+        };
+
+        lume_mir::Operand::Reference { id: self.declare(decl) }
     }
 
     fn construct(&mut self, expr: &lume_tir::Construct) -> lume_mir::Operand {
