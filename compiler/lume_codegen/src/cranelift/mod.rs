@@ -406,6 +406,29 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().bxor(x_val, y_val)
     }
 
+    pub(crate) fn icast(&mut self, reg: RegisterId, to: u8) -> Value {
+        let lume_mir::TypeKind::Integer { bits: from, signed } = self.func.registers.register_ty(reg).kind else {
+            panic!("bug!: attempted to use icast on non-integer register");
+        };
+
+        // Cast from larger int to smaller int (ex. i64 -> i32)
+        if from > to {
+            let reduced_ty = types::Type::int(u16::from(to)).unwrap();
+            let value = self.use_var(reg);
+
+            return self.builder.ins().ireduce(reduced_ty, value);
+        }
+
+        let extended_ty = types::Type::int(u16::from(to)).unwrap();
+        let value = self.use_var(reg);
+
+        if signed {
+            self.builder.ins().sextend(extended_ty, value)
+        } else {
+            self.builder.ins().uextend(extended_ty, value)
+        }
+    }
+
     pub(crate) fn fcmp(&mut self, cmp: FloatCC, x: &lume_mir::Operand, y: &lume_mir::Operand) -> Value {
         let x_val = self.cg_operand(x);
         let y_val = self.cg_operand(y);
@@ -439,6 +462,25 @@ impl<'ctx> LowerFunction<'ctx> {
         let y_val = self.cg_operand(y);
 
         self.builder.ins().fdiv(x_val, y_val)
+    }
+
+    pub(crate) fn fcast(&mut self, reg: RegisterId, to: u8) -> Value {
+        let lume_mir::TypeKind::Float { bits: from } = self.func.registers.register_ty(reg).kind else {
+            panic!("bug!: attempted to use fcast on non-float register");
+        };
+
+        let value = self.use_var(reg);
+        let cast_ty = match to {
+            32 => types::F32,
+            64 => types::F64,
+            _ => unreachable!(),
+        };
+
+        if from < to {
+            self.builder.ins().fpromote(cast_ty, value)
+        } else {
+            self.builder.ins().fdemote(cast_ty, value)
+        }
     }
 
     #[allow(clippy::cast_lossless)]

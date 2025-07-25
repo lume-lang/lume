@@ -6,7 +6,16 @@ impl LowerFunction<'_> {
     pub(crate) fn cg_declaration(&mut self, decl: &lume_mir::Declaration) -> Value {
         match decl {
             lume_mir::Declaration::Operand(op) => self.cg_operand(op),
-            lume_mir::Declaration::Cast { .. } => todo!(),
+            lume_mir::Declaration::Cast { operand, bits } => {
+                let operand_ty = self.func.registers.register_ty(*operand);
+                let is_int = matches!(operand_ty.kind, lume_mir::TypeKind::Integer { .. });
+
+                if is_int {
+                    self.icast(*operand, *bits)
+                } else {
+                    self.fcast(*operand, *bits)
+                }
+            }
             lume_mir::Declaration::Call { func_id, args } => {
                 let ret = self.call(*func_id, args);
 
