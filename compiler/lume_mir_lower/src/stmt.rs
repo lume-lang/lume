@@ -30,7 +30,6 @@ impl FunctionTransformer<'_> {
         let register = if is_ref_ty {
             match value {
                 lume_mir::Operand::Reference { id } => id,
-                lume_mir::Operand::String { .. } => todo!("define global string constants"),
                 _ => self.declare_value(value),
             }
         } else {

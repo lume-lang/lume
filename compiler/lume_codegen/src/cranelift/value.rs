@@ -102,7 +102,7 @@ impl LowerFunction<'_> {
                 64 => self.builder.ins().f64const(*value),
                 _ => unreachable!(),
             },
-            lume_mir::Operand::String { .. } => todo!(),
+            lume_mir::Operand::String { value } => self.reference_static_string(value.as_str()),
             lume_mir::Operand::Load { id } => self.load_var(*id),
             lume_mir::Operand::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
             lume_mir::Operand::Reference { id } => self.use_var(*id),

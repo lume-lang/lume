@@ -2,16 +2,19 @@ pub(crate) mod inst;
 pub(crate) mod ty;
 pub(crate) mod value;
 
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
+};
 
 use cranelift::{
     codegen::{
-        ir::{BlockArg, immediates::Offset32},
+        ir::{BlockArg, GlobalValue, immediates::Offset32},
         verify_function,
     },
     prelude::*,
 };
-use cranelift_module::Module;
+use cranelift_module::{DataDescription, DataId, Linkage, Module};
 use cranelift_object::{ObjectBuilder, ObjectModule};
 use error_snippet::SimpleDiagnostic;
 use indexmap::IndexMap;
@@ -37,6 +40,8 @@ pub(crate) struct CraneliftBackend<'ctx> {
 
     declared_funcs: IndexMap<lume_mir::FunctionId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
+
+    static_data: RwLock<HashMap<String, DataId>>,
 }
 
 impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
@@ -120,6 +125,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
             module: Some(Arc::new(RwLock::new(module))),
             declared_funcs: IndexMap::new(),
             intrinsics,
+            static_data: RwLock::new(HashMap::new()),
         })
     }
 
@@ -485,13 +491,61 @@ impl<'ctx> LowerFunction<'ctx> {
 
     #[allow(clippy::cast_lossless)]
     pub(crate) fn alloc(&mut self, ty: types::Type) -> Value {
+        self.alloca(ty.bytes() as usize)
+    }
+
+    #[allow(clippy::cast_lossless, clippy::cast_possible_wrap)]
+    pub(crate) fn alloca(&mut self, size: usize) -> Value {
         let malloc_id = self.backend.intrinsics.malloc;
         let malloc = self.get_func(malloc_id);
 
-        let size = self.builder.ins().iconst(types::I64, ty.bytes() as i64);
+        let size = self.builder.ins().iconst(types::I64, size as i64);
         let call = self.builder.ins().call(malloc, &[size]);
 
         self.builder.inst_results(call)[0]
+    }
+
+    pub(crate) fn declare_data_in_func(&mut self, data: DataId) -> GlobalValue {
+        self.backend.module_mut().declare_data_in_func(data, self.builder.func)
+    }
+
+    pub(crate) fn declare_static_data(&mut self, key: &str, value: &[u8]) -> DataId {
+        if let Some(global) = self.backend.static_data.read().unwrap().get(key) {
+            *global
+        } else {
+            let len = self.backend.static_data.read().unwrap().len();
+            let name = format!("@__SYM_STATIC_{len}");
+
+            let data_id = self
+                .backend
+                .module_mut()
+                .declare_data(&name, Linkage::Local, false, false)
+                .unwrap();
+
+            let mut data_ctx = DataDescription::new();
+            data_ctx.define(value.to_vec().into_boxed_slice());
+
+            self.backend.module_mut().define_data(data_id, &data_ctx).unwrap();
+
+            self.backend
+                .static_data
+                .write()
+                .unwrap()
+                .insert(key.to_owned(), data_id);
+
+            data_id
+        }
+    }
+
+    pub(crate) fn declare_static_string(&mut self, value: &str) -> DataId {
+        self.declare_static_data(value, value.as_bytes())
+    }
+
+    pub(crate) fn reference_static_string(&mut self, value: &str) -> Value {
+        let data_id = self.declare_static_string(value);
+        let local_id = self.declare_data_in_func(data_id);
+
+        self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id)
     }
 
     pub(crate) fn call(&mut self, func: lume_mir::FunctionId, args: &[lume_mir::Operand]) -> &[Value] {
