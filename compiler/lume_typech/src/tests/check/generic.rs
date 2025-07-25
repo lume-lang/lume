@@ -484,3 +484,33 @@ fn typech_generic_type_method_instance_call_returned_type_incomp() {
         }"
     );
 }
+
+#[test]
+fn typech_call_trait_method_unbound() {
+    assert_typech_snapshot!(
+        "trait B {
+            fn value(self) -> Int32 {
+                return 0;
+            }
+        }
+
+        fn foo<T>(val: T) {
+            let _: Int32 = val.value();
+        }"
+    );
+}
+
+#[test]
+fn typech_call_trait_method_bound() {
+    assert_typech_snapshot!(
+        "trait B {
+            fn value(self) -> Int32 {
+                return 0;
+            }
+        }
+
+        fn foo<T: B>(val: T) {
+            let _: Int32 = val.value();
+        }"
+    );
+}
