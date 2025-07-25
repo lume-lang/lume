@@ -50,12 +50,14 @@ impl<'ctx> LlvmBackend<'ctx> {
 }
 
 impl<'ctx> crate::Backend<'ctx> for LlvmBackend<'ctx> {
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn initialize(&mut self) -> lume_errors::Result<()> {
         inkwell::targets::Target::initialize_native(&InitializationConfig::default()).unwrap();
 
         Ok(())
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
         let module = self.build();
 

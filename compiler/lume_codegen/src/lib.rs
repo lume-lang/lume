@@ -41,6 +41,7 @@ impl<'ctx> Generator<'ctx> {
     /// # Errors
     ///
     /// Returns `Err` if the selected backend returned an error while generating object files.
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.path.display()), err)]
     pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<CompiledModule> {
         let context = Context { package, mir, options };
 

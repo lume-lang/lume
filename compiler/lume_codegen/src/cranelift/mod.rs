@@ -36,10 +36,12 @@ pub(crate) struct CraneliftBackend<'ctx> {
 }
 
 impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn initialize(&mut self) -> lume_errors::Result<()> {
         Ok(())
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
         let functions = std::mem::take(&mut self.context.mir.functions);
 
@@ -127,6 +129,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         self.module.as_ref().unwrap().try_write().unwrap()
     }
 
+    #[tracing::instrument(level = "TRACE", skip(module), err)]
     fn declare_external_function(
         module: &mut ObjectModule,
         name: &'static str,
@@ -150,6 +153,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         Ok(func_id)
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %func.name))]
     fn declare_function(&mut self, func: &lume_mir::Function) -> Signature {
         let module = self.module();
         let mut sig = module.make_signature();
@@ -169,6 +173,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         sig
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %func.name), err)]
     fn define_function(
         &mut self,
         func: &lume_mir::Function,
@@ -251,12 +256,14 @@ impl<'ctx> LowerFunction<'ctx> {
         self.backend.module_mut().declare_func_in_func(id, self.builder.func)
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn seal_block(&mut self, id: lume_mir::BasicBlockId) {
         let cg_block = *self.blocks.get(&id).unwrap();
 
         self.builder.seal_block(cg_block);
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn declare_var(&mut self, register: RegisterId, ty: Type) -> Variable {
         let var = self.builder.declare_var(ty);
 
