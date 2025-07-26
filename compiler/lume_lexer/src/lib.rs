@@ -447,6 +447,9 @@ pub struct Lexer {
     /// Declares the source to lex tokens from.
     pub source: Arc<SourceFile>,
 
+    /// Represents an index of all codepoints within the source content.
+    indexed_source: Vec<usize>,
+
     /// Defines the current position in the source.
     position: usize,
 
@@ -457,8 +460,11 @@ pub struct Lexer {
 impl Lexer {
     /// Creates a new lexer instance.
     pub fn new(source: Arc<SourceFile>) -> Self {
+        let indexed_source = source.content.char_indices().map(|(i, _)| i).collect();
+
         Lexer {
             length: source.content.len(),
+            indexed_source,
             source,
             position: 0,
         }
@@ -475,7 +481,7 @@ impl Lexer {
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn current_char(&self) -> Option<char> {
-        self.source.content.as_bytes().get(self.position).map(|c| *c as char)
+        self.at_offset(0)
     }
 
     /// Tries to get the character at the current cursor position.
@@ -489,15 +495,57 @@ impl Lexer {
 
     /// Tries to get the character which is at the current cursor position, offset by `offset`.
     ///
+    /// Returns `None` if the cursor is at the end of the source.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn at_offset(&self, offset: usize) -> Option<char> {
+        let idx = self.position + offset;
+
+        if idx >= self.indexed_source.len() {
+            return None;
+        }
+
+        let start = self.indexed_source[idx];
+        let end = if idx + 1 < self.indexed_source.len() {
+            self.indexed_source[idx + 1]
+        } else {
+            self.length
+        };
+
+        self.source.content.get(start..end)?.chars().next()
+    }
+
+    /// Tries to get the character which is at the current cursor position, offset by `offset`.
+    ///
     /// Returns `\0` if the cursor is at the end of the source.
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn at_offset(&self, offset: usize) -> char {
-        self.source
-            .content
-            .as_bytes()
-            .get(self.position + offset)
-            .map_or('\0', |c| *c as char)
+    fn at_offset_or_eof(&self, offset: usize) -> char {
+        self.at_offset(offset).unwrap_or('\0')
+    }
+
+    /// Tries to get the slice of the content stream, given the index and length.
+    ///
+    /// Returns an empty string if the cursor is at the end of the source.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn content_slice(&self, start: usize, mut end: usize) -> &str {
+        if start > end || start >= self.indexed_source.len() {
+            return "";
+        }
+
+        if end >= self.indexed_source.len() {
+            end = self.indexed_source.len();
+        }
+
+        let byte_start = self.indexed_source[start];
+        let byte_end = if end < self.indexed_source.len() {
+            self.indexed_source[end]
+        } else {
+            self.length
+        };
+
+        self.source.content.get(byte_start..byte_end).unwrap_or_default()
     }
 
     /// Advances the cursor position of the lexer to the next line.
@@ -544,14 +592,14 @@ impl Lexer {
     fn take_until(&mut self, c: char) -> &str {
         let start = self.position;
 
-        let sliced = &self.source.content[start..];
+        let sliced = self.content_slice(start, self.length);
         let found_idx = match sliced.find(c).map(|i| i + start) {
             Some(idx) => idx,
             None => self.source.content.len(),
         };
 
         self.position = found_idx;
-        &self.source.content[start..found_idx]
+        self.content_slice(start, found_idx)
     }
 
     /// Gets characters while the predicate returns `true`.
@@ -562,7 +610,7 @@ impl Lexer {
 
         self.eat_while(predicate);
 
-        self.source.content[start..self.position].to_string()
+        self.content_slice(start, self.position).to_string()
     }
 
     /// Skips characters while the predicate returns `true`.
@@ -741,7 +789,7 @@ impl Lexer {
     #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
     fn symbol(&mut self) -> Result<Token> {
         let max_len = (self.position + 3).min(self.length);
-        let slice = &self.source.content[self.position..max_len];
+        let slice = self.content_slice(self.position, self.position + max_len);
 
         let chars: Vec<char> = slice.chars().collect();
         let (kind, len) = match self.symbol_value(&chars) {
@@ -840,7 +888,7 @@ impl Lexer {
 
         // Attempt to parse any following groups, such as decimal point or float exponent.
         match self.current_char_or_eof() {
-            '.' if self.at_offset(1).is_ascii_digit() => {
+            '.' if self.at_offset_or_eof(1).is_ascii_digit() => {
                 self.next();
 
                 // Check for digits following the decimal point
@@ -865,7 +913,7 @@ impl Lexer {
         }
 
         let end_index = self.position;
-        let number_str = self.source.content[start_index..end_index].to_string();
+        let number_str = self.content_slice(start_index, end_index).to_string();
 
         let kind = match self.current_char_or_eof() {
             '_' => {
@@ -1301,5 +1349,10 @@ mod tests {
                 assert_eq!(&err.message(), "expected ending quote");
             })
             .unwrap_err();
+    }
+
+    #[test]
+    fn test_fuzz() {
+        lex_all("1_1_").unwrap();
     }
 }
