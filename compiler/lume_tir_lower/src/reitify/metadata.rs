@@ -34,6 +34,7 @@ impl ReificationPass<'_> {
         let type_arguments = type_ref
             .type_arguments
             .iter()
+            .filter(|arg| self.tcx.is_type_parameter(arg).unwrap_or(false))
             .map(|arg| self.build_type_metadata_of(arg))
             .collect::<Result<Vec<_>>>()?;
 
