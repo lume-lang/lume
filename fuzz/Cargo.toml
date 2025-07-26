@@ -1,0 +1,36 @@
+[package]
+name = "lume-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+lume_lexer = { path = "../compiler/lume_lexer" }
+lume_parser = { path = "../compiler/lume_parser" }
+lume_span = { path = "../compiler/lume_span" }
+
+[[bin]]
+name = "fuzz_lexer"
+path = "fuzz_targets/lume_lexer.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_parser"
+path = "fuzz_targets/lume_parser.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_parser_expr"
+path = "fuzz_targets/lume_parser_expr.rs"
+test = false
+doc = false
+bench = false

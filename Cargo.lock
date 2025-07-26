@@ -894,6 +894,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
 
 [[package]]
+name = "libfuzzer-sys"
+version = "0.4.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5037190e1f70cbeef565bd267599242926f724d3b8a9f510fd7e0b540cfa4404"
+dependencies = [
+ "arbitrary",
+ "cc",
+]
+
+[[package]]
 name = "libgit2-sys"
 version = "0.18.1+1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -994,6 +1004,16 @@ version = "0.1.0"
 dependencies = [
  "lume_cli",
  "lume_driver",
+]
+
+[[package]]
+name = "lume-fuzz"
+version = "0.0.0"
+dependencies = [
+ "libfuzzer-sys",
+ "lume_lexer",
+ "lume_parser",
+ "lume_span",
 ]
 
 [[package]]
