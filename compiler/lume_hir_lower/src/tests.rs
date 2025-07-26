@@ -653,3 +653,9 @@ fn test_duplicate_type_param() {
     assert_snap_eq!("fn foo<T1, T2>() { }", "valid");
     assert_err_snap_eq!("fn foo<T, T>() { }", "duplicate");
 }
+
+#[test]
+fn test_duplicate_param() {
+    assert_snap_eq!("fn foo(x: Int32, y: Int32) { }", "valid");
+    assert_err_snap_eq!("fn foo(x: Int32, x: Int32) { }", "duplicate");
+}

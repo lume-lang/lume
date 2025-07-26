@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use error_snippet::Result;
 use lume_span::DefId;
 use lume_span::MethodId;
@@ -281,6 +283,7 @@ impl LowerModule<'_> {
     fn parameters(&mut self, params: Vec<ast::Parameter>, allow_self: bool) -> Result<Vec<hir::Parameter>> {
         let param_len = params.len();
         let mut parameters = Vec::with_capacity(param_len);
+        let mut names: HashSet<lume_ast::Identifier> = HashSet::with_capacity(param_len);
 
         for (index, param) in params.into_iter().enumerate() {
             // Make sure that `self` is the first parameter.
@@ -315,6 +318,18 @@ impl LowerModule<'_> {
                 }
                 .into());
             }
+
+            if let Some(existing) = names.get(&param.name) {
+                return Err(crate::errors::DuplicateParameter {
+                    source: self.file.clone(),
+                    duplicate_range: param.location.0.clone(),
+                    original_range: existing.location.0.clone(),
+                    name: param.name.to_string(),
+                }
+                .into());
+            }
+
+            names.insert(param.name.clone());
 
             parameters.push(self.parameter(index, param)?);
         }

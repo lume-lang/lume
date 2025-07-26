@@ -114,3 +114,18 @@ pub struct DuplicateTypeParameter {
 
     pub name: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "duplicate parameter", code = "LM3030")]
+pub struct DuplicateParameter {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("parameter {name} is already defined")]
+    pub duplicate_range: Range<usize>,
+
+    #[label(note, "original parameter found here")]
+    pub original_range: Range<usize>,
+
+    pub name: String,
+}
