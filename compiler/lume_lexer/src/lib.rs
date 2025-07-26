@@ -114,6 +114,7 @@ pub enum TokenKind {
     Mul,
     MulAssign,
     Namespace,
+    Newline,
     NotEqual,
     PathSeparator,
     Priv,
@@ -274,6 +275,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Mul => "*",
             TokenKind::MulAssign => "*=",
             TokenKind::Namespace => "namespace",
+            TokenKind::Newline => "\\n",
             TokenKind::NotEqual => "!=",
             TokenKind::Integer(_) => "integer",
             TokenKind::PathSeparator => "::",
@@ -442,10 +444,20 @@ impl From<Token> for Identifier {
     }
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Whitespace {
+    #[default]
+    Ignore,
+    Newline,
+}
+
 #[derive(Debug)]
 pub struct Lexer {
     /// Declares the source to lex tokens from.
     pub source: Arc<SourceFile>,
+
+    /// Defines how to lex whitespace in the source content.
+    whitespace: Whitespace,
 
     /// Represents an index of all codepoints within the source content.
     indexed_source: Vec<usize>,
@@ -464,10 +476,16 @@ impl Lexer {
 
         Lexer {
             length: source.content.len(),
+            whitespace: Whitespace::default(),
             indexed_source,
             source,
             position: 0,
         }
+    }
+
+    #[inline]
+    pub fn enable_whitespace(&mut self) {
+        self.whitespace = Whitespace::Newline;
     }
 
     #[inline]
@@ -665,6 +683,18 @@ impl Lexer {
 
             // String literals
             '"' => self.string()?,
+
+            // Newlines
+            '\n' | '\r' if self.whitespace == Whitespace::Newline => {
+                self.next();
+
+                return Ok(Token {
+                    kind: TokenKind::Newline,
+                    index: (start_idx..start_idx + 1),
+                    value: None,
+                    ty: None,
+                });
+            }
 
             // Whitespace
             ' ' | '\t' | '\n' | '\r' => {
