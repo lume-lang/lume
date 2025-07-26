@@ -487,6 +487,21 @@ impl TypeKind {
             TypeKind::TypeParameter(_) => TypeKindRef::TypeParameter,
         }
     }
+
+    pub fn is_generic(&self) -> bool {
+        match self {
+            TypeKind::Void
+            | TypeKind::Bool
+            | TypeKind::Int(_)
+            | TypeKind::UInt(_)
+            | TypeKind::Float(_)
+            | TypeKind::String
+            | TypeKind::TypeParameter(_)
+            | TypeKind::User(UserType::Enum(_)) => false,
+            TypeKind::User(UserType::Struct(def)) => !def.type_parameters.is_empty(),
+            TypeKind::User(UserType::Trait(def)) => !def.type_parameters.is_empty(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -647,6 +662,14 @@ impl Type {
             }))),
             name: Path::array(),
         }
+    }
+
+    pub fn is_type_parameter(&self) -> bool {
+        matches!(self.kind, TypeKind::TypeParameter(_))
+    }
+
+    pub fn is_generic(&self) -> bool {
+        self.kind.is_generic()
     }
 }
 

@@ -7,7 +7,7 @@ pub mod reitify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_span::Internable;
+use lume_span::{Internable, Location};
 use lume_tir::{TypedIR, VariableId, VariableSource};
 use lume_type_metadata::{FunctionId, FunctionKind};
 use lume_typech::TyCheckCtx;
@@ -42,6 +42,17 @@ impl<'tcx> Lower<'tcx> {
         self.lower_callables()?;
 
         let mut reitify_pass = reitify::ReificationPass::new(self.tcx);
+
+        for ty in self.tcx.db().types() {
+            // We only build type metadata of concrete types, so we skip
+            // generic types and type parameters.
+            if ty.is_generic() || ty.is_type_parameter() {
+                continue;
+            }
+
+            let type_ref = lume_types::TypeRef::new(ty.id, Location::empty());
+            reitify_pass.build_type_metadata_of(&type_ref)?;
+        }
 
         for function in self.ir.functions.values_mut() {
             reitify_pass.execute(function)?;
