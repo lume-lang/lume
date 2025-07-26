@@ -490,7 +490,7 @@ impl Lexer {
 
     #[inline]
     pub fn is_eof(&self) -> bool {
-        self.position >= self.source.content.len()
+        self.position >= self.indexed_source.len()
     }
 
     /// Tries to get the character at the current cursor position.
@@ -664,9 +664,8 @@ impl Lexer {
         let start_idx = self.position;
         tracing::Span::current().record("start_idx", start_idx);
 
-        let first_char = match self.current_char_or_eof() {
-            '\0' => return Ok(Token::empty(TokenKind::Eof)),
-            c => c,
+        let Some(first_char) = self.current_char() else {
+            return Ok(Token::empty(TokenKind::Eof));
         };
 
         tracing::trace!("first character: {first_char:?}");
@@ -724,22 +723,23 @@ impl Lexer {
 
     /// Parses a comment token at the current cursor position.
     #[tracing::instrument(level = "DEBUG", skip(self), ret)]
-    fn comment(&mut self) -> Token {
-        let kind = self.eat_comment_prefix();
+    fn comment(&mut self) -> Option<Token> {
+        let kind = self.eat_comment_prefix()?;
         let content = self.take_until('\n').trim().to_string();
 
-        Token::new(kind, content)
+        Some(Token::new(kind, content))
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn eat_comment_prefix(&mut self) -> TokenKind {
+    fn eat_comment_prefix(&mut self) -> Option<TokenKind> {
         // Skip over all the whitespace characters, before attempting to eat the comment prefix.
         self.eat_while(char::is_whitespace);
 
         // Eat the comment prefix characters.
         match self.take_while(|c| c == '/').len() {
-            3 => TokenKind::DocComment,
-            _ => TokenKind::Comment,
+            0..=1 => None,
+            3 => Some(TokenKind::DocComment),
+            _ => Some(TokenKind::Comment),
         }
     }
 
@@ -751,7 +751,9 @@ impl Lexer {
 
         loop {
             let position = self.position;
-            let token = self.comment();
+            let Some(token) = self.comment() else {
+                break;
+            };
 
             // If this is the first iteration, update the kind of token.
             if comments.is_empty() {
