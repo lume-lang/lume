@@ -219,7 +219,7 @@ impl Function {
 
         if let Declaration::Operand(op) = &decl {
             match op {
-                Operand::Load { id } => *id,
+                Operand::Load { id } | Operand::Reference { id } => *id,
                 _ if is_ref_type => {
                     let ptr = self.add_register(ty.clone());
                     self.current_block_mut().allocate(ptr, ty);

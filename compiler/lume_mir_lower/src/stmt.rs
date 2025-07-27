@@ -29,7 +29,8 @@ impl FunctionTransformer<'_> {
 
         let register = if is_ref_ty {
             match value {
-                lume_mir::Operand::Reference { id } => id,
+                lume_mir::Operand::Reference { id } | lume_mir::Operand::Load { id } => id,
+                lume_mir::Operand::LoadField { target, .. } => target,
                 _ => self.declare_value(value),
             }
         } else {
