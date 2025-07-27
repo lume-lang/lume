@@ -24,13 +24,29 @@ impl TyCheckCtx {
     fn typech_expr_item(&self, symbol: &lume_hir::Item) -> Result<()> {
         match symbol {
             lume_hir::Item::Type(ty) => match &**ty {
+                lume_hir::TypeDefinition::Struct(struct_def) => self.define_struct_type(struct_def),
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
-                _ => Ok(()),
+                lume_hir::TypeDefinition::Enum(_) => Ok(()),
             },
             lume_hir::Item::Impl(impl_def) => self.define_impl_type(impl_def),
             lume_hir::Item::Function(func) => self.define_function_scope(func),
             lume_hir::Item::Use(_) => Ok(()),
         }
+    }
+
+    fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
+        for property in &struct_def.properties {
+            if let Some(default_value) = &property.default_value {
+                let property_type = self.mk_type_ref_from(&property.property_type, DefId::Item(struct_def.id))?;
+                let default_value_type = self.type_of_expr(default_value)?;
+
+                if let Err(err) = self.ensure_type_compatibility(&default_value_type, &property_type) {
+                    self.dcx().emit(err);
+                }
+            }
+        }
+
+        Ok(())
     }
 
     fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
