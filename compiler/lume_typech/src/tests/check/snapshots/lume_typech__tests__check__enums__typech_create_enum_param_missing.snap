@@ -1,0 +1,11 @@
+---
+source: compiler/lume_typech/src/tests/check/enums.rs
+description: "enum Foo { A, B(Int32) }\n\n        fn foo() {\n            let a = Foo::B;\n        }"
+---
+× error[LM4116]: argument count mismatch
+   ╭───────────
+ 3 │         fn foo() {
+ 4 │             let a = Foo::B;
+   │                          ^ expected 1 arguments, but got 0
+ 5 │         }
+   ╰──

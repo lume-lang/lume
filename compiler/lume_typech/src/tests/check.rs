@@ -1,4 +1,5 @@
 mod construct;
+mod enums;
 mod generic;
 
 use crate::assert_typech_snapshot;
