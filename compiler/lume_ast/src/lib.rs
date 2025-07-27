@@ -413,12 +413,16 @@ impl Path {
 
     #[must_use]
     pub fn with_root(namespace: Vec<impl Into<PathSegment>>, name: impl Into<PathSegment>) -> Self {
-        let root = namespace.into_iter().map(Into::<PathSegment>::into).collect();
+        let name: PathSegment = name.into();
+        let root: Vec<PathSegment> = namespace.into_iter().map(Into::<PathSegment>::into).collect();
+
+        let start = root.first().map_or(name.location().start(), |s| s.location().start());
+        let end = name.location().end();
 
         Self {
             root,
-            name: name.into(),
-            location: Location(0..0),
+            name,
+            location: Location(start..end),
         }
     }
 
