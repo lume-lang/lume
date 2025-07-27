@@ -1136,6 +1136,26 @@ impl TypeDatabaseContext {
         }
     }
 
+    /// Expects the [`Type`] with the given ID to be a [`Struct`] kind.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the type wasn't found or if the found type did not
+    /// have a [`TypeKindRef`] of [`TypeKindRef::Struct`].
+    pub fn ty_expect_struct(&self, id: TypeId) -> Result<&Struct> {
+        let ty = self.ty_expect(id)?;
+
+        if let TypeKind::User(UserType::Struct(tr)) = &ty.kind {
+            Ok(tr.as_ref())
+        } else {
+            Err(UnexpectedTypeKind {
+                expected: TypeKindRef::Struct,
+                found: ty.kind.as_kind_ref(),
+            }
+            .into())
+        }
+    }
+
     /// Expects the [`Type`] with the given ID to be a [`Trait`] kind.
     ///
     /// # Errors

@@ -369,7 +369,7 @@ impl TyCheckCtx {
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
         for property in properties {
-            let Some(field) = expr.fields.iter().find(|field| field.name.as_str() == property.name) else {
+            let Some(field) = self.constructer_field_of(expr, &property.name) else {
                 self.dcx().emit(
                     MissingPropertyField {
                         source: expr.location,

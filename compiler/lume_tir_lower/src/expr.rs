@@ -78,9 +78,19 @@ impl LowerFunction<'_> {
             .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
             .unwrap();
 
-        let fields = expr
-            .fields
-            .iter()
+        let mut fields = expr.fields.clone();
+
+        let constructed_type = self.lower.tcx.find_type_ref(&expr.path)?.unwrap();
+        let properties = self.lower.tcx.tdb().find_properties(constructed_type.instance_of);
+
+        for property in properties {
+            if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, &property.name) {
+                fields.push(default_field);
+            }
+        }
+
+        let fields = fields
+            .into_iter()
             .map(|field| {
                 let name = field.name.to_string().intern();
                 let value = self.expression(&field.value)?;

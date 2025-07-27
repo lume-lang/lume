@@ -93,6 +93,7 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Item`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_item(&self, id: ItemId) -> &lume_hir::Item {
         match self.hir.items.get(&id) {
@@ -106,10 +107,26 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::TypeDefinition`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_type(&self, id: ItemId) -> &lume_hir::TypeDefinition {
         let lume_hir::Item::Type(ty) = self.hir_expect_item(id) else {
             panic!("expected HIR type with ID of {id:?}")
+        };
+
+        ty
+    }
+
+    /// Returns the [`lume_hir::StructDefinition`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::StructDefinition`] with the given ID was found.
+    #[track_caller]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_struct(&self, id: ItemId) -> &lume_hir::StructDefinition {
+        let lume_hir::TypeDefinition::Struct(ty) = self.hir_expect_type(id) else {
+            panic!("expected HIR struct with ID of {id:?}")
         };
 
         ty
@@ -120,6 +137,7 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::EnumDefinition`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_enum(&self, id: ItemId) -> &lume_hir::EnumDefinition {
         let lume_hir::TypeDefinition::Enum(ty) = self.hir_expect_type(id) else {
@@ -134,6 +152,7 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Expression`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_expr(&self, id: lume_span::ExpressionId) -> &lume_hir::Expression {
         match self.hir.expressions.get(&id) {
@@ -147,6 +166,7 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Statement`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_stmt(&self, id: lume_span::StatementId) -> &lume_hir::Statement {
         match self.hir.statements.get(&id) {
@@ -160,6 +180,7 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// Panics if no [`lume_hir::Def`] with the given ID was found.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_def(&'_ self, id: lume_span::DefId) -> lume_hir::Def<'_> {
         match self.hir_def(id) {
@@ -170,6 +191,7 @@ impl TyInferCtx {
 
     /// Returns the parent of the given HIR element, if any is found.
     #[cached_query]
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_parent_of(&self, def: DefId) -> Option<DefId> {
         self.ancestry.get(&def).copied()
@@ -177,6 +199,7 @@ impl TyInferCtx {
 
     /// Returns an iterator for the IDs in the ancestry tree above
     /// the given HIR [`DefId`] node.
+    #[track_caller]
     pub fn hir_parent_id_iter(&self, def: DefId) -> ParentHirIterator<'_> {
         ParentHirIterator {
             tcx: self,
@@ -186,11 +209,13 @@ impl TyInferCtx {
 
     /// Returns the parent of the given HIR element, if any is found.
     #[tracing::instrument(level = "TRACE", skip(self))]
+    #[track_caller]
     pub fn hir_parent_iter(&self, def: DefId) -> impl Iterator<Item = lume_hir::Def<'_>> {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_def(id))
     }
 
     /// Attempts to find the closes loop from the given definition.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_loop_target(&self, source: DefId) -> Option<&lume_hir::Statement> {
         for parent in self.hir_parent_iter(source) {
@@ -207,6 +232,7 @@ impl TyInferCtx {
     }
 
     /// Attempts to find the closes loop from the given statement.
+    #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_loop_target_stmt(&self, id: StatementId) -> Option<&lume_hir::Statement> {
         self.hir_loop_target(DefId::Statement(id))
