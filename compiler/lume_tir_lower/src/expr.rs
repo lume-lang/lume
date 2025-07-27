@@ -248,7 +248,7 @@ impl LowerFunction<'_> {
         let callee = self.expression(&expr.callee)?;
         let name = expr.name.intern();
 
-        let callee_ty = self.lower.tcx.type_of(expr.id)?;
+        let callee_ty = self.lower.tcx.type_of_expr(&expr.callee)?;
         let property = self
             .lower
             .tcx
