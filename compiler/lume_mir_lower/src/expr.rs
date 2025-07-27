@@ -344,7 +344,7 @@ impl FunctionTransformer<'_> {
         let mut offset = 0;
 
         for (idx, prop) in self.tcx().tdb().find_properties(property.owner).enumerate() {
-            if idx == prop.index {
+            if idx == property.index {
                 break;
             }
 
