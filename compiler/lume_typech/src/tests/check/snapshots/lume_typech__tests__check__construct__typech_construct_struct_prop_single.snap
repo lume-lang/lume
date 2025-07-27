@@ -1,0 +1,5 @@
+---
+source: compiler/lume_typech/src/tests/check/construct.rs
+description: "struct A {\n            foo: Boolean;\n        }\n\n        fn foo() {\n            let a = A { foo: false };\n        }"
+---
+

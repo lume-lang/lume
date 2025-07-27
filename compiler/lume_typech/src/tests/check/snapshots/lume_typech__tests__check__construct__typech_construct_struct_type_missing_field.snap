@@ -1,0 +1,11 @@
+---
+source: compiler/lume_typech/src/tests/check/construct.rs
+description: "struct A {\n            foo: Boolean;\n        }\n\n        fn foo() {\n            let a = A { };\n        }"
+---
+× error[LM4385]: missing structure field
+   ╭───────────
+ 5 │         fn foo() {
+ 6 │             let a = A { };
+   │                     ^^^^^^ constructor is missing field foo
+ 7 │         }
+   ╰──
