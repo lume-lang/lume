@@ -7,7 +7,7 @@ use lume_session::GlobalCtx;
 
 use crate::errors::*;
 pub use lume_hir::TypeId;
-use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeParameterId, UseId, Visibility};
+use lume_hir::{FunctionId, ImplId, MethodId, Path, PathSegment, PropertyId, TypeParameterId, UseId, Visibility};
 use lume_span::{DefId, ItemId, Location, PackageId};
 
 pub mod errors;
@@ -1510,6 +1510,17 @@ impl TypeDatabaseContext {
         id.type_params_mut(self)?.push(type_id);
 
         Ok(())
+    }
+
+    /// Checks whether the given namespace exists for any item within the database.
+    pub fn namespace_exists(&self, root: &[PathSegment]) -> bool {
+        for ty in self.types.values() {
+            if ty.name.root.starts_with(root) {
+                return true;
+            }
+        }
+
+        false
     }
 }
 

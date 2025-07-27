@@ -426,6 +426,22 @@ impl PartialEq for Path {
 
 impl Eq for Path {}
 
+impl From<&[PathSegment]> for Path {
+    fn from(value: &[PathSegment]) -> Self {
+        let (name, root) = value.split_last().unwrap();
+
+        Self::from_parts(Some(root.to_owned()), name.to_owned())
+    }
+}
+
+impl From<Vec<PathSegment>> for Path {
+    fn from(value: Vec<PathSegment>) -> Self {
+        let (name, root) = value.split_last().unwrap();
+
+        Self::from_parts(Some(root.to_owned()), name.to_owned())
+    }
+}
+
 /// Trait for HIR nodes which can contain some amount of type parameters.
 pub trait WithTypeParameters {
     /// Gets all the type parameters of this node.

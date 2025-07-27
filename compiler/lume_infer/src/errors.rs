@@ -31,6 +31,35 @@ pub struct UnavailableScalarType {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find namespace", code = "LM4104")]
+pub struct InvalidNamespace {
+    #[label(source, "could not find {name} within namespace {parent:+}")]
+    pub source: Location,
+
+    pub name: String,
+    pub parent: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find namespace", code = "LM4104")]
+pub struct InvalidNamespaceRoot {
+    #[label(source, "could not find namespace {name}")]
+    pub source: Location,
+
+    pub name: String,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find type in namespace", code = "LM4105")]
+pub struct InvalidTypeInNamespace {
+    #[label(source, "could not find type {name} in {namespace}")]
+    pub source: Location,
+
+    pub name: Path,
+    pub namespace: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "no such property was found", code = "LM4115")]
 pub struct MissingProperty {
     #[span]

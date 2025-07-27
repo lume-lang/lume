@@ -290,7 +290,7 @@ impl TyInferCtx {
     }
 
     /// Returns an error indicating that the given type was not found.
-    #[allow(clippy::unused_self)]
+    #[allow(clippy::unused_self, clippy::redundant_else)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             if newcomer_name == &ty.name.name().as_str() {
@@ -302,6 +302,46 @@ impl TyInferCtx {
                 }
                 .into();
             }
+        }
+
+        let mut type_path = ty.name.root.clone();
+
+        while !type_path.is_empty() {
+            if !self.tdb().namespace_exists(&type_path) {
+                let subpath = Path::from(type_path);
+
+                let source = if let Some(import) = self.hir.imports.get(&subpath) {
+                    import.location
+                } else {
+                    subpath.location
+                };
+
+                if let Some(parent) = subpath.clone().parent() {
+                    return errors::InvalidNamespace {
+                        source,
+                        parent: format!("{parent:+}"),
+                        name: subpath.name.to_string(),
+                    }
+                    .into();
+                } else {
+                    return errors::InvalidNamespaceRoot {
+                        source,
+                        name: format!("{:+}", subpath.name.to_string()),
+                    }
+                    .into();
+                }
+            }
+
+            type_path.pop();
+        }
+
+        if let Some(import) = self.hir.imports.get(&ty.name) {
+            return errors::InvalidTypeInNamespace {
+                source: import.name.name().location,
+                name: ty.name.clone(),
+                namespace: format!("{:+}", ty.name.clone().parent().unwrap()),
+            }
+            .into();
         }
 
         errors::MissingType {

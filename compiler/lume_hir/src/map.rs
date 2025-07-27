@@ -1,4 +1,4 @@
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 
 use crate::*;
 use lume_span::{ExpressionId, ItemId, StatementId};
@@ -16,6 +16,9 @@ pub struct Map {
 
     /// Defines all the local expressions within the current scope.
     pub expressions: IndexMap<ExpressionId, Expression>,
+
+    /// Defines all the imported paths within the HIR map.
+    pub imports: IndexSet<Path>,
 }
 
 impl Map {
@@ -26,6 +29,7 @@ impl Map {
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),
+            imports: IndexSet::new(),
         }
     }
 
