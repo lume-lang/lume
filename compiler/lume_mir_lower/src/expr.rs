@@ -93,8 +93,9 @@ impl FunctionTransformer<'_> {
         let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
 
         let struct_type = lume_mir::Type::structure(expr.ty.clone(), prop_types);
+        let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
-        let reg = self.func.add_register(struct_type.clone());
+        let reg = self.func.add_register(struct_ptr);
         self.func.current_block_mut().allocate(reg, struct_type);
 
         let mut offset = 0;
