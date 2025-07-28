@@ -214,26 +214,12 @@ impl Function {
     }
 
     /// Declares a new local with the given declaration in the current block.
+    #[expect(clippy::needless_pass_by_value)]
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        let is_ref_type = ty.is_reference_type();
-
-        if let Declaration::Operand(op) = &decl {
-            match op {
-                Operand::Load { id } | Operand::Reference { id } => *id,
-                _ if is_ref_type => {
-                    let ptr = self.add_register(ty.clone());
-                    self.current_block_mut().allocate(ptr, ty);
-                    self.current_block_mut().store(ptr, op.clone());
-
-                    ptr
-                }
-                _ => {
-                    let ptr = self.add_register(ty.clone());
-                    self.current_block_mut().declare(ptr, decl);
-
-                    ptr
-                }
-            }
+        if let Declaration::Operand(op) = &decl
+            && let Operand::Load { id } | Operand::Reference { id } = op
+        {
+            *id
         } else {
             let ptr = self.add_register(ty.clone());
             self.current_block_mut().declare(ptr, decl);
