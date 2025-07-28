@@ -186,7 +186,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         sig
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %func.name), err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(func = %func.name), err)]
     fn define_function(
         &mut self,
         func: &lume_mir::Function,
@@ -198,6 +198,8 @@ impl<'ctx> CraneliftBackend<'ctx> {
 
         let builder = FunctionBuilder::new(&mut ctx.func, builder_ctx);
         LowerFunction::new(self, func, builder).define();
+
+        tracing::debug!(name: "lowered_func", name = %func.name, function = %ctx.func);
 
         let verify_flags = settings::Flags::new(settings::builder());
         if let Err(err) = verify_function(&ctx.func, &verify_flags) {
@@ -335,6 +337,8 @@ impl<'ctx> LowerFunction<'ctx> {
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
 
+        tracing::debug!(name: "declare_var", %register, %var, %ty);
+
         var
     }
 
@@ -358,10 +362,14 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().load(ty, MemFlags::new(), val, Offset32::new(0))
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name, ptr, field_ty))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize) -> Value {
         let ptr = self.use_var(register);
         let field_ty = self.retrieve_field_type(register, field);
+
+        tracing::Span::current().record("ptr", tracing::field::display(&ptr));
+        tracing::Span::current().record("field_ty", tracing::field::display(&field_ty));
 
         self.builder
             .ins()
@@ -381,6 +389,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.backend.cl_type_of(elemental)
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
     pub(crate) fn retrieve_field_type(&self, register: RegisterId, index: usize) -> Type {
         let reg_ty = self.func.registers.register_ty(register);
         let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
@@ -390,6 +399,8 @@ impl<'ctx> LowerFunction<'ctx> {
         let lume_mir::TypeKind::Struct { properties } = &elemental.kind else {
             panic!("bug!: attempting to load field from non-struct register");
         };
+
+        tracing::debug!(name: "retrieve_field_type", %reg_ty);
 
         self.backend.cl_type_of(&properties[index])
     }

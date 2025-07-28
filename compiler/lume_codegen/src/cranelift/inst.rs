@@ -5,6 +5,7 @@ use super::LowerFunction;
 pub const UNREACHABLE_TRAP_CODE: u8 = 0x99;
 
 impl LowerFunction<'_> {
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_block_alloc_entry(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = self.builder.create_block();
         self.builder.append_block_params_for_function_params(cg_block);
@@ -17,6 +18,7 @@ impl LowerFunction<'_> {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_block_alloc(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = self.builder.create_block();
 
@@ -42,6 +44,7 @@ impl LowerFunction<'_> {
         self.cg_terminator(mir_block.terminator().unwrap());
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
         match inst {
             lume_mir::Instruction::Let { register, decl } => {
@@ -83,6 +86,7 @@ impl LowerFunction<'_> {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
         match term {
             lume_mir::Terminator::Return(operand) => {
@@ -117,6 +121,7 @@ impl LowerFunction<'_> {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type) -> Value {
         match &ty.kind {
             lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } => {

@@ -4,6 +4,7 @@ use cranelift_module::Module;
 use crate::cranelift::{CraneliftBackend, LowerFunction};
 
 impl CraneliftBackend<'_> {
+    #[tracing::instrument(level = "TRACE", skip(self, ty), fields(ty = %ty))]
     pub(crate) fn cl_type_of(&self, ty: &lume_mir::Type) -> types::Type {
         match &ty.kind {
             lume_mir::TypeKind::Boolean => Self::cl_bool_type(),

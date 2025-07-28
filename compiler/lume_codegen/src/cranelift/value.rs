@@ -92,6 +92,7 @@ impl LowerFunction<'_> {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
     pub(crate) fn cg_operand(&mut self, op: &lume_mir::Operand) -> Value {
         match op {
             lume_mir::Operand::Boolean { value } => self.builder.ins().iconst(Self::cl_bool_type(), i64::from(*value)),

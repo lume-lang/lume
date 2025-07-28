@@ -1199,6 +1199,7 @@ dependencies = [
  "lume_span",
  "lume_type_metadata",
  "lume_types",
+ "tracing",
 ]
 
 [[package]]

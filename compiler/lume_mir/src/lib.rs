@@ -616,6 +616,7 @@ impl Registers {
     }
 
     /// Allocates a new register with the given type and block.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(%ty, %block), ret)]
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
         let id = RegisterId(self.regs.len());
         self.regs.push(Register {
@@ -628,6 +629,7 @@ impl Registers {
     }
 
     /// Allocates a new parameter register with the given type.
+    #[tracing::instrument(level = "TRACE" skip_all, fields(%ty), ret)]
     pub fn allocate_param(&mut self, ty: Type) -> RegisterId {
         let id = RegisterId(self.regs.len());
         self.regs.push(Register { id, ty, block: None });
@@ -888,7 +890,7 @@ impl std::fmt::Display for Operand {
             Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "*{id}"),
-            Self::LoadField { target, offset, .. } => write!(f, "&{target}[+0x{offset}]"),
+            Self::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
             Self::String { value } => write!(f, "\"{value}\""),
         }
     }
