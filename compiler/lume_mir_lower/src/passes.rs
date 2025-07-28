@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use lume_mir::{BasicBlock, BlockBranchSite, Declaration, Function, Instruction, Operand, RegisterId, Terminator};
 
 use crate::FunctionTransformer;
@@ -107,7 +105,7 @@ impl RenameSsaVariables {
             .cloned()
             .collect::<Vec<lume_mir::Register>>();
 
-        let mut register_mapping = HashMap::new();
+        let mut register_mapping = IndexMap::new();
 
         for block in &mut func.blocks {
             for param_idx in 0..func.signature.parameters.len() {
@@ -147,7 +145,7 @@ impl RenameSsaVariables {
     fn rename_register_index(
         &mut self,
         old: &mut RegisterId,
-        mapping: &mut HashMap<RegisterId, RegisterId>,
+        mapping: &mut IndexMap<RegisterId, RegisterId>,
     ) -> RegisterId {
         let new = RegisterId::new(self.register_counter);
 
@@ -159,7 +157,7 @@ impl RenameSsaVariables {
         new
     }
 
-    fn update_regs_inst(&mut self, inst: &mut Instruction, mapping: &mut HashMap<RegisterId, RegisterId>) {
+    fn update_regs_inst(&mut self, inst: &mut Instruction, mapping: &mut IndexMap<RegisterId, RegisterId>) {
         match inst {
             Instruction::Let { register, decl } => {
                 self.rename_register_index(register, mapping);
@@ -189,7 +187,7 @@ impl RenameSsaVariables {
         }
     }
 
-    fn update_regs_term(term: &mut Terminator, mapping: &mut HashMap<RegisterId, RegisterId>) {
+    fn update_regs_term(term: &mut Terminator, mapping: &mut IndexMap<RegisterId, RegisterId>) {
         match term {
             Terminator::Return(op) => {
                 if let Some(value) = op {
@@ -216,7 +214,7 @@ impl RenameSsaVariables {
         }
     }
 
-    fn update_regs_decl(decl: &mut Declaration, mapping: &mut HashMap<RegisterId, RegisterId>) {
+    fn update_regs_decl(decl: &mut Declaration, mapping: &mut IndexMap<RegisterId, RegisterId>) {
         match decl {
             Declaration::Operand(op) => Self::update_regs_op(op, mapping),
             Declaration::Cast { operand, .. } => {
@@ -233,7 +231,7 @@ impl RenameSsaVariables {
         }
     }
 
-    fn update_regs_op(op: &mut Operand, mapping: &mut HashMap<RegisterId, RegisterId>) {
+    fn update_regs_op(op: &mut Operand, mapping: &mut IndexMap<RegisterId, RegisterId>) {
         match op {
             Operand::Load { id } | Operand::Reference { id } => {
                 *id = *mapping.get(id).unwrap();
