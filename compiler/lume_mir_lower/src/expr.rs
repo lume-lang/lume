@@ -33,7 +33,15 @@ impl FunctionTransformer<'_> {
 
                 lume_mir::Operand::Load { id }
             }
-            _ => todo!(),
+            load @ lume_mir::Operand::LoadField { target, offset, .. } => {
+                self.func.current_block_mut().store_field(target, offset, value);
+
+                load
+            }
+            lume_mir::Operand::Boolean { .. }
+            | lume_mir::Operand::Integer { .. }
+            | lume_mir::Operand::Float { .. }
+            | lume_mir::Operand::String { .. } => panic!("bug!: attempted to assign literal"),
         }
     }
 
