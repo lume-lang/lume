@@ -1,0 +1,36 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"1 = b;\")"
+---
+[
+    Expression(
+        Assignment(
+            Assignment {
+                target: Literal(
+                    Int(
+                        IntLiteral {
+                            value: 1,
+                            location: Location(
+                                0..1,
+                            ),
+                            kind: I32,
+                        },
+                    ),
+                ),
+                value: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "b",
+                            location: Location(
+                                4..5,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    0..5,
+                ),
+            },
+        ),
+    ),
+]

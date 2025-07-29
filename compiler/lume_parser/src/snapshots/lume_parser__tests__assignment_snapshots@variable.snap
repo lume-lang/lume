@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"a = b;\")"
+---
+[
+    Expression(
+        Assignment(
+            Assignment {
+                target: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                0..1,
+                            ),
+                        },
+                    },
+                ),
+                value: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "b",
+                            location: Location(
+                                4..5,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    0..5,
+                ),
+            },
+        ),
+    ),
+]

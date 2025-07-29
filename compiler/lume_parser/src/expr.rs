@@ -86,6 +86,12 @@ impl Parser {
             return self.parse_member(left);
         }
 
+        if self.peek(TokenKind::Assign) {
+            tracing::trace!("expression is assignment");
+
+            return self.parse_assignment(left);
+        }
+
         if self.peek(TokenKind::As) {
             tracing::trace!("expression is cast");
 

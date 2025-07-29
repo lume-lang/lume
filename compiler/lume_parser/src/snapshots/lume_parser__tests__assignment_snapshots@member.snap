@@ -1,0 +1,43 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"foo.bar = a;\")"
+---
+[
+    Expression(
+        Assignment(
+            Assignment {
+                target: Member(
+                    Member {
+                        callee: Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "foo",
+                                    location: Location(
+                                        0..3,
+                                    ),
+                                },
+                            },
+                        ),
+                        name: "bar",
+                        location: Location(
+                            0..7,
+                        ),
+                    },
+                ),
+                value: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                10..11,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    0..11,
+                ),
+            },
+        ),
+    ),
+]

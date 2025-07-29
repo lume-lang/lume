@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"\\\"foo\\\" = b;\")"
+---
+[
+    Expression(
+        Assignment(
+            Assignment {
+                target: Literal(
+                    String(
+                        StringLiteral {
+                            value: "foo",
+                            location: Location(
+                                0..5,
+                            ),
+                        },
+                    ),
+                ),
+                value: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "b",
+                            location: Location(
+                                8..9,
+                            ),
+                        },
+                    },
+                ),
+                location: Location(
+                    0..9,
+                ),
+            },
+        ),
+    ),
+]

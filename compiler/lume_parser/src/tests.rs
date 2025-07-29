@@ -417,6 +417,15 @@ fn test_operator_snapshots() {
 }
 
 #[test]
+fn test_assignment_snapshots() {
+    assert_expr_snap_eq!("a = b;", "variable");
+    assert_expr_snap_eq!("foo.bar = a;", "member");
+    assert_expr_snap_eq!("1 = b;", "literal_int");
+    assert_expr_snap_eq!("false = b;", "literal_bool");
+    assert_expr_snap_eq!("\"foo\" = b;", "literal_str");
+}
+
+#[test]
 fn test_generic_function_snapshots() {
     assert_snap_eq!("fn test() -> void {}", "no_generics");
     assert_snap_eq!("fn test<>() -> void {}", "empty_generics");
