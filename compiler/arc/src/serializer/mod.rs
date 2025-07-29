@@ -14,6 +14,7 @@ use semver::{Version, VersionReq};
 use url::Url;
 
 pub(crate) mod dep;
+mod errors;
 mod prop;
 mod version;
 

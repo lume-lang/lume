@@ -36,15 +36,33 @@ impl PackageParser {
     /// Parses the dependencies from the given package block.
     pub(crate) fn parse_dependency(&self, block: &Block) -> Result<ManifestDependency> {
         if block.ty.value() != "Dependency" {
-            todo!();
+            return Err(super::errors::UnexpectedBlockType {
+                source: self.source.clone(),
+                range: block.ty.span().clone(),
+                expected: String::from("Dependency"),
+                actual: block.ty.value().clone(),
+            }
+            .into());
         }
 
         let Some(source_prop) = block.find_prop("source") else {
-            todo!();
+            return Err(super::errors::SourcePropertyRequired {
+                source: self.source.clone(),
+                range: block.ty.span().clone(),
+                name: String::from("source"),
+                block: String::from("Dependency"),
+            }
+            .into());
         };
 
         let Some(version_prop) = block.find_prop("version") else {
-            todo!();
+            return Err(super::errors::VersionPropertyRequired {
+                source: self.source.clone(),
+                range: block.ty.span().clone(),
+                name: String::from("version"),
+                block: String::from("Dependency"),
+            }
+            .into());
         };
 
         let source = self.expect_prop_string(source_prop)?.to_owned();
