@@ -36,9 +36,19 @@ impl FunctionTransformer<'_> {
 
                 lume_mir::Type::pointer(elemental)
             }
-            lume_mir::Operand::LoadField { target, .. } | lume_mir::Operand::Reference { id: target } => {
-                self.func.registers.register_ty(*target).clone()
+            lume_mir::Operand::LoadField { target, index, .. } => {
+                let reg_ty = self.func.registers.register_ty(*target).clone();
+                let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
+                    panic!("bug!: attempting to load non-pointer register");
+                };
+
+                let lume_mir::TypeKind::Struct { properties } = &elemental.kind else {
+                    panic!("bug!: attempting to load field from non-struct register");
+                };
+
+                properties[*index].clone()
             }
+            lume_mir::Operand::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }
 
