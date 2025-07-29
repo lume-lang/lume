@@ -33,6 +33,7 @@ impl LowerFunction<'_> {
         self.blocks.insert(mir_block.id, cg_block);
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_block_in(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = *self.blocks.get(&mir_block.id).unwrap();
         self.builder.switch_to_block(cg_block);
@@ -52,6 +53,8 @@ impl LowerFunction<'_> {
                 let var = self.declare_var(*register, ty);
 
                 let value = self.cg_declaration(decl);
+                tracing::debug!("define_var {register} = {value}");
+
                 self.builder.def_var(var, value);
             }
             lume_mir::Instruction::Assign { .. } => {

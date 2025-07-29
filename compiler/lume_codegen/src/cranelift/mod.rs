@@ -337,7 +337,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
 
-        tracing::debug!(name: "declare_var", %register, %var, %ty);
+        tracing::debug!("declare_var {register}[{ty}] = {var}");
 
         var
     }
