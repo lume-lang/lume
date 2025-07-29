@@ -138,6 +138,9 @@ impl FunctionTransformer<'_> {
                     let lhs_val = self.expression(&comp_expr.lhs);
                     let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
 
+                    self.add_edge(self.func.current_block().id, inter_block);
+                    self.add_edge(inter_block, else_block);
+
                     self.func
                         .current_block_mut()
                         .conditional_branch(lhs_expr, inter_block, else_block);
@@ -171,6 +174,9 @@ impl FunctionTransformer<'_> {
 
                     let lhs_val = self.expression(&comp_expr.lhs);
                     let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
+
+                    self.add_edge(self.func.current_block().id, inter_block);
+                    self.add_edge(inter_block, then_block);
 
                     self.func
                         .current_block_mut()
