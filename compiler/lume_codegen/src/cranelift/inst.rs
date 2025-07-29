@@ -109,9 +109,6 @@ impl LowerFunction<'_> {
                 let condition = self.use_var(*condition);
 
                 self.conditional_branch(condition, then_block, else_block);
-
-                self.seal_block(then_block.block);
-                self.seal_block(else_block.block);
             }
             lume_mir::Terminator::Unreachable => {
                 let code = TrapCode::user(UNREACHABLE_TRAP_CODE).unwrap();
