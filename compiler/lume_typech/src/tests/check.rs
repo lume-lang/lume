@@ -100,3 +100,30 @@ fn typech_return_value_call_expr() {
         }"
     );
 }
+
+#[test]
+fn typech_literal_assignment_int() {
+    assert_typech_snapshot!(
+        "fn foo() {
+            1 = false;
+        }"
+    );
+}
+
+#[test]
+fn typech_literal_assignment_bool() {
+    assert_typech_snapshot!(
+        "fn foo() {
+            false = false;
+        }"
+    );
+}
+
+#[test]
+fn typech_literal_assignment_str() {
+    assert_typech_snapshot!(
+        "fn foo() {
+            \"foo\" = false;
+        }"
+    );
+}

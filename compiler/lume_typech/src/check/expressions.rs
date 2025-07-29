@@ -258,6 +258,10 @@ impl TyCheckCtx {
         let target = self.type_of_expr(&expr.target)?;
         let value = self.type_of_expr(&expr.value)?;
 
+        if matches!(expr.target.kind, lume_hir::ExpressionKind::Literal(_)) {
+            return Err(LiteralAssignment { source: expr.location }.into());
+        }
+
         if !self.check_type_compatibility(&value, &target)? {
             return Err(NonMatchingAssignment {
                 source: expr.location,
