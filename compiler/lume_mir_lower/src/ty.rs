@@ -94,7 +94,12 @@ impl FunctionTransformer<'_> {
                     }
                 }
             },
-            lume_mir::Declaration::Cast { .. } => todo!(),
+            lume_mir::Declaration::Cast { operand, bits } => {
+                let operand_ty = self.func.registers.register_ty(*operand);
+                let signed = operand_ty.is_signed();
+
+                lume_mir::Type::integer(*bits, signed)
+            }
             lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
         }
     }

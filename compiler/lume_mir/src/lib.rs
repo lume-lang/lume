@@ -1147,6 +1147,14 @@ impl Type {
         self.kind.is_reference_type()
     }
 
+    pub fn is_signed(&self) -> bool {
+        if let TypeKind::Integer { signed, .. } = &self.kind {
+            *signed
+        } else {
+            false
+        }
+    }
+
     pub fn bytesize(&self) -> usize {
         match &self.kind {
             TypeKind::Struct { properties } => properties.iter().map(Type::bytesize).sum(),
