@@ -4,7 +4,7 @@
 // see: https://zed.dev/docs/debugger
 [
   {
-    "label": "Debug sample project (CodeLLDB)",
+    "label": "Debug playground project (CodeLLDB)",
     "build": {
       "command": "cargo",
       "args": [
@@ -14,11 +14,14 @@
       ]
     },
     "adapter": "CodeLLDB",
+    "sourceLanguages": [
+      "rust"
+    ],
     "request": "launch",
     "program": "$ZED_WORKTREE_ROOT/target/debug/lume",
     "args": [
       "run",
-      "./samples/project"
+      "./samples/playground"
     ],
     "cwd": "$ZED_WORKTREE_ROOT"
   }

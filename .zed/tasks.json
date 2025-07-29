@@ -27,12 +27,12 @@
     "shell": "system"
   },
   {
-    "label": "Execute (samples/project)",
+    "label": "Execute (samples/playground)",
     "command": "cargo",
     "args": [
       "run",
       "--",
-      "run ./samples/project"
+      "run ./samples/playground"
     ],
     "hide": "never"
   }
