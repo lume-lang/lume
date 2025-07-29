@@ -100,8 +100,6 @@ impl LowerFunction<'_> {
                 },
                 lume_mir::Intrinsic::Metadata { .. } => self.backend.cl_ptr_type(),
             },
-            lume_mir::Declaration::Reference { id } => self.retrieve_var_type(*id),
-            lume_mir::Declaration::Load { .. } => self.backend.cl_ptr_type(),
         }
     }
 

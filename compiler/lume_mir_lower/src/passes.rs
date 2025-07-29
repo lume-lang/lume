@@ -225,9 +225,6 @@ impl RenameSsaVariables {
                     Self::update_regs_op(arg, mapping);
                 }
             }
-            Declaration::Reference { id } | Declaration::Load { id, .. } => {
-                *id = *mapping.get(id).unwrap();
-            }
         }
     }
 

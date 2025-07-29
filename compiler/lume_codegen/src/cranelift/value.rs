@@ -87,8 +87,6 @@ impl LowerFunction<'_> {
                     value
                 }
             },
-            lume_mir::Declaration::Reference { id } => self.use_var(*id),
-            lume_mir::Declaration::Load { id } => self.load_var(*id),
         }
     }
 

@@ -712,12 +712,6 @@ pub enum Declaration {
     /// Defines a call to an intrinsic function.
     Intrinsic { name: Intrinsic, args: Vec<Operand> },
 
-    /// Represents a reference to an existing register.
-    Reference { id: RegisterId },
-
-    /// Represents a memory load from an existing register, holding a pointer.
-    Load { id: RegisterId },
-
     /// Represents a call to a function.
     Call { func_id: FunctionId, args: Vec<Operand> },
 }
@@ -730,7 +724,6 @@ impl Declaration {
             Self::Intrinsic { args, .. } | Self::Call { args, .. } => {
                 args.iter().flat_map(Operand::register_refs).collect()
             }
-            Self::Reference { id } | Self::Load { id } => vec![*id],
         }
     }
 }
@@ -745,8 +738,6 @@ impl std::fmt::Display for Declaration {
                 "{name}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
-            Self::Reference { id } => write!(f, "{id}"),
-            Self::Load { id } => write!(f, "&{id}"),
             Self::Call { func_id, args } => write!(
                 f,
                 "(call {func_id})({})",

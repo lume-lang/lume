@@ -94,8 +94,8 @@ impl FunctionTransformer<'_> {
                     }
                 }
             },
+            lume_mir::Declaration::Cast { .. } => todo!(),
             lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
-            _ => todo!(),
         }
     }
 
