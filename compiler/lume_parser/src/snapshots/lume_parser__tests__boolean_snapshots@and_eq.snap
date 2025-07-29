@@ -1,0 +1,119 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
+---
+[
+    Expression(
+        Logical(
+            Logical {
+                lhs: IntrinsicCall(
+                    IntrinsicCall {
+                        callee: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        0..1,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        name: Path {
+                            root: [],
+                            name: Callable {
+                                name: Identifier {
+                                    name: "==",
+                                    location: Location(
+                                        2..4,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    2..4,
+                                ),
+                            },
+                            location: Location(
+                                2..4,
+                            ),
+                        },
+                        arguments: [
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            5..6,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ],
+                        location: Location(
+                            0..6,
+                        ),
+                    },
+                ),
+                op: LogicalOperator {
+                    kind: And,
+                    location: Location(
+                        7..9,
+                    ),
+                },
+                rhs: IntrinsicCall(
+                    IntrinsicCall {
+                        callee: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        10..11,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        name: Path {
+                            root: [],
+                            name: Callable {
+                                name: Identifier {
+                                    name: "==",
+                                    location: Location(
+                                        12..14,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    12..14,
+                                ),
+                            },
+                            location: Location(
+                                12..14,
+                            ),
+                        },
+                        arguments: [
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            15..16,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ],
+                        location: Location(
+                            10..16,
+                        ),
+                    },
+                ),
+                location: Location(
+                    0..16,
+                ),
+            },
+        ),
+    ),
+]

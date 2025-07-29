@@ -267,6 +267,8 @@ fn test_binary_snapshots() {
 fn test_boolean_snapshots() {
     assert_expr_snap_eq!("0 && 0;", "and");
     assert_expr_snap_eq!("0 || 0;", "or");
+    assert_expr_snap_eq!("0 == 0 && 0 == 0;", "and_eq");
+    assert_expr_snap_eq!("0 == 0 || 0 == 0;", "or_eq");
 }
 
 #[test]
