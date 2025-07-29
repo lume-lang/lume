@@ -362,18 +362,15 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().load(ty, MemFlags::new(), val, Offset32::new(0))
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name, ptr, field_ty))]
+    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize) -> Value {
         let ptr = self.use_var(register);
         let field_ty = self.retrieve_field_type(register, field);
 
-        tracing::Span::current().record("ptr", tracing::field::display(&ptr));
-        tracing::Span::current().record("field_ty", tracing::field::display(&field_ty));
+        tracing::debug!(%ptr, %field_ty);
 
-        self.builder
-            .ins()
-            .load(field_ty, MemFlags::new(), ptr, Offset32::new(offset as i32))
+        self.builder.ins().load(field_ty, MemFlags::new(), ptr, offset as i32)
     }
 
     pub(crate) fn retrieve_var_type(&self, register: RegisterId) -> Type {
@@ -400,9 +397,10 @@ impl<'ctx> LowerFunction<'ctx> {
             panic!("bug!: attempting to load field from non-struct register");
         };
 
-        tracing::debug!(name: "retrieve_field_type", %reg_ty);
+        let property = &properties[index];
+        tracing::debug!(%reg_ty, %property, index);
 
-        self.backend.cl_type_of(&properties[index])
+        self.backend.cl_type_of(property)
     }
 
     pub(crate) fn icmp(&mut self, cmp: IntCC, x: &lume_mir::Operand, y: &lume_mir::Operand) -> Value {
