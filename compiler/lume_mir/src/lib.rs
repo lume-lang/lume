@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_span::Interned;
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 
@@ -67,7 +67,7 @@ impl std::fmt::Display for FunctionId {
 
 /// Defines a function signature, such as parameter types and return type,
 /// as well as any declared modifiers such as `external` or `inline`.
-#[derive(Debug, Clone)]
+#[derive(Default, Debug, Clone)]
 pub struct Signature {
     /// Defines whether the function is externally defined or not.
     ///
@@ -104,17 +104,6 @@ impl std::fmt::Display for Signature {
                 .join(", "),
             self.return_type
         )
-    }
-}
-
-impl Default for Signature {
-    fn default() -> Self {
-        Signature {
-            external: false,
-            vararg: false,
-            parameters: Vec::new(),
-            return_type: Type::void(),
-        }
     }
 }
 
@@ -365,10 +354,10 @@ pub struct BasicBlock {
     terminator: Option<Terminator>,
 
     /// Gets all the predecessor blocks, which branch to this block.
-    predecessors: Vec<BasicBlockId>,
+    predecessors: IndexSet<BasicBlockId>,
 
     /// Gets all the successor blocks, which this block branches to.
-    successors: Vec<BasicBlockId>,
+    successors: IndexSet<BasicBlockId>,
 }
 
 impl BasicBlock {
@@ -378,8 +367,8 @@ impl BasicBlock {
             parameters: Vec::new(),
             instructions: Vec::new(),
             terminator: None,
-            predecessors: Vec::new(),
-            successors: Vec::new(),
+            predecessors: IndexSet::new(),
+            successors: IndexSet::new(),
         }
     }
 
@@ -433,13 +422,13 @@ impl BasicBlock {
     /// Pushes the given block to be a predecessor to the current block.
     pub fn push_predecessor(&mut self, block: BasicBlockId) {
         self.predecessors.reserve_exact(1);
-        self.predecessors.push(block);
+        self.predecessors.insert(block);
     }
 
     /// Pushes the given block to be a successor to the current block.
     pub fn push_successor(&mut self, block: BasicBlockId) {
         self.successors.reserve_exact(1);
-        self.successors.push(block);
+        self.successors.insert(block);
     }
 
     /// Declares a new stack-allocated register with the given value.
@@ -545,7 +534,7 @@ impl std::fmt::Display for BasicBlock {
     }
 }
 
-#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct RegisterId(usize);
 
 impl RegisterId {
@@ -569,7 +558,7 @@ impl std::fmt::Display for RegisterId {
 /// Registers cannot be altered after they are created, as they follow
 /// the SSA (Single Static Assignment) principle. If register needs to be updated,
 /// it should define an allocation which can be used to store the new value.
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
     pub id: RegisterId,
 
@@ -1177,6 +1166,12 @@ impl Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.kind.fmt(f)
+    }
+}
+
+impl Default for Type {
+    fn default() -> Self {
+        Self::void()
     }
 }
 

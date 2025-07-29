@@ -1,25 +1,30 @@
 use indexmap::{IndexMap, IndexSet};
-use lume_mir::{BasicBlock, BlockBranchSite, Declaration, Function, Instruction, Operand, RegisterId, Terminator};
+use lume_mir::{
+    BasicBlock, BasicBlockId, BlockBranchSite, Declaration, Function, Instruction, Operand, Register, RegisterId,
+    Terminator,
+};
 
 use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_> {
     pub(crate) fn run_passes(&mut self) {
-        DefineBlockParameters::execute(&mut self.func);
+        DefineBlockParameters::default().execute(&mut self.func);
         PassBlockArguments::execute(&mut self.func);
-
-        DefineBlockParameters::execute(&mut self.func);
-        PassBlockArguments::execute(&mut self.func);
-
         RenameSsaVariables::default().execute(&mut self.func);
     }
 }
 
 #[derive(Default, Debug)]
-struct DefineBlockParameters;
+struct DefineBlockParameters {
+    params: IndexMap<BasicBlockId, IndexSet<RegisterId>>,
+}
 
 impl DefineBlockParameters {
-    pub fn execute(func: &mut Function) {
+    pub fn execute(&mut self, func: &mut Function) {
+        for block in &func.blocks {
+            self.find_required_input_registers(func, block);
+        }
+
         for block in &mut func.blocks {
             // Skip blocks which don't have any predecessors, since they cannot
             // have any input parameters. This is mostly for entry blocks, as they
@@ -28,12 +33,35 @@ impl DefineBlockParameters {
                 continue;
             }
 
-            block.parameters = Self::find_required_input_registers(block);
+            let Some(params) = self.params.get(&block.id) else {
+                continue;
+            };
+
+            // TODO: is there maybe a better way to convert an `IndexSet` to a `Vec`?
+            block.parameters = params.clone().into_iter().collect();
         }
     }
 
-    fn find_required_input_registers(block: &BasicBlock) -> Vec<RegisterId> {
+    fn find_required_input_registers(&mut self, func: &Function, block: &BasicBlock) {
+        if self.params.contains_key(&block.id) {
+            return;
+        }
+
+        // Prevent a stack overflow from self-referencing blocks, such as loops.
+        self.params.insert(block.id, IndexSet::new());
+
         let mut regs = IndexSet::new();
+
+        for successor in block.successors() {
+            let successor_block = func.block(successor);
+            self.find_required_input_registers(func, successor_block);
+
+            if let Some(successor_params) = self.params.get(&successor) {
+                for successor_param in successor_params {
+                    regs.insert(*successor_param);
+                }
+            }
+        }
 
         // Find all referenced registers within the block from all the instructions
         // and the block terminator...
@@ -53,8 +81,7 @@ impl DefineBlockParameters {
             }
         }
 
-        // TODO: is there maybe a better way to convert an `IndexSet` to a `Vec`?
-        regs.into_iter().collect()
+        self.params.insert(block.id, regs);
     }
 }
 
@@ -103,7 +130,7 @@ impl RenameSsaVariables {
             .iter()
             .filter(|reg| reg.block.is_none())
             .cloned()
-            .collect::<Vec<lume_mir::Register>>();
+            .collect::<Vec<Register>>();
 
         let mut register_mapping = IndexMap::new();
 
@@ -129,11 +156,15 @@ impl RenameSsaVariables {
             for (old, new) in &register_mapping {
                 let old_reg = func.registers.register(*old);
 
-                new_registers.push(lume_mir::Register {
+                if new_registers.len() <= new.as_usize() {
+                    new_registers.resize_with(new.as_usize() + 1, Register::default);
+                }
+
+                new_registers[new.as_usize()] = lume_mir::Register {
                     id: *new,
                     ty: old_reg.ty.clone(),
                     block: Some(block.id),
-                });
+                };
             }
 
             register_mapping.clear();
@@ -200,8 +231,12 @@ impl RenameSsaVariables {
                 }
             }
             Terminator::ConditionalBranch {
-                then_block, else_block, ..
+                condition,
+                then_block,
+                else_block,
             } => {
+                *condition = *mapping.get(condition).unwrap();
+
                 for arg in &mut then_block.arguments {
                     *arg = *mapping.get(arg).unwrap();
                 }
