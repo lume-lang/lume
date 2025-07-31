@@ -576,16 +576,19 @@ pub struct Registers {
 
 impl Registers {
     /// Gets a reference to the [`Register`] with the given ID.
+    #[track_caller]
     pub fn register(&self, id: RegisterId) -> &Register {
         &self.regs[id.0]
     }
 
     /// Gets a mutable reference to the [`Register`] with the given ID.
+    #[track_caller]
     pub fn register_mut(&mut self, id: RegisterId) -> &mut Register {
         &mut self.regs[id.0]
     }
 
     /// Gets a reference to the type of the [`Register`] with the given ID.
+    #[track_caller]
     pub fn register_ty(&self, id: RegisterId) -> &Type {
         &self.register(id).ty
     }
