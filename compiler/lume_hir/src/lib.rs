@@ -958,7 +958,6 @@ impl Statement {
             StatementKind::If(stmt) => stmt.is_returning(),
             StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
             StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
-            StatementKind::PredicateLoop(stmt) => stmt.is_returning(),
             StatementKind::Return(_) | StatementKind::Continue(_) => true,
             StatementKind::Variable(_) | StatementKind::Break(_) | StatementKind::Expression(_) => false,
         }
@@ -968,7 +967,7 @@ impl Statement {
     pub fn is_loop(&self) -> bool {
         matches!(
             &self.kind,
-            StatementKind::InfiniteLoop(_) | StatementKind::IteratorLoop(_) | StatementKind::PredicateLoop(_)
+            StatementKind::InfiniteLoop(_) | StatementKind::IteratorLoop(_)
         )
     }
 }
@@ -982,7 +981,6 @@ pub enum StatementKind {
     If(Box<If>),
     InfiniteLoop(Box<InfiniteLoop>),
     IteratorLoop(Box<IteratorLoop>),
-    PredicateLoop(Box<PredicateLoop>),
     Expression(Box<Expression>),
 }
 
@@ -1064,21 +1062,6 @@ pub struct IteratorLoop {
 }
 
 impl IteratorLoop {
-    /// Determines whether the block returns from the control flow.
-    pub fn is_returning(&self) -> bool {
-        self.block.is_returning()
-    }
-}
-
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct PredicateLoop {
-    pub id: StatementId,
-    pub condition: Expression,
-    pub block: Block,
-    pub location: Location,
-}
-
-impl PredicateLoop {
     /// Determines whether the block returns from the control flow.
     pub fn is_returning(&self) -> bool {
         self.block.is_returning()

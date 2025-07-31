@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use indexmap::{IndexMap, IndexSet};
 
 use crate::*;
 use lume_span::{ExpressionId, ItemId, StatementId};
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub struct Map {
     /// Defines which package this map belongs to.
     pub package: PackageId,
@@ -61,5 +63,20 @@ impl Map {
     /// Gets all the expressions within the HIR map.
     pub fn expressions_mut(&mut self) -> &mut IndexMap<ExpressionId, Expression> {
         &mut self.expressions
+    }
+}
+
+#[expect(
+    clippy::missing_fields_in_debug,
+    reason = "we explicitly don't want imports, since they clutter tests"
+)]
+impl Debug for Map {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Map")
+            .field("package", &self.package)
+            .field("items", &self.items)
+            .field("statements", &self.statements)
+            .field("expressions", &self.expressions)
+            .finish()
     }
 }

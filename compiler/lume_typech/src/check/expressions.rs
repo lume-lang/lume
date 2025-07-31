@@ -146,11 +146,6 @@ impl TyCheckCtx {
 
                 self.define_block_scope(&stmt.block)
             }
-            lume_hir::StatementKind::PredicateLoop(stmt) => {
-                self.expression(&stmt.condition)?;
-
-                self.define_block_scope(&stmt.block)
-            }
             lume_hir::StatementKind::Expression(expr) => self.expression(expr),
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
         }

@@ -13,7 +13,6 @@ impl LowerFunction<'_> {
             lume_hir::StatementKind::If(stmt) => self.if_statement(stmt),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_statement(stmt),
             lume_hir::StatementKind::IteratorLoop(stmt) => self.iterator_statement(stmt),
-            lume_hir::StatementKind::PredicateLoop(stmt) => self.predicate_statement(stmt),
             lume_hir::StatementKind::Expression(expr) => Ok(lume_tir::Statement::Expression(self.expression(expr)?)),
         }
     }
@@ -96,17 +95,6 @@ impl LowerFunction<'_> {
         Ok(lume_tir::Statement::IteratorLoop(lume_tir::IteratorLoop {
             id: stmt.id,
             collection,
-            block,
-        }))
-    }
-
-    fn predicate_statement(&mut self, stmt: &lume_hir::PredicateLoop) -> Result<lume_tir::Statement> {
-        let condition = self.expression(&stmt.condition)?;
-        let block = self.lower_block(&stmt.block)?;
-
-        Ok(lume_tir::Statement::PredicateLoop(lume_tir::PredicateLoop {
-            id: stmt.id,
-            condition,
             block,
         }))
     }

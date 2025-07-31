@@ -54,12 +54,6 @@ pub(crate) trait Visitor {
 
                 Ok(())
             }
-            Statement::PredicateLoop(stmt) => {
-                self.visit_expression(&mut stmt.condition)?;
-                self.visit_block(&mut stmt.block)?;
-
-                Ok(())
-            }
             Statement::Expression(expr) => self.visit_expression(expr),
             Statement::Break(_) | Statement::Continue(_) => Ok(()),
         }

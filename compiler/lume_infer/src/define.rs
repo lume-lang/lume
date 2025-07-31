@@ -784,12 +784,6 @@ impl TyInferCtx {
 
                 Ok(())
             }
-            lume_hir::StatementKind::PredicateLoop(s) => {
-                self.define_block_scope(&s.block, stmt_id)?;
-                self.define_expr_scope(&s.condition, stmt_id)?;
-
-                Ok(())
-            }
             lume_hir::StatementKind::Expression(s) => self.define_expr_scope(s, stmt_id),
         }
     }

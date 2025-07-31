@@ -16,7 +16,6 @@ impl FunctionTransformer<'_> {
             lume_tir::Statement::If(cond) => self.if_condition(cond),
             lume_tir::Statement::InfiniteLoop(stmt) => self.infinite_loop(stmt),
             lume_tir::Statement::IteratorLoop(_) => todo!("mir: iterator loop"),
-            lume_tir::Statement::PredicateLoop(_) => todo!("mir: predicate loop"),
             lume_tir::Statement::Expression(expr) => {
                 self.expression(expr);
             }

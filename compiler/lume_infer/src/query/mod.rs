@@ -200,7 +200,6 @@ impl TyInferCtx {
         match &stmt.kind {
             lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
-            lume_hir::StatementKind::PredicateLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::If(cond) => self.type_of_if_conditional(cond),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void()),

@@ -244,7 +244,6 @@ pub enum Statement {
     If(If),
     InfiniteLoop(InfiniteLoop),
     IteratorLoop(IteratorLoop),
-    PredicateLoop(PredicateLoop),
     Expression(Expression),
 }
 
@@ -256,7 +255,6 @@ impl Statement {
             Statement::If(stmt) => stmt.is_returning(),
             Statement::InfiniteLoop(stmt) => stmt.is_returning(),
             Statement::IteratorLoop(stmt) => stmt.is_returning(),
-            Statement::PredicateLoop(stmt) => stmt.is_returning(),
             Statement::Return(_) | Statement::Continue(_) => true,
             Statement::Variable(_) | Statement::Break(_) | Statement::Expression(_) => false,
         }
@@ -335,20 +333,6 @@ pub struct IteratorLoop {
 }
 
 impl IteratorLoop {
-    /// Determines whether the block returns from the control flow.
-    pub fn is_returning(&self) -> bool {
-        self.block.is_returning()
-    }
-}
-
-#[derive(Hash, Debug, Clone, PartialEq)]
-pub struct PredicateLoop {
-    pub id: StatementId,
-    pub condition: Expression,
-    pub block: Block,
-}
-
-impl PredicateLoop {
     /// Determines whether the block returns from the control flow.
     pub fn is_returning(&self) -> bool {
         self.block.is_returning()

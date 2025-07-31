@@ -225,18 +225,35 @@ impl LowerModule<'_> {
     fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let location = self.location(expr.location);
-        let condition = self.expression(expr.condition)?;
-        let block = self.block(expr.block);
+
+        let block = self.block(lume_ast::Block {
+            statements: vec![lume_ast::Statement::If(Box::new(lume_ast::IfCondition {
+                cases: vec![
+                    lume_ast::Condition {
+                        condition: Some(expr.condition),
+                        block: expr.block,
+                        location: lume_ast::Location(0..0),
+                    },
+                    lume_ast::Condition {
+                        condition: None,
+                        block: lume_ast::Block {
+                            statements: vec![lume_ast::Statement::Break(Box::new(lume_ast::Break {
+                                location: lume_ast::Location(0..0),
+                            }))],
+                            location: lume_ast::Location(0..0),
+                        },
+                        location: lume_ast::Location(0..0),
+                    },
+                ],
+                location: lume_ast::Location(0..0),
+            }))],
+            location: lume_ast::Location(0..0),
+        });
 
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::PredicateLoop(Box::new(hir::PredicateLoop {
-                id,
-                condition,
-                block,
-                location,
-            })),
+            kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
         })
     }
 }
