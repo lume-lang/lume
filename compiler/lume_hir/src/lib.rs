@@ -42,7 +42,7 @@ pub struct MethodId(pub usize);
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct TypeParameterId(pub usize);
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Node, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
@@ -1203,6 +1203,7 @@ pub enum ExpressionKind {
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
+    Switch(Box<Switch>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
 }
@@ -1509,6 +1510,21 @@ pub struct Member {
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Switch {
+    pub id: ExpressionId,
+    pub operand: Expression,
+    pub cases: Vec<SwitchCase>,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct SwitchCase {
+    pub pattern: Pattern,
+    pub branch: Expression,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Variable {
     pub id: ExpressionId,
     pub reference: VariableSource,
@@ -1527,6 +1543,26 @@ pub struct Variant {
     pub id: ExpressionId,
     pub name: Path,
     pub arguments: Vec<Expression>,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub enum Pattern {
+    Literal(Literal),
+    Identifier(Identifier),
+    Variant(VariantPattern),
+    Wildcard(WildcardPattern),
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct VariantPattern {
+    pub name: Path,
+    pub fields: Vec<Pattern>,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct WildcardPattern {
     pub location: Location,
 }
 

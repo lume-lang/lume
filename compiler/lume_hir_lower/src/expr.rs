@@ -37,6 +37,7 @@ impl LowerModule<'_> {
             ast::Expression::Logical(e) => self.expr_logical(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
+            ast::Expression::Switch(e) => self.expr_switch(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
             ast::Expression::Variant(e) => self.expr_variant(*e)?,
         };
@@ -318,6 +319,47 @@ impl LowerModule<'_> {
                 arguments: vec![lower, upper],
                 location,
             })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_switch(&mut self, expr: ast::Switch) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let operand = self.expression(expr.operand)?;
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|field| self.expr_switch_case(field))
+            .collect::<Result<Vec<_>>>()?;
+
+        let location = self.location(expr.location);
+
+        Ok(hir::Expression {
+            id,
+            kind: lume_hir::ExpressionKind::Switch(Box::new(hir::Switch {
+                id,
+                operand,
+                cases,
+                location,
+            })),
+            location,
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_switch_case(&mut self, expr: ast::SwitchCase) -> Result<hir::SwitchCase> {
+        self.locals.push_frame();
+
+        let pattern = self.pattern(expr.pattern)?;
+        let branch = self.expression(expr.branch)?;
+        let location = self.location(expr.location);
+
+        self.locals.pop_frame();
+
+        Ok(hir::SwitchCase {
+            pattern,
+            branch,
+            location,
         })
     }
 

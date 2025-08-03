@@ -17,6 +17,7 @@ mod expr;
 mod generic;
 mod lit;
 mod path;
+mod pattern;
 mod stmt;
 mod ty;
 
