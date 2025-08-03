@@ -1,0 +1,137 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
+---
+[
+    Expression(
+        Switch(
+            Switch {
+                operand: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                7..8,
+                            ),
+                        },
+                    },
+                ),
+                cases: [
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Type {
+                                            name: Identifier {
+                                                name: "Address",
+                                                location: Location(
+                                                    11..18,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                11..18,
+                                            ),
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "V4",
+                                            location: Location(
+                                                20..22,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            20..22,
+                                        ),
+                                    },
+                                    location: Location(
+                                        20..22,
+                                    ),
+                                },
+                                fields: [],
+                                location: Location(
+                                    20..25,
+                                ),
+                            },
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 4,
+                                    location: Location(
+                                        26..27,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            20..27,
+                        ),
+                    },
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Type {
+                                            name: Identifier {
+                                                name: "Address",
+                                                location: Location(
+                                                    29..36,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                29..36,
+                                            ),
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "V6",
+                                            location: Location(
+                                                38..40,
+                                            ),
+                                        },
+                                        type_arguments: [],
+                                        location: Location(
+                                            38..40,
+                                        ),
+                                    },
+                                    location: Location(
+                                        38..40,
+                                    ),
+                                },
+                                fields: [],
+                                location: Location(
+                                    38..43,
+                                ),
+                            },
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 6,
+                                    location: Location(
+                                        44..45,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            38..45,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..47,
+                ),
+            },
+        ),
+    ),
+]

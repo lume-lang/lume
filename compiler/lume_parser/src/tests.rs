@@ -349,6 +349,21 @@ fn test_loop_snapshots() {
 }
 
 #[test]
+fn test_switch_snapshots() {
+    assert_expr_snap_eq!("switch a { }", "empty");
+    assert_expr_snap_eq!("switch a { b => c }", "single_arm");
+    assert_expr_snap_eq!("switch a { b => c, d => e }", "multiple_arms");
+    assert_expr_snap_eq!("switch a { b => c, .. => d }", "wildcard");
+    assert_expr_snap_eq!("switch a { 1 => 4, 2 => 6 }", "literal");
+    assert_expr_snap_eq!("switch a { Address::V4 => 4, Address::V6 => 6 }", "variant");
+    assert_expr_snap_eq!(
+        "switch a { Optional::Some(a) => a, Optional::None => 0 }",
+        "variant_backed"
+    );
+    assert_expr_err_snap_eq!("switch a { a => b c => d }", "missing_comma");
+}
+
+#[test]
 fn test_array_snapshots() {
     assert_expr_snap_eq!("let _ = [];", "empty");
     assert_expr_snap_eq!("let _ = [a];", "single");

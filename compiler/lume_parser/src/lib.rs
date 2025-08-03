@@ -1,3 +1,4 @@
+#![feature(box_into_inner)]
 #![feature(string_remove_matches)]
 
 use std::sync::Arc;
@@ -15,6 +16,7 @@ pub mod expr;
 pub mod generic;
 pub mod item;
 pub mod path;
+pub mod pattern;
 pub mod stmt;
 pub mod ty;
 

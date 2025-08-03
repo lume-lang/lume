@@ -237,6 +237,18 @@ pub struct InvalidImportPath {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "invalid pattern", code = "LM1108")]
+pub struct InvalidPattern {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("expected pattern, found {found}")]
+    pub range: Range<usize>,
+
+    pub found: TokenKind,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unimplemented", code = "LM9999")]
 pub struct Unimplemented {
     #[span]

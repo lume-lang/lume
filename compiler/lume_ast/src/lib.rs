@@ -885,6 +885,7 @@ pub enum Expression {
     Logical(Box<Logical>),
     Member(Box<Member>),
     Range(Box<Range>),
+    Switch(Box<Switch>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
 }
@@ -904,6 +905,7 @@ impl Node for Expression {
             Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
             Self::Range(e) => &e.location,
+            Self::Switch(e) => &e.location,
             Self::Variable(e) => e.location(),
             Self::Variant(e) => e.location(),
         }
@@ -1125,6 +1127,24 @@ pub struct Range {
 node_location!(Range);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Switch {
+    pub operand: Expression,
+    pub cases: Vec<SwitchCase>,
+    pub location: Location,
+}
+
+node_location!(Switch);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct SwitchCase {
+    pub pattern: Pattern,
+    pub branch: Expression,
+    pub location: Location,
+}
+
+node_location!(SwitchCase);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Variable {
     pub name: Identifier,
 }
@@ -1143,6 +1163,42 @@ pub struct Variant {
 }
 
 node_location!(Variant);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub enum Pattern {
+    Literal(Literal),
+    Identifier(Identifier),
+    Variant(VariantPattern),
+    Wildcard(WildcardPattern),
+}
+
+impl Node for Pattern {
+    #[inline]
+    fn location(&self) -> &Location {
+        match self {
+            Self::Literal(p) => p.location(),
+            Self::Identifier(p) => &p.location,
+            Self::Variant(p) => p.location(),
+            Self::Wildcard(p) => &p.location,
+        }
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct VariantPattern {
+    pub name: Path,
+    pub fields: Vec<Pattern>,
+    pub location: Location,
+}
+
+node_location!(VariantPattern);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct WildcardPattern {
+    pub location: Location,
+}
+
+node_location!(WildcardPattern);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {

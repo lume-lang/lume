@@ -51,6 +51,7 @@ impl Parser {
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
             TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
+            TokenKind::Switch => Ok(self.parse_switch_expression()?),
             TokenKind::SelfRef => Ok(self.parse_self_reference()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
 
@@ -271,6 +272,41 @@ impl Parser {
         })?;
 
         Ok(Expression::Array(Box::new(Array { values, location })))
+    }
+
+    /// Parses a switch expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub(super) fn parse_switch_expression(&mut self) -> Result<Expression> {
+        let start = self.consume(TokenKind::Switch)?.start();
+        let operand = self.parse_expression()?;
+        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_switch_case)?;
+
+        let end = self.token().end();
+
+        Ok(Expression::Switch(Box::new(Switch {
+            operand,
+            cases,
+            location: (start..end).into(),
+        })))
+    }
+
+    /// Parses a switch case on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_switch_case(&mut self) -> Result<SwitchCase> {
+        let pattern = self.parse_pattern()?;
+
+        self.consume(TokenKind::ArrowBig)?;
+
+        let branch = self.parse_expression()?;
+
+        let start = pattern.location().start();
+        let end = branch.location().end();
+
+        Ok(SwitchCase {
+            pattern,
+            branch,
+            location: (start..end).into(),
+        })
     }
 
     /// Parses a range expression on the current cursor position.
@@ -578,7 +614,7 @@ impl Parser {
 
     /// Parses a literal value expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_literal(&mut self) -> Result<Expression> {
+    pub(super) fn parse_literal(&mut self) -> Result<Expression> {
         let token = self.token();
         let location: Location = token.index.into();
 

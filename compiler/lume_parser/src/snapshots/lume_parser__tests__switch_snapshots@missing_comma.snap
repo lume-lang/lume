@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr_err(\"switch a { a => b c => d }\")"
+---
+MissingDelimiterInSequence {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "switch a { a => b c => d }",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 18..19,
+    delimiter: ,,
+}

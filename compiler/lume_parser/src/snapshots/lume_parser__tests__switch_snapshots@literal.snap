@@ -1,0 +1,81 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"switch a { 1 => 4, 2 => 6 }\")"
+---
+[
+    Expression(
+        Switch(
+            Switch {
+                operand: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                7..8,
+                            ),
+                        },
+                    },
+                ),
+                cases: [
+                    SwitchCase {
+                        pattern: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 1,
+                                    location: Location(
+                                        11..12,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 4,
+                                    location: Location(
+                                        16..17,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            11..17,
+                        ),
+                    },
+                    SwitchCase {
+                        pattern: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 2,
+                                    location: Location(
+                                        19..20,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 6,
+                                    location: Location(
+                                        24..25,
+                                    ),
+                                    kind: I32,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            19..25,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..27,
+                ),
+            },
+        ),
+    ),
+]

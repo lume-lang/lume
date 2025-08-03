@@ -1,0 +1,72 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"switch a { b => c, .. => d }\")"
+---
+[
+    Expression(
+        Switch(
+            Switch {
+                operand: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                7..8,
+                            ),
+                        },
+                    },
+                ),
+                cases: [
+                    SwitchCase {
+                        pattern: Identifier(
+                            Identifier {
+                                name: "b",
+                                location: Location(
+                                    11..12,
+                                ),
+                            },
+                        ),
+                        branch: Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "c",
+                                    location: Location(
+                                        16..17,
+                                    ),
+                                },
+                            },
+                        ),
+                        location: Location(
+                            11..17,
+                        ),
+                    },
+                    SwitchCase {
+                        pattern: Wildcard(
+                            WildcardPattern {
+                                location: Location(
+                                    19..21,
+                                ),
+                            },
+                        ),
+                        branch: Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "d",
+                                    location: Location(
+                                        25..26,
+                                    ),
+                                },
+                            },
+                        ),
+                        location: Location(
+                            19..26,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..28,
+                ),
+            },
+        ),
+    ),
+]
