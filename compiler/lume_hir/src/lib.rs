@@ -566,7 +566,7 @@ impl Item {
             Item::Type(symbol) => match &**symbol {
                 TypeDefinition::Struct(s) => &s.type_parameters,
                 TypeDefinition::Trait(t) => &t.type_parameters,
-                TypeDefinition::Enum(_) => &EMPTY,
+                TypeDefinition::Enum(e) => &e.type_parameters,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
             Item::Use(_) => &EMPTY,

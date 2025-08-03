@@ -436,6 +436,7 @@ impl TyCheckCtx {
     /// the types of passed parameters, if any.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
+        let enum_def = self.enum_def_of_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
 
         if expr.arguments.len() != enum_case_def.parameters.len() {
@@ -449,7 +450,7 @@ impl TyCheckCtx {
 
         for (arg, param) in expr.arguments.iter().zip(enum_case_def.parameters.iter()) {
             let arg_type = self.type_of_expr(arg)?;
-            let param_ty = self.mk_type_ref_from_expr(param, expr.id)?;
+            let param_ty = self.mk_type_ref_from(param, DefId::Item(enum_def.id))?;
 
             if let Err(err) = self.ensure_type_compatibility(&arg_type, &param_ty) {
                 self.dcx().emit(err);
