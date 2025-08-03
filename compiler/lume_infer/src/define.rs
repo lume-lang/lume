@@ -868,6 +868,13 @@ impl TyInferCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::Switch(s) => {
+                for case in &s.cases {
+                    self.define_expr_scope(&case.branch, expr_id)?;
+                }
+
+                Ok(())
+            }
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
             | lume_hir::ExpressionKind::Variant(_) => Ok(()),

@@ -68,6 +68,7 @@ pub enum TokenKind {
     AddAssign,
     And,
     Arrow,
+    ArrowBig,
     Assign,
     DocComment,
     BinaryAnd,
@@ -131,6 +132,7 @@ pub enum TokenKind {
     Struct,
     Sub,
     SubAssign,
+    Switch,
     Trait,
     True,
     Use,
@@ -162,6 +164,7 @@ impl TokenKind {
                 | TokenKind::Return
                 | TokenKind::SelfRef
                 | TokenKind::Struct
+                | TokenKind::Switch
                 | TokenKind::Trait
                 | TokenKind::True
                 | TokenKind::Use
@@ -230,6 +233,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::AddAssign => "+=",
             TokenKind::And => "&&",
             TokenKind::Arrow => "->",
+            TokenKind::ArrowBig => "=>",
             TokenKind::Assign => "=",
             TokenKind::DocComment => "doc comment",
             TokenKind::BinaryAnd => "&",
@@ -293,6 +297,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Struct => "struct",
             TokenKind::Sub => "-",
             TokenKind::SubAssign => "-=",
+            TokenKind::Switch => "switch",
             TokenKind::Trait => "trait",
             TokenKind::True => "true",
             TokenKind::Use => "use",
@@ -809,6 +814,7 @@ impl Lexer {
             "return" => Token::empty(TokenKind::Return),
             "self" => Token::empty(TokenKind::SelfRef),
             "struct" => Token::empty(TokenKind::Struct),
+            "switch" => Token::empty(TokenKind::Switch),
             "trait" => Token::empty(TokenKind::Trait),
             "true" => Token::empty(TokenKind::True),
             "use" => Token::empty(TokenKind::Use),
@@ -855,6 +861,7 @@ impl Lexer {
                 ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
                 ('&', '&') => return Ok((TokenKind::And, 2)),
                 ('-', '>') => return Ok((TokenKind::Arrow, 2)),
+                ('=', '>') => return Ok((TokenKind::ArrowBig, 2)),
                 ('/', '/') => return Ok((TokenKind::Comment, 2)),
                 ('=', '=') => return Ok((TokenKind::Equal, 2)),
                 ('-', '-') => return Ok((TokenKind::Decrement, 2)),
@@ -1180,6 +1187,7 @@ mod tests {
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
         assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
         assert_token!("struct", TokenKind::Struct, None::<String>, 0, 6);
+        assert_token!("switch", TokenKind::Switch, None::<String>, 0, 6);
         assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
         assert_token!("true", TokenKind::True, None::<String>, 0, 4);
         assert_token!("false", TokenKind::False, None::<String>, 0, 5);
@@ -1196,6 +1204,7 @@ mod tests {
         assert_token!("+=", TokenKind::AddAssign, Some("+="), 0, 2);
         assert_token!("&&", TokenKind::And, Some("&&"), 0, 2);
         assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
+        assert_token!("=>", TokenKind::ArrowBig, Some("=>"), 0, 2);
         assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);
         assert_token!("--", TokenKind::Decrement, Some("--"), 0, 2);
         assert_token!("..", TokenKind::DotDot, Some(".."), 0, 2);

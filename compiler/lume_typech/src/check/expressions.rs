@@ -233,6 +233,7 @@ impl TyCheckCtx {
             }
             lume_hir::ExpressionKind::StaticCall(call) => self.call_expression(lume_hir::CallExpression::Static(call)),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr),
+            lume_hir::ExpressionKind::Switch(expr) => self.switch_expression(expr),
             lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr),
             _ => Ok(()),
         }
@@ -427,6 +428,34 @@ impl TyCheckCtx {
                 found: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the patterns in the switch expression are valid for the operand,
+    /// as well as checking that all branch expressions are compatible.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn switch_expression(&self, expr: &lume_hir::Switch) -> Result<()> {
+        let Some(first_case) = expr.cases.first() else {
+            return Ok(());
+        };
+
+        let operand_ty = self.type_of_expr(&expr.operand)?;
+        let branch_ty = self.type_of_expr(&first_case.branch)?;
+
+        for case in &expr.cases {
+            let case_branch_ty = self.type_of_expr(&case.branch)?;
+
+            if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
+                self.dcx().emit(err);
+            }
+
+            if let Some(case_pattern_ty) = self.type_of_pattern(&case.pattern)?
+                && let Err(err) = self.ensure_type_compatibility(&case_pattern_ty, &operand_ty)
+            {
+                self.dcx().emit(err);
+            }
         }
 
         Ok(())

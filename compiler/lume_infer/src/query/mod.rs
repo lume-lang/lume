@@ -1,6 +1,6 @@
 use crate::{TyInferCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, FunctionId, Identifier, MethodId, Path, UseId};
+use lume_hir::{self, FunctionId, Identifier, MethodId, Node, Path, UseId};
 use lume_query::cached_query;
 use lume_span::ExpressionId;
 use lume_types::{Function, Method, Trait, TypeRef};
@@ -139,6 +139,10 @@ impl TyInferCtx {
 
                 property.property_type.clone()
             }
+            lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
+                Some(case) => self.type_of_expr(&case.branch)?,
+                None => TypeRef::void(),
+            },
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
                 lume_hir::VariableSource::Parameter(param) => {
                     self.mk_type_ref_from(&param.param_type, DefId::Expression(var.id))?
@@ -271,6 +275,38 @@ impl TyInferCtx {
         let signature = self.signature_of_instantiated(callable, expr)?;
 
         Result::Ok(signature.ret_ty)
+    }
+
+    /// Returns the *type* of the given [`Pattern`].
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if no definition with the given ID exists
+    /// within it's declared module. This also applies to any recursive calls this
+    /// method makes, in the case of some expressions, such as assignments.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_pattern(&self, pat: &lume_hir::Pattern) -> Result<Option<TypeRef>> {
+        let ty = match pat {
+            lume_hir::Pattern::Literal(lit) => self.type_of_lit(lit),
+            lume_hir::Pattern::Variant(var) => {
+                let enum_name = var.name.clone().parent().unwrap();
+
+                match self.tdb().find_type(&enum_name) {
+                    Some(ty) => TypeRef::new(ty.id, pat.location()),
+                    None => {
+                        return Err(self.missing_type_err(&lume_hir::Type {
+                            id: lume_span::ItemId::empty(),
+                            name: var.name.clone(),
+                            location: var.name.location,
+                        }));
+                    }
+                }
+            }
+            lume_hir::Pattern::Identifier(_) | lume_hir::Pattern::Wildcard(_) => return Ok(None),
+        };
+
+        Result::Ok(Some(ty.with_location(pat.location())))
     }
 
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
