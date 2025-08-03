@@ -110,6 +110,11 @@ impl LowerFunction<'_> {
             lume_mir::Operand::String { value } => self.reference_static_string(value.as_str()),
             lume_mir::Operand::Load { id } => self.load_var(*id),
             lume_mir::Operand::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
+            lume_mir::Operand::SlotAddress { id } => {
+                let slot = self.retrieve_slot(*id);
+
+                self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, 0)
+            }
             lume_mir::Operand::Reference { id } => self.use_var(*id),
         }
     }

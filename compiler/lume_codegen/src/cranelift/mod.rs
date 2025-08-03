@@ -10,7 +10,7 @@ use std::{
 
 use cranelift::{
     codegen::{
-        ir::{BlockArg, GlobalValue, immediates::Offset32},
+        ir::{BlockArg, GlobalValue, StackSlot, immediates::Offset32},
         verify_function,
     },
     prelude::*,
@@ -20,7 +20,7 @@ use cranelift_object::{ObjectBuilder, ObjectModule};
 use error_snippet::SimpleDiagnostic;
 use indexmap::IndexMap;
 use lume_errors::Result;
-use lume_mir::{BlockBranchSite, RegisterId};
+use lume_mir::{BlockBranchSite, RegisterId, SlotId};
 
 use crate::{Backend, CompiledModule, Context};
 
@@ -279,6 +279,7 @@ struct LowerFunction<'ctx> {
     variables: IndexMap<RegisterId, Variable>,
     variable_types: IndexMap<RegisterId, Type>,
     parameters: IndexMap<RegisterId, Value>,
+    slots: IndexMap<SlotId, StackSlot>,
     blocks: IndexMap<lume_mir::BasicBlockId, Block>,
 }
 
@@ -295,6 +296,7 @@ impl<'ctx> LowerFunction<'ctx> {
             variables: IndexMap::new(),
             variable_types: IndexMap::new(),
             parameters: IndexMap::new(),
+            slots: IndexMap::new(),
             blocks: IndexMap::new(),
         }
     }
@@ -403,6 +405,10 @@ impl<'ctx> LowerFunction<'ctx> {
         tracing::debug!(%reg_ty, %property, index);
 
         self.backend.cl_type_of(property)
+    }
+
+    pub(crate) fn retrieve_slot(&self, slot: SlotId) -> StackSlot {
+        *self.slots.get(&slot).unwrap()
     }
 
     pub(crate) fn icmp(&mut self, cmp: IntCC, x: &lume_mir::Operand, y: &lume_mir::Operand) -> Value {

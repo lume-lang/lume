@@ -118,6 +118,7 @@ pub struct Function {
     pub signature: Signature,
 
     pub registers: Registers,
+    pub slots: IndexMap<SlotId, Type>,
     pub blocks: Vec<BasicBlock>,
     current_block: BasicBlockId,
 
@@ -130,6 +131,7 @@ impl Function {
             id,
             name,
             registers: Registers::default(),
+            slots: IndexMap::new(),
             blocks: Vec::new(),
             signature: Signature::default(),
             current_block: BasicBlockId(0),
@@ -202,6 +204,14 @@ impl Function {
         self.registers.allocate(ty, self.current_block)
     }
 
+    /// Allocates a new slot with the given type and returns its ID.
+    pub fn add_slot(&mut self, ty: Type) -> SlotId {
+        let slot = SlotId::new(self.slots.len());
+        self.slots.insert(slot, ty);
+
+        slot
+    }
+
     /// Declares a new local with the given declaration in the current block.
     #[expect(clippy::needless_pass_by_value)]
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
@@ -220,6 +230,14 @@ impl Function {
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare(ty, Declaration::Operand(value))
+    }
+
+    /// Creates a new stack-allocated slot within the function.
+    pub fn alloc_slot(&mut self, ty: Type) -> SlotId {
+        let slot = self.add_slot(ty.clone());
+        self.current_block_mut().create_slot(slot, ty);
+
+        slot
     }
 
     /// Enters a new scope with the given scope kind.
@@ -441,6 +459,11 @@ impl BasicBlock {
         self.instructions.push(Instruction::Assign { target, value });
     }
 
+    /// Declares a new stack-allocated slot with the given value.
+    pub fn create_slot(&mut self, slot: SlotId, ty: Type) {
+        self.instructions.push(Instruction::CreateSlot { slot, ty });
+    }
+
     /// Declares a new heap-allocated register with the given type.
     pub fn allocate(&mut self, register: RegisterId, ty: Type) {
         self.instructions.push(Instruction::Allocate { register, ty });
@@ -449,6 +472,11 @@ impl BasicBlock {
     /// Stores a value in an existing register.
     pub fn store(&mut self, target: RegisterId, value: Operand) {
         self.instructions.push(Instruction::Store { target, value });
+    }
+
+    /// Stores a value in an existing slot.
+    pub fn store_slot(&mut self, target: SlotId, value: Operand) {
+        self.instructions.push(Instruction::StoreSlot { target, value });
     }
 
     /// Stores a value in a field of an existing register.
@@ -631,6 +659,25 @@ impl Registers {
     }
 }
 
+#[derive(Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+pub struct SlotId(usize);
+
+impl SlotId {
+    pub fn new(index: usize) -> Self {
+        SlotId(index)
+    }
+
+    pub fn as_usize(&self) -> usize {
+        self.0
+    }
+}
+
+impl std::fmt::Display for SlotId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "@{}", self.0)
+    }
+}
+
 /// Represents a standalone instruction within a basic block.
 ///
 /// Instructions themselves cannot be referenced by other instructions - only registers
@@ -643,11 +690,17 @@ pub enum Instruction {
     /// Assigns the value into the target register.
     Assign { target: RegisterId, value: Operand },
 
+    /// Declares a stack-allocated slot within the current function.
+    CreateSlot { slot: SlotId, ty: Type },
+
     /// Declares a heap-allocated register within the current function.
     Allocate { register: RegisterId, ty: Type },
 
     /// Stores the value into the target register.
     Store { target: RegisterId, value: Operand },
+
+    /// Stores the value into the target slot.
+    StoreSlot { target: SlotId, value: Operand },
 
     /// Stores the value into the field of an target register.
     StoreField {
@@ -661,7 +714,11 @@ impl Instruction {
     pub fn register_def(&self) -> Option<RegisterId> {
         match self {
             Self::Let { register, .. } | Self::Allocate { register, .. } => Some(*register),
-            Self::Assign { .. } | Self::Store { .. } | Self::StoreField { .. } => None,
+            Self::Assign { .. }
+            | Self::CreateSlot { .. }
+            | Self::Store { .. }
+            | Self::StoreSlot { .. }
+            | Self::StoreField { .. } => None,
         }
     }
 
@@ -674,7 +731,7 @@ impl Instruction {
 
                 refs
             }
-            Self::Allocate { .. } => Vec::new(),
+            Self::CreateSlot { .. } | Self::Allocate { .. } | Self::StoreSlot { .. } => Vec::new(),
             Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
         }
     }
@@ -685,8 +742,10 @@ impl std::fmt::Display for Instruction {
         match &self {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
             Self::Assign { target, value } => write!(f, "{target} = {value}"),
+            Self::CreateSlot { slot, ty } => write!(f, "{slot} = slot {ty}"),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
+            Self::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
             Self::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
         }
     }
@@ -822,6 +881,9 @@ pub enum Operand {
         index: usize,
     },
 
+    /// Represents an address to an existing stack slot.
+    SlotAddress { id: SlotId },
+
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
 }
@@ -834,7 +896,9 @@ impl Operand {
             Self::Boolean { .. } => 1,
             Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
             Self::Reference { .. } | Self::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
-            Self::Load { .. } | Self::LoadField { .. } => panic!("cannot get bitsize of load operand"),
+            Self::Load { .. } | Self::LoadField { .. } | Self::SlotAddress { .. } => {
+                panic!("cannot get bitsize of load operand")
+            }
         }
     }
 
@@ -846,7 +910,11 @@ impl Operand {
             Self::LoadField { target, .. } => {
                 vec![*target]
             }
-            Self::Boolean { .. } | Self::Integer { .. } | Self::Float { .. } | Self::String { .. } => Vec::new(),
+            Self::Boolean { .. }
+            | Self::Integer { .. }
+            | Self::Float { .. }
+            | Self::String { .. }
+            | Self::SlotAddress { .. } => Vec::new(),
         }
     }
 }
@@ -860,6 +928,7 @@ impl std::fmt::Display for Operand {
             Self::Reference { id } => write!(f, "{id}"),
             Self::Load { id } => write!(f, "*{id}"),
             Self::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
+            Self::SlotAddress { id } => write!(f, "{id}"),
             Self::String { value } => write!(f, "\"{value}\""),
         }
     }
@@ -987,6 +1056,7 @@ pub type TypeRef = lume_types::TypeRef;
 pub struct Type {
     pub id: TypeRef,
     pub kind: TypeKind,
+    pub is_generic: bool,
 }
 
 impl Type {
@@ -994,6 +1064,7 @@ impl Type {
         Self {
             id: TypeRef::void(),
             kind: TypeKind::Void,
+            is_generic: false,
         }
     }
 
@@ -1001,6 +1072,7 @@ impl Type {
         Self {
             id: TypeRef::bool(),
             kind: TypeKind::Boolean,
+            is_generic: false,
         }
     }
 
@@ -1008,6 +1080,7 @@ impl Type {
         Self {
             id: TypeRef::string(),
             kind: TypeKind::String,
+            is_generic: false,
         }
     }
 
@@ -1017,6 +1090,17 @@ impl Type {
             kind: TypeKind::Pointer {
                 elemental: Box::new(elemental),
             },
+            is_generic: false,
+        }
+    }
+
+    pub fn type_param() -> Self {
+        Self {
+            id: TypeRef::pointer(TypeRef::void()),
+            kind: TypeKind::Pointer {
+                elemental: Box::new(Type::void()),
+            },
+            is_generic: true,
         }
     }
 
@@ -1038,6 +1122,7 @@ impl Type {
         Self {
             id: TypeRef::i8(),
             kind: TypeKind::Integer { bits: 8, signed: true },
+            is_generic: false,
         }
     }
 
@@ -1045,6 +1130,7 @@ impl Type {
         Self {
             id: TypeRef::u8(),
             kind: TypeKind::Integer { bits: 8, signed: false },
+            is_generic: false,
         }
     }
 
@@ -1052,6 +1138,7 @@ impl Type {
         Self {
             id: TypeRef::i16(),
             kind: TypeKind::Integer { bits: 16, signed: true },
+            is_generic: false,
         }
     }
 
@@ -1062,6 +1149,7 @@ impl Type {
                 bits: 16,
                 signed: false,
             },
+            is_generic: false,
         }
     }
 
@@ -1069,6 +1157,7 @@ impl Type {
         Self {
             id: TypeRef::i32(),
             kind: TypeKind::Integer { bits: 32, signed: true },
+            is_generic: false,
         }
     }
 
@@ -1079,6 +1168,7 @@ impl Type {
                 bits: 32,
                 signed: false,
             },
+            is_generic: false,
         }
     }
 
@@ -1086,6 +1176,7 @@ impl Type {
         Self {
             id: TypeRef::i64(),
             kind: TypeKind::Integer { bits: 64, signed: true },
+            is_generic: false,
         }
     }
 
@@ -1096,6 +1187,7 @@ impl Type {
                 bits: 64,
                 signed: false,
             },
+            is_generic: false,
         }
     }
 
@@ -1111,6 +1203,7 @@ impl Type {
         Self {
             id: TypeRef::f32(),
             kind: TypeKind::Float { bits: 32 },
+            is_generic: false,
         }
     }
 
@@ -1118,6 +1211,7 @@ impl Type {
         Self {
             id: TypeRef::f64(),
             kind: TypeKind::Float { bits: 64 },
+            is_generic: false,
         }
     }
 
@@ -1125,6 +1219,7 @@ impl Type {
         Self {
             id,
             kind: TypeKind::Struct { properties: props },
+            is_generic: false,
         }
     }
 
@@ -1132,11 +1227,16 @@ impl Type {
         Self {
             id,
             kind: TypeKind::Union { cases },
+            is_generic: false,
         }
     }
 
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
+    }
+
+    pub fn is_metadata_type(&self) -> bool {
+        matches!(self.kind, TypeKind::Metadata { .. })
     }
 
     pub fn is_signed(&self) -> bool {

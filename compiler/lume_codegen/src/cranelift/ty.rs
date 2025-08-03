@@ -112,7 +112,7 @@ impl LowerFunction<'_> {
                 64 => types::F64,
                 _ => unreachable!(),
             },
-            lume_mir::Operand::String { .. } => self.backend.cl_ptr_type(),
+            lume_mir::Operand::String { .. } | lume_mir::Operand::SlotAddress { .. } => self.backend.cl_ptr_type(),
             lume_mir::Operand::Load { id } => self.retrieve_load_type(*id),
             lume_mir::Operand::LoadField { target, index, .. } => self.retrieve_field_type(*target, *index),
             lume_mir::Operand::Reference { id } => self.retrieve_var_type(*id),

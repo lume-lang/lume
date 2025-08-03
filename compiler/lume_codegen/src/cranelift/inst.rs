@@ -60,6 +60,18 @@ impl LowerFunction<'_> {
             lume_mir::Instruction::Assign { .. } => {
                 panic!("bug!: assignment instructions should not be present in codegen")
             }
+            lume_mir::Instruction::CreateSlot { slot, ty } => {
+                #[expect(clippy::cast_possible_truncation)]
+                let size = ty.bytesize() as u32;
+
+                let stack_slot = self.builder.create_sized_stack_slot(StackSlotData {
+                    kind: StackSlotKind::ExplicitSlot,
+                    size,
+                    align_shift: 4,
+                });
+
+                self.slots.insert(*slot, stack_slot);
+            }
             lume_mir::Instruction::Allocate { register, ty } => {
                 let ptr_ty = self.backend.cl_ptr_type();
                 let var = self.declare_var(*register, ptr_ty);
@@ -74,6 +86,12 @@ impl LowerFunction<'_> {
                 self.builder
                     .ins()
                     .store(MemFlags::new(), value, target, Offset32::new(0));
+            }
+            lume_mir::Instruction::StoreSlot { target, value } => {
+                let slot = self.retrieve_slot(*target);
+                let value = self.cg_operand(value);
+
+                self.builder.ins().stack_store(value, slot, 0);
             }
             lume_mir::Instruction::StoreField { target, offset, value } => {
                 let target = self.use_var(*target);

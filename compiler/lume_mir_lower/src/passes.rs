@@ -201,6 +201,7 @@ impl ConvertAssignmentExpressions {
                 self.get_moved_register(target);
                 self.update_regs_op(value);
             }
+            Instruction::CreateSlot { .. } | Instruction::StoreSlot { .. } => {}
         }
     }
 
@@ -257,7 +258,11 @@ impl ConvertAssignmentExpressions {
             Operand::LoadField { target, .. } => {
                 self.get_moved_register(target);
             }
-            Operand::Boolean { .. } | Operand::Integer { .. } | Operand::Float { .. } | Operand::String { .. } => {}
+            Operand::Boolean { .. }
+            | Operand::Integer { .. }
+            | Operand::Float { .. }
+            | Operand::String { .. }
+            | Operand::SlotAddress { .. } => {}
         }
     }
 }
@@ -352,6 +357,7 @@ impl RenameSsaVariables {
                 *target = *mapping.get(&(*target, block)).unwrap();
                 Self::update_regs_op(value, block, mapping);
             }
+            Instruction::CreateSlot { .. } | Instruction::StoreSlot { .. } => {}
         }
     }
 
@@ -408,7 +414,11 @@ impl RenameSsaVariables {
             Operand::LoadField { target, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();
             }
-            Operand::Boolean { .. } | Operand::Integer { .. } | Operand::Float { .. } | Operand::String { .. } => {}
+            Operand::Boolean { .. }
+            | Operand::Integer { .. }
+            | Operand::Float { .. }
+            | Operand::String { .. }
+            | Operand::SlotAddress { .. } => {}
         }
     }
 }

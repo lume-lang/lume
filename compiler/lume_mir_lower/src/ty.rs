@@ -19,8 +19,10 @@ impl FunctionTransformer<'_> {
 
                 lume_mir::Type::pointer(struct_ty)
             }
-            lume_types::TypeKind::User(lume_types::UserType::Trait(_) | lume_types::UserType::Enum(_))
-            | lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::pointer(lume_mir::Type::void()),
+            lume_types::TypeKind::User(lume_types::UserType::Trait(_) | lume_types::UserType::Enum(_)) => {
+                lume_mir::Type::pointer(lume_mir::Type::void())
+            }
+            lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::type_param(),
         }
     }
 
@@ -48,6 +50,7 @@ impl FunctionTransformer<'_> {
 
                 properties[*index].clone()
             }
+            lume_mir::Operand::SlotAddress { .. } => lume_mir::Type::pointer(lume_mir::Type::void()),
             lume_mir::Operand::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }
@@ -91,6 +94,7 @@ impl FunctionTransformer<'_> {
                         kind: lume_mir::TypeKind::Metadata {
                             inner: metadata.clone(),
                         },
+                        is_generic: false,
                     }
                 }
             },

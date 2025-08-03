@@ -38,6 +38,7 @@ impl FunctionTransformer<'_> {
 
                 load
             }
+            lume_mir::Operand::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
             lume_mir::Operand::Boolean { .. }
             | lume_mir::Operand::Integer { .. }
             | lume_mir::Operand::Float { .. }
