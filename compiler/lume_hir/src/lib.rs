@@ -397,6 +397,23 @@ impl Path {
     pub fn is_type(&self) -> bool {
         matches!(self.name, PathSegment::Type { .. })
     }
+
+    /// Determines whether the given [`Path`]s match in terms of name.
+    ///
+    /// Type arguments are not test for a match.
+    pub fn is_name_match(&self, other: &Self) -> bool {
+        if self.root.len() != other.root.len() {
+            return false;
+        }
+
+        for (s, o) in self.root.iter().zip(other.root.iter()) {
+            if s.name() != o.name() {
+                return false;
+            }
+        }
+
+        self.name() == other.name()
+    }
 }
 
 impl std::fmt::Display for Path {

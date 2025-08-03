@@ -64,6 +64,11 @@ impl Map {
     pub fn expressions_mut(&mut self) -> &mut IndexMap<ExpressionId, Expression> {
         &mut self.expressions
     }
+
+    /// Determines whether the given name has been imported.
+    pub fn get_imported(&self, name: &Path) -> Option<&Path> {
+        self.imports.iter().find(|i| i.is_name_match(name))
+    }
 }
 
 #[expect(

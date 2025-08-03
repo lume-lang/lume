@@ -310,7 +310,7 @@ impl TyInferCtx {
             if !self.tdb().namespace_exists(&type_path) {
                 let subpath = Path::from(type_path);
 
-                let source = if let Some(import) = self.hir.imports.get(&subpath) {
+                let source = if let Some(import) = self.hir.get_imported(&subpath) {
                     import.location
                 } else {
                     subpath.location
@@ -335,7 +335,7 @@ impl TyInferCtx {
             type_path.pop();
         }
 
-        if let Some(import) = self.hir.imports.get(&ty.name) {
+        if let Some(import) = self.hir.get_imported(&ty.name) {
             return errors::InvalidTypeInNamespace {
                 source: import.name.name().location,
                 name: ty.name.clone(),

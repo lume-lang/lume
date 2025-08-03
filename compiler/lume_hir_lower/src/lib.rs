@@ -242,6 +242,7 @@ impl<'a> LowerModule<'a> {
                 lower.dcx.emit(err);
             }
         }
+
         for import in lower.imports.values() {
             lower.map.imports.insert(import.clone());
         }

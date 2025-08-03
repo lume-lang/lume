@@ -533,9 +533,8 @@ impl TyInferCtx {
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_method_bodies(&mut self) -> Result<()> {
-        let hir = std::mem::take(&mut self.hir);
-
-        for (_, item) in &hir.items {
+        // TODO: this is not a very good way of handling mutability issues.
+        for (_, item) in &self.hir.clone().items {
             match item {
                 lume_hir::Item::Type(t) => self.define_method_bodies_type(t)?,
                 lume_hir::Item::Function(f) => self.define_func_body(f)?,
@@ -543,8 +542,6 @@ impl TyInferCtx {
                 lume_hir::Item::Impl(i) => self.define_method_bodies_impl(i)?,
             }
         }
-
-        self.hir = hir;
 
         Ok(())
     }
