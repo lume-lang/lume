@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar(Int32)\n        }\")"
+expression: "parse(\"enum Test<T: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -14,52 +14,48 @@ expression: "parse(\"\n        enum Foo {\n            Bar(Int32)\n        }\")"
                     },
                 ),
                 name: Identifier {
-                    name: "Foo",
+                    name: "Test",
                     location: Location(
-                        14..17,
+                        5..9,
                     ),
                 },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
+                type_parameters: [
+                    TypeParameter {
                         name: Identifier {
-                            name: "Bar",
+                            name: "T",
                             location: Location(
-                                32..35,
+                                10..11,
                             ),
                         },
-                        parameters: [
+                        constraints: [
                             Named(
                                 NamedType {
                                     name: Path {
                                         root: [],
                                         name: Type {
                                             name: Identifier {
-                                                name: "Int32",
+                                                name: "Numeric",
                                                 location: Location(
-                                                    36..41,
+                                                    13..20,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..41,
+                                                13..20,
                                             ),
                                         },
                                         location: Location(
-                                            36..41,
+                                            13..20,
                                         ),
                                     },
                                 },
                             ),
                         ],
-                        location: Location(
-                            32..42,
-                        ),
-                        documentation: None,
                     },
                 ],
+                cases: [],
                 location: Location(
-                    9..52,
+                    0..24,
                 ),
                 documentation: None,
             },

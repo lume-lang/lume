@@ -38,6 +38,9 @@ Map {
                         },
                         location: <internal>:18:21,
                     },
+                    type_parameters: TypeParameters {
+                        inner: [],
+                    },
                     visibility: Private,
                     cases: [
                         EnumDefinitionCase {

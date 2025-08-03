@@ -408,6 +408,7 @@ impl Parser {
         let start = self.consume(TokenKind::Enum)?.start();
 
         let name = self.parse_identifier()?;
+        let type_parameters = self.parse_type_parameters()?;
         let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_enum_case)?;
 
         let end = self.previous_token().end();
@@ -416,6 +417,7 @@ impl Parser {
             Box::new(EnumDefinition {
                 visibility,
                 name,
+                type_parameters,
                 cases,
                 location: (start..end).into(),
                 documentation: self.doc_token.take(),

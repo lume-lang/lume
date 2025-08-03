@@ -699,6 +699,7 @@ node_location!(TraitMethodDefinition);
 pub struct EnumDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
+    pub type_parameters: Vec<TypeParameter>,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
     pub documentation: Option<String>,

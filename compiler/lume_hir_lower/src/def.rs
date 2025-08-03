@@ -205,6 +205,7 @@ impl LowerModule<'_> {
         let id = self.next_item_id();
 
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
+        let type_parameters = self.type_parameters(expr.type_parameters)?;
         let visibility = lower_visibility(&expr.visibility);
         let location = self.location(expr.location);
 
@@ -220,6 +221,7 @@ impl LowerModule<'_> {
                 id,
                 type_id: None,
                 name,
+                type_parameters,
                 visibility,
                 cases,
                 location,

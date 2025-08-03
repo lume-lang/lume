@@ -1,0 +1,21 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_err(\"enum Test<T1 T2> {}\")"
+---
+MissingDelimiterInSequence {
+    source: SourceFile {
+        id: SourceFileId(
+            PackageId(
+                0,
+            ),
+            0,
+        ),
+        name: Internal,
+        content: "enum Test<T1 T2> {}",
+        package: PackageId(
+            0,
+        ),
+    },
+    range: 13..15,
+    delimiter: ,,
+}

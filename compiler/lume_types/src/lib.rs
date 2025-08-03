@@ -101,6 +101,7 @@ impl WithTypeParameters for TypeId {
         match &ty.kind {
             TypeKind::User(UserType::Struct(k)) => Ok(&k.type_parameters),
             TypeKind::User(UserType::Trait(k)) => Ok(&k.type_parameters),
+            TypeKind::User(UserType::Enum(k)) => Ok(&k.type_parameters),
             kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
         }
     }
@@ -113,6 +114,7 @@ impl WithTypeParameters for TypeId {
         match &mut ty.kind {
             TypeKind::User(UserType::Struct(k)) => Ok(&mut k.type_parameters),
             TypeKind::User(UserType::Trait(k)) => Ok(&mut k.type_parameters),
+            TypeKind::User(UserType::Enum(k)) => Ok(&mut k.type_parameters),
             kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
         }
     }
@@ -353,6 +355,7 @@ impl Trait {
 pub struct Enum {
     pub id: ItemId,
     pub name: Path,
+    pub type_parameters: Vec<TypeParameterId>,
 }
 
 impl Enum {
@@ -360,6 +363,7 @@ impl Enum {
         Self {
             id: reference.id,
             name: reference.name.clone(),
+            type_parameters: Vec::new(),
         }
     }
 }
@@ -496,10 +500,10 @@ impl TypeKind {
             | TypeKind::UInt(_)
             | TypeKind::Float(_)
             | TypeKind::String
-            | TypeKind::TypeParameter(_)
-            | TypeKind::User(UserType::Enum(_)) => false,
+            | TypeKind::TypeParameter(_) => false,
             TypeKind::User(UserType::Struct(def)) => !def.type_parameters.is_empty(),
             TypeKind::User(UserType::Trait(def)) => !def.type_parameters.is_empty(),
+            TypeKind::User(UserType::Enum(def)) => !def.type_parameters.is_empty(),
         }
     }
 }

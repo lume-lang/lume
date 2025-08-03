@@ -260,7 +260,18 @@ impl TyInferCtx {
                     }
                 }
             }
-            lume_hir::TypeDefinition::Enum(_) => {}
+            lume_hir::TypeDefinition::Enum(enum_def) => {
+                let type_id = enum_def.type_id.unwrap();
+
+                for type_param in &mut enum_def.type_parameters.iter_mut() {
+                    let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+
+                    type_param.type_param_id = Some(type_param_id);
+                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+
+                    self.tdb_mut().push_type_param(type_id, type_param_id)?;
+                }
+            }
         }
 
         Ok(())
@@ -419,7 +430,12 @@ impl TyInferCtx {
                     self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
                 }
             }
-            lume_hir::TypeDefinition::Enum(_) => {}
+            lume_hir::TypeDefinition::Enum(enum_def) => {
+                let type_id = enum_def.type_id.unwrap();
+                let type_params = self.tdb().type_params_of(type_id)?.to_owned();
+
+                self.lower_type_constraints(&enum_def.type_parameters.inner, &type_params)?;
+            }
         }
 
         Ok(())

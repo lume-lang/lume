@@ -19,6 +19,7 @@ expression: "parse(\"enum Foo {\n            /// This is a doc comment\n        
                         5..8,
                     ),
                 },
+                type_parameters: [],
                 cases: [
                     EnumDefinitionCase {
                         name: Identifier {

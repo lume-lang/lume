@@ -581,6 +581,18 @@ fn test_generic_method_snapshots() {
 }
 
 #[test]
+fn test_generic_enum_snapshots() {
+    assert_snap_eq!("enum Test {}", "no_generics");
+    assert_snap_eq!("enum Test<> {}", "empty_generics");
+    assert_snap_eq!("enum Test<T> {}", "single_generic");
+    assert_snap_eq!("enum Test<T1, T2> {}", "multiple_generics");
+    assert_snap_eq!("enum Test<T: Numeric> {}", "constrained_generic");
+    assert_snap_eq!("enum Test<T1: Numeric, T2: Numeric> {}", "constrained_generics");
+    assert_snap_eq!("enum Test<T1,> {}", "trailing_generic_comma");
+    assert_err_snap_eq!("enum Test<T1 T2> {}", "missing_comma");
+}
+
+#[test]
 fn test_enum_snapshots() {
     assert_snap_eq!("enum Foo {}", "empty");
     assert_snap_eq!("enum Foo { Bar }", "single_variant");

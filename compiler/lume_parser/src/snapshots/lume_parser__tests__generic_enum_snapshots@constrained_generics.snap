@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n        }\")"
+expression: "parse(\"enum Test<T1: Numeric, T2: Numeric> {}\")"
 ---
 [
     TypeDefinition(
@@ -14,74 +14,80 @@ expression: "parse(\"\n        enum Foo {\n            Bar(Int32, Int32)\n      
                     },
                 ),
                 name: Identifier {
-                    name: "Foo",
+                    name: "Test",
                     location: Location(
-                        14..17,
+                        5..9,
                     ),
                 },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
+                type_parameters: [
+                    TypeParameter {
                         name: Identifier {
-                            name: "Bar",
+                            name: "T1",
                             location: Location(
-                                32..35,
+                                10..12,
                             ),
                         },
-                        parameters: [
+                        constraints: [
                             Named(
                                 NamedType {
                                     name: Path {
                                         root: [],
                                         name: Type {
                                             name: Identifier {
-                                                name: "Int32",
+                                                name: "Numeric",
                                                 location: Location(
-                                                    36..41,
+                                                    14..21,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                36..41,
+                                                14..21,
                                             ),
                                         },
                                         location: Location(
-                                            36..41,
-                                        ),
-                                    },
-                                },
-                            ),
-                            Named(
-                                NamedType {
-                                    name: Path {
-                                        root: [],
-                                        name: Type {
-                                            name: Identifier {
-                                                name: "Int32",
-                                                location: Location(
-                                                    43..48,
-                                                ),
-                                            },
-                                            type_arguments: [],
-                                            location: Location(
-                                                43..48,
-                                            ),
-                                        },
-                                        location: Location(
-                                            43..48,
+                                            14..21,
                                         ),
                                     },
                                 },
                             ),
                         ],
-                        location: Location(
-                            32..49,
-                        ),
-                        documentation: None,
+                    },
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: Location(
+                                23..25,
+                            ),
+                        },
+                        constraints: [
+                            Named(
+                                NamedType {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: Location(
+                                                    27..34,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                27..34,
+                                            ),
+                                        },
+                                        location: Location(
+                                            27..34,
+                                        ),
+                                    },
+                                },
+                            ),
+                        ],
                     },
                 ],
+                cases: [],
                 location: Location(
-                    9..59,
+                    0..38,
                 ),
                 documentation: None,
             },

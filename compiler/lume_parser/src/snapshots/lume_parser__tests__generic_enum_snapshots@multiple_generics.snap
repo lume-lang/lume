@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        enum Foo {\n            Bar()\n        }\")"
+expression: "parse(\"enum Test<T1, T2> {}\")"
 ---
 [
     TypeDefinition(
@@ -14,29 +14,34 @@ expression: "parse(\"\n        enum Foo {\n            Bar()\n        }\")"
                     },
                 ),
                 name: Identifier {
-                    name: "Foo",
+                    name: "Test",
                     location: Location(
-                        14..17,
+                        5..9,
                     ),
                 },
-                type_parameters: [],
-                cases: [
-                    EnumDefinitionCase {
+                type_parameters: [
+                    TypeParameter {
                         name: Identifier {
-                            name: "Bar",
+                            name: "T1",
                             location: Location(
-                                32..35,
+                                10..12,
                             ),
                         },
-                        parameters: [],
-                        location: Location(
-                            32..37,
-                        ),
-                        documentation: None,
+                        constraints: [],
+                    },
+                    TypeParameter {
+                        name: Identifier {
+                            name: "T2",
+                            location: Location(
+                                14..16,
+                            ),
+                        },
+                        constraints: [],
                     },
                 ],
+                cases: [],
                 location: Location(
-                    9..47,
+                    0..20,
                 ),
                 documentation: None,
             },

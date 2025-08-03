@@ -19,6 +19,7 @@ expression: "parse(\"enum Foo { Bar, Baz }\")"
                         5..8,
                     ),
                 },
+                type_parameters: [],
                 cases: [
                     EnumDefinitionCase {
                         name: Identifier {

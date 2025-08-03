@@ -733,6 +733,7 @@ pub struct EnumDefinition {
     pub id: ItemId,
     pub type_id: Option<TypeId>,
     pub name: Path,
+    pub type_parameters: TypeParameters,
     pub visibility: Visibility,
     pub cases: Vec<EnumDefinitionCase>,
     pub location: Location,
