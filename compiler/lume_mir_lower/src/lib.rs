@@ -162,7 +162,8 @@ impl<'mir> FunctionTransformer<'mir> {
                 continue;
             }
 
-            let slot = self.func.alloc_slot(param.clone());
+            let arg_ty = self.type_of_value(arg);
+            let slot = self.func.alloc_slot(arg_ty);
             self.func.current_block_mut().store_slot(slot, arg.clone());
 
             *arg = lume_mir::Operand::SlotAddress { id: slot };

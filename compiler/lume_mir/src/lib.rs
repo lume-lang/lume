@@ -742,7 +742,7 @@ impl std::fmt::Display for Instruction {
         match &self {
             Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
             Self::Assign { target, value } => write!(f, "{target} = {value}"),
-            Self::CreateSlot { slot, ty } => write!(f, "{slot} = slot {ty}"),
+            Self::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             Self::Store { target, value } => write!(f, "*{target} = {value}"),
             Self::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
