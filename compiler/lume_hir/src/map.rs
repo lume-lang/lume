@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use indexmap::{IndexMap, IndexSet};
 
 use crate::*;
-use lume_span::{ExpressionId, ItemId, StatementId};
+use lume_span::{ExpressionId, ItemId, PatternId, StatementId};
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Map {
@@ -19,6 +19,9 @@ pub struct Map {
     /// Defines all the local expressions within the current scope.
     pub expressions: IndexMap<ExpressionId, Expression>,
 
+    /// Defines all the local patterns within the current scope.
+    pub patterns: IndexMap<PatternId, Pattern>,
+
     /// Defines all the imported paths within the HIR map.
     pub imports: IndexSet<Path>,
 }
@@ -31,6 +34,7 @@ impl Map {
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),
+            patterns: IndexMap::new(),
             imports: IndexSet::new(),
         }
     }

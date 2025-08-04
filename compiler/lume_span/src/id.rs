@@ -209,6 +209,38 @@ impl MethodId {
     }
 }
 
+/// Uniquely identifies a pattern within a given parent item.
+///
+/// [`PatternId`] instances are unique within the parent item, referenced
+/// by it's [`ItemId`] in [`PatternId::item`].
+#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+pub struct PatternId {
+    pub item: ItemId,
+    pub index: Idx,
+}
+
+impl PatternId {
+    /// Creates a new [`PatternId`] without a unique ID.
+    ///
+    /// If an [`PatternId`] with a valid ID is required, see [`PatternId::next()`].
+    #[inline]
+    pub fn empty(item: ItemId) -> Self {
+        Self {
+            item,
+            index: Idx::new(),
+        }
+    }
+
+    /// Creates a new [`PatternId`] with the given ID.
+    #[inline]
+    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
+        Self {
+            item,
+            index: index.into(),
+        }
+    }
+}
+
 /// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
 ///
 /// [`LocalId`] instances are unique within the parent item, referenced by it's [`ItemId`] in [`LocalId::def`].
@@ -327,6 +359,7 @@ pub enum DefId {
     Item(ItemId),
     Property(PropertyId),
     Method(MethodId),
+    Pattern(PatternId),
     Statement(StatementId),
     Expression(ExpressionId),
 }

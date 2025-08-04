@@ -581,6 +581,7 @@ pub enum Def<'a> {
     Method(&'a MethodDefinition),
     TraitMethodDef(&'a TraitMethodDefinition),
     TraitMethodImpl(&'a TraitMethodImplementation),
+    Pattern(&'a Pattern),
     Statement(&'a Statement),
     Expression(&'a Expression),
 }
@@ -592,6 +593,7 @@ impl Def<'_> {
             Def::Method(def) => def.id,
             Def::TraitMethodDef(def) => def.id,
             Def::TraitMethodImpl(def) => def.id,
+            Def::Pattern(def) => def.id,
             Def::Statement(def) => DefId::Statement(def.id),
             Def::Expression(def) => DefId::Expression(def.id),
             Def::Property(def) => def.id,
@@ -606,7 +608,7 @@ impl Def<'_> {
             Self::Method(def) => &def.type_parameters,
             Self::TraitMethodDef(def) => &def.type_parameters,
             Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Property(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
+            Self::Property(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
         }
     }
 
@@ -619,6 +621,7 @@ impl Def<'_> {
             Def::Statement(def) => def.location(),
             Def::Expression(def) => def.location(),
             Def::Property(def) => def.location(),
+            Def::Pattern(def) => def.location,
         }
     }
 }
@@ -1203,6 +1206,16 @@ pub enum ExpressionKind {
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
+
+    /// Defines a reference to a field within a pattern.
+    ///
+    /// ```lume
+    /// switch a {
+    ///    Some(b) => b,
+    ///               ^ Field expression
+    /// }
+    /// ```
+    Field(Box<PatternField>),
     Switch(Box<Switch>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
@@ -1510,6 +1523,14 @@ pub struct Member {
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct PatternField {
+    pub id: ExpressionId,
+    pub pattern: DefId,
+    pub field: usize,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Switch {
     pub id: ExpressionId,
     pub operand: Expression,
@@ -1532,10 +1553,21 @@ pub struct Variable {
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub enum VariableSource {
     Parameter(Parameter),
     Variable(VariableDeclaration),
+    Pattern(Pattern),
+}
+
+impl Node for VariableSource {
+    fn location(&self) -> Location {
+        match self {
+            Self::Parameter(pat) => pat.location,
+            Self::Variable(pat) => pat.location,
+            Self::Pattern(pat) => pat.location,
+        }
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1546,12 +1578,31 @@ pub struct Variant {
     pub location: Location,
 }
 
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Pattern {
+    pub id: DefId,
+    pub kind: PatternKind,
+    pub location: Location,
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub enum Pattern {
-    Literal(Literal),
-    Identifier(Identifier),
+pub enum PatternKind {
+    Literal(LiteralPattern),
+    Identifier(IdentifierPattern),
     Variant(VariantPattern),
     Wildcard(WildcardPattern),
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct LiteralPattern {
+    pub literal: Literal,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct IdentifierPattern {
+    pub name: Identifier,
+    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
@@ -1559,6 +1610,13 @@ pub struct VariantPattern {
     pub name: Path,
     pub fields: Vec<Pattern>,
     pub location: Location,
+}
+
+impl VariantPattern {
+    #[expect(clippy::missing_panics_doc)]
+    pub fn enum_name(&self) -> Path {
+        self.name.clone().parent().unwrap()
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]

@@ -8,7 +8,7 @@ use lume_errors::DiagCtxHandle;
 use lume_hir::{Identifier, Path, PathSegment, map::Map, symbols::*};
 use lume_parser::Parser;
 use lume_session::Package;
-use lume_span::{ExpressionId, Internable, ItemId, Location, SourceFile, SourceMap, StatementId};
+use lume_span::{ExpressionId, Internable, ItemId, Location, PatternId, SourceFile, SourceMap, StatementId};
 
 mod errors;
 
@@ -291,6 +291,17 @@ impl<'a> LowerModule<'a> {
         self.local_id_counter += 1;
 
         StatementId::from_id(self.current_item, id)
+    }
+
+    /// Generates the next [`PatternId`] instance in the chain.
+    ///
+    /// Local IDs are simply incremented over the last used ID, starting from 0.
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    fn next_pat_id(&mut self) -> PatternId {
+        let id = self.local_id_counter;
+        self.local_id_counter += 1;
+
+        PatternId::new(self.current_item, id)
     }
 
     /// Ensure that the item with the given name is undefined within the file.

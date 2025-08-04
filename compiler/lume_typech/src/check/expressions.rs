@@ -446,14 +446,13 @@ impl TyCheckCtx {
 
         for case in &expr.cases {
             let case_branch_ty = self.type_of_expr(&case.branch)?;
+            let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
 
             if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
                 self.dcx().emit(err);
             }
 
-            if let Some(case_pattern_ty) = self.type_of_pattern(&case.pattern)?
-                && let Err(err) = self.ensure_type_compatibility(&case_pattern_ty, &operand_ty)
-            {
+            if let Err(err) = self.ensure_type_compatibility(&case_pattern_ty, &operand_ty) {
                 self.dcx().emit(err);
             }
         }

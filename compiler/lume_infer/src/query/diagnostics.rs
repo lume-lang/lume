@@ -52,6 +52,16 @@ pub struct SuggestedFunction {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "argument count mismatch", code = "LM4116")]
+pub(crate) struct ArgumentCountMismatch {
+    #[label(source, "expected {expected} arguments, but got {actual}")]
+    pub source: Location,
+
+    pub expected: usize,
+    pub actual: usize,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "could not find variant", code = "LM4134")]
 pub struct MissingVariant {
     #[label(source, "could not find variant {name} in type {type_name:+}")]

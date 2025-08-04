@@ -870,6 +870,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Switch(s) => {
                 for case in &s.cases {
+                    self.define_pat_scope(&case.pattern, expr_id)?;
                     self.define_expr_scope(&case.branch, expr_id)?;
                 }
 
@@ -877,7 +878,26 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
+            | lume_hir::ExpressionKind::Field(_)
             | lume_hir::ExpressionKind::Variant(_) => Ok(()),
+        }
+    }
+
+    fn define_pat_scope(&mut self, pat: &lume_hir::Pattern, parent: DefId) -> Result<()> {
+        let def_id = pat.id;
+        let _ = self.ancestry.try_insert(def_id, parent);
+
+        match &pat.kind {
+            lume_hir::PatternKind::Literal(_)
+            | lume_hir::PatternKind::Identifier(_)
+            | lume_hir::PatternKind::Wildcard(_) => Ok(()),
+            lume_hir::PatternKind::Variant(var) => {
+                for field in &var.fields {
+                    self.define_pat_scope(field, def_id)?;
+                }
+
+                Ok(())
+            }
         }
     }
 }

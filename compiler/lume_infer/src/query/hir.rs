@@ -48,6 +48,12 @@ impl TyInferCtx {
         })
     }
 
+    /// Returns the [`lume_hir::Pattern`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_pat(&self, id: lume_span::PatternId) -> Option<&lume_hir::Pattern> {
+        self.hir.patterns.get(&id)
+    }
+
     /// Returns the [`lume_hir::Def`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn hir_method(&self, id: lume_span::MethodId) -> Option<lume_hir::Def<'_>> {
@@ -83,6 +89,7 @@ impl TyInferCtx {
             lume_span::DefId::Item(id) => self.hir_item(id).map(lume_hir::Def::Item),
             lume_span::DefId::Property(id) => self.hir_prop(id).map(lume_hir::Def::Property),
             lume_span::DefId::Method(id) => self.hir_method(id),
+            lume_span::DefId::Pattern(id) => self.hir_pat(id).map(lume_hir::Def::Pattern),
             lume_span::DefId::Statement(id) => self.hir_stmt(id).map(lume_hir::Def::Statement),
             lume_span::DefId::Expression(id) => self.hir_expr(id).map(lume_hir::Def::Expression),
         }
@@ -189,6 +196,20 @@ impl TyInferCtx {
         }
     }
 
+    /// Returns the [`lume_hir::Pattern`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::Pattern`] with the given ID was found.
+    #[track_caller]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_pattern(&self, id: lume_span::DefId) -> &lume_hir::Pattern {
+        match self.hir_expect_def(id) {
+            lume_hir::Def::Pattern(pat) => pat,
+            _ => panic!("expected HIR pattern with ID of {id:?}"),
+        }
+    }
+
     /// Returns the parent of the given HIR element, if any is found.
     #[cached_query]
     #[track_caller]
@@ -214,7 +235,24 @@ impl TyInferCtx {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_def(id))
     }
 
-    /// Attempts to find the closes loop from the given definition.
+    /// Attempts to find the closest switch expression from the given definition.
+    #[track_caller]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_switch_expression(&self, source: DefId) -> Option<&lume_hir::Switch> {
+        for parent in self.hir_parent_iter(source) {
+            let lume_hir::Def::Expression(expr) = parent else {
+                continue;
+            };
+
+            if let lume_hir::ExpressionKind::Switch(switch) = &expr.kind {
+                return Some(switch.as_ref());
+            }
+        }
+
+        None
+    }
+
+    /// Attempts to find the closest loop from the given definition.
     #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_loop_target(&self, source: DefId) -> Option<&lume_hir::Statement> {
