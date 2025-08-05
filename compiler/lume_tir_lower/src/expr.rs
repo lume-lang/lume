@@ -22,6 +22,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
+            lume_hir::ExpressionKind::Field(_) | lume_hir::ExpressionKind::Switch(_) => todo!(),
             lume_hir::ExpressionKind::Variable(expr) => self.variable_expression(expr),
             lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr)?,
         };
@@ -269,11 +270,13 @@ impl LowerFunction<'_> {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
             lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
+            lume_hir::VariableSource::Pattern(_) => todo!(),
         };
 
         let source = match expr.reference {
             lume_hir::VariableSource::Parameter(_) => lume_tir::VariableSource::Parameter,
             lume_hir::VariableSource::Variable(_) => lume_tir::VariableSource::Variable,
+            lume_hir::VariableSource::Pattern(_) => todo!(),
         };
 
         lume_tir::ExpressionKind::Variable(Box::new(lume_tir::VariableReference {
