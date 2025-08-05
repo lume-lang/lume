@@ -245,7 +245,7 @@ impl TyCheckCtx {
     /// Callables returned by this method are checked for validity within the current
     /// context, including visibility, arguments and type arguments. To look up methods
     /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %expr.name(), args = ?expr.arguments()), err)]
     pub fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {

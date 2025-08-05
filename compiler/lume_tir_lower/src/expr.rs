@@ -110,16 +110,22 @@ impl LowerFunction<'_> {
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let function = match self.lower.tcx.lookup_callable(expr)? {
             lume_typech::query::Callable::Function(call) => {
+                debug_assert!(call.parameters.len() == expr.arguments().len());
+
                 FunctionId::new(FunctionKind::Function, call.id.index.as_usize())
             }
             lume_typech::query::Callable::Method(call) => FunctionId::new(FunctionKind::Method, call.id.0),
         };
 
-        let arguments = expr
-            .arguments()
-            .iter()
-            .map(|arg| self.expression(arg))
-            .collect::<Result<Vec<_>>>()?;
+        let mut arguments = Vec::with_capacity(expr.arguments().len());
+
+        if let lume_hir::CallExpression::Instanced(instance_call) = &expr {
+            arguments.push(self.expression(&instance_call.callee)?);
+        }
+
+        for arg in expr.arguments() {
+            arguments.push(self.expression(arg)?);
+        }
 
         let type_arguments = expr
             .type_arguments()
