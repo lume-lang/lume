@@ -14,7 +14,7 @@ Map {
             index: Idx(
                 1,
             ),
-        }: Use(
+        }: TraitImpl(
             TraitImplementation {
                 id: ItemId {
                     package: PackageId(

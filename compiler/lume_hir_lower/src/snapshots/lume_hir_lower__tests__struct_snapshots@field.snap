@@ -40,10 +40,10 @@ Map {
                     },
                     visibility: Private,
                     builtin: false,
-                    properties: [
-                        Property {
-                            id: Property(
-                                PropertyId {
+                    fields: [
+                        Field {
+                            id: Field(
+                                FieldId {
                                     item: ItemId {
                                         package: PackageId(
                                             0,
@@ -57,13 +57,13 @@ Map {
                                     ),
                                 },
                             ),
-                            prop_id: None,
+                            field_id: None,
                             visibility: Private,
                             name: Identifier {
                                 name: "x",
                                 location: <internal>:25:26,
                             },
-                            property_type: Type {
+                            field_type: Type {
                                 id: ItemId {
                                     package: PackageId(
                                         0,

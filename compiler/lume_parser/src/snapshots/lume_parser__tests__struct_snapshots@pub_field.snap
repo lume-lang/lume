@@ -20,8 +20,8 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                     ),
                 },
                 builtin: false,
-                properties: [
-                    Property {
+                fields: [
+                    Field {
                         visibility: Public(
                             Public {
                                 location: Location(
@@ -35,7 +35,7 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                                 38..39,
                             ),
                         },
-                        property_type: Named(
+                        field_type: Named(
                             NamedType {
                                 name: Path {
                                     root: [],

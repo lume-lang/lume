@@ -40,7 +40,7 @@ Map {
                     },
                     visibility: Private,
                     builtin: false,
-                    properties: [],
+                    fields: [],
                     type_parameters: TypeParameters {
                         inner: [],
                     },

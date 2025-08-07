@@ -4,7 +4,7 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            pub
 ---
 [
     Use(
-        UseTrait {
+        ImplTrait {
             visibility: Private(
                 Private {
                     location: Location(

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
+expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")"
 ---
 [
     TypeDefinition(
@@ -16,26 +16,26 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
                 name: Identifier {
                     name: "Foo",
                     location: Location(
-                        7..10,
+                        16..19,
                     ),
                 },
                 builtin: false,
-                properties: [
-                    Property {
-                        visibility: Public(
-                            Public {
+                fields: [
+                    Field {
+                        visibility: Private(
+                            Private {
                                 location: Location(
-                                    63..66,
+                                    34..34,
                                 ),
                             },
                         ),
                         name: Identifier {
-                            name: "bar",
+                            name: "x",
                             location: Location(
-                                67..70,
+                                34..35,
                             ),
                         },
-                        property_type: Named(
+                        field_type: Named(
                             NamedType {
                                 name: Path {
                                     root: [],
@@ -43,44 +43,30 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
-                                                72..77,
+                                                37..42,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            72..77,
+                                            37..42,
                                         ),
                                     },
                                     location: Location(
-                                        72..77,
+                                        37..42,
                                     ),
                                 },
                             },
                         ),
-                        default_value: Some(
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            80..81,
-                                        ),
-                                        kind: I32,
-                                    },
-                                ),
-                            ),
-                        ),
+                        default_value: None,
                         location: Location(
-                            63..82,
+                            34..43,
                         ),
-                        documentation: Some(
-                            "This is a doc comment",
-                        ),
+                        documentation: None,
                     },
                 ],
                 type_parameters: [],
                 location: Location(
-                    0..92,
+                    9..53,
                 ),
                 documentation: None,
             },

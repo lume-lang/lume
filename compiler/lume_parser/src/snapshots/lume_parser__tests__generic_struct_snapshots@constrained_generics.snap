@@ -20,7 +20,7 @@ expression: "parse(\"struct Test<T1: Numeric, T2: Numeric> {}\")"
                     ),
                 },
                 builtin: false,
-                properties: [],
+                fields: [],
                 type_parameters: [
                     TypeParameter {
                         name: Identifier {

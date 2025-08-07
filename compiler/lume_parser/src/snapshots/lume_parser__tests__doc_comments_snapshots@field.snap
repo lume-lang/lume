@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        }\")"
+expression: "parse(\"struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }\")"
 ---
 [
     TypeDefinition(
@@ -16,26 +16,26 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                 name: Identifier {
                     name: "Foo",
                     location: Location(
-                        16..19,
+                        7..10,
                     ),
                 },
                 builtin: false,
-                properties: [
-                    Property {
-                        visibility: Private(
-                            Private {
+                fields: [
+                    Field {
+                        visibility: Public(
+                            Public {
                                 location: Location(
-                                    34..34,
+                                    63..66,
                                 ),
                             },
                         ),
                         name: Identifier {
-                            name: "x",
+                            name: "bar",
                             location: Location(
-                                34..35,
+                                67..70,
                             ),
                         },
-                        property_type: Named(
+                        field_type: Named(
                             NamedType {
                                 name: Path {
                                     root: [],
@@ -43,16 +43,16 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
-                                                37..42,
+                                                72..77,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            37..42,
+                                            72..77,
                                         ),
                                     },
                                     location: Location(
-                                        37..42,
+                                        72..77,
                                     ),
                                 },
                             },
@@ -63,7 +63,7 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                                     IntLiteral {
                                         value: 0,
                                         location: Location(
-                                            45..46,
+                                            80..81,
                                         ),
                                         kind: I32,
                                     },
@@ -71,14 +71,16 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                             ),
                         ),
                         location: Location(
-                            34..47,
+                            63..82,
                         ),
-                        documentation: None,
+                        documentation: Some(
+                            "This is a doc comment",
+                        ),
                     },
                 ],
                 type_parameters: [],
                 location: Location(
-                    9..57,
+                    0..92,
                 ),
                 documentation: None,
             },

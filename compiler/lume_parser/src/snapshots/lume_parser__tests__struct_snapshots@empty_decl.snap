@@ -20,7 +20,7 @@ expression: "parse(\"struct Int32 {}\")"
                     ),
                 },
                 builtin: false,
-                properties: [],
+                fields: [],
                 type_parameters: [],
                 location: Location(
                     0..15,

@@ -60,7 +60,7 @@ description: "Foo { bar: 0, };"
                             location: <internal>:0:3,
                         },
                         fields: [
-                            Field {
+                            ConstructorField {
                                 name: Identifier {
                                     name: "bar",
                                     location: <internal>:6:9,

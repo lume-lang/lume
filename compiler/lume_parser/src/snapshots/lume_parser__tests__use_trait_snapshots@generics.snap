@@ -4,7 +4,7 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            pub
 ---
 [
     Use(
-        UseTrait {
+        ImplTrait {
             visibility: Private(
                 Private {
                     location: Location(

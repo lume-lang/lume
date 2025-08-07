@@ -20,7 +20,7 @@ expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
                     ),
                 },
                 builtin: false,
-                properties: [],
+                fields: [],
                 type_parameters: [],
                 location: Location(
                     34..48,

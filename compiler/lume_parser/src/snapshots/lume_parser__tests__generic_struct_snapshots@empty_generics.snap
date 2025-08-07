@@ -20,7 +20,7 @@ expression: "parse(\"struct Test<> {}\")"
                     ),
                 },
                 builtin: false,
-                properties: [],
+                fields: [],
                 type_parameters: [],
                 location: Location(
                     0..16,

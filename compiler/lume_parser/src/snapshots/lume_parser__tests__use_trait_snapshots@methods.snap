@@ -4,7 +4,7 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
 ---
 [
     Use(
-        UseTrait {
+        ImplTrait {
             visibility: Private(
                 Private {
                     location: Location(

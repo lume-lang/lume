@@ -4,7 +4,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            pub fn add(other:
 ---
 [
     Use(
-        UseTrait {
+        ImplTrait {
             visibility: Private(
                 Private {
                     location: Location(

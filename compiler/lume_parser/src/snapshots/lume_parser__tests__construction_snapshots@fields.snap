@@ -25,7 +25,7 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                     ),
                 },
                 fields: [
-                    Field {
+                    ConstructorField {
                         name: Identifier {
                             name: "bar",
                             location: Location(
@@ -47,7 +47,7 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                             6..12,
                         ),
                     },
-                    Field {
+                    ConstructorField {
                         name: Identifier {
                             name: "baz",
                             location: Location(

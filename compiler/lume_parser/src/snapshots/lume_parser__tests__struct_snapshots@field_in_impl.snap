@@ -2,7 +2,7 @@
 source: compiler/lume_parser/src/tests.rs
 expression: "parse_err(\"impl Foo { pub x: Bar; }\")"
 ---
-PropertyInImpl {
+FieldInImpl {
     source: SourceFile {
         id: SourceFileId(
             PackageId(

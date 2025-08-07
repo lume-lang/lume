@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_hir_lower/src/tests.rs
-description: "struct Foo {\n            pub x: Int32 = 1;\n        }"
+description: "struct Foo {\n            /// This is a doc comment\n            pub bar: Int32 = 0;\n        }"
 ---
 Map {
     package: PackageId(
@@ -40,10 +40,10 @@ Map {
                     },
                     visibility: Private,
                     builtin: false,
-                    properties: [
-                        Property {
-                            id: Property(
-                                PropertyId {
+                    fields: [
+                        Field {
+                            id: Field(
+                                FieldId {
                                     item: ItemId {
                                         package: PackageId(
                                             0,
@@ -57,13 +57,13 @@ Map {
                                     ),
                                 },
                             ),
-                            prop_id: None,
+                            field_id: None,
                             visibility: Public,
                             name: Identifier {
-                                name: "x",
-                                location: <internal>:29:30,
+                                name: "bar",
+                                location: <internal>:67:70,
                             },
-                            property_type: Type {
+                            field_type: Type {
                                 id: ItemId {
                                     package: PackageId(
                                         0,
@@ -84,14 +84,14 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: <internal>:32:37,
+                                            location: <internal>:72:77,
                                         },
                                         type_arguments: [],
-                                        location: <internal>:32:37,
+                                        location: <internal>:72:77,
                                     },
-                                    location: <internal>:32:37,
+                                    location: <internal>:72:77,
                                 },
-                                location: <internal>:32:37,
+                                location: <internal>:72:77,
                             },
                             default_value: Some(
                                 Expression {
@@ -138,23 +138,23 @@ Map {
                                                             0,
                                                         ),
                                                     },
-                                                    value: 1,
+                                                    value: 0,
                                                     kind: I32,
                                                 },
                                             ),
-                                            location: <internal>:40:41,
+                                            location: <internal>:80:81,
                                         },
                                     ),
-                                    location: <internal>:40:41,
+                                    location: <internal>:80:81,
                                 },
                             ),
-                            location: <internal>:25:42,
+                            location: <internal>:63:82,
                         },
                     ],
                     type_parameters: TypeParameters {
                         inner: [],
                     },
-                    location: <internal>:0:52,
+                    location: <internal>:0:92,
                 },
             ),
         ),
@@ -217,14 +217,14 @@ Map {
                                     0,
                                 ),
                             },
-                            value: 1,
+                            value: 0,
                             kind: I32,
                         },
                     ),
-                    location: <internal>:40:41,
+                    location: <internal>:80:81,
                 },
             ),
-            location: <internal>:40:41,
+            location: <internal>:80:81,
         },
     },
 }

@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")"
+expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        }\")"
 ---
 [
     TypeDefinition(
@@ -20,8 +20,8 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")
                     ),
                 },
                 builtin: false,
-                properties: [
-                    Property {
+                fields: [
+                    Field {
                         visibility: Private(
                             Private {
                                 location: Location(
@@ -35,7 +35,7 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")
                                 34..35,
                             ),
                         },
-                        property_type: Named(
+                        field_type: Named(
                             NamedType {
                                 name: Path {
                                     root: [],
@@ -57,16 +57,28 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32;\n        }\")
                                 },
                             },
                         ),
-                        default_value: None,
+                        default_value: Some(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            45..46,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ),
                         location: Location(
-                            34..43,
+                            34..47,
                         ),
                         documentation: None,
                     },
                 ],
                 type_parameters: [],
                 location: Location(
-                    9..53,
+                    9..57,
                 ),
                 documentation: None,
             },
