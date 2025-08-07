@@ -68,8 +68,8 @@ impl ReificationPass<'_> {
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
                 let mut size = 0;
 
-                for prop in self.tcx.tdb().find_properties(ty.id) {
-                    let prop_ty = self.tcx.tdb().ty_expect(prop.property_type.instance_of)?;
+                for prop in self.tcx.tdb().find_fields(ty.id) {
+                    let prop_ty = self.tcx.tdb().ty_expect(prop.field_type.instance_of)?;
 
                     size += if prop_ty.kind.is_ref_type() {
                         PTR_SIZE
@@ -120,12 +120,12 @@ impl ReificationPass<'_> {
                     return self.alignment_of_ty(type_ref.type_arguments.first().unwrap());
                 }
 
-                // Otherwise, use the maximum alignment of all properties on the type.
+                // Otherwise, use the maximum alignment of all fields on the type.
                 // We start at alignment 1, since an alignment of 0 is invalid.
                 let mut max_alignment = 1;
 
-                for prop in self.tcx.tdb().find_properties(ty.id) {
-                    let prop_ty = &prop.property_type;
+                for prop in self.tcx.tdb().find_fields(ty.id) {
+                    let prop_ty = &prop.field_type;
 
                     max_alignment = if self.tcx.tdb().is_reference_type(prop_ty.instance_of).unwrap() {
                         PTR_SIZE.max(max_alignment)
@@ -142,10 +142,10 @@ impl ReificationPass<'_> {
     fn fields_on_type(&mut self, ty: &lume_types::Type) -> Result<Vec<FieldMetadata>> {
         self.tcx
             .tdb()
-            .find_properties(ty.id)
+            .find_fields(ty.id)
             .map(|field| {
                 let name = field.name.clone();
-                let ty = self.build_type_metadata_of(&field.property_type)?;
+                let ty = self.build_type_metadata_of(&field.field_type)?;
 
                 Ok(FieldMetadata { name, ty })
             })

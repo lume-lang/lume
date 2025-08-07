@@ -1215,10 +1215,10 @@ impl Type {
         }
     }
 
-    pub fn structure(id: TypeRef, props: Vec<Type>) -> Self {
+    pub fn structure(id: TypeRef, fields: Vec<Type>) -> Self {
         Self {
             id,
-            kind: TypeKind::Struct { properties: props },
+            kind: TypeKind::Struct { fields },
             is_generic: false,
         }
     }
@@ -1249,7 +1249,7 @@ impl Type {
 
     pub fn bytesize(&self) -> usize {
         match &self.kind {
-            TypeKind::Struct { properties } => properties.iter().map(Type::bytesize).sum(),
+            TypeKind::Struct { fields } => fields.iter().map(Type::bytesize).sum(),
             TypeKind::Union { cases } => {
                 let discriminator_size = Self::i8().bytesize();
                 let max_case_size = cases.iter().map(Type::bytesize).max().unwrap_or_default();
@@ -1280,8 +1280,8 @@ impl Default for Type {
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum TypeKind {
-    /// Represents a struct type with zero-or-more properties.
-    Struct { properties: Vec<Type> },
+    /// Represents a struct type with zero-or-more fields.
+    Struct { fields: Vec<Type> },
 
     /// Represents a union type with zero-or-more cases.
     Union { cases: Vec<Type> },
@@ -1320,10 +1320,10 @@ impl TypeKind {
 impl std::fmt::Display for TypeKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Struct { properties } => write!(
+            Self::Struct { fields } => write!(
                 f,
                 "{{{}}}",
-                properties
+                fields
                     .iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()

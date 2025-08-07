@@ -208,7 +208,7 @@ impl Parser {
 
         let name = self.parse_ident_or_err(err!(self, ExpectedStructName))?;
         let type_parameters = self.parse_type_parameters()?;
-        let properties = self.consume_curly_seq(Parser::parse_struct_property)?;
+        let fields = self.consume_curly_seq(Parser::parse_struct_field)?;
 
         let end = self.previous_token().end();
 
@@ -216,7 +216,7 @@ impl Parser {
             visibility,
             name,
             builtin,
-            properties,
+            fields,
             type_parameters,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
@@ -243,13 +243,13 @@ impl Parser {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_struct_property(&mut self) -> Result<Property> {
+    fn parse_struct_field(&mut self) -> Result<Field> {
         self.read_doc_comment();
 
         let visibility = self.parse_visibility()?;
 
         let Ok(name) = self.parse_identifier() else {
-            return Err(err!(self, ExpectedStructProperty));
+            return Err(err!(self, ExpectedStructField));
         };
 
         // Report a special error if we found an identifier, such as
@@ -258,16 +258,16 @@ impl Parser {
             return Err(err!(self, MethodInStruct));
         }
 
-        let property_type = self.parse_type()?;
+        let field_type = self.parse_type()?;
         let default_value = self.parse_opt_assignment()?;
 
         let start = visibility.location().start();
         let end = self.expect_semi()?.end();
 
-        Ok(Property {
+        Ok(Field {
             visibility,
             name,
-            property_type,
+            field_type,
             default_value,
             location: (start..end).into(),
             documentation: self.doc_token.take(),
@@ -282,9 +282,9 @@ impl Parser {
         let start = visibility.location().start();
 
         // Report a special error if we found an identifier, such as
-        // a property declaration, which isn't allowed within an `impl` block.
+        // a field declaration, which isn't allowed within an `impl` block.
         if self.consume_if(TokenKind::Fn).is_none() && self.peek(TokenKind::Identifier) {
-            return Err(err!(self, PropertyInImpl));
+            return Err(err!(self, FieldInImpl));
         }
 
         let external = self.check_external();
@@ -471,7 +471,7 @@ impl Parser {
         let methods = self.consume_curly_seq(Parser::parse_use_impl)?;
         let end = self.previous_token().end();
 
-        let use_trait = UseTrait {
+        let use_trait = ImplTrait {
             visibility,
             type_parameters,
             name: Box::new(name),

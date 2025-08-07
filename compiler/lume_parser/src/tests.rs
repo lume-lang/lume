@@ -470,7 +470,7 @@ fn test_struct_snapshots() {
     assert_err_snap_eq!("struct 1A {}", "invalid_decl_name");
     assert_err_snap_eq!("impl 1A {}", "invalid_impl_name");
 
-    assert_err_snap_eq!("impl Foo { pub x: Bar; }", "property_in_impl");
+    assert_err_snap_eq!("impl Foo { pub x: Bar; }", "field_in_impl");
     assert_err_snap_eq!("struct Foo { pub fn bar() -> void { } }", "method_in_struct");
 
     assert_snap_eq!(
@@ -540,7 +540,7 @@ fn test_struct_snapshots() {
         struct Foo {
             x: Int32 = 0;
         }",
-        "property"
+        "field"
     );
 
     assert_err_snap_eq!(
@@ -548,7 +548,7 @@ fn test_struct_snapshots() {
         struct Foo {
             x?: Int32 = 0;
         }",
-        "property_invalid_boolean"
+        "field_invalid_boolean"
     );
 
     assert_snap_eq!(
@@ -556,7 +556,7 @@ fn test_struct_snapshots() {
         struct Foo {
             x: Int32;
         }",
-        "property_no_default"
+        "field_no_default"
     );
 
     assert_snap_eq!(
@@ -564,7 +564,7 @@ fn test_struct_snapshots() {
         struct Foo {
             pub x: Int32 = 1;
         }",
-        "pub_property"
+        "pub_field"
     );
 }
 
@@ -790,7 +790,7 @@ fn test_doc_comments_snapshots() {
             /// This is a doc comment
             pub bar: Int32 = 0;
         }",
-        "property"
+        "field"
     );
 
     assert_snap_eq!(

@@ -96,26 +96,26 @@ pub struct ExpectedTraitName {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "expected struct property", code = "LM1062")]
-pub struct ExpectedStructProperty {
+#[diagnostic(message = "expected struct field", code = "LM1062")]
+pub struct ExpectedStructField {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected a struct property definition")]
+    #[label("expected a struct field definition")]
     pub range: Range<usize>,
 }
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
-    message = "property in implementation",
+    message = "field in implementation",
     code = "LM1063",
-    help = "properties can only be defined in `struct` blocks"
+    help = "fields can only be defined in `struct` blocks"
 )]
-pub struct PropertyInImpl {
+pub struct FieldInImpl {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("found unexpected property in implementation block")]
+    #[label("found unexpected field in implementation block")]
     pub range: Range<usize>,
 }
 

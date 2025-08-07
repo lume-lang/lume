@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use error_snippet::Result;
 use lume_span::DefId;
+use lume_span::FieldId;
 use lume_span::MethodId;
-use lume_span::PropertyId;
 
 use crate::DefinedItem;
 use crate::LowerModule;
@@ -35,9 +35,9 @@ impl LowerModule<'_> {
 
         self.self_type = Some(name.clone());
 
-        let mut properties = Vec::with_capacity(expr.properties.len());
-        for (idx, property) in expr.properties.into_iter().enumerate() {
-            properties.push(self.def_property(idx, property)?);
+        let mut fields = Vec::with_capacity(expr.fields.len());
+        for (idx, field) in expr.fields.into_iter().enumerate() {
+            fields.push(self.def_field(idx, field)?);
         }
 
         self.self_type = None;
@@ -50,19 +50,19 @@ impl LowerModule<'_> {
                 visibility,
                 builtin: expr.builtin,
                 type_parameters,
-                properties,
+                fields,
                 location,
             },
         )))))
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_property(&mut self, idx: usize, expr: ast::Property) -> Result<hir::Property> {
-        let id = DefId::Property(PropertyId::new(self.current_item, idx));
+    fn def_field(&mut self, idx: usize, expr: ast::Field) -> Result<hir::Field> {
+        let id = DefId::Field(FieldId::new(self.current_item, idx));
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
-        let property_type = self.type_ref(expr.property_type)?;
+        let field_type = self.type_ref(expr.field_type)?;
         let location = self.location(expr.location);
 
         let default_value = if let Some(def) = expr.default_value {
@@ -71,12 +71,12 @@ impl LowerModule<'_> {
             None
         };
 
-        Ok(hir::Property {
+        Ok(hir::Field {
             id,
             name,
-            prop_id: None,
+            field_id: None,
             visibility,
-            property_type,
+            field_type,
             default_value,
             location,
         })
@@ -355,7 +355,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn def_use(&mut self, expr: ast::UseTrait) -> Result<lume_hir::Item> {
+    pub(super) fn def_trait_impl(&mut self, expr: ast::ImplTrait) -> Result<lume_hir::Item> {
         let id = self.next_item_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
 
@@ -374,7 +374,7 @@ impl LowerModule<'_> {
 
         self.self_type = None;
 
-        Ok(lume_hir::Item::Use(Box::new(hir::TraitImplementation {
+        Ok(lume_hir::Item::TraitImpl(Box::new(hir::TraitImplementation {
             id,
             use_id: None,
             name: Box::new(name),

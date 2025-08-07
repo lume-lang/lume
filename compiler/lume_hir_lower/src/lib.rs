@@ -496,7 +496,7 @@ impl<'a> LowerModule<'a> {
             }
             ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
-            ast::TopLevelExpression::Use(f) => self.def_use(*f)?,
+            ast::TopLevelExpression::Use(f) => self.def_trait_impl(*f)?,
             ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
         };
 

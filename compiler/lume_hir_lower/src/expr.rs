@@ -183,7 +183,7 @@ impl LowerModule<'_> {
         let fields = expr
             .fields
             .into_iter()
-            .map(|field| self.expr_field(field))
+            .map(|field| self.expr_constructor_field(field))
             .collect::<Result<Vec<_>>>()?;
 
         let location = self.location(expr.location);
@@ -201,12 +201,12 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_field(&mut self, expr: ast::Field) -> Result<hir::Field> {
+    fn expr_constructor_field(&mut self, expr: ast::ConstructorField) -> Result<hir::ConstructorField> {
         let name = self.identifier(expr.name);
         let value = self.expression(expr.value)?;
         let location = self.location(expr.location);
 
-        Ok(hir::Field { name, value, location })
+        Ok(hir::ConstructorField { name, value, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{FunctionId, ImplId, MethodId, Path, PropertyId, TypeId, UseId};
+use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, TypeId, UseId};
 
 use crate::{Item, TypeKindRef};
 
@@ -10,9 +10,9 @@ pub struct FunctionNotFound {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find property {id:?} in context")]
-pub struct PropertyNotFound {
-    pub id: PropertyId,
+#[diagnostic(message = "could not find field {id:?} in context")]
+pub struct FieldNotFound {
+    pub id: FieldId,
 }
 
 #[derive(Diagnostic, Debug)]

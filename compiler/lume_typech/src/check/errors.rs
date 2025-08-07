@@ -169,7 +169,7 @@ pub struct MismatchedTypesBranches {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "missing structure field", code = "LM4385")]
-pub struct MissingPropertyField {
+pub struct MissingField {
     #[label(source, "constructor is missing field {field}")]
     pub source: Location,
 
@@ -178,7 +178,7 @@ pub struct MissingPropertyField {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "unknown structure field", code = "LM4386")]
-pub struct UnknownPropertyField {
+pub struct UnknownField {
     #[label(source, "type {ty} has no field {field}")]
     pub source: Location,
 

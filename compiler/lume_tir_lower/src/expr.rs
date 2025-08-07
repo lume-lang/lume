@@ -79,31 +79,31 @@ impl LowerFunction<'_> {
             .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
             .unwrap();
 
-        let mut fields = expr.fields.clone();
+        let mut constructed = expr.fields.clone();
 
         let constructed_type = self.lower.tcx.find_type_ref(&expr.path)?.unwrap();
-        let properties = self.lower.tcx.tdb().find_properties(constructed_type.instance_of);
+        let fields = self.lower.tcx.tdb().find_fields(constructed_type.instance_of);
 
-        for property in properties {
-            if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, &property.name) {
-                fields.push(default_field);
+        for field in fields {
+            if let Some(default_field) = self.lower.tcx.constructer_default_field_of(expr, &field.name) {
+                constructed.push(default_field);
             }
         }
 
-        let fields = fields
+        let constructed = constructed
             .into_iter()
             .map(|field| {
                 let name = field.name.to_string().intern();
                 let value = self.expression(&field.value)?;
 
-                Ok(lume_tir::Field { name, value })
+                Ok(lume_tir::ConstructorField { name, value })
             })
             .collect::<Result<Vec<_>>>()?;
 
         Ok(lume_tir::ExpressionKind::Construct(Box::new(lume_tir::Construct {
             id: expr.id,
             ty,
-            fields,
+            fields: constructed,
         })))
     }
 
@@ -256,18 +256,18 @@ impl LowerFunction<'_> {
         let name = expr.name.intern();
 
         let callee_ty = self.lower.tcx.type_of_expr(&expr.callee)?;
-        let property = self
+        let field = self
             .lower
             .tcx
             .tdb()
-            .find_property(callee_ty.instance_of, &expr.name)
+            .find_field(callee_ty.instance_of, &expr.name)
             .unwrap()
             .clone();
 
         Ok(lume_tir::ExpressionKind::Member(Box::new(lume_tir::Member {
             id: expr.id,
             callee,
-            property,
+            field,
             name,
         })))
     }

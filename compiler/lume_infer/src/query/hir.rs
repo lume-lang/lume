@@ -36,12 +36,12 @@ impl TyInferCtx {
         self.hir.items.get(&id)
     }
 
-    /// Returns the [`lume_hir::Property`] with the given ID, if any.
+    /// Returns the [`lume_hir::Field`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn hir_prop(&self, id: lume_span::PropertyId) -> Option<&lume_hir::Property> {
+    pub fn hir_prop(&self, id: lume_span::FieldId) -> Option<&lume_hir::Field> {
         self.hir_item(id.item).and_then(|item| match item {
             lume_hir::Item::Type(ty) => match &**ty {
-                lume_hir::TypeDefinition::Struct(s) => s.properties.get(id.index.as_usize()),
+                lume_hir::TypeDefinition::Struct(s) => s.fields.get(id.index.as_usize()),
                 _ => None,
             },
             _ => None,
@@ -59,7 +59,9 @@ impl TyInferCtx {
     pub fn hir_method(&self, id: lume_span::MethodId) -> Option<lume_hir::Def<'_>> {
         self.hir_item(id.item).and_then(|item| match item {
             lume_hir::Item::Impl(item) => Some(lume_hir::Def::Method(item.methods.get(id.index.as_usize())?)),
-            lume_hir::Item::Use(item) => Some(lume_hir::Def::TraitMethodImpl(item.methods.get(id.index.as_usize())?)),
+            lume_hir::Item::TraitImpl(item) => {
+                Some(lume_hir::Def::TraitMethodImpl(item.methods.get(id.index.as_usize())?))
+            }
             lume_hir::Item::Type(item) => match &**item {
                 lume_hir::TypeDefinition::Trait(item) => {
                     Some(lume_hir::Def::TraitMethodDef(item.methods.get(id.index.as_usize())?))
@@ -87,7 +89,7 @@ impl TyInferCtx {
     pub fn hir_def(&'_ self, id: lume_span::DefId) -> Option<lume_hir::Def<'_>> {
         match id {
             lume_span::DefId::Item(id) => self.hir_item(id).map(lume_hir::Def::Item),
-            lume_span::DefId::Property(id) => self.hir_prop(id).map(lume_hir::Def::Property),
+            lume_span::DefId::Field(id) => self.hir_prop(id).map(lume_hir::Def::Field),
             lume_span::DefId::Method(id) => self.hir_method(id),
             lume_span::DefId::Pattern(id) => self.hir_pat(id).map(lume_hir::Def::Pattern),
             lume_span::DefId::Statement(id) => self.hir_stmt(id).map(lume_hir::Def::Statement),

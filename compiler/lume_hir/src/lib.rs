@@ -34,7 +34,7 @@ pub struct ImplId(pub usize);
 pub struct UseId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct PropertyId(pub usize);
+pub struct FieldId(pub usize);
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct MethodId(pub usize);
@@ -544,7 +544,7 @@ impl Block {
 pub enum Item {
     Function(Box<FunctionDefinition>),
     Type(Box<TypeDefinition>),
-    Use(Box<TraitImplementation>),
+    TraitImpl(Box<TraitImplementation>),
     Impl(Box<Implementation>),
 }
 
@@ -553,7 +553,7 @@ impl Item {
         match self {
             Item::Function(symbol) => symbol.id,
             Item::Type(symbol) => symbol.id(),
-            Item::Use(symbol) => symbol.id,
+            Item::TraitImpl(symbol) => symbol.id,
             Item::Impl(symbol) => symbol.id,
         }
     }
@@ -569,7 +569,7 @@ impl Item {
                 TypeDefinition::Enum(e) => &e.type_parameters,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
-            Item::Use(_) => &EMPTY,
+            Item::TraitImpl(_) => &EMPTY,
         }
     }
 }
@@ -577,7 +577,7 @@ impl Item {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Def<'a> {
     Item(&'a Item),
-    Property(&'a Property),
+    Field(&'a Field),
     Method(&'a MethodDefinition),
     TraitMethodDef(&'a TraitMethodDefinition),
     TraitMethodImpl(&'a TraitMethodImplementation),
@@ -596,7 +596,7 @@ impl Def<'_> {
             Def::Pattern(def) => def.id,
             Def::Statement(def) => DefId::Statement(def.id),
             Def::Expression(def) => DefId::Expression(def.id),
-            Def::Property(def) => def.id,
+            Def::Field(def) => def.id,
         }
     }
 
@@ -608,7 +608,7 @@ impl Def<'_> {
             Self::Method(def) => &def.type_parameters,
             Self::TraitMethodDef(def) => &def.type_parameters,
             Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Property(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
+            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
         }
     }
 
@@ -620,7 +620,7 @@ impl Def<'_> {
             Def::TraitMethodImpl(def) => def.location(),
             Def::Statement(def) => def.location(),
             Def::Expression(def) => def.location(),
-            Def::Property(def) => def.location(),
+            Def::Field(def) => def.location(),
             Def::Pattern(def) => def.location,
         }
     }
@@ -780,7 +780,7 @@ pub struct StructDefinition {
     pub name: Path,
     pub visibility: Visibility,
     pub builtin: bool,
-    pub properties: Vec<Property>,
+    pub fields: Vec<Field>,
     pub type_parameters: TypeParameters,
     pub location: Location,
 }
@@ -790,12 +790,12 @@ impl StructDefinition {
         &self.name
     }
 
-    pub fn properties(&self) -> impl Iterator<Item = &Property> {
-        self.properties.iter()
+    pub fn fields(&self) -> impl Iterator<Item = &Field> {
+        self.fields.iter()
     }
 
-    pub fn properties_mut(&mut self) -> impl Iterator<Item = &mut Property> {
-        self.properties.iter_mut()
+    pub fn fields_mut(&mut self) -> impl Iterator<Item = &mut Field> {
+        self.fields.iter_mut()
     }
 }
 
@@ -823,17 +823,17 @@ impl WithTypeParameters for Implementation {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub enum StructMember {
-    Property(Box<Property>),
+    Field(Box<Field>),
     Method(Box<MethodDefinition>),
 }
 
 #[derive(Node, Debug, Clone, PartialEq)]
-pub struct Property {
+pub struct Field {
     pub id: DefId,
-    pub prop_id: Option<PropertyId>,
+    pub field_id: Option<FieldId>,
     pub visibility: Visibility,
     pub name: Identifier,
-    pub property_type: Type,
+    pub field_type: Type,
     pub default_value: Option<Expression>,
     pub location: Location,
 }
@@ -1335,12 +1335,12 @@ pub struct Cast {
 pub struct Construct {
     pub id: ExpressionId,
     pub path: Path,
-    pub fields: Vec<Field>,
+    pub fields: Vec<ConstructorField>,
     pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct Field {
+pub struct ConstructorField {
     pub name: Identifier,
     pub value: Expression,
     pub location: Location,

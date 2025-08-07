@@ -588,7 +588,7 @@ impl Parser {
 
     /// Parses a field expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_field(&mut self) -> Result<Field> {
+    fn parse_field(&mut self) -> Result<ConstructorField> {
         let name = self.parse_identifier()?;
 
         let value = if self.check(TokenKind::Colon) {
@@ -601,7 +601,7 @@ impl Parser {
         let end = value.location().end();
         let location = (start..end).into();
 
-        Ok(Field { name, value, location })
+        Ok(ConstructorField { name, value, location })
     }
 
     /// Parses a variable reference expression on the current cursor position.

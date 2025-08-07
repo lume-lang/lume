@@ -389,21 +389,21 @@ fn test_struct_snapshots() {
         "struct Foo {
             x: Int32 = 0;
         }",
-        "property"
+        "field"
     );
 
     assert_snap_eq!(
         "struct Foo {
             x: Int32;
         }",
-        "property_no_default"
+        "field_no_default"
     );
 
     assert_snap_eq!(
         "struct Foo {
             pub x: Int32 = 1;
         }",
-        "pub_property"
+        "pub_field"
     );
 }
 
@@ -573,7 +573,7 @@ fn test_doc_comments_snapshots() {
             /// This is a doc comment
             pub bar: Int32 = 0;
         }",
-        "property"
+        "field"
     );
 
     assert_snap_eq!(

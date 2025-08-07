@@ -398,14 +398,14 @@ impl<'ctx> LowerFunction<'ctx> {
             panic!("bug!: attempting to load non-pointer register");
         };
 
-        let lume_mir::TypeKind::Struct { properties } = &elemental.kind else {
+        let lume_mir::TypeKind::Struct { fields } = &elemental.kind else {
             panic!("bug!: attempting to load field from non-struct register");
         };
 
-        let property = &properties[index];
-        tracing::debug!(%reg_ty, %property, index);
+        let field = &fields[index];
+        tracing::debug!(%reg_ty, %field, index);
 
-        self.backend.cl_type_of(property)
+        self.backend.cl_type_of(field)
     }
 
     pub(crate) fn retrieve_slot(&self, slot: SlotId) -> StackSlot {

@@ -13,7 +13,7 @@ impl Context {
                 _ => panic!("unsupported float type: {n}-bits"),
             },
             lume_mir::TypeKind::String | lume_mir::TypeKind::Pointer { .. } => self.ptr_type().as_basic_type_enum(),
-            lume_mir::TypeKind::Struct { properties } => self.struct_type(properties).as_basic_type_enum(),
+            lume_mir::TypeKind::Struct { fields } => self.struct_type(fields).as_basic_type_enum(),
             lume_mir::TypeKind::Metadata { .. } => todo!(),
         }
     }
@@ -57,8 +57,8 @@ impl Context {
         self.inner.ptr_type(inkwell::AddressSpace::default())
     }
 
-    pub fn struct_type(&self, properties: &[lume_mir::Type]) -> inkwell::types::StructType<'_> {
-        let props = properties.iter().map(|ty| self.lower_type(ty)).collect::<Vec<_>>();
+    pub fn struct_type(&self, fields: &[lume_mir::Type]) -> inkwell::types::StructType<'_> {
+        let props = fields.iter().map(|ty| self.lower_type(ty)).collect::<Vec<_>>();
 
         self.inner.struct_type(&props, false)
     }

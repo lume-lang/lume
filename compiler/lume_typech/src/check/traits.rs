@@ -17,7 +17,7 @@ impl TyCheckCtx {
     }
 
     fn typech_item(&self, symbol: &lume_hir::Item) -> Result<()> {
-        if let lume_hir::Item::Use(trait_impl) = symbol {
+        if let lume_hir::Item::TraitImpl(trait_impl) = symbol {
             self.check_trait_impl(trait_impl)?;
         }
 

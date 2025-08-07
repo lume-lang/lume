@@ -60,14 +60,14 @@ pub struct InvalidTypeInNamespace {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "no such property was found", code = "LM4115")]
-pub struct MissingProperty {
+#[diagnostic(message = "no such field was found", code = "LM4115")]
+pub struct MissingField {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("could not find property {property_name} on type {type_name}")]
+    #[label("could not find field {field_name} on type {type_name}")]
     pub range: Range<usize>,
 
     pub type_name: Path,
-    pub property_name: Identifier,
+    pub field_name: Identifier,
 }

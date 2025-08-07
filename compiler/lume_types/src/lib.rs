@@ -7,7 +7,7 @@ use lume_session::GlobalCtx;
 
 use crate::errors::*;
 pub use lume_hir::TypeId;
-use lume_hir::{FunctionId, ImplId, MethodId, Path, PathSegment, PropertyId, TypeParameterId, UseId, Visibility};
+use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, PathSegment, TypeParameterId, UseId, Visibility};
 use lume_span::{DefId, ItemId, Location, PackageId};
 
 pub mod errors;
@@ -141,7 +141,7 @@ pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId::new(PackageId::empty(), 0xFFFF_FF
 pub enum Item {
     Type(Box<Type>),
     Function(Box<Function>),
-    Property(Box<Property>),
+    Field(Box<Field>),
     Method(Box<Method>),
     Implementation(Box<Implementation>),
 }
@@ -280,13 +280,13 @@ impl Function {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
-pub struct Property {
-    pub id: PropertyId,
+pub struct Field {
+    pub id: FieldId,
     pub index: usize,
     pub visibility: Visibility,
     pub owner: TypeId,
     pub name: String,
-    pub property_type: TypeRef,
+    pub field_type: TypeRef,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1064,7 +1064,7 @@ pub enum TypeArgument {
 #[derive(Debug)]
 pub struct TypeDatabaseContext {
     pub types: IndexMap<TypeId, Type>,
-    pub properties: Vec<Property>,
+    pub fields: Vec<Field>,
     pub methods: Vec<Method>,
     pub functions: IndexMap<FunctionId, Function>,
     pub type_parameters: Vec<TypeParameter>,
@@ -1189,30 +1189,30 @@ impl TypeDatabaseContext {
         }
     }
 
-    /// Gets an iterator which iterates all [`Property`]-instances within
+    /// Gets an iterator which iterates all [`Field`]-instances within
     /// the database context.
-    pub fn properties(&self) -> impl Iterator<Item = &Property> {
-        self.properties.iter()
+    pub fn fields(&self) -> impl Iterator<Item = &Field> {
+        self.fields.iter()
     }
 
-    /// Gets an iterator which iterates all [`Property`]-instances within
+    /// Gets an iterator which iterates all [`Field`]-instances within
     /// the database context.
-    pub fn properties_mut(&mut self) -> impl Iterator<Item = &mut Property> {
-        self.properties.iter_mut()
+    pub fn fields_mut(&mut self) -> impl Iterator<Item = &mut Field> {
+        self.fields.iter_mut()
     }
 
-    /// Gets the [`Property`] with the given ID, if any.
+    /// Gets the [`Field`] with the given ID, if any.
     ///
-    /// Returns `None` if the [`Property`] is not found.
-    pub fn property(&self, id: PropertyId) -> Option<&Property> {
-        self.properties.get(id.0)
+    /// Returns `None` if the [`Field`] is not found.
+    pub fn field(&self, id: FieldId) -> Option<&Field> {
+        self.fields.get(id.0)
     }
 
-    /// Gets the [`Property`] with the given ID, if any.
+    /// Gets the [`Field`] with the given ID, if any.
     ///
-    /// Returns `None` if the [`Property`] is not found.
-    pub fn property_mut(&mut self, id: PropertyId) -> Option<&mut Property> {
-        self.properties.get_mut(id.0)
+    /// Returns `None` if the [`Field`] is not found.
+    pub fn field_mut(&mut self, id: FieldId) -> Option<&mut Field> {
+        self.fields.get_mut(id.0)
     }
 
     /// Gets an iterator which iterates all [`Method`]-instances within
@@ -1353,14 +1353,14 @@ impl TypeDatabaseContext {
         self.functions().find(|func| func.name == *name)
     }
 
-    /// Attempts to find all [`Property`]s on the given parent type.
-    pub fn find_properties(&self, owner: TypeId) -> impl Iterator<Item = &Property> {
-        self.properties().filter(move |prop| prop.owner == owner)
+    /// Attempts to find all [`Field`]s on the given parent type.
+    pub fn find_fields(&self, owner: TypeId) -> impl Iterator<Item = &Field> {
+        self.fields().filter(move |prop| prop.owner == owner)
     }
 
-    /// Attempts to find a [`Property`] with the given name on the given parent type, if any.
-    pub fn find_property(&self, owner: TypeId, name: &String) -> Option<&Property> {
-        self.properties().find(|prop| prop.owner == owner && prop.name == *name)
+    /// Attempts to find a [`Field`] with the given name on the given parent type, if any.
+    pub fn find_field(&self, owner: TypeId, name: &String) -> Option<&Field> {
+        self.fields().find(|prop| prop.owner == owner && prop.name == *name)
     }
 
     /// Attempts to find a [`Method`] with the given name, if any.
@@ -1434,31 +1434,31 @@ impl TypeDatabaseContext {
         id
     }
 
-    /// Allocates a new [`Property`] on the given [`Item`].
+    /// Allocates a new [`Field`] on the given [`Item`].
     ///
     /// # Errors
     ///
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn property_alloc(
+    pub fn field_alloc(
         &mut self,
         index: usize,
         owner: TypeId,
         name: String,
         visibility: Visibility,
-    ) -> Result<PropertyId> {
-        let id = PropertyId(self.properties.len());
-        let prop = Property {
+    ) -> Result<FieldId> {
+        let id = FieldId(self.fields.len());
+        let prop = Field {
             id,
             index,
             owner,
             name,
             visibility,
-            property_type: TypeRef::unknown(),
+            field_type: TypeRef::unknown(),
         };
 
-        self.properties.push(prop);
+        self.fields.push(prop);
 
         Ok(id)
     }
@@ -1565,7 +1565,7 @@ impl Default for TypeDatabaseContext {
                 TYPEREF_POINTER_ID => Type::pointer(),
                 TYPEREF_ARRAY_ID => Type::array(),
             },
-            properties: Vec::new(),
+            fields: Vec::new(),
             methods: Vec::new(),
             functions: IndexMap::new(),
             type_parameters: vec![

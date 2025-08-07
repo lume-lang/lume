@@ -30,17 +30,17 @@ impl TyCheckCtx {
             },
             lume_hir::Item::Impl(impl_def) => self.define_impl_type(impl_def),
             lume_hir::Item::Function(func) => self.define_function_scope(func),
-            lume_hir::Item::Use(_) => Ok(()),
+            lume_hir::Item::TraitImpl(_) => Ok(()),
         }
     }
 
     fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
-        for property in &struct_def.properties {
-            if let Some(default_value) = &property.default_value {
-                let property_type = self.mk_type_ref_from(&property.property_type, DefId::Item(struct_def.id))?;
+        for field in &struct_def.fields {
+            if let Some(default_value) = &field.default_value {
+                let field_type = self.mk_type_ref_from(&field.field_type, DefId::Item(struct_def.id))?;
                 let default_value_type = self.type_of_expr(default_value)?;
 
-                if let Err(err) = self.ensure_type_compatibility(&default_value_type, &property_type) {
+                if let Err(err) = self.ensure_type_compatibility(&default_value_type, &field_type) {
                     self.dcx().emit(err);
                 }
             }
@@ -364,16 +364,16 @@ impl TyCheckCtx {
     /// which is incompatible with `Int32`.
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
         let constructed_type = self.find_type_ref(&expr.path)?.unwrap();
-        let properties = self.tdb().find_properties(constructed_type.instance_of);
+        let fields = self.tdb().find_fields(constructed_type.instance_of);
 
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
-        for property in properties {
-            let Some(field) = self.constructer_field_of(expr, &property.name) else {
+        for field in fields {
+            let Some(constructor_field) = self.constructer_field_of(expr, &field.name) else {
                 self.dcx().emit(
-                    MissingPropertyField {
+                    MissingField {
                         source: expr.location,
-                        field: property.name.clone(),
+                        field: field.name.clone(),
                     }
                     .into(),
                 );
@@ -381,19 +381,19 @@ impl TyCheckCtx {
                 continue;
             };
 
-            let prop_ty = &property.property_type;
-            let field_ty = self.type_of_expr(&field.value)?;
+            let prop_ty = &field.field_type;
+            let field_ty = self.type_of_expr(&constructor_field.value)?;
 
             if let Err(err) = self.ensure_type_compatibility(&field_ty, prop_ty) {
                 self.dcx().emit(err);
             }
 
-            fields_left.swap_remove(&field.name);
+            fields_left.swap_remove(&constructor_field.name);
         }
 
         for field_left in fields_left {
             self.dcx().emit(
-                UnknownPropertyField {
+                UnknownField {
                     source: field_left.location,
                     ty: self.new_named_type(&constructed_type, false)?,
                     field: field_left.to_string(),

@@ -106,11 +106,11 @@ impl TyInferCtx {
         self.define_functions();
         self.define_implementations();
         self.define_trait_implementations();
-        self.define_properties()?;
+        self.define_fields()?;
         self.define_trait_methods()?;
         self.define_type_parameters()?;
         self.define_type_constraints()?;
-        self.define_property_types()?;
+        self.define_field_types()?;
         self.define_method_bodies()?;
         self.define_scopes()?;
 

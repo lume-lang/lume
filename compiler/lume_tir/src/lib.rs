@@ -1,7 +1,7 @@
 use indexmap::IndexMap;
 use lume_span::{ExpressionId, Interned, StatementId};
 use lume_type_metadata::{FunctionId, StaticMetadata, TypeMetadataId};
-use lume_types::{Property, TypeRef};
+use lume_types::{Field, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
@@ -393,11 +393,11 @@ pub struct Cast {
 pub struct Construct {
     pub id: ExpressionId,
     pub ty: TypeRef,
-    pub fields: Vec<Field>,
+    pub fields: Vec<ConstructorField>,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
-pub struct Field {
+pub struct ConstructorField {
     pub name: Interned<String>,
     pub value: Expression,
 }
@@ -518,7 +518,7 @@ pub struct Logical {
 pub struct Member {
     pub id: ExpressionId,
     pub callee: Expression,
-    pub property: Property,
+    pub field: Field,
     pub name: Interned<String>,
 }
 

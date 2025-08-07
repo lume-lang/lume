@@ -88,15 +88,11 @@ impl FunctionTransformer<'_> {
     }
 
     fn construct(&mut self, expr: &lume_tir::Construct) -> lume_mir::Operand {
-        let props = self
-            .tcx()
-            .tdb()
-            .find_properties(expr.ty.instance_of)
-            .collect::<Vec<_>>();
+        let props = self.tcx().tdb().find_fields(expr.ty.instance_of).collect::<Vec<_>>();
 
         let prop_types = props
             .iter()
-            .map(|prop| self.lower_type(&prop.property_type))
+            .map(|prop| self.lower_type(&prop.field_type))
             .collect::<Vec<_>>();
 
         let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
@@ -240,8 +236,8 @@ impl FunctionTransformer<'_> {
         let target_val = self.expression(&expr.callee);
         let target_reg = self.load_operand(&target_val);
 
-        let index = expr.property.index;
-        let offset = self.property_offset(&expr.property);
+        let index = expr.field.index;
+        let offset = self.field_offset(&expr.field);
 
         lume_mir::Operand::LoadField {
             target: target_reg,
@@ -350,15 +346,15 @@ impl FunctionTransformer<'_> {
         }
     }
 
-    fn property_offset(&self, property: &lume_types::Property) -> usize {
+    fn field_offset(&self, field: &lume_types::Field) -> usize {
         let mut offset = 0;
 
-        for (idx, prop) in self.tcx().tdb().find_properties(property.owner).enumerate() {
-            if idx == property.index {
+        for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
+            if idx == field.index {
                 break;
             }
 
-            let prop_ty = self.lower_type(&prop.property_type);
+            let prop_ty = self.lower_type(&prop.field_type);
             offset += prop_ty.bytesize();
         }
 

@@ -122,14 +122,14 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee.id)?;
 
-                let Some(property) = self.tdb().find_property(callee_type.instance_of, &expr.name) else {
+                let Some(field) = self.tdb().find_field(callee_type.instance_of, &expr.name) else {
                     let ty = self.tdb().type_(callee_type.instance_of).unwrap();
 
-                    return Err(crate::errors::MissingProperty {
+                    return Err(crate::errors::MissingField {
                         source: expr.location.file.clone(),
                         range: expr.location.index.clone(),
                         type_name: ty.name.clone(),
-                        property_name: Identifier {
+                        field_name: Identifier {
                             name: expr.name.clone(),
                             location: expr.location,
                         },
@@ -137,7 +137,7 @@ impl TyInferCtx {
                     .into());
                 };
 
-                property.property_type.clone()
+                field.field_type.clone()
             }
             lume_hir::ExpressionKind::Field(field) => {
                 let pattern = self.hir_expect_pattern(field.pattern);
@@ -476,10 +476,14 @@ impl TyInferCtx {
         .into())
     }
 
-    /// Returns the field of the constructor expression, matching the given property.
+    /// Returns the field of the constructor expression, matching the given field.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    pub fn constructer_field_of(&self, expr: &lume_hir::Construct, prop_name: &String) -> Option<lume_hir::Field> {
+    pub fn constructer_field_of(
+        &self,
+        expr: &lume_hir::Construct,
+        prop_name: &String,
+    ) -> Option<lume_hir::ConstructorField> {
         if let Some(field) = expr.fields.iter().find(|field| field.name.as_str() == prop_name) {
             return Some(field.clone());
         }
@@ -487,24 +491,22 @@ impl TyInferCtx {
         self.constructer_default_field_of(expr, prop_name)
     }
 
-    /// Returns the field of the constructor expression, matching the given property.
+    /// Returns the field of the constructor expression, matching the given field.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn constructer_default_field_of(
         &self,
         expr: &lume_hir::Construct,
         prop_name: &String,
-    ) -> Option<lume_hir::Field> {
+    ) -> Option<lume_hir::ConstructorField> {
         let construct_type = self.find_type_ref(&expr.path).ok()??;
         let struct_type = self.tdb().ty_expect_struct(construct_type.instance_of).ok()?;
         let struct_hir_type = self.hir_expect_struct(struct_type.id);
 
-        let matching_property = struct_hir_type
-            .properties()
-            .find(|prop| prop.name.as_str() == prop_name)?;
+        let matching_field = struct_hir_type.fields().find(|prop| prop.name.as_str() == prop_name)?;
 
-        if let Some(default_value) = &matching_property.default_value {
-            return Some(lume_hir::Field {
+        if let Some(default_value) = &matching_field.default_value {
+            return Some(lume_hir::ConstructorField {
                 name: lume_hir::Identifier::from(prop_name),
                 value: default_value.clone(),
                 location: lume_span::Location::empty(),

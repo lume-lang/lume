@@ -515,7 +515,7 @@ pub enum TopLevelExpression {
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
     Impl(Box<Implementation>),
-    Use(Box<UseTrait>),
+    Use(Box<ImplTrait>),
 }
 
 impl Node for TopLevelExpression {
@@ -634,7 +634,7 @@ pub struct StructDefinition {
     pub visibility: Visibility,
     pub name: Identifier,
     pub builtin: bool,
-    pub properties: Vec<Property>,
+    pub fields: Vec<Field>,
     pub type_parameters: Vec<TypeParameter>,
     pub location: Location,
     pub documentation: Option<String>,
@@ -643,16 +643,16 @@ pub struct StructDefinition {
 node_location!(StructDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Property {
+pub struct Field {
     pub visibility: Visibility,
     pub name: Identifier,
-    pub property_type: Type,
+    pub field_type: Type,
     pub default_value: Option<Expression>,
     pub location: Location,
     pub documentation: Option<String>,
 }
 
-node_location!(Property);
+node_location!(Field);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
@@ -741,7 +741,7 @@ pub struct Implementation {
 node_location!(Implementation);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct UseTrait {
+pub struct ImplTrait {
     pub visibility: Visibility,
     pub name: Box<Type>,
     pub target: Box<Type>,
@@ -750,7 +750,7 @@ pub struct UseTrait {
     pub location: Location,
 }
 
-node_location!(UseTrait);
+node_location!(ImplTrait);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
@@ -986,20 +986,20 @@ node_location!(Cast);
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Construct {
     pub path: Path,
-    pub fields: Vec<Field>,
+    pub fields: Vec<ConstructorField>,
     pub location: Location,
 }
 
 node_location!(Construct);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Field {
+pub struct ConstructorField {
     pub name: Identifier,
     pub value: Expression,
     pub location: Location,
 }
 
-node_location!(Field);
+node_location!(ConstructorField);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Literal {

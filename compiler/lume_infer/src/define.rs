@@ -198,7 +198,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Use(trait_impl) = item {
+            if let lume_hir::Item::TraitImpl(trait_impl) = item {
                 trait_impl.use_id = Some(self.tdb_mut().use_alloc());
             }
         }
@@ -209,12 +209,12 @@ impl TyInferCtx {
 
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn define_properties(&mut self) -> Result<()> {
+    pub(crate) fn define_fields(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
             if let lume_hir::Item::Type(ty) = item {
-                self.define_properties_type(ty)?;
+                self.define_fields_type(ty)?;
             }
         }
 
@@ -223,19 +223,19 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_properties_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+    fn define_fields_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             let type_id = struct_def.type_id.unwrap();
 
-            for (index, property) in struct_def.properties_mut().enumerate() {
-                let property_name = property.name.name.clone();
-                let visibility = property.visibility;
+            for (index, field) in struct_def.fields_mut().enumerate() {
+                let field_name = field.name.name.clone();
+                let visibility = field.visibility;
 
-                let property_id = self
+                let field_id = self
                     .tdb_mut()
-                    .property_alloc(index, type_id, property_name.clone(), visibility)?;
+                    .field_alloc(index, type_id, field_name.clone(), visibility)?;
 
-                property.prop_id = Some(property_id);
+                field.field_id = Some(field_id);
             }
         }
 
@@ -255,7 +255,7 @@ impl TyInferCtx {
                         self.define_trait_def_methods(tr)?;
                     }
                 }
-                lume_hir::Item::Use(u) => self.define_trait_impl_methods(u)?,
+                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_methods(u)?,
                 _ => (),
             }
         }
@@ -326,7 +326,7 @@ impl TyInferCtx {
             match item {
                 lume_hir::Item::Type(t) => self.define_type_type_params(t)?,
                 lume_hir::Item::Impl(i) => self.define_impl_type_params(i)?,
-                lume_hir::Item::Use(u) => self.define_trait_impl_type_params(u)?,
+                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_type_params(u)?,
                 lume_hir::Item::Function(f) => self.define_func_type_params(f)?,
             }
         }
@@ -529,7 +529,7 @@ impl TyInferCtx {
             match item {
                 lume_hir::Item::Type(t) => self.define_type_type_constraints(t)?,
                 lume_hir::Item::Impl(i) => self.define_impl_type_constraints(i)?,
-                lume_hir::Item::Use(u) => self.define_trait_impl_type_constraints(u)?,
+                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_type_constraints(u)?,
                 lume_hir::Item::Function(f) => self.define_func_type_constraints(f)?,
             }
         }
@@ -631,12 +631,12 @@ impl TyInferCtx {
 
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(crate) fn define_property_types(&mut self) -> Result<()> {
+    pub(crate) fn define_field_types(&mut self) -> Result<()> {
         let hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &hir.items {
             if let lume_hir::Item::Type(ty) = item {
-                self.define_property_type_on_type(ty)?;
+                self.define_field_type_on_type(ty)?;
             }
         }
 
@@ -645,14 +645,13 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_property_type_on_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
+    fn define_field_type_on_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
-            for property in struct_def.properties() {
-                let property_id = property.prop_id.unwrap();
-                let type_ref =
-                    self.mk_type_ref_generic(&property.property_type, &struct_def.type_parameters.as_refs())?;
+            for field in struct_def.fields() {
+                let field_id = field.field_id.unwrap();
+                let type_ref = self.mk_type_ref_generic(&field.field_type, &struct_def.type_parameters.as_refs())?;
 
-                self.tdb_mut().property_mut(property_id).unwrap().property_type = type_ref;
+                self.tdb_mut().field_mut(field_id).unwrap().field_type = type_ref;
             }
         }
 
@@ -668,7 +667,7 @@ impl TyInferCtx {
             match item {
                 lume_hir::Item::Type(t) => self.define_method_bodies_type(t)?,
                 lume_hir::Item::Function(f) => self.define_func_body(f)?,
-                lume_hir::Item::Use(u) => self.define_method_bodies_trait_impl(u)?,
+                lume_hir::Item::TraitImpl(u) => self.define_method_bodies_trait_impl(u)?,
                 lume_hir::Item::Impl(i) => self.define_method_bodies_impl(i)?,
             }
         }
@@ -817,7 +816,7 @@ impl TyInferCtx {
                     lume_hir::TypeDefinition::Enum(_) => {}
                 },
                 lume_hir::Item::Impl(f) => self.define_impl_scope(f)?,
-                lume_hir::Item::Use(f) => self.define_use_scope(f)?,
+                lume_hir::Item::TraitImpl(f) => self.define_use_scope(f)?,
                 lume_hir::Item::Function(f) => self.define_function_scope(f)?,
             }
         }
@@ -830,11 +829,11 @@ impl TyInferCtx {
     fn define_struct_scope(&mut self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
         let parent = DefId::Item(struct_def.id);
 
-        for property in &struct_def.properties {
-            let _ = self.ancestry.try_insert(property.id, parent);
+        for field in &struct_def.fields {
+            let _ = self.ancestry.try_insert(field.id, parent);
 
-            if let Some(default) = &property.default_value {
-                self.define_expr_scope(default, property.id)?;
+            if let Some(default) = &field.default_value {
+                self.define_expr_scope(default, field.id)?;
             }
         }
 

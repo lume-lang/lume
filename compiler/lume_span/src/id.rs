@@ -145,20 +145,20 @@ impl ItemId {
     }
 }
 
-/// Uniquely identifies a property within a given parent item.
+/// Uniquely identifies a field within a given parent item.
 ///
-/// [`PropertyId`] instances are unique within the parent item, referenced
-/// by it's [`ItemId`] in [`PropertyId::item`].
+/// [`FieldId`] instances are unique within the parent item, referenced
+/// by it's [`ItemId`] in [`FieldId::item`].
 #[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct PropertyId {
+pub struct FieldId {
     pub item: ItemId,
     pub index: Idx,
 }
 
-impl PropertyId {
-    /// Creates a new [`PropertyId`] without a unique ID.
+impl FieldId {
+    /// Creates a new [`FieldId`] without a unique ID.
     ///
-    /// If an [`PropertyId`] with a valid ID is required, see [`PropertyId::next()`].
+    /// If an [`FieldId`] with a valid ID is required, see [`FieldId::next()`].
     #[inline]
     pub fn empty(item: ItemId) -> Self {
         Self {
@@ -167,7 +167,7 @@ impl PropertyId {
         }
     }
 
-    /// Creates a new [`PropertyId`] with the given ID.
+    /// Creates a new [`FieldId`] with the given ID.
     #[inline]
     pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
         Self {
@@ -357,7 +357,7 @@ impl ExpressionId {
 #[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DefId {
     Item(ItemId),
-    Property(PropertyId),
+    Field(FieldId),
     Method(MethodId),
     Pattern(PatternId),
     Statement(StatementId),
