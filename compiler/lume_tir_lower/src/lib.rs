@@ -77,6 +77,12 @@ impl<'tcx> Lower<'tcx> {
 
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
+            // Intrinsic methods are only defined so they can be type-checked against.
+            // They do not need to exist within the binary.
+            if method.kind == lume_types::MethodKind::Intrinsic {
+                continue;
+            }
+
             tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
 
             let id = FunctionId::new(FunctionKind::Method, method.id.0);
@@ -101,6 +107,10 @@ impl<'tcx> Lower<'tcx> {
 
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
+            if method.kind == lume_types::MethodKind::Intrinsic {
+                continue;
+            }
+
             tracing::debug!(target: "tir_lower", "lowering method {:+}", method.name);
 
             let id = FunctionId::new(FunctionKind::Method, method.id.0);

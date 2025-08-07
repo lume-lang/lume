@@ -289,10 +289,19 @@ pub struct Property {
     pub property_type: TypeRef,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MethodKind {
+    Implementation,
+    Intrinsic,
+    TraitDefinition,
+    TraitImplementation,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
     pub id: MethodId,
     pub hir: DefId,
+    pub kind: MethodKind,
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: Path,
@@ -1461,12 +1470,20 @@ impl TypeDatabaseContext {
     /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
     /// is not a type.
     #[inline]
-    pub fn method_alloc(&mut self, hir: DefId, owner: TypeRef, name: Path, visibility: Visibility) -> Result<MethodId> {
+    pub fn method_alloc(
+        &mut self,
+        hir: DefId,
+        owner: TypeRef,
+        name: Path,
+        visibility: Visibility,
+        kind: MethodKind,
+    ) -> Result<MethodId> {
         let id = MethodId(self.methods.len());
 
         let method = Method {
             id,
             hir,
+            kind,
             callee: owner,
             name,
             visibility,

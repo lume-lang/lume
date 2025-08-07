@@ -1,9 +1,118 @@
+use std::{collections::HashSet, sync::LazyLock};
+
 use error_snippet::Result;
 use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
 use lume_span::{DefId, PackageId};
 use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
 
 use crate::TyInferCtx;
+
+static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
+    HashSet::from([
+        "std::Boolean::==",
+        "std::Boolean::!=",
+        "std::Int8::==",
+        "std::Int8::!=",
+        "std::Int8::<",
+        "std::Int8::<=",
+        "std::Int8::>",
+        "std::Int8::>=",
+        "std::Int8::+",
+        "std::Int8::-",
+        "std::Int8::*",
+        "std::Int8::/",
+        "std::Int16::==",
+        "std::Int16::!=",
+        "std::Int16::<",
+        "std::Int16::<=",
+        "std::Int16::>",
+        "std::Int16::>=",
+        "std::Int16::+",
+        "std::Int16::-",
+        "std::Int16::*",
+        "std::Int16::/",
+        "std::Int32::==",
+        "std::Int32::!=",
+        "std::Int32::<",
+        "std::Int32::<=",
+        "std::Int32::>",
+        "std::Int32::>=",
+        "std::Int32::+",
+        "std::Int32::-",
+        "std::Int32::*",
+        "std::Int32::/",
+        "std::Int64::==",
+        "std::Int64::!=",
+        "std::Int64::<",
+        "std::Int64::<=",
+        "std::Int64::>",
+        "std::Int64::>=",
+        "std::Int64::+",
+        "std::Int64::-",
+        "std::Int64::*",
+        "std::Int64::/",
+        "std::UInt8::==",
+        "std::UInt8::!=",
+        "std::UInt8::<",
+        "std::UInt8::<=",
+        "std::UInt8::>",
+        "std::UInt8::>=",
+        "std::UInt8::+",
+        "std::UInt8::-",
+        "std::UInt8::*",
+        "std::UInt8::/",
+        "std::UInt16::==",
+        "std::UInt16::!=",
+        "std::UInt16::<",
+        "std::UInt16::<=",
+        "std::UInt16::>",
+        "std::UInt16::>=",
+        "std::UInt16::+",
+        "std::UInt16::-",
+        "std::UInt16::*",
+        "std::UInt16::/",
+        "std::UInt32::==",
+        "std::UInt32::!=",
+        "std::UInt32::<",
+        "std::UInt32::<=",
+        "std::UInt32::>",
+        "std::UInt32::>=",
+        "std::UInt32::+",
+        "std::UInt32::-",
+        "std::UInt32::*",
+        "std::UInt32::/",
+        "std::UInt64::==",
+        "std::UInt64::!=",
+        "std::UInt64::<",
+        "std::UInt64::<=",
+        "std::UInt64::>",
+        "std::UInt64::>=",
+        "std::UInt64::+",
+        "std::UInt64::-",
+        "std::UInt64::*",
+        "std::UInt64::/",
+        "std::Float::==",
+        "std::Float::!=",
+        "std::Float::<",
+        "std::Float::<=",
+        "std::Float::>",
+        "std::Float::>=",
+        "std::Float::+",
+        "std::Float::-",
+        "std::Float::*",
+        "std::Float::/",
+        "std::Double::==",
+        "std::Double::!=",
+        "std::Double::<",
+        "std::Double::<=",
+        "std::Double::>",
+        "std::Double::>=",
+        "std::Double::+",
+        "std::Double::-",
+        "std::Double::*",
+        "std::Double::/",
+    ])
+});
 
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
@@ -167,9 +276,13 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id =
-                self.tdb_mut()
-                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id = self.tdb_mut().method_alloc(
+                method.id,
+                type_ref.clone(),
+                qualified_name,
+                method.visibility,
+                lume_types::MethodKind::TraitDefinition,
+            )?;
 
             method.method_id = Some(method_id);
         }
@@ -189,9 +302,13 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id =
-                self.tdb_mut()
-                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id = self.tdb_mut().method_alloc(
+                method.id,
+                type_ref.clone(),
+                qualified_name,
+                method.visibility,
+                lume_types::MethodKind::TraitImplementation,
+            )?;
 
             method.method_id = Some(method_id);
         }
@@ -295,6 +412,8 @@ impl TyInferCtx {
             &implementation.type_parameters.as_refs(),
         )?;
 
+        let is_type_intrinsic = type_ref.is_bool() || type_ref.is_integer() || type_ref.is_float();
+
         for method in &mut implementation.methods {
             let method_name = method.name.clone();
 
@@ -303,11 +422,22 @@ impl TyInferCtx {
                 PathSegment::callable(method_name.clone()),
             );
 
+            let method_kind = if is_type_intrinsic && INTRINSIC_METHODS.contains(format!("{qualified_name:+}").as_str())
+            {
+                lume_types::MethodKind::Intrinsic
+            } else {
+                lume_types::MethodKind::Implementation
+            };
+
             qualified_name.location = method_name.location;
 
-            let method_id =
-                self.tdb_mut()
-                    .method_alloc(method.id, type_ref.clone(), qualified_name, method.visibility)?;
+            let method_id = self.tdb_mut().method_alloc(
+                method.id,
+                type_ref.clone(),
+                qualified_name,
+                method.visibility,
+                method_kind,
+            )?;
 
             method.method_id = Some(method_id);
 
