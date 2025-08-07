@@ -63,6 +63,20 @@ impl TyCheckCtx {
             self.check_trait_method(method_def, method_impl)?;
         }
 
+        for method_impl in &trait_impl.methods {
+            if !trait_def
+                .methods
+                .iter()
+                .any(|method_def| method_def.name == method_impl.name)
+            {
+                return Err(crate::check::errors::TraitImplExtraneousMethod {
+                    source: trait_impl.location,
+                    name: method_impl.name.clone(),
+                }
+                .into());
+            }
+        }
+
         Ok(())
     }
 

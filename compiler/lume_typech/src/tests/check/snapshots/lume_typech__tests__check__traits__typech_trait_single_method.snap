@@ -1,0 +1,5 @@
+---
+source: compiler/lume_typech/src/tests/check/traits.rs
+description: "struct A { }\n\n        trait Foo {\n            fn foo();\n        }\n\n        use Foo in A {\n            fn foo() { }\n        }"
+---
+

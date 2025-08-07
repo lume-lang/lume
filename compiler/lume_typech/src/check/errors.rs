@@ -68,6 +68,15 @@ pub struct TraitImplMissingMethod {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "extraneous method in implementation", code = "LM4162")]
+pub struct TraitImplExtraneousMethod {
+    #[label(source, "implemented method {name} does not exist in trait definition")]
+    pub source: Location,
+
+    pub name: lume_hir::Identifier,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "implemented trait does not match trait definition", code = "LM4165")]
 pub struct TraitImplTypeParameterCountMismatch {
     #[label(
