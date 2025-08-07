@@ -708,6 +708,12 @@ pub struct Parameter {
     pub location: Location,
 }
 
+impl Parameter {
+    pub fn is_self(&self) -> bool {
+        self.name.as_str() == SELF_TYPE_NAME
+    }
+}
+
 impl std::hash::Hash for Parameter {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.index.hash(state);
@@ -719,7 +725,11 @@ impl std::hash::Hash for Parameter {
 
 impl PartialEq for Parameter {
     fn eq(&self, other: &Self) -> bool {
-        self.param_type == other.param_type
+        if self.is_self() && other.is_self() {
+            return true;
+        }
+
+        self.param_type == other.param_type && self.vararg == other.vararg
     }
 }
 

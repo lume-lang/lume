@@ -373,7 +373,7 @@ impl LowerModule<'_> {
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
 
-        self.self_type = Some(name.name.clone());
+        self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         for (idx, method) in expr.methods.into_iter().enumerate() {
