@@ -224,7 +224,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
     }
 
     pub(crate) fn declare_static_data_ctx(&self, key: &str, ctx: &DataDescription) -> DataId {
-        let data_id = if let Some(global) = self.static_data.read().unwrap().get(key) {
+        if let Some(global) = self.static_data.read().unwrap().get(key) {
             *global
         } else {
             let len = self.static_data.read().unwrap().len();
@@ -235,18 +235,19 @@ impl<'ctx> CraneliftBackend<'ctx> {
                 .declare_data(&name, Linkage::Local, false, false)
                 .unwrap();
 
-            self.static_data.write().unwrap().insert(key.to_owned(), data_id);
+            self.static_data.try_write().unwrap().insert(key.to_owned(), data_id);
+
+            self.module_mut().define_data(data_id, ctx).unwrap();
 
             data_id
-        };
-
-        self.module_mut().define_data(data_id, ctx).unwrap();
-
-        data_id
+        }
     }
 
     pub(crate) fn declare_static_data(&self, key: &str, value: &[u8]) -> DataId {
         let mut data_ctx = DataDescription::new();
+        data_ctx.set_align(8);
+        data_ctx.set_used(true);
+
         data_ctx.define(value.to_vec().into_boxed_slice());
 
         self.declare_static_data_ctx(key, &data_ctx)

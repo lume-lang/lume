@@ -41,6 +41,7 @@ impl ReificationPass<'_> {
         self.static_metadata.metadata.insert(
             id,
             TypeMetadata {
+                id,
                 full_name,
                 size,
                 alignment,

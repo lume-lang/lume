@@ -1,54 +1,572 @@
-use cranelift_module::{DataDescription, Module};
-use lume_type_metadata::TypeMetadata;
+use std::ops::Rem;
+
+use cranelift_module::{DataDescription, DataId, FuncOrDataId, Module};
+use indexmap::{IndexMap, IndexSet};
+use lume_type_metadata::*;
 
 use crate::cranelift::CraneliftBackend;
 
+const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const u8>();
+const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const u8>();
+
 impl CraneliftBackend<'_> {
+    #[tracing::instrument(level = "DEBUG", skip(self))]
     pub(crate) fn declare_type_metadata(&mut self) {
-        let metadata_store = std::mem::take(&mut self.context.mir.metadata);
+        let metadata_store = &self.context.mir.metadata;
+        let mut found_types = IndexMap::new();
 
         for metadata_entry in metadata_store.metadata.values() {
-            let type_name_id = self.declare_static_data(
-                &format!("{}_NAME", metadata_entry.full_name),
-                metadata_entry.full_name.as_bytes(),
-            );
-
-            let mut data_ctx = DataDescription::new();
-            self.module_mut().declare_data_in_data(type_name_id, &mut data_ctx);
-
-            data_ctx.define(Self::build_metadata_buffer(metadata_entry).into_boxed_slice());
-            self.declare_static_data_ctx(&metadata_entry.full_name, &data_ctx);
+            self.find_all_types_on(metadata_entry, &mut found_types);
         }
 
-        self.context.mir.metadata = metadata_store;
+        self.declare_all_type_metadata(found_types.values());
+        self.declare_all_field_metadata(found_types.values());
+        self.declare_all_method_metadata(found_types.values());
+        self.declare_all_parameter_metadata(found_types.values());
+        self.declare_all_type_parameter_metadata(found_types.values());
+
+        let mut defined_methods = IndexSet::new();
+
+        for metadata_entry in found_types.values() {
+            self.build_type_metadata_buffer(metadata_entry);
+
+            for field_metadata in &metadata_entry.fields {
+                self.build_field_metadata_buffer(field_metadata, metadata_entry);
+            }
+
+            for method_metadata in &metadata_entry.methods {
+                if defined_methods.contains(&method_metadata.func_id) {
+                    continue;
+                }
+
+                defined_methods.insert(method_metadata.func_id);
+
+                self.build_method_metadata_buffer(method_metadata);
+
+                for param_metadata in &method_metadata.parameters {
+                    self.build_parameter_metadata_buffer(param_metadata, method_metadata);
+                }
+
+                for type_param_metadata in &method_metadata.type_parameters {
+                    self.build_type_parameter_metadata_buffer(type_param_metadata, method_metadata);
+                }
+            }
+        }
+    }
+}
+
+impl CraneliftBackend<'_> {
+    /// Recursively finds all the types on the given metadata type. Children types
+    /// can be defined within a parameter, field, type argument, etc.
+    ///
+    /// The `found` parameter defines which types have already been found, preventing infinite
+    /// looping from recursive types.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(id = ?metadata.id, name = metadata.full_name))]
+    fn find_all_types_on(&self, metadata: &TypeMetadata, found: &mut IndexMap<TypeMetadataId, TypeMetadata>) {
+        if found.contains_key(&metadata.id) {
+            return;
+        }
+
+        found.insert(metadata.id, metadata.to_owned());
+
+        for field in &metadata.fields {
+            let field_ty = self.find_metadata(field.ty);
+            self.find_all_types_on(field_ty, found);
+        }
+
+        for method in &metadata.methods {
+            for param in &method.parameters {
+                let param_ty = self.find_metadata(param.ty);
+                self.find_all_types_on(param_ty, found);
+            }
+
+            for type_param in &method.type_parameters {
+                for constraint in &type_param.constraints {
+                    let constraint_ty = self.find_metadata(*constraint);
+                    self.find_all_types_on(constraint_ty, found);
+                }
+            }
+
+            let return_ty = self.find_metadata(method.return_type);
+            self.find_all_types_on(return_ty, found);
+        }
+
+        for type_arg in &metadata.type_arguments {
+            let arg_ty = self.find_metadata(*type_arg);
+            self.find_all_types_on(arg_ty, found);
+        }
     }
 
-    fn build_metadata_buffer(entry: &TypeMetadata) -> Vec<u8> {
-        let mut memory_block = Vec::new();
+    /// Finds an existing [`TypeMetadata`] instance from the given ID.
+    #[inline]
+    fn find_metadata(&self, id: TypeMetadataId) -> &TypeMetadata {
+        self.context.mir.metadata.metadata.get(&id).unwrap()
+    }
 
-        // Allocate enough space for the pointer to the name of
-        // the type, which will be inserted after the buffer is built.
-        memory_block.extend_from_slice(&0_usize.to_ne_bytes()[..]);
+    #[inline]
+    #[allow(clippy::unused_self)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = field.name, ty = ty.full_name))]
+    fn metadata_name_of_field(&self, field: &FieldMetadata, ty: &TypeMetadata) -> String {
+        let mut field_metadata_name = ty.symbol_name();
+        field_metadata_name.push_str(&field.name);
+
+        field_metadata_name
+    }
+
+    #[inline]
+    #[allow(clippy::unused_self)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, method = method.full_name))]
+    fn metadata_name_of_param(&self, param: &ParameterMetadata, method: &MethodMetadata) -> String {
+        let mut metadata_name = method.full_name.clone();
+        metadata_name.push_str(&param.name);
+
+        metadata_name
+    }
+
+    #[inline]
+    #[allow(clippy::unused_self)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, method = method_metadata.full_name))]
+    fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, method_metadata: &MethodMetadata) -> String {
+        let mut metadata_name = method_metadata.full_name.clone();
+        metadata_name.push_str(&param.name);
+
+        metadata_name
+    }
+
+    /// Finds an existing data declaration for a metadata value with the given name.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    fn find_decl_by_name(&self, name: &str) -> DataId {
+        let Some(FuncOrDataId::Data(data_id)) = self.module().declarations().get_name(name) else {
+            panic!("bug!: metadata declaration not found: {name}");
+        };
+
+        data_id
+    }
+
+    /// Finds an existing data declaration for the type metadata with the given ID.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    fn find_type_decl(&self, id: TypeMetadataId) -> DataId {
+        let metadata = self.find_metadata(id);
+        let metadata_name = metadata.symbol_name();
+
+        self.find_decl_by_name(&metadata_name)
+    }
+
+    /// Declares type metadata for the types in the given iterator, but without defining it.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn declare_all_type_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
+        for metadata in iter {
+            let metadata_name = metadata.symbol_name();
+
+            tracing::debug!("declaring type metadata: {metadata_name}");
+
+            self.module_mut()
+                .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                .unwrap();
+        }
+    }
+
+    /// Declares the field metadata for all the types in the given iterator, but without defining it.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn declare_all_field_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
+        for metadata in iter {
+            for field in &metadata.fields {
+                let metadata_name = self.metadata_name_of_field(field, metadata);
+
+                tracing::debug!("declaring field metadata: {metadata_name}");
+
+                self.module_mut()
+                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                    .unwrap();
+            }
+        }
+    }
+
+    /// Declares the field metadata for all the types in the given iterator, but without defining it.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn declare_all_method_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
+        for metadata in iter {
+            for method in &metadata.methods {
+                let metadata_name = method.symbol_name();
+
+                if self.module().declarations().get_name(&metadata_name).is_some() {
+                    continue;
+                }
+
+                tracing::debug!("declaring method metadata: {metadata_name}");
+
+                self.module_mut()
+                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                    .unwrap();
+            }
+        }
+    }
+
+    /// Declares the parameter metadata for all the types in the given iterator, but without defining it.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn declare_all_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
+        for metadata in iter {
+            for method in &metadata.methods {
+                for param in &method.parameters {
+                    let metadata_name = self.metadata_name_of_param(param, method);
+
+                    tracing::debug!("declaring parameter metadata: {metadata_name}");
+
+                    self.module_mut()
+                        .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                        .unwrap();
+                }
+            }
+        }
+    }
+
+    /// Declares the type parameter metadata for all the types in the given iterator, but without defining it.
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
+        for metadata in iter {
+            for method in &metadata.methods {
+                for type_param in &method.type_parameters {
+                    let metadata_name = self.metadata_name_of_type_param(type_param, method);
+
+                    tracing::debug!("declaring type parameter metadata: {metadata_name}");
+
+                    self.module_mut()
+                        .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                        .unwrap();
+                }
+            }
+        }
+    }
+}
+
+impl CraneliftBackend<'_> {
+    #[tracing::instrument(level = "TRACE", skip(self, desc))]
+    fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
+        self.module_mut().define_data(data_id, desc).unwrap();
+        self.static_data.write().unwrap().insert(name, data_id);
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
+    fn build_type_metadata_buffer(&self, metadata: &TypeMetadata) {
+        let data_id = self.find_type_decl(metadata.id);
+        let mut builder = MemoryBlockBuilder::new(self);
+
+        // Type.name
+        builder.append_str_address(metadata.full_name.clone());
 
         // Type.size
-        memory_block.extend_from_slice(&entry.size.to_ne_bytes()[..]);
+        builder.append(metadata.size);
 
         // Type.alignment
-        memory_block.extend_from_slice(&entry.alignment.to_ne_bytes()[..]);
+        builder.append(metadata.alignment);
 
         // Type.type_id
-        let type_id = lume_span::hash_id(&entry.type_id);
-        memory_block.extend_from_slice(&type_id.to_ne_bytes()[..]);
+        builder.append(metadata.type_id_usize());
 
         // Type.fields
-        memory_block.extend_from_slice(&entry.fields.len().to_ne_bytes()[..]);
+        builder.append_slice_of(&metadata.fields, |builder, field| {
+            let name = self.metadata_name_of_field(field, metadata);
+            let data_id = self.find_decl_by_name(&name);
+
+            builder.append_data_address(data_id);
+        });
 
         // Type.methods
-        memory_block.extend_from_slice(&entry.methods.len().to_ne_bytes()[..]);
+        builder.append_slice_of(&metadata.methods, |builder, method| {
+            let name = method.symbol_name();
+            let data_id = self.find_decl_by_name(&name);
+
+            builder.append_data_address(data_id);
+        });
 
         // Type.type_arguments
-        memory_block.extend_from_slice(&entry.type_arguments.len().to_ne_bytes()[..]);
+        builder.append_slice_of(&metadata.type_arguments, |builder, type_arg| {
+            let data_id = self.find_type_decl(*type_arg);
+            builder.append_data_address(data_id);
+        });
 
-        memory_block
+        self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, ty = type_metadata.full_name))]
+    fn build_field_metadata_buffer(&self, metadata: &FieldMetadata, type_metadata: &TypeMetadata) {
+        let metadata_name = self.metadata_name_of_field(metadata, type_metadata);
+        let data_id = self.find_decl_by_name(&metadata_name);
+        let mut builder = MemoryBlockBuilder::new(self);
+
+        // Field.name
+        builder.append_str_address(metadata.name.clone());
+
+        // Field.type
+        let type_data_id = self.find_type_decl(metadata.ty);
+        builder.append_data_address(type_data_id);
+
+        self.define_metadata(data_id, metadata_name, &builder.finish());
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
+    fn build_method_metadata_buffer(&self, metadata: &MethodMetadata) {
+        let metadata_name = metadata.symbol_name();
+        let data_id = self.find_decl_by_name(&metadata_name);
+        let mut builder = MemoryBlockBuilder::new(self);
+
+        // Method.full_name
+        builder.append_str_address(metadata.full_name.clone());
+
+        // Method.func_id
+        builder.append(metadata.func_id.as_usize());
+
+        // Method.parameters
+        builder.append_slice_of(&metadata.parameters, |builder, param| {
+            let name = self.metadata_name_of_param(param, metadata);
+            let data_id = self.find_decl_by_name(&name);
+
+            builder.append_data_address(data_id);
+        });
+
+        // Method.type_parameters
+        builder.append_slice_of(&metadata.type_parameters, |builder, param| {
+            let name = self.metadata_name_of_type_param(param, metadata);
+            let data_id = self.find_decl_by_name(&name);
+
+            builder.append_data_address(data_id);
+        });
+
+        // Method.return_type
+        let type_data_id = self.find_type_decl(metadata.return_type);
+        builder.append_data_address(type_data_id);
+
+        self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, method = method_metadata.full_name))]
+    fn build_parameter_metadata_buffer(&self, metadata: &ParameterMetadata, method_metadata: &MethodMetadata) {
+        let metadata_name = self.metadata_name_of_param(metadata, method_metadata);
+        let data_id = self.find_decl_by_name(&metadata_name);
+        let mut builder = MemoryBlockBuilder::new(self);
+
+        // Parameter.name
+        builder.append_str_address(metadata.name.clone());
+
+        // Parameter.type
+        let type_data_id = self.find_type_decl(metadata.ty);
+        builder.append_data_address(type_data_id);
+
+        // Parameter.vararg
+        builder.append_byte(u8::from(metadata.vararg));
+
+        self.define_metadata(data_id, metadata_name, &builder.finish());
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, method = method_metadata.full_name))]
+    fn build_type_parameter_metadata_buffer(&self, metadata: &TypeParameterMetadata, method_metadata: &MethodMetadata) {
+        let metadata_name = self.metadata_name_of_type_param(metadata, method_metadata);
+        let data_id = self.find_decl_by_name(&metadata_name);
+        let mut builder = MemoryBlockBuilder::new(self);
+
+        // TypeParameter.name
+        builder.append_str_address(metadata.name.clone());
+
+        // TypeParameter.constraints
+        builder.append_slice_of(&metadata.constraints, |builder, constraint| {
+            let constraint_data_id = self.find_type_decl(*constraint);
+            builder.append_data_address(constraint_data_id);
+        });
+
+        self.define_metadata(data_id, metadata_name, &builder.finish());
+    }
+}
+
+trait Encode {
+    fn encode(&self) -> Box<[u8]>;
+}
+
+impl Encode for u8 {
+    fn encode(&self) -> Box<[u8]> {
+        vec![*self].into_boxed_slice()
+    }
+}
+
+impl Encode for u16 {
+    fn encode(&self) -> Box<[u8]> {
+        self.to_ne_bytes().to_vec().into_boxed_slice()
+    }
+}
+
+impl Encode for u32 {
+    fn encode(&self) -> Box<[u8]> {
+        self.to_ne_bytes().to_vec().into_boxed_slice()
+    }
+}
+
+impl Encode for u64 {
+    fn encode(&self) -> Box<[u8]> {
+        self.to_ne_bytes().to_vec().into_boxed_slice()
+    }
+}
+
+impl Encode for usize {
+    fn encode(&self) -> Box<[u8]> {
+        self.to_ne_bytes().to_vec().into_boxed_slice()
+    }
+}
+
+impl<T: Encode> Encode for [T] {
+    fn encode(&self) -> Box<[u8]> {
+        let mut bytes = Vec::new();
+
+        // Write the length of the slice
+        bytes.extend_from_slice(&self.len().to_ne_bytes()[..]);
+
+        // Write every item in the slice as a single block
+        for item in self {
+            bytes.extend(item.encode());
+        }
+
+        bytes.into_boxed_slice()
+    }
+}
+
+impl<T: Encode> Encode for Vec<T> {
+    fn encode(&self) -> Box<[u8]> {
+        Encode::encode(self.as_slice())
+    }
+}
+
+struct MemoryBlockBuilder<'back, 'ctx> {
+    backend: &'back CraneliftBackend<'ctx>,
+
+    data: Vec<u8>,
+    data_relocs: Vec<(usize, DataId)>,
+    offset: usize,
+}
+
+impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
+    pub fn new(backend: &'back CraneliftBackend<'ctx>) -> Self {
+        Self {
+            backend,
+            data: Vec::new(),
+            data_relocs: Vec::new(),
+            offset: 0,
+        }
+    }
+
+    /// Checks whether the given value is aligned.
+    #[inline]
+    fn is_aligned(val: usize) -> bool {
+        val.rem(NATIVE_PTR_ALIGN) == 0
+    }
+
+    /// Determines how many bytes the given value is off from being aligned.
+    #[inline]
+    fn unalignment_of(val: usize) -> usize {
+        (NATIVE_PTR_ALIGN - val.rem(NATIVE_PTR_ALIGN)).rem(NATIVE_PTR_ALIGN)
+    }
+
+    /// Makes sure the offset is aligned with the target pointer alignment.
+    fn align_offset(&mut self) {
+        let rem = self.offset.rem(NATIVE_PTR_ALIGN);
+        if rem != 0 {
+            let extra = NATIVE_PTR_ALIGN - rem;
+
+            self.offset += extra;
+            self.data.resize(self.data.len() + extra, 0x00);
+
+            debug_assert_eq!(self.offset.rem(NATIVE_PTR_ALIGN), 0);
+        }
+    }
+
+    /// Appends an encodable value onto the data block.
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn append<T: Encode>(&mut self, value: T) -> &mut Self {
+        let encoded = value.encode();
+        let len = encoded.len();
+
+        self.data.extend(encoded);
+        self.offset += len;
+
+        self.align_offset();
+
+        self
+    }
+
+    /// Append a raw byte onto the data block.
+    pub fn append_byte(&mut self, byte: u8) -> &mut Self {
+        self.append_bytes(&[byte][..])
+    }
+
+    /// Append a raw list of bytes onto the data block.
+    pub fn append_bytes(&mut self, bytes: &[u8]) -> &mut Self {
+        let mut encoded = bytes.to_vec();
+        let mut len = encoded.len();
+
+        // If the added bytes are unaligned, prepend enough bytes
+        // in the beginning of the array so they end up being aligned.
+        let unalignment = Self::unalignment_of(len);
+        if unalignment != 0 {
+            encoded.splice(0..0, vec![0x00; unalignment]);
+            len += unalignment;
+        }
+
+        debug_assert!(Self::is_aligned(len));
+        debug_assert!(Self::is_aligned(encoded.len()));
+
+        self.data.extend(encoded.into_boxed_slice());
+        self.offset += len;
+
+        self.align_offset();
+
+        self
+    }
+
+    /// Appends a slice of items, where each item is built from the given closure.
+    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder, &T)>(&mut self, slice: &[T], f: F) -> &mut Self {
+        self.append(slice.len());
+
+        for item in slice {
+            f(self, item);
+        }
+
+        self
+    }
+
+    /// Appends a pointer (relocation) of the given data to the data block.
+    pub fn append_data_address(&mut self, id: DataId) -> &mut Self {
+        self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
+
+        self.data_relocs.push((self.offset, id));
+        self.offset += NATIVE_PTR_SIZE;
+        self
+    }
+
+    /// Appends a pointer (relocation) of the given string data to the data block.
+    pub fn append_str_address(&mut self, mut value: String) -> &mut Self {
+        if !value.ends_with('\0') {
+            value.push('\0');
+        }
+
+        let name_data_id = self.backend.declare_static_string(&value);
+
+        self.append_data_address(name_data_id)
+    }
+
+    /// Takes the builder instance and returns the underlying [`DataDescription`]
+    pub fn finish(self) -> DataDescription {
+        let mut ctx = DataDescription::new();
+        ctx.set_align(8);
+        ctx.set_used(true);
+
+        ctx.define(self.data.into_boxed_slice());
+
+        for (offset, data_reloc) in self.data_relocs {
+            let gv = self.backend.module_mut().declare_data_in_data(data_reloc, &mut ctx);
+
+            #[allow(clippy::cast_possible_truncation)]
+            ctx.write_data_addr(offset as u32, gv, 0);
+        }
+
+        ctx
     }
 }

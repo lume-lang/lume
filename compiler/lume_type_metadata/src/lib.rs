@@ -35,6 +35,9 @@ pub struct TypeMetadataId(pub usize);
 
 #[derive(Default, Debug, Clone)]
 pub struct TypeMetadata {
+    /// Gets the unique ID of the type metadata.
+    pub id: TypeMetadataId,
+
     /// Gets the fully qualified name of the type, including namespace.
     pub full_name: String,
 
@@ -56,6 +59,20 @@ pub struct TypeMetadata {
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
     pub type_arguments: Vec<TypeMetadataId>,
+}
+
+impl TypeMetadata {
+    /// Gets the `type_id` field as a single `usize`.
+    #[inline]
+    pub fn type_id_usize(&self) -> usize {
+        lume_span::hash_id(&self.type_id)
+    }
+
+    /// Gets the symbol name of the type metadata.
+    #[inline]
+    pub fn symbol_name(&self) -> String {
+        format!("@__SYM_TYPE_{:08X}_{}", self.type_id_usize(), self.full_name)
+    }
 }
 
 impl std::hash::Hash for TypeMetadata {
@@ -98,6 +115,14 @@ pub struct MethodMetadata {
 
     /// Gets the return type of the method.
     pub return_type: TypeMetadataId,
+}
+
+impl MethodMetadata {
+    /// Gets the symbol name of the method metadata.
+    #[inline]
+    pub fn symbol_name(&self) -> String {
+        format!("@__SYM_FUNC_{:08X}_{}", self.func_id.as_usize(), self.full_name)
+    }
 }
 
 #[derive(Debug, Clone)]
