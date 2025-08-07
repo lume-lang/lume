@@ -3,7 +3,7 @@ pub(crate) mod generic;
 pub(crate) mod path;
 pub(crate) mod stmt;
 
-pub mod reitify;
+pub mod reify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
@@ -41,7 +41,7 @@ impl<'tcx> Lower<'tcx> {
         self.define_callables()?;
         self.lower_callables()?;
 
-        let mut reitify_pass = reitify::ReificationPass::new(self.tcx);
+        let mut reification_pass = reify::ReificationPass::new(self.tcx);
 
         for ty in self.tcx.db().types() {
             // We only build type metadata of concrete types, so we skip
@@ -51,14 +51,14 @@ impl<'tcx> Lower<'tcx> {
             }
 
             let type_ref = lume_types::TypeRef::new(ty.id, Location::empty());
-            reitify_pass.build_type_metadata_of(&type_ref)?;
+            reification_pass.build_type_metadata_of(&type_ref)?;
         }
 
         for function in self.ir.functions.values_mut() {
-            reitify_pass.execute(function)?;
+            reification_pass.execute(function)?;
         }
 
-        self.ir.metadata = reitify_pass.static_metadata;
+        self.ir.metadata = reification_pass.static_metadata;
 
         Ok(self.ir)
     }

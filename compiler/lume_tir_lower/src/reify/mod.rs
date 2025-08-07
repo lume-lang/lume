@@ -8,7 +8,7 @@ use lume_type_metadata::*;
 use lume_typech::TyCheckCtx;
 use lume_types::TypeRef;
 
-use crate::reitify::visitor::Visitor;
+use crate::reify::visitor::Visitor;
 
 pub(crate) struct ReificationPass<'tcx> {
     tcx: &'tcx TyCheckCtx,

@@ -2,7 +2,7 @@ use lume_errors::Result;
 use lume_span::{DefId, hash_id};
 use lume_type_metadata::*;
 
-use crate::reitify::ReificationPass;
+use crate::reify::ReificationPass;
 
 /// Defines the byte size of the current build architecture.
 const PTR_SIZE: usize = std::mem::size_of::<usize>();
