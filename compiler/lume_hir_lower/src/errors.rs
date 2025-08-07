@@ -74,6 +74,22 @@ pub struct VarargNotLastParameter {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "cannot declare parameter type on {ty}",
+    code = "LM3017",
+    help = "remove the type in the parameter"
+)]
+pub struct SelfWithExplicitType {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("{ty} parameters cannot have a explicit type declared")]
+    pub range: Range<usize>,
+
+    pub ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "undeclared variable", code = "LM3024")]
 pub struct UndeclaredVariable {
     #[span]

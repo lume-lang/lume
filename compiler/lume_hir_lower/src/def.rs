@@ -312,6 +312,16 @@ impl LowerModule<'_> {
                 .into());
             }
 
+            // Naming a parameter `self` with an explicit type is not allowed.
+            if param.name.as_str() == SELF_TYPE_NAME && !param.param_type.is_self() {
+                return Err(SelfWithExplicitType {
+                    source: self.file.clone(),
+                    range: param.location.0.clone(),
+                    ty: String::from(SELF_TYPE_NAME),
+                }
+                .into());
+            }
+
             // Make sure that any vararg parameters exist only on the last position.
             if param.vararg && index + 1 < param_len {
                 return Err(VarargNotLastParameter {
