@@ -58,16 +58,7 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
         let functions = std::mem::take(&mut self.context.mir.functions);
 
         for func in functions.values() {
-            if func.signature.external {
-                continue;
-            }
-
-            let sig = self.declare_function(func);
-
-            let func_id = self
-                .module_mut()
-                .declare_function(&func.name, cranelift_module::Linkage::Export, &sig)
-                .map_error()?;
+            let (func_id, sig) = self.declare_function(func)?;
 
             self.declared_funcs
                 .insert(func.id, DeclaredFunction { id: func_id, sig });
@@ -167,9 +158,8 @@ impl<'ctx> CraneliftBackend<'ctx> {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %func.name))]
-    fn declare_function(&mut self, func: &lume_mir::Function) -> Signature {
-        let module = self.module();
-        let mut sig = module.make_signature();
+    fn declare_function(&mut self, func: &lume_mir::Function) -> Result<(cranelift_module::FuncId, Signature)> {
+        let mut sig = self.module().make_signature();
 
         for param in &func.signature.parameters {
             let param_ty = self.cl_type_of(param);
@@ -183,7 +173,18 @@ impl<'ctx> CraneliftBackend<'ctx> {
             sig.returns.push(AbiParam::new(ret_ty));
         }
 
-        sig
+        let linkage = if func.signature.external {
+            cranelift_module::Linkage::Import
+        } else {
+            cranelift_module::Linkage::Export
+        };
+
+        let func_id = self
+            .module_mut()
+            .declare_function(&func.name, linkage, &sig)
+            .map_error()?;
+
+        Ok((func_id, sig))
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(func = %func.name), err)]
