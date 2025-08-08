@@ -226,7 +226,6 @@ impl<'a> Compiler<'a> {
         let sources = compiler.parse()?;
         tracing::debug!(target: "driver", "finished parsing");
 
-        #[allow(unused)]
         let (tcx, typed_ir) = compiler.type_check(sources)?;
 
         compiler.codegen(&tcx, typed_ir)
@@ -273,20 +272,17 @@ impl<'a> Compiler<'a> {
 
         // Defines the types of all nodes within the HIR maps.
         let mut ticx = TyInferCtx::new(tcx, hir);
-        ticx.infer()?;
-        tracing::debug!(target: "driver", "finished type inference");
+        tracing::info_span!("type inference").in_scope(|| ticx.infer())?;
 
         // Then, make sure they're all valid.
         let mut tccx = TyCheckCtx::new(ticx);
-        tccx.typecheck()?;
-        tracing::debug!(target: "driver", "finished typechecking");
+        tracing::info_span!("type checking").in_scope(|| tccx.typecheck())?;
 
         if self.gcx.session.options.print_type_context {
             println!("{:#?}", tccx.tdb());
         }
 
-        let typed_ir = lume_tir_lower::Lower::build(&tccx)?;
-        tracing::debug!(target: "driver", "finished lowering to TIR");
+        let typed_ir = tracing::info_span!("tir lowering").in_scope(|| lume_tir_lower::Lower::build(&tccx))?;
 
         Ok((tccx, typed_ir))
     }
@@ -295,7 +291,8 @@ impl<'a> Compiler<'a> {
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_codegen::CompiledModule> {
-        let mir = lume_mir_lower::ModuleTransformer::transform(tcx, tir);
+        let mir =
+            tracing::info_span!("mir lowering").in_scope(|| lume_mir_lower::ModuleTransformer::transform(tcx, tir));
 
         match self.gcx.session.options.print_mir {
             lume_session::MirPrinting::None => {}
@@ -303,7 +300,8 @@ impl<'a> Compiler<'a> {
             lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
-        lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options)
+        tracing::info_span!("codegen")
+            .in_scope(|| lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options))
     }
 
     /// Links all the modules within the given state object into a single executable or library.
