@@ -200,6 +200,37 @@ impl TyInferCtx {
         ty.with_location(lit.location)
     }
 
+    /// Returns the *type* of the given [`lume_hir::Parameter`], before the
+    /// ancestry tree has been initialized.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_parameter_pre(
+        &self,
+        param: &lume_hir::Parameter,
+        type_params: &[&TypeParameter],
+    ) -> Result<TypeRef> {
+        let elemental_type = self.mk_type_ref_generic(&param.param_type, type_params)?;
+
+        if param.vararg {
+            Result::Ok(TypeRef::array(elemental_type))
+        } else {
+            Result::Ok(elemental_type)
+        }
+    }
+
+    /// Returns the *type* of the given [`lume_hir::Parameter`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, owner: lume_span::ItemId) -> Result<TypeRef> {
+        let elemental_type = self.mk_type_ref_from(&param.param_type, lume_span::DefId::Item(owner))?;
+
+        if param.vararg {
+            Result::Ok(TypeRef::array(elemental_type))
+        } else {
+            Result::Ok(elemental_type)
+        }
+    }
+
     /// Returns the *type* of the given [`lume_hir::Statement`].
     ///
     /// # Panics

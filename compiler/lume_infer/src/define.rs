@@ -682,8 +682,8 @@ impl TyInferCtx {
 
                 for param in &method.parameters {
                     let name = param.name.name.clone();
-                    let type_ref = self.mk_type_ref_generic(
-                        &param.param_type,
+                    let type_ref = self.type_of_parameter_pre(
+                        param,
                         &[
                             &trait_def.type_parameters.as_refs()[..],
                             &method.type_parameters.as_refs()[..],
@@ -717,7 +717,7 @@ impl TyInferCtx {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.mk_type_ref_generic(&param.param_type, &func.type_parameters.as_refs())?;
+            let type_ref = self.type_of_parameter_pre(param, &func.type_parameters.as_refs())?;
 
             self.tdb_mut()
                 .function_mut(func_id)
@@ -738,8 +738,8 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.mk_type_ref_generic(
-                    &param.param_type,
+                let type_ref = self.type_of_parameter_pre(
+                    param,
                     &[
                         &trait_impl.type_parameters.as_refs()[..],
                         &method.type_parameters.as_refs()[..],
@@ -773,8 +773,8 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.mk_type_ref_generic(
-                    &param.param_type,
+                let type_ref = self.type_of_parameter_pre(
+                    param,
                     &[
                         &implementation.type_parameters.as_refs()[..],
                         &method.type_parameters.as_refs()[..],
