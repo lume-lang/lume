@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use lume_macros::Node;
 use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, StatementId};
 
@@ -24,6 +26,12 @@ impl TypeId {
             package,
             index: Idx::from_usize(idx),
         }
+    }
+}
+
+impl Display for TypeId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "TypeId({}, {})", self.package.as_usize(), self.index.as_usize())
     }
 }
 

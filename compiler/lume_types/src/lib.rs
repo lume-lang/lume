@@ -992,7 +992,7 @@ impl std::hash::Hash for TypeRef {
 
 impl std::fmt::Display for TypeRef {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.instance_of)?;
+        write!(f, "{}", self.instance_of)?;
 
         if !self.type_arguments.is_empty() {
             write!(

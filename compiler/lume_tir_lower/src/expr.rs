@@ -6,6 +6,7 @@ use lume_type_metadata::{FunctionId, FunctionKind};
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub(crate) fn expression(&mut self, expr: &lume_hir::Expression) -> Result<lume_tir::Expression> {
         let kind = match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr)?,
@@ -43,6 +44,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn binary_expression(&mut self, expr: &lume_hir::Binary) -> Result<lume_tir::ExpressionKind> {
         let lhs = self.expression(&expr.lhs)?;
         let rhs = self.expression(&expr.rhs)?;
@@ -61,6 +63,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn cast_expression(&mut self, expr: &lume_hir::Cast) -> Result<lume_tir::ExpressionKind> {
         let source = self.expression(&expr.source)?;
         let target = self.lower.tcx.mk_type_ref_from_expr(&expr.target, expr.id)?;
@@ -72,6 +75,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
         let ty = self
             .lower
@@ -107,10 +111,14 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let function = match self.lower.tcx.lookup_callable(expr)? {
             lume_typech::query::Callable::Function(call) => {
-                debug_assert!(call.parameters.len() == expr.arguments().len());
+                #[cfg(debug_assertions)]
+                if !call.sig().is_vararg() {
+                    debug_assert!(call.parameters.len() == expr.arguments().len());
+                }
 
                 FunctionId::new(FunctionKind::Function, call.id.index.as_usize())
             }
@@ -141,6 +149,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn intrinsic_expression(&mut self, expr: &lume_hir::IntrinsicCall) -> Result<lume_tir::ExpressionKind> {
         let kind = self.intrinsic_of(expr);
         let arguments = expr
@@ -234,6 +243,7 @@ impl LowerFunction<'_> {
         lume_tir::ExpressionKind::Literal(lume_tir::Literal { id: expr.id, kind: lit })
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn logical_expression(&mut self, expr: &lume_hir::Logical) -> Result<lume_tir::ExpressionKind> {
         let lhs = self.expression(&expr.lhs)?;
         let rhs = self.expression(&expr.rhs)?;
@@ -251,6 +261,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn member_expression(&mut self, expr: &lume_hir::Member) -> Result<lume_tir::ExpressionKind> {
         let callee = self.expression(&expr.callee)?;
         let name = expr.name.intern();
@@ -272,6 +283,7 @@ impl LowerFunction<'_> {
         })))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
@@ -293,6 +305,7 @@ impl LowerFunction<'_> {
         }))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
         let name = self.path(&expr.name)?;
         let enum_type = expr.name.clone().parent().unwrap();
