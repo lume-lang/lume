@@ -99,7 +99,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id)?,
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
-                let Some(ty_opt) = self.find_type_ref(&e.path)? else {
+                let Some(ty_opt) = self.find_type_ref_from(&e.path, DefId::Expression(e.id))? else {
                     return Err(self.missing_type_err(&lume_hir::Type {
                         id: lume_span::ItemId::empty(),
                         name: e.path.clone(),

@@ -363,9 +363,11 @@ impl TyCheckCtx {
     /// this method would raise an error, since the field `bar` expands to be of type `String`,
     /// which is incompatible with `Int32`.
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
-        let constructed_type = self.find_type_ref(&expr.path)?.unwrap();
-        let fields = self.tdb().find_fields(constructed_type.instance_of);
+        let constructed_type = self
+            .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
+            .unwrap();
 
+        let fields = self.tdb().find_fields(constructed_type.instance_of);
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
         for field in fields {

@@ -77,15 +77,13 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
-        let ty = self
+        let constructed_type = self
             .lower
             .tcx
             .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
             .unwrap();
 
         let mut constructed = expr.fields.clone();
-
-        let constructed_type = self.lower.tcx.find_type_ref(&expr.path)?.unwrap();
         let fields = self.lower.tcx.tdb().find_fields(constructed_type.instance_of);
 
         for field in fields {
@@ -106,7 +104,7 @@ impl LowerFunction<'_> {
 
         Ok(lume_tir::ExpressionKind::Construct(Box::new(lume_tir::Construct {
             id: expr.id,
-            ty,
+            ty: constructed_type,
             fields: constructed,
         })))
     }
