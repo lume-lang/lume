@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+doctest = false
+
 [dependencies]
 lume_errors = { path = "../lume_errors" }
 lume_hir = { path = "../lume_hir" }

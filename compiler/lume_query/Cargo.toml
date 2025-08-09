@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+test = false
+doctest = false
+
 [dependencies]
 lume_query_macros = { path = "../lume_query_macros", optional = true }
 

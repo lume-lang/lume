@@ -4,6 +4,10 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+test = false
+doctest = false
+
 [dependencies]
 lume_codegen = { path = "../lume_codegen" }
 lume_errors = { path = "../lume_errors" }
