@@ -11,11 +11,12 @@ impl FunctionTransformer<'_> {
             lume_types::TypeKind::UInt(n) => lume_mir::Type::integer(*n, false),
             lume_types::TypeKind::Float(n) => lume_mir::Type::float(*n),
             lume_types::TypeKind::String => lume_mir::Type::string(),
-            lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
+            lume_types::TypeKind::User(lume_types::UserType::Struct(def)) => {
+                let name = format!("{:+}", def.name);
                 let ty_props = self.tcx().db().find_fields(type_ref.instance_of);
                 let props = ty_props.map(|p| self.lower_type(&p.field_type)).collect::<Vec<_>>();
 
-                let struct_ty = lume_mir::Type::structure(type_ref.clone(), props);
+                let struct_ty = lume_mir::Type::structure(type_ref.clone(), name, props);
 
                 lume_mir::Type::pointer(struct_ty)
             }
@@ -44,7 +45,7 @@ impl FunctionTransformer<'_> {
                     panic!("bug!: attempting to load non-pointer register");
                 };
 
-                let lume_mir::TypeKind::Struct { fields } = &elemental.kind else {
+                let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
                     panic!("bug!: attempting to load field from non-struct register");
                 };
 
