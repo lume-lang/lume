@@ -133,11 +133,31 @@ impl LowerFunction<'_> {
             arguments.push(self.expression(arg)?);
         }
 
-        let type_arguments = expr
-            .type_arguments()
-            .iter()
-            .map(|arg| self.lower.tcx.mk_type_ref_from_expr(arg, expr.id()))
-            .collect::<Result<Vec<_>>>()?;
+        let mut type_arguments = Vec::with_capacity(expr.type_arguments().len());
+
+        // Add the surround type arguments of the expression, which are also required
+        // by the function to be invoked.
+        match &expr {
+            lume_hir::CallExpression::Instanced(call) => {
+                let callee = self.expression(&call.callee)?;
+
+                type_arguments.extend(callee.ty.type_arguments);
+            }
+            lume_hir::CallExpression::Static(call) => {
+                for type_arg in call.name.all_root_type_arguments() {
+                    let tir_type_arg = self.lower.tcx.mk_type_ref_from_expr(&type_arg, expr.id())?;
+
+                    type_arguments.push(tir_type_arg);
+                }
+            }
+            lume_hir::CallExpression::Intrinsic(_) => {}
+        }
+
+        for type_arg in expr.type_arguments() {
+            let tir_type_arg = self.lower.tcx.mk_type_ref_from_expr(type_arg, expr.id())?;
+
+            type_arguments.push(tir_type_arg);
+        }
 
         Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
             id: expr.id(),

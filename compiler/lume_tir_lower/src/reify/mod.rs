@@ -51,9 +51,7 @@ impl<'tcx> ReificationPass<'tcx> {
     /// **Note:** the `$T` parameter is not accessible within the function body and
     /// is only shown for presentation purposes.
     fn add_metadata_params(&self, func: &mut Function) {
-        let type_params = std::mem::take(&mut func.type_params.inner);
-
-        for type_param in &type_params {
+        for type_param in &func.type_params.inner {
             let name = format!("${}", type_param.name).intern();
             let ty = self.tcx.std_type();
 
@@ -65,8 +63,6 @@ impl<'tcx> ReificationPass<'tcx> {
                 vararg: false,
             });
         }
-
-        func.type_params.inner = type_params;
     }
 
     fn add_metadata_calls(&mut self, func: &mut Function) -> Result<()> {

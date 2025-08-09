@@ -401,6 +401,16 @@ impl Path {
         args
     }
 
+    /// Gets the all type arguments of all the root path segments.
+    pub fn all_root_type_arguments(&self) -> Vec<Type> {
+        let mut args = Vec::new();
+        for segment in &self.root {
+            args.extend_from_slice(segment.type_arguments());
+        }
+
+        args
+    }
+
     /// Determines whether the path refers to a type.
     pub fn is_type(&self) -> bool {
         matches!(self.name, PathSegment::Type { .. })
