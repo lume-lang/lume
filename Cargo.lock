@@ -1035,6 +1035,7 @@ dependencies = [
  "lume_errors",
  "lume_linker",
  "lume_session",
+ "lumert",
  "tracing",
  "tracing-subscriber",
  "tracing-tracy",
@@ -1349,6 +1350,10 @@ dependencies = [
  "lume_session",
  "lume_span",
 ]
+
+[[package]]
+name = "lumert"
+version = "0.1.0"
 
 [[package]]
 name = "matchers"
