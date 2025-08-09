@@ -94,6 +94,8 @@ impl WithTypeParameters for UseId {
 
 impl WithTypeParameters for TypeId {
     fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
+        static EMPTY: Vec<TypeParameterId> = Vec::new();
+
         let Some(ty) = tcx.type_(self) else {
             return Err(TypeNotFound { id: self }.into());
         };
@@ -102,7 +104,7 @@ impl WithTypeParameters for TypeId {
             TypeKind::User(UserType::Struct(k)) => Ok(&k.type_parameters),
             TypeKind::User(UserType::Trait(k)) => Ok(&k.type_parameters),
             TypeKind::User(UserType::Enum(k)) => Ok(&k.type_parameters),
-            kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
+            _ => Ok(&EMPTY),
         }
     }
 

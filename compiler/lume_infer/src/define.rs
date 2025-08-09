@@ -133,7 +133,15 @@ impl TyInferCtx {
             lume_hir::TypeDefinition::Struct(struct_def) => {
                 let name = struct_def.name.clone();
                 let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(struct_def.id.package, name, kind);
+
+                let type_id = if let Some(first_root) = name.root.first()
+                    && first_root.name().as_str() == "std"
+                    && let Some(std_id) = std_type_id(&name)
+                {
+                    std_id
+                } else {
+                    self.tdb_mut().type_alloc(struct_def.id.package, name, kind)
+                };
 
                 struct_def.type_id = Some(type_id);
             }
@@ -152,6 +160,27 @@ impl TyInferCtx {
                 enum_def.type_id = Some(type_id);
             }
         }
+    }
+}
+
+fn std_type_id(name: &Path) -> Option<TypeId> {
+    match name {
+        n if n.is_name_match(&Path::void()) => Some(lume_types::TYPEREF_VOID_ID),
+        n if n.is_name_match(&Path::boolean()) => Some(lume_types::TYPEREF_BOOL_ID),
+        n if n.is_name_match(&Path::i8()) => Some(lume_types::TYPEREF_INT8_ID),
+        n if n.is_name_match(&Path::i16()) => Some(lume_types::TYPEREF_INT16_ID),
+        n if n.is_name_match(&Path::i32()) => Some(lume_types::TYPEREF_INT32_ID),
+        n if n.is_name_match(&Path::i64()) => Some(lume_types::TYPEREF_INT64_ID),
+        n if n.is_name_match(&Path::u8()) => Some(lume_types::TYPEREF_UINT8_ID),
+        n if n.is_name_match(&Path::u16()) => Some(lume_types::TYPEREF_UINT16_ID),
+        n if n.is_name_match(&Path::u32()) => Some(lume_types::TYPEREF_UINT32_ID),
+        n if n.is_name_match(&Path::u64()) => Some(lume_types::TYPEREF_UINT64_ID),
+        n if n.is_name_match(&Path::f32()) => Some(lume_types::TYPEREF_FLOAT32_ID),
+        n if n.is_name_match(&Path::f64()) => Some(lume_types::TYPEREF_FLOAT64_ID),
+        n if n.is_name_match(&Path::string()) => Some(lume_types::TYPEREF_STRING_ID),
+        n if n.is_name_match(&Path::pointer()) => Some(lume_types::TYPEREF_POINTER_ID),
+        n if n.is_name_match(&Path::array()) => Some(lume_types::TYPEREF_ARRAY_ID),
+        _ => None,
     }
 }
 
