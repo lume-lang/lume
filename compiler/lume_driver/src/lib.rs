@@ -116,7 +116,7 @@ impl Driver {
         let objects = Self::write_object_files(&gcx, codegen_mods)?;
         let output_file_path = gcx.binary_output_path(&self.package.name);
 
-        lume_linker::link_objects(&objects, &output_file_path, gcx.session.options.linker)?;
+        lume_linker::link_objects(&objects, &output_file_path, &gcx.session.options)?;
 
         Ok(CompiledExecutable {
             binary: output_file_path,

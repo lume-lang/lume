@@ -6,7 +6,13 @@ use std::{
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_codegen::CodegenObjects;
 use lume_errors::Result;
-use lume_session::LinkerPreference;
+use lume_session::{LinkerPreference, Options};
+
+#[cfg(all(target_family = "windows", target_env = "msvc"))]
+const LIB_RUNTIME_NAME: &str = "liblumert.lib";
+
+#[cfg(not(all(target_family = "windows", target_env = "msvc")))]
+const LIB_RUNTIME_NAME: &str = "liblumert.a";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Linker {
@@ -62,8 +68,8 @@ fn detect_linker() -> Result<Linker> {
 /// Returns `Err` if the linker binary could not be found, the linker fails to invoke or fails
 /// to generate a valid output binary.
 #[allow(clippy::missing_panics_doc)]
-pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, linker: Option<LinkerPreference>) -> Result<()> {
-    let linker = match linker {
+pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, opts: &Options) -> Result<()> {
+    let linker = match opts.linker {
         Some(LinkerPreference::Clang) => Linker::Clang,
         Some(LinkerPreference::Gcc) => Linker::Gcc,
         None => detect_linker()?,
@@ -71,11 +77,14 @@ pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, linker: Option<L
 
     ensure_command_available(linker.command())?;
 
+    let runtime_path = determine_runtime_path(opts)?;
+
     // Make sure the parent directory exists before attempting to
     // run any commands
     std::fs::create_dir_all(output.parent().unwrap()).map_err(IntoDiagnostic::into_diagnostic)?;
 
     let mut cmd = Command::new(linker.command());
+    cmd.arg(runtime_path);
 
     for obj in &objects.objects {
         cmd.arg(obj.path.clone());
@@ -106,4 +115,31 @@ pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, linker: Option<L
     }
 
     Ok(())
+}
+
+/// Determines the full path of the runtime library.
+fn determine_runtime_path(opts: &Options) -> Result<PathBuf> {
+    if let Some(defined_path) = &opts.runtime_path {
+        return if defined_path.is_absolute() {
+            Ok(defined_path.clone())
+        } else {
+            let cwd = std::env::current_dir().expect("could not get working directory");
+
+            Ok(cwd.join(defined_path))
+        };
+    }
+
+    let profile_name =
+        std::env::var_os("PROFILE").map_or_else(|| String::from("debug"), |env| env.into_string().unwrap());
+
+    let root_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../")
+        .canonicalize()
+        .map_err(|err| {
+            Box::new(
+                SimpleDiagnostic::new("could not determine root project directory").add_cause(err.into_diagnostic()),
+            ) as error_snippet::Error
+        })?;
+
+    Ok(root_dir.join("target").join(profile_name).join(LIB_RUNTIME_NAME))
 }

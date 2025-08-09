@@ -2,6 +2,8 @@ pub(crate) mod arc;
 pub(crate) mod build;
 pub(crate) mod run;
 
+use clap::ValueHint;
+
 use crate::error::*;
 use error_snippet::{IntoDiagnostic, Result};
 use lume_session::{Backend, LinkerPreference, MirPrinting, OptimizationLevel};
@@ -50,8 +52,8 @@ pub fn project_or_cwd(path: Option<&PathBuf>) -> Result<String> {
 
 #[derive(Debug, clap::Parser)]
 pub struct BuildOptions {
-    #[arg(help = "Path to the project", value_name = "DIR", value_hint = clap::ValueHint::DirPath)]
-    pub path: Option<std::path::PathBuf>,
+    #[arg(help = "Path to the project", value_name = "DIR", value_hint = ValueHint::DirPath)]
+    pub path: Option<PathBuf>,
 
     #[arg(long, help = "Print the type context before analyzing")]
     pub print_type_ctx: bool,
@@ -81,6 +83,9 @@ pub struct BuildOptions {
     #[arg(long, default_value = None, help = "Linker to use when linking objects")]
     pub linker: Option<LinkerPreference>,
 
+    #[arg(long, help = "Linker to use when linking objects", value_name = "LIB", value_hint = ValueHint::FilePath)]
+    pub runtime_path: Option<PathBuf>,
+
     #[arg(
         long = "codegen-backend",
         help = "Code generation backend",
@@ -107,6 +112,7 @@ impl BuildOptions {
             },
             backend: self.backend,
             linker: self.linker,
+            runtime_path: self.runtime_path.clone(),
         }
     }
 }

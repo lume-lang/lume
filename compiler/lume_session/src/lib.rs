@@ -70,6 +70,9 @@ pub struct Options {
 
     /// Defines which linker to use.
     pub linker: Option<LinkerPreference>,
+
+    /// Defines the absolute path to the runtime library.
+    pub runtime_path: Option<PathBuf>,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
