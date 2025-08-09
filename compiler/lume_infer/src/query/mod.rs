@@ -52,6 +52,14 @@ impl Callable<'_> {
     pub fn to_call_reference(self) -> CallReference {
         self.into()
     }
+
+    pub fn is_instance(&self) -> bool {
+        if let Self::Method(method) = self {
+            method.is_instanced()
+        } else {
+            false
+        }
+    }
 }
 
 impl From<Callable<'_>> for CallReference {

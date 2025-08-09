@@ -154,8 +154,15 @@ impl<'mir> FunctionTransformer<'mir> {
 
     /// Defines a new call instruction in the current function block.
     fn call(&mut self, func_id: FunctionId, mut args: Vec<lume_mir::Operand>) -> lume_mir::Operand {
-        let params = &self.transformer.mir.function(func_id).signature.parameters;
-        debug_assert!(params.len() == args.len());
+        let func = self.transformer.mir.function(func_id);
+        let params = &func.signature.parameters;
+
+        #[cfg(debug_assertions)]
+        if func.signature.vararg {
+            debug_assert!(params.len() <= args.len());
+        } else {
+            debug_assert!(params.len() == args.len());
+        }
 
         for (arg, param) in args.iter_mut().zip(params.iter()) {
             if !param.is_generic {

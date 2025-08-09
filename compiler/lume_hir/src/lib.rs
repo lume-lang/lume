@@ -1309,6 +1309,10 @@ impl CallExpression<'_> {
             Self::Intrinsic(call) => call.location,
         }
     }
+
+    pub fn is_instance(&self) -> bool {
+        matches!(self, Self::Instanced(_))
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
