@@ -257,19 +257,11 @@ impl FunctionTransformer<'_> {
     }
 
     fn variant(&mut self, expr: &lume_tir::Variant) -> lume_mir::Operand {
-        let variant = self.tcx().enum_case_expr(expr.id).unwrap();
-
         let discriminant = lume_mir::Operand::Integer {
             bits: 8,
             signed: false,
             value: i64::from(expr.index),
         };
-
-        // If the variant only consists of a discriminant, we skip
-        // the allocation and only pass an 8-bit integer around.
-        if variant.parameters.is_empty() {
-            return discriminant;
-        }
 
         let enum_ty = self.tcx().type_of(expr.id).unwrap();
         let enum_def = self.tcx().enum_def_type(enum_ty.instance_of).unwrap();

@@ -166,7 +166,7 @@ impl<'tcx> LowerFunction<'tcx> {
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
     ) -> Result<lume_tir::Function> {
-        let name = self.path_generic_hir(name, hir_id)?;
+        let name = self.path_hir(name, hir_id)?;
         let hir_type_params = self
             .lower
             .tcx

@@ -229,6 +229,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid references
     /// to type IDs.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
     pub fn find_type_ref(&self, name: &Path) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);
@@ -255,6 +256,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid references
     /// to type IDs.
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
     pub fn find_type_ref_generic(&self, name: &Path, ty_params: &[&TypeParameter]) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);

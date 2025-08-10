@@ -168,7 +168,7 @@ impl TyInferCtx {
             },
             lume_hir::ExpressionKind::Variant(var) => {
                 let enum_segment = var.name.clone().parent().unwrap();
-                let enum_ty = self.find_type_ref(&enum_segment)?;
+                let enum_ty = self.find_type_ref_from(&enum_segment, DefId::Expression(expr.id))?;
 
                 enum_ty.ok_or_else(|| {
                     self.missing_type_err(&lume_hir::Type {
@@ -475,11 +475,11 @@ impl TyInferCtx {
     /// Returns the enum case definitions on the enum type with the given name.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_cases_of_name(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {
-        let Some(parent_ty_ref) = self.find_type_ref(name)? else {
+        let Some(parent_ty) = self.tdb().find_type(name) else {
             return Err(lume_types::errors::TypeNameNotFound { name: name.clone() }.into());
         };
 
-        self.enum_cases_of(parent_ty_ref.instance_of)
+        self.enum_cases_of(parent_ty.id)
     }
 
     /// Returns the enum case definition, which is being referred to by the given expression.

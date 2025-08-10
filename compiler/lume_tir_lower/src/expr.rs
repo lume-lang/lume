@@ -325,7 +325,7 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
-        let name = self.path(&expr.name)?;
+        let name = self.path_hir(&expr.name, DefId::Expression(expr.id))?;
         let enum_type = expr.name.clone().parent().unwrap();
 
         let ty = self
