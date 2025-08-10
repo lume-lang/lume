@@ -157,7 +157,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         Ok(func_id)
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %func.name))]
+    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
     fn declare_function(&mut self, func: &lume_mir::Function) -> Result<(cranelift_module::FuncId, Signature)> {
         let mut sig = self.module().make_signature();
 
@@ -187,7 +187,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         Ok((func_id, sig))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(func = %func.name), err)]
+    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name), err)]
     fn define_function(
         &mut self,
         func: &lume_mir::Function,
@@ -349,7 +349,10 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub(crate) fn retrieve_var(&self, register: RegisterId) -> Variable {
-        *self.variables.get(&register).unwrap()
+        *self
+            .variables
+            .get(&register)
+            .unwrap_or_else(|| panic!("should have register {register} present"))
     }
 
     pub(crate) fn use_var(&mut self, register: RegisterId) -> Value {

@@ -291,11 +291,11 @@ impl RenameSsaVariables {
             for param_idx in 0..func.signature.parameters.len() {
                 let param_reg = func.registers.register_mut(RegisterId::new(param_idx));
 
-                self.rename_register_index(&mut param_reg.id, block_id, &mut register_mapping);
+                self.rename_register_index(param_reg.id, block_id, &mut register_mapping);
             }
 
             for param in &mut block.parameters {
-                self.rename_register_index(param, block_id, &mut register_mapping);
+                self.rename_register_index_mut(param, block_id, &mut register_mapping);
             }
 
             for inst in block.instructions_mut() {
@@ -328,6 +328,20 @@ impl RenameSsaVariables {
 
     fn rename_register_index(
         &mut self,
+        old: RegisterId,
+        block: BasicBlockId,
+        mapping: &mut RegisterMapping,
+    ) -> RegisterId {
+        let new = RegisterId::new(self.register_counter);
+
+        mapping.insert((old, block), new);
+        self.register_counter += 1;
+
+        new
+    }
+
+    fn rename_register_index_mut(
+        &mut self,
         old: &mut RegisterId,
         block: BasicBlockId,
         mapping: &mut RegisterMapping,
@@ -345,13 +359,13 @@ impl RenameSsaVariables {
     fn update_regs_inst(&mut self, inst: &mut Instruction, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match inst {
             Instruction::Let { register, decl } => {
-                self.rename_register_index(register, block, mapping);
+                self.rename_register_index_mut(register, block, mapping);
 
                 Self::update_regs_decl(decl, block, mapping);
             }
             Instruction::Assign { .. } => unreachable!("bug!: assignments should be removed in previous SSA pass"),
             Instruction::Allocate { register, .. } => {
-                self.rename_register_index(register, block, mapping);
+                self.rename_register_index_mut(register, block, mapping);
             }
             Instruction::Store { target, value } | Instruction::StoreField { target, value, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();

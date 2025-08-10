@@ -1313,7 +1313,10 @@ pub enum TypeKind {
 
 impl TypeKind {
     pub fn is_reference_type(&self) -> bool {
-        matches!(self, Self::Struct { .. } | Self::String | Self::Pointer { .. })
+        matches!(
+            self,
+            Self::Struct { .. } | Self::String | Self::Pointer { .. } | Self::Metadata { .. }
+        )
     }
 }
 

@@ -164,8 +164,22 @@ impl<'mir> FunctionTransformer<'mir> {
             debug_assert!(params.len() == args.len());
         }
 
+        // Generic parameters are lowering into accepting pointer types, so all
+        // types of argument can be passed.
+        //
+        // When passing a non-reference argument into a generic parameter, we then
+        // need to pass an address to the argument, so the callee can load it. When
+        // lowering these arguments, we create a slot in the stack to store the argument,
+        // then we pass the address of the stack slot to the function.
         for (arg, param) in args.iter_mut().zip(params.iter()) {
+            // If the parameter isn't generic, we let it be.
             if !param.is_generic {
+                continue;
+            }
+
+            // If the passed type is already a reference type, we can pass it without
+            // allocating room for it.
+            if self.type_of_value(arg).kind.is_reference_type() {
                 continue;
             }
 
