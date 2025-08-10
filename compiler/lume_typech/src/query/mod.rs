@@ -51,9 +51,7 @@ impl TyCheckCtx {
             (lume_hir::CallExpression::Instanced(call), true) => {
                 &[&[call.callee.clone()][..], &call.arguments[..]].concat()
             }
-            (lume_hir::CallExpression::Intrinsic(call), true) => {
-                &[&[call.callee().clone()][..], &call.arguments[..]].concat()
-            }
+            (lume_hir::CallExpression::Intrinsic(call), true) => &call.arguments,
             (lume_hir::CallExpression::Static(call), _) => &call.arguments,
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
                 self.dcx().emit(
@@ -126,7 +124,7 @@ impl TyCheckCtx {
 
     /// Checks whether the given arguments matches the signature of the given
     /// parameters.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %expr.name()), err, ret)]
     fn check_params<'a>(
         &self,
         expr: lume_hir::CallExpression<'a>,
