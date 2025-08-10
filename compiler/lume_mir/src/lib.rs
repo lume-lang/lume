@@ -725,14 +725,13 @@ impl Instruction {
     pub fn register_refs(&self) -> Vec<RegisterId> {
         match self {
             Self::Let { decl, .. } => decl.register_refs(),
-            Self::Assign { target, value } => {
+            Self::Assign { target, value } | Self::Store { target, value } | Self::StoreField { target, value, .. } => {
                 let mut refs = vec![*target];
                 refs.extend(value.register_refs());
 
                 refs
             }
             Self::CreateSlot { .. } | Self::Allocate { .. } | Self::StoreSlot { .. } => Vec::new(),
-            Self::Store { target, .. } | Self::StoreField { target, .. } => vec![*target],
         }
     }
 }
