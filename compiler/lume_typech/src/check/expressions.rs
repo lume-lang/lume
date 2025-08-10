@@ -224,18 +224,75 @@ impl TyCheckCtx {
         let _ = self.type_of_expr(expr)?;
 
         match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr),
-            lume_hir::ExpressionKind::Binary(expr) => self.binary_expression(expr),
-            lume_hir::ExpressionKind::Cast(cast) => self.cast_expression(cast),
-            lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr),
+            lume_hir::ExpressionKind::Assignment(expr) => {
+                self.expression(&expr.target)?;
+                self.expression(&expr.value)?;
+
+                self.assignment_expression(expr)
+            }
+            lume_hir::ExpressionKind::Binary(expr) => {
+                self.expression(&expr.lhs)?;
+                self.expression(&expr.rhs)?;
+
+                self.binary_expression(expr)
+            }
+            lume_hir::ExpressionKind::Cast(cast) => {
+                self.expression(&cast.source)?;
+
+                self.cast_expression(cast)
+            }
+            lume_hir::ExpressionKind::Construct(expr) => {
+                for field in &expr.fields {
+                    self.expression(&field.value)?;
+                }
+
+                self.construct_expression(expr)
+            }
+            lume_hir::ExpressionKind::StaticCall(call) => {
+                for arg in &call.arguments {
+                    self.expression(arg)?;
+                }
+
+                self.call_expression(lume_hir::CallExpression::Static(call))
+            }
             lume_hir::ExpressionKind::InstanceCall(call) => {
+                for arg in &call.arguments {
+                    self.expression(arg)?;
+                }
+
                 self.call_expression(lume_hir::CallExpression::Instanced(call))
             }
-            lume_hir::ExpressionKind::StaticCall(call) => self.call_expression(lume_hir::CallExpression::Static(call)),
-            lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr),
-            lume_hir::ExpressionKind::Switch(expr) => self.switch_expression(expr),
-            lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr),
-            _ => Ok(()),
+            lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                for arg in &call.arguments {
+                    self.expression(arg)?;
+                }
+
+                self.call_expression(lume_hir::CallExpression::Intrinsic(call))
+            }
+            lume_hir::ExpressionKind::Logical(expr) => {
+                self.expression(&expr.lhs)?;
+                self.expression(&expr.rhs)?;
+
+                self.logical_expression(expr)
+            }
+            lume_hir::ExpressionKind::Member(expr) => self.expression(&expr.callee),
+            lume_hir::ExpressionKind::Switch(expr) => {
+                for case in &expr.cases {
+                    self.expression(&case.branch)?;
+                }
+
+                self.switch_expression(expr)
+            }
+            lume_hir::ExpressionKind::Variant(expr) => {
+                for arg in &expr.arguments {
+                    self.expression(arg)?;
+                }
+
+                self.variant_expression(expr)
+            }
+            lume_hir::ExpressionKind::Literal(_)
+            | lume_hir::ExpressionKind::Field(_)
+            | lume_hir::ExpressionKind::Variable(_) => Ok(()),
         }
     }
 
