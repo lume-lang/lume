@@ -373,7 +373,13 @@ impl TyCheckCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn matching_type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
-            lume_hir::StatementKind::If(cond) => self.matching_type_of_cond(&cond.cases),
+            lume_hir::StatementKind::Expression(expr) => {
+                if let lume_hir::ExpressionKind::If(cond) = &expr.kind {
+                    self.matching_type_of_cond(&cond.cases)
+                } else {
+                    self.type_of_stmt(stmt)
+                }
+            }
             _ => self.type_of_stmt(stmt),
         }
     }

@@ -125,6 +125,7 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::IntrinsicCall(call) => {
                 self.type_of_call(lume_hir::CallExpression::Intrinsic(call))?
             }
+            lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
             lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {
@@ -264,9 +265,9 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
+            lume_hir::StatementKind::Final(fin) => self.type_of_expr(&fin.value),
             lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
-            lume_hir::StatementKind::If(cond) => self.type_of_if_conditional(cond),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
             _ => Ok(TypeRef::void()),
         }

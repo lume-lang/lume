@@ -19,6 +19,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::StaticCall(expr) => {
                 self.call_expression(lume_hir::CallExpression::Static(expr))?
             }
+            lume_hir::ExpressionKind::If(stmt) => self.if_expression(stmt)?,
             lume_hir::ExpressionKind::IntrinsicCall(expr) => self.intrinsic_expression(expr)?,
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
@@ -166,6 +167,32 @@ impl LowerFunction<'_> {
             arguments,
             type_arguments,
         })))
+    }
+
+    fn if_expression(&mut self, expr: &lume_hir::If) -> Result<lume_tir::ExpressionKind> {
+        let cases = expr
+            .cases
+            .iter()
+            .map(|case| {
+                let condition = if let Some(val) = case.condition.as_ref() {
+                    Some(self.expression(val)?)
+                } else {
+                    None
+                };
+
+                let block = self.lower_block(&case.block)?;
+
+                Ok(lume_tir::Conditional { condition, block })
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        let return_type = self.lower.tcx.type_of_if_conditional(expr)?;
+
+        Ok(lume_tir::ExpressionKind::If(lume_tir::If {
+            id: expr.id,
+            cases,
+            return_type: if return_type.is_void() { None } else { Some(return_type) },
+        }))
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]

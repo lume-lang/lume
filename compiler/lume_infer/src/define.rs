@@ -946,13 +946,6 @@ impl TyInferCtx {
                     Ok(())
                 }
             }
-            lume_hir::StatementKind::If(s) => {
-                for case in &s.cases {
-                    self.define_condition_scope(case, stmt_id)?;
-                }
-
-                Ok(())
-            }
             lume_hir::StatementKind::InfiniteLoop(s) => self.define_block_scope(&s.block, stmt_id),
             lume_hir::StatementKind::IteratorLoop(s) => {
                 self.define_block_scope(&s.block, stmt_id)?;
@@ -1013,6 +1006,13 @@ impl TyInferCtx {
 
                 for arg in &s.arguments {
                     self.define_expr_scope(arg, expr_id)?;
+                }
+
+                Ok(())
+            }
+            lume_hir::ExpressionKind::If(s) => {
+                for case in &s.cases {
+                    self.define_condition_scope(case, expr_id)?;
                 }
 
                 Ok(())

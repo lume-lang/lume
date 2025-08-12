@@ -63,7 +63,6 @@ impl LowerModule<'_> {
             ast::Statement::Continue(s) => self.stmt_continue(*s),
             ast::Statement::Final(s) => self.stmt_final(*s)?,
             ast::Statement::Return(s) => self.stmt_return(*s)?,
-            ast::Statement::If(e) => self.stmt_if(*e)?,
             ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
             ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
             ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
@@ -166,43 +165,6 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_if(&mut self, expr: ast::IfCondition) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
-        let location = self.location(expr.location);
-
-        let cases = expr
-            .cases
-            .into_iter()
-            .map(|c| self.stmt_condition(c))
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(hir::Statement {
-            id,
-            location,
-            kind: hir::StatementKind::If(Box::new(hir::If { id, cases, location })),
-        })
-    }
-
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
-        let location = self.location(expr.location);
-
-        let condition = if let Some(cond) = expr.condition {
-            Some(self.expression(cond)?)
-        } else {
-            None
-        };
-
-        let block = self.block(expr.block);
-
-        Ok(hir::Condition {
-            condition,
-            block,
-            location,
-        })
-    }
-
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> hir::Statement {
         let id = self.next_stmt_id();
@@ -241,26 +203,28 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         let block = self.block(lume_ast::Block {
-            statements: vec![lume_ast::Statement::If(Box::new(lume_ast::IfCondition {
-                cases: vec![
-                    lume_ast::Condition {
-                        condition: Some(expr.condition),
-                        block: expr.block,
-                        location: lume_ast::Location(0..0),
-                    },
-                    lume_ast::Condition {
-                        condition: None,
-                        block: lume_ast::Block {
-                            statements: vec![lume_ast::Statement::Break(Box::new(lume_ast::Break {
-                                location: lume_ast::Location(0..0),
-                            }))],
+            statements: vec![lume_ast::Statement::Expression(Box::new(lume_ast::Expression::If(
+                Box::new(lume_ast::IfCondition {
+                    cases: vec![
+                        lume_ast::Condition {
+                            condition: Some(expr.condition),
+                            block: expr.block,
                             location: lume_ast::Location(0..0),
                         },
-                        location: lume_ast::Location(0..0),
-                    },
-                ],
-                location: lume_ast::Location(0..0),
-            }))],
+                        lume_ast::Condition {
+                            condition: None,
+                            block: lume_ast::Block {
+                                statements: vec![lume_ast::Statement::Break(Box::new(lume_ast::Break {
+                                    location: lume_ast::Location(0..0),
+                                }))],
+                                location: lume_ast::Location(0..0),
+                            },
+                            location: lume_ast::Location(0..0),
+                        },
+                    ],
+                    location: lume_ast::Location(0..0),
+                }),
+            )))],
             location: lume_ast::Location(0..0),
         });
 

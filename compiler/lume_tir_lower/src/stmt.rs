@@ -11,7 +11,6 @@ impl LowerFunction<'_> {
             lume_hir::StatementKind::Continue(stmt) => Ok(self.continue_statement(stmt)),
             lume_hir::StatementKind::Final(stmt) => self.final_statement(stmt),
             lume_hir::StatementKind::Return(stmt) => self.return_statement(stmt),
-            lume_hir::StatementKind::If(stmt) => self.if_statement(stmt),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_statement(stmt),
             lume_hir::StatementKind::IteratorLoop(stmt) => self.iterator_statement(stmt),
             lume_hir::StatementKind::Expression(expr) => Ok(lume_tir::Statement::Expression(self.expression(expr)?)),
@@ -64,26 +63,6 @@ impl LowerFunction<'_> {
         };
 
         Ok(lume_tir::Statement::Return(lume_tir::Return { id: stmt.id, value }))
-    }
-
-    fn if_statement(&mut self, stmt: &lume_hir::If) -> Result<lume_tir::Statement> {
-        let cases = stmt
-            .cases
-            .iter()
-            .map(|case| {
-                let condition = if let Some(val) = case.condition.as_ref() {
-                    Some(self.expression(val)?)
-                } else {
-                    None
-                };
-
-                let block = self.lower_block(&case.block)?;
-
-                Ok(lume_tir::Conditional { condition, block })
-            })
-            .collect::<Result<Vec<_>>>()?;
-
-        Ok(lume_tir::Statement::If(lume_tir::If { id: stmt.id, cases }))
     }
 
     fn infinite_statement(&mut self, stmt: &lume_hir::InfiniteLoop) -> Result<lume_tir::Statement> {
