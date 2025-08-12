@@ -330,6 +330,21 @@ fn test_conditional_snapshots() {
 }
 
 #[test]
+fn test_scope_snapshots() {
+    assert_expr_snap_eq!("{ };", "free");
+    assert_expr_snap_eq!("let _ = { };", "empty");
+    assert_expr_snap_eq!("let _ = { 1; };", "stmt_single");
+    assert_expr_snap_eq!("let _ = { 1; 5; };", "stmt_multi");
+}
+
+#[test]
+fn test_final_expr_snapshots() {
+    assert_expr_snap_eq!("let _ = { a; };", "void");
+    assert_expr_snap_eq!("let _ = { a };", "varref");
+    assert_expr_snap_eq!("let _ = { 4 + 7 };", "arithmetic");
+}
+
+#[test]
 fn test_loop_snapshots() {
     assert_expr_snap_eq!("loop { }", "inf_loop_empty");
     assert_expr_snap_eq!("loop { let a = 0; }", "inf_loop_statement");

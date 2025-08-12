@@ -1,0 +1,16 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"{ };\")"
+---
+[
+    Expression(
+        Scope(
+            Scope {
+                body: [],
+                location: Location(
+                    0..3,
+                ),
+            },
+        ),
+    ),
+]
