@@ -276,6 +276,13 @@ impl TyCheckCtx {
                 self.logical_expression(expr)
             }
             lume_hir::ExpressionKind::Member(expr) => self.expression(&expr.callee),
+            lume_hir::ExpressionKind::Scope(expr) => {
+                for stmt in &expr.body {
+                    self.statement(stmt)?;
+                }
+
+                Ok(())
+            }
             lume_hir::ExpressionKind::Switch(expr) => {
                 for case in &expr.cases {
                     self.expression(&case.branch)?;

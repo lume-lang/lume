@@ -37,6 +37,7 @@ impl LowerModule<'_> {
             ast::Expression::Logical(e) => self.expr_logical(*e)?,
             ast::Expression::Member(e) => self.expr_member(*e)?,
             ast::Expression::Range(e) => self.expr_range(*e)?,
+            ast::Expression::Scope(e) => self.expr_scope(*e)?,
             ast::Expression::Switch(e) => self.expr_switch(*e)?,
             ast::Expression::Variable(e) => self.expr_variable(*e)?,
             ast::Expression::Variant(e) => self.expr_variant(*e)?,
@@ -319,6 +320,23 @@ impl LowerModule<'_> {
                 arguments: vec![lower, upper],
                 location,
             })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_scope(&mut self, expr: ast::Scope) -> Result<hir::Expression> {
+        self.locals.push_frame();
+
+        let id = self.next_expr_id();
+        let body = self.statements(expr.body);
+        let location = self.location(expr.location);
+
+        self.locals.pop_frame();
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::Scope(Box::new(hir::Scope { id, body, location })),
         })
     }
 

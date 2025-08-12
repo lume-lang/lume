@@ -14,6 +14,7 @@ impl FunctionTransformer<'_> {
             lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
             lume_tir::ExpressionKind::Member(expr) => self.member(expr),
+            lume_tir::ExpressionKind::Scope(expr) => self.scope(expr),
             lume_tir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_tir::ExpressionKind::Variant(var) => self.variant(var),
         }
@@ -245,6 +246,21 @@ impl FunctionTransformer<'_> {
             offset,
             index,
         }
+    }
+
+    fn scope(&mut self, expr: &lume_tir::Scope) -> lume_mir::Operand {
+        let empty_reg = self.func.add_register(lume_mir::Type::void());
+        let mut val = lume_mir::Operand::Reference { id: empty_reg };
+
+        for stmt in &expr.body {
+            val = if let Some(op) = self.statement(stmt) {
+                op
+            } else {
+                self.null_operand()
+            };
+        }
+
+        val
     }
 
     fn variable_reference(&mut self, expr: &lume_tir::VariableReference) -> lume_mir::Operand {

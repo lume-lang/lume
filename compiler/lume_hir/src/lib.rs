@@ -1244,6 +1244,7 @@ pub enum ExpressionKind {
     /// }
     /// ```
     Field(Box<PatternField>),
+    Scope(Box<Scope>),
     Switch(Box<Switch>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
@@ -1559,6 +1560,13 @@ pub struct PatternField {
     pub id: ExpressionId,
     pub pattern: DefId,
     pub field: usize,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Scope {
+    pub id: ExpressionId,
+    pub body: Vec<Statement>,
     pub location: Location,
 }
 

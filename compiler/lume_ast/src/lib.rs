@@ -451,7 +451,7 @@ impl std::fmt::Display for Path {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Block {
     pub statements: Vec<Statement>,
     pub location: Location,
@@ -766,7 +766,7 @@ pub struct TraitMethodImplementation {
 
 node_location!(TraitMethodImplementation);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
     Break(Box<Break>),
@@ -796,7 +796,7 @@ impl Node for Statement {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub variable_type: Option<Type>,
@@ -806,21 +806,21 @@ pub struct VariableDeclaration {
 
 node_location!(VariableDeclaration);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Break {
     pub location: Location,
 }
 
 node_location!(Break);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Continue {
     pub location: Location,
 }
 
 node_location!(Continue);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Return {
     pub value: Option<Expression>,
     pub location: Location,
@@ -828,7 +828,7 @@ pub struct Return {
 
 node_location!(Return);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IfCondition {
     pub cases: Vec<Condition>,
     pub location: Location,
@@ -836,7 +836,7 @@ pub struct IfCondition {
 
 node_location!(IfCondition);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Condition {
     pub condition: Option<Expression>,
     pub block: Block,
@@ -845,7 +845,7 @@ pub struct Condition {
 
 node_location!(Condition);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct InfiniteLoop {
     pub block: Block,
     pub location: Location,
@@ -853,7 +853,7 @@ pub struct InfiniteLoop {
 
 node_location!(InfiniteLoop);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IteratorLoop {
     pub pattern: Identifier,
     pub collection: Expression,
@@ -863,7 +863,7 @@ pub struct IteratorLoop {
 
 node_location!(IteratorLoop);
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct PredicateLoop {
     pub condition: Expression,
     pub block: Block,
@@ -885,6 +885,7 @@ pub enum Expression {
     Logical(Box<Logical>),
     Member(Box<Member>),
     Range(Box<Range>),
+    Scope(Box<Scope>),
     Switch(Box<Switch>),
     Variable(Box<Variable>),
     Variant(Box<Variant>),
@@ -905,6 +906,7 @@ impl Node for Expression {
             Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
             Self::Range(e) => &e.location,
+            Self::Scope(e) => &e.location,
             Self::Switch(e) => &e.location,
             Self::Variable(e) => e.location(),
             Self::Variant(e) => e.location(),
@@ -1125,6 +1127,14 @@ pub struct Range {
 }
 
 node_location!(Range);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Scope {
+    pub body: Vec<Statement>,
+    pub location: Location,
+}
+
+node_location!(Scope);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Switch {

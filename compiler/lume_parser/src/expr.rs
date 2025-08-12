@@ -51,6 +51,7 @@ impl Parser {
         match kind {
             TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
             TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
+            TokenKind::LeftCurly => Ok(self.parse_scope_expression()?),
             TokenKind::Switch => Ok(self.parse_switch_expression()?),
             TokenKind::SelfRef => Ok(self.parse_self_reference()?),
             TokenKind::Identifier => Ok(self.parse_named_expression()?),
@@ -272,6 +273,14 @@ impl Parser {
         })?;
 
         Ok(Expression::Array(Box::new(Array { values, location })))
+    }
+
+    /// Parses a scope expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_scope_expression(&mut self) -> Result<Expression> {
+        let (body, location) = self.consume_with_loc(|p| p.consume_curly_seq(Parser::parse_statement))?;
+
+        Ok(Expression::Scope(Box::new(Scope { body, location })))
     }
 
     /// Parses a switch expression on the current cursor position.
