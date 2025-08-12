@@ -1,0 +1,82 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"let _ = { 4 + 7 };\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Scope(
+                Scope {
+                    body: [
+                        Final(
+                            Final {
+                                value: IntrinsicCall(
+                                    IntrinsicCall {
+                                        callee: Literal(
+                                            Int(
+                                                IntLiteral {
+                                                    value: 4,
+                                                    location: Location(
+                                                        10..11,
+                                                    ),
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        ),
+                                        name: Path {
+                                            root: [],
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: Location(
+                                                        12..13,
+                                                    ),
+                                                },
+                                                type_arguments: [],
+                                                location: Location(
+                                                    12..13,
+                                                ),
+                                            },
+                                            location: Location(
+                                                12..13,
+                                            ),
+                                        },
+                                        arguments: [
+                                            Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 7,
+                                                        location: Location(
+                                                            14..15,
+                                                        ),
+                                                        kind: I32,
+                                                    },
+                                                ),
+                                            ),
+                                        ],
+                                        location: Location(
+                                            10..15,
+                                        ),
+                                    },
+                                ),
+                            },
+                        ),
+                    ],
+                    location: Location(
+                        8..17,
+                    ),
+                },
+            ),
+            location: Location(
+                0..18,
+            ),
+        },
+    ),
+]

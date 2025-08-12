@@ -1,0 +1,55 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"let _ = { 1; 5; };\")"
+---
+[
+    VariableDeclaration(
+        VariableDeclaration {
+            name: Identifier {
+                name: "_",
+                location: Location(
+                    4..5,
+                ),
+            },
+            variable_type: None,
+            value: Scope(
+                Scope {
+                    body: [
+                        Expression(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 1,
+                                        location: Location(
+                                            10..11,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ),
+                        Expression(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 5,
+                                        location: Location(
+                                            13..14,
+                                        ),
+                                        kind: I32,
+                                    },
+                                ),
+                            ),
+                        ),
+                    ],
+                    location: Location(
+                        8..17,
+                    ),
+                },
+            ),
+            location: Location(
+                0..18,
+            ),
+        },
+    ),
+]
