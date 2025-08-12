@@ -41,17 +41,6 @@ pub(crate) trait Visitor {
 
                 Ok(())
             }
-            Statement::If(stmt) => {
-                for case in &mut stmt.cases {
-                    if let Some(cond) = &mut case.condition {
-                        self.visit_expression(cond)?;
-                    }
-
-                    self.visit_block(&mut case.block)?;
-                }
-
-                Ok(())
-            }
             Statement::InfiniteLoop(stmt) => self.visit_block(&mut stmt.block),
             Statement::IteratorLoop(stmt) => {
                 self.visit_expression(&mut stmt.collection)?;
@@ -93,6 +82,17 @@ pub(crate) trait Visitor {
             ExpressionKind::Call(expr) => {
                 for arg in &mut expr.arguments {
                     self.visit_expression(arg)?;
+                }
+
+                Ok(())
+            }
+            ExpressionKind::If(expr) => {
+                for case in &mut expr.cases {
+                    if let Some(cond) = &mut case.condition {
+                        self.visit_expression(cond)?;
+                    }
+
+                    self.visit_block(&mut case.block)?;
                 }
 
                 Ok(())

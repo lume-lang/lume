@@ -242,7 +242,6 @@ pub enum Statement {
     Continue(Continue),
     Final(Final),
     Return(Return),
-    If(If),
     InfiniteLoop(InfiniteLoop),
     IteratorLoop(IteratorLoop),
     Expression(Expression),
@@ -253,11 +252,11 @@ impl Statement {
     /// the statement branch away from the current control flow.
     pub fn is_returning(&self) -> bool {
         match self {
-            Statement::If(stmt) => stmt.is_returning(),
             Statement::InfiniteLoop(stmt) => stmt.is_returning(),
             Statement::IteratorLoop(stmt) => stmt.is_returning(),
-            Statement::Final(_) | Statement::Return(_) | Statement::Continue(_) => true,
-            Statement::Variable(_) | Statement::Break(_) | Statement::Expression(_) => false,
+            Statement::Return(_) | Statement::Continue(_) => true,
+            Statement::Final(_) | Statement::Variable(_) | Statement::Break(_) => false,
+            Statement::Expression(expr) => expr.is_returning(),
         }
     }
 }
@@ -295,31 +294,6 @@ pub struct Return {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
-pub struct If {
-    pub id: StatementId,
-    pub cases: Vec<Conditional>,
-}
-
-impl If {
-    /// Determines whether all branches from the statement return from the
-    /// control flow.
-    pub fn is_returning(&self) -> bool {
-        self.cases.iter().all(|branch| branch.block.is_returning())
-    }
-
-    /// Gets the `else` branch, if any is defined
-    pub fn else_branch(&self) -> Option<&Conditional> {
-        self.cases.iter().find(|case| case.condition.is_none())
-    }
-}
-
-#[derive(Hash, Debug, Clone, PartialEq)]
-pub struct Conditional {
-    pub condition: Option<Expression>,
-    pub block: Block,
-}
-
-#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub id: StatementId,
     pub block: Block,
@@ -352,6 +326,17 @@ pub struct Expression {
     pub ty: TypeRef,
 }
 
+impl Expression {
+    /// Determines whether the given expression or all branches within
+    /// the expression branch away from the current control flow.
+    pub fn is_returning(&self) -> bool {
+        match &self.kind {
+            ExpressionKind::If(stmt) => stmt.is_returning(),
+            _ => false,
+        }
+    }
+}
+
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Box<Assignment>),
@@ -359,6 +344,7 @@ pub enum ExpressionKind {
     Cast(Box<Cast>),
     Construct(Box<Construct>),
     Call(Box<Call>),
+    If(If),
     IntrinsicCall(Box<IntrinsicCall>),
     Literal(Literal),
     Logical(Box<Logical>),
@@ -416,6 +402,32 @@ pub struct Call {
     pub function: FunctionId,
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct If {
+    pub id: ExpressionId,
+    pub cases: Vec<Conditional>,
+    pub return_type: Option<TypeRef>,
+}
+
+impl If {
+    /// Determines whether all branches from the statement return from the
+    /// control flow.
+    pub fn is_returning(&self) -> bool {
+        self.cases.iter().all(|branch| branch.block.is_returning())
+    }
+
+    /// Gets the `else` branch, if any is defined
+    pub fn else_branch(&self) -> Option<&Conditional> {
+        self.cases.iter().find(|case| case.condition.is_none())
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Conditional {
+    pub condition: Option<Expression>,
+    pub block: Block,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

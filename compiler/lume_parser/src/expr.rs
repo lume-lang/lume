@@ -49,15 +49,16 @@ impl Parser {
         tracing::trace!("expression kind: {kind}");
 
         match kind {
-            TokenKind::LeftParen => Ok(self.parse_nested_expression()?),
-            TokenKind::LeftBracket => Ok(self.parse_array_expression()?),
-            TokenKind::LeftCurly => Ok(self.parse_scope_expression()?),
-            TokenKind::Switch => Ok(self.parse_switch_expression()?),
-            TokenKind::SelfRef => Ok(self.parse_self_reference()?),
-            TokenKind::Identifier => Ok(self.parse_named_expression()?),
+            TokenKind::LeftParen => self.parse_nested_expression(),
+            TokenKind::LeftBracket => self.parse_array_expression(),
+            TokenKind::LeftCurly => self.parse_scope_expression(),
+            TokenKind::If => self.parse_if_conditional(),
+            TokenKind::Switch => self.parse_switch_expression(),
+            TokenKind::SelfRef => self.parse_self_reference(),
+            TokenKind::Identifier => self.parse_named_expression(),
 
-            k if k.is_literal() => Ok(self.parse_literal()?),
-            k if k.is_unary() => Ok(self.parse_unary()?),
+            k if k.is_literal() => self.parse_literal(),
+            k if k.is_unary() => self.parse_unary(),
 
             _ => Err(err!(self, InvalidExpression, actual, kind)),
         }
@@ -448,6 +449,94 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_call_arguments(&mut self) -> Result<Vec<Expression>> {
         self.consume_paren_seq(Parser::parse_expression)
+    }
+
+    /// Parses an "if" conditional statement at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_if_conditional(&mut self) -> Result<Expression> {
+        let start = self.consume(TokenKind::If)?.start();
+        let mut cases = Vec::new();
+
+        // Append the primary case
+        self.parse_conditional_case(&mut cases)?;
+
+        // Append the `else if` case
+        self.parse_else_if_conditional_cases(&mut cases)?;
+
+        // Append the `else` case
+        self.parse_else_conditional_case(&mut cases)?;
+
+        let end = cases.last().unwrap().location.end();
+
+        let conditional = IfCondition {
+            cases,
+            location: (start..end).into(),
+        };
+
+        Ok(Expression::If(Box::new(conditional)))
+    }
+
+    /// Parses a case within a conditional expression at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        let condition = self.parse_expression()?;
+        let block = self.parse_block()?;
+
+        let start = condition.location().start();
+        let end = block.location().end();
+
+        let case = Condition {
+            condition: Some(condition),
+            block,
+            location: (start..end).into(),
+        };
+
+        cases.push(case);
+
+        Ok(())
+    }
+
+    /// Parses zero-or-more `else-if` cases within a conditional expression at the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        loop {
+            if !self.peek(TokenKind::Else) || !self.peek_next(TokenKind::If) {
+                break;
+            }
+
+            self.consume(TokenKind::Else)?;
+            self.consume(TokenKind::If)?;
+
+            self.parse_conditional_case(cases)?;
+        }
+
+        Ok(())
+    }
+
+    /// Parses zero-or-one `else` cases within a conditional expression at the current cursor position.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if the parser hits an unexpected token.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
+        let start = match self.consume_if(TokenKind::Else) {
+            Some(t) => t.index.start,
+            None => return Ok(()),
+        };
+
+        let block = self.parse_block()?;
+        let end = block.location.end();
+
+        let case = Condition {
+            condition: None,
+            block,
+            location: (start..end).into(),
+        };
+
+        cases.push(case);
+
+        Ok(())
     }
 
     /// Parses a member expression on the current cursor position, which is preceded by some identifier.

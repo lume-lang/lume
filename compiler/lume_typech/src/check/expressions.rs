@@ -123,28 +123,6 @@ impl TyCheckCtx {
 
                 self.return_statement(ret)
             }
-            lume_hir::StatementKind::If(cond) => {
-                for case in &cond.cases {
-                    if let Some(expr) = &case.condition {
-                        let ty = self.type_of_expr(expr)?;
-
-                        if !self.check_type_compatibility(&ty, &TypeRef::bool())? {
-                            return Err(super::errors::MismatchedTypesBoolean {
-                                source: expr.location,
-                                found: self.new_named_type(&ty, false)?,
-                                expected: self.new_named_type(&TypeRef::bool(), false)?,
-                            }
-                            .into());
-                        }
-
-                        self.expression(expr)?;
-                    }
-
-                    self.define_block_scope(&case.block)?;
-                }
-
-                Ok(())
-            }
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.define_block_scope(&stmt.block),
             lume_hir::StatementKind::IteratorLoop(stmt) => {
                 self.expression(&stmt.collection)?;
@@ -273,6 +251,28 @@ impl TyCheckCtx {
                 }
 
                 self.call_expression(lume_hir::CallExpression::Intrinsic(call))
+            }
+            lume_hir::ExpressionKind::If(cond) => {
+                for case in &cond.cases {
+                    if let Some(expr) = &case.condition {
+                        let ty = self.type_of_expr(expr)?;
+
+                        if !self.check_type_compatibility(&ty, &TypeRef::bool())? {
+                            return Err(super::errors::MismatchedTypesBoolean {
+                                source: expr.location,
+                                found: self.new_named_type(&ty, false)?,
+                                expected: self.new_named_type(&TypeRef::bool(), false)?,
+                            }
+                            .into());
+                        }
+
+                        self.expression(expr)?;
+                    }
+
+                    self.define_block_scope(&case.block)?;
+                }
+
+                Ok(())
             }
             lume_hir::ExpressionKind::Logical(expr) => {
                 self.expression(&expr.lhs)?;

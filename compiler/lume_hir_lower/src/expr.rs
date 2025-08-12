@@ -32,6 +32,7 @@ impl LowerModule<'_> {
             ast::Expression::Call(e) => self.expr_call(*e)?,
             ast::Expression::Cast(e) => self.expr_cast(*e)?,
             ast::Expression::Construct(e) => self.expr_construct(*e)?,
+            ast::Expression::If(e) => self.expr_if(*e)?,
             ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
             ast::Expression::Literal(e) => self.expr_literal(*e),
             ast::Expression::Logical(e) => self.expr_logical(*e)?,
@@ -208,6 +209,43 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         Ok(hir::ConstructorField { name, value, location })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_if(&mut self, expr: ast::IfCondition) -> Result<hir::Expression> {
+        let id = self.next_expr_id();
+        let location = self.location(expr.location);
+
+        let cases = expr
+            .cases
+            .into_iter()
+            .map(|c| self.expr_condition(c))
+            .collect::<Result<Vec<_>>>()?;
+
+        Ok(hir::Expression {
+            id,
+            location,
+            kind: hir::ExpressionKind::If(Box::new(hir::If { id, cases, location })),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn expr_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
+        let location = self.location(expr.location);
+
+        let condition = if let Some(cond) = expr.condition {
+            Some(self.expression(cond)?)
+        } else {
+            None
+        };
+
+        let block = self.block(expr.block);
+
+        Ok(hir::Condition {
+            condition,
+            block,
+            location,
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

@@ -1004,7 +1004,6 @@ impl Statement {
     /// the statement branch away from the current control flow.
     pub fn is_returning(&self) -> bool {
         match &self.kind {
-            StatementKind::If(stmt) => stmt.is_returning(),
             StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
             StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
             StatementKind::Final(_) | StatementKind::Return(_) | StatementKind::Continue(_) => true,
@@ -1028,7 +1027,6 @@ pub enum StatementKind {
     Continue(Box<Continue>),
     Final(Box<Final>),
     Return(Box<Return>),
-    If(Box<If>),
     InfiniteLoop(Box<InfiniteLoop>),
     IteratorLoop(Box<IteratorLoop>),
     Expression(Box<Expression>),
@@ -1066,33 +1064,6 @@ pub struct Final {
 pub struct Return {
     pub id: StatementId,
     pub value: Option<Expression>,
-    pub location: Location,
-}
-
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct If {
-    pub id: StatementId,
-    pub cases: Vec<Condition>,
-    pub location: Location,
-}
-
-impl If {
-    /// Determines whether all branches from the statement return from the
-    /// control flow.
-    pub fn is_returning(&self) -> bool {
-        self.cases.iter().all(|case| case.block.is_returning())
-    }
-
-    /// Gets the `else` branch, if any is defined
-    pub fn else_branch(&self) -> Option<&Condition> {
-        self.cases.iter().find(|case| case.condition.is_none())
-    }
-}
-
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct Condition {
-    pub condition: Option<Expression>,
-    pub block: Block,
     pub location: Location,
 }
 
@@ -1239,6 +1210,7 @@ pub enum ExpressionKind {
     /// let a = 1 + 2;
     /// ```
     IntrinsicCall(Box<IntrinsicCall>),
+    If(Box<If>),
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -1441,6 +1413,33 @@ impl IntrinsicCall {
     pub fn type_arguments(&self) -> &[Type] {
         self.name.type_arguments()
     }
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct If {
+    pub id: ExpressionId,
+    pub cases: Vec<Condition>,
+    pub location: Location,
+}
+
+impl If {
+    /// Determines whether all branches from the statement return from the
+    /// control flow.
+    pub fn is_returning(&self) -> bool {
+        self.cases.iter().all(|case| case.block.is_returning())
+    }
+
+    /// Gets the `else` branch, if any is defined
+    pub fn else_branch(&self) -> Option<&Condition> {
+        self.cases.iter().find(|case| case.condition.is_none())
+    }
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Condition {
+    pub condition: Option<Expression>,
+    pub block: Block,
+    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
