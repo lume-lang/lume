@@ -82,6 +82,14 @@ impl DefineBlockParameters {
             }
         }
 
+        // ...as well as any registers which aren't a one-to-one mapping between
+        // predecessor block and successor. This mostly involves conditionals where
+        // multiple calls are made to a merge block, which don't use the same register as
+        // their argument.
+        for (dst, _) in block.phi_registers() {
+            regs.shift_remove(&dst);
+        }
+
         self.params.insert(block.id, regs);
     }
 }
