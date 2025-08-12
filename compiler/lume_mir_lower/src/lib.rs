@@ -149,11 +149,7 @@ impl<'mir> FunctionTransformer<'mir> {
 
     /// Defines a new register with a value of `null` and return an reference to it.
     fn null_operand(&mut self) -> lume_mir::Operand {
-        let reg = self.func.add_register(lume_mir::Type::pointer(lume_mir::Type::void()));
-
-        self.func
-            .current_block_mut()
-            .assign(reg, lume_mir::Operand::Boolean { value: false });
+        let reg = self.declare_value(lume_mir::Operand::Boolean { value: false });
 
         lume_mir::Operand::Reference { id: reg }
     }

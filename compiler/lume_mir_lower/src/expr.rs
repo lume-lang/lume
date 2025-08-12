@@ -10,6 +10,7 @@ impl FunctionTransformer<'_> {
             lume_tir::ExpressionKind::Cast(expr) => self.cast(expr),
             lume_tir::ExpressionKind::Construct(expr) => self.construct(expr),
             lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
+            lume_tir::ExpressionKind::If(cond) => self.if_condition(cond),
             lume_tir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
@@ -138,6 +139,190 @@ impl FunctionTransformer<'_> {
         let reg = self.declare(decl);
 
         lume_mir::Operand::Reference { id: reg }
+    }
+
+    fn if_condition(&mut self, expr: &lume_tir::If) -> lume_mir::Operand {
+        let merge_block = if expr.is_returning() {
+            None
+        } else {
+            Some(self.func.new_block())
+        };
+
+        let return_reg = if let Some(merge_block) = merge_block
+            && let Some(return_type) = expr.return_type.as_ref()
+        {
+            let expr_ty = self.lower_type(return_type);
+            let param_reg = self.func.add_block_parameter(merge_block, expr_ty);
+
+            Some(param_reg)
+        } else {
+            None
+        };
+
+        for case in &expr.cases {
+            // Ignore the `else` condition, if present.
+            let Some(condition) = case.condition.as_ref() else {
+                continue;
+            };
+
+            let cond_then = self.func.new_block();
+            let cond_else = self.func.new_block();
+
+            self.add_edge(self.func.current_block().id, cond_then);
+            self.add_edge(self.func.current_block().id, cond_else);
+
+            self.build_conditional_graph(condition, cond_then, cond_else);
+
+            self.func.set_current_block(cond_then);
+            let value = self.block(&case.block);
+
+            if let Some(merge_block) = merge_block {
+                let args = if let Some(cond_result) = value {
+                    let loaded_result = self.load_operand(&cond_result);
+
+                    if let Some(return_reg) = return_reg {
+                        self.func
+                            .current_block_mut()
+                            .push_phi_register(loaded_result, return_reg);
+                    }
+
+                    &[loaded_result]
+                } else {
+                    &[][..]
+                };
+
+                self.func.current_block_mut().branch_with(merge_block, args);
+
+                self.add_edge(cond_then, merge_block);
+                self.add_edge(cond_else, merge_block);
+            }
+
+            self.func.set_current_block(cond_else);
+        }
+
+        if let Some(else_block) = &expr.else_branch() {
+            let value = self.block(&else_block.block);
+
+            if let Some(merge_block) = merge_block {
+                let args = if let Some(cond_result) = value {
+                    let loaded_result = self.load_operand(&cond_result);
+
+                    if let Some(return_reg) = return_reg {
+                        self.func
+                            .current_block_mut()
+                            .push_phi_register(loaded_result, return_reg);
+                    }
+
+                    &[loaded_result]
+                } else {
+                    &[][..]
+                };
+
+                self.func.current_block_mut().branch_with(merge_block, args);
+            }
+        }
+
+        if let Some(merge_block) = merge_block {
+            self.func.set_current_block(merge_block);
+        }
+
+        if let Some(return_reg) = return_reg {
+            lume_mir::Operand::Reference { id: return_reg }
+        } else {
+            self.null_operand()
+        }
+    }
+
+    fn build_conditional_graph(
+        &mut self,
+        expr: &lume_tir::Expression,
+        then_block: lume_mir::BasicBlockId,
+        else_block: lume_mir::BasicBlockId,
+    ) {
+        if let lume_tir::ExpressionKind::Logical(comp_expr) = &expr.kind {
+            match comp_expr.op {
+                // Build graph for logical AND expressions
+                //
+                // For example, given an expression such as `x < 10 && x > 5`, the graph
+                // would be visualized as:
+                //
+                //      BB0
+                //     x < 10?
+                //    /      \
+                //  false    BB1
+                //          x > 5?
+                //         /     \
+                //       false   true
+                //
+                // where `BB0` is the entry block and `BB1` is an intermediary block.
+                lume_tir::LogicalOperator::And => {
+                    let inter_block = self.func.new_block();
+
+                    let lhs_val = self.expression(&comp_expr.lhs);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
+
+                    self.add_edge(self.func.current_block().id, inter_block);
+                    self.add_edge(inter_block, else_block);
+
+                    self.func
+                        .current_block_mut()
+                        .conditional_branch(lhs_expr, inter_block, else_block);
+
+                    self.func.set_current_block(inter_block);
+
+                    let rhs_val = self.expression(&comp_expr.rhs);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
+
+                    self.func
+                        .current_block_mut()
+                        .conditional_branch(rhs_expr, then_block, else_block);
+                }
+
+                // Build graph for logical OR expressions
+                //
+                // For example, given an expression such as `x < 10 || y < 10`, the graph
+                // would be visualized as:
+                //
+                //      BB0
+                //     x < 10?
+                //    /      \
+                //  true     BB1
+                //          y < 10?
+                //         /      \
+                //       true     false
+                //
+                // where `BB0` is the entry block and `BB1` is an intermediary block.
+                lume_tir::LogicalOperator::Or => {
+                    let inter_block = self.func.new_block();
+
+                    let lhs_val = self.expression(&comp_expr.lhs);
+                    let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
+
+                    self.add_edge(self.func.current_block().id, inter_block);
+                    self.add_edge(inter_block, then_block);
+
+                    self.func
+                        .current_block_mut()
+                        .conditional_branch(lhs_expr, then_block, inter_block);
+
+                    self.func.set_current_block(inter_block);
+
+                    let rhs_val = self.expression(&comp_expr.rhs);
+                    let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
+
+                    self.func
+                        .current_block_mut()
+                        .conditional_branch(rhs_expr, then_block, else_block);
+                }
+            }
+        } else {
+            let cond_val = self.expression(expr);
+            let cond_expr = self.func.declare_value(lume_mir::Type::boolean(), cond_val);
+
+            self.func
+                .current_block_mut()
+                .conditional_branch(cond_expr, then_block, else_block);
+        }
     }
 
     fn intrinsic_of(&self, expr: &lume_tir::IntrinsicKind) -> lume_mir::Intrinsic {
