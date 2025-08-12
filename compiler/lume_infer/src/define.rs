@@ -934,6 +934,11 @@ impl TyInferCtx {
         match &stmt.kind {
             lume_hir::StatementKind::Variable(s) => self.define_expr_scope(&s.value, stmt_id),
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
+            lume_hir::StatementKind::Final(s) => {
+                self.define_expr_scope(&s.value, stmt_id)?;
+
+                Ok(())
+            }
             lume_hir::StatementKind::Return(s) => {
                 if let Some(value) = &s.value {
                     self.define_expr_scope(value, stmt_id)

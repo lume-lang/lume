@@ -9,6 +9,7 @@ impl LowerFunction<'_> {
             lume_hir::StatementKind::Variable(stmt) => self.variable_statement(stmt),
             lume_hir::StatementKind::Break(stmt) => Ok(self.break_statement(stmt)),
             lume_hir::StatementKind::Continue(stmt) => Ok(self.continue_statement(stmt)),
+            lume_hir::StatementKind::Final(stmt) => self.final_statement(stmt),
             lume_hir::StatementKind::Return(stmt) => self.return_statement(stmt),
             lume_hir::StatementKind::If(stmt) => self.if_statement(stmt),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_statement(stmt),
@@ -47,6 +48,12 @@ impl LowerFunction<'_> {
             id: stmt.id,
             target: target.id,
         })
+    }
+
+    fn final_statement(&mut self, stmt: &lume_hir::Final) -> Result<lume_tir::Statement> {
+        let value = self.expression(&stmt.value)?;
+
+        Ok(lume_tir::Statement::Final(lume_tir::Final { id: stmt.id, value }))
     }
 
     fn return_statement(&mut self, stmt: &lume_hir::Return) -> Result<lume_tir::Statement> {

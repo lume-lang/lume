@@ -771,6 +771,7 @@ pub enum Statement {
     VariableDeclaration(Box<VariableDeclaration>),
     Break(Box<Break>),
     Continue(Box<Continue>),
+    Final(Box<Final>),
     Return(Box<Return>),
     If(Box<IfCondition>),
     InfiniteLoop(Box<InfiniteLoop>),
@@ -786,6 +787,7 @@ impl Node for Statement {
             Self::VariableDeclaration(e) => &e.location,
             Self::Break(e) => &e.location,
             Self::Continue(e) => &e.location,
+            Self::Final(e) => e.location(),
             Self::Return(e) => &e.location,
             Self::If(e) => &e.location,
             Self::InfiniteLoop(e) => &e.location,
@@ -819,6 +821,17 @@ pub struct Continue {
 }
 
 node_location!(Continue);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Final {
+    pub value: Expression,
+}
+
+impl Node for Final {
+    fn location(&self) -> &Location {
+        self.value.location()
+    }
+}
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Return {

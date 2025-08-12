@@ -1007,7 +1007,7 @@ impl Statement {
             StatementKind::If(stmt) => stmt.is_returning(),
             StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
             StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
-            StatementKind::Return(_) | StatementKind::Continue(_) => true,
+            StatementKind::Final(_) | StatementKind::Return(_) | StatementKind::Continue(_) => true,
             StatementKind::Variable(_) | StatementKind::Break(_) | StatementKind::Expression(_) => false,
         }
     }
@@ -1026,6 +1026,7 @@ pub enum StatementKind {
     Variable(Box<VariableDeclaration>),
     Break(Box<Break>),
     Continue(Box<Continue>),
+    Final(Box<Final>),
     Return(Box<Return>),
     If(Box<If>),
     InfiniteLoop(Box<InfiniteLoop>),
@@ -1051,6 +1052,13 @@ pub struct Break {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub id: StatementId,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Final {
+    pub id: StatementId,
+    pub value: Expression,
     pub location: Location,
 }
 
