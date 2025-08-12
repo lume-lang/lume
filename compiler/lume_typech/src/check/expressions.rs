@@ -111,6 +111,11 @@ impl TyCheckCtx {
 
                 self.variable_declaration(var)
             }
+            lume_hir::StatementKind::Final(stmt) => {
+                self.expression(&stmt.value)?;
+
+                Ok(())
+            }
             lume_hir::StatementKind::Return(ret) => {
                 if let Some(value) = &ret.value {
                     self.expression(value)?;

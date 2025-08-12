@@ -61,6 +61,7 @@ impl LowerModule<'_> {
             ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
             ast::Statement::Break(s) => self.stmt_break(*s),
             ast::Statement::Continue(s) => self.stmt_continue(*s),
+            ast::Statement::Final(s) => self.stmt_final(*s)?,
             ast::Statement::Return(s) => self.stmt_return(*s)?,
             ast::Statement::If(e) => self.stmt_if(*e)?,
             ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
@@ -137,6 +138,19 @@ impl LowerModule<'_> {
             location,
             kind: hir::StatementKind::Continue(Box::new(hir::Continue { id, location })),
         }
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn stmt_final(&mut self, statement: ast::Final) -> Result<hir::Statement> {
+        let id = self.next_stmt_id();
+        let value = self.expression(statement.value)?;
+        let location = value.location;
+
+        Ok(hir::Statement {
+            id,
+            location,
+            kind: hir::StatementKind::Final(Box::new(hir::Final { id, value, location })),
+        })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

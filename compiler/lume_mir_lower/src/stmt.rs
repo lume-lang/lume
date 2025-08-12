@@ -12,6 +12,7 @@ impl FunctionTransformer<'_> {
             lume_tir::Statement::Variable(decl) => self.declare_variable(decl),
             lume_tir::Statement::Break(_) => self.break_loop(),
             lume_tir::Statement::Continue(_) => self.continue_loop(),
+            lume_tir::Statement::Final(fin) => Some(self.final_value(fin)),
             lume_tir::Statement::Return(ret) => self.return_value(ret),
             lume_tir::Statement::If(cond) => self.if_condition(cond),
             lume_tir::Statement::InfiniteLoop(stmt) => self.infinite_loop(stmt),
@@ -55,6 +56,10 @@ impl FunctionTransformer<'_> {
         self.add_edge(self.func.current_block().id, body);
 
         None
+    }
+
+    fn final_value(&mut self, stmt: &lume_tir::Final) -> lume_mir::Operand {
+        self.expression(&stmt.value)
     }
 
     fn return_value(&mut self, stmt: &lume_tir::Return) -> Option<lume_mir::Operand> {

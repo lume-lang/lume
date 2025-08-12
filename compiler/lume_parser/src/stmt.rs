@@ -253,6 +253,10 @@ impl Parser {
     fn parse_expression_stmt(&mut self) -> Result<Statement> {
         let expression = self.parse_expression()?;
 
+        if self.peek(TokenKind::RightCurly) {
+            return Ok(Statement::Final(Box::new(Final { value: expression })));
+        }
+
         if !matches!(expression, Expression::Switch(_)) {
             self.consume(TokenKind::Semicolon)?;
         }

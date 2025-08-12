@@ -29,6 +29,11 @@ pub(crate) trait Visitor {
     fn visit_statement_inner(&mut self, stmt: &mut Statement) -> Result<()> {
         match stmt {
             Statement::Variable(stmt) => self.visit_expression(&mut stmt.value),
+            Statement::Final(stmt) => {
+                self.visit_expression(&mut stmt.value)?;
+
+                Ok(())
+            }
             Statement::Return(stmt) => {
                 if let Some(value) = &mut stmt.value {
                     self.visit_expression(value)?;

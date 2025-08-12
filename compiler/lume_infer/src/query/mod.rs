@@ -245,9 +245,9 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
         if let Some(stmt) = scope.body.last()
-            && let lume_hir::StatementKind::Expression(expr) = &stmt.kind
+            && let lume_hir::StatementKind::Final(fin) = &stmt.kind
         {
-            self.type_of_expr(expr)
+            self.type_of_expr(&fin.value)
         } else {
             Ok(TypeRef::void())
         }

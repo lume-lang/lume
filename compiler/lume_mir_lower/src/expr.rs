@@ -249,18 +249,13 @@ impl FunctionTransformer<'_> {
     }
 
     fn scope(&mut self, expr: &lume_tir::Scope) -> lume_mir::Operand {
-        let empty_reg = self.func.add_register(lume_mir::Type::void());
-        let mut val = lume_mir::Operand::Reference { id: empty_reg };
+        let mut val: Option<lume_mir::Operand> = None;
 
         for stmt in &expr.body {
-            val = if let Some(op) = self.statement(stmt) {
-                op
-            } else {
-                self.null_operand()
-            };
+            val = self.statement(stmt);
         }
 
-        val
+        val.unwrap_or_else(|| self.null_operand())
     }
 
     fn variable_reference(&mut self, expr: &lume_tir::VariableReference) -> lume_mir::Operand {

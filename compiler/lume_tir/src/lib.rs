@@ -240,6 +240,7 @@ pub enum Statement {
     Variable(VariableDeclaration),
     Break(Break),
     Continue(Continue),
+    Final(Final),
     Return(Return),
     If(If),
     InfiniteLoop(InfiniteLoop),
@@ -255,7 +256,7 @@ impl Statement {
             Statement::If(stmt) => stmt.is_returning(),
             Statement::InfiniteLoop(stmt) => stmt.is_returning(),
             Statement::IteratorLoop(stmt) => stmt.is_returning(),
-            Statement::Return(_) | Statement::Continue(_) => true,
+            Statement::Final(_) | Statement::Return(_) | Statement::Continue(_) => true,
             Statement::Variable(_) | Statement::Break(_) | Statement::Expression(_) => false,
         }
     }
@@ -279,6 +280,12 @@ pub struct Break {
 pub struct Continue {
     pub id: StatementId,
     pub target: StatementId,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Final {
+    pub id: StatementId,
+    pub value: Expression,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
