@@ -190,6 +190,18 @@ impl Function {
         block
     }
 
+    /// Adds a new register with the given type to the block with the given ID.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the given ID is invalid or out of bounds.
+    pub fn add_block_parameter(&mut self, block: BasicBlockId, ty: Type) -> RegisterId {
+        let reg = self.add_register_in(block, ty);
+        self.block_mut(block).parameters.push(reg);
+
+        reg
+    }
+
     /// Adds the given instruction to the basic block with the given ID.
     ///
     /// # Panics
@@ -201,7 +213,12 @@ impl Function {
 
     /// Allocates a new register with the given type and returns its ID.
     pub fn add_register(&mut self, ty: Type) -> RegisterId {
-        self.registers.allocate(ty, self.current_block)
+        self.add_register_in(self.current_block, ty)
+    }
+
+    /// Allocates a new register with the given type and returns its ID.
+    pub fn add_register_in(&mut self, block: BasicBlockId, ty: Type) -> RegisterId {
+        self.registers.allocate(ty, block)
     }
 
     /// Allocates a new slot with the given type and returns its ID.
@@ -376,6 +393,10 @@ pub struct BasicBlock {
 
     /// Gets all the successor blocks, which this block branches to.
     successors: IndexSet<BasicBlockId>,
+
+    /// Defines all the input registers, which are the result of phi
+    /// node instructions.
+    phi_registers: IndexMap<RegisterId, Vec<RegisterId>>,
 }
 
 impl BasicBlock {
@@ -387,6 +408,7 @@ impl BasicBlock {
             terminator: None,
             predecessors: IndexSet::new(),
             successors: IndexSet::new(),
+            phi_registers: IndexMap::new(),
         }
     }
 
@@ -449,6 +471,20 @@ impl BasicBlock {
         self.successors.insert(block);
     }
 
+    /// Gets the phi registers of the block.
+    pub fn phi_registers(&self) -> impl Iterator<Item = (RegisterId, &[RegisterId])> {
+        self.phi_registers.iter().map(|(dst, src)| (*dst, src.as_slice()))
+    }
+
+    /// Pushes the given register onto the block as a phi destination register.
+    pub fn push_phi_register(&mut self, src: RegisterId, dst: RegisterId) {
+        if let Some(sources) = self.phi_registers.get_mut(&dst) {
+            sources.push(src);
+        } else {
+            self.phi_registers.insert(dst, vec![src]);
+        }
+    }
+
     /// Declares a new stack-allocated register with the given value.
     pub fn declare(&mut self, register: RegisterId, decl: Declaration) {
         self.instructions.push(Instruction::Let { register, decl });
@@ -488,6 +524,14 @@ impl BasicBlock {
     /// Sets the terminator of the current block to an unconditional branch.
     pub fn branch(&mut self, block: BasicBlockId) {
         self.set_terminator(Terminator::Branch(BlockBranchSite::new(block)));
+    }
+
+    /// Sets the terminator of the current block to an unconditional branch.
+    pub fn branch_with(&mut self, block: BasicBlockId, args: &[RegisterId]) {
+        self.set_terminator(Terminator::Branch(BlockBranchSite {
+            block,
+            arguments: args.to_vec(),
+        }));
     }
 
     /// Sets the terminator of the current block to a conditional branch.
