@@ -24,6 +24,7 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
             lume_hir::ExpressionKind::Field(_) | lume_hir::ExpressionKind::Switch(_) => todo!(),
+            lume_hir::ExpressionKind::Scope(expr) => self.scope_expression(expr)?,
             lume_hir::ExpressionKind::Variable(expr) => self.variable_expression(expr),
             lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr)?,
         };
@@ -298,6 +299,22 @@ impl LowerFunction<'_> {
             callee,
             field,
             name,
+        })))
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn scope_expression(&mut self, expr: &lume_hir::Scope) -> Result<lume_tir::ExpressionKind> {
+        let mut body = Vec::with_capacity(expr.body.len());
+        for stmt in &expr.body {
+            body.push(self.statement(stmt)?);
+        }
+
+        let return_type = self.lower.tcx.type_of_scope(expr)?;
+
+        Ok(lume_tir::ExpressionKind::Scope(Box::new(lume_tir::Scope {
+            id: expr.id,
+            body,
+            return_type,
         })))
     }
 

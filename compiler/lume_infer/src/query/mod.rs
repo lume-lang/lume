@@ -155,6 +155,7 @@ impl TyInferCtx {
 
                 self.type_of_variant_field(&variant_pat.name, field.field)?
             }
+            lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
                 Some(case) => self.type_of_expr(&case.branch)?,
                 None => TypeRef::void(),
@@ -236,6 +237,19 @@ impl TyInferCtx {
             Result::Ok(TypeRef::array(elemental_type))
         } else {
             Result::Ok(elemental_type)
+        }
+    }
+
+    /// Returns the return type of the given [`lume_hir::Scope`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
+        if let Some(stmt) = scope.body.last()
+            && let lume_hir::StatementKind::Expression(expr) = &stmt.kind
+        {
+            self.type_of_expr(expr)
+        } else {
+            Ok(TypeRef::void())
         }
     }
 

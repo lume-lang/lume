@@ -7,7 +7,7 @@ impl FunctionTransformer<'_> {
         }
     }
 
-    pub(super) fn statement(&mut self, stmt: &lume_tir::Statement) {
+    pub(super) fn statement(&mut self, stmt: &lume_tir::Statement) -> Option<lume_mir::Operand> {
         match stmt {
             lume_tir::Statement::Variable(decl) => self.declare_variable(decl),
             lume_tir::Statement::Break(_) => self.break_loop(),
@@ -16,13 +16,11 @@ impl FunctionTransformer<'_> {
             lume_tir::Statement::If(cond) => self.if_condition(cond),
             lume_tir::Statement::InfiniteLoop(stmt) => self.infinite_loop(stmt),
             lume_tir::Statement::IteratorLoop(_) => todo!("mir: iterator loop"),
-            lume_tir::Statement::Expression(expr) => {
-                self.expression(expr);
-            }
+            lume_tir::Statement::Expression(expr) => Some(self.expression(expr)),
         }
     }
 
-    fn declare_variable(&mut self, stmt: &lume_tir::VariableDeclaration) {
+    fn declare_variable(&mut self, stmt: &lume_tir::VariableDeclaration) -> Option<lume_mir::Operand> {
         let value = self.expression(&stmt.value);
         let is_ref_ty = self.tcx().tdb().is_reference_type(stmt.value.ty.instance_of).unwrap();
 
@@ -37,29 +35,37 @@ impl FunctionTransformer<'_> {
         };
 
         self.variables.insert(stmt.var, register);
+
+        None
     }
 
-    fn break_loop(&mut self) {
+    fn break_loop(&mut self) -> Option<lume_mir::Operand> {
         let (_, end) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(end);
         self.add_edge(self.func.current_block().id, end);
+
+        None
     }
 
-    fn continue_loop(&mut self) {
+    fn continue_loop(&mut self) -> Option<lume_mir::Operand> {
         let (body, _) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(body);
         self.add_edge(self.func.current_block().id, body);
+
+        None
     }
 
-    fn return_value(&mut self, stmt: &lume_tir::Return) {
+    fn return_value(&mut self, stmt: &lume_tir::Return) -> Option<lume_mir::Operand> {
         let value = stmt.value.clone().map(|val| self.expression(&val));
 
         self.func.current_block_mut().return_any(value);
+
+        None
     }
 
-    fn if_condition(&mut self, stmt: &lume_tir::If) {
+    fn if_condition(&mut self, stmt: &lume_tir::If) -> Option<lume_mir::Operand> {
         let merge_block = if stmt.is_returning() {
             None
         } else {
@@ -107,6 +113,8 @@ impl FunctionTransformer<'_> {
         if let Some(merge_block) = merge_block {
             self.func.set_current_block(merge_block);
         }
+
+        None
     }
 
     fn build_conditional_graph(
@@ -201,7 +209,7 @@ impl FunctionTransformer<'_> {
         }
     }
 
-    fn infinite_loop(&mut self, stmt: &lume_tir::InfiniteLoop) {
+    fn infinite_loop(&mut self, stmt: &lume_tir::InfiniteLoop) -> Option<lume_mir::Operand> {
         let body_block = self.func.new_block();
 
         let merge_block = if stmt.is_returning() {
@@ -235,5 +243,7 @@ impl FunctionTransformer<'_> {
             self.func.current_block_mut().branch(merge_block);
             self.func.set_current_block(merge_block);
         }
+
+        None
     }
 }

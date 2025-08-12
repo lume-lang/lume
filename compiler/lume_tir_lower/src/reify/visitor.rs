@@ -106,6 +106,13 @@ pub(crate) trait Visitor {
                 Ok(())
             }
             ExpressionKind::Member(expr) => self.visit_expression(&mut expr.callee),
+            ExpressionKind::Scope(expr) => {
+                for stmt in &mut expr.body {
+                    self.visit_statement(stmt)?;
+                }
+
+                Ok(())
+            }
             ExpressionKind::Literal(_) | ExpressionKind::Variable(_) | ExpressionKind::Variant(_) => Ok(()),
         }
     }

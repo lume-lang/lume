@@ -356,6 +356,7 @@ pub enum ExpressionKind {
     Literal(Literal),
     Logical(Box<Logical>),
     Member(Box<Member>),
+    Scope(Box<Scope>),
     Variable(Box<VariableReference>),
     Variant(Box<Variant>),
 }
@@ -520,6 +521,13 @@ pub struct Member {
     pub callee: Expression,
     pub field: Field,
     pub name: Interned<String>,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Scope {
+    pub id: ExpressionId,
+    pub body: Vec<Statement>,
+    pub return_type: TypeRef,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
