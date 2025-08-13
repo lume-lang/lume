@@ -1,8 +1,44 @@
 namespace std
 
+import std::mem (ptr_read, ptr_write)
+
 /// Defines a raw pointer, which can be used to access memory directly.
 ///
 /// Pointers cannot be created manually - they can only be created by the compiler itself, as a result
 /// of creating a built-in type or some other memory allocation.
-struct builtin Pointer
+struct builtin Pointer<T>
 { }
+
+impl<T> Pointer<T> {
+    /// Writes a new value to the memory location the current pointer is pointing to.
+    pub fn read(self) -> T {
+        return ptr_read<T>(self, 0_u64);
+    }
+
+    /// Writes a new value to the memory location the current pointer is pointing to.
+    pub fn write(self, value: T) {
+        ptr_write<T>(self, value, 0_u64);
+    }
+
+    /// Reads the value from the memory location the current pointer is pointing to,
+    /// offset by the given amount of items.
+    ///
+    /// This method does not read with a byte offset. The byte offset of this method
+    /// will be `ptr + (size_of<T> * offset)`.
+    pub fn read_offset(self, offset: UInt64) -> T {
+        let size = std::type_of<T>().size;
+
+        return ptr_read<T>(self, offset * size);
+    }
+
+    /// Writes a new value to the memory location the current pointer is pointing to,
+    /// offset by the given amount of items.
+    ///
+    /// This method does not write with a byte offset. The byte offset of this method
+    /// will be `ptr + (size_of<T> * offset)`.
+    pub fn write_offset(self, value: T, offset: UInt64) {
+        let size = std::type_of<T>().size;
+
+        ptr_write<T>(self, value, offset * size);
+    }
+}

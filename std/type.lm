@@ -63,3 +63,5 @@ pub struct TypeParameter {
     /// that they're declared.
     pub constraints: Array<Type>;
 }
+
+pub fn external type_of<T>() -> Type

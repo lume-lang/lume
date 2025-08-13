@@ -1,0 +1,25 @@
+namespace std::mem
+
+/// Allocates the given amount of bytes using the global allocator.
+///
+/// The returned memory block may be larger than the requested size and
+/// it may not have it's content initialized and/or zeroed.
+pub fn external alloc<T>(size: UInt64) -> Pointer<T>
+
+/// Allocates the given amount of bytes using the global allocator, aligned
+/// to the defined alignment.
+///
+/// The returned memory block may be larger than the requested size and
+/// it may not have it's content initialized and/or zeroed.
+pub fn external alloca<T>(size: UInt64, align: UInt64) -> Pointer<T>
+
+/// Reallocates an existing pointer to a new size.
+pub fn external realloc<T>(ptr: Pointer<T>, size: UInt64) -> Pointer<T>
+
+/// Reads an existing value from the memory location the current pointer is pointing to,
+/// offset by the given amount of bytes.
+pub fn external ptr_read<T>(ptr: Pointer<T>, offset: UInt64) -> T
+
+/// Writes a new value to the memory location the current pointer is pointing to,
+/// offset by the given amount of bytes.
+pub fn external ptr_write<T>(ptr: Pointer<T>, value: T, offset: UInt64)

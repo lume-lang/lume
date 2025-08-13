@@ -1,3 +1,7 @@
+pub mod mem;
+pub mod metadata;
+pub mod pointer;
+
 /// Retrieves of the type metadata of the first type parameter.
 ///
 /// Since Lume passes the metadata of type arguments after all other parameters,
