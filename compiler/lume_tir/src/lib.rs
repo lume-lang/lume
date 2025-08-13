@@ -231,6 +231,11 @@ impl Block {
     /// Determines whether all branches from the block return from the
     /// control flow.
     pub fn is_returning(&self) -> bool {
+        // .all() returns `true` if the iterator is empty, which isn't correct.
+        if self.statements.is_empty() {
+            return false;
+        }
+
         self.statements.iter().all(Statement::is_returning)
     }
 }
@@ -415,6 +420,11 @@ impl If {
     /// Determines whether all branches from the statement return from the
     /// control flow.
     pub fn is_returning(&self) -> bool {
+        // .all() returns `true` if the iterator is empty, which isn't correct.
+        if self.cases.is_empty() {
+            return false;
+        }
+
         self.cases.iter().all(|branch| branch.block.is_returning())
     }
 

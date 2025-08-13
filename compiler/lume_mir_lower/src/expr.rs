@@ -223,6 +223,8 @@ impl FunctionTransformer<'_> {
         }
 
         if let Some(merge_block) = merge_block {
+            self.func.current_block_mut().branch(merge_block);
+
             self.func.set_current_block(merge_block);
         }
 
