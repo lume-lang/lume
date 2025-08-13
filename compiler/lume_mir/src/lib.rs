@@ -396,7 +396,7 @@ pub struct BasicBlock {
 
     /// Defines all the input registers, which are the result of phi
     /// node instructions.
-    phi_registers: IndexMap<RegisterId, Vec<RegisterId>>,
+    phi_registers: IndexMap<RegisterId, RegisterId>,
 }
 
 impl BasicBlock {
@@ -472,17 +472,23 @@ impl BasicBlock {
     }
 
     /// Gets the phi registers of the block.
-    pub fn phi_registers(&self) -> impl Iterator<Item = (RegisterId, &[RegisterId])> {
-        self.phi_registers.iter().map(|(dst, src)| (*dst, src.as_slice()))
+    pub fn phi_registers(&self) -> impl Iterator<Item = (RegisterId, RegisterId)> {
+        self.phi_registers.iter().map(|(k, v)| (*k, *v))
+    }
+
+    /// Gets whether the given register is a destination register for a phi instruction.
+    pub fn is_register_phi_dest(&self, reg: RegisterId) -> bool {
+        self.phi_registers.contains_key(&reg)
     }
 
     /// Pushes the given register onto the block as a phi destination register.
     pub fn push_phi_register(&mut self, src: RegisterId, dst: RegisterId) {
-        if let Some(sources) = self.phi_registers.get_mut(&dst) {
-            sources.push(src);
-        } else {
-            self.phi_registers.insert(dst, vec![src]);
-        }
+        self.phi_registers.insert(dst, src);
+    }
+
+    /// Attempts to resolve the source of a phi node from the given destination node.
+    pub fn resolve_phi_source(&self, dst: RegisterId) -> Option<RegisterId> {
+        self.phi_registers().find(|(phi, _)| *phi == dst).map(|(_, src)| src)
     }
 
     /// Declares a new stack-allocated register with the given value.
