@@ -59,6 +59,10 @@ impl DefineBlockParameters {
 
             if let Some(successor_params) = self.params.get(&successor) {
                 for successor_param in successor_params {
+                    if block.is_register_phi_dest(*successor_param) {
+                        continue;
+                    }
+
                     regs.insert(*successor_param);
                 }
             }
@@ -82,14 +86,6 @@ impl DefineBlockParameters {
             }
         }
 
-        // ...as well as any registers which aren't a one-to-one mapping between
-        // predecessor block and successor. This mostly involves conditionals where
-        // multiple calls are made to a merge block, which don't use the same register as
-        // their argument.
-        for (dst, _) in block.phi_registers() {
-            regs.shift_remove(&dst);
-        }
-
         self.params.insert(block.id, regs);
     }
 }
@@ -105,14 +101,16 @@ impl PassBlockArguments {
         let func_immut = func.clone();
 
         for block in &mut func.blocks {
+            let block_id = block.id;
+
             if let Some(terminator) = block.terminator_mut() {
                 match terminator {
-                    Terminator::Branch(target) => Self::update_branch_terminator(target, &func_immut),
+                    Terminator::Branch(target) => Self::update_branch_terminator(block_id, target, &func_immut),
                     Terminator::ConditionalBranch {
                         then_block, else_block, ..
                     } => {
-                        Self::update_branch_terminator(then_block, &func_immut);
-                        Self::update_branch_terminator(else_block, &func_immut);
+                        Self::update_branch_terminator(block_id, then_block, &func_immut);
+                        Self::update_branch_terminator(block_id, else_block, &func_immut);
                     }
                     Terminator::Return(_) | Terminator::Unreachable => {}
                 }
@@ -120,10 +118,23 @@ impl PassBlockArguments {
         }
     }
 
-    fn update_branch_terminator(call_site: &mut BlockBranchSite, func: &Function) {
+    fn update_branch_terminator(block: BasicBlockId, call_site: &mut BlockBranchSite, func: &Function) {
+        let source_block = func.block(block);
         let target_block = func.block(call_site.block);
 
-        target_block.parameters.clone_into(&mut call_site.arguments);
+        call_site.arguments.reserve(target_block.parameters.len());
+
+        for param in &target_block.parameters {
+            let arg = if let Some(phi_source) = source_block.resolve_phi_source(*param) {
+                phi_source
+            } else {
+                *param
+            };
+
+            if !call_site.arguments.contains(&arg) {
+                call_site.arguments.push(arg);
+            }
+        }
     }
 }
 

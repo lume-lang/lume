@@ -177,18 +177,18 @@ impl FunctionTransformer<'_> {
             let value = self.block(&case.block);
 
             if let Some(merge_block) = merge_block {
-                let args = if let Some(cond_result) = value {
+                let args = if let Some(cond_result) = value
+                    && let Some(return_reg) = return_reg
+                {
                     let loaded_result = self.load_operand(&cond_result);
 
-                    if let Some(return_reg) = return_reg {
-                        self.func
-                            .current_block_mut()
-                            .push_phi_register(loaded_result, return_reg);
-                    }
+                    self.func
+                        .current_block_mut()
+                        .push_phi_register(loaded_result, return_reg);
 
-                    &[loaded_result]
+                    &[loaded_result][..]
                 } else {
-                    &[][..]
+                    &[]
                 };
 
                 self.func.current_block_mut().branch_with(merge_block, args);
@@ -204,18 +204,18 @@ impl FunctionTransformer<'_> {
             let value = self.block(&else_block.block);
 
             if let Some(merge_block) = merge_block {
-                let args = if let Some(cond_result) = value {
+                let args = if let Some(cond_result) = value
+                    && let Some(return_reg) = return_reg
+                {
                     let loaded_result = self.load_operand(&cond_result);
 
-                    if let Some(return_reg) = return_reg {
-                        self.func
-                            .current_block_mut()
-                            .push_phi_register(loaded_result, return_reg);
-                    }
+                    self.func
+                        .current_block_mut()
+                        .push_phi_register(loaded_result, return_reg);
 
-                    &[loaded_result]
+                    &[loaded_result][..]
                 } else {
-                    &[][..]
+                    &[]
                 };
 
                 self.func.current_block_mut().branch_with(merge_block, args);
