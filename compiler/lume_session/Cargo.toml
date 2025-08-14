@@ -19,7 +19,10 @@ error_snippet_derive = { workspace = true }
 glob = "^0"
 indexmap = { version = "=2.9.0" }
 petgraph = { version = "=0.8.2" }
-rust-embed = { version = "=8.7.0", features = ["interpolate-folder-path"] }
+rust-embed = { version = "=8.7.0", features = [
+    "interpolate-folder-path",
+    "include-exclude",
+] }
 semver = { version = "^1" }
 tracing = { workspace = true }
 
