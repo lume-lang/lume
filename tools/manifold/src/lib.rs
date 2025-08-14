@@ -4,9 +4,10 @@ mod ui;
 
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
-use error_snippet::{Result, SimpleDiagnostic};
+use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
 use glob::glob;
 use owo_colors::OwoColorize;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 pub(crate) enum TestResult {
     Success,
@@ -26,7 +27,7 @@ impl PartialEq for TestResult {
 
 impl Eq for TestResult {}
 
-pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String>;
+pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
 
 /// Main entrypoint for the Manifold CLI.
 pub fn manifold_entry() -> Result<()> {
@@ -76,22 +77,23 @@ fn run_test_suite(root: &PathBuf) -> Result<()> {
     let glob_pattern_str = format!("{}/**/*.lm", root.display());
     let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
 
-    let mut results = Vec::new();
+    let files: Vec<PathBuf> = glob_pattern
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(IntoDiagnostic::into_diagnostic)?;
 
-    for test_file_path in glob_pattern {
-        let test_file_path = test_file_path.unwrap();
-        if !test_file_path.is_file() {
-            continue;
-        }
+    let results = files
+        .into_par_iter()
+        .filter(|test_file_path| test_file_path.is_file())
+        .map(|test_file_path| {
+            let test_type = determine_test_type(root, &test_file_path)?;
 
-        let test_type = determine_test_type(root, &test_file_path)?;
+            let status = match test_type {
+                ManifoldTestType::Ui => ui::run_test(test_file_path)?,
+            };
 
-        let status = match test_type {
-            ManifoldTestType::Ui => ui::run_test(test_file_path)?,
-        };
-
-        results.push(status);
-    }
+            Ok(status)
+        })
+        .collect::<Result<Vec<_>>>()?;
 
     let success_count = results.iter().fold(0_usize, |cnt, item| {
         if matches!(item, TestResult::Success) {

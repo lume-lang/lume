@@ -12,6 +12,7 @@ build_stage = { path = "../build_stage" }
 error_snippet = { workspace = true }
 glob = "^0"
 owo-colors = { workspace = true }
+rayon = "=1.11.0"
 regex = "=1.11.1"
 similar = { version = "=2.7.0", features = ["inline"] }
 
