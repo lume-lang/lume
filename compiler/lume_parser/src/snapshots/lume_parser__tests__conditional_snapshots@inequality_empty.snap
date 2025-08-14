@@ -3,74 +3,76 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse_expr(\"if a != 1 { }\")"
 ---
 [
-    If(
-        IfCondition {
-            cases: [
-                Condition {
-                    condition: Some(
-                        IntrinsicCall(
-                            IntrinsicCall {
-                                callee: Variable(
-                                    Variable {
-                                        name: Identifier {
-                                            name: "a",
-                                            location: Location(
-                                                3..4,
-                                            ),
+    Expression(
+        If(
+            IfCondition {
+                cases: [
+                    Condition {
+                        condition: Some(
+                            IntrinsicCall(
+                                IntrinsicCall {
+                                    callee: Variable(
+                                        Variable {
+                                            name: Identifier {
+                                                name: "a",
+                                                location: Location(
+                                                    3..4,
+                                                ),
+                                            },
                                         },
-                                    },
-                                ),
-                                name: Path {
-                                    root: [],
-                                    name: Callable {
-                                        name: Identifier {
-                                            name: "!=",
+                                    ),
+                                    name: Path {
+                                        root: [],
+                                        name: Callable {
+                                            name: Identifier {
+                                                name: "!=",
+                                                location: Location(
+                                                    5..7,
+                                                ),
+                                            },
+                                            type_arguments: [],
                                             location: Location(
                                                 5..7,
                                             ),
                                         },
-                                        type_arguments: [],
                                         location: Location(
                                             5..7,
                                         ),
                                     },
+                                    arguments: [
+                                        Literal(
+                                            Int(
+                                                IntLiteral {
+                                                    value: 1,
+                                                    location: Location(
+                                                        8..9,
+                                                    ),
+                                                    kind: I32,
+                                                },
+                                            ),
+                                        ),
+                                    ],
                                     location: Location(
-                                        5..7,
+                                        3..9,
                                     ),
                                 },
-                                arguments: [
-                                    Literal(
-                                        Int(
-                                            IntLiteral {
-                                                value: 1,
-                                                location: Location(
-                                                    8..9,
-                                                ),
-                                                kind: I32,
-                                            },
-                                        ),
-                                    ),
-                                ],
-                                location: Location(
-                                    3..9,
-                                ),
-                            },
+                            ),
                         ),
-                    ),
-                    block: Block {
-                        statements: [],
+                        block: Block {
+                            statements: [],
+                            location: Location(
+                                10..13,
+                            ),
+                        },
                         location: Location(
-                            10..13,
+                            3..13,
                         ),
                     },
-                    location: Location(
-                        3..13,
-                    ),
-                },
-            ],
-            location: Location(
-                0..13,
-            ),
-        },
+                ],
+                location: Location(
+                    0..13,
+                ),
+            },
+        ),
     ),
 ]

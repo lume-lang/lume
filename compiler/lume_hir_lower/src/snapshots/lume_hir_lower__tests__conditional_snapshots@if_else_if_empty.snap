@@ -17,9 +17,9 @@ description: "if true { } else if false { }"
                 0,
             ),
         },
-        kind: If(
-            If {
-                id: StatementId {
+        kind: Expression(
+            Expression {
+                id: ExpressionId {
                     def: ItemId {
                         package: PackageId(
                             0,
@@ -29,89 +29,28 @@ description: "if true { } else if false { }"
                         ),
                     },
                     index: Idx(
-                        0,
+                        1,
                     ),
                 },
-                cases: [
-                    Condition {
-                        condition: Some(
-                            Expression {
-                                id: ExpressionId {
-                                    def: ItemId {
-                                        package: PackageId(
-                                            0,
-                                        ),
-                                        index: Idx(
-                                            0,
-                                        ),
-                                    },
-                                    index: Idx(
-                                        1,
-                                    ),
-                                },
-                                kind: Literal(
-                                    Literal {
-                                        id: ExpressionId {
-                                            def: ItemId {
-                                                package: PackageId(
-                                                    0,
-                                                ),
-                                                index: Idx(
-                                                    0,
-                                                ),
-                                            },
-                                            index: Idx(
-                                                1,
-                                            ),
-                                        },
-                                        kind: Boolean(
-                                            BooleanLiteral {
-                                                id: ExpressionId {
-                                                    def: ItemId {
-                                                        package: PackageId(
-                                                            0,
-                                                        ),
-                                                        index: Idx(
-                                                            0,
-                                                        ),
-                                                    },
-                                                    index: Idx(
-                                                        1,
-                                                    ),
-                                                },
-                                                value: true,
-                                            },
-                                        ),
-                                        location: <internal>:3:7,
-                                    },
+                kind: If(
+                    If {
+                        id: ExpressionId {
+                            def: ItemId {
+                                package: PackageId(
+                                    0,
                                 ),
-                                location: <internal>:3:7,
+                                index: Idx(
+                                    0,
+                                ),
                             },
-                        ),
-                        block: Block {
-                            statements: [],
-                            location: <internal>:8:11,
+                            index: Idx(
+                                1,
+                            ),
                         },
-                        location: <internal>:3:11,
-                    },
-                    Condition {
-                        condition: Some(
-                            Expression {
-                                id: ExpressionId {
-                                    def: ItemId {
-                                        package: PackageId(
-                                            0,
-                                        ),
-                                        index: Idx(
-                                            0,
-                                        ),
-                                    },
-                                    index: Idx(
-                                        2,
-                                    ),
-                                },
-                                kind: Literal(
-                                    Literal {
+                        cases: [
+                            Condition {
+                                condition: Some(
+                                    Expression {
                                         id: ExpressionId {
                                             def: ItemId {
                                                 package: PackageId(
@@ -125,8 +64,8 @@ description: "if true { } else if false { }"
                                                 2,
                                             ),
                                         },
-                                        kind: Boolean(
-                                            BooleanLiteral {
+                                        kind: Literal(
+                                            Literal {
                                                 id: ExpressionId {
                                                     def: ItemId {
                                                         package: PackageId(
@@ -140,22 +79,101 @@ description: "if true { } else if false { }"
                                                         2,
                                                     ),
                                                 },
-                                                value: false,
+                                                kind: Boolean(
+                                                    BooleanLiteral {
+                                                        id: ExpressionId {
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
+                                                            index: Idx(
+                                                                2,
+                                                            ),
+                                                        },
+                                                        value: true,
+                                                    },
+                                                ),
+                                                location: <internal>:3:7,
+                                            },
+                                        ),
+                                        location: <internal>:3:7,
+                                    },
+                                ),
+                                block: Block {
+                                    statements: [],
+                                    location: <internal>:8:11,
+                                },
+                                location: <internal>:3:11,
+                            },
+                            Condition {
+                                condition: Some(
+                                    Expression {
+                                        id: ExpressionId {
+                                            def: ItemId {
+                                                package: PackageId(
+                                                    0,
+                                                ),
+                                                index: Idx(
+                                                    0,
+                                                ),
+                                            },
+                                            index: Idx(
+                                                3,
+                                            ),
+                                        },
+                                        kind: Literal(
+                                            Literal {
+                                                id: ExpressionId {
+                                                    def: ItemId {
+                                                        package: PackageId(
+                                                            0,
+                                                        ),
+                                                        index: Idx(
+                                                            0,
+                                                        ),
+                                                    },
+                                                    index: Idx(
+                                                        3,
+                                                    ),
+                                                },
+                                                kind: Boolean(
+                                                    BooleanLiteral {
+                                                        id: ExpressionId {
+                                                            def: ItemId {
+                                                                package: PackageId(
+                                                                    0,
+                                                                ),
+                                                                index: Idx(
+                                                                    0,
+                                                                ),
+                                                            },
+                                                            index: Idx(
+                                                                3,
+                                                            ),
+                                                        },
+                                                        value: false,
+                                                    },
+                                                ),
+                                                location: <internal>:20:25,
                                             },
                                         ),
                                         location: <internal>:20:25,
                                     },
                                 ),
-                                location: <internal>:20:25,
+                                block: Block {
+                                    statements: [],
+                                    location: <internal>:26:29,
+                                },
+                                location: <internal>:20:29,
                             },
-                        ),
-                        block: Block {
-                            statements: [],
-                            location: <internal>:26:29,
-                        },
-                        location: <internal>:20:29,
+                        ],
+                        location: <internal>:0:29,
                     },
-                ],
+                ),
                 location: <internal>:0:29,
             },
         ),
