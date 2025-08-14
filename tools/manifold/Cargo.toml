@@ -1,0 +1,19 @@
+[package]
+name = "manifold"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+lume_errors = { path = "../../compiler/lume_errors" }
+lume_span = { path = "../../compiler/lume_span" }
+
+build_stage = { path = "../build_stage" }
+error_snippet = { workspace = true }
+glob = "^0"
+owo-colors = { workspace = true }
+regex = "=1.11.1"
+similar = { version = "=2.7.0", features = ["inline"] }
+
+[lints]
+workspace = true
