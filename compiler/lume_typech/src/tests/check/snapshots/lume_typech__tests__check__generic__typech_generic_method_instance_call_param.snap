@@ -1,5 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check/generic.rs
-description: "struct A {}\n\n        impl A {\n            pub fn bar<T>(self, val:  T) { }\n        }\n\n        fn bar() {\n            let a: A = A { };\n\n            a.bar<Boolean>(false);\n        }"
----
-

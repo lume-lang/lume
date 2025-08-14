@@ -1,5 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check/generic.rs
-description: "trait B {\n            fn value(self) -> Int32 {\n                return 0;\n            }\n        }\n\n        fn foo<T: B>(val: T) {\n            let _: Int32 = val.value();\n        }"
----
-

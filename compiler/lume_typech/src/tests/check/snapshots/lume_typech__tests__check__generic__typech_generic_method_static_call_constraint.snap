@@ -1,5 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check/generic.rs
-description: "trait A {}\n\n        use A in Boolean { }\n\n        impl Foo {\n            pub fn bar<T: A>(val: T) -> T {\n                return val;\n            }\n        }\n\n        fn bar() {\n            let _: Int32 = A::bar<Boolean>(false);\n        }"
----
-
