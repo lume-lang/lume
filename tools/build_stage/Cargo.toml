@@ -1,0 +1,27 @@
+[package]
+name = "build_stage"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+arc = { path = "../../compiler/arc" }
+lume_errors = { path = "../../compiler/lume_errors" }
+lume_hir = { path = "../../compiler/lume_hir" }
+lume_hir_lower = { path = "../../compiler/lume_hir_lower" }
+lume_infer = { path = "../../compiler/lume_infer" }
+lume_mir = { path = "../../compiler/lume_mir" }
+lume_mir_lower = { path = "../../compiler/lume_mir_lower" }
+lume_session = { path = "../../compiler/lume_session" }
+lume_span = { path = "../../compiler/lume_span" }
+lume_tir = { path = "../../compiler/lume_tir" }
+lume_tir_lower = { path = "../../compiler/lume_tir_lower" }
+lume_typech = { path = "../../compiler/lume_typech" }
+lume_types = { path = "../../compiler/lume_types" }
+
+[lints]
+workspace = true

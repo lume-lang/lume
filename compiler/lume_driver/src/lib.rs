@@ -303,13 +303,6 @@ impl<'a> Compiler<'a> {
         tracing::info_span!("codegen")
             .in_scope(|| lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options))
     }
-
-    /// Links all the modules within the given state object into a single executable or library.
-    #[cfg(feature = "codegen")]
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn link(&mut self) -> Result<()> {
-        Ok(())
-    }
 }
 
 #[derive(Default)]
