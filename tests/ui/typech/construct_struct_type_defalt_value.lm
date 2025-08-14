@@ -1,0 +1,9 @@
+//# test-outcome=success
+
+struct A {
+    foo: Boolean = false;
+}
+
+fn foo() {
+    let a = A { };
+}

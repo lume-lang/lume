@@ -1,0 +1,15 @@
+//# test-outcome=success
+
+struct A<T> {}
+
+impl<T> A<T> {
+    pub fn bar(self, val: T) -> T {
+        return val;
+    }
+}
+
+fn bar() {
+    let a: A<Boolean> = A<Boolean> { };
+
+    let _: Boolean = a.bar(false);
+}

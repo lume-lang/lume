@@ -1,0 +1,24 @@
+× error[LM4120]: type constraint not satisfied
+    ╭─[generic_method_static_call_unsatisfied_constraints.lm:14:14]
+ 13 │ fn bar() {
+ 14 │     Foo::bar<Boolean>(false);
+    │              ^^^^^^^ type Boolean does not implement A...
+ 15 │ }
+    ∶
+ 7  │ impl Foo {
+ 8  │     pub fn bar<T: A + B>(val: T) -> T {
+    │                   ^ ...which is required by the type parameter T
+ 9  │         return val;
+    ╰──
+× error[LM4120]: type constraint not satisfied
+    ╭─[generic_method_static_call_unsatisfied_constraints.lm:14:14]
+ 13 │ fn bar() {
+ 14 │     Foo::bar<Boolean>(false);
+    │              ^^^^^^^ type Boolean does not implement B...
+ 15 │ }
+    ∶
+ 7  │ impl Foo {
+ 8  │     pub fn bar<T: A + B>(val: T) -> T {
+    │                       ^ ...which is required by the type parameter T
+ 9  │         return val;
+    ╰──

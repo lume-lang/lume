@@ -1,0 +1,7 @@
+fn foo() -> Boolean {
+    return false;
+}
+
+fn bar() -> Int32 {
+    return foo();
+}

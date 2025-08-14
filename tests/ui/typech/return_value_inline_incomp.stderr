@@ -1,0 +1,13 @@
+× error[LM4001]: mismatched types
+   ╭─[return_value_inline_incomp.lm:2:12]
+ 1 │ fn foo() -> Int32 {
+ 2 │     return true;
+   │            ^^^^ expected type Int32, but found type Boolean...
+ 3 │ }
+   ∶
+ 1 │ fn foo() -> Int32 {
+   │             ^^^^^ ...because of type defined here
+ 2 │     return true;
+   ╰──
+   help: expected type Int32
+            found type Boolean

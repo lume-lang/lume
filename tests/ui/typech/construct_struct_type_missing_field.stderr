@@ -1,0 +1,7 @@
+× error[LM4385]: missing structure field
+   ╭─[construct_struct_type_missing_field.lm:6:13]
+ 5 │ fn foo() {
+ 6 │     let a = A { };
+   │             ^^^^^^ constructor is missing field foo
+ 7 │ }
+   ╰──

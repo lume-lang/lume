@@ -1,0 +1,14 @@
+× error[LM4001]: mismatched types
+   ╭─[generic_method_static_call_incorrect_type.lm:8:21]
+ 7 │ fn bar() {
+ 8 │     A::bar<Boolean>(0);
+   │                     ^ expected type Boolean, but found type Int32...
+ 9 │ }
+   ∶
+ 7 │ fn bar() {
+ 8 │     A::bar<Boolean>(0);
+   │            ^^^^^^^ ...because of type defined here
+ 9 │ }
+   ╰──
+   help: expected type Boolean
+            found type Int32

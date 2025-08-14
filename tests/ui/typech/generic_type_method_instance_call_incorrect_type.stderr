@@ -1,0 +1,13 @@
+× error[LM4001]: mismatched types
+    ╭─[generic_type_method_instance_call_incorrect_type.lm:10:11]
+ 9  │
+ 10 │     a.bar(0);
+    │           ^ expected type Boolean, but found type Int32...
+ 11 │ }
+    ∶
+ 7  │ fn bar() {
+ 8  │     let a: A<Boolean> = A<Boolean> { };
+    │              ^^^^^^^ ...because of type defined here
+    ╰──
+   help: expected type Boolean
+            found type Int32

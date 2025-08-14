@@ -1,0 +1,5 @@
+enum Foo { A, B(Int32, Boolean) }
+
+fn foo() {
+    let a = Foo::B(false, 0);
+}

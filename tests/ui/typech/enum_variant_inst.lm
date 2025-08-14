@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+enum Foo { A, B }
+
+fn foo() {
+    let a = Foo::A;
+}

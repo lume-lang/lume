@@ -1,0 +1,7 @@
+× error[LM4375]: cannot assign value to literal
+   ╭─[literal_assignment_bool.lm:2:5]
+ 1 │ fn foo() {
+ 2 │     false = false;
+   │     ^^^^^^^^^^^^^ literal values are constant and cannot be assigned
+ 3 │ }
+   ╰──

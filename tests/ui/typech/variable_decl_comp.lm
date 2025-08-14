@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn foo() {
+    let _: Int32 = 1_i32;
+}

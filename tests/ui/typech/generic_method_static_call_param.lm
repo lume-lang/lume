@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+struct A {}
+
+impl A {
+    pub fn bar<T>(val:  T) { }
+}
+
+fn bar() {
+    A::bar<Boolean>(false);
+}
