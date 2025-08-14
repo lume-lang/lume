@@ -1375,6 +1375,20 @@ name = "lumert"
 version = "0.1.0"
 
 [[package]]
+name = "manifold"
+version = "0.1.0"
+dependencies = [
+ "build_stage",
+ "error_snippet",
+ "glob",
+ "lume_errors",
+ "lume_span",
+ "owo-colors",
+ "regex",
+ "similar",
+]
+
+[[package]]
 name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
