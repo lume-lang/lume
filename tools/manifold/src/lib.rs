@@ -6,7 +6,6 @@ use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
 use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
-use lume_errors::DiagCtx;
 use owo_colors::OwoColorize;
 
 pub(crate) enum TestResult {
@@ -29,23 +28,8 @@ impl Eq for TestResult {}
 
 pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String>;
 
-fn main() {
-    let dcx = DiagCtx::new();
-
-    if let Err(err) = manifold_cli_entry() {
-        dcx.emit(err);
-    }
-
-    let mut renderer = error_snippet::GraphicalRenderer::new();
-    renderer.use_colors = true;
-    renderer.highlight_source = true;
-
-    dcx.render_stderr(&mut renderer);
-    dcx.clear();
-}
-
 /// Main entrypoint for the Manifold CLI.
-fn manifold_cli_entry() -> Result<()> {
+pub fn manifold_entry() -> Result<()> {
     let test_root = find_test_root()?;
 
     run_test_suite(&test_root)
@@ -157,5 +141,13 @@ fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> 
     match subfolder {
         Some("ui") => Ok(ManifoldTestType::Ui),
         _ => Err(SimpleDiagnostic::new(format!("could not determine type of test: {relative_path_str}")).into()),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[test]
+    fn manifold_tests() {
+        super::manifold_entry().unwrap();
     }
 }
