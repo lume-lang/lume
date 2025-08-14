@@ -118,7 +118,8 @@ fn build_test_file(test_case: &TestCase) -> String {
     let file_name = Path::new(test_case.path.file_name().unwrap());
 
     let source_file = SourceFile::new(PackageId::empty(), file_name, test_case.file_content.clone());
-    let stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
+    let mut stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
+    stub_package.add_std_sources();
 
     let dcx = DiagCtx::new();
     let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
