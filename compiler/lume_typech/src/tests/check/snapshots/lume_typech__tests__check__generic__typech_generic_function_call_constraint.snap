@@ -1,4 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check/generic.rs
-description: "trait A {}\n\n        use A in Boolean { }\n\n        fn foo<T: A>() { }\n\n        fn bar() {\n            foo<Boolean>();\n        }"
----

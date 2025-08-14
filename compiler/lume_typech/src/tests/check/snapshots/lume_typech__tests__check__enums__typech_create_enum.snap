@@ -1,5 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check/enums.rs
-description: "enum Foo { A, B }\n\n        fn foo() {\n            let a = Foo::A;\n        }"
----
-
