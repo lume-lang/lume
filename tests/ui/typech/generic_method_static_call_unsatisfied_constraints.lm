@@ -1,0 +1,15 @@
+trait A {}
+
+trait B {}
+
+struct Foo { }
+
+impl Foo {
+    pub fn bar<T: A + B>(val: T) -> T {
+        return val;
+    }
+}
+
+fn bar() {
+    Foo::bar<Boolean>(false);
+}

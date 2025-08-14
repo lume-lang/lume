@@ -1,0 +1,13 @@
+struct A {}
+
+impl A {
+    pub fn bar<T>(self, val: T) -> T {
+        return val;
+    }
+}
+
+fn bar() {
+    let a: A = A { };
+
+    let _: Int32 = a.bar<Boolean>(false);
+}

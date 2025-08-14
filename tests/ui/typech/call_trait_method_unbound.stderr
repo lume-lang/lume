@@ -1,0 +1,7 @@
+× error[LM4113]: could not find method
+   ╭─[call_trait_method_unbound.lm:8:24]
+ 7 │ fn foo<T>(val: T) {
+ 8 │     let _: Int32 = val.value();
+   │                        ^^^^^^ could not find method value on type T
+ 9 │ }
+   ╰──

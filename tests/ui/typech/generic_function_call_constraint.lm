@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+trait A {}
+
+use A in Boolean { }
+
+fn foo<T: A>() { }
+
+fn bar() {
+    foo<Boolean>();
+}

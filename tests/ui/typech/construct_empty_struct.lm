@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+struct A { }
+
+fn foo() {
+    let a = A { };
+}

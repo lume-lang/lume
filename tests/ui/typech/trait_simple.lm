@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+struct A { }
+
+trait Foo {}
+
+use Foo in A { }

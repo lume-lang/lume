@@ -1,0 +1,6 @@
+× error[LM4161]: missing method in implementation
+   ╭─[trait_missing_method.lm:7:1]
+ 6 │
+ 7 │ use Foo in A { }
+   │ ^^^^^^^^^^^^^^^^ trait implementation does not implement method foo
+   ╰──

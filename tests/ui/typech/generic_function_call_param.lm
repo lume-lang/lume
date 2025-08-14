@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+fn foo<T>(val: T) { }
+
+fn bar() {
+    foo<Boolean>(false);
+}

@@ -1,0 +1,14 @@
+× error[LM4001]: mismatched types
+    ╭─[generic_method_static_call_returned_type_incomp.lm:10:23]
+ 9  │ fn bar() {
+ 10 │     let _: Int32 = A::bar<Boolean>(false);
+    │                       ^^^^^^^^^^^^ expected type Int32, but found type Boolean...
+ 11 │ }
+    ∶
+ 9  │ fn bar() {
+ 10 │     let _: Int32 = A::bar<Boolean>(false);
+    │            ^^^^^ ...because of type defined here
+ 11 │ }
+    ╰──
+   help: expected type Int32
+            found type Boolean

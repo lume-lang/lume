@@ -1,0 +1,17 @@
+//# test-outcome=success
+
+trait A {}
+
+use A in Boolean { }
+
+struct Foo { }
+
+impl Foo {
+    pub fn bar<T: A>(val: T) -> T {
+        return val;
+    }
+}
+
+fn bar() {
+    Foo::bar<Boolean>(false);
+}

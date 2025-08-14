@@ -1,0 +1,12 @@
+× error[LM4001]: mismatched types
+   ╭─[enum_variant_param_incomp.lm:4:20]
+ 3 │ fn foo() {
+ 4 │     let a = Foo::B(false);
+   │                    ^^^^^ expected type Int32, but found type Boolean...
+ 5 │ }
+   ∶
+ 1 │ enum Foo { A, B(Int32) }
+   │                 ^^^^^ ...because of type defined here
+   ╰──
+   help: expected type Int32
+            found type Boolean

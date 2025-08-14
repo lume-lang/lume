@@ -1,0 +1,14 @@
+× error[LM4001]: mismatched types
+   ╭─[generic_function_call_incorrect_type.lm:4:18]
+ 3 │ fn bar() {
+ 4 │     foo<Boolean>(0);
+   │                  ^ expected type Boolean, but found type Int32...
+ 5 │ }
+   ∶
+ 3 │ fn bar() {
+ 4 │     foo<Boolean>(0);
+   │         ^^^^^^^ ...because of type defined here
+ 5 │ }
+   ╰──
+   help: expected type Boolean
+            found type Int32

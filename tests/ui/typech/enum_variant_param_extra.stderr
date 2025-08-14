@@ -1,0 +1,7 @@
+× error[LM4116]: argument count mismatch
+   ╭─[enum_variant_param_extra.lm:4:18]
+ 3 │ fn foo() {
+ 4 │     let a = Foo::B(false);
+   │                  ^ expected 0 arguments, but got 1
+ 5 │ }
+   ╰──

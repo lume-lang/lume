@@ -1,0 +1,9 @@
+trait A {}
+
+trait B {}
+
+fn foo<T: A + B>() { }
+
+fn bar() {
+    foo<Boolean>();
+}
