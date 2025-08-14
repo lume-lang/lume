@@ -40,6 +40,9 @@ range_plus_one = "allow"
 lume_cli = { path = "compiler/lume_cli" }
 lume_driver = { path = "compiler/lume_driver" }
 
+[dev-dependencies]
+manifold = { path = "tools/manifold" }
+
 [profile.profiling]
 inherits = "release"
 debug = true
