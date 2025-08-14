@@ -112,6 +112,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "build_stage"
+version = "0.1.0"
+dependencies = [
+ "arc",
+ "lume_errors",
+ "lume_hir",
+ "lume_hir_lower",
+ "lume_infer",
+ "lume_mir",
+ "lume_mir_lower",
+ "lume_session",
+ "lume_span",
+ "lume_tir",
+ "lume_tir_lower",
+ "lume_typech",
+ "lume_types",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
