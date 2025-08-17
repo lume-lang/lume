@@ -546,7 +546,7 @@ impl std::fmt::Display for SignatureOwned {
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Block {
-    pub statements: Vec<Statement>,
+    pub statements: Vec<StatementId>,
     pub location: Location,
 }
 
@@ -862,7 +862,7 @@ pub struct Field {
     pub visibility: Visibility,
     pub name: Identifier,
     pub field_type: Type,
-    pub default_value: Option<Expression>,
+    pub default_value: Option<ExpressionId>,
     pub location: Location,
 }
 
@@ -1026,14 +1026,14 @@ impl Statement {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum StatementKind {
-    Variable(Box<VariableDeclaration>),
-    Break(Box<Break>),
-    Continue(Box<Continue>),
-    Final(Box<Final>),
-    Return(Box<Return>),
-    InfiniteLoop(Box<InfiniteLoop>),
-    IteratorLoop(Box<IteratorLoop>),
-    Expression(Box<Expression>),
+    Variable(VariableDeclaration),
+    Break(Break),
+    Continue(Continue),
+    Final(Final),
+    Return(Return),
+    InfiniteLoop(InfiniteLoop),
+    IteratorLoop(IteratorLoop),
+    Expression(ExpressionId),
 }
 
 #[derive(Node, Hash, Debug, Clone, PartialEq)]
@@ -1041,7 +1041,7 @@ pub struct VariableDeclaration {
     pub id: StatementId,
     pub name: Identifier,
     pub declared_type: Option<Type>,
-    pub value: Expression,
+    pub value: ExpressionId,
     pub location: Location,
 }
 
@@ -1060,14 +1060,14 @@ pub struct Continue {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Final {
     pub id: StatementId,
-    pub value: Expression,
+    pub value: ExpressionId,
     pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: StatementId,
-    pub value: Option<Expression>,
+    pub value: Option<ExpressionId>,
     pub location: Location,
 }
 
@@ -1088,7 +1088,7 @@ impl InfiniteLoop {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub id: StatementId,
-    pub collection: Expression,
+    pub collection: ExpressionId,
     pub block: Block,
     pub location: Location,
 }
@@ -1121,11 +1121,11 @@ impl Expression {
         Self {
             id: ExpressionId::default(),
             location: Location::empty(),
-            kind: ExpressionKind::Literal(Box::new(Literal {
+            kind: ExpressionKind::Literal(Literal {
                 id: ExpressionId::default(),
                 location: Location::empty(),
                 kind,
-            })),
+            }),
         }
     }
 
@@ -1188,17 +1188,17 @@ expr_lit_int!(lit_u32, U32, u32);
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
-    Assignment(Box<Assignment>),
-    Binary(Box<Binary>),
-    Cast(Box<Cast>),
-    Construct(Box<Construct>),
+    Assignment(Assignment),
+    Binary(Binary),
+    Cast(Cast),
+    Construct(Construct),
 
     /// Defines a call which was invoked without any callee or receiver.
     ///
     /// These are either invoked from:
     /// - a path (`std::Int32::new()`),
     /// - or as a function call (`foo()`),
-    StaticCall(Box<StaticCall>),
+    StaticCall(StaticCall),
 
     /// Defines a call which was invoked within the context of a receiver
     ///
@@ -1206,18 +1206,18 @@ pub enum ExpressionKind {
     /// let a = foo();
     /// a.bar();
     /// ```
-    InstanceCall(Box<InstanceCall>),
+    InstanceCall(InstanceCall),
 
     /// Defines an intrinsic call which was replaced by a call expression.
     ///
     /// ```lume
     /// let a = 1 + 2;
     /// ```
-    IntrinsicCall(Box<IntrinsicCall>),
-    If(Box<If>),
-    Literal(Box<Literal>),
-    Logical(Box<Logical>),
-    Member(Box<Member>),
+    IntrinsicCall(IntrinsicCall),
+    If(If),
+    Literal(Literal),
+    Logical(Logical),
+    Member(Member),
 
     /// Defines a reference to a field within a pattern.
     ///
@@ -1227,11 +1227,11 @@ pub enum ExpressionKind {
     ///               ^ Field expression
     /// }
     /// ```
-    Field(Box<PatternField>),
-    Scope(Box<Scope>),
-    Switch(Box<Switch>),
-    Variable(Box<Variable>),
-    Variant(Box<Variant>),
+    Field(PatternField),
+    Scope(Scope),
+    Switch(Switch),
+    Variable(Variable),
+    Variant(Variant),
 }
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq)]
@@ -1279,7 +1279,7 @@ impl CallExpression<'_> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &[Expression] {
+    pub fn arguments(&self) -> &[ExpressionId] {
         match self {
             Self::Instanced(call) => &call.arguments,
             Self::Static(call) => &call.arguments,
@@ -1313,8 +1313,8 @@ impl CallExpression<'_> {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Assignment {
     pub id: ExpressionId,
-    pub target: Expression,
-    pub value: Expression,
+    pub target: ExpressionId,
+    pub value: ExpressionId,
     pub location: Location,
 }
 
@@ -1334,16 +1334,16 @@ pub struct BinaryOperator {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Binary {
     pub id: ExpressionId,
-    pub lhs: Expression,
+    pub lhs: ExpressionId,
     pub op: BinaryOperator,
-    pub rhs: Expression,
+    pub rhs: ExpressionId,
     pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Cast {
     pub id: ExpressionId,
-    pub source: Expression,
+    pub source: ExpressionId,
     pub target: Type,
     pub location: Location,
 }
@@ -1359,7 +1359,7 @@ pub struct Construct {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct ConstructorField {
     pub name: Identifier,
-    pub value: Expression,
+    pub value: ExpressionId,
     pub location: Location,
 }
 
@@ -1367,7 +1367,7 @@ pub struct ConstructorField {
 pub struct StaticCall {
     pub id: ExpressionId,
     pub name: Path,
-    pub arguments: Vec<Expression>,
+    pub arguments: Vec<ExpressionId>,
     pub location: Location,
 }
 
@@ -1384,9 +1384,9 @@ impl StaticCall {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct InstanceCall {
     pub id: ExpressionId,
-    pub callee: Expression,
+    pub callee: ExpressionId,
     pub name: PathSegment,
-    pub arguments: Vec<Expression>,
+    pub arguments: Vec<ExpressionId>,
     pub location: Location,
 }
 
@@ -1400,7 +1400,7 @@ impl InstanceCall {
 pub struct IntrinsicCall {
     pub id: ExpressionId,
     pub name: PathSegment,
-    pub arguments: Vec<Expression>,
+    pub arguments: Vec<ExpressionId>,
     pub location: Location,
 }
 
@@ -1410,7 +1410,7 @@ impl IntrinsicCall {
     /// # Panics
     ///
     /// Panics if the intrinsic call has no arguments.
-    pub fn callee(&self) -> &Expression {
+    pub fn callee(&self) -> &ExpressionId {
         self.arguments.first().unwrap()
     }
 
@@ -1441,7 +1441,7 @@ impl If {
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Condition {
-    pub condition: Option<Expression>,
+    pub condition: Option<ExpressionId>,
     pub block: Block,
     pub location: Location,
 }
@@ -1552,16 +1552,16 @@ pub struct LogicalOperator {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Logical {
     pub id: ExpressionId,
-    pub lhs: Expression,
+    pub lhs: ExpressionId,
     pub op: LogicalOperator,
-    pub rhs: Expression,
+    pub rhs: ExpressionId,
     pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Member {
     pub id: ExpressionId,
-    pub callee: Expression,
+    pub callee: ExpressionId,
     pub name: String,
     pub location: Location,
 }
@@ -1577,14 +1577,14 @@ pub struct PatternField {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Scope {
     pub id: ExpressionId,
-    pub body: Vec<Statement>,
+    pub body: Vec<StatementId>,
     pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct Switch {
     pub id: ExpressionId,
-    pub operand: Expression,
+    pub operand: ExpressionId,
     pub cases: Vec<SwitchCase>,
     pub location: Location,
 }
@@ -1592,7 +1592,7 @@ pub struct Switch {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct SwitchCase {
     pub pattern: Pattern,
-    pub branch: Expression,
+    pub branch: ExpressionId,
     pub location: Location,
 }
 
@@ -1625,7 +1625,7 @@ impl Node for VariableSource {
 pub struct Variant {
     pub id: ExpressionId,
     pub name: Path,
-    pub arguments: Vec<Expression>,
+    pub arguments: Vec<ExpressionId>,
     pub location: Location,
 }
 
