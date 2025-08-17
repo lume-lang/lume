@@ -954,6 +954,10 @@ impl TraitImplementation {
     pub fn ident(&self) -> &PathSegment {
         self.name.ident()
     }
+
+    pub fn type_args(&self) -> &[Type] {
+        self.name.type_arguments()
+    }
 }
 
 impl WithTypeParameters for TraitImplementation {

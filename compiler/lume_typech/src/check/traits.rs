@@ -31,11 +31,11 @@ impl TyCheckCtx {
             panic!("bug!: expected HIR ID to reference trait item");
         };
 
-        if trait_impl.type_parameters.len() != trait_def.type_parameters.len() {
+        if trait_impl.type_args().len() != trait_def.type_parameters.len() {
             return Err(crate::check::errors::TraitImplTypeParameterCountMismatch {
                 source: trait_impl.location,
                 expected: trait_def.type_parameters.len(),
-                found: trait_impl.type_parameters.len(),
+                found: trait_impl.type_args().len(),
             }
             .into());
         }
