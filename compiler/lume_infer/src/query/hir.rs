@@ -247,7 +247,7 @@ impl TyInferCtx {
             };
 
             if let lume_hir::ExpressionKind::Switch(switch) = &expr.kind {
-                return Some(switch.as_ref());
+                return Some(switch);
             }
         }
 

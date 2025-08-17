@@ -91,6 +91,20 @@ impl LowerModule<'_> {
                     location,
                 };
 
+                let ident_decl_value = lume_hir::Expression {
+                    id: self.next_expr_id(),
+                    kind: lume_hir::ExpressionKind::Field(lume_hir::PatternField {
+                        id: self.next_expr_id(),
+                        pattern: parent,
+                        field: idx,
+                        location,
+                    }),
+                    location,
+                };
+
+                let ident_decl_value_id = ident_decl_value.id;
+                self.map.expressions.insert(ident_decl_value_id, ident_decl_value);
+
                 // When visiting an identifier sub-pattern, we implicitly define a new variable
                 // which refers to the sub-pattern, so it can be referenced within the branch.
                 let ident_decl = lume_hir::VariableDeclaration {
@@ -100,16 +114,7 @@ impl LowerModule<'_> {
                         location,
                     },
                     declared_type: None,
-                    value: lume_hir::Expression {
-                        id: self.next_expr_id(),
-                        kind: lume_hir::ExpressionKind::Field(Box::new(lume_hir::PatternField {
-                            id: self.next_expr_id(),
-                            pattern: parent,
-                            field: idx,
-                            location,
-                        })),
-                        location,
-                    },
+                    value: ident_decl_value_id,
                     location,
                 };
 

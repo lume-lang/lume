@@ -1,6 +1,8 @@
 use std::fmt::Debug;
 
+use error_snippet::SimpleDiagnostic;
 use indexmap::{IndexMap, IndexSet};
+use lume_errors::Result;
 
 use crate::*;
 use lume_span::{ExpressionId, ItemId, PatternId, StatementId};
@@ -47,6 +49,22 @@ impl Map {
     /// Gets all the statements within the HIR map.
     pub fn statements(&self) -> &IndexMap<StatementId, Statement> {
         &self.statements
+    }
+
+    /// Gets the statement with the given ID.
+    pub fn statement(&self, id: StatementId) -> Option<&Statement> {
+        self.statements.get(&id)
+    }
+
+    /// Gets the statement with the given ID.
+    pub fn statement_mut(&mut self, id: StatementId) -> Option<&mut Statement> {
+        self.statements.get_mut(&id)
+    }
+
+    /// Gets the statement with the given ID.
+    pub fn expect_statement(&self, id: StatementId) -> Result<&Statement> {
+        self.statement(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected statement with ID {id:?}, found none")).into())
     }
 
     /// Gets the expression with the given ID.
