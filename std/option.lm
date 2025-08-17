@@ -1,0 +1,10 @@
+namespace std
+
+/// The `Optional` type represents an optional value.
+///
+/// A value with type of `Optional<Int32>` can be either a value of `Int32`, as represented
+/// by the variant `Some`, or nothing, as represented by the variant `None`.
+pub enum Optional<T> {
+    Some(T),
+    None
+}

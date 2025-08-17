@@ -1,5 +1,8 @@
 namespace std
 
+import std (Optional)
+import std::mem (alloc, realloc)
+
 /// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
 /// is a generic type, all values within the array must be of the same type.
 ///
@@ -26,14 +29,80 @@ struct Array<T>
     /// Defines the amount of items currently stored within the array.
     length: UInt64;
 
+    /// Defines the number of items which can be stored in the array
+    /// without reallocation.
+    capacity: UInt64;
+
     /// Pointer to the memory allocated for the array items.
-    ptr: Pointer;
+    ptr: Pointer<T>;
 }
 
 impl<T> Array<T> {
-    /// Allocates a new array with the given items.
+    /// Allocates a new, empty array.
+    pub fn new() -> Array<T> {
+        let ptr = alloc<T>(0_u64);
+
+        return Array<T> {
+            length: 0_u64,
+            capacity: 0_u64,
+            ptr
+        };
+    }
+
+    /// Allocates a new, empty array with at least the given capacity.
+    pub fn with_capacity(capacity: UInt64) -> Array<T> {
+        let type_size = std::type_of<T>().size;
+        let ptr = alloc<T>(type_size * capacity);
+
+        return Array<T> {
+            length: 0_u64,
+            capacity,
+            ptr
+        };
+    }
+
+    /// Gets the element at position `index` within the array.
     ///
-    /// When creating a new array with a list of items, it allocates an array
-    /// with the capacity of the length of the items.
-    pub fn external new(...items: T) -> Array<T>
+    /// If `index` is outside of the bounds of the array, returns `Optional::None`.
+    pub fn get(self, index: UInt64) -> Optional<T> {
+        if index > self.length {
+            return Optional<T>::None;
+        }
+
+        let value = self.ptr.read_offset(index);
+
+        Optional<T>::Some(value)
+    }
+
+    /// Sets an element at position `index` within the array to the given value `value`.
+    pub fn set(self, index: UInt64, value: T) {
+        // TODO: panic if index > len
+        self.ptr.write_offset(value, index);
+    }
+
+    /// Appends a new element to the end of the array.
+    pub fn push(self, value: T) {
+        if self.length == self.capacity {
+            self.reserve(self.capacity + 1_u64);
+        }
+
+        self.ptr.write_offset(value, self.length);
+        self.length = self.length + 1_u64;
+    }
+
+    /// Ensures that the array has the capacity for at least the given
+    /// amount of items.
+    ///
+    /// If `capacity` is less than the current capacity, the array is not
+    /// reallocated. Otherwise, the array is resized to at least `capacity` items.
+    pub fn reserve(self, capacity: UInt64) {
+        if self.capacity >= capacity {
+            return;
+        }
+
+        let type_size = std::type_of<T>().size;
+
+        self.capacity = capacity;
+        self.ptr = realloc<T>(self.ptr, type_size * self.capacity);
+    }
 }
