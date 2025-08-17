@@ -222,9 +222,10 @@ pub struct TypeParameter {
     pub constraints: Vec<TypeRef>,
 }
 
-#[derive(Hash, Default, Debug, Clone, PartialEq)]
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Block {
     pub statements: Vec<Statement>,
+    pub return_type: TypeRef,
 }
 
 impl Block {
@@ -237,6 +238,20 @@ impl Block {
         }
 
         self.statements.iter().all(Statement::is_returning)
+    }
+
+    /// Determines whether the block has a non-void return value.
+    pub fn has_return_value(&self) -> bool {
+        !self.return_type.is_void()
+    }
+}
+
+impl Default for Block {
+    fn default() -> Self {
+        Self {
+            statements: Vec::new(),
+            return_type: TypeRef::void(),
+        }
     }
 }
 

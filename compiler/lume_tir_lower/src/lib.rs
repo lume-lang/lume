@@ -196,7 +196,12 @@ impl<'tcx> LowerFunction<'tcx> {
             .map(|stmt| self.statement(stmt))
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(lume_tir::Block { statements })
+        let return_type = self.lower.tcx.type_of_block(block)?;
+
+        Ok(lume_tir::Block {
+            statements,
+            return_type,
+        })
     }
 
     /// Allocates a new variable in the function with the given source and returns it's ID.

@@ -114,8 +114,12 @@ impl<'mir> FunctionTransformer<'mir> {
     fn lower(&mut self, block: &lume_tir::Block) {
         let _entry_block = self.func.new_active_block();
 
-        for statement in &block.statements {
-            self.statement(statement);
+        let return_value = self.block(block);
+
+        // Only declare the return value, if the block actually expects a
+        // non-void return type.
+        if block.has_return_value() {
+            self.func.current_block_mut().return_any(return_value);
         }
 
         // If the current block is not returning, add a return statement so
