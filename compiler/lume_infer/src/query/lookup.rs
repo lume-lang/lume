@@ -84,8 +84,8 @@ impl TyInferCtx {
             lume_hir::CallExpression::Static(call) => {
                 self.find_type_ref(&call.name.clone().parent().unwrap())?.unwrap()
             }
-            lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee.id)?,
-            lume_hir::CallExpression::Intrinsic(call) => self.type_of(call.callee().id)?,
+            lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee)?,
+            lume_hir::CallExpression::Intrinsic(call) => self.type_of(call.callee())?,
         };
 
         let suggestion: Option<Result<error_snippet::Error>> = self
@@ -160,7 +160,7 @@ impl TyInferCtx {
     pub fn probe_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
-                let callee_type = self.type_of(call.callee.id)?;
+                let callee_type = self.type_of(call.callee)?;
                 let methods = self.lookup_methods_on(&callee_type, call.name.name());
 
                 let Some(method) = methods.first() else {
@@ -172,7 +172,7 @@ impl TyInferCtx {
                 Ok(Callable::Method(method))
             }
             expr @ lume_hir::CallExpression::Intrinsic(call) => {
-                let callee_type = self.type_of(call.callee().id)?;
+                let callee_type = self.type_of(call.callee())?;
                 let methods = self.lookup_methods_on(&callee_type, call.name.name());
 
                 let Some(method) = methods.first() else {
@@ -337,7 +337,7 @@ impl TyInferCtx {
             }
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
                 let callee = match expr {
-                    lume_hir::CallExpression::Instanced(call) => &call.callee,
+                    lume_hir::CallExpression::Instanced(call) => call.callee,
                     lume_hir::CallExpression::Intrinsic(call) => call.callee(),
                     lume_hir::CallExpression::Static(_) => unreachable!(),
                 };
@@ -345,7 +345,7 @@ impl TyInferCtx {
                 let hir_type_args = expr.type_arguments();
                 let mut type_args = self.mk_type_refs_generic(hir_type_args, &type_parameters)?;
 
-                let callee_type = self.type_of_expr(callee)?;
+                let callee_type = self.type_of(callee)?;
                 type_args.extend(callee_type.type_arguments.into_iter());
 
                 Ok(type_args)

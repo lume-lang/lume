@@ -96,7 +96,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value.id)?,
+            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, DefId::Expression(e.id))? else {
@@ -117,7 +117,7 @@ impl TyInferCtx {
 
                 instantiated.clone()
             }
-            lume_hir::ExpressionKind::Binary(expr) => self.type_of_expr(&expr.lhs)?,
+            lume_hir::ExpressionKind::Binary(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::StaticCall(call) => self.type_of_call(lume_hir::CallExpression::Static(call))?,
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 self.type_of_call(lume_hir::CallExpression::Instanced(call))?
@@ -127,9 +127,9 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
-            lume_hir::ExpressionKind::Logical(expr) => self.type_of_expr(&expr.lhs)?,
+            lume_hir::ExpressionKind::Logical(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {
-                let callee_type = self.type_of(expr.callee.id)?;
+                let callee_type = self.type_of(expr.callee)?;
 
                 let Some(field) = self.tdb().find_field(callee_type.instance_of, &expr.name) else {
                     let ty = self.tdb().type_(callee_type.instance_of).unwrap();
@@ -158,7 +158,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
-                Some(case) => self.type_of_expr(&case.branch)?,
+                Some(case) => self.type_of(case.branch)?,
                 None => TypeRef::void(),
             },
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
@@ -245,13 +245,15 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
-        if let Some(stmt) = scope.body.last()
-            && let lume_hir::StatementKind::Final(fin) = &stmt.kind
-        {
-            self.type_of_expr(&fin.value)
-        } else {
-            Ok(TypeRef::void())
+        if let Some(stmt) = scope.body.last() {
+            let stmt = self.hir.expect_statement(*stmt)?;
+
+            if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
+                return self.type_of(fin.value);
+            }
         }
+
+        Result::Ok(TypeRef::void())
     }
 
     /// Returns the *type* of the given [`lume_hir::Statement`].
@@ -265,7 +267,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
-            lume_hir::StatementKind::Final(fin) => self.type_of_expr(&fin.value),
+            lume_hir::StatementKind::Final(fin) => self.type_of(fin.value),
             lume_hir::StatementKind::IteratorLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::InfiniteLoop(l) => self.type_of_block(&l.block),
             lume_hir::StatementKind::Return(ret) => self.type_of_return(ret),
@@ -296,7 +298,7 @@ impl TyInferCtx {
         if let Some(declared_type) = &stmt.declared_type {
             self.mk_type_ref_from(declared_type, DefId::Statement(stmt.id))
         } else {
-            self.type_of_expr(&stmt.value)
+            self.type_of(stmt.value)
         }
     }
 
@@ -304,8 +306,8 @@ impl TyInferCtx {
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_return(&self, stmt: &lume_hir::Return) -> Result<TypeRef> {
-        if let Some(expr) = &stmt.value {
-            self.type_of_expr(expr)
+        if let Some(expr) = stmt.value {
+            self.type_of(expr)
         } else {
             Ok(TypeRef::void())
         }
@@ -327,7 +329,8 @@ impl TyInferCtx {
             return Ok(TypeRef::void());
         };
 
-        self.type_of_stmt(last_statement)
+        let stmt = self.hir.expect_statement(*last_statement)?;
+        self.type_of_stmt(stmt)
     }
 
     /// Returns the return type of the given [`lume_hir::CallExpression`].
@@ -375,7 +378,7 @@ impl TyInferCtx {
                         // which was passed to the parent `switch` expression.
                         lume_hir::Def::Expression(expr) => {
                             if let lume_hir::ExpressionKind::Switch(switch) = &expr.kind {
-                                return self.type_of_expr(&switch.operand);
+                                return self.type_of(switch.operand);
                             }
                         }
 

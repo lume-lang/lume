@@ -1,4 +1,7 @@
-use std::{collections::HashSet, sync::LazyLock};
+use std::{
+    collections::{BTreeMap, HashSet},
+    sync::LazyLock,
+};
 
 use error_snippet::Result;
 use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
@@ -835,213 +838,257 @@ impl TyInferCtx {
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_scopes(&mut self) -> Result<()> {
-        let hir = std::mem::take(&mut self.hir);
+        let mut tree = BTreeMap::new();
 
-        for (_, item) in &hir.items {
+        for (_, item) in &self.hir.items {
             match item {
                 lume_hir::Item::Type(ty) => match ty.as_ref() {
-                    lume_hir::TypeDefinition::Struct(f) => self.define_struct_scope(f)?,
-                    lume_hir::TypeDefinition::Trait(f) => self.define_trait_scope(f)?,
+                    lume_hir::TypeDefinition::Struct(f) => self.define_struct_scope(&mut tree, f)?,
+                    lume_hir::TypeDefinition::Trait(f) => self.define_trait_scope(&mut tree, f)?,
                     lume_hir::TypeDefinition::Enum(_) => {}
                 },
-                lume_hir::Item::Impl(f) => self.define_impl_scope(f)?,
-                lume_hir::Item::TraitImpl(f) => self.define_use_scope(f)?,
-                lume_hir::Item::Function(f) => self.define_function_scope(f)?,
+                lume_hir::Item::Impl(f) => self.define_impl_scope(&mut tree, f)?,
+                lume_hir::Item::TraitImpl(f) => self.define_use_scope(&mut tree, f)?,
+                lume_hir::Item::Function(f) => self.define_function_scope(&mut tree, f)?,
             }
         }
 
-        self.hir = hir;
+        self.ancestry = tree;
 
         Ok(())
     }
 
-    fn define_struct_scope(&mut self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
+    fn define_struct_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        struct_def: &lume_hir::StructDefinition,
+    ) -> Result<()> {
         let parent = DefId::Item(struct_def.id);
 
         for field in &struct_def.fields {
-            let _ = self.ancestry.try_insert(field.id, parent);
+            let _ = tree.try_insert(field.id, parent);
 
-            if let Some(default) = &field.default_value {
-                self.define_expr_scope(default, field.id)?;
+            if let Some(default) = field.default_value {
+                self.define_expr_scope(tree, default, field.id)?;
             }
         }
 
         Ok(())
     }
 
-    fn define_trait_scope(&mut self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
+    fn define_trait_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        trait_def: &lume_hir::TraitDefinition,
+    ) -> Result<()> {
         let parent = DefId::Item(trait_def.id);
 
         for method in &trait_def.methods {
-            let _ = self.ancestry.try_insert(method.id, parent);
+            let _ = tree.try_insert(method.id, parent);
 
             if let Some(block) = &method.block {
-                self.define_block_scope(block, method.id)?;
+                self.define_block_scope(tree, block, method.id)?;
             }
         }
 
         Ok(())
     }
 
-    fn define_impl_scope(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
+    fn define_impl_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        implementation: &lume_hir::Implementation,
+    ) -> Result<()> {
         let parent = DefId::Item(implementation.id);
 
         for method in &implementation.methods {
-            let _ = self.ancestry.try_insert(method.id, parent);
+            let _ = tree.try_insert(method.id, parent);
 
             if let Some(block) = &method.block {
-                self.define_block_scope(block, method.id)?;
+                self.define_block_scope(tree, block, method.id)?;
             }
         }
 
         Ok(())
     }
 
-    fn define_use_scope(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
+    fn define_use_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        trait_impl: &lume_hir::TraitImplementation,
+    ) -> Result<()> {
         let parent = DefId::Item(trait_impl.id);
 
         for method in &trait_impl.methods {
-            let _ = self.ancestry.try_insert(method.id, parent);
+            let _ = tree.try_insert(method.id, parent);
 
-            self.define_block_scope(&method.block, method.id)?;
+            self.define_block_scope(tree, &method.block, method.id)?;
         }
 
         Ok(())
     }
 
-    fn define_function_scope(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
+    fn define_function_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        func: &lume_hir::FunctionDefinition,
+    ) -> Result<()> {
         if let Some(block) = &func.block {
             let parent = DefId::Item(func.id);
 
-            self.define_block_scope(block, parent)?;
+            self.define_block_scope(tree, block, parent)?;
         }
 
         Ok(())
     }
 
-    fn define_block_scope(&mut self, block: &lume_hir::Block, parent: DefId) -> Result<()> {
+    fn define_block_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        block: &lume_hir::Block,
+        parent: DefId,
+    ) -> Result<()> {
         for stmt in &block.statements {
-            self.define_stmt_scope(stmt, parent)?;
+            self.define_stmt_scope(tree, *stmt, parent)?;
         }
 
         Ok(())
     }
 
-    fn define_stmt_scope(&mut self, stmt: &lume_hir::Statement, parent: DefId) -> Result<()> {
-        let stmt_id = DefId::Statement(stmt.id);
-        let _ = self.ancestry.try_insert(stmt_id, parent);
+    fn define_stmt_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        stmt: lume_span::StatementId,
+        parent: DefId,
+    ) -> Result<()> {
+        let stmt_id = DefId::Statement(stmt);
+        let _ = tree.try_insert(stmt_id, parent);
+
+        let stmt = self.hir.statement(stmt).unwrap();
 
         match &stmt.kind {
-            lume_hir::StatementKind::Variable(s) => self.define_expr_scope(&s.value, stmt_id),
+            lume_hir::StatementKind::Variable(s) => self.define_expr_scope(tree, s.value, stmt_id),
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
             lume_hir::StatementKind::Final(s) => {
-                self.define_expr_scope(&s.value, stmt_id)?;
+                self.define_expr_scope(tree, s.value, stmt_id)?;
 
                 Ok(())
             }
             lume_hir::StatementKind::Return(s) => {
-                if let Some(value) = &s.value {
-                    self.define_expr_scope(value, stmt_id)
+                if let Some(value) = s.value {
+                    self.define_expr_scope(tree, value, stmt_id)
                 } else {
                     Ok(())
                 }
             }
-            lume_hir::StatementKind::InfiniteLoop(s) => self.define_block_scope(&s.block, stmt_id),
+            lume_hir::StatementKind::InfiniteLoop(s) => self.define_block_scope(tree, &s.block, stmt_id),
             lume_hir::StatementKind::IteratorLoop(s) => {
-                self.define_block_scope(&s.block, stmt_id)?;
-                self.define_expr_scope(&s.collection, stmt_id)?;
+                self.define_block_scope(tree, &s.block, stmt_id)?;
+                self.define_expr_scope(tree, s.collection, stmt_id)?;
 
                 Ok(())
             }
-            lume_hir::StatementKind::Expression(s) => self.define_expr_scope(s, stmt_id),
+            lume_hir::StatementKind::Expression(s) => self.define_expr_scope(tree, *s, stmt_id),
         }
     }
 
-    fn define_condition_scope(&mut self, cond: &lume_hir::Condition, parent: DefId) -> Result<()> {
-        if let Some(condition) = &cond.condition {
-            self.define_expr_scope(condition, parent)?;
+    fn define_condition_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        cond: &lume_hir::Condition,
+        parent: DefId,
+    ) -> Result<()> {
+        if let Some(condition) = cond.condition {
+            self.define_expr_scope(tree, condition, parent)?;
         }
 
-        self.define_block_scope(&cond.block, parent)?;
+        self.define_block_scope(tree, &cond.block, parent)?;
 
         Ok(())
     }
 
-    fn define_expr_scope(&mut self, expr: &lume_hir::Expression, parent: DefId) -> Result<()> {
-        let expr_id = DefId::Expression(expr.id);
-        let _ = self.ancestry.try_insert(expr_id, parent);
+    fn define_expr_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        expr: lume_span::ExpressionId,
+        parent: DefId,
+    ) -> Result<()> {
+        let expr_id = DefId::Expression(expr);
+        let _ = tree.try_insert(expr_id, parent);
+
+        let expr = self.hir.expression(expr).unwrap();
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(s) => {
-                self.define_expr_scope(&s.target, expr_id)?;
-                self.define_expr_scope(&s.value, expr_id)?;
+                self.define_expr_scope(tree, s.target, expr_id)?;
+                self.define_expr_scope(tree, s.value, expr_id)?;
 
                 Ok(())
             }
-            lume_hir::ExpressionKind::Cast(s) => self.define_expr_scope(&s.source, expr_id),
+            lume_hir::ExpressionKind::Cast(s) => self.define_expr_scope(tree, s.source, expr_id),
             lume_hir::ExpressionKind::Construct(s) => {
                 for field in &s.fields {
-                    self.define_expr_scope(&field.value, expr_id)?;
+                    self.define_expr_scope(tree, field.value, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::Binary(s) => {
-                self.define_expr_scope(&s.lhs, expr_id)?;
-                self.define_expr_scope(&s.rhs, expr_id)?;
+                self.define_expr_scope(tree, s.lhs, expr_id)?;
+                self.define_expr_scope(tree, s.rhs, expr_id)?;
 
                 Ok(())
             }
             lume_hir::ExpressionKind::InstanceCall(s) => {
-                self.define_expr_scope(&s.callee, expr_id)?;
+                self.define_expr_scope(tree, s.callee, expr_id)?;
 
                 for arg in &s.arguments {
-                    self.define_expr_scope(arg, expr_id)?;
+                    self.define_expr_scope(tree, *arg, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::IntrinsicCall(s) => {
-                self.define_expr_scope(s.callee(), expr_id)?;
+                self.define_expr_scope(tree, s.callee(), expr_id)?;
 
                 for arg in &s.arguments {
-                    self.define_expr_scope(arg, expr_id)?;
+                    self.define_expr_scope(tree, *arg, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::If(s) => {
                 for case in &s.cases {
-                    self.define_condition_scope(case, expr_id)?;
+                    self.define_condition_scope(tree, case, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::Logical(s) => {
-                self.define_expr_scope(&s.lhs, expr_id)?;
-                self.define_expr_scope(&s.rhs, expr_id)?;
+                self.define_expr_scope(tree, s.lhs, expr_id)?;
+                self.define_expr_scope(tree, s.rhs, expr_id)?;
 
                 Ok(())
             }
-            lume_hir::ExpressionKind::Member(s) => self.define_expr_scope(&s.callee, expr_id),
+            lume_hir::ExpressionKind::Member(s) => self.define_expr_scope(tree, s.callee, expr_id),
             lume_hir::ExpressionKind::StaticCall(s) => {
                 for arg in &s.arguments {
-                    self.define_expr_scope(arg, expr_id)?;
+                    self.define_expr_scope(tree, *arg, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::Scope(s) => {
                 for stmt in &s.body {
-                    self.define_stmt_scope(stmt, expr_id)?;
+                    self.define_stmt_scope(tree, *stmt, expr_id)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::Switch(s) => {
                 for case in &s.cases {
-                    self.define_pat_scope(&case.pattern, expr_id)?;
-                    self.define_expr_scope(&case.branch, expr_id)?;
+                    self.define_pat_scope(tree, &case.pattern, expr_id)?;
+                    self.define_expr_scope(tree, case.branch, expr_id)?;
                 }
 
                 Ok(())
@@ -1053,9 +1100,14 @@ impl TyInferCtx {
         }
     }
 
-    fn define_pat_scope(&mut self, pat: &lume_hir::Pattern, parent: DefId) -> Result<()> {
+    fn define_pat_scope(
+        &self,
+        tree: &mut BTreeMap<DefId, DefId>,
+        pat: &lume_hir::Pattern,
+        parent: DefId,
+    ) -> Result<()> {
         let def_id = pat.id;
-        let _ = self.ancestry.try_insert(def_id, parent);
+        let _ = tree.try_insert(def_id, parent);
 
         match &pat.kind {
             lume_hir::PatternKind::Literal(_)
@@ -1063,7 +1115,7 @@ impl TyInferCtx {
             | lume_hir::PatternKind::Wildcard(_) => Ok(()),
             lume_hir::PatternKind::Variant(var) => {
                 for field in &var.fields {
-                    self.define_pat_scope(field, def_id)?;
+                    self.define_pat_scope(tree, field, def_id)?;
                 }
 
                 Ok(())

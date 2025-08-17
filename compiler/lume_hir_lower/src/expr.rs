@@ -5,12 +5,11 @@ use crate::err;
 use crate::errors::*;
 use crate::{ARRAY_NEW_FUNC, ARRAY_STD_TYPE, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE};
 
-use lume_ast::{self as ast, Node};
-use lume_hir::{self as hir};
+use lume_ast::Node;
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn expressions(&mut self, expressions: Vec<ast::Expression>) -> Vec<hir::Expression> {
+    pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::ExpressionId> {
         expressions
             .into_iter()
             .filter_map(|expr| match self.expression(expr) {
@@ -24,33 +23,37 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn expression(&mut self, statement: ast::Expression) -> Result<hir::Expression> {
+    pub(super) fn expression(&mut self, statement: lume_ast::Expression) -> Result<lume_span::ExpressionId> {
         let expr = match statement {
-            ast::Expression::Array(e) => self.expr_array(*e)?,
-            ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
-            ast::Expression::Binary(e) => self.expr_binary(*e)?,
-            ast::Expression::Call(e) => self.expr_call(*e)?,
-            ast::Expression::Cast(e) => self.expr_cast(*e)?,
-            ast::Expression::Construct(e) => self.expr_construct(*e)?,
-            ast::Expression::If(e) => self.expr_if(*e)?,
-            ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
-            ast::Expression::Literal(e) => self.expr_literal(*e),
-            ast::Expression::Logical(e) => self.expr_logical(*e)?,
-            ast::Expression::Member(e) => self.expr_member(*e)?,
-            ast::Expression::Range(e) => self.expr_range(*e)?,
-            ast::Expression::Scope(e) => self.expr_scope(*e)?,
-            ast::Expression::Switch(e) => self.expr_switch(*e)?,
-            ast::Expression::Variable(e) => self.expr_variable(*e)?,
-            ast::Expression::Variant(e) => self.expr_variant(*e)?,
+            lume_ast::Expression::Array(e) => self.expr_array(*e)?,
+            lume_ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
+            lume_ast::Expression::Binary(e) => self.expr_binary(*e)?,
+            lume_ast::Expression::Call(e) => self.expr_call(*e)?,
+            lume_ast::Expression::Cast(e) => self.expr_cast(*e)?,
+            lume_ast::Expression::Construct(e) => self.expr_construct(*e)?,
+            lume_ast::Expression::If(e) => self.expr_if(*e)?,
+            lume_ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
+            lume_ast::Expression::Literal(e) => self.expr_literal(*e),
+            lume_ast::Expression::Logical(e) => self.expr_logical(*e)?,
+            lume_ast::Expression::Member(e) => self.expr_member(*e)?,
+            lume_ast::Expression::Range(e) => self.expr_range(*e)?,
+            lume_ast::Expression::Scope(e) => self.expr_scope(*e)?,
+            lume_ast::Expression::Switch(e) => self.expr_switch(*e)?,
+            lume_ast::Expression::Variable(e) => self.expr_variable(*e)?,
+            lume_ast::Expression::Variant(e) => self.expr_variant(*e)?,
         };
 
-        self.map.expressions.insert(expr.id, expr.clone());
+        let id = expr.id;
+        self.map.expressions.insert(id, expr);
 
-        Ok(expr)
+        Ok(id)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn opt_expression(&mut self, statement: Option<ast::Expression>) -> Result<Option<hir::Expression>> {
+    pub(super) fn opt_expression(
+        &mut self,
+        statement: Option<lume_ast::Expression>,
+    ) -> Result<Option<lume_span::ExpressionId>> {
         match statement {
             Some(expr) => Ok(Some(self.expression(expr)?)),
             None => Ok(None),
@@ -58,80 +61,83 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_array(&mut self, expr: ast::Array) -> Result<hir::Expression> {
+    fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
         let array_path = lume_ast::Path::with_root(
-            vec![ast::PathSegment::namespace("std"), ast::PathSegment::ty(ARRAY_STD_TYPE)],
-            ast::PathSegment::callable(ARRAY_NEW_FUNC),
+            vec![
+                lume_ast::PathSegment::namespace("std"),
+                lume_ast::PathSegment::ty(ARRAY_STD_TYPE),
+            ],
+            lume_ast::PathSegment::callable(ARRAY_NEW_FUNC),
         );
 
         let id = self.next_expr_id();
         let values = self.expressions(expr.values);
         let location = self.location(expr.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
+            kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&array_path)?,
                 arguments: values,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_assignment(&mut self, expr: ast::Assignment) -> Result<hir::Expression> {
+    fn expr_assignment(&mut self, expr: lume_ast::Assignment) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
         let target = self.expression(expr.target)?;
         let value = self.expression(expr.value)?;
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Assignment(Box::new(hir::Assignment {
+            kind: lume_hir::ExpressionKind::Assignment(lume_hir::Assignment {
                 id,
                 target,
                 value,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_binary(&mut self, expr: ast::Binary) -> Result<hir::Expression> {
+    fn expr_binary(&mut self, expr: lume_ast::Binary) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
         let lhs = self.expression(expr.lhs)?;
         let rhs = self.expression(expr.rhs)?;
 
         let operator_kind = match expr.op.kind {
-            ast::BinaryOperatorKind::And => hir::BinaryOperatorKind::And,
-            ast::BinaryOperatorKind::Or => hir::BinaryOperatorKind::Or,
-            ast::BinaryOperatorKind::Xor => hir::BinaryOperatorKind::Xor,
+            lume_ast::BinaryOperatorKind::And => lume_hir::BinaryOperatorKind::And,
+            lume_ast::BinaryOperatorKind::Or => lume_hir::BinaryOperatorKind::Or,
+            lume_ast::BinaryOperatorKind::Xor => lume_hir::BinaryOperatorKind::Xor,
         };
 
         let operator_loc = self.location(expr.op.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Binary(Box::new(hir::Binary {
+            kind: lume_hir::ExpressionKind::Binary(lume_hir::Binary {
                 id,
                 lhs,
-                op: hir::BinaryOperator {
+                op: lume_hir::BinaryOperator {
                     kind: operator_kind,
                     location: operator_loc,
                 },
                 rhs,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_call(&mut self, expr: ast::Call) -> Result<hir::Expression> {
+    fn expr_call(&mut self, expr: lume_ast::Call) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let arguments = self.expressions(expr.arguments);
@@ -140,46 +146,46 @@ impl LowerModule<'_> {
         let kind = if let Some(callee) = expr.callee {
             let callee = self.expression(callee)?;
 
-            hir::ExpressionKind::InstanceCall(Box::new(hir::InstanceCall {
+            lume_hir::ExpressionKind::InstanceCall(lume_hir::InstanceCall {
                 id,
                 callee,
                 name: name.name,
                 arguments,
                 location,
-            }))
+            })
         } else {
-            hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
+            lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
                 id,
                 name,
                 arguments,
                 location,
-            }))
+            })
         };
 
-        Ok(hir::Expression { id, location, kind })
+        Ok(lume_hir::Expression { id, location, kind })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_cast(&mut self, expr: ast::Cast) -> Result<hir::Expression> {
+    fn expr_cast(&mut self, expr: lume_ast::Cast) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let source = self.expression(expr.source)?;
         let target = self.type_ref(expr.target_type)?;
         let location = self.location(expr.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Cast(Box::new(hir::Cast {
+            kind: lume_hir::ExpressionKind::Cast(lume_hir::Cast {
                 id,
                 source,
                 target,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_construct(&mut self, expr: ast::Construct) -> Result<hir::Expression> {
+    fn expr_construct(&mut self, expr: lume_ast::Construct) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let path = self.resolve_symbol_name(&expr.path)?;
         let fields = expr
@@ -190,29 +196,29 @@ impl LowerModule<'_> {
 
         let location = self.location(expr.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Construct(Box::new(hir::Construct {
+            kind: lume_hir::ExpressionKind::Construct(lume_hir::Construct {
                 id,
                 path,
                 fields,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_constructor_field(&mut self, expr: ast::ConstructorField) -> Result<hir::ConstructorField> {
+    fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> Result<lume_hir::ConstructorField> {
         let name = self.identifier(expr.name);
         let value = self.expression(expr.value)?;
         let location = self.location(expr.location);
 
-        Ok(hir::ConstructorField { name, value, location })
+        Ok(lume_hir::ConstructorField { name, value, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_if(&mut self, expr: ast::IfCondition) -> Result<hir::Expression> {
+    fn expr_if(&mut self, expr: lume_ast::IfCondition) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
 
@@ -222,15 +228,15 @@ impl LowerModule<'_> {
             .map(|c| self.expr_condition(c))
             .collect::<Result<Vec<_>>>()?;
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::If(Box::new(hir::If { id, cases, location })),
+            kind: lume_hir::ExpressionKind::If(lume_hir::If { id, cases, location }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_condition(&mut self, expr: ast::Condition) -> Result<hir::Condition> {
+    fn expr_condition(&mut self, expr: lume_ast::Condition) -> Result<lume_hir::Condition> {
         let location = self.location(expr.location);
 
         let condition = if let Some(cond) = expr.condition {
@@ -241,7 +247,7 @@ impl LowerModule<'_> {
 
         let block = self.block(expr.block);
 
-        Ok(hir::Condition {
+        Ok(lume_hir::Condition {
             condition,
             block,
             location,
@@ -249,7 +255,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_intrinsic_call(&mut self, expr: ast::IntrinsicCall) -> Result<hir::Expression> {
+    fn expr_intrinsic_call(&mut self, expr: lume_ast::IntrinsicCall) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location);
@@ -257,79 +263,79 @@ impl LowerModule<'_> {
         let mut arguments = vec![self.expression(expr.callee)?];
         arguments.extend_from_slice(&self.expressions(expr.arguments));
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::IntrinsicCall(Box::new(hir::IntrinsicCall {
+            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
                 id,
                 name: name.name,
                 arguments,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn expr_literal(&mut self, expr: ast::Literal) -> hir::Expression {
+    fn expr_literal(&mut self, expr: lume_ast::Literal) -> lume_hir::Expression {
         let literal = self.literal(expr);
 
-        hir::Expression {
+        lume_hir::Expression {
             id: literal.id,
             location: literal.location,
-            kind: hir::ExpressionKind::Literal(Box::new(literal)),
+            kind: lume_hir::ExpressionKind::Literal(literal),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_logical(&mut self, expr: ast::Logical) -> Result<hir::Expression> {
+    fn expr_logical(&mut self, expr: lume_ast::Logical) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
         let lhs = self.expression(expr.lhs)?;
         let rhs = self.expression(expr.rhs)?;
 
         let operator_kind = match expr.op.kind {
-            ast::LogicalOperatorKind::And => hir::LogicalOperatorKind::And,
-            ast::LogicalOperatorKind::Or => hir::LogicalOperatorKind::Or,
+            lume_ast::LogicalOperatorKind::And => lume_hir::LogicalOperatorKind::And,
+            lume_ast::LogicalOperatorKind::Or => lume_hir::LogicalOperatorKind::Or,
         };
 
         let operator_loc = self.location(expr.op.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Logical(Box::new(hir::Logical {
+            kind: lume_hir::ExpressionKind::Logical(lume_hir::Logical {
                 id,
                 lhs,
-                op: hir::LogicalOperator {
+                op: lume_hir::LogicalOperator {
                     kind: operator_kind,
                     location: operator_loc,
                 },
                 rhs,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_member(&mut self, expr: ast::Member) -> Result<hir::Expression> {
+    fn expr_member(&mut self, expr: lume_ast::Member) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location);
         let callee = self.expression(expr.callee)?;
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Member(Box::new(hir::Member {
+            kind: lume_hir::ExpressionKind::Member(lume_hir::Member {
                 id,
                 callee,
                 name: expr.name,
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_range(&mut self, expr: ast::Range) -> Result<hir::Expression> {
+    fn expr_range(&mut self, expr: lume_ast::Range) -> Result<lume_hir::Expression> {
         let range_type_name = if expr.inclusive {
             RANGE_INCLUSIVE_STD_TYPE
         } else {
@@ -338,10 +344,10 @@ impl LowerModule<'_> {
 
         let range_type = lume_ast::Path::with_root(
             vec![
-                ast::PathSegment::namespace("std"),
-                ast::PathSegment::ty(range_type_name),
+                lume_ast::PathSegment::namespace("std"),
+                lume_ast::PathSegment::ty(range_type_name),
             ],
-            ast::PathSegment::callable(RANGE_NEW_FUNC),
+            lume_ast::PathSegment::callable(RANGE_NEW_FUNC),
         );
 
         let id = self.next_expr_id();
@@ -349,20 +355,20 @@ impl LowerModule<'_> {
         let lower = self.expression(expr.lower)?;
         let upper = self.expression(expr.upper)?;
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::StaticCall(Box::new(hir::StaticCall {
+            kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
                 id,
                 name: self.resolve_symbol_name(&range_type)?,
                 arguments: vec![lower, upper],
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_scope(&mut self, expr: ast::Scope) -> Result<hir::Expression> {
+    fn expr_scope(&mut self, expr: lume_ast::Scope) -> Result<lume_hir::Expression> {
         self.locals.push_frame();
 
         let id = self.next_expr_id();
@@ -371,15 +377,15 @@ impl LowerModule<'_> {
 
         self.locals.pop_frame();
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Scope(Box::new(hir::Scope { id, body, location })),
+            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope { id, body, location }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_switch(&mut self, expr: ast::Switch) -> Result<hir::Expression> {
+    fn expr_switch(&mut self, expr: lume_ast::Switch) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let operand = self.expression(expr.operand)?;
         let cases = expr
@@ -390,20 +396,20 @@ impl LowerModule<'_> {
 
         let location = self.location(expr.location);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
-            kind: lume_hir::ExpressionKind::Switch(Box::new(hir::Switch {
+            kind: lume_hir::ExpressionKind::Switch(lume_hir::Switch {
                 id,
                 operand,
                 cases,
                 location,
-            })),
+            }),
             location,
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_switch_case(&mut self, expr: ast::SwitchCase) -> Result<hir::SwitchCase> {
+    fn expr_switch_case(&mut self, expr: lume_ast::SwitchCase) -> Result<lume_hir::SwitchCase> {
         self.locals.push_frame();
 
         let pattern = self.pattern(expr.pattern)?;
@@ -412,7 +418,7 @@ impl LowerModule<'_> {
 
         self.locals.pop_frame();
 
-        Ok(hir::SwitchCase {
+        Ok(lume_hir::SwitchCase {
             pattern,
             branch,
             location,
@@ -420,7 +426,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_variable(&mut self, expr: ast::Variable) -> Result<hir::Expression> {
+    fn expr_variable(&mut self, expr: lume_ast::Variable) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let location = self.location(expr.location().clone());
 
@@ -428,34 +434,34 @@ impl LowerModule<'_> {
             return Err(err!(self, location, UndeclaredVariable, name, expr.name.name));
         };
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Variable(Box::new(hir::Variable {
+            kind: lume_hir::ExpressionKind::Variable(lume_hir::Variable {
                 id,
                 reference: var_source.clone(),
                 name: self.identifier(expr.name.clone()),
                 location,
-            })),
+            }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn expr_variant(&mut self, expr: ast::Variant) -> Result<hir::Expression> {
+    fn expr_variant(&mut self, expr: lume_ast::Variant) -> Result<lume_hir::Expression> {
         let id = self.next_expr_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
         let arguments = self.expressions(expr.arguments);
 
-        Ok(hir::Expression {
+        Ok(lume_hir::Expression {
             id,
             location,
-            kind: hir::ExpressionKind::Variant(Box::new(hir::Variant {
+            kind: lume_hir::ExpressionKind::Variant(lume_hir::Variant {
                 id,
                 name,
                 arguments,
                 location,
-            })),
+            }),
         })
     }
 }

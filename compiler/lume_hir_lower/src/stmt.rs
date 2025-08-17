@@ -42,7 +42,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<hir::Statement> {
+    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<lume_span::StatementId> {
         statements
             .into_iter()
             .filter_map(|expr| match self.statement(expr) {
@@ -56,7 +56,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn statement(&mut self, expr: ast::Statement) -> Result<hir::Statement> {
+    fn statement(&mut self, expr: ast::Statement) -> Result<lume_span::StatementId> {
         let stmt = match expr {
             ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
             ast::Statement::Break(s) => self.stmt_break(*s),
@@ -70,17 +70,21 @@ impl LowerModule<'_> {
                 let id = self.next_stmt_id();
                 let expr = self.expression(*s)?;
 
+                let location = self.map.expression(expr).unwrap().location;
+
                 hir::Statement {
                     id,
-                    location: expr.location,
-                    kind: hir::StatementKind::Expression(Box::new(expr)),
+                    location,
+                    kind: hir::StatementKind::Expression(expr),
                 }
             }
         };
 
-        self.map.statements.insert(stmt.id, stmt.clone());
+        let id = stmt.id;
 
-        Ok(stmt)
+        self.map.statements.insert(id, stmt);
+
+        Ok(id)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -109,7 +113,7 @@ impl LowerModule<'_> {
         let statement = hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Variable(Box::new(decl)),
+            kind: hir::StatementKind::Variable(decl),
         };
 
         Ok(statement)
@@ -123,7 +127,7 @@ impl LowerModule<'_> {
         hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Break(Box::new(hir::Break { id, location })),
+            kind: hir::StatementKind::Break(hir::Break { id, location }),
         }
     }
 
@@ -135,7 +139,7 @@ impl LowerModule<'_> {
         hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Continue(Box::new(hir::Continue { id, location })),
+            kind: hir::StatementKind::Continue(hir::Continue { id, location }),
         }
     }
 
@@ -143,12 +147,12 @@ impl LowerModule<'_> {
     fn stmt_final(&mut self, statement: ast::Final) -> Result<hir::Statement> {
         let id = self.next_stmt_id();
         let value = self.expression(statement.value)?;
-        let location = value.location;
+        let location = self.map.expression(value).unwrap().location;
 
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Final(Box::new(hir::Final { id, value, location })),
+            kind: hir::StatementKind::Final(hir::Final { id, value, location }),
         })
     }
 
@@ -161,7 +165,7 @@ impl LowerModule<'_> {
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Return(Box::new(hir::Return { id, value, location })),
+            kind: hir::StatementKind::Return(hir::Return { id, value, location }),
         })
     }
 
@@ -174,7 +178,7 @@ impl LowerModule<'_> {
         hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
+            kind: hir::StatementKind::InfiniteLoop(hir::InfiniteLoop { id, block, location }),
         }
     }
 
@@ -188,12 +192,12 @@ impl LowerModule<'_> {
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::IteratorLoop(Box::new(hir::IteratorLoop {
+            kind: hir::StatementKind::IteratorLoop(hir::IteratorLoop {
                 id,
                 collection,
                 block,
                 location,
-            })),
+            }),
         })
     }
 
@@ -231,7 +235,7 @@ impl LowerModule<'_> {
         Ok(hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::InfiniteLoop(Box::new(hir::InfiniteLoop { id, block, location })),
+            kind: hir::StatementKind::InfiniteLoop(hir::InfiniteLoop { id, block, location }),
         })
     }
 }
