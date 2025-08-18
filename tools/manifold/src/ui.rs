@@ -1,5 +1,3 @@
-use std::fmt;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 
@@ -7,10 +5,10 @@ use build_stage::ManifoldDriver;
 use error_snippet::IntoDiagnostic;
 use lume_errors::{DiagCtx, Result};
 use lume_span::{PackageId, SourceFile};
-use owo_colors::{OwoColorize, Style};
+use owo_colors::OwoColorize;
 use regex::Regex;
-use similar::{ChangeTag, TextDiff};
 
+use crate::diff::normalize_output;
 use crate::{TestFailureCallback, TestResult};
 
 pub(crate) struct TestCase {
@@ -57,31 +55,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
                 return Ok(TestResult::Failure { write_failure_report });
             }
 
-            if test_case.stderr_path.is_file() {
-                let expected_output =
-                    std::fs::read_to_string(&test_case.stderr_path).map_err(IntoDiagnostic::into_diagnostic)?;
-
-                let expected_output = normalize_output(&expected_output);
-
-                let diff = TextDiff::from_lines(&expected_output, &stderr_output);
-
-                #[allow(clippy::float_cmp)]
-                if diff.ratio() == 1.0 {
-                    return Ok(TestResult::Success);
-                }
-
-                let write_failure_report: TestFailureCallback =
-                    Box::new(move || print_diff_output(&test_case, &stderr_output, &expected_output).unwrap());
-
-                Ok(TestResult::Failure { write_failure_report })
-            } else {
-                std::fs::write(&stderr_new_path, stderr_output).map_err(IntoDiagnostic::into_diagnostic)?;
-
-                let write_failure_report: TestFailureCallback =
-                    Box::new(move || format!("Review needed:  {}", stderr_new_path.display().cyan().underline()));
-
-                Ok(TestResult::Failure { write_failure_report })
-            }
+            crate::diff::diff_output_of(stderr_output, test_case.path, test_case.stderr_path)
         }
         TestOutcome::Success => {
             if stderr_output.trim().is_empty() {
@@ -143,83 +117,4 @@ fn render_dcx_output(dcx: &DiagCtx) -> String {
     let buffer = dcx.render_buffer(&mut renderer).unwrap_or_default();
 
     normalize_output(&buffer)
-}
-
-struct Line(Option<usize>);
-
-impl fmt::Display for Line {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self.0 {
-            None => write!(f, "    "),
-            Some(idx) => write!(f, "{:<4}", idx + 1),
-        }
-    }
-}
-
-fn normalize_output(value: &str) -> String {
-    value
-        .lines()
-        .map(str::trim_end)
-        .collect::<Vec<_>>()
-        .join("\n")
-        .trim()
-        .to_string()
-}
-
-fn print_diff_output(test_case: &TestCase, actual: &str, expected: &str) -> std::io::Result<String> {
-    let mut f = Vec::new();
-
-    writeln!(
-        &mut f,
-        "Source file:    {}",
-        test_case.path.display().cyan().underline()
-    )?;
-
-    writeln!(
-        &mut f,
-        "Snapshot file:  {}",
-        test_case.stderr_path.display().cyan().underline()
-    )?;
-
-    writeln!(&mut f)?;
-
-    let diff = TextDiff::from_lines(expected, actual);
-
-    for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
-        if idx > 0 {
-            writeln!(&mut f, "{:-^1$}", "-", 80)?;
-        }
-
-        for op in group {
-            for change in diff.iter_inline_changes(op) {
-                let (sign, s) = match change.tag() {
-                    ChangeTag::Delete => ("-", Style::new().red()),
-                    ChangeTag::Insert => ("+", Style::new().green()),
-                    ChangeTag::Equal => (" ", Style::new().dimmed()),
-                };
-
-                write!(
-                    &mut f,
-                    "{}{} |{}",
-                    Line(change.old_index()).dimmed(),
-                    Line(change.new_index()).dimmed(),
-                    sign.style(s).bold(),
-                )?;
-
-                for (emphasized, value) in change.iter_strings_lossy() {
-                    if emphasized {
-                        write!(&mut f, "{}", value.style(s).underline())?;
-                    } else {
-                        write!(&mut f, "{}", value.style(s))?;
-                    }
-                }
-
-                if change.missing_newline() {
-                    writeln!(&mut f)?;
-                }
-            }
-        }
-    }
-
-    Ok(String::from_utf8_lossy(&f).to_string())
 }
