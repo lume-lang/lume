@@ -1,5 +1,6 @@
 #![feature(path_add_extension)]
 
+mod diff;
 mod ui;
 
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
