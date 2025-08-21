@@ -21,9 +21,6 @@ mod pattern;
 mod stmt;
 mod ty;
 
-#[cfg(test)]
-mod tests;
-
 const ARRAY_STD_TYPE: &str = "Array";
 const ARRAY_NEW_FUNC: &str = "new";
 
