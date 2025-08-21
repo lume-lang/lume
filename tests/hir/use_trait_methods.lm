@@ -1,0 +1,5 @@
+use Cast in Int32 {
+    pub fn to_string() -> String {}
+
+    pub fn to_int() -> Int32 {}
+}

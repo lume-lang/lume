@@ -1,0 +1,80 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: struct_pub_method.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: struct_pub_method.lm:5:8,
+                    },
+                    location: struct_pub_method.lm:5:8,
+                },
+                location: struct_pub_method.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "bar",
+                        location: struct_pub_method.lm:22:25,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: struct_pub_method.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: struct_pub_method.lm:31:36,
+                                },
+                                type_arguments: [],
+                                location: struct_pub_method.lm:31:36,
+                            },
+                            location: struct_pub_method.lm:31:36,
+                        },
+                        location: struct_pub_method.lm:31:36,
+                    },
+                    block: Block {
+                        statements: [
+                            Return {
+                                value: Literal {
+                                    kind: IntLiteral {
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                    location: struct_pub_method.lm:54:55,
+                                },
+                                location: struct_pub_method.lm:47:56,
+                            },
+                        ],
+                        location: struct_pub_method.lm:37:62,
+                    },
+                    location: struct_pub_method.lm:15:62,
+                },
+            ],
+            type_parameters: [],
+            location: struct_pub_method.lm:0:64,
+        },
+    ],
+}

@@ -1,0 +1,106 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: loop_iter_loop_continue.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: loop_iter_loop_continue.lm:3:6,
+                },
+                location: loop_iter_loop_continue.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    IteratorLoop {
+                        collection: StaticCall {
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: loop_iter_loop_continue.lm:0:0,
+                                        },
+                                    },
+                                    Type {
+                                        name: Identifier {
+                                            name: "Array",
+                                            location: loop_iter_loop_continue.lm:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: loop_iter_loop_continue.lm:0:0,
+                                    },
+                                ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "new",
+                                        location: loop_iter_loop_continue.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: loop_iter_loop_continue.lm:0:0,
+                                },
+                                location: loop_iter_loop_continue.lm:0:0,
+                            },
+                            arguments: [
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 1,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_continue.lm:28:29,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 2,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_continue.lm:31:32,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 3,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_continue.lm:34:35,
+                                },
+                            ],
+                            location: loop_iter_loop_continue.lm:27:28,
+                        },
+                        block: Block {
+                            statements: [
+                                Continue {
+                                    location: loop_iter_loop_continue.lm:44:53,
+                                },
+                            ],
+                            location: loop_iter_loop_continue.lm:37:56,
+                        },
+                        location: loop_iter_loop_continue.lm:12:56,
+                    },
+                ],
+                location: loop_iter_loop_continue.lm:9:58,
+            },
+            location: loop_iter_loop_continue.lm:0:58,
+        },
+    ],
+}

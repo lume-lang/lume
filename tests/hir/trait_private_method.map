@@ -1,0 +1,77 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: trait_private_method.lm:6:9,
+                    },
+                    type_arguments: [],
+                    location: trait_private_method.lm:6:9,
+                },
+                location: trait_private_method.lm:6:9,
+            },
+            methods: [
+                TraitMethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "add",
+                        location: trait_private_method.lm:15:18,
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: trait_private_method.lm:19:24,
+                            },
+                            param_type: Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        7468397361300629741,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [],
+                                    name: Namespace {
+                                        name: Identifier {
+                                            name: "int",
+                                            location: trait_private_method.lm:26:29,
+                                        },
+                                    },
+                                    location: trait_private_method.lm:26:29,
+                                },
+                                location: trait_private_method.lm:26:29,
+                            },
+                            vararg: false,
+                            location: trait_private_method.lm:19:29,
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Namespace {
+                                name: Identifier {
+                                    name: "int",
+                                    location: trait_private_method.lm:34:37,
+                                },
+                            },
+                            location: trait_private_method.lm:34:37,
+                        },
+                        location: trait_private_method.lm:34:37,
+                    },
+                    block: None,
+                    location: trait_private_method.lm:12:38,
+                },
+            ],
+            type_parameters: [],
+            location: trait_private_method.lm:0:40,
+        },
+    ],
+}

@@ -1,0 +1,63 @@
+Map {
+    items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: struct_field_no_default.lm:7:10,
+                    },
+                    type_arguments: [],
+                    location: struct_field_no_default.lm:7:10,
+                },
+                location: struct_field_no_default.lm:7:10,
+            },
+            builtin: false,
+            fields: [
+                Field {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "x",
+                        location: struct_field_no_default.lm:17:18,
+                    },
+                    field_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                6143724420395906933,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: struct_field_no_default.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: struct_field_no_default.lm:20:25,
+                                },
+                                type_arguments: [],
+                                location: struct_field_no_default.lm:20:25,
+                            },
+                            location: struct_field_no_default.lm:20:25,
+                        },
+                        location: struct_field_no_default.lm:20:25,
+                    },
+                    default_value: None,
+                    location: struct_field_no_default.lm:17:26,
+                },
+            ],
+            type_parameters: [],
+            location: struct_field_no_default.lm:0:28,
+        },
+    ],
+}

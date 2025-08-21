@@ -1,0 +1,8 @@
+× error[LM1020]: unexpected character
+   ╭─[literal_string_empty.lm:2:2]
+ 1 │ fn foo() {
+ 2 │ 	\"\";
+   │  ^ unexpected character \
+ 3 │ }
+   ╰──
+   help: check your syntax

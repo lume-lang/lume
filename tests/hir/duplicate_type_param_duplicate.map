@@ -1,0 +1,8 @@
+× error[LM3029]: duplicate type parameter
+   ╭─[duplicate_type_param_duplicate.lm:1:11]
+ 1 │ fn foo<T, T>() { }
+   │           ^ type parameter T is already defined
+   ∶
+ 1 │ fn foo<T, T>() { }
+   │        ^ original type parameter found here
+   ╰──

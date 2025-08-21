@@ -1,0 +1,225 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: range_expr_nested_inclusive.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: range_expr_nested_inclusive.lm:3:6,
+                },
+                location: range_expr_nested_inclusive.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "a",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 0,
+                                kind: I32,
+                            },
+                            location: range_expr_nested_inclusive.lm:23:24,
+                        },
+                        location: range_expr_nested_inclusive.lm:15:25,
+                    },
+                    VariableDeclaration {
+                        name: "b",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 1,
+                                kind: I32,
+                            },
+                            location: range_expr_nested_inclusive.lm:38:39,
+                        },
+                        location: range_expr_nested_inclusive.lm:30:40,
+                    },
+                    VariableDeclaration {
+                        name: "_",
+                        declared_type: None,
+                        value: StaticCall {
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: range_expr_nested_inclusive.lm:0:0,
+                                        },
+                                    },
+                                    Type {
+                                        name: Identifier {
+                                            name: "RangeInclusive",
+                                            location: range_expr_nested_inclusive.lm:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: range_expr_nested_inclusive.lm:0:0,
+                                    },
+                                ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "new",
+                                        location: range_expr_nested_inclusive.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: range_expr_nested_inclusive.lm:0:0,
+                                },
+                                location: range_expr_nested_inclusive.lm:0:0,
+                            },
+                            arguments: [
+                                IntrinsicCall {
+                                    name: Callable {
+                                        name: Identifier {
+                                            name: "+",
+                                            location: range_expr_nested_inclusive.lm:57:58,
+                                        },
+                                        type_arguments: [],
+                                        location: range_expr_nested_inclusive.lm:57:58,
+                                    },
+                                    arguments: [
+                                        Variable {
+                                            name: Identifier {
+                                                name: "a",
+                                                location: range_expr_nested_inclusive.lm:55:56,
+                                            },
+                                            reference: VariableDeclaration {
+                                                name: "a",
+                                                declared_type: None,
+                                                value: Literal {
+                                                    kind: IntLiteral {
+                                                        value: 0,
+                                                        kind: I32,
+                                                    },
+                                                    location: range_expr_nested_inclusive.lm:23:24,
+                                                },
+                                                location: range_expr_nested_inclusive.lm:15:25,
+                                            },
+                                            location: range_expr_nested_inclusive.lm:55:56,
+                                        },
+                                        Variable {
+                                            name: Identifier {
+                                                name: "b",
+                                                location: range_expr_nested_inclusive.lm:59:60,
+                                            },
+                                            reference: VariableDeclaration {
+                                                name: "b",
+                                                declared_type: None,
+                                                value: Literal {
+                                                    kind: IntLiteral {
+                                                        value: 1,
+                                                        kind: I32,
+                                                    },
+                                                    location: range_expr_nested_inclusive.lm:38:39,
+                                                },
+                                                location: range_expr_nested_inclusive.lm:30:40,
+                                            },
+                                            location: range_expr_nested_inclusive.lm:59:60,
+                                        },
+                                    ],
+                                    location: range_expr_nested_inclusive.lm:55:60,
+                                },
+                                IntrinsicCall {
+                                    name: Callable {
+                                        name: Identifier {
+                                            name: "+",
+                                            location: range_expr_nested_inclusive.lm:71:72,
+                                        },
+                                        type_arguments: [],
+                                        location: range_expr_nested_inclusive.lm:71:72,
+                                    },
+                                    arguments: [
+                                        IntrinsicCall {
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "+",
+                                                    location: range_expr_nested_inclusive.lm:67:68,
+                                                },
+                                                type_arguments: [],
+                                                location: range_expr_nested_inclusive.lm:67:68,
+                                            },
+                                            arguments: [
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "a",
+                                                        location: range_expr_nested_inclusive.lm:65:66,
+                                                    },
+                                                    reference: VariableDeclaration {
+                                                        name: "a",
+                                                        declared_type: None,
+                                                        value: Literal {
+                                                            kind: IntLiteral {
+                                                                value: 0,
+                                                                kind: I32,
+                                                            },
+                                                            location: range_expr_nested_inclusive.lm:23:24,
+                                                        },
+                                                        location: range_expr_nested_inclusive.lm:15:25,
+                                                    },
+                                                    location: range_expr_nested_inclusive.lm:65:66,
+                                                },
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "b",
+                                                        location: range_expr_nested_inclusive.lm:69:70,
+                                                    },
+                                                    reference: VariableDeclaration {
+                                                        name: "b",
+                                                        declared_type: None,
+                                                        value: Literal {
+                                                            kind: IntLiteral {
+                                                                value: 1,
+                                                                kind: I32,
+                                                            },
+                                                            location: range_expr_nested_inclusive.lm:38:39,
+                                                        },
+                                                        location: range_expr_nested_inclusive.lm:30:40,
+                                                    },
+                                                    location: range_expr_nested_inclusive.lm:69:70,
+                                                },
+                                            ],
+                                            location: range_expr_nested_inclusive.lm:65:70,
+                                        },
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 1,
+                                                kind: I32,
+                                            },
+                                            location: range_expr_nested_inclusive.lm:73:74,
+                                        },
+                                    ],
+                                    location: range_expr_nested_inclusive.lm:65:74,
+                                },
+                            ],
+                            location: range_expr_nested_inclusive.lm:55:74,
+                        },
+                        location: range_expr_nested_inclusive.lm:45:77,
+                    },
+                ],
+                location: range_expr_nested_inclusive.lm:9:79,
+            },
+            location: range_expr_nested_inclusive.lm:0:79,
+        },
+    ],
+}

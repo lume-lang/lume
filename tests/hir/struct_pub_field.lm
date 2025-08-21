@@ -1,0 +1,3 @@
+struct Foo {
+    pub x: Int32 = 1;
+}

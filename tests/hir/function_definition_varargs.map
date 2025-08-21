@@ -1,0 +1,80 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: function_definition_varargs.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: function_definition_varargs.lm:3:6,
+                },
+                location: function_definition_varargs.lm:3:6,
+            },
+            parameters: [
+                Parameter {
+                    name: Identifier {
+                        name: "args",
+                        location: function_definition_varargs.lm:10:14,
+                    },
+                    param_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                6143724420395906933,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: function_definition_varargs.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: function_definition_varargs.lm:16:21,
+                                },
+                                type_arguments: [],
+                                location: function_definition_varargs.lm:16:21,
+                            },
+                            location: function_definition_varargs.lm:16:21,
+                        },
+                        location: function_definition_varargs.lm:16:21,
+                    },
+                    vararg: true,
+                    location: function_definition_varargs.lm:10:21,
+                },
+            ],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [],
+                location: function_definition_varargs.lm:23:25,
+            },
+            location: function_definition_varargs.lm:0:25,
+        },
+    ],
+}

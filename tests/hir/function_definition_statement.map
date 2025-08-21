@@ -1,0 +1,54 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "main",
+                        location: function_definition_statement.lm:3:7,
+                    },
+                    type_arguments: [],
+                    location: function_definition_statement.lm:3:7,
+                },
+                location: function_definition_statement.lm:3:7,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: function_definition_statement.lm:13:17,
+                        },
+                        type_arguments: [],
+                        location: function_definition_statement.lm:13:17,
+                    },
+                    location: function_definition_statement.lm:13:17,
+                },
+                location: function_definition_statement.lm:13:17,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "a",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 0,
+                                kind: I32,
+                            },
+                            location: function_definition_statement.lm:28:29,
+                        },
+                        location: function_definition_statement.lm:20:30,
+                    },
+                ],
+                location: function_definition_statement.lm:18:32,
+            },
+            location: function_definition_statement.lm:0:32,
+        },
+    ],
+}

@@ -1,0 +1,22 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: trait_empty.lm:6:9,
+                    },
+                    type_arguments: [],
+                    location: trait_empty.lm:6:9,
+                },
+                location: trait_empty.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [],
+            location: trait_empty.lm:0:13,
+        },
+    ],
+}

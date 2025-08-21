@@ -1,0 +1,55 @@
+Map {
+    items: [
+        EnumDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: enum_multiple_variants.lm:5:8,
+                    },
+                    type_arguments: [],
+                    location: enum_multiple_variants.lm:5:8,
+                },
+                location: enum_multiple_variants.lm:5:8,
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Bar",
+                                location: enum_multiple_variants.lm:11:14,
+                            },
+                            type_arguments: [],
+                            location: enum_multiple_variants.lm:11:14,
+                        },
+                        location: enum_multiple_variants.lm:11:14,
+                    },
+                    parameters: [],
+                    location: enum_multiple_variants.lm:11:14,
+                },
+                EnumDefinitionCase {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Baz",
+                                location: enum_multiple_variants.lm:16:19,
+                            },
+                            type_arguments: [],
+                            location: enum_multiple_variants.lm:16:19,
+                        },
+                        location: enum_multiple_variants.lm:16:19,
+                    },
+                    parameters: [],
+                    location: enum_multiple_variants.lm:16:19,
+                },
+            ],
+            location: enum_multiple_variants.lm:0:21,
+        },
+    ],
+}

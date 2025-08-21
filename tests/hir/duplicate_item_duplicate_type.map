@@ -1,0 +1,9 @@
+× error[LM3028]: duplicate definition
+   ╭─[duplicate_item_duplicate_type.lm:3:7]
+ 2 │
+ 3 │ trait Foo { }
+   │       ^^^ item Foo is already defined within this file
+   ∶
+ 1 │ struct Foo {}
+   │        ^^^ original definition found here
+   ╰──

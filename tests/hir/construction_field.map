@@ -1,0 +1,70 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: construction_field.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: construction_field.lm:3:6,
+                },
+                location: construction_field.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Construct {
+                        path: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Foo",
+                                    location: construction_field.lm:12:15,
+                                },
+                                type_arguments: [],
+                                location: construction_field.lm:12:15,
+                            },
+                            location: construction_field.lm:12:15,
+                        },
+                        fields: [
+                            ConstructorField {
+                                name: "bar",
+                                value: Literal {
+                                    kind: IntLiteral {
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                    location: construction_field.lm:23:24,
+                                },
+                                location: construction_field.lm:18:24,
+                            },
+                        ],
+                        location: construction_field.lm:12:27,
+                    },
+                ],
+                location: construction_field.lm:9:29,
+            },
+            location: construction_field.lm:0:29,
+        },
+    ],
+}

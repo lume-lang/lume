@@ -1,0 +1,23 @@
+Map {
+    items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Int32",
+                        location: struct_empty_decl.lm:7:12,
+                    },
+                    type_arguments: [],
+                    location: struct_empty_decl.lm:7:12,
+                },
+                location: struct_empty_decl.lm:7:12,
+            },
+            builtin: false,
+            fields: [],
+            type_parameters: [],
+            location: struct_empty_decl.lm:0:15,
+        },
+    ],
+}

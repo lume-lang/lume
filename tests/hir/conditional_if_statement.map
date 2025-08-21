@@ -1,0 +1,76 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: conditional_if_statement.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: conditional_if_statement.lm:3:6,
+                },
+                location: conditional_if_statement.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Final {
+                        value: If {
+                            cases: [
+                                Condition {
+                                    condition: Literal {
+                                        kind: BooleanLiteral {
+                                            value: true,
+                                        },
+                                        location: conditional_if_statement.lm:15:19,
+                                    },
+                                    block: Block {
+                                        statements: [
+                                            VariableDeclaration {
+                                                name: "a",
+                                                declared_type: None,
+                                                value: Literal {
+                                                    kind: IntLiteral {
+                                                        value: 0,
+                                                        kind: I32,
+                                                    },
+                                                    location: conditional_if_statement.lm:30:31,
+                                                },
+                                                location: conditional_if_statement.lm:22:32,
+                                            },
+                                        ],
+                                        location: conditional_if_statement.lm:20:34,
+                                    },
+                                    location: conditional_if_statement.lm:15:34,
+                                },
+                            ],
+                            location: conditional_if_statement.lm:12:34,
+                        },
+                        location: conditional_if_statement.lm:12:34,
+                    },
+                ],
+                location: conditional_if_statement.lm:9:36,
+            },
+            location: conditional_if_statement.lm:0:36,
+        },
+    ],
+}

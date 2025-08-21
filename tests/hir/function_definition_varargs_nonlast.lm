@@ -1,0 +1,1 @@
+fn foo(...args: Int32, a: Int32) {}

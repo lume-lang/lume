@@ -1,0 +1,4 @@
+impl Foo {
+    /// This is a doc comment
+    pub fn bar() -> void { }
+}

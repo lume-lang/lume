@@ -1,0 +1,108 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: conditional_inequality_empty.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: conditional_inequality_empty.lm:3:6,
+                },
+                location: conditional_inequality_empty.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "a",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 0,
+                                kind: I32,
+                            },
+                            location: conditional_inequality_empty.lm:20:21,
+                        },
+                        location: conditional_inequality_empty.lm:12:22,
+                    },
+                    Final {
+                        value: If {
+                            cases: [
+                                Condition {
+                                    condition: IntrinsicCall {
+                                        name: Callable {
+                                            name: Identifier {
+                                                name: "!=",
+                                                location: conditional_inequality_empty.lm:28:30,
+                                            },
+                                            type_arguments: [],
+                                            location: conditional_inequality_empty.lm:28:30,
+                                        },
+                                        arguments: [
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: conditional_inequality_empty.lm:26:27,
+                                                },
+                                                reference: VariableDeclaration {
+                                                    name: "a",
+                                                    declared_type: None,
+                                                    value: Literal {
+                                                        kind: IntLiteral {
+                                                            value: 0,
+                                                            kind: I32,
+                                                        },
+                                                        location: conditional_inequality_empty.lm:20:21,
+                                                    },
+                                                    location: conditional_inequality_empty.lm:12:22,
+                                                },
+                                                location: conditional_inequality_empty.lm:26:27,
+                                            },
+                                            Literal {
+                                                kind: IntLiteral {
+                                                    value: 1,
+                                                    kind: I32,
+                                                },
+                                                location: conditional_inequality_empty.lm:31:32,
+                                            },
+                                        ],
+                                        location: conditional_inequality_empty.lm:26:32,
+                                    },
+                                    block: Block {
+                                        statements: [],
+                                        location: conditional_inequality_empty.lm:33:36,
+                                    },
+                                    location: conditional_inequality_empty.lm:26:36,
+                                },
+                            ],
+                            location: conditional_inequality_empty.lm:23:36,
+                        },
+                        location: conditional_inequality_empty.lm:23:36,
+                    },
+                ],
+                location: conditional_inequality_empty.lm:9:38,
+            },
+            location: conditional_inequality_empty.lm:0:38,
+        },
+    ],
+}

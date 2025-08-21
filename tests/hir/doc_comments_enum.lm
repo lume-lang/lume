@@ -1,0 +1,4 @@
+/// This is a doc comment
+enum Foo {
+    Bar
+}

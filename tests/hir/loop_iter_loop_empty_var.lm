@@ -1,0 +1,4 @@
+fn foo() {
+    let collection = [1, 2, 3];
+    for pattern in collection { }
+}

@@ -1,0 +1,105 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: call_method_generic.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: call_method_generic.lm:3:6,
+                },
+                location: call_method_generic.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "_",
+                        declared_type: None,
+                        value: InstanceCall {
+                            name: Callable {
+                                name: Identifier {
+                                    name: "call",
+                                    location: call_method_generic.lm:22:26,
+                                },
+                                type_arguments: [
+                                    Type {
+                                        id: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                8901637729188007634,
+                                            ),
+                                        },
+                                        name: Path {
+                                            root: [],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "T",
+                                                    location: call_method_generic.lm:27:28,
+                                                },
+                                                type_arguments: [],
+                                                location: call_method_generic.lm:27:28,
+                                            },
+                                            location: call_method_generic.lm:27:28,
+                                        },
+                                        location: call_method_generic.lm:27:28,
+                                    },
+                                ],
+                                location: call_method_generic.lm:22:30,
+                            },
+                            callee: Literal {
+                                kind: IntLiteral {
+                                    value: 1,
+                                    kind: I32,
+                                },
+                                location: call_method_generic.lm:20:21,
+                            },
+                            arguments: [
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                    location: call_method_generic.lm:30:31,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 1,
+                                        kind: I32,
+                                    },
+                                    location: call_method_generic.lm:33:34,
+                                },
+                            ],
+                            location: call_method_generic.lm:22:36,
+                        },
+                        location: call_method_generic.lm:12:36,
+                    },
+                ],
+                location: call_method_generic.lm:9:38,
+            },
+            location: call_method_generic.lm:0:38,
+        },
+    ],
+}

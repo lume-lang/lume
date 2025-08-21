@@ -1,0 +1,3 @@
+impl Foo {
+    pub fn bar(a: Int32, self) -> void { }
+}

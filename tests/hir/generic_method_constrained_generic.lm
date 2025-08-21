@@ -1,0 +1,1 @@
+impl Test { fn test<T: Numeric>() -> void {} }

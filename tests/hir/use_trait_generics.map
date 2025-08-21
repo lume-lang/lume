@@ -1,0 +1,200 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        15441871705290034520,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Add",
+                            location: use_trait_generics.lm:4:7,
+                        },
+                        type_arguments: [
+                            Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6143724420395906933,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: use_trait_generics.lm:0:0,
+                                            },
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: use_trait_generics.lm:8:13,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_generics.lm:8:13,
+                                    },
+                                    location: use_trait_generics.lm:8:13,
+                                },
+                                location: use_trait_generics.lm:8:13,
+                            },
+                            Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6005476461629404090,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: use_trait_generics.lm:0:0,
+                                            },
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int64",
+                                            location: use_trait_generics.lm:15:20,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_generics.lm:15:20,
+                                    },
+                                    location: use_trait_generics.lm:15:20,
+                                },
+                                location: use_trait_generics.lm:15:20,
+                            },
+                        ],
+                        location: use_trait_generics.lm:4:21,
+                    },
+                    location: use_trait_generics.lm:4:21,
+                },
+                location: use_trait_generics.lm:4:21,
+            },
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        6143724420395906933,
+                    ),
+                },
+                name: Path {
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: use_trait_generics.lm:0:0,
+                            },
+                        },
+                    ],
+                    name: Type {
+                        name: Identifier {
+                            name: "Int32",
+                            location: use_trait_generics.lm:25:30,
+                        },
+                        type_arguments: [],
+                        location: use_trait_generics.lm:25:30,
+                    },
+                    location: use_trait_generics.lm:25:30,
+                },
+                location: use_trait_generics.lm:25:30,
+            },
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "add",
+                        location: use_trait_generics.lm:44:47,
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: use_trait_generics.lm:48:53,
+                            },
+                            param_type: Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6143724420395906933,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: use_trait_generics.lm:0:0,
+                                            },
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: use_trait_generics.lm:55:60,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_generics.lm:55:60,
+                                    },
+                                    location: use_trait_generics.lm:55:60,
+                                },
+                                location: use_trait_generics.lm:55:60,
+                            },
+                            vararg: false,
+                            location: use_trait_generics.lm:48:60,
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: use_trait_generics.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int64",
+                                    location: use_trait_generics.lm:65:70,
+                                },
+                                type_arguments: [],
+                                location: use_trait_generics.lm:65:70,
+                            },
+                            location: use_trait_generics.lm:65:70,
+                        },
+                        location: use_trait_generics.lm:65:70,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: use_trait_generics.lm:71:73,
+                    },
+                    location: use_trait_generics.lm:37:73,
+                },
+            ],
+            type_parameters: [],
+            location: use_trait_generics.lm:0:75,
+        },
+    ],
+}

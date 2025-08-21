@@ -1,0 +1,3 @@
+use Add in Int32 {
+    fn add(other: Int32) {}
+}

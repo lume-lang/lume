@@ -1,0 +1,90 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "test",
+                        location: generic_function_constrained_generics.lm:3:7,
+                    },
+                    type_arguments: [],
+                    location: generic_function_constrained_generics.lm:3:7,
+                },
+                location: generic_function_constrained_generics.lm:3:7,
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: generic_function_constrained_generics.lm:8:10,
+                    },
+                    constraints: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: generic_function_constrained_generics.lm:12:19,
+                                    },
+                                    type_arguments: [],
+                                    location: generic_function_constrained_generics.lm:12:19,
+                                },
+                                location: generic_function_constrained_generics.lm:12:19,
+                            },
+                            location: generic_function_constrained_generics.lm:12:19,
+                        },
+                    ],
+                    location: generic_function_constrained_generics.lm:8:10,
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: generic_function_constrained_generics.lm:21:23,
+                    },
+                    constraints: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: generic_function_constrained_generics.lm:25:32,
+                                    },
+                                    type_arguments: [],
+                                    location: generic_function_constrained_generics.lm:25:32,
+                                },
+                                location: generic_function_constrained_generics.lm:25:32,
+                            },
+                            location: generic_function_constrained_generics.lm:25:32,
+                        },
+                    ],
+                    location: generic_function_constrained_generics.lm:21:23,
+                },
+            ],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: generic_function_constrained_generics.lm:39:43,
+                        },
+                        type_arguments: [],
+                        location: generic_function_constrained_generics.lm:39:43,
+                    },
+                    location: generic_function_constrained_generics.lm:39:43,
+                },
+                location: generic_function_constrained_generics.lm:39:43,
+            },
+            block: Block {
+                statements: [],
+                location: generic_function_constrained_generics.lm:44:46,
+            },
+            location: generic_function_constrained_generics.lm:0:46,
+        },
+    ],
+}
