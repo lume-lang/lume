@@ -7,7 +7,9 @@ use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn expression(&mut self, expr: &lume_hir::Expression) -> Result<lume_tir::Expression> {
+    pub(crate) fn expression(&mut self, expr: lume_span::ExpressionId) -> Result<lume_tir::Expression> {
+        let expr = self.lower.tcx.hir_expect_expr(expr);
+
         let kind = match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr)?,
             lume_hir::ExpressionKind::Binary(expr) => self.binary_expression(expr)?,
@@ -36,8 +38,8 @@ impl LowerFunction<'_> {
     }
 
     fn assignment_expression(&mut self, expr: &lume_hir::Assignment) -> Result<lume_tir::ExpressionKind> {
-        let target = self.expression(&expr.target)?;
-        let value = self.expression(&expr.value)?;
+        let target = self.expression(expr.target)?;
+        let value = self.expression(expr.value)?;
 
         Ok(lume_tir::ExpressionKind::Assignment(Box::new(lume_tir::Assignment {
             id: expr.id,
@@ -48,8 +50,8 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn binary_expression(&mut self, expr: &lume_hir::Binary) -> Result<lume_tir::ExpressionKind> {
-        let lhs = self.expression(&expr.lhs)?;
-        let rhs = self.expression(&expr.rhs)?;
+        let lhs = self.expression(expr.lhs)?;
+        let rhs = self.expression(expr.rhs)?;
 
         let op = match expr.op.kind {
             lume_hir::BinaryOperatorKind::And => lume_tir::BinaryOperator::And,
@@ -67,7 +69,7 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn cast_expression(&mut self, expr: &lume_hir::Cast) -> Result<lume_tir::ExpressionKind> {
-        let source = self.expression(&expr.source)?;
+        let source = self.expression(expr.source)?;
         let target = self.lower.tcx.mk_type_ref_from_expr(&expr.target, expr.id)?;
 
         Ok(lume_tir::ExpressionKind::Cast(Box::new(lume_tir::Cast {
@@ -98,7 +100,7 @@ impl LowerFunction<'_> {
             .into_iter()
             .map(|field| {
                 let name = field.name.to_string().intern();
-                let value = self.expression(&field.value)?;
+                let value = self.expression(field.value)?;
 
                 Ok(lume_tir::ConstructorField { name, value })
             })
@@ -128,11 +130,11 @@ impl LowerFunction<'_> {
         let mut arguments = Vec::with_capacity(expr.arguments().len());
 
         if let lume_hir::CallExpression::Instanced(instance_call) = &expr {
-            arguments.push(self.expression(&instance_call.callee)?);
+            arguments.push(self.expression(instance_call.callee)?);
         }
 
         for arg in expr.arguments() {
-            arguments.push(self.expression(arg)?);
+            arguments.push(self.expression(*arg)?);
         }
 
         let mut type_arguments = Vec::with_capacity(expr.type_arguments().len());
@@ -141,7 +143,7 @@ impl LowerFunction<'_> {
         // by the function to be invoked.
         match &expr {
             lume_hir::CallExpression::Instanced(call) => {
-                let callee = self.expression(&call.callee)?;
+                let callee = self.expression(call.callee)?;
 
                 type_arguments.extend(callee.ty.type_arguments);
             }
@@ -174,7 +176,7 @@ impl LowerFunction<'_> {
             .cases
             .iter()
             .map(|case| {
-                let condition = if let Some(val) = case.condition.as_ref() {
+                let condition = if let Some(val) = case.condition {
                     Some(self.expression(val)?)
                 } else {
                     None
@@ -201,7 +203,7 @@ impl LowerFunction<'_> {
         let arguments = expr
             .arguments
             .iter()
-            .map(|arg| self.expression(arg))
+            .map(|arg| self.expression(*arg))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(lume_tir::ExpressionKind::IntrinsicCall(Box::new(
@@ -214,7 +216,7 @@ impl LowerFunction<'_> {
     }
 
     fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_tir::IntrinsicKind {
-        let callee_ty = self.lower.tcx.type_of_expr(expr.callee()).unwrap();
+        let callee_ty = self.lower.tcx.type_of(expr.callee()).unwrap();
 
         if callee_ty.is_integer() {
             let bits = callee_ty.bitwidth();
@@ -291,8 +293,8 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn logical_expression(&mut self, expr: &lume_hir::Logical) -> Result<lume_tir::ExpressionKind> {
-        let lhs = self.expression(&expr.lhs)?;
-        let rhs = self.expression(&expr.rhs)?;
+        let lhs = self.expression(expr.lhs)?;
+        let rhs = self.expression(expr.rhs)?;
 
         let op = match expr.op.kind {
             lume_hir::LogicalOperatorKind::And => lume_tir::LogicalOperator::And,
@@ -309,10 +311,10 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn member_expression(&mut self, expr: &lume_hir::Member) -> Result<lume_tir::ExpressionKind> {
-        let callee = self.expression(&expr.callee)?;
+        let callee = self.expression(expr.callee)?;
         let name = expr.name.intern();
 
-        let callee_ty = self.lower.tcx.type_of_expr(&expr.callee)?;
+        let callee_ty = self.lower.tcx.type_of(expr.callee)?;
         let field = self
             .lower
             .tcx
@@ -333,7 +335,7 @@ impl LowerFunction<'_> {
     fn scope_expression(&mut self, expr: &lume_hir::Scope) -> Result<lume_tir::ExpressionKind> {
         let mut body = Vec::with_capacity(expr.body.len());
         for stmt in &expr.body {
-            body.push(self.statement(stmt)?);
+            body.push(self.statement(*stmt)?);
         }
 
         let return_type = self.lower.tcx.type_of_scope(expr)?;
@@ -383,7 +385,7 @@ impl LowerFunction<'_> {
         let arguments = expr
             .arguments
             .iter()
-            .map(|arg| self.expression(arg))
+            .map(|arg| self.expression(*arg))
             .collect::<Result<Vec<_>>>()?;
 
         #[allow(clippy::cast_possible_truncation)]

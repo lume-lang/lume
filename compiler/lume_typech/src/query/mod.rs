@@ -37,7 +37,7 @@ impl TyCheckCtx {
             return Ok(false);
         }
 
-        let arguments = match (expr, is_instance_method) {
+        let argument_ids = match (expr, is_instance_method) {
             // For any instanced call where the method is also instanced, we
             // combine the callee and arguments list into one, such that:
             // ```lm
@@ -66,9 +66,14 @@ impl TyCheckCtx {
             }
         };
 
+        let arguments = argument_ids
+            .iter()
+            .map(|id| self.hir().expect_expression(*id))
+            .collect::<Result<Vec<_>>>()?;
+
         let signature = self.signature_of_instantiated(callable, expr)?;
 
-        self.check_params(expr, &signature.params, arguments)
+        self.check_params(expr, &signature.params, &arguments)
     }
 
     /// Checks whether the given type arguments matches the signature of the given
@@ -129,7 +134,7 @@ impl TyCheckCtx {
         &self,
         expr: lume_hir::CallExpression<'a>,
         parameters: &'a lume_types::Parameters,
-        arguments: &'a [lume_hir::Expression],
+        arguments: &'a [&'a lume_hir::Expression],
     ) -> Result<bool> {
         // Verify that the expected argument count is met, as defined
         // by the parameter definition.
@@ -352,6 +357,8 @@ impl TyCheckCtx {
         let last_statement = block.statements.last();
 
         if let Some(stmt) = last_statement {
+            let stmt = self.hir().expect_statement(*stmt)?;
+
             self.matching_type_of_stmt(stmt)
         } else {
             Ok(TypeRef::void())
@@ -374,6 +381,8 @@ impl TyCheckCtx {
     pub(crate) fn matching_type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
             lume_hir::StatementKind::Expression(expr) => {
+                let expr = self.hir().expect_expression(*expr)?;
+
                 if let lume_hir::ExpressionKind::If(cond) = &expr.kind {
                     self.matching_type_of_cond(&cond.cases)
                 } else {

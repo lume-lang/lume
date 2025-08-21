@@ -193,7 +193,7 @@ impl<'tcx> LowerFunction<'tcx> {
         let statements = block
             .statements
             .iter()
-            .map(|stmt| self.statement(stmt))
+            .map(|stmt| self.statement(*stmt))
             .collect::<Result<Vec<_>>>()?;
 
         let return_type = self.lower.tcx.type_of_block(block)?;
