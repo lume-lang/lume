@@ -230,19 +230,7 @@ mod tests {
                 location: Location::empty(),
             },
             declared_type: None,
-            value: Expression {
-                id: ExpressionId::default(),
-                kind: ExpressionKind::Literal(Box::new(Literal {
-                    id: ExpressionId::default(),
-                    kind: LiteralKind::Int(Box::new(IntLiteral {
-                        id: ExpressionId::default(),
-                        value: 0,
-                        kind: IntKind::I32,
-                    })),
-                    location: Location::empty(),
-                })),
-                location: Location::empty(),
-            },
+            value: ExpressionId::default(),
             location: Location::empty(),
         }
     }

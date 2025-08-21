@@ -1377,8 +1377,8 @@ impl IntrinsicCall {
     /// # Panics
     ///
     /// Panics if the intrinsic call has no arguments.
-    pub fn callee(&self) -> &ExpressionId {
-        self.arguments.first().unwrap()
+    pub fn callee(&self) -> ExpressionId {
+        *self.arguments.first().unwrap()
     }
 
     pub fn type_arguments(&self) -> &[Type] {

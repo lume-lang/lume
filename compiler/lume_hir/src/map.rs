@@ -77,6 +77,12 @@ impl Map {
         self.expressions.get_mut(&id)
     }
 
+    /// Gets the expression with the given ID.
+    pub fn expect_expression(&self, id: ExpressionId) -> Result<&Expression> {
+        self.expression(id)
+            .ok_or_else(|| SimpleDiagnostic::new(format!("expected expression with ID {id:?}, found none")).into())
+    }
+
     /// Gets all the expressions within the HIR map.
     pub fn expressions(&self) -> &IndexMap<ExpressionId, Expression> {
         &self.expressions

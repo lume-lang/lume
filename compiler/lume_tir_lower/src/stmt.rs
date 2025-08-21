@@ -4,7 +4,9 @@ use lume_span::Internable;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    pub(crate) fn statement(&mut self, stmt: &lume_hir::Statement) -> Result<lume_tir::Statement> {
+    pub(crate) fn statement(&mut self, stmt: lume_span::StatementId) -> Result<lume_tir::Statement> {
+        let stmt = self.lower.tcx.hir_expect_stmt(stmt);
+
         match &stmt.kind {
             lume_hir::StatementKind::Variable(stmt) => self.variable_statement(stmt),
             lume_hir::StatementKind::Break(stmt) => Ok(self.break_statement(stmt)),
@@ -13,13 +15,13 @@ impl LowerFunction<'_> {
             lume_hir::StatementKind::Return(stmt) => self.return_statement(stmt),
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.infinite_statement(stmt),
             lume_hir::StatementKind::IteratorLoop(stmt) => self.iterator_statement(stmt),
-            lume_hir::StatementKind::Expression(expr) => Ok(lume_tir::Statement::Expression(self.expression(expr)?)),
+            lume_hir::StatementKind::Expression(expr) => Ok(lume_tir::Statement::Expression(self.expression(*expr)?)),
         }
     }
 
     fn variable_statement(&mut self, stmt: &lume_hir::VariableDeclaration) -> Result<lume_tir::Statement> {
         let var = self.mark_variable(lume_tir::VariableSource::Variable);
-        let value = self.expression(&stmt.value)?;
+        let value = self.expression(stmt.value)?;
 
         self.variable_mapping.insert(stmt.id, var);
 
@@ -50,13 +52,13 @@ impl LowerFunction<'_> {
     }
 
     fn final_statement(&mut self, stmt: &lume_hir::Final) -> Result<lume_tir::Statement> {
-        let value = self.expression(&stmt.value)?;
+        let value = self.expression(stmt.value)?;
 
         Ok(lume_tir::Statement::Final(lume_tir::Final { id: stmt.id, value }))
     }
 
     fn return_statement(&mut self, stmt: &lume_hir::Return) -> Result<lume_tir::Statement> {
-        let value = if let Some(val) = stmt.value.as_ref() {
+        let value = if let Some(val) = stmt.value {
             Some(self.expression(val)?)
         } else {
             None
@@ -75,7 +77,7 @@ impl LowerFunction<'_> {
     }
 
     fn iterator_statement(&mut self, stmt: &lume_hir::IteratorLoop) -> Result<lume_tir::Statement> {
-        let collection = self.expression(&stmt.collection)?;
+        let collection = self.expression(stmt.collection)?;
         let block = self.lower_block(&stmt.block)?;
 
         Ok(lume_tir::Statement::IteratorLoop(lume_tir::IteratorLoop {

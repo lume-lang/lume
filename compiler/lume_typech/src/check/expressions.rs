@@ -38,7 +38,7 @@ impl TyCheckCtx {
         for field in &struct_def.fields {
             if let Some(default_value) = &field.default_value {
                 let field_type = self.mk_type_ref_from(&field.field_type, DefId::Item(struct_def.id))?;
-                let default_value_type = self.type_of_expr(default_value)?;
+                let default_value_type = self.type_of(*default_value)?;
 
                 if let Err(err) = self.ensure_type_compatibility(&default_value_type, &field_type) {
                     self.dcx().emit(err);
@@ -97,27 +97,29 @@ impl TyCheckCtx {
 
     fn define_block_scope(&self, block: &lume_hir::Block) -> Result<()> {
         for stmt in &block.statements {
-            self.statement(stmt)?;
+            self.statement(*stmt)?;
         }
 
         Ok(())
     }
 
     /// Type checks the given HIR statement.
-    fn statement(&self, stmt: &lume_hir::Statement) -> Result<()> {
+    fn statement(&self, stmt: lume_span::StatementId) -> Result<()> {
+        let stmt = self.hir().expect_statement(stmt)?;
+
         match &stmt.kind {
             lume_hir::StatementKind::Variable(var) => {
-                self.expression(&var.value)?;
+                self.expression(var.value)?;
 
                 self.variable_declaration(var)
             }
             lume_hir::StatementKind::Final(stmt) => {
-                self.expression(&stmt.value)?;
+                self.expression(stmt.value)?;
 
                 Ok(())
             }
             lume_hir::StatementKind::Return(ret) => {
-                if let Some(value) = &ret.value {
+                if let Some(value) = ret.value {
                     self.expression(value)?;
                 }
 
@@ -125,11 +127,11 @@ impl TyCheckCtx {
             }
             lume_hir::StatementKind::InfiniteLoop(stmt) => self.define_block_scope(&stmt.block),
             lume_hir::StatementKind::IteratorLoop(stmt) => {
-                self.expression(&stmt.collection)?;
+                self.expression(stmt.collection)?;
 
                 self.define_block_scope(&stmt.block)
             }
-            lume_hir::StatementKind::Expression(expr) => self.expression(expr),
+            lume_hir::StatementKind::Expression(expr) => self.expression(*expr),
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
         }
     }
@@ -144,17 +146,18 @@ impl TyCheckCtx {
     /// this method would raise an error, since the value expands to be of type `Boolean`,
     /// which is incompatible with `Int32`.
     fn variable_declaration(&self, stmt: &lume_hir::VariableDeclaration) -> Result<()> {
-        let value_expr = self.type_of_expr(&stmt.value)?;
+        let value_type = self.type_of(stmt.value)?;
         let resolved_type = self.type_of_vardecl(stmt)?;
 
-        if !self.check_type_compatibility(&value_expr, &resolved_type)? {
+        if !self.check_type_compatibility(&value_type, &resolved_type)? {
+            let value_expr = self.hir().expect_expression(stmt.value)?;
             let declared_type = stmt.declared_type.clone().unwrap();
 
             return Err(MismatchedTypes {
-                found_loc: stmt.value.location,
+                found_loc: value_expr.location,
                 reason_loc: declared_type.location,
                 expected: self.new_named_type(&resolved_type, false)?,
-                found: self.new_named_type(&value_expr, false)?,
+                found: self.new_named_type(&value_type, false)?,
             }
             .into());
         }
@@ -176,14 +179,14 @@ impl TyCheckCtx {
     fn return_statement(&self, stmt: &lume_hir::Return) -> Result<()> {
         let expected = self.hir_ctx_return_type(lume_span::DefId::Statement(stmt.id))?;
 
-        let actual = match &stmt.value {
-            Some(val) => self.type_of_expr(val)?,
+        let actual = match stmt.value {
+            Some(val) => self.type_of(val)?,
             None => TypeRef::void(),
         };
 
         if !self.check_type_compatibility(&actual, &expected)? {
-            let found_loc = match &stmt.value {
-                Some(val) => val.location,
+            let found_loc = match stmt.value {
+                Some(val) => self.hir().expect_expression(val)?.location,
                 None => self.hir_expect_stmt(stmt.id).location,
             };
 
@@ -200,7 +203,9 @@ impl TyCheckCtx {
     }
 
     /// Type checks the given HIR expression.
-    fn expression(&self, expr: &lume_hir::Expression) -> Result<()> {
+    fn expression(&self, expr: lume_span::ExpressionId) -> Result<()> {
+        let expr = self.hir().expect_expression(expr)?;
+
         // Even if the expression type is not yet handled, we still
         // need to verify that the expression itself is valid by
         // querying it's resulting type.
@@ -208,46 +213,46 @@ impl TyCheckCtx {
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => {
-                self.expression(&expr.target)?;
-                self.expression(&expr.value)?;
+                self.expression(expr.target)?;
+                self.expression(expr.value)?;
 
                 self.assignment_expression(expr)
             }
             lume_hir::ExpressionKind::Binary(expr) => {
-                self.expression(&expr.lhs)?;
-                self.expression(&expr.rhs)?;
+                self.expression(expr.lhs)?;
+                self.expression(expr.rhs)?;
 
                 self.binary_expression(expr)
             }
             lume_hir::ExpressionKind::Cast(cast) => {
-                self.expression(&cast.source)?;
+                self.expression(cast.source)?;
 
                 self.cast_expression(cast)
             }
             lume_hir::ExpressionKind::Construct(expr) => {
                 for field in &expr.fields {
-                    self.expression(&field.value)?;
+                    self.expression(field.value)?;
                 }
 
                 self.construct_expression(expr)
             }
             lume_hir::ExpressionKind::StaticCall(call) => {
                 for arg in &call.arguments {
-                    self.expression(arg)?;
+                    self.expression(*arg)?;
                 }
 
                 self.call_expression(lume_hir::CallExpression::Static(call))
             }
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 for arg in &call.arguments {
-                    self.expression(arg)?;
+                    self.expression(*arg)?;
                 }
 
                 self.call_expression(lume_hir::CallExpression::Instanced(call))
             }
             lume_hir::ExpressionKind::IntrinsicCall(call) => {
                 for arg in &call.arguments {
-                    self.expression(arg)?;
+                    self.expression(*arg)?;
                 }
 
                 self.call_expression(lume_hir::CallExpression::Intrinsic(call))
@@ -255,18 +260,20 @@ impl TyCheckCtx {
             lume_hir::ExpressionKind::If(cond) => {
                 for case in &cond.cases {
                     if let Some(expr) = &case.condition {
-                        let ty = self.type_of_expr(expr)?;
+                        let ty = self.type_of(*expr)?;
 
                         if !self.check_type_compatibility(&ty, &TypeRef::bool())? {
+                            let hir_expr = self.hir().expect_expression(*expr)?;
+
                             return Err(super::errors::MismatchedTypesBoolean {
-                                source: expr.location,
+                                source: hir_expr.location,
                                 found: self.new_named_type(&ty, false)?,
                                 expected: self.new_named_type(&TypeRef::bool(), false)?,
                             }
                             .into());
                         }
 
-                        self.expression(expr)?;
+                        self.expression(*expr)?;
                     }
 
                     self.define_block_scope(&case.block)?;
@@ -275,29 +282,29 @@ impl TyCheckCtx {
                 Ok(())
             }
             lume_hir::ExpressionKind::Logical(expr) => {
-                self.expression(&expr.lhs)?;
-                self.expression(&expr.rhs)?;
+                self.expression(expr.lhs)?;
+                self.expression(expr.rhs)?;
 
                 self.logical_expression(expr)
             }
-            lume_hir::ExpressionKind::Member(expr) => self.expression(&expr.callee),
+            lume_hir::ExpressionKind::Member(expr) => self.expression(expr.callee),
             lume_hir::ExpressionKind::Scope(expr) => {
                 for stmt in &expr.body {
-                    self.statement(stmt)?;
+                    self.statement(*stmt)?;
                 }
 
                 Ok(())
             }
             lume_hir::ExpressionKind::Switch(expr) => {
                 for case in &expr.cases {
-                    self.expression(&case.branch)?;
+                    self.expression(case.branch)?;
                 }
 
                 self.switch_expression(expr)
             }
             lume_hir::ExpressionKind::Variant(expr) => {
                 for arg in &expr.arguments {
-                    self.expression(arg)?;
+                    self.expression(*arg)?;
                 }
 
                 self.variant_expression(expr)
@@ -320,18 +327,22 @@ impl TyCheckCtx {
     /// this method would raise an error, since `a` is a type of `Boolean` which cannot
     /// be assigned a value other than `Boolean`.
     fn assignment_expression(&self, expr: &lume_hir::Assignment) -> Result<()> {
-        let target = self.type_of_expr(&expr.target)?;
-        let value = self.type_of_expr(&expr.value)?;
+        let target = self.type_of(expr.target)?;
+        let value = self.type_of(expr.value)?;
 
-        if matches!(expr.target.kind, lume_hir::ExpressionKind::Literal(_)) {
+        let target_expr = self.hir().expect_expression(expr.target)?;
+
+        if matches!(target_expr.kind, lume_hir::ExpressionKind::Literal(_)) {
             return Err(LiteralAssignment { source: expr.location }.into());
         }
 
         if !self.check_type_compatibility(&value, &target)? {
+            let value_expr = self.hir().expect_expression(expr.value)?;
+
             return Err(NonMatchingAssignment {
                 source: expr.location,
-                target_loc: expr.target.location,
-                value_loc: expr.value.location,
+                target_loc: target_expr.location,
+                value_loc: value_expr.location,
                 target_ty: self.new_named_type(&target, false)?.to_string(),
                 value_ty: self.new_named_type(&value, false)?.to_string(),
             }
@@ -351,8 +362,8 @@ impl TyCheckCtx {
     /// this method would raise an error, since [`String`] is not an integer type,
     /// making binary expressions invalid.
     fn binary_expression(&self, expr: &lume_hir::Binary) -> Result<()> {
-        let lhs = self.type_of_expr(&expr.lhs)?;
-        let rhs = self.type_of_expr(&expr.rhs)?;
+        let lhs = self.type_of(expr.lhs)?;
+        let rhs = self.type_of(expr.rhs)?;
 
         // NOTE: We're checking for equality - not compatibility.
         //       These types MUST be the same.
@@ -380,7 +391,7 @@ impl TyCheckCtx {
     /// this method would raise an error, since there exists no implementation of [`Cast<Boolean>`]
     /// on the [`String`] type.
     fn cast_expression(&self, expr: &lume_hir::Cast) -> Result<()> {
-        let source_type = self.type_of_expr(&expr.source)?;
+        let source_type = self.type_of(expr.source)?;
         let dest_type = self.mk_type_ref(&expr.target)?;
 
         let source_named = self.new_named_type(&source_type, false)?;
@@ -453,7 +464,7 @@ impl TyCheckCtx {
             };
 
             let prop_ty = &field.field_type;
-            let field_ty = self.type_of_expr(&constructor_field.value)?;
+            let field_ty = self.type_of(constructor_field.value)?;
 
             if let Err(err) = self.ensure_type_compatibility(&field_ty, prop_ty) {
                 self.dcx().emit(err);
@@ -480,12 +491,14 @@ impl TyCheckCtx {
     /// only boolean values can be tested in logical expressions.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn logical_expression(&self, expr: &lume_hir::Logical) -> Result<()> {
-        let lhs = self.type_of_expr(&expr.lhs)?;
-        let rhs = self.type_of_expr(&expr.rhs)?;
+        let lhs = self.type_of(expr.lhs)?;
+        let rhs = self.type_of(expr.rhs)?;
 
         if self.type_ref_name(&lhs)? != &Path::boolean() {
+            let lhs_expr = self.hir().expect_expression(expr.lhs)?;
+
             return Err(BooleanOperationOnNonBoolean {
-                source: expr.lhs.location,
+                source: lhs_expr.location,
                 expected: Path::boolean().to_string(),
                 found: self.new_named_type(&lhs, false)?.to_string(),
             }
@@ -493,8 +506,10 @@ impl TyCheckCtx {
         }
 
         if self.type_ref_name(&rhs)? != &Path::boolean() {
+            let rhs_expr = self.hir().expect_expression(expr.rhs)?;
+
             return Err(BooleanOperationOnNonBoolean {
-                source: expr.rhs.location,
+                source: rhs_expr.location,
                 expected: Path::boolean().to_string(),
                 found: self.new_named_type(&rhs, false)?.to_string(),
             }
@@ -512,11 +527,11 @@ impl TyCheckCtx {
             return Ok(());
         };
 
-        let operand_ty = self.type_of_expr(&expr.operand)?;
-        let branch_ty = self.type_of_expr(&first_case.branch)?;
+        let operand_ty = self.type_of(expr.operand)?;
+        let branch_ty = self.type_of(first_case.branch)?;
 
         for case in &expr.cases {
-            let case_branch_ty = self.type_of_expr(&case.branch)?;
+            let case_branch_ty = self.type_of(case.branch)?;
             let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
 
             if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
@@ -548,7 +563,7 @@ impl TyCheckCtx {
         }
 
         for (arg, param) in expr.arguments.iter().zip(enum_case_def.parameters.iter()) {
-            let arg_type = self.type_of_expr(arg)?;
+            let arg_type = self.type_of(*arg)?;
             let param_ty = self.mk_type_ref_from(param, DefId::Item(enum_def.id))?;
 
             if let Err(err) = self.ensure_type_compatibility(&arg_type, &param_ty) {
