@@ -114,6 +114,7 @@ fn render_dcx_output(dcx: &DiagCtx) -> String {
     renderer.use_colors = false;
     renderer.highlight_source = false;
 
+    owo_colors::set_override(false);
     let buffer = dcx.render_buffer(&mut renderer).unwrap_or_default();
 
     normalize_output(&buffer)
