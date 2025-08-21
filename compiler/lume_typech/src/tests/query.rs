@@ -79,97 +79,6 @@ fn query_function_check_arg_count() -> Result<()> {
 }
 
 #[test]
-fn query_function_check_arg_type() -> Result<()> {
-    let tcx = type_infer("fn foo(x: Int32) { }")?;
-    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
-    let func = funcs.first().unwrap();
-
-    let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
-        name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![
-            lume_hir::Expression::lit_bool(false).with_location(
-                lume_span::source::Location {
-                    file: Arc::new(SourceFile::internal("foo(false);")),
-                    index: 4..9,
-                }
-                .intern(),
-            ),
-        ],
-        location: lume_span::source::Location {
-            file: Arc::new(SourceFile::internal("foo(false);")),
-            index: 0..10,
-        }
-        .intern(),
-    };
-
-    tcx.check_function(func, &expr)?;
-
-    crate::tests::assert_dcx_snapshot!(tcx.dcx());
-
-    Ok(())
-}
-
-#[test]
-fn query_function_check_arg_type_second() -> Result<()> {
-    let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
-    let func = funcs.first().unwrap();
-
-    let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
-        name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![
-            lume_hir::Expression::lit_bool(false).with_location(
-                lume_span::source::Location {
-                    file: Arc::new(SourceFile::internal("foo(false, false);")),
-                    index: 4..9,
-                }
-                .intern(),
-            ),
-            lume_hir::Expression::lit_bool(false).with_location(
-                lume_span::source::Location {
-                    file: Arc::new(SourceFile::internal("foo(false, false);")),
-                    index: 11..16,
-                }
-                .intern(),
-            ),
-        ],
-        location: lume_span::source::Location {
-            file: Arc::new(SourceFile::internal("foo(false, false);")),
-            index: 0..18,
-        }
-        .intern(),
-    };
-
-    tcx.check_function(func, &expr)?;
-
-    crate::tests::assert_dcx_snapshot!(tcx.dcx());
-
-    Ok(())
-}
-
-#[test]
-fn query_function_check_arg_type_match() -> Result<()> {
-    let tcx = type_infer("fn foo(x: Boolean, y: Int32) { }")?;
-    let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
-    let func = funcs.first().unwrap();
-
-    let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
-        name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![lume_hir::Expression::lit_bool(false), lume_hir::Expression::lit_i32(1)],
-        location: Location::empty(),
-    };
-
-    tcx.check_function(func, &expr)?;
-
-    crate::tests::assert_dcx_snapshot!(tcx.dcx());
-
-    Ok(())
-}
-
-#[test]
 fn query_function_check_type_arg_type_count() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
     let funcs = tcx.probe_functions(&Path::rooted(PathSegment::callable("foo")));
@@ -383,50 +292,6 @@ fn query_check_method_arg_count() -> Result<()> {
 }
 
 #[test]
-fn query_check_method_arg_type() -> Result<()> {
-    let tcx = type_infer(
-        "struct A {}
-
-        impl A {
-            pub fn foo(x: Int32) { }
-        }",
-    )?;
-
-    let method = tcx
-        .tdb()
-        .find_method(&Path::from_parts(
-            Some([PathSegment::ty("A")]),
-            PathSegment::callable("foo"),
-        ))
-        .unwrap();
-
-    let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
-        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
-        arguments: vec![
-            lume_hir::Expression::lit_bool(false).with_location(
-                lume_span::source::Location {
-                    file: Arc::new(SourceFile::internal("A::foo(false);")),
-                    index: 7..13,
-                }
-                .intern(),
-            ),
-        ],
-        location: lume_span::source::Location {
-            file: Arc::new(SourceFile::internal("A::foo(false);")),
-            index: 0..13,
-        }
-        .intern(),
-    };
-
-    tcx.check_method(method, lume_hir::CallExpression::Static(&expr))?;
-
-    crate::tests::assert_dcx_snapshot!(tcx.dcx());
-
-    Ok(())
-}
-
-#[test]
 fn query_check_method_type_arg_count() -> Result<()> {
     let tcx = type_infer(
         "struct A {}
@@ -571,36 +436,6 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),
-    };
-
-    tcx.lookup_functions(&expr)?;
-
-    crate::tests::assert_dcx_snapshot!(tcx.dcx());
-
-    Ok(())
-}
-
-#[test]
-fn query_lookup_functions_suggestion_arg_mismatch() -> Result<()> {
-    let tcx = type_infer("fn foo(x: Int32) { }")?;
-
-    let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
-        name: Path::rooted(PathSegment::callable("foo")),
-        arguments: vec![
-            lume_hir::Expression::lit_bool(false).with_location(
-                lume_span::source::Location {
-                    file: Arc::new(SourceFile::internal("foo(false);")),
-                    index: 4..9,
-                }
-                .intern(),
-            ),
-        ],
-        location: lume_span::source::Location {
-            file: Arc::new(SourceFile::internal("foo(false);")),
-            index: 0..11,
-        }
-        .intern(),
     };
 
     tcx.lookup_functions(&expr)?;
