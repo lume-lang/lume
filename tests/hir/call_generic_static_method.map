@@ -1,0 +1,117 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: call_generic_static_method.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: call_generic_static_method.lm:3:6,
+                },
+                location: call_generic_static_method.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "_",
+                        declared_type: None,
+                        value: StaticCall {
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: call_generic_static_method.lm:0:0,
+                                        },
+                                    },
+                                    Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: call_generic_static_method.lm:20:25,
+                                        },
+                                        type_arguments: [
+                                            Type {
+                                                id: ItemId {
+                                                    package: PackageId(
+                                                        0,
+                                                    ),
+                                                    index: Idx(
+                                                        8901637729188007634,
+                                                    ),
+                                                },
+                                                name: Path {
+                                                    root: [],
+                                                    name: Type {
+                                                        name: Identifier {
+                                                            name: "T",
+                                                            location: call_generic_static_method.lm:26:27,
+                                                        },
+                                                        type_arguments: [],
+                                                        location: call_generic_static_method.lm:26:27,
+                                                    },
+                                                    location: call_generic_static_method.lm:26:27,
+                                                },
+                                                location: call_generic_static_method.lm:26:27,
+                                            },
+                                        ],
+                                        location: call_generic_static_method.lm:20:28,
+                                    },
+                                ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "call",
+                                        location: call_generic_static_method.lm:30:34,
+                                    },
+                                    type_arguments: [],
+                                    location: call_generic_static_method.lm:30:34,
+                                },
+                                location: call_generic_static_method.lm:30:34,
+                            },
+                            arguments: [
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                    location: call_generic_static_method.lm:35:36,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 1,
+                                        kind: I32,
+                                    },
+                                    location: call_generic_static_method.lm:38:39,
+                                },
+                            ],
+                            location: call_generic_static_method.lm:30:34,
+                        },
+                        location: call_generic_static_method.lm:12:41,
+                    },
+                ],
+                location: call_generic_static_method.lm:9:43,
+            },
+            location: call_generic_static_method.lm:0:43,
+        },
+    ],
+}

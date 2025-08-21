@@ -1,0 +1,1 @@
+trait Add { fn add(other: int) -> int; }

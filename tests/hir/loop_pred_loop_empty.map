@@ -1,0 +1,80 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: loop_pred_loop_empty.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: loop_pred_loop_empty.lm:3:6,
+                },
+                location: loop_pred_loop_empty.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    InfiniteLoop {
+                        block: Block {
+                            statements: [
+                                If {
+                                    cases: [
+                                        Condition {
+                                            condition: Literal {
+                                                kind: BooleanLiteral {
+                                                    value: true,
+                                                },
+                                                location: loop_pred_loop_empty.lm:18:22,
+                                            },
+                                            block: Block {
+                                                statements: [],
+                                                location: loop_pred_loop_empty.lm:23:26,
+                                            },
+                                            location: loop_pred_loop_empty.lm:0:0,
+                                        },
+                                        Condition {
+                                            condition: None,
+                                            block: Block {
+                                                statements: [
+                                                    Break {
+                                                        location: loop_pred_loop_empty.lm:0:0,
+                                                    },
+                                                ],
+                                                location: loop_pred_loop_empty.lm:0:0,
+                                            },
+                                            location: loop_pred_loop_empty.lm:0:0,
+                                        },
+                                    ],
+                                    location: loop_pred_loop_empty.lm:0:0,
+                                },
+                            ],
+                            location: loop_pred_loop_empty.lm:0:0,
+                        },
+                        location: loop_pred_loop_empty.lm:12:26,
+                    },
+                ],
+                location: loop_pred_loop_empty.lm:9:28,
+            },
+            location: loop_pred_loop_empty.lm:0:28,
+        },
+    ],
+}

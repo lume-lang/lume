@@ -1,0 +1,58 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: construction_empty_self.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: construction_empty_self.lm:3:6,
+                },
+                location: construction_empty_self.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Construct {
+                        path: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Self",
+                                    location: construction_empty_self.lm:12:16,
+                                },
+                                type_arguments: [],
+                                location: construction_empty_self.lm:12:16,
+                            },
+                            location: construction_empty_self.lm:12:16,
+                        },
+                        fields: [],
+                        location: construction_empty_self.lm:12:21,
+                    },
+                ],
+                location: construction_empty_self.lm:9:23,
+            },
+            location: construction_empty_self.lm:0:23,
+        },
+    ],
+}

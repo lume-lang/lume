@@ -1,0 +1,3 @@
+fn foo() {
+	Foo { bar: 0 };
+}

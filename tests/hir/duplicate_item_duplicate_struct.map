@@ -1,0 +1,9 @@
+× error[LM3028]: duplicate definition
+   ╭─[duplicate_item_duplicate_struct.lm:3:8]
+ 2 │
+ 3 │ struct Foo { }
+   │        ^^^ item Foo is already defined within this file
+   ∶
+ 1 │ struct Foo {}
+   │        ^^^ original definition found here
+   ╰──

@@ -1,0 +1,139 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        14895811466431262429,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Add",
+                            location: use_trait_priv_method.lm:4:7,
+                        },
+                        type_arguments: [],
+                        location: use_trait_priv_method.lm:4:7,
+                    },
+                    location: use_trait_priv_method.lm:4:7,
+                },
+                location: use_trait_priv_method.lm:4:7,
+            },
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        6143724420395906933,
+                    ),
+                },
+                name: Path {
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: use_trait_priv_method.lm:0:0,
+                            },
+                        },
+                    ],
+                    name: Type {
+                        name: Identifier {
+                            name: "Int32",
+                            location: use_trait_priv_method.lm:11:16,
+                        },
+                        type_arguments: [],
+                        location: use_trait_priv_method.lm:11:16,
+                    },
+                    location: use_trait_priv_method.lm:11:16,
+                },
+                location: use_trait_priv_method.lm:11:16,
+            },
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "add",
+                        location: use_trait_priv_method.lm:26:29,
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "other",
+                                location: use_trait_priv_method.lm:30:35,
+                            },
+                            param_type: Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6143724420395906933,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: use_trait_priv_method.lm:0:0,
+                                            },
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: use_trait_priv_method.lm:37:42,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_priv_method.lm:37:42,
+                                    },
+                                    location: use_trait_priv_method.lm:37:42,
+                                },
+                                location: use_trait_priv_method.lm:37:42,
+                            },
+                            vararg: false,
+                            location: use_trait_priv_method.lm:30:42,
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: use_trait_priv_method.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: use_trait_priv_method.lm:47:52,
+                                },
+                                type_arguments: [],
+                                location: use_trait_priv_method.lm:47:52,
+                            },
+                            location: use_trait_priv_method.lm:47:52,
+                        },
+                        location: use_trait_priv_method.lm:47:52,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: use_trait_priv_method.lm:53:55,
+                    },
+                    location: use_trait_priv_method.lm:23:55,
+                },
+            ],
+            type_parameters: [],
+            location: use_trait_priv_method.lm:0:57,
+        },
+    ],
+}

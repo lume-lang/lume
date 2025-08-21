@@ -1,0 +1,6 @@
+× error[LM3016]: vararg parameter must be last
+   ╭─[function_definition_varargs_nonlast.lm:1:11]
+ 1 │ fn foo(...args: Int32, a: Int32) {}
+   │           ^^^^^^^^^^^ vararg parameter must be the last parameter
+   ╰──
+   help: consider moving the vararg parameter to the end

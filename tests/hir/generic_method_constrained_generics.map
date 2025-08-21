@@ -1,0 +1,111 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        13825029388148061585,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Test",
+                            location: generic_method_constrained_generics.lm:5:9,
+                        },
+                        type_arguments: [],
+                        location: generic_method_constrained_generics.lm:5:9,
+                    },
+                    location: generic_method_constrained_generics.lm:5:9,
+                },
+                location: generic_method_constrained_generics.lm:5:9,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "test",
+                        location: generic_method_constrained_generics.lm:15:19,
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: generic_method_constrained_generics.lm:20:22,
+                            },
+                            constraints: [
+                                Type {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: generic_method_constrained_generics.lm:24:31,
+                                            },
+                                            type_arguments: [],
+                                            location: generic_method_constrained_generics.lm:24:31,
+                                        },
+                                        location: generic_method_constrained_generics.lm:24:31,
+                                    },
+                                    location: generic_method_constrained_generics.lm:24:31,
+                                },
+                            ],
+                            location: generic_method_constrained_generics.lm:20:22,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: generic_method_constrained_generics.lm:33:35,
+                            },
+                            constraints: [
+                                Type {
+                                    name: Path {
+                                        root: [],
+                                        name: Type {
+                                            name: Identifier {
+                                                name: "Numeric",
+                                                location: generic_method_constrained_generics.lm:37:44,
+                                            },
+                                            type_arguments: [],
+                                            location: generic_method_constrained_generics.lm:37:44,
+                                        },
+                                        location: generic_method_constrained_generics.lm:37:44,
+                                    },
+                                    location: generic_method_constrained_generics.lm:37:44,
+                                },
+                            ],
+                            location: generic_method_constrained_generics.lm:33:35,
+                        },
+                    ],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: generic_method_constrained_generics.lm:51:55,
+                                },
+                                type_arguments: [],
+                                location: generic_method_constrained_generics.lm:51:55,
+                            },
+                            location: generic_method_constrained_generics.lm:51:55,
+                        },
+                        location: generic_method_constrained_generics.lm:51:55,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: generic_method_constrained_generics.lm:56:58,
+                    },
+                    location: generic_method_constrained_generics.lm:12:58,
+                },
+            ],
+            type_parameters: [],
+            location: generic_method_constrained_generics.lm:0:60,
+        },
+    ],
+}

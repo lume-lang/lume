@@ -1,0 +1,1 @@
+trait Add { pub fn add(other: int) { } }

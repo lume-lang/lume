@@ -1,0 +1,39 @@
+Map {
+    items: [
+        EnumDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: enum_single_variant.lm:5:8,
+                    },
+                    type_arguments: [],
+                    location: enum_single_variant.lm:5:8,
+                },
+                location: enum_single_variant.lm:5:8,
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Bar",
+                                location: enum_single_variant.lm:11:14,
+                            },
+                            type_arguments: [],
+                            location: enum_single_variant.lm:11:14,
+                        },
+                        location: enum_single_variant.lm:11:14,
+                    },
+                    parameters: [],
+                    location: enum_single_variant.lm:11:14,
+                },
+            ],
+            location: enum_single_variant.lm:0:16,
+        },
+    ],
+}

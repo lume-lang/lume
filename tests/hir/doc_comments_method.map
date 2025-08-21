@@ -1,0 +1,62 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: doc_comments_method.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: doc_comments_method.lm:5:8,
+                    },
+                    location: doc_comments_method.lm:5:8,
+                },
+                location: doc_comments_method.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "bar",
+                        location: doc_comments_method.lm:52:55,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: doc_comments_method.lm:61:65,
+                                },
+                                type_arguments: [],
+                                location: doc_comments_method.lm:61:65,
+                            },
+                            location: doc_comments_method.lm:61:65,
+                        },
+                        location: doc_comments_method.lm:61:65,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: doc_comments_method.lm:66:69,
+                    },
+                    location: doc_comments_method.lm:45:69,
+                },
+            ],
+            type_parameters: [],
+            location: doc_comments_method.lm:0:71,
+        },
+    ],
+}

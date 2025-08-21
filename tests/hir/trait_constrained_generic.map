@@ -1,0 +1,47 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Add",
+                        location: trait_constrained_generic.lm:6:9,
+                    },
+                    type_arguments: [],
+                    location: trait_constrained_generic.lm:6:9,
+                },
+                location: trait_constrained_generic.lm:6:9,
+            },
+            methods: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T",
+                        location: trait_constrained_generic.lm:10:11,
+                    },
+                    constraints: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: trait_constrained_generic.lm:13:20,
+                                    },
+                                    type_arguments: [],
+                                    location: trait_constrained_generic.lm:13:20,
+                                },
+                                location: trait_constrained_generic.lm:13:20,
+                            },
+                            location: trait_constrained_generic.lm:13:20,
+                        },
+                    ],
+                    location: trait_constrained_generic.lm:10:11,
+                },
+            ],
+            location: trait_constrained_generic.lm:0:24,
+        },
+    ],
+}

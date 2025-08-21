@@ -1,0 +1,41 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: using_self_in_function_valid.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: using_self_in_function_valid.lm:3:6,
+                },
+                location: using_self_in_function_valid.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: using_self_in_function_valid.lm:12:16,
+                        },
+                        type_arguments: [],
+                        location: using_self_in_function_valid.lm:12:16,
+                    },
+                    location: using_self_in_function_valid.lm:12:16,
+                },
+                location: using_self_in_function_valid.lm:12:16,
+            },
+            block: Block {
+                statements: [],
+                location: using_self_in_function_valid.lm:17:20,
+            },
+            location: using_self_in_function_valid.lm:0:20,
+        },
+    ],
+}

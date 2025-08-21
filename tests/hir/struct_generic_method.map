@@ -1,0 +1,78 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: struct_generic_method.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: struct_generic_method.lm:5:8,
+                    },
+                    location: struct_generic_method.lm:5:8,
+                },
+                location: struct_generic_method.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "bar",
+                        location: struct_generic_method.lm:18:21,
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: struct_generic_method.lm:22:23,
+                            },
+                            constraints: [],
+                            location: struct_generic_method.lm:22:23,
+                        },
+                    ],
+                    return_type: Type {
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: struct_generic_method.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: struct_generic_method.lm:30:35,
+                                },
+                                type_arguments: [],
+                                location: struct_generic_method.lm:30:35,
+                            },
+                            location: struct_generic_method.lm:30:35,
+                        },
+                        location: struct_generic_method.lm:30:35,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: struct_generic_method.lm:36:39,
+                    },
+                    location: struct_generic_method.lm:15:39,
+                },
+            ],
+            type_parameters: [],
+            location: struct_generic_method.lm:0:41,
+        },
+    ],
+}

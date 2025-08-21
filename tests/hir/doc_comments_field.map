@@ -1,0 +1,69 @@
+Map {
+    items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: doc_comments_field.lm:7:10,
+                    },
+                    type_arguments: [],
+                    location: doc_comments_field.lm:7:10,
+                },
+                location: doc_comments_field.lm:7:10,
+            },
+            builtin: false,
+            fields: [
+                Field {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "bar",
+                        location: doc_comments_field.lm:51:54,
+                    },
+                    field_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                6143724420395906933,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: doc_comments_field.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: doc_comments_field.lm:56:61,
+                                },
+                                type_arguments: [],
+                                location: doc_comments_field.lm:56:61,
+                            },
+                            location: doc_comments_field.lm:56:61,
+                        },
+                        location: doc_comments_field.lm:56:61,
+                    },
+                    default_value: Literal {
+                        kind: IntLiteral {
+                            value: 0,
+                            kind: I32,
+                        },
+                        location: doc_comments_field.lm:64:65,
+                    },
+                    location: doc_comments_field.lm:47:66,
+                },
+            ],
+            type_parameters: [],
+            location: doc_comments_field.lm:0:68,
+        },
+    ],
+}

@@ -1,0 +1,79 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        13825029388148061585,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Test",
+                            location: generic_method_multiple_generics.lm:5:9,
+                        },
+                        type_arguments: [],
+                        location: generic_method_multiple_generics.lm:5:9,
+                    },
+                    location: generic_method_multiple_generics.lm:5:9,
+                },
+                location: generic_method_multiple_generics.lm:5:9,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "test",
+                        location: generic_method_multiple_generics.lm:15:19,
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T1",
+                                location: generic_method_multiple_generics.lm:20:22,
+                            },
+                            constraints: [],
+                            location: generic_method_multiple_generics.lm:20:22,
+                        },
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T2",
+                                location: generic_method_multiple_generics.lm:24:26,
+                            },
+                            constraints: [],
+                            location: generic_method_multiple_generics.lm:24:26,
+                        },
+                    ],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: generic_method_multiple_generics.lm:33:37,
+                                },
+                                type_arguments: [],
+                                location: generic_method_multiple_generics.lm:33:37,
+                            },
+                            location: generic_method_multiple_generics.lm:33:37,
+                        },
+                        location: generic_method_multiple_generics.lm:33:37,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: generic_method_multiple_generics.lm:38:40,
+                    },
+                    location: generic_method_multiple_generics.lm:12:40,
+                },
+            ],
+            type_parameters: [],
+            location: generic_method_multiple_generics.lm:0:42,
+        },
+    ],
+}

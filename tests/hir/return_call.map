@@ -1,0 +1,132 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: return_call.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: return_call.lm:3:6,
+                },
+                location: return_call.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "a",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 1,
+                                kind: I32,
+                            },
+                            location: return_call.lm:23:24,
+                        },
+                        location: return_call.lm:15:25,
+                    },
+                    VariableDeclaration {
+                        name: "b",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 1,
+                                kind: I32,
+                            },
+                            location: return_call.lm:38:39,
+                        },
+                        location: return_call.lm:30:40,
+                    },
+                    VariableDeclaration {
+                        name: "c",
+                        declared_type: None,
+                        value: Literal {
+                            kind: IntLiteral {
+                                value: 1,
+                                kind: I32,
+                            },
+                            location: return_call.lm:53:54,
+                        },
+                        location: return_call.lm:45:55,
+                    },
+                    Return {
+                        value: InstanceCall {
+                            name: Callable {
+                                name: Identifier {
+                                    name: "b",
+                                    location: return_call.lm:70:71,
+                                },
+                                type_arguments: [],
+                                location: return_call.lm:70:72,
+                            },
+                            callee: Variable {
+                                name: Identifier {
+                                    name: "a",
+                                    location: return_call.lm:68:69,
+                                },
+                                reference: VariableDeclaration {
+                                    name: "a",
+                                    declared_type: None,
+                                    value: Literal {
+                                        kind: IntLiteral {
+                                            value: 1,
+                                            kind: I32,
+                                        },
+                                        location: return_call.lm:23:24,
+                                    },
+                                    location: return_call.lm:15:25,
+                                },
+                                location: return_call.lm:68:69,
+                            },
+                            arguments: [
+                                Variable {
+                                    name: Identifier {
+                                        name: "c",
+                                        location: return_call.lm:72:73,
+                                    },
+                                    reference: VariableDeclaration {
+                                        name: "c",
+                                        declared_type: None,
+                                        value: Literal {
+                                            kind: IntLiteral {
+                                                value: 1,
+                                                kind: I32,
+                                            },
+                                            location: return_call.lm:53:54,
+                                        },
+                                        location: return_call.lm:45:55,
+                                    },
+                                    location: return_call.lm:72:73,
+                                },
+                            ],
+                            location: return_call.lm:70:75,
+                        },
+                        location: return_call.lm:61:75,
+                    },
+                ],
+                location: return_call.lm:9:77,
+            },
+            location: return_call.lm:0:77,
+        },
+    ],
+}

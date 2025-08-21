@@ -1,0 +1,4 @@
+struct Foo {
+    /// This is a doc comment
+    pub bar: Int32 = 0;
+}

@@ -1,0 +1,109 @@
+Map {
+    items: [
+        EnumDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: enum_multiple_variants_multiple_params.lm:5:8,
+                    },
+                    type_arguments: [],
+                    location: enum_multiple_variants_multiple_params.lm:5:8,
+                },
+                location: enum_multiple_variants_multiple_params.lm:5:8,
+            },
+            type_parameters: [],
+            cases: [
+                EnumDefinitionCase {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Bar",
+                                location: enum_multiple_variants_multiple_params.lm:15:18,
+                            },
+                            type_arguments: [],
+                            location: enum_multiple_variants_multiple_params.lm:15:18,
+                        },
+                        location: enum_multiple_variants_multiple_params.lm:15:18,
+                    },
+                    parameters: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "int",
+                                        location: enum_multiple_variants_multiple_params.lm:19:22,
+                                    },
+                                },
+                                location: enum_multiple_variants_multiple_params.lm:19:22,
+                            },
+                            location: enum_multiple_variants_multiple_params.lm:19:22,
+                        },
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "int",
+                                        location: enum_multiple_variants_multiple_params.lm:24:27,
+                                    },
+                                },
+                                location: enum_multiple_variants_multiple_params.lm:24:27,
+                            },
+                            location: enum_multiple_variants_multiple_params.lm:24:27,
+                        },
+                    ],
+                    location: enum_multiple_variants_multiple_params.lm:15:28,
+                },
+                EnumDefinitionCase {
+                    name: Path {
+                        root: [],
+                        name: Type {
+                            name: Identifier {
+                                name: "Baz",
+                                location: enum_multiple_variants_multiple_params.lm:34:37,
+                            },
+                            type_arguments: [],
+                            location: enum_multiple_variants_multiple_params.lm:34:37,
+                        },
+                        location: enum_multiple_variants_multiple_params.lm:34:37,
+                    },
+                    parameters: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "int",
+                                        location: enum_multiple_variants_multiple_params.lm:38:41,
+                                    },
+                                },
+                                location: enum_multiple_variants_multiple_params.lm:38:41,
+                            },
+                            location: enum_multiple_variants_multiple_params.lm:38:41,
+                        },
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "int",
+                                        location: enum_multiple_variants_multiple_params.lm:43:46,
+                                    },
+                                },
+                                location: enum_multiple_variants_multiple_params.lm:43:46,
+                            },
+                            location: enum_multiple_variants_multiple_params.lm:43:46,
+                        },
+                    ],
+                    location: enum_multiple_variants_multiple_params.lm:34:47,
+                },
+            ],
+            location: enum_multiple_variants_multiple_params.lm:0:49,
+        },
+    ],
+}

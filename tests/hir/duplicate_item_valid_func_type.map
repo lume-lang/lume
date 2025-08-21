@@ -1,0 +1,59 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: duplicate_item_valid_func_type.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: duplicate_item_valid_func_type.lm:3:6,
+                },
+                location: duplicate_item_valid_func_type.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [],
+                location: duplicate_item_valid_func_type.lm:9:11,
+            },
+            location: duplicate_item_valid_func_type.lm:0:11,
+        },
+        TraitDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Foo",
+                        location: duplicate_item_valid_func_type.lm:19:22,
+                    },
+                    type_arguments: [],
+                    location: duplicate_item_valid_func_type.lm:19:22,
+                },
+                location: duplicate_item_valid_func_type.lm:19:22,
+            },
+            methods: [],
+            type_parameters: [],
+            location: duplicate_item_valid_func_type.lm:13:26,
+        },
+    ],
+}

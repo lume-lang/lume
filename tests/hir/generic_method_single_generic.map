@@ -1,0 +1,71 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        13825029388148061585,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Test",
+                            location: generic_method_single_generic.lm:5:9,
+                        },
+                        type_arguments: [],
+                        location: generic_method_single_generic.lm:5:9,
+                    },
+                    location: generic_method_single_generic.lm:5:9,
+                },
+                location: generic_method_single_generic.lm:5:9,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "test",
+                        location: generic_method_single_generic.lm:15:19,
+                    },
+                    parameters: [],
+                    type_parameters: [
+                        TypeParameter {
+                            name: Identifier {
+                                name: "T",
+                                location: generic_method_single_generic.lm:20:21,
+                            },
+                            constraints: [],
+                            location: generic_method_single_generic.lm:20:21,
+                        },
+                    ],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: generic_method_single_generic.lm:28:32,
+                                },
+                                type_arguments: [],
+                                location: generic_method_single_generic.lm:28:32,
+                            },
+                            location: generic_method_single_generic.lm:28:32,
+                        },
+                        location: generic_method_single_generic.lm:28:32,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: generic_method_single_generic.lm:33:35,
+                    },
+                    location: generic_method_single_generic.lm:12:35,
+                },
+            ],
+            type_parameters: [],
+            location: generic_method_single_generic.lm:0:37,
+        },
+    ],
+}

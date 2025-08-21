@@ -1,0 +1,41 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "test",
+                        location: generic_function_empty_generics.lm:3:7,
+                    },
+                    type_arguments: [],
+                    location: generic_function_empty_generics.lm:3:7,
+                },
+                location: generic_function_empty_generics.lm:3:7,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: generic_function_empty_generics.lm:15:19,
+                        },
+                        type_arguments: [],
+                        location: generic_function_empty_generics.lm:15:19,
+                    },
+                    location: generic_function_empty_generics.lm:15:19,
+                },
+                location: generic_function_empty_generics.lm:15:19,
+            },
+            block: Block {
+                statements: [],
+                location: generic_function_empty_generics.lm:20:22,
+            },
+            location: generic_function_empty_generics.lm:0:22,
+        },
+    ],
+}

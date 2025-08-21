@@ -1,0 +1,140 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "main",
+                        location: function_definition_parameters.lm:3:7,
+                    },
+                    type_arguments: [],
+                    location: function_definition_parameters.lm:3:7,
+                },
+                location: function_definition_parameters.lm:3:7,
+            },
+            parameters: [
+                Parameter {
+                    name: Identifier {
+                        name: "argc",
+                        location: function_definition_parameters.lm:8:12,
+                    },
+                    param_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                16901111566601906630,
+                            ),
+                        },
+                        name: Path {
+                            root: [],
+                            name: Namespace {
+                                name: Identifier {
+                                    name: "u8",
+                                    location: function_definition_parameters.lm:14:16,
+                                },
+                            },
+                            location: function_definition_parameters.lm:14:16,
+                        },
+                        location: function_definition_parameters.lm:14:16,
+                    },
+                    vararg: false,
+                    location: function_definition_parameters.lm:8:16,
+                },
+                Parameter {
+                    name: Identifier {
+                        name: "arcv",
+                        location: function_definition_parameters.lm:18:22,
+                    },
+                    param_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                2759316654582934287,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: <internal>:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Array",
+                                    location: function_definition_parameters.lm:0:0,
+                                },
+                                type_arguments: [
+                                    Type {
+                                        id: ItemId {
+                                            package: PackageId(
+                                                0,
+                                            ),
+                                            index: Idx(
+                                                8008751949105636900,
+                                            ),
+                                        },
+                                        name: Path {
+                                            root: [
+                                                Namespace {
+                                                    name: Identifier {
+                                                        name: "std",
+                                                        location: function_definition_parameters.lm:0:0,
+                                                    },
+                                                },
+                                            ],
+                                            name: Type {
+                                                name: Identifier {
+                                                    name: "String",
+                                                    location: function_definition_parameters.lm:25:31,
+                                                },
+                                                type_arguments: [],
+                                                location: function_definition_parameters.lm:25:31,
+                                            },
+                                            location: function_definition_parameters.lm:25:31,
+                                        },
+                                        location: function_definition_parameters.lm:25:31,
+                                    },
+                                ],
+                                location: function_definition_parameters.lm:24:32,
+                            },
+                            location: function_definition_parameters.lm:24:32,
+                        },
+                        location: function_definition_parameters.lm:24:32,
+                    },
+                    vararg: false,
+                    location: function_definition_parameters.lm:18:32,
+                },
+            ],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: function_definition_parameters.lm:37:41,
+                        },
+                        type_arguments: [],
+                        location: function_definition_parameters.lm:37:41,
+                    },
+                    location: function_definition_parameters.lm:37:41,
+                },
+                location: function_definition_parameters.lm:37:41,
+            },
+            block: Block {
+                statements: [],
+                location: function_definition_parameters.lm:42:45,
+            },
+            location: function_definition_parameters.lm:0:45,
+        },
+    ],
+}

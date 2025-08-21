@@ -1,0 +1,3 @@
+fn foo() {
+	while true { let a = 0; }
+}

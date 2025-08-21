@@ -1,0 +1,71 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: call_function_param_1.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: call_function_param_1.lm:3:6,
+                },
+                location: call_function_param_1.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "_",
+                        declared_type: None,
+                        value: StaticCall {
+                            name: Path {
+                                root: [],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "call",
+                                        location: call_function_param_1.lm:20:24,
+                                    },
+                                    type_arguments: [],
+                                    location: call_function_param_1.lm:20:25,
+                                },
+                                location: call_function_param_1.lm:20:25,
+                            },
+                            arguments: [
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 0,
+                                        kind: I32,
+                                    },
+                                    location: call_function_param_1.lm:25:26,
+                                },
+                            ],
+                            location: call_function_param_1.lm:20:28,
+                        },
+                        location: call_function_param_1.lm:12:28,
+                    },
+                ],
+                location: call_function_param_1.lm:9:30,
+            },
+            location: call_function_param_1.lm:0:30,
+        },
+    ],
+}

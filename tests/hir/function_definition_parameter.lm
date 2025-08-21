@@ -1,0 +1,1 @@
+fn main(argc: u8) -> void { }

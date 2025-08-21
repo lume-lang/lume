@@ -1,0 +1,132 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: using_self_as_parameter_valid.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: using_self_as_parameter_valid.lm:5:8,
+                    },
+                    location: using_self_as_parameter_valid.lm:5:8,
+                },
+                location: using_self_as_parameter_valid.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "bar",
+                        location: using_self_as_parameter_valid.lm:22:25,
+                    },
+                    parameters: [
+                        Parameter {
+                            name: Identifier {
+                                name: "self",
+                                location: using_self_as_parameter_valid.lm:26:30,
+                            },
+                            param_type: Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        5175167619020667705,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Foo",
+                                            location: using_self_as_parameter_valid.lm:5:8,
+                                        },
+                                        type_arguments: [],
+                                        location: using_self_as_parameter_valid.lm:5:8,
+                                    },
+                                    location: using_self_as_parameter_valid.lm:5:8,
+                                },
+                                location: using_self_as_parameter_valid.lm:26:30,
+                            },
+                            vararg: false,
+                            location: using_self_as_parameter_valid.lm:26:30,
+                        },
+                        Parameter {
+                            name: Identifier {
+                                name: "a",
+                                location: using_self_as_parameter_valid.lm:32:33,
+                            },
+                            param_type: Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        6143724420395906933,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: using_self_as_parameter_valid.lm:0:0,
+                                            },
+                                        },
+                                    ],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "Int32",
+                                            location: using_self_as_parameter_valid.lm:35:40,
+                                        },
+                                        type_arguments: [],
+                                        location: using_self_as_parameter_valid.lm:35:40,
+                                    },
+                                    location: using_self_as_parameter_valid.lm:35:40,
+                                },
+                                location: using_self_as_parameter_valid.lm:35:40,
+                            },
+                            vararg: false,
+                            location: using_self_as_parameter_valid.lm:32:40,
+                        },
+                    ],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "void",
+                                    location: using_self_as_parameter_valid.lm:45:49,
+                                },
+                                type_arguments: [],
+                                location: using_self_as_parameter_valid.lm:45:49,
+                            },
+                            location: using_self_as_parameter_valid.lm:45:49,
+                        },
+                        location: using_self_as_parameter_valid.lm:45:49,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: using_self_as_parameter_valid.lm:50:53,
+                    },
+                    location: using_self_as_parameter_valid.lm:15:53,
+                },
+            ],
+            type_parameters: [],
+            location: using_self_as_parameter_valid.lm:0:55,
+        },
+    ],
+}

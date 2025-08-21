@@ -1,0 +1,73 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: cast_literal_single.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: cast_literal_single.lm:3:6,
+                },
+                location: cast_literal_single.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Cast {
+                        source: Literal {
+                            kind: IntLiteral {
+                                value: 0,
+                                kind: I32,
+                            },
+                            location: cast_literal_single.lm:12:13,
+                        },
+                        target: Type {
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    13902787388289951280,
+                                ),
+                            },
+                            name: Path {
+                                root: [],
+                                name: Namespace {
+                                    name: Identifier {
+                                        name: "u64",
+                                        location: cast_literal_single.lm:17:20,
+                                    },
+                                },
+                                location: cast_literal_single.lm:17:20,
+                            },
+                            location: cast_literal_single.lm:17:20,
+                        },
+                        location: cast_literal_single.lm:12:20,
+                    },
+                ],
+                location: cast_literal_single.lm:9:23,
+            },
+            location: cast_literal_single.lm:0:23,
+        },
+    ],
+}

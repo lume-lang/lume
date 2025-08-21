@@ -1,0 +1,41 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Public,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "main",
+                        location: function_definition_pub_modifier.lm:7:11,
+                    },
+                    type_arguments: [],
+                    location: function_definition_pub_modifier.lm:7:11,
+                },
+                location: function_definition_pub_modifier.lm:7:11,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: function_definition_pub_modifier.lm:17:21,
+                        },
+                        type_arguments: [],
+                        location: function_definition_pub_modifier.lm:17:21,
+                    },
+                    location: function_definition_pub_modifier.lm:17:21,
+                },
+                location: function_definition_pub_modifier.lm:17:21,
+            },
+            block: Block {
+                statements: [],
+                location: function_definition_pub_modifier.lm:22:24,
+            },
+            location: function_definition_pub_modifier.lm:0:24,
+        },
+    ],
+}

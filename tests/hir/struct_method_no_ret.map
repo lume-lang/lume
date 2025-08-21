@@ -1,0 +1,62 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: struct_method_no_ret.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: struct_method_no_ret.lm:5:8,
+                    },
+                    location: struct_method_no_ret.lm:5:8,
+                },
+                location: struct_method_no_ret.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Private,
+                    name: Identifier {
+                        name: "bar",
+                        location: struct_method_no_ret.lm:18:21,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Void",
+                                    location: <internal>:0:0,
+                                },
+                                type_arguments: [],
+                                location: <internal>:0:0,
+                            },
+                            location: <internal>:0:0,
+                        },
+                        location: <internal>:0:0,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: struct_method_no_ret.lm:24:27,
+                    },
+                    location: struct_method_no_ret.lm:15:27,
+                },
+            ],
+            type_parameters: [],
+            location: struct_method_no_ret.lm:0:29,
+        },
+    ],
+}

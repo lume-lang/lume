@@ -1,0 +1,39 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        6143724420395906933,
+                    ),
+                },
+                name: Path {
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: struct_empty_impl.lm:0:0,
+                            },
+                        },
+                    ],
+                    name: Type {
+                        name: Identifier {
+                            name: "Int32",
+                            location: struct_empty_impl.lm:5:10,
+                        },
+                        type_arguments: [],
+                        location: struct_empty_impl.lm:5:10,
+                    },
+                    location: struct_empty_impl.lm:5:10,
+                },
+                location: struct_empty_impl.lm:5:10,
+            },
+            methods: [],
+            type_parameters: [],
+            location: struct_empty_impl.lm:0:13,
+        },
+    ],
+}

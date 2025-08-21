@@ -1,0 +1,1 @@
+fn test<T1: Numeric, T2: Numeric>() -> void {}

@@ -1,0 +1,84 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: conditional_if_else_if_else_empty.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: conditional_if_else_if_else_empty.lm:3:6,
+                },
+                location: conditional_if_else_if_else_empty.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Final {
+                        value: If {
+                            cases: [
+                                Condition {
+                                    condition: Literal {
+                                        kind: BooleanLiteral {
+                                            value: true,
+                                        },
+                                        location: conditional_if_else_if_else_empty.lm:15:19,
+                                    },
+                                    block: Block {
+                                        statements: [],
+                                        location: conditional_if_else_if_else_empty.lm:20:23,
+                                    },
+                                    location: conditional_if_else_if_else_empty.lm:15:23,
+                                },
+                                Condition {
+                                    condition: Literal {
+                                        kind: BooleanLiteral {
+                                            value: false,
+                                        },
+                                        location: conditional_if_else_if_else_empty.lm:32:37,
+                                    },
+                                    block: Block {
+                                        statements: [],
+                                        location: conditional_if_else_if_else_empty.lm:38:41,
+                                    },
+                                    location: conditional_if_else_if_else_empty.lm:32:41,
+                                },
+                                Condition {
+                                    condition: None,
+                                    block: Block {
+                                        statements: [],
+                                        location: conditional_if_else_if_else_empty.lm:47:50,
+                                    },
+                                    location: conditional_if_else_if_else_empty.lm:42:50,
+                                },
+                            ],
+                            location: conditional_if_else_if_else_empty.lm:12:50,
+                        },
+                        location: conditional_if_else_if_else_empty.lm:12:50,
+                    },
+                ],
+                location: conditional_if_else_if_else_empty.lm:9:52,
+            },
+            location: conditional_if_else_if_else_empty.lm:0:52,
+        },
+    ],
+}

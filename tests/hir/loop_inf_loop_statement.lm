@@ -1,0 +1,3 @@
+fn foo() {
+	loop { let a = 0; }
+}

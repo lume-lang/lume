@@ -1,0 +1,134 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        13380267704548414892,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Enumerable",
+                            location: use_trait_generic_type.lm:4:14,
+                        },
+                        type_arguments: [
+                            Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        8901637729188007634,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "T",
+                                            location: use_trait_generic_type.lm:15:16,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_generic_type.lm:15:16,
+                                    },
+                                    location: use_trait_generic_type.lm:15:16,
+                                },
+                                location: use_trait_generic_type.lm:15:16,
+                            },
+                        ],
+                        location: use_trait_generic_type.lm:4:17,
+                    },
+                    location: use_trait_generic_type.lm:4:17,
+                },
+                location: use_trait_generic_type.lm:4:17,
+            },
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        7484320765453361402,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Vector",
+                            location: use_trait_generic_type.lm:21:27,
+                        },
+                        type_arguments: [
+                            Type {
+                                id: ItemId {
+                                    package: PackageId(
+                                        0,
+                                    ),
+                                    index: Idx(
+                                        8901637729188007634,
+                                    ),
+                                },
+                                name: Path {
+                                    root: [],
+                                    name: Type {
+                                        name: Identifier {
+                                            name: "T",
+                                            location: use_trait_generic_type.lm:28:29,
+                                        },
+                                        type_arguments: [],
+                                        location: use_trait_generic_type.lm:28:29,
+                                    },
+                                    location: use_trait_generic_type.lm:28:29,
+                                },
+                                location: use_trait_generic_type.lm:28:29,
+                            },
+                        ],
+                        location: use_trait_generic_type.lm:21:30,
+                    },
+                    location: use_trait_generic_type.lm:21:30,
+                },
+                location: use_trait_generic_type.lm:21:30,
+            },
+            methods: [
+                TraitMethodImplementation {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "next",
+                        location: use_trait_generic_type.lm:44:48,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Type {
+                                name: Identifier {
+                                    name: "T",
+                                    location: use_trait_generic_type.lm:54:55,
+                                },
+                                type_arguments: [],
+                                location: use_trait_generic_type.lm:54:55,
+                            },
+                            location: use_trait_generic_type.lm:54:55,
+                        },
+                        location: use_trait_generic_type.lm:54:55,
+                    },
+                    block: Block {
+                        statements: [],
+                        location: use_trait_generic_type.lm:56:58,
+                    },
+                    location: use_trait_generic_type.lm:37:58,
+                },
+            ],
+            type_parameters: [],
+            location: use_trait_generic_type.lm:0:60,
+        },
+    ],
+}

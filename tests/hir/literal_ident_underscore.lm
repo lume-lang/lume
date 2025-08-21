@@ -1,0 +1,3 @@
+fn foo() {
+	let __IDENT__ = 0;
+}

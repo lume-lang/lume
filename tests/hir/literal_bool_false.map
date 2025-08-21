@@ -1,0 +1,48 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: literal_bool_false.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: literal_bool_false.lm:3:6,
+                },
+                location: literal_bool_false.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Literal {
+                        kind: BooleanLiteral {
+                            value: false,
+                        },
+                        location: literal_bool_false.lm:12:17,
+                    },
+                ],
+                location: literal_bool_false.lm:9:20,
+            },
+            location: literal_bool_false.lm:0:20,
+        },
+    ],
+}

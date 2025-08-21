@@ -1,0 +1,3 @@
+impl Foo {
+    fn bar<T>() -> Int32 { }
+}

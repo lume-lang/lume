@@ -1,0 +1,70 @@
+Map {
+    items: [
+        Implementation {
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        5175167619020667705,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Foo",
+                            location: struct_operator_method.lm:5:8,
+                        },
+                        type_arguments: [],
+                        location: struct_operator_method.lm:5:8,
+                    },
+                    location: struct_operator_method.lm:5:8,
+                },
+                location: struct_operator_method.lm:5:8,
+            },
+            methods: [
+                MethodDefinition {
+                    visibility: Public,
+                    name: Identifier {
+                        name: "==",
+                        location: struct_operator_method.lm:22:24,
+                    },
+                    parameters: [],
+                    type_parameters: [],
+                    return_type: Type {
+                        name: Path {
+                            root: [],
+                            name: Namespace {
+                                name: Identifier {
+                                    name: "bool",
+                                    location: struct_operator_method.lm:30:34,
+                                },
+                            },
+                            location: struct_operator_method.lm:30:34,
+                        },
+                        location: struct_operator_method.lm:30:34,
+                    },
+                    block: Block {
+                        statements: [
+                            Return {
+                                value: Literal {
+                                    kind: BooleanLiteral {
+                                        value: true,
+                                    },
+                                    location: struct_operator_method.lm:52:56,
+                                },
+                                location: struct_operator_method.lm:45:57,
+                            },
+                        ],
+                        location: struct_operator_method.lm:35:63,
+                    },
+                    location: struct_operator_method.lm:15:63,
+                },
+            ],
+            type_parameters: [],
+            location: struct_operator_method.lm:0:65,
+        },
+    ],
+}

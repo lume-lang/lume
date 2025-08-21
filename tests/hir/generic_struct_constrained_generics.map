@@ -1,0 +1,72 @@
+Map {
+    items: [
+        StructDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "Test",
+                        location: generic_struct_constrained_generics.lm:7:11,
+                    },
+                    type_arguments: [],
+                    location: generic_struct_constrained_generics.lm:7:11,
+                },
+                location: generic_struct_constrained_generics.lm:7:11,
+            },
+            builtin: false,
+            fields: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: generic_struct_constrained_generics.lm:12:14,
+                    },
+                    constraints: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: generic_struct_constrained_generics.lm:16:23,
+                                    },
+                                    type_arguments: [],
+                                    location: generic_struct_constrained_generics.lm:16:23,
+                                },
+                                location: generic_struct_constrained_generics.lm:16:23,
+                            },
+                            location: generic_struct_constrained_generics.lm:16:23,
+                        },
+                    ],
+                    location: generic_struct_constrained_generics.lm:12:14,
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: generic_struct_constrained_generics.lm:25:27,
+                    },
+                    constraints: [
+                        Type {
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "Numeric",
+                                        location: generic_struct_constrained_generics.lm:29:36,
+                                    },
+                                    type_arguments: [],
+                                    location: generic_struct_constrained_generics.lm:29:36,
+                                },
+                                location: generic_struct_constrained_generics.lm:29:36,
+                            },
+                            location: generic_struct_constrained_generics.lm:29:36,
+                        },
+                    ],
+                    location: generic_struct_constrained_generics.lm:25:27,
+                },
+            ],
+            location: generic_struct_constrained_generics.lm:0:40,
+        },
+    ],
+}

@@ -1,0 +1,118 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: duplicate_param_valid.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: duplicate_param_valid.lm:3:6,
+                },
+                location: duplicate_param_valid.lm:3:6,
+            },
+            parameters: [
+                Parameter {
+                    name: Identifier {
+                        name: "x",
+                        location: duplicate_param_valid.lm:7:8,
+                    },
+                    param_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                6143724420395906933,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: duplicate_param_valid.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: duplicate_param_valid.lm:10:15,
+                                },
+                                type_arguments: [],
+                                location: duplicate_param_valid.lm:10:15,
+                            },
+                            location: duplicate_param_valid.lm:10:15,
+                        },
+                        location: duplicate_param_valid.lm:10:15,
+                    },
+                    vararg: false,
+                    location: duplicate_param_valid.lm:7:15,
+                },
+                Parameter {
+                    name: Identifier {
+                        name: "y",
+                        location: duplicate_param_valid.lm:17:18,
+                    },
+                    param_type: Type {
+                        id: ItemId {
+                            package: PackageId(
+                                0,
+                            ),
+                            index: Idx(
+                                6143724420395906933,
+                            ),
+                        },
+                        name: Path {
+                            root: [
+                                Namespace {
+                                    name: Identifier {
+                                        name: "std",
+                                        location: duplicate_param_valid.lm:0:0,
+                                    },
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "Int32",
+                                    location: duplicate_param_valid.lm:20:25,
+                                },
+                                type_arguments: [],
+                                location: duplicate_param_valid.lm:20:25,
+                            },
+                            location: duplicate_param_valid.lm:20:25,
+                        },
+                        location: duplicate_param_valid.lm:20:25,
+                    },
+                    vararg: false,
+                    location: duplicate_param_valid.lm:17:25,
+                },
+            ],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [],
+                location: duplicate_param_valid.lm:27:30,
+            },
+            location: duplicate_param_valid.lm:0:30,
+        },
+    ],
+}

@@ -1,0 +1,172 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: loop_iter_loop_empty_var.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: loop_iter_loop_empty_var.lm:3:6,
+                },
+                location: loop_iter_loop_empty_var.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    VariableDeclaration {
+                        name: "collection",
+                        declared_type: None,
+                        value: StaticCall {
+                            name: Path {
+                                root: [
+                                    Namespace {
+                                        name: Identifier {
+                                            name: "std",
+                                            location: loop_iter_loop_empty_var.lm:0:0,
+                                        },
+                                    },
+                                    Type {
+                                        name: Identifier {
+                                            name: "Array",
+                                            location: loop_iter_loop_empty_var.lm:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: loop_iter_loop_empty_var.lm:0:0,
+                                    },
+                                ],
+                                name: Callable {
+                                    name: Identifier {
+                                        name: "new",
+                                        location: loop_iter_loop_empty_var.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: loop_iter_loop_empty_var.lm:0:0,
+                                },
+                                location: loop_iter_loop_empty_var.lm:0:0,
+                            },
+                            arguments: [
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 1,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_empty_var.lm:33:34,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 2,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_empty_var.lm:36:37,
+                                },
+                                Literal {
+                                    kind: IntLiteral {
+                                        value: 3,
+                                        kind: I32,
+                                    },
+                                    location: loop_iter_loop_empty_var.lm:39:40,
+                                },
+                            ],
+                            location: loop_iter_loop_empty_var.lm:32:33,
+                        },
+                        location: loop_iter_loop_empty_var.lm:15:42,
+                    },
+                    IteratorLoop {
+                        collection: Variable {
+                            name: Identifier {
+                                name: "collection",
+                                location: loop_iter_loop_empty_var.lm:62:72,
+                            },
+                            reference: VariableDeclaration {
+                                name: "collection",
+                                declared_type: None,
+                                value: StaticCall {
+                                    name: Path {
+                                        root: [
+                                            Namespace {
+                                                name: Identifier {
+                                                    name: "std",
+                                                    location: loop_iter_loop_empty_var.lm:0:0,
+                                                },
+                                            },
+                                            Type {
+                                                name: Identifier {
+                                                    name: "Array",
+                                                    location: loop_iter_loop_empty_var.lm:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: loop_iter_loop_empty_var.lm:0:0,
+                                            },
+                                        ],
+                                        name: Callable {
+                                            name: Identifier {
+                                                name: "new",
+                                                location: loop_iter_loop_empty_var.lm:0:0,
+                                            },
+                                            type_arguments: [],
+                                            location: loop_iter_loop_empty_var.lm:0:0,
+                                        },
+                                        location: loop_iter_loop_empty_var.lm:0:0,
+                                    },
+                                    arguments: [
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 1,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_empty_var.lm:33:34,
+                                        },
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 2,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_empty_var.lm:36:37,
+                                        },
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 3,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_empty_var.lm:39:40,
+                                        },
+                                    ],
+                                    location: loop_iter_loop_empty_var.lm:32:33,
+                                },
+                                location: loop_iter_loop_empty_var.lm:15:42,
+                            },
+                            location: loop_iter_loop_empty_var.lm:62:72,
+                        },
+                        block: Block {
+                            statements: [],
+                            location: loop_iter_loop_empty_var.lm:73:76,
+                        },
+                        location: loop_iter_loop_empty_var.lm:47:76,
+                    },
+                ],
+                location: loop_iter_loop_empty_var.lm:9:78,
+            },
+            location: loop_iter_loop_empty_var.lm:0:78,
+        },
+    ],
+}

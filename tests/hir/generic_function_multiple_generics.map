@@ -1,0 +1,58 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "test",
+                        location: generic_function_multiple_generics.lm:3:7,
+                    },
+                    type_arguments: [],
+                    location: generic_function_multiple_generics.lm:3:7,
+                },
+                location: generic_function_multiple_generics.lm:3:7,
+            },
+            parameters: [],
+            type_parameters: [
+                TypeParameter {
+                    name: Identifier {
+                        name: "T1",
+                        location: generic_function_multiple_generics.lm:8:10,
+                    },
+                    constraints: [],
+                    location: generic_function_multiple_generics.lm:8:10,
+                },
+                TypeParameter {
+                    name: Identifier {
+                        name: "T2",
+                        location: generic_function_multiple_generics.lm:12:14,
+                    },
+                    constraints: [],
+                    location: generic_function_multiple_generics.lm:12:14,
+                },
+            ],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "void",
+                            location: generic_function_multiple_generics.lm:21:25,
+                        },
+                        type_arguments: [],
+                        location: generic_function_multiple_generics.lm:21:25,
+                    },
+                    location: generic_function_multiple_generics.lm:21:25,
+                },
+                location: generic_function_multiple_generics.lm:21:25,
+            },
+            block: Block {
+                statements: [],
+                location: generic_function_multiple_generics.lm:26:28,
+            },
+            location: generic_function_multiple_generics.lm:0:28,
+        },
+    ],
+}

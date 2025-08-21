@@ -1,0 +1,63 @@
+Map {
+    items: [
+        TraitDefinition {
+            visibility: Private,
+            name: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        14895811466431262429,
+                    ),
+                },
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Add",
+                            location: use_trait_empty.lm:4:7,
+                        },
+                        type_arguments: [],
+                        location: use_trait_empty.lm:4:7,
+                    },
+                    location: use_trait_empty.lm:4:7,
+                },
+                location: use_trait_empty.lm:4:7,
+            },
+            target: Type {
+                id: ItemId {
+                    package: PackageId(
+                        0,
+                    ),
+                    index: Idx(
+                        6143724420395906933,
+                    ),
+                },
+                name: Path {
+                    root: [
+                        Namespace {
+                            name: Identifier {
+                                name: "std",
+                                location: use_trait_empty.lm:0:0,
+                            },
+                        },
+                    ],
+                    name: Type {
+                        name: Identifier {
+                            name: "Int32",
+                            location: use_trait_empty.lm:11:16,
+                        },
+                        type_arguments: [],
+                        location: use_trait_empty.lm:11:16,
+                    },
+                    location: use_trait_empty.lm:11:16,
+                },
+                location: use_trait_empty.lm:11:16,
+            },
+            methods: [],
+            type_parameters: [],
+            location: use_trait_empty.lm:0:19,
+        },
+    ],
+}
