@@ -550,14 +550,6 @@ pub struct Block {
     pub location: Location,
 }
 
-impl Block {
-    /// Determines whether all branches from the block return from the
-    /// control flow.
-    pub fn is_returning(&self) -> bool {
-        self.statements.iter().all(Statement::is_returning)
-    }
-}
-
 #[derive(Node, Debug, Clone, PartialEq)]
 pub enum Item {
     Function(Box<FunctionDefinition>),
@@ -1004,17 +996,6 @@ pub struct Statement {
 }
 
 impl Statement {
-    /// Determines whether the given statement or all branches within
-    /// the statement branch away from the current control flow.
-    pub fn is_returning(&self) -> bool {
-        match &self.kind {
-            StatementKind::InfiniteLoop(stmt) => stmt.is_returning(),
-            StatementKind::IteratorLoop(stmt) => stmt.is_returning(),
-            StatementKind::Final(_) | StatementKind::Return(_) | StatementKind::Continue(_) => true,
-            StatementKind::Variable(_) | StatementKind::Break(_) | StatementKind::Expression(_) => false,
-        }
-    }
-
     /// Determines whether the given statement is a loop statement.
     pub fn is_loop(&self) -> bool {
         matches!(
@@ -1078,26 +1059,12 @@ pub struct InfiniteLoop {
     pub location: Location,
 }
 
-impl InfiniteLoop {
-    /// Determines whether the block returns from the control flow.
-    pub fn is_returning(&self) -> bool {
-        self.block.is_returning()
-    }
-}
-
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
     pub id: StatementId,
     pub collection: ExpressionId,
     pub block: Block,
     pub location: Location,
-}
-
-impl IteratorLoop {
-    /// Determines whether the block returns from the control flow.
-    pub fn is_returning(&self) -> bool {
-        self.block.is_returning()
-    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
@@ -1424,19 +1391,6 @@ pub struct If {
     pub id: ExpressionId,
     pub cases: Vec<Condition>,
     pub location: Location,
-}
-
-impl If {
-    /// Determines whether all branches from the statement return from the
-    /// control flow.
-    pub fn is_returning(&self) -> bool {
-        self.cases.iter().all(|case| case.block.is_returning())
-    }
-
-    /// Gets the `else` branch, if any is defined
-    pub fn else_branch(&self) -> Option<&Condition> {
-        self.cases.iter().find(|case| case.condition.is_none())
-    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
