@@ -1,9 +1,12 @@
+#![feature(debug_closure_helpers)]
+
 use std::fmt::Display;
 
 use lume_macros::Node;
 use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, StatementId};
 
 pub mod map;
+pub mod pretty;
 pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
