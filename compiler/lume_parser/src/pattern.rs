@@ -24,11 +24,9 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_literal_pattern(&mut self) -> Result<Pattern> {
-        let Expression::Literal(literal_expr) = self.parse_literal()? else {
-            unreachable!()
-        };
+        let literal_expr = self.parse_literal_inner()?;
 
-        Ok(Pattern::Literal(Box::into_inner(literal_expr)))
+        Ok(Pattern::Literal(literal_expr))
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]

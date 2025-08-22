@@ -1,6 +1,3 @@
-#![feature(box_into_inner)]
-#![feature(string_remove_matches)]
-
 use std::sync::Arc;
 
 use crate::errors::*;
