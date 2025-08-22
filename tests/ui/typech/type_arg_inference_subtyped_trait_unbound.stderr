@@ -1,0 +1,10 @@
+× error[LM4120]: type constraint not satisfied
+    ╭─[type_arg_inference_subtyped_trait_unbound.lm:8:19]
+ 7  │ fn main() {
+ 8  │     let foo = Foo<Int32> { };
+    │                   ^^^^^ type Int32 does not implement Test...
+    ∶
+ 4  │
+ 5  │ fn func<T: Test>(val: Foo<T>) { }
+    │            ^^^^ ...which is required by the type parameter T
+    ╰──

@@ -1,0 +1,11 @@
+× error[LM4120]: type constraint not satisfied
+   ╭─[type_arg_inference_trait_unbound.lm:6:9]
+ 5 │ fn main() {
+ 6 │     foo(6_i32);
+   │         ^^^^^ type Int32 does not implement Foo...
+ 7 │ }
+   ∶
+ 2 │
+ 3 │ fn foo<T: Foo>(val: T) { }
+   │           ^^^ ...which is required by the type parameter T
+   ╰──
