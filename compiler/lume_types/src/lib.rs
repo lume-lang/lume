@@ -1057,12 +1057,6 @@ pub struct TypeParameter {
     pub constraints: Vec<TypeRef>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum TypeArgument {
-    Named { name: String },
-    Resolved { param: TypeParameterId },
-}
-
 #[derive(Debug)]
 pub struct TypeDatabaseContext {
     pub types: IndexMap<TypeId, Type>,

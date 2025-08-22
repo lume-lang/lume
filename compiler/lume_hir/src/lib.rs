@@ -1699,44 +1699,6 @@ impl From<Vec<TypeParameter>> for TypeParameters {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub enum TypeArgument {
-    /// Defines a named type argument, which was specified by the user, but not yet resolved.
-    Named { ty: Type, location: Location },
-
-    /// Defines an implicit type argument, which is up to the compiler to infer.
-    Implicit { location: Location },
-}
-
-impl TypeArgument {
-    /// Determines whether this type argument is named.
-    pub fn is_named(&self) -> bool {
-        matches!(self, TypeArgument::Named { .. })
-    }
-
-    /// Determines whether this type argument is implicit.
-    pub fn is_implicit(&self) -> bool {
-        matches!(self, TypeArgument::Implicit { .. })
-    }
-}
-
-impl Node for TypeArgument {
-    fn location(&self) -> Location {
-        match self {
-            TypeArgument::Named { location, .. } | TypeArgument::Implicit { location } => *location,
-        }
-    }
-}
-
-impl std::fmt::Display for TypeArgument {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            TypeArgument::Named { ty, .. } => ty.fmt(f),
-            TypeArgument::Implicit { .. } => write!(f, "?T"),
-        }
-    }
-}
-
 #[derive(Node, Debug, Clone, Eq)]
 pub struct Type {
     pub id: ItemId,
