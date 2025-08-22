@@ -713,6 +713,14 @@ impl Parser {
     /// Parses a literal value expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_literal(&mut self) -> Result<Expression> {
+        let literal = self.parse_literal_inner()?;
+
+        Ok(Expression::Literal(Box::new(literal)))
+    }
+
+    /// Parses a literal value expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub(super) fn parse_literal_inner(&mut self) -> Result<Literal> {
         let token = self.token();
         let location: Location = token.index.into();
 
@@ -721,7 +729,9 @@ impl Parser {
                 let mut value = token.value.unwrap();
 
                 // Remove all underscores from the literal
-                value.remove_matches("_");
+                while let Some(idx) = value.find("\"") {
+                    value.remove(idx);
+                }
 
                 // Remove radix prefixes, as `from_str_radix` does not support them
                 // being included.
@@ -798,7 +808,7 @@ impl Parser {
 
         self.skip();
 
-        Ok(Expression::Literal(Box::new(literal)))
+        Ok(literal)
     }
 
     /// Parses a unary expression on the current cursor position.

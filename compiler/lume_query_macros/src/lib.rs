@@ -1,5 +1,3 @@
-#![feature(string_remove_matches)]
-
 mod cached_query;
 
 use proc_macro::TokenStream;

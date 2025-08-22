@@ -137,7 +137,9 @@ fn parse_hash_keys(expr: &syn::Meta) -> proc_macro2::TokenStream {
         syn::Meta::List(_) => panic!("list expressions are not supported"),
     };
 
-    keys.remove_matches("\"");
+    while let Some(idx) = keys.find("\"") {
+        keys.remove(idx);
+    }
 
     let ident = syn::parse_str::<syn::Expr>(&keys).expect("unable to parse \"key\" expression");
 
