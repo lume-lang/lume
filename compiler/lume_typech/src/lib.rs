@@ -1,5 +1,3 @@
-#![feature(map_try_insert)]
-
 use std::ops::Deref;
 
 use lume_errors::DiagCtx;

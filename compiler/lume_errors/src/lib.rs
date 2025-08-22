@@ -1,5 +1,4 @@
 #![allow(clippy::arc_with_non_send_sync)]
-#![feature(negative_impls)]
 
 pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
 
