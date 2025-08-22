@@ -1,5 +1,3 @@
-#![feature(map_try_insert)]
-
 use std::{collections::BTreeMap, fmt::Debug, ops::Deref};
 
 use error_snippet::Result;
