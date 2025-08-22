@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+fn foo<T, U>(val1: T, val2: U) { }
+
+fn main() {
+    foo(6_i32, false);
+}
