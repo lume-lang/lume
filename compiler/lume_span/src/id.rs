@@ -115,6 +115,7 @@ impl ItemId {
             index: Idx::new(),
         }
     }
+
     /// Creates a new [`ItemId`] from the given value.
     #[inline]
     pub fn from_name<T: std::hash::Hash + ?Sized>(package: PackageId, value: &T) -> Self {
