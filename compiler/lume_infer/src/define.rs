@@ -1178,14 +1178,16 @@ impl TyInferCtx {
 
             match &mut expr.kind {
                 lume_hir::ExpressionKind::InstanceCall(call) => {
-                    call.name.place_type_arguments(new_type_args.to_owned())
+                    call.name.place_type_arguments(new_type_args.to_owned());
                 }
                 lume_hir::ExpressionKind::IntrinsicCall(call) => {
-                    call.name.place_type_arguments(new_type_args.to_owned())
+                    call.name.place_type_arguments(new_type_args.to_owned());
                 }
-                lume_hir::ExpressionKind::StaticCall(call) => call.name.place_type_arguments(new_type_args.to_owned()),
-                _ => continue,
-            };
+                lume_hir::ExpressionKind::StaticCall(call) => {
+                    call.name.place_type_arguments(new_type_args.to_owned());
+                }
+                _ => {}
+            }
         }
 
         Ok(())
@@ -1197,7 +1199,7 @@ impl TyInferCtx {
         callable: Callable<'_>,
     ) -> Result<TypeArgumentInference> {
         let params = callable.signature().params;
-        let args = self.hir().expect_expressions(&expr.arguments())?;
+        let args = self.hir().expect_expressions(expr.arguments())?;
 
         let mut type_args = expr.type_arguments().to_vec();
         let type_params = callable.signature().type_params;

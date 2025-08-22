@@ -48,9 +48,7 @@ impl TyCheckCtx {
             // ```lm
             // Foo::foo(a);
             // ```
-            (lume_hir::CallExpression::Instanced(call), true) => {
-                &[&[call.callee.clone()][..], &call.arguments[..]].concat()
-            }
+            (lume_hir::CallExpression::Instanced(call), true) => &[&[call.callee][..], &call.arguments[..]].concat(),
             (lume_hir::CallExpression::Intrinsic(call), true) => &call.arguments,
             (lume_hir::CallExpression::Static(call), _) => &call.arguments,
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
