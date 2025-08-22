@@ -71,3 +71,20 @@ pub struct MissingField {
     pub type_name: Path,
     pub field_name: Identifier,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "could not infer type argument on callable",
+    code = "LM4145",
+    help = "try specifying the type argments explicitly"
+)]
+pub struct TypeArgumentInferenceFailedCallable {
+    #[label(
+        source,
+        "could not infer type argument {type_param_name} on callable {callable_name}"
+    )]
+    pub source: Location,
+
+    pub type_param_name: String,
+    pub callable_name: String,
+}

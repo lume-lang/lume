@@ -197,6 +197,16 @@ impl PathSegment {
             Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
         }
     }
+
+    /// Replaces the type arguments in the path segment.
+    pub fn place_type_arguments(&mut self, types: Vec<Type>) -> Vec<Type> {
+        match self {
+            Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => {
+                std::mem::replace(type_arguments, types)
+            }
+        }
+    }
 }
 
 impl std::fmt::Display for PathSegment {
@@ -392,6 +402,11 @@ impl Path {
     /// Gets the type arguments of the path segment.
     pub fn type_arguments(&self) -> &[Type] {
         self.name.type_arguments()
+    }
+
+    /// Replaces the type arguments in the top-level path segment.
+    pub fn place_type_arguments(&mut self, types: Vec<Type>) -> Vec<Type> {
+        self.name.place_type_arguments(types)
     }
 
     /// Gets the all type arguments of all the path segments.

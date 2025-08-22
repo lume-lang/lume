@@ -1,7 +1,5 @@
-use std::{
-    collections::{BTreeMap, HashSet},
-    sync::LazyLock,
-};
+use std::collections::{BTreeMap, HashMap, HashSet};
+use std::sync::LazyLock;
 
 use error_snippet::Result;
 use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
@@ -9,6 +7,7 @@ use lume_span::{DefId, PackageId};
 use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
 
 use crate::TyInferCtx;
+use crate::query::Callable;
 
 static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     HashSet::from([
@@ -1121,5 +1120,131 @@ impl TyInferCtx {
                 Ok(())
             }
         }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+enum TypeArgumentInference {
+    /// All type arguments within the expression or type are all
+    /// already defined and have no need for inference.
+    Fulfilled,
+
+    /// One-or-more type arguments were inferred and have been
+    /// defined the given `replacement` field.
+    Replace { replacement: Vec<lume_hir::Type> },
+}
+
+impl TyInferCtx {
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    pub(crate) fn infer_type_arguments(&mut self) -> Result<()> {
+        let mut new_type_arg_mapping = HashMap::new();
+
+        for (expr_id, expr) in self.hir.expressions() {
+            let new_type_args = match &expr.kind {
+                lume_hir::ExpressionKind::InstanceCall(call) => {
+                    let callable = self.probe_callable_instance(call)?;
+
+                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Instanced(call), callable)? {
+                        TypeArgumentInference::Fulfilled => continue,
+                        TypeArgumentInference::Replace { replacement } => replacement,
+                    }
+                }
+                lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                    let callable = self.probe_callable_intrinsic(call)?;
+
+                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Intrinsic(call), callable)? {
+                        TypeArgumentInference::Fulfilled => continue,
+                        TypeArgumentInference::Replace { replacement } => replacement,
+                    }
+                }
+                lume_hir::ExpressionKind::StaticCall(call) => {
+                    let callable = self.probe_callable_static(call)?;
+
+                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
+                        TypeArgumentInference::Fulfilled => continue,
+                        TypeArgumentInference::Replace { replacement } => replacement,
+                    }
+                }
+                _ => continue,
+            };
+
+            new_type_arg_mapping.insert(*expr_id, new_type_args);
+        }
+
+        for (expr_id, expr) in self.hir.expressions_mut() {
+            let Some(new_type_args) = new_type_arg_mapping.get(expr_id) else {
+                continue;
+            };
+
+            match &mut expr.kind {
+                lume_hir::ExpressionKind::InstanceCall(call) => {
+                    call.name.place_type_arguments(new_type_args.to_owned())
+                }
+                lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                    call.name.place_type_arguments(new_type_args.to_owned())
+                }
+                lume_hir::ExpressionKind::StaticCall(call) => call.name.place_type_arguments(new_type_args.to_owned()),
+                _ => continue,
+            };
+        }
+
+        Ok(())
+    }
+
+    fn infer_type_arguments_callable(
+        &self,
+        expr: lume_hir::CallExpression<'_>,
+        callable: Callable<'_>,
+    ) -> Result<TypeArgumentInference> {
+        let params = callable.signature().params;
+        let args = self.hir().expect_expressions(&expr.arguments())?;
+
+        let mut type_args = expr.type_arguments().to_vec();
+        let type_params = callable.signature().type_params;
+
+        // All all the type arguments have already been declared, theres
+        // nothing for us to infer.
+        if type_args.len() >= type_params.len() {
+            return Ok(TypeArgumentInference::Fulfilled);
+        }
+
+        for type_param in type_params.iter().skip(type_args.len()) {
+            if let Some(inferred_type_arg) = self.attempt_type_arg_inference(*type_param, params, &args)? {
+                type_args.push(self.hir_lift_type(inferred_type_arg)?);
+            } else {
+                let type_param_name = self.tdb().type_parameter(*type_param).unwrap().name.clone();
+
+                self.dcx().emit(
+                    crate::errors::TypeArgumentInferenceFailedCallable {
+                        source: expr.location(),
+                        type_param_name,
+                        callable_name: format!("{:+}", callable.name().to_string()),
+                    }
+                    .into(),
+                );
+            }
+        }
+
+        Ok(TypeArgumentInference::Replace { replacement: type_args })
+    }
+
+    /// Attempts to infer the type of the type parameter, given the arguments and parameter types.
+    fn attempt_type_arg_inference(
+        &self,
+        type_param: TypeParameterId,
+        params: &lume_types::Parameters,
+        args: &[&lume_hir::Expression],
+    ) -> Result<Option<TypeRef>> {
+        for (param, arg) in params.inner().iter().zip(args.iter()) {
+            if let Some(param_ty_param) = self.as_type_parameter(&param.ty)?
+                && param_ty_param.id == type_param
+            {
+                let arg_expr_ty = self.type_of_expr(arg)?;
+
+                return Ok(Some(arg_expr_ty));
+            }
+        }
+
+        Ok(None)
     }
 }

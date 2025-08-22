@@ -83,6 +83,13 @@ impl Map {
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected expression with ID {id:?}, found none")).into())
     }
 
+    /// Gets the expressions with the given IDs.
+    pub fn expect_expressions(&self, id: &[ExpressionId]) -> Result<Vec<&Expression>> {
+        id.iter()
+            .map(|id| self.expect_expression(*id))
+            .collect::<Result<Vec<_>>>()
+    }
+
     /// Gets all the expressions within the HIR map.
     pub fn expressions(&self) -> &IndexMap<ExpressionId, Expression> {
         &self.expressions
