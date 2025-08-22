@@ -10,8 +10,17 @@ use similar::{ChangeTag, TextDiff};
 use crate::{TestFailureCallback, TestResult};
 
 pub(crate) fn diff_output_of(output: String, path: PathBuf, output_path: PathBuf) -> Result<TestResult> {
+    let new_extension = if let Some(existing_ext) = output_path.extension().and_then(|ext| ext.to_str()) {
+        let mut ext = existing_ext.to_string();
+        ext.push_str(".new");
+
+        ext
+    } else {
+        String::from("new")
+    };
+
     let mut output_path_new = output_path.clone();
-    output_path_new.add_extension("new");
+    output_path_new.set_extension(new_extension);
 
     if output_path.is_file() {
         let expected_output = std::fs::read_to_string(&output_path).map_err(IntoDiagnostic::into_diagnostic)?;

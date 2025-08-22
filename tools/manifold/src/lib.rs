@@ -1,6 +1,3 @@
-#![feature(formatting_options)]
-#![feature(path_add_extension)]
-
 mod diff;
 mod hir;
 mod ui;

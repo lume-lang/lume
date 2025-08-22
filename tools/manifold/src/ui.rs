@@ -28,8 +28,8 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     let mut stderr_path = path.clone();
     stderr_path.set_extension("stderr");
 
-    let mut stderr_new_path = stderr_path.clone();
-    stderr_new_path.add_extension("new");
+    let mut stderr_new_path = path.clone();
+    stderr_new_path.set_extension("stderr.new");
 
     let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
 
