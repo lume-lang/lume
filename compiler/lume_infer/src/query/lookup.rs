@@ -2,7 +2,7 @@ use crate::{TyInferCtx, query::Callable};
 use error_snippet::Result;
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
-use lume_types::{Function, FunctionSigOwned, Method, TypeRef};
+use lume_types::{Function, FunctionSigOwned, Method, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
 
@@ -411,5 +411,23 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> impl Iterator<Item = &'_ Method> {
         self.tdb().methods_on(self_ty.instance_of)
+    }
+
+    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
+        match self.tdb().ty_expect(ty.instance_of)?.kind {
+            TypeKind::TypeParameter(_) => Ok(true),
+            _ => Ok(false),
+        }
+    }
+
+    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
+        match self.tdb().ty_expect(ty.instance_of)?.kind {
+            TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
+            _ => Ok(None),
+        }
     }
 }
