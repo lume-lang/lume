@@ -118,17 +118,8 @@ impl Map {
     }
 }
 
-#[expect(
-    clippy::missing_fields_in_debug,
-    reason = "we explicitly don't want imports, since they clutter tests"
-)]
 impl Debug for Map {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Map")
-            .field("package", &self.package)
-            .field("items", &self.items)
-            .field("statements", &self.statements)
-            .field("expressions", &self.expressions)
-            .finish()
+        self.pretty_fmt(f)
     }
 }
