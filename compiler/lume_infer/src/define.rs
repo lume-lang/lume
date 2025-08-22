@@ -1211,7 +1211,7 @@ impl TyInferCtx {
         }
 
         for type_param in type_params.iter().skip(type_args.len()) {
-            if let Some(inferred_type_arg) = self.attempt_type_arg_inference(*type_param, params, &args)? {
+            if let Some(inferred_type_arg) = self.infer_type_arg_param(*type_param, params, &args)? {
                 type_args.push(self.hir_lift_type(inferred_type_arg)?);
             } else {
                 let type_param_name = self.tdb().type_parameter(*type_param).unwrap().name.clone();
@@ -1231,19 +1231,68 @@ impl TyInferCtx {
     }
 
     /// Attempts to infer the type of the type parameter, given the arguments and parameter types.
-    fn attempt_type_arg_inference(
+    fn infer_type_arg_param(
         &self,
         type_param: TypeParameterId,
         params: &lume_types::Parameters,
         args: &[&lume_hir::Expression],
     ) -> Result<Option<TypeRef>> {
         for (param, arg) in params.inner().iter().zip(args.iter()) {
-            if let Some(param_ty_param) = self.as_type_parameter(&param.ty)?
-                && param_ty_param.id == type_param
-            {
-                let arg_expr_ty = self.type_of_expr(arg)?;
+            let expr_ty = self.type_of_expr(arg)?;
 
-                return Ok(Some(arg_expr_ty));
+            if let Some(inferred_type) = self.infer_type_arg_param_nested(type_param, &param.ty, &expr_ty)? {
+                return Ok(Some(inferred_type));
+            }
+        }
+
+        Ok(None)
+    }
+
+    /// Attempts to infer a type argument from within a nested parameter type.
+    ///
+    /// The method takes three parameters:
+    /// - `target_param_id`: The ID of the type parameter which we wish to infer the type from.
+    /// - `param_ty`: The type of some parameter.
+    /// - `arg_ty`: The type of the argument which corresponds to the parameter.
+    ///
+    /// If the parameter is already a type parameter which corresponds to the target ID,
+    /// the type of the parameter is returned. If not, the method will iterate over type
+    /// arguments within the parameter- and argument-types. For example, given the given Lume sample:
+    /// ```lm
+    /// struct Test<T> {}
+    ///
+    /// fn foo<T>(val: Test<T>) { }
+    ///
+    /// fn main() {
+    ///     let t = Test<Int32> { };
+    ///
+    ///     foo(t);
+    /// }
+    /// ```
+    ///
+    /// From the given sample, we'd want to resolve `T` to be `Int32`, since they are both
+    /// contained within the type `Test`. As such, the method iterates over the type parameters
+    /// within the `param_ty` and their corresponding `arg_ty` type argument. When the type parameter
+    /// of `para_ty` is matched against the target parameter ID, the corresponding type argument is returned.
+    fn infer_type_arg_param_nested(
+        &self,
+        target_param_id: TypeParameterId,
+        param_ty: &lume_types::TypeRef,
+        arg_ty: &lume_types::TypeRef,
+    ) -> Result<Option<TypeRef>> {
+        if let Some(param_ty_param) = self.as_type_parameter(param_ty)?
+            && param_ty_param.id == target_param_id
+        {
+            return Ok(Some(arg_ty.to_owned()));
+        }
+
+        if param_ty.type_arguments.len() != arg_ty.type_arguments.len() {
+            return Ok(None);
+        }
+
+        for (type_param, type_arg) in param_ty.type_arguments.iter().zip(arg_ty.type_arguments.iter()) {
+            if let Some(inferred_type) = self.infer_type_arg_param_nested(target_param_id, type_param, type_arg)? {
+                return Ok(Some(inferred_type));
             }
         }
 
