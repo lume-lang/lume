@@ -44,12 +44,5 @@ fn build_hir(path: &PathBuf, content: String) -> String {
         }
     };
 
-    let mut opts = std::fmt::FormattingOptions::new();
-    opts.alternate(true);
-
-    let mut writer = String::new();
-    let mut fmt = opts.create_formatter(&mut writer);
-    map.pretty_fmt(&mut fmt).unwrap();
-
-    writer
+    format!("{map:#?}")
 }
