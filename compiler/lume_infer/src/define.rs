@@ -865,7 +865,7 @@ impl TyInferCtx {
         let parent = DefId::Item(struct_def.id);
 
         for field in &struct_def.fields {
-            let _ = tree.try_insert(field.id, parent);
+            let _ = tree.insert(field.id, parent);
 
             if let Some(default) = field.default_value {
                 self.define_expr_scope(tree, default, field.id)?;
@@ -883,7 +883,7 @@ impl TyInferCtx {
         let parent = DefId::Item(trait_def.id);
 
         for method in &trait_def.methods {
-            let _ = tree.try_insert(method.id, parent);
+            let _ = tree.insert(method.id, parent);
 
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
@@ -901,7 +901,7 @@ impl TyInferCtx {
         let parent = DefId::Item(implementation.id);
 
         for method in &implementation.methods {
-            let _ = tree.try_insert(method.id, parent);
+            let _ = tree.insert(method.id, parent);
 
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
@@ -919,7 +919,7 @@ impl TyInferCtx {
         let parent = DefId::Item(trait_impl.id);
 
         for method in &trait_impl.methods {
-            let _ = tree.try_insert(method.id, parent);
+            let _ = tree.insert(method.id, parent);
 
             self.define_block_scope(tree, &method.block, method.id)?;
         }
@@ -961,7 +961,7 @@ impl TyInferCtx {
         parent: DefId,
     ) -> Result<()> {
         let stmt_id = DefId::Statement(stmt);
-        let _ = tree.try_insert(stmt_id, parent);
+        let _ = tree.insert(stmt_id, parent);
 
         let stmt = self.hir.statement(stmt).unwrap();
 
@@ -1013,7 +1013,7 @@ impl TyInferCtx {
         parent: DefId,
     ) -> Result<()> {
         let expr_id = DefId::Expression(expr);
-        let _ = tree.try_insert(expr_id, parent);
+        let _ = tree.insert(expr_id, parent);
 
         let expr = self.hir.expression(expr).unwrap();
 
@@ -1106,7 +1106,7 @@ impl TyInferCtx {
         parent: DefId,
     ) -> Result<()> {
         let def_id = pat.id;
-        let _ = tree.try_insert(def_id, parent);
+        let _ = tree.insert(def_id, parent);
 
         match &pat.kind {
             lume_hir::PatternKind::Literal(_)
