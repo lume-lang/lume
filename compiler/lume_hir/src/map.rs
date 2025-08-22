@@ -62,6 +62,10 @@ impl Map {
     }
 
     /// Gets the statement with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `Statement` with the given ID was found in the map.
     pub fn expect_statement(&self, id: StatementId) -> Result<&Statement> {
         self.statement(id)
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected statement with ID {id:?}, found none")).into())
@@ -78,12 +82,20 @@ impl Map {
     }
 
     /// Gets the expression with the given ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if no `Expression` with the given ID was found in the map.
     pub fn expect_expression(&self, id: ExpressionId) -> Result<&Expression> {
         self.expression(id)
             .ok_or_else(|| SimpleDiagnostic::new(format!("expected expression with ID {id:?}, found none")).into())
     }
 
     /// Gets the expressions with the given IDs.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if one-or-more IDs have no associated `Expression` within the map.
     pub fn expect_expressions(&self, id: &[ExpressionId]) -> Result<Vec<&Expression>> {
         id.iter()
             .map(|id| self.expect_expression(*id))

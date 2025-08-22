@@ -565,7 +565,7 @@ impl TyInferCtx {
         if let Some(default_value) = &matching_field.default_value {
             return Some(lume_hir::ConstructorField {
                 name: lume_hir::Identifier::from(prop_name),
-                value: default_value.clone(),
+                value: *default_value,
                 location: lume_span::Location::empty(),
             });
         }
