@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+fn foo<T>(val: T) { }
+
+fn main() {
+    foo(6_i32);
+}
