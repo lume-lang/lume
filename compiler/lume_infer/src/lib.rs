@@ -113,6 +113,7 @@ impl TyInferCtx {
         self.define_field_types()?;
         self.define_method_bodies()?;
         self.define_scopes()?;
+        self.infer_type_arguments()?;
 
         tracing::debug!(target: "inference", "finished inference");
 
@@ -370,6 +371,16 @@ impl TyInferCtx {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(NamedTypeRef { name, type_arguments })
+    }
+
+    /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    pub fn hir_lift_type(&self, ty: TypeRef) -> Result<lume_hir::Type> {
+        let id = lume_span::ItemId::from_name(ty.instance_of.package, &ty);
+        let name = self.type_ref_name(&ty)?.to_owned();
+        let location = ty.location;
+
+        Ok(lume_hir::Type { id, name, location })
     }
 
     /// Creates a new [`TypeRef`] which refers to the `std::Type` type.
