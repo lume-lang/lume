@@ -1,0 +1,2 @@
+[alias]
+test-manifold = "run --package manifold"
