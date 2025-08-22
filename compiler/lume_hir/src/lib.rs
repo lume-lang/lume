@@ -1,5 +1,3 @@
-#![feature(debug_closure_helpers)]
-
 use std::fmt::Display;
 
 use lume_macros::Node;

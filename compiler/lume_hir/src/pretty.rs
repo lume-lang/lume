@@ -7,19 +7,54 @@ pub trait PrettyPrint {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
+impl<T: PrettyPrint> PrettyPrint for Option<T> {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        if let Some(value) = self {
+            value.pretty_fmt(map, f)
+        } else {
+            f.write_str("None")
+        }
+    }
+}
+
+struct PrettyItem<'a, T> {
+    value: &'a T,
+    map: &'a Map,
+}
+
+impl<'a, T: PrettyPrint> std::fmt::Debug for PrettyItem<'a, T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.value.pretty_fmt(self.map, f)
+    }
+}
+
+macro_rules! pretty_item {
+    ($expr:expr, $map:expr) => {
+        &PrettyItem {
+            value: &$expr,
+            map: $map,
+        }
+    };
+}
+
+macro_rules! pretty_list {
+    ($collection:expr, $map:expr) => {
+        $collection
+            .iter()
+            .map(|item| PrettyItem { value: item, map: $map })
+            .collect::<Vec<_>>()
+    };
+}
+
 impl Map {
     pub fn pretty_fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Map")
-            .field_with("items", |f| {
-                let mut list = f.debug_list();
+        let items = self
+            .items
+            .values()
+            .map(|item| PrettyItem { value: item, map: self })
+            .collect::<Vec<_>>();
 
-                for item in self.items.values() {
-                    list.entry_with(|f| item.pretty_fmt(self, f));
-                }
-
-                list.finish()
-            })
-            .finish()
+        f.debug_struct("Map").field("items", &items).finish()
     }
 }
 
@@ -45,27 +80,15 @@ impl PrettyPrint for Item {
 
 impl PrettyPrint for FunctionDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let parameters = pretty_list!(self.parameters, map);
+
         f.debug_struct("FunctionDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("parameters", |f| {
-                let mut list = f.debug_list();
-
-                for param in &self.parameters {
-                    list.entry_with(|f| param.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
-            .field_with("return_type", |f| self.return_type.pretty_fmt(map, f))
-            .field_with("block", |f| {
-                if let Some(block) = &self.block {
-                    block.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
+            .field("parameters", &parameters)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("return_type", pretty_item!(self.return_type, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -94,19 +117,13 @@ impl PrettyPrint for TypeDefinition {
 
 impl PrettyPrint for EnumDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let cases = pretty_list!(self.cases, map);
+
         f.debug_struct("EnumDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
-            .field_with("cases", |f| {
-                let mut list = f.debug_list();
-
-                for case in &self.cases {
-                    list.entry_with(|f| case.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("cases", &cases)
             .field("location", &self.location)
             .finish()
     }
@@ -114,17 +131,11 @@ impl PrettyPrint for EnumDefinition {
 
 impl PrettyPrint for EnumDefinitionCase {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let parameters = pretty_list!(self.parameters, map);
+
         f.debug_struct("EnumDefinitionCase")
             .field("name", &self.name)
-            .field_with("parameters", |f| {
-                let mut list = f.debug_list();
-
-                for param in &self.parameters {
-                    list.entry_with(|f| param.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("parameters", &parameters)
             .field("location", &self.location)
             .finish()
     }
@@ -132,20 +143,14 @@ impl PrettyPrint for EnumDefinitionCase {
 
 impl PrettyPrint for StructDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let fields = pretty_list!(self.fields, map);
+
         f.debug_struct("StructDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("builtin", &self.builtin)
-            .field_with("fields", |f| {
-                let mut list = f.debug_list();
-
-                for field in &self.fields {
-                    list.entry_with(|f| field.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
+            .field("fields", &fields)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -153,18 +158,12 @@ impl PrettyPrint for StructDefinition {
 
 impl PrettyPrint for Implementation {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let methods = pretty_list!(self.methods, map);
+
         f.debug_struct("Implementation")
             .field("target", &self.target)
-            .field_with("methods", |f| {
-                let mut list = f.debug_list();
-
-                for method in &self.methods {
-                    list.entry_with(|f| method.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
+            .field("methods", &methods)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -176,13 +175,7 @@ impl PrettyPrint for Field {
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("field_type", &self.field_type)
-            .field_with("default_value", |f| {
-                if let Some(default_value) = self.default_value {
-                    default_value.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
+            .field("default_value", pretty_item!(self.default_value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -190,27 +183,15 @@ impl PrettyPrint for Field {
 
 impl PrettyPrint for MethodDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let parameters = pretty_list!(self.parameters, map);
+
         f.debug_struct("MethodDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("parameters", |f| {
-                let mut list = f.debug_list();
-
-                for param in &self.parameters {
-                    list.entry_with(|f| param.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
-            .field_with("return_type", |f| self.return_type.pretty_fmt(map, f))
-            .field_with("block", |f| {
-                if let Some(block) = &self.block {
-                    block.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
+            .field("parameters", &parameters)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("return_type", pretty_item!(self.return_type, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -218,19 +199,13 @@ impl PrettyPrint for MethodDefinition {
 
 impl PrettyPrint for TraitDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let methods = pretty_list!(self.methods, map);
+
         f.debug_struct("TraitDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("methods", |f| {
-                let mut list = f.debug_list();
-
-                for method in &self.methods {
-                    list.entry_with(|f| method.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
+            .field("methods", &methods)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -238,27 +213,15 @@ impl PrettyPrint for TraitDefinition {
 
 impl PrettyPrint for TraitMethodDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let parameters = pretty_list!(self.parameters, map);
+
         f.debug_struct("TraitMethodDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("parameters", |f| {
-                let mut list = f.debug_list();
-
-                for param in &self.parameters {
-                    list.entry_with(|f| param.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
-            .field_with("return_type", |f| self.return_type.pretty_fmt(map, f))
-            .field_with("block", |f| {
-                if let Some(block) = &self.block {
-                    block.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
+            .field("parameters", &parameters)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("return_type", pretty_item!(self.return_type, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -266,20 +229,14 @@ impl PrettyPrint for TraitMethodDefinition {
 
 impl PrettyPrint for TraitImplementation {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let methods = pretty_list!(self.methods, map);
+
         f.debug_struct("TraitDefinition")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
             .field("target", &self.target)
-            .field_with("methods", |f| {
-                let mut list = f.debug_list();
-
-                for method in &self.methods {
-                    list.entry_with(|f| method.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
+            .field("methods", &methods)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
             .field("location", &self.location)
             .finish()
     }
@@ -287,21 +244,15 @@ impl PrettyPrint for TraitImplementation {
 
 impl PrettyPrint for TraitMethodImplementation {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let parameters = pretty_list!(self.parameters, map);
+
         f.debug_struct("TraitMethodImplementation")
             .field("visibility", &self.visibility)
             .field("name", &self.name)
-            .field_with("parameters", |f| {
-                let mut list = f.debug_list();
-
-                for param in &self.parameters {
-                    list.entry_with(|f| param.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
-            .field_with("type_parameters", |f| self.type_parameters.pretty_fmt(map, f))
-            .field_with("return_type", |f| self.return_type.pretty_fmt(map, f))
-            .field_with("block", |f| self.block.pretty_fmt(map, f))
+            .field("parameters", &parameters)
+            .field("type_parameters", pretty_item!(self.type_parameters, map))
+            .field("return_type", pretty_item!(self.return_type, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -309,16 +260,10 @@ impl PrettyPrint for TraitMethodImplementation {
 
 impl PrettyPrint for Block {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let statements = pretty_list!(self.statements, map);
+
         f.debug_struct("Block")
-            .field_with("statements", |f| {
-                let mut list = f.debug_list();
-
-                for stmt in &self.statements {
-                    list.entry_with(|f| stmt.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("statements", &statements)
             .field("location", &self.location)
             .finish()
     }
@@ -358,7 +303,7 @@ impl PrettyPrint for VariableDeclaration {
         f.debug_struct("VariableDeclaration")
             .field("name", &self.name.as_str())
             .field("declared_type", &self.declared_type)
-            .field_with("value", |f| self.value.pretty_fmt(map, f))
+            .field("value", pretty_item!(self.value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -379,7 +324,7 @@ impl PrettyPrint for Continue {
 impl PrettyPrint for Final {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Final")
-            .field_with("value", |f| self.value.pretty_fmt(map, f))
+            .field("value", pretty_item!(self.value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -388,13 +333,7 @@ impl PrettyPrint for Final {
 impl PrettyPrint for Return {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Return")
-            .field_with("value", |f| {
-                if let Some(value) = self.value {
-                    value.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
+            .field("value", pretty_item!(self.value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -403,7 +342,7 @@ impl PrettyPrint for Return {
 impl PrettyPrint for InfiniteLoop {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("InfiniteLoop")
-            .field_with("block", |f| self.block.pretty_fmt(map, f))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -412,8 +351,8 @@ impl PrettyPrint for InfiniteLoop {
 impl PrettyPrint for IteratorLoop {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IteratorLoop")
-            .field_with("collection", |f| self.collection.pretty_fmt(map, f))
-            .field_with("block", |f| self.block.pretty_fmt(map, f))
+            .field("collection", pretty_item!(self.collection, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -459,8 +398,8 @@ impl PrettyPrint for ExpressionKind {
 impl PrettyPrint for Assignment {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Assignment")
-            .field_with("target", |f| self.target.pretty_fmt(map, f))
-            .field_with("value", |f| self.value.pretty_fmt(map, f))
+            .field("target", pretty_item!(self.target, map))
+            .field("value", pretty_item!(self.value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -470,8 +409,8 @@ impl PrettyPrint for Binary {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Binary")
             .field("op", &self.op.kind)
-            .field_with("lhs", |f| self.lhs.pretty_fmt(map, f))
-            .field_with("rhs", |f| self.rhs.pretty_fmt(map, f))
+            .field("lhs", pretty_item!(self.lhs, map))
+            .field("rhs", pretty_item!(self.rhs, map))
             .field("location", &self.location)
             .finish()
     }
@@ -480,7 +419,7 @@ impl PrettyPrint for Binary {
 impl PrettyPrint for Cast {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Cast")
-            .field_with("source", |f| self.source.pretty_fmt(map, f))
+            .field("source", pretty_item!(self.source, map))
             .field("target", &self.target)
             .field("location", &self.location)
             .finish()
@@ -489,17 +428,11 @@ impl PrettyPrint for Cast {
 
 impl PrettyPrint for Construct {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let fields = pretty_list!(self.fields, map);
+
         f.debug_struct("Construct")
             .field("path", &self.path)
-            .field_with("fields", |f| {
-                let mut list = f.debug_list();
-
-                for field in &self.fields {
-                    list.entry_with(|f| field.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("fields", &fields)
             .field("location", &self.location)
             .finish()
     }
@@ -509,7 +442,7 @@ impl PrettyPrint for ConstructorField {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ConstructorField")
             .field("name", &self.name.as_str())
-            .field_with("value", |f| self.value.pretty_fmt(map, f))
+            .field("value", pretty_item!(self.value, map))
             .field("location", &self.location)
             .finish()
     }
@@ -517,17 +450,11 @@ impl PrettyPrint for ConstructorField {
 
 impl PrettyPrint for StaticCall {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let arguments = pretty_list!(self.arguments, map);
+
         f.debug_struct("StaticCall")
             .field("name", &self.name)
-            .field_with("arguments", |f| {
-                let mut list = f.debug_list();
-
-                for arg in &self.arguments {
-                    list.entry_with(|f| arg.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("arguments", &arguments)
             .field("location", &self.location)
             .finish()
     }
@@ -535,18 +462,12 @@ impl PrettyPrint for StaticCall {
 
 impl PrettyPrint for InstanceCall {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let arguments = pretty_list!(self.arguments, map);
+
         f.debug_struct("InstanceCall")
             .field("name", &self.name)
-            .field_with("callee", |f| self.callee.pretty_fmt(map, f))
-            .field_with("arguments", |f| {
-                let mut list = f.debug_list();
-
-                for arg in &self.arguments {
-                    list.entry_with(|f| arg.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("callee", pretty_item!(self.callee, map))
+            .field("arguments", &arguments)
             .field("location", &self.location)
             .finish()
     }
@@ -554,17 +475,11 @@ impl PrettyPrint for InstanceCall {
 
 impl PrettyPrint for IntrinsicCall {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let arguments = pretty_list!(self.arguments, map);
+
         f.debug_struct("IntrinsicCall")
             .field("name", &self.name)
-            .field_with("arguments", |f| {
-                let mut list = f.debug_list();
-
-                for arg in &self.arguments {
-                    list.entry_with(|f| arg.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("arguments", &arguments)
             .field("location", &self.location)
             .finish()
     }
@@ -572,16 +487,10 @@ impl PrettyPrint for IntrinsicCall {
 
 impl PrettyPrint for If {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let cases = pretty_list!(self.cases, map);
+
         f.debug_struct("If")
-            .field_with("cases", |f| {
-                let mut list = f.debug_list();
-
-                for case in &self.cases {
-                    list.entry_with(|f| case.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("cases", &cases)
             .field("location", &self.location)
             .finish()
     }
@@ -590,14 +499,8 @@ impl PrettyPrint for If {
 impl PrettyPrint for Condition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Condition")
-            .field_with("condition", |f| {
-                if let Some(condition) = self.condition {
-                    condition.pretty_fmt(map, f)
-                } else {
-                    f.write_str("None")
-                }
-            })
-            .field_with("block", |f| self.block.pretty_fmt(map, f))
+            .field("condition", pretty_item!(self.condition, map))
+            .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
     }
@@ -606,7 +509,7 @@ impl PrettyPrint for Condition {
 impl PrettyPrint for Literal {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Literal")
-            .field_with("kind", |f| self.kind.pretty_fmt(map, f))
+            .field("kind", pretty_item!(self.kind, map))
             .field("location", &self.location)
             .finish()
     }
@@ -657,8 +560,8 @@ impl PrettyPrint for Logical {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Logical")
             .field("op", &self.op.kind)
-            .field_with("lhs", |f| self.lhs.pretty_fmt(map, f))
-            .field_with("rhs", |f| self.rhs.pretty_fmt(map, f))
+            .field("lhs", pretty_item!(self.lhs, map))
+            .field("rhs", pretty_item!(self.rhs, map))
             .field("location", &self.location)
             .finish()
     }
@@ -667,7 +570,7 @@ impl PrettyPrint for Logical {
 impl PrettyPrint for Member {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Member")
-            .field_with("callee", |f| self.callee.pretty_fmt(map, f))
+            .field("callee", pretty_item!(self.callee, map))
             .field("name", &self.name)
             .field("location", &self.location)
             .finish()
@@ -686,16 +589,10 @@ impl PrettyPrint for PatternField {
 
 impl PrettyPrint for Scope {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let body = pretty_list!(self.body, map);
+
         f.debug_struct("Scope")
-            .field_with("body", |f| {
-                let mut list = f.debug_list();
-
-                for stmt in &self.body {
-                    list.entry_with(|f| stmt.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("body", &body)
             .field("location", &self.location)
             .finish()
     }
@@ -703,17 +600,11 @@ impl PrettyPrint for Scope {
 
 impl PrettyPrint for Switch {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let cases = pretty_list!(self.cases, map);
+
         f.debug_struct("Switch")
-            .field_with("operand", |f| self.operand.pretty_fmt(map, f))
-            .field_with("cases", |f| {
-                let mut list = f.debug_list();
-
-                for case in &self.cases {
-                    list.entry_with(|f| case.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("operand", pretty_item!(self.operand, map))
+            .field("cases", &cases)
             .field("location", &self.location)
             .finish()
     }
@@ -722,8 +613,8 @@ impl PrettyPrint for Switch {
 impl PrettyPrint for SwitchCase {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("SwitchCase")
-            .field_with("pattern", |f| self.pattern.pretty_fmt(map, f))
-            .field_with("branch", |f| self.branch.pretty_fmt(map, f))
+            .field("pattern", pretty_item!(self.pattern, map))
+            .field("branch", pretty_item!(self.branch, map))
             .field("location", &self.location)
             .finish()
     }
@@ -733,7 +624,7 @@ impl PrettyPrint for Variable {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Variable")
             .field("name", &self.name)
-            .field_with("reference", |f| self.reference.pretty_fmt(map, f))
+            .field("reference", pretty_item!(self.reference, map))
             .field("location", &self.location)
             .finish()
     }
@@ -751,17 +642,11 @@ impl PrettyPrint for VariableSource {
 
 impl PrettyPrint for Variant {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let arguments = pretty_list!(self.arguments, map);
+
         f.debug_struct("Variant")
             .field("name", &self.name)
-            .field_with("args", |f| {
-                let mut list = f.debug_list();
-
-                for arg in &self.arguments {
-                    list.entry_with(|f| arg.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("args", &arguments)
             .field("location", &self.location)
             .finish()
     }
@@ -770,7 +655,7 @@ impl PrettyPrint for Variant {
 impl PrettyPrint for Pattern {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Pattern")
-            .field_with("kind", |f| self.kind.pretty_fmt(map, f))
+            .field("kind", pretty_item!(self.kind, map))
             .field("location", &self.location)
             .finish()
     }
@@ -790,7 +675,7 @@ impl PrettyPrint for PatternKind {
 impl PrettyPrint for LiteralPattern {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("LiteralPattern")
-            .field_with("literal", |f| self.literal.pretty_fmt(map, f))
+            .field("literal", pretty_item!(self.literal, map))
             .field("location", &self.location)
             .finish()
     }
@@ -799,7 +684,7 @@ impl PrettyPrint for LiteralPattern {
 impl PrettyPrint for IdentifierPattern {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("IdentifierPattern")
-            .field_with("name", |f| self.name.pretty_fmt(map, f))
+            .field("name", pretty_item!(self.name, map))
             .field("location", &self.location)
             .finish()
     }
@@ -807,16 +692,10 @@ impl PrettyPrint for IdentifierPattern {
 
 impl PrettyPrint for VariantPattern {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let fields = pretty_list!(self.fields, map);
+
         f.debug_struct("VariantPattern")
-            .field_with("fields", |f| {
-                let mut list = f.debug_list();
-
-                for field in &self.fields {
-                    list.entry_with(|f| field.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("fields", &fields)
             .field("location", &self.location)
             .finish()
     }
@@ -835,7 +714,7 @@ impl PrettyPrint for TypeParameters {
         let mut list = f.debug_list();
 
         for param in &self.inner {
-            list.entry_with(|f| param.pretty_fmt(map, f));
+            list.entry(pretty_item!(param.to_owned(), map));
         }
 
         list.finish()
@@ -844,17 +723,11 @@ impl PrettyPrint for TypeParameters {
 
 impl PrettyPrint for TypeParameter {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let constraints = pretty_list!(self.constraints, map);
+
         f.debug_struct("TypeParameter")
-            .field_with("name", |f| self.name.pretty_fmt(map, f))
-            .field_with("constraints", |f| {
-                let mut list = f.debug_list();
-
-                for constraint in &self.constraints {
-                    list.entry_with(|f| constraint.pretty_fmt(map, f));
-                }
-
-                list.finish()
-            })
+            .field("name", pretty_item!(self.name, map))
+            .field("constraints", &constraints)
             .field("location", &self.location)
             .finish()
     }

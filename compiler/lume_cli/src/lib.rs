@@ -1,5 +1,3 @@
-#![feature(exclusive_wrapper)]
-
 pub(crate) mod commands;
 pub(crate) mod error;
 
