@@ -4,7 +4,7 @@ use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_> {
     pub(super) fn expression(&mut self, expr: &lume_tir::Expression) -> lume_mir::Operand {
-        match &expr.kind {
+        let op = match &expr.kind {
             lume_tir::ExpressionKind::Assignment(expr) => self.assignment(expr),
             lume_tir::ExpressionKind::Binary(expr) => self.binary(expr),
             lume_tir::ExpressionKind::Cast(expr) => self.cast(expr),
@@ -18,7 +18,20 @@ impl FunctionTransformer<'_> {
             lume_tir::ExpressionKind::Scope(expr) => self.scope(expr),
             lume_tir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_tir::ExpressionKind::Variant(var) => self.variant(var),
+        };
+
+        if expr.ty.is_scalar_type() && self.type_of_value(&op).is_reference_type() {
+            let return_ty = self.lower_type(&expr.ty);
+
+            let target_reg = self.load_operand(&op);
+            let loaded_reg = self
+                .func
+                .declare_value_raw(return_ty, lume_mir::Operand::Load { id: target_reg });
+
+            return lume_mir::Operand::Reference { id: loaded_reg };
         }
+
+        op
     }
 
     fn assignment(&mut self, expr: &lume_tir::Assignment) -> lume_mir::Operand {

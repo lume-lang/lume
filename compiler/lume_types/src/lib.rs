@@ -975,6 +975,11 @@ impl TypeRef {
     pub fn is_unknown(&self) -> bool {
         self.instance_of == TYPEREF_UNKNOWN_ID
     }
+
+    /// Determines if the type is a scalar type.
+    pub fn is_scalar_type(&self) -> bool {
+        self.is_bool() || self.is_integer() || self.is_float()
+    }
 }
 
 impl PartialEq for TypeRef {

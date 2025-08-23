@@ -230,23 +230,32 @@ impl Function {
     }
 
     /// Declares a new local with the given declaration in the current block.
-    #[expect(clippy::needless_pass_by_value)]
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
         if let Declaration::Operand(op) = &decl
             && let Operand::Load { id } | Operand::Reference { id } = op
         {
             *id
         } else {
-            let ptr = self.add_register(ty.clone());
-            self.current_block_mut().declare(ptr, decl);
-
-            ptr
+            self.declare_raw(ty, decl)
         }
     }
 
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare(ty, Declaration::Operand(value))
+    }
+
+    /// Declares a new local with the given declaration in the current block.
+    pub fn declare_raw(&mut self, ty: Type, decl: Declaration) -> RegisterId {
+        let ptr = self.add_register(ty.clone());
+        self.current_block_mut().declare(ptr, decl, ty);
+
+        ptr
+    }
+
+    /// Declares a new local with the given declaration in the current block.
+    pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
+        self.declare_raw(ty, Declaration::Operand(value))
     }
 
     /// Creates a new stack-allocated slot within the function.
