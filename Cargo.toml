@@ -14,7 +14,7 @@ path = "src/main.rs"
 test = false
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 rust-version = "1.88.0"
 edition = "2024"
 authors = ["Max T. Kristiansen <me@maxtrier.dk>"]

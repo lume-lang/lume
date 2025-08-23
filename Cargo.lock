@@ -81,7 +81,7 @@ checksum = "dde20b3d026af13f561bdd0f15edf01fc734f0dafcedbaf42bba506a9517f223"
 
 [[package]]
 name = "arc"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -123,7 +123,7 @@ dependencies = [
 
 [[package]]
 name = "build_stage"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "lume_errors",
@@ -1042,7 +1042,7 @@ dependencies = [
 
 [[package]]
 name = "lume"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lume_cli",
  "lume_driver",
@@ -1061,14 +1061,14 @@ dependencies = [
 
 [[package]]
 name = "lume_ast"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "insta",
 ]
 
 [[package]]
 name = "lume_cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "clap",
@@ -1086,7 +1086,7 @@ dependencies = [
 
 [[package]]
 name = "lume_codegen"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "cranelift",
  "cranelift-module",
@@ -1106,7 +1106,7 @@ dependencies = [
 
 [[package]]
 name = "lume_driver"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1131,7 +1131,7 @@ dependencies = [
 
 [[package]]
 name = "lume_errors"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1140,7 +1140,7 @@ dependencies = [
 
 [[package]]
 name = "lume_errors_test"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "insta",
@@ -1150,7 +1150,7 @@ dependencies = [
 
 [[package]]
 name = "lume_hir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1165,7 +1165,7 @@ dependencies = [
 
 [[package]]
 name = "lume_hir_lower"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1183,7 +1183,7 @@ dependencies = [
 
 [[package]]
 name = "lume_infer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1205,7 +1205,7 @@ dependencies = [
 
 [[package]]
 name = "lume_lexer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1216,7 +1216,7 @@ dependencies = [
 
 [[package]]
 name = "lume_linker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "dirs",
@@ -1229,7 +1229,7 @@ dependencies = [
 
 [[package]]
 name = "lume_macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1238,7 +1238,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_errors",
@@ -1250,7 +1250,7 @@ dependencies = [
 
 [[package]]
 name = "lume_mir_lower"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_hir",
@@ -1263,7 +1263,7 @@ dependencies = [
 
 [[package]]
 name = "lume_parser"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1277,7 +1277,7 @@ dependencies = [
 
 [[package]]
 name = "lume_query"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "lume_query_macros",
  "once_cell",
@@ -1286,7 +1286,7 @@ dependencies = [
 
 [[package]]
 name = "lume_query_macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "darling",
  "once_cell",
@@ -1297,7 +1297,7 @@ dependencies = [
 
 [[package]]
 name = "lume_session"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "error_snippet",
@@ -1315,7 +1315,7 @@ dependencies = [
 
 [[package]]
 name = "lume_span"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1325,7 +1325,7 @@ dependencies = [
 
 [[package]]
 name = "lume_tir"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_session",
@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "lume_tir_lower"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "indexmap",
@@ -1352,7 +1352,7 @@ dependencies = [
 
 [[package]]
 name = "lume_type_metadata"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_hir",
@@ -1362,7 +1362,7 @@ dependencies = [
 
 [[package]]
 name = "lume_typech"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arc",
  "error_snippet",
@@ -1385,7 +1385,7 @@ dependencies = [
 
 [[package]]
 name = "lume_types"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "error_snippet",
  "error_snippet_derive",
@@ -1398,11 +1398,11 @@ dependencies = [
 
 [[package]]
 name = "lumert"
-version = "0.1.0"
+version = "0.1.1"
 
 [[package]]
 name = "manifold"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "build_stage",
  "error_snippet",
