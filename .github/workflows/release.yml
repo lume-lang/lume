@@ -28,9 +28,9 @@ jobs:
             triple: x86_64-linux
             runner: ubuntu-latest
 
-          # - target: aarch64-apple-darwin
-          #   triple: aarch64-macos
-          #   runner: macos-latest
+          - target: aarch64-apple-darwin
+            triple: aarch64-macos
+            runner: macos-latest
 
     steps:
       - uses: actions/checkout@v4
