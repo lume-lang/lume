@@ -4,6 +4,8 @@ use crate::map::Map;
 use crate::*;
 
 pub trait PrettyPrint {
+    /// Pretty print the instance for use in Manifold tests.
+    #[expect(clippy::missing_errors_doc)]
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
@@ -22,7 +24,7 @@ struct PrettyItem<'a, T> {
     map: &'a Map,
 }
 
-impl<'a, T: PrettyPrint> std::fmt::Debug for PrettyItem<'a, T> {
+impl<T: PrettyPrint> std::fmt::Debug for PrettyItem<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.value.pretty_fmt(self.map, f)
     }

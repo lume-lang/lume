@@ -1,6 +1,6 @@
-use std::fmt;
 use std::io::Write;
 use std::path::PathBuf;
+use std::{fmt, path::Path};
 
 use error_snippet::IntoDiagnostic;
 use lume_errors::Result;
@@ -68,12 +68,7 @@ impl fmt::Display for Line {
     }
 }
 
-fn print_diff_output(
-    input_path: &PathBuf,
-    expected_path: &PathBuf,
-    actual: &str,
-    expected: &str,
-) -> std::io::Result<String> {
+fn print_diff_output(input_path: &Path, expected_path: &Path, actual: &str, expected: &str) -> std::io::Result<String> {
     let mut f = Vec::new();
 
     writeln!(&mut f, "Source file:    {}", input_path.display().cyan().underline())?;

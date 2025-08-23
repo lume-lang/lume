@@ -137,7 +137,7 @@ fn parse_hash_keys(expr: &syn::Meta) -> proc_macro2::TokenStream {
         syn::Meta::List(_) => panic!("list expressions are not supported"),
     };
 
-    while let Some(idx) = keys.find("\"") {
+    while let Some(idx) = keys.find('"') {
         keys.remove(idx);
     }
 

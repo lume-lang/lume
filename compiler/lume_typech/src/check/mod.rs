@@ -212,7 +212,7 @@ impl TyCheckCtx {
             }
         }
 
-        if !self.check_type_compatibility(&from.ret_ty, &to.ret_ty)? {
+        if !self.check_type_compatibility(from.ret_ty, to.ret_ty)? {
             return Ok(false);
         }
 

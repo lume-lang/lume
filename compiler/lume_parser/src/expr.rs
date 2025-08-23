@@ -729,7 +729,7 @@ impl Parser {
                 let mut value = token.value.unwrap();
 
                 // Remove all underscores from the literal
-                while let Some(idx) = value.find("\"") {
+                while let Some(idx) = value.find('"') {
                     value.remove(idx);
                 }
 

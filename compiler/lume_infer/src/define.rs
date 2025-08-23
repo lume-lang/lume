@@ -1099,6 +1099,7 @@ impl TyInferCtx {
         }
     }
 
+    #[allow(clippy::only_used_in_recursion, reason = "pedantic")]
     fn define_pat_scope(
         &self,
         tree: &mut BTreeMap<DefId, DefId>,

@@ -20,7 +20,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     crate::diff::diff_output_of(hir_output, path, map_path)
 }
 
-fn build_hir(path: &PathBuf, content: String) -> String {
+fn build_hir(path: &Path, content: String) -> String {
     let file_name = Path::new(path.file_name().unwrap());
     let source_file = SourceFile::new(PackageId::empty(), file_name, content);
     let stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
