@@ -422,6 +422,7 @@ pub struct Call {
     pub function: FunctionId,
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
+    pub return_type: TypeRef,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

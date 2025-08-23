@@ -279,7 +279,7 @@ struct LowerFunction<'ctx> {
 
     builder: FunctionBuilder<'ctx>,
     variables: IndexMap<RegisterId, Variable>,
-    variable_types: IndexMap<RegisterId, Type>,
+    variable_types: IndexMap<RegisterId, lume_mir::Type>,
     parameters: IndexMap<RegisterId, Value>,
     slots: IndexMap<SlotId, StackSlot>,
     blocks: IndexMap<lume_mir::BasicBlockId, Block>,
@@ -337,13 +337,14 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub(crate) fn declare_var(&mut self, register: RegisterId, ty: Type) -> Variable {
-        let var = self.builder.declare_var(ty);
+    pub(crate) fn declare_var(&mut self, register: RegisterId, ty: lume_mir::Type) -> Variable {
+        let cg_ty = self.backend.cl_type_of(&ty);
+        let var = self.builder.declare_var(cg_ty);
+
+        tracing::debug!("declare_var {register}[{ty}] = {var}");
 
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
-
-        tracing::debug!("declare_var {register}[{ty}] = {var}");
 
         var
     }
@@ -366,9 +367,17 @@ impl<'ctx> LowerFunction<'ctx> {
 
     pub(crate) fn load_var(&mut self, register: RegisterId) -> Value {
         let val = self.use_var(register);
-        let ty = self.retrieve_var_type(register);
+        let lume_mir::TypeKind::Pointer { elemental } = &self.retrieve_var_type(register).kind else {
+            panic!("bug!: attempted to load from non-pointer register {register}");
+        };
 
-        self.builder.ins().load(ty, MemFlags::new(), val, Offset32::new(0))
+        let inner_ty = self.backend.cl_type_of(elemental);
+
+        tracing::debug!("loading {val} from {register}, type {inner_ty}");
+
+        self.builder
+            .ins()
+            .load(inner_ty, MemFlags::new(), val, Offset32::new(0))
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
@@ -382,8 +391,8 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().load(field_ty, MemFlags::new(), ptr, offset as i32)
     }
 
-    pub(crate) fn retrieve_var_type(&self, register: RegisterId) -> Type {
-        *self.variable_types.get(&register).unwrap()
+    pub(crate) fn retrieve_var_type(&self, register: RegisterId) -> &lume_mir::Type {
+        self.variable_types.get(&register).unwrap()
     }
 
     pub(crate) fn retrieve_load_type(&self, register: RegisterId) -> Type {

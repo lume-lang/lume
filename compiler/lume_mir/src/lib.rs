@@ -501,8 +501,8 @@ impl BasicBlock {
     }
 
     /// Declares a new stack-allocated register with the given value.
-    pub fn declare(&mut self, register: RegisterId, decl: Declaration) {
-        self.instructions.push(Instruction::Let { register, decl });
+    pub fn declare(&mut self, register: RegisterId, decl: Declaration, ty: Type) {
+        self.instructions.push(Instruction::Let { register, decl, ty });
     }
 
     /// Assigns a new value to an existing register.
@@ -744,7 +744,11 @@ impl std::fmt::Display for SlotId {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Instruction {
     /// Declares an SSA register within the current function.
-    Let { register: RegisterId, decl: Declaration },
+    Let {
+        register: RegisterId,
+        decl: Declaration,
+        ty: Type,
+    },
 
     /// Assigns the value into the target register.
     Assign { target: RegisterId, value: Operand },
@@ -798,7 +802,7 @@ impl Instruction {
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Self::Let { register, decl } => write!(f, "let {register} = {decl}"),
+            Self::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
             Self::Assign { target, value } => write!(f, "{target} = {value}"),
             Self::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
             Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
