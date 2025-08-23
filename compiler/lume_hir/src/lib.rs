@@ -1284,6 +1284,7 @@ pub enum ExpressionKind {
     /// ```
     IntrinsicCall(IntrinsicCall),
     If(If),
+    Is(Is),
     Literal(Literal),
     Logical(Logical),
     Member(Member),
@@ -1506,6 +1507,14 @@ pub struct If {
 pub struct Condition {
     pub condition: Option<ExpressionId>,
     pub block: Block,
+    pub location: Location,
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Is {
+    pub id: ExpressionId,
+    pub target: ExpressionId,
+    pub pattern: Pattern,
     pub location: Location,
 }
 

@@ -281,6 +281,11 @@ impl TyCheckCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::Is(is) => {
+                self.expression(is.target)?;
+
+                self.is_expression(is)
+            }
             lume_hir::ExpressionKind::Logical(expr) => {
                 self.expression(expr.lhs)?;
                 self.expression(expr.rhs)?;
@@ -495,6 +500,20 @@ impl TyCheckCtx {
                 }
                 .into(),
             );
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the logical expression is performed on boolean values, since
+    /// only boolean values can be tested in logical expressions.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn is_expression(&self, expr: &lume_hir::Is) -> Result<()> {
+        let target_ty = self.type_of(expr.target)?;
+        let pattern_ty = self.type_of_pattern(&expr.pattern)?;
+
+        if let Err(err) = self.ensure_type_compatibility(&target_ty, &pattern_ty) {
+            self.dcx().emit(err);
         }
 
         Ok(())
