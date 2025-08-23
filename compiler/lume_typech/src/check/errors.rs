@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{SignatureOwned, Visibility};
+use lume_hir::Visibility;
 use lume_span::Location;
 use lume_types::NamedTypeRef;
 
@@ -105,8 +105,8 @@ pub struct TraitMethodSignatureMismatch {
     #[label(source, "expected signature {expected}, found {found}")]
     pub source: Location,
 
-    pub expected: SignatureOwned,
-    pub found: SignatureOwned,
+    pub expected: String,
+    pub found: String,
 }
 
 #[derive(Diagnostic, Debug)]

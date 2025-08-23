@@ -4,7 +4,7 @@ use error_snippet::Result;
 use lume_errors::DiagCtx;
 use lume_hir::{Path, TypeId, TypeParameter};
 use lume_span::{DefId, StatementId};
-use lume_types::{NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
+use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
 
 mod define;
 mod errors;
@@ -369,6 +369,75 @@ impl TyInferCtx {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(NamedTypeRef { name, type_arguments })
+    }
+
+    /// Creates a human-readable version of the given signature.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any types referenced by the given [`FunctionSig`], or any child
+    /// instances are missing from the type context.
+    pub fn sig_to_string(&self, name: &lume_hir::Identifier, sig: FunctionSig<'_>, expand: bool) -> Result<String> {
+        let name = if expand { format!("{name:+}") } else { format!("{name}") };
+
+        let type_parameters = if sig.type_params.is_empty() {
+            String::new()
+        } else {
+            format!(
+                "<{}>",
+                sig.type_params
+                    .iter()
+                    .map(|id| {
+                        let param = self.tdb().type_parameter(*id).unwrap();
+
+                        self.type_param_to_string(param, expand)
+                    })
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        };
+
+        let parameters = format!(
+            "({})",
+            sig.params
+                .inner()
+                .iter()
+                .map(|param| {
+                    let type_name = self.new_named_type(&param.ty, expand)?;
+
+                    Ok(format!("{}: {type_name}", param.name))
+                })
+                .collect::<Result<Vec<_>>>()?
+                .join(", ")
+        );
+
+        let ret_ty = self.new_named_type(sig.ret_ty, expand)?;
+
+        Ok(format!("fn {name}{type_parameters}{parameters} -> {ret_ty}"))
+    }
+
+    /// Creates a human-readable version of the given type parameter.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if any types referenced by the given [`TypeParameter`], or any child
+    /// instances are missing from the type context.
+    pub fn type_param_to_string(&self, type_param: &lume_types::TypeParameter, expand: bool) -> Result<String> {
+        let constraints = if type_param.constraints.is_empty() {
+            String::new()
+        } else {
+            format!(
+                ": {}",
+                type_param
+                    .constraints
+                    .iter()
+                    .map(|constraint| { Ok(self.new_named_type(constraint, expand)?.to_string()) })
+                    .collect::<Result<Vec<_>>>()?
+                    .join(", ")
+            )
+        };
+
+        Ok(format!("{}{constraints}", type_param.name))
     }
 
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
