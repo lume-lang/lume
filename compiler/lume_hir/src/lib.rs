@@ -1704,6 +1704,12 @@ impl TypeParameters {
     pub fn as_refs(&self) -> Vec<&TypeParameter> {
         self.iter().map(AsRef::as_ref).collect::<Vec<_>>()
     }
+
+    pub fn as_id_refs(&self) -> Vec<TypeParameterId> {
+        self.iter()
+            .map(|param| param.type_param_id.unwrap())
+            .collect::<Vec<_>>()
+    }
 }
 
 impl From<Vec<TypeParameter>> for TypeParameters {
