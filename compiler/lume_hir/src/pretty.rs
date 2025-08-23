@@ -385,6 +385,7 @@ impl PrettyPrint for ExpressionKind {
             Self::InstanceCall(e) => e.pretty_fmt(map, f),
             Self::IntrinsicCall(e) => e.pretty_fmt(map, f),
             Self::If(e) => e.pretty_fmt(map, f),
+            Self::Is(e) => e.pretty_fmt(map, f),
             Self::Literal(e) => e.pretty_fmt(map, f),
             Self::Logical(e) => e.pretty_fmt(map, f),
             Self::Member(e) => e.pretty_fmt(map, f),
@@ -493,6 +494,16 @@ impl PrettyPrint for If {
 
         f.debug_struct("If")
             .field("cases", &cases)
+            .field("location", &self.location)
+            .finish()
+    }
+}
+
+impl PrettyPrint for Is {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Is")
+            .field("target", pretty_item!(self.target, map))
+            .field("pattern", pretty_item!(self.pattern, map))
             .field("location", &self.location)
             .finish()
     }
@@ -697,6 +708,7 @@ impl PrettyPrint for VariantPattern {
         let fields = pretty_list!(self.fields, map);
 
         f.debug_struct("VariantPattern")
+            .field("name", &self.name)
             .field("fields", &fields)
             .field("location", &self.location)
             .finish()

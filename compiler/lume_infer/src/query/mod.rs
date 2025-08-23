@@ -133,6 +133,7 @@ impl TyInferCtx {
                 self.type_of_call(lume_hir::CallExpression::Intrinsic(call))?
             }
             lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
+            lume_hir::ExpressionKind::Is(_) => TypeRef::bool(),
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
             lume_hir::ExpressionKind::Logical(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {

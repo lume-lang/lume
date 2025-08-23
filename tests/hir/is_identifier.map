@@ -1,0 +1,62 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: is_identifier.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: is_identifier.lm:3:6,
+                },
+                location: is_identifier.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Is {
+                        target: Literal {
+                            kind: IntLiteral {
+                                value: 0,
+                                kind: I32,
+                            },
+                            location: is_identifier.lm:12:13,
+                        },
+                        pattern: Pattern {
+                            kind: IdentifierPattern {
+                                name: Identifier {
+                                    name: "ident",
+                                    location: is_identifier.lm:17:22,
+                                },
+                                location: is_identifier.lm:17:22,
+                            },
+                            location: is_identifier.lm:17:22,
+                        },
+                        location: is_identifier.lm:12:23,
+                    },
+                ],
+                location: is_identifier.lm:9:25,
+            },
+            location: is_identifier.lm:0:25,
+        },
+    ],
+}
