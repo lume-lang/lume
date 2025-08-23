@@ -109,7 +109,7 @@ impl TyCheckCtx {
         let impl_sig = self.signature_of_call_ref(CallReference::Method(method_impl.method_id.unwrap()))?;
         let inst_impl_sig = self.instantiate_signature_isolate(impl_sig.as_ref(), &type_params, &type_args);
 
-        if inst_def_sig != inst_impl_sig {
+        if !self.check_signature_compatibility(inst_def_sig.as_ref(), inst_impl_sig.as_ref())? {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {
                 source: method_impl.location,
                 expected: self.sig_to_string(&method_def.name, inst_def_sig.as_ref(), false)?,
