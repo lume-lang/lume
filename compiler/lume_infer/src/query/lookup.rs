@@ -1,5 +1,7 @@
-use crate::{TyInferCtx, query::Callable};
-use error_snippet::Result;
+use crate::TyInferCtx;
+use crate::query::{CallReference, Callable};
+
+use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
 use lume_types::{Function, FunctionSigOwned, Method, TypeKind, TypeRef};
@@ -10,6 +12,29 @@ use super::diagnostics::{self};
 pub const MAX_LEVENSHTEIN_DISTANCE: usize = 3;
 
 impl TyInferCtx {
+    /// Gets the [`Callable`] with the given ID.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn callable_of(&self, id: CallReference) -> Result<Callable<'_>> {
+        match id {
+            CallReference::Method(id) => {
+                let method = self
+                    .tdb()
+                    .method(id)
+                    .ok_or_else(|| lume_types::errors::MethodNotFound { id }.into_diagnostic())?;
+
+                Ok(Callable::Method(method))
+            }
+            CallReference::Function(id) => {
+                let func = self
+                    .tdb()
+                    .function(id)
+                    .ok_or_else(|| lume_types::errors::FunctionNotFound { id }.into_diagnostic())?;
+
+                Ok(Callable::Function(func))
+            }
+        }
+    }
+
     /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`.
     ///
     /// Methods returned by this method are not checked for validity within the current
@@ -275,6 +300,18 @@ impl TyInferCtx {
         sig: lume_types::FunctionSig<'a>,
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
+        self.instantiate_signature_isolate(sig, sig.type_params, type_args)
+    }
+
+    /// Instantiates a function signature against the given type arguments, resolving
+    /// the parameters and return type within the signature.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_signature_isolate<'a>(
+        &self,
+        sig: lume_types::FunctionSig<'a>,
+        type_params: &[lume_hir::TypeParameterId],
+        type_args: &[TypeRef],
+    ) -> lume_types::FunctionSigOwned {
         let mut inst = lume_types::FunctionSigOwned {
             params: lume_types::Parameters::new(),
             ret_ty: TypeRef::unknown(),
@@ -282,7 +319,7 @@ impl TyInferCtx {
         };
 
         for param in sig.params.inner() {
-            let param_ty = self.instantiate_type_from(&param.ty, sig.type_params, type_args);
+            let param_ty = self.instantiate_type_from(&param.ty, type_params, type_args);
 
             inst.params.params.push(lume_types::Parameter {
                 idx: param.idx,
@@ -292,9 +329,7 @@ impl TyInferCtx {
             });
         }
 
-        inst.ret_ty = self
-            .instantiate_type_from(sig.ret_ty, sig.type_params, type_args)
-            .clone();
+        inst.ret_ty = self.instantiate_type_from(sig.ret_ty, type_params, type_args).clone();
 
         inst
     }
@@ -375,6 +410,17 @@ impl TyInferCtx {
             }
             Callable::Function(function) => Ok(function.sig().to_owned()),
         }
+    }
+
+    /// Gets the expanded signature of the [`Callable`] with the given ID.
+    ///
+    /// The expanded signature of a [`Callable`] will include all the type parameters
+    /// defined on parent definitions, such as on implementation blocks.
+    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    pub fn signature_of_call_ref(&self, id: CallReference) -> Result<FunctionSigOwned> {
+        let callable = self.callable_of(id)?;
+
+        self.signature_of(callable)
     }
 
     /// Gets the instantiated signature of the given [`Callable`], w.r.t the given expression.

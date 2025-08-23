@@ -1,4 +1,6 @@
 use error_snippet::Result;
+use lume_infer::query::CallReference;
+use lume_span::DefId;
 
 use crate::TyCheckCtx;
 
@@ -60,7 +62,7 @@ impl TyCheckCtx {
                 .into());
             };
 
-            self.check_trait_method(method_def, method_impl)?;
+            self.check_trait_method(trait_def, trait_impl, method_def, method_impl)?;
         }
 
         for method_impl in &trait_impl.methods {
@@ -80,12 +82,18 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    #[allow(clippy::unused_self)]
     fn check_trait_method<'a>(
         &self,
+        trait_def: &'a lume_hir::TraitDefinition,
+        trait_impl: &'a lume_hir::TraitImplementation,
         method_def: &'a lume_hir::TraitMethodDefinition,
         method_impl: &'a lume_hir::TraitMethodImplementation,
     ) -> Result<()> {
+        let mut type_params = trait_def.type_parameters.as_id_refs();
+        type_params.extend(method_def.type_parameters.as_id_refs());
+
+        let type_args = self.mk_type_refs_from(trait_impl.type_args(), DefId::Item(trait_impl.id))?;
+
         if method_def.visibility != method_impl.visibility {
             return Err(crate::check::errors::TraitMethodVisibilityMismatch {
                 source: method_impl.location,
@@ -95,7 +103,13 @@ impl TyCheckCtx {
             .into());
         }
 
-        if method_def.signature() != method_impl.signature() {
+        let def_sig = self.signature_of_call_ref(CallReference::Method(method_def.method_id.unwrap()))?;
+        let inst_def_sig = self.instantiate_signature_isolate(def_sig.as_ref(), &type_params, &type_args);
+
+        let impl_sig = self.signature_of_call_ref(CallReference::Method(method_impl.method_id.unwrap()))?;
+        let inst_impl_sig = self.instantiate_signature_isolate(impl_sig.as_ref(), &type_params, &type_args);
+
+        if inst_def_sig != inst_impl_sig {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {
                 source: method_impl.location,
                 expected: method_def.signature().to_owned(),
