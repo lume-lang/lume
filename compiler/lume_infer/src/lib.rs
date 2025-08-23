@@ -408,7 +408,11 @@ impl TyInferCtx {
                     } else {
                         let type_name = self.new_named_type(&param.ty, expand)?;
 
-                        Ok(format!("{}: {type_name}", param.name))
+                        Ok(format!(
+                            "{}{}: {type_name}",
+                            if param.vararg { "..." } else { "" },
+                            param.name
+                        ))
                     }
                 })
                 .collect::<Result<Vec<_>>>()?
