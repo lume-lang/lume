@@ -257,6 +257,15 @@ fn test_cast_snapshots() {
 }
 
 #[test]
+fn test_is_snapshots() {
+    assert_expr_snap_eq!("0 is 0;", "literal");
+    assert_expr_snap_eq!("0 is ..;", "wildcard");
+    assert_expr_snap_eq!("0 is test;", "identifier");
+    assert_expr_snap_eq!("0 is Foo::A;", "variant");
+    assert_expr_snap_eq!("0 is Foo::A(a, b);", "variant_backed");
+}
+
+#[test]
 fn test_binary_snapshots() {
     assert_expr_snap_eq!("0 & 0;", "and");
     assert_expr_snap_eq!("0 | 0;", "or");

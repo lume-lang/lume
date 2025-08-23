@@ -1,0 +1,65 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"0 is Foo::A;\")"
+---
+[
+    Expression(
+        Is(
+            Is {
+                target: Literal(
+                    Int(
+                        IntLiteral {
+                            value: 0,
+                            location: Location(
+                                0..1,
+                            ),
+                            kind: I32,
+                        },
+                    ),
+                ),
+                pattern: Variant(
+                    VariantPattern {
+                        name: Path {
+                            root: [
+                                Type {
+                                    name: Identifier {
+                                        name: "Foo",
+                                        location: Location(
+                                            5..8,
+                                        ),
+                                    },
+                                    type_arguments: [],
+                                    location: Location(
+                                        5..8,
+                                    ),
+                                },
+                            ],
+                            name: Type {
+                                name: Identifier {
+                                    name: "A",
+                                    location: Location(
+                                        10..11,
+                                    ),
+                                },
+                                type_arguments: [],
+                                location: Location(
+                                    10..11,
+                                ),
+                            },
+                            location: Location(
+                                10..11,
+                            ),
+                        },
+                        fields: [],
+                        location: Location(
+                            10..12,
+                        ),
+                    },
+                ),
+                location: Location(
+                    0..12,
+                ),
+            },
+        ),
+    ),
+]
