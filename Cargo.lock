@@ -1219,10 +1219,12 @@ name = "lume_linker"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "dirs",
  "error_snippet",
  "lume_codegen",
  "lume_errors",
  "lume_session",
+ "rust-embed",
 ]
 
 [[package]]

@@ -14,7 +14,12 @@ lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session" }
 
 clap = { workspace = true, optional = true }
+dirs = { version = "=6.0.0" }
 error_snippet = { workspace = true }
+rust-embed = { version = "=8.7.0", features = [
+    "interpolate-folder-path",
+    "include-exclude",
+] }
 
 [features]
 cli = ["dep:clap"]

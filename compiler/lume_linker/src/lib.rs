@@ -1,12 +1,11 @@
-use std::{
-    path::PathBuf,
-    process::{Command, Stdio},
-};
+use std::path::PathBuf;
+use std::process::{Command, Stdio};
 
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_codegen::CodegenObjects;
 use lume_errors::Result;
 use lume_session::{LinkerPreference, Options};
+use rust_embed::Embed;
 
 #[cfg(all(target_family = "windows", target_env = "msvc"))]
 const LIB_RUNTIME_NAME: &str = "liblumert.lib";
@@ -132,11 +131,21 @@ fn determine_runtime_path(opts: &Options) -> Result<PathBuf> {
         };
     }
 
-    #[cfg(debug_assertions)]
-    let profile_name = "debug";
+    // If `CARGO` is set, we know we are being run as part of a `cargo run` command
+    // which only happens inside of the source tree. Otherwise, we're likely
+    // outside the tree and we need to look for the runtime in the system directories.
+    let is_dev_build = std::env::var_os("CARGO").is_some();
 
-    #[cfg(not(debug_assertions))]
-    let profile_name = "release";
+    if is_dev_build {
+        determine_dev_runtime_path()
+    } else {
+        determine_release_runtime_path()
+    }
+}
+
+/// Determines the full path of the runtime library within the source tree of the Lume compiler
+fn determine_dev_runtime_path() -> Result<PathBuf> {
+    let profile_name = profile_name();
 
     let root_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../")
@@ -148,4 +157,77 @@ fn determine_runtime_path(opts: &Options) -> Result<PathBuf> {
         })?;
 
     Ok(root_dir.join("target").join(profile_name).join(LIB_RUNTIME_NAME))
+}
+
+#[derive(Embed)]
+#[folder = "$CARGO_MANIFEST_DIR/../../target"]
+#[include = "debug/liblumert.{a,lib}"]
+#[include = "release/liblumert.{a,lib}"]
+struct RuntimeLibrary;
+
+/// Determines the full path of the runtime library in the system library directory.
+fn determine_release_runtime_path() -> Result<PathBuf> {
+    let data_dir = determine_data_dir()?;
+    let system_runtime_dir = data_dir.join(env!("CARGO_PKG_VERSION"));
+    let system_runtime_path = system_runtime_dir.join(LIB_RUNTIME_NAME);
+
+    if system_runtime_path.exists() {
+        return Ok(system_runtime_path);
+    }
+
+    // Ensure the data directory exists before writing anything to disk
+    std::fs::create_dir_all(system_runtime_dir).map_err(IntoDiagnostic::into_diagnostic)?;
+
+    let library_file_name = format!("{}/{}", profile_name(), LIB_RUNTIME_NAME);
+
+    let Some(runtime_file) = RuntimeLibrary::get(&library_file_name) else {
+        return Err(SimpleDiagnostic::new("could not find runtime library in binary")
+            .with_help("was the library built correctly?")
+            .with_help("use `cargo build --release --workspace` to build the runtime")
+            .into());
+    };
+
+    // Write the runtime library to disk so the linker can use it.
+    std::fs::write(&system_runtime_path, runtime_file.data).map_err(IntoDiagnostic::into_diagnostic)?;
+
+    Ok(system_runtime_path)
+}
+
+/// Determines the directory where the system runtime library would be stored.
+fn determine_data_dir() -> Result<PathBuf> {
+    if let Some(dir) = dirs::data_dir()
+        && dir.exists()
+    {
+        return Ok(dir.join("lume"));
+    }
+
+    if let Some(dir) = dirs::data_local_dir()
+        && dir.exists()
+    {
+        return Ok(dir.join("lume"));
+    }
+
+    if let Some(dir) = dirs::cache_dir()
+        && dir.exists()
+    {
+        return Ok(dir.join("lume"));
+    }
+
+    if let Some(home_dir) = dirs::home_dir() {
+        return Ok(home_dir.join(".lume"));
+    }
+
+    Err(SimpleDiagnostic::new("could not determine where to place runtime library").into())
+}
+
+fn profile_name() -> &'static str {
+    #[cfg(debug_assertions)]
+    {
+        "debug"
+    }
+
+    #[cfg(not(debug_assertions))]
+    {
+        "release"
+    }
 }
