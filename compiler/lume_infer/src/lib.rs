@@ -403,9 +403,13 @@ impl TyInferCtx {
                 .inner()
                 .iter()
                 .map(|param| {
-                    let type_name = self.new_named_type(&param.ty, expand)?;
+                    if param.name == "self" {
+                        Ok(String::from("self"))
+                    } else {
+                        let type_name = self.new_named_type(&param.ty, expand)?;
 
-                    Ok(format!("{}: {type_name}", param.name))
+                        Ok(format!("{}: {type_name}", param.name))
+                    }
                 })
                 .collect::<Result<Vec<_>>>()?
                 .join(", ")
