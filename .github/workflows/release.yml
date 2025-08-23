@@ -25,6 +25,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo build --release --workspace
 
       - uses: taiki-e/upload-rust-binary-action@v1
         with:
