@@ -84,11 +84,14 @@ pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, opts: &Options) 
     std::fs::create_dir_all(output.parent().unwrap()).map_err(IntoDiagnostic::into_diagnostic)?;
 
     let mut cmd = Command::new(linker.command());
-    cmd.arg(runtime_path);
 
     for obj in &objects.objects {
         cmd.arg(obj.path.clone());
     }
+
+    // GCC will not link correctly if the runtime library is presented in the beginning
+    // of the argument list, so we must add all source object files first.
+    cmd.arg(runtime_path);
 
     cmd.stdin(Stdio::null());
     cmd.stdout(Stdio::null());
