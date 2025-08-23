@@ -37,7 +37,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Compile runtime
-        run: cargo build --release --package lumert --target ${{ matrix.target }}
+        run: cargo build --release --package lumert
 
       - name: Compile workspace and upload binaries
         uses: taiki-e/upload-rust-binary-action@v1
