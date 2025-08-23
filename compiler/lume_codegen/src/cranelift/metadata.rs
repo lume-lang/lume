@@ -522,7 +522,11 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
     }
 
     /// Appends a slice of items, where each item is built from the given closure.
-    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder, &T)>(&mut self, slice: &[T], f: F) -> &mut Self {
+    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder<'back, 'ctx>, &T)>(
+        &mut self,
+        slice: &[T],
+        f: F,
+    ) -> &mut Self {
         self.append(slice.len());
 
         for item in slice {

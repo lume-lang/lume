@@ -141,7 +141,16 @@ impl FunctionTransformer<'_> {
             .map(|arg| self.expression(arg))
             .collect::<Vec<_>>();
 
-        self.call(func_id, args)
+        let mut ret_ty = self.lower_type(&expr.return_type);
+
+        let hir_call_expr = self.tcx().hir_call_expr(expr.id).unwrap();
+        let hir_callable = self.tcx().lookup_callable(hir_call_expr).unwrap();
+
+        if self.tcx().is_type_parameter(hir_callable.return_type()).unwrap() {
+            ret_ty = lume_mir::Type::pointer(ret_ty);
+        }
+
+        self.call(func_id, args, ret_ty)
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {

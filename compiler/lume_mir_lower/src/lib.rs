@@ -164,7 +164,12 @@ impl<'mir> FunctionTransformer<'mir> {
     }
 
     /// Defines a new call instruction in the current function block.
-    fn call(&mut self, func_id: FunctionId, mut args: Vec<lume_mir::Operand>) -> lume_mir::Operand {
+    fn call(
+        &mut self,
+        func_id: FunctionId,
+        mut args: Vec<lume_mir::Operand>,
+        ret_ty: lume_mir::Type,
+    ) -> lume_mir::Operand {
         let func = self.transformer.mir.function(func_id);
         let params = &func.signature.parameters;
 
@@ -201,7 +206,7 @@ impl<'mir> FunctionTransformer<'mir> {
             *arg = lume_mir::Operand::SlotAddress { id: slot };
         }
 
-        let call_inst = self.declare(lume_mir::Declaration::Call { func_id, args });
+        let call_inst = self.func.declare(ret_ty, lume_mir::Declaration::Call { func_id, args });
 
         lume_mir::Operand::Reference { id: call_inst }
     }

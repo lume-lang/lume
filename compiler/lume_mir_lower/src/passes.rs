@@ -1,8 +1,5 @@
 use indexmap::{IndexMap, IndexSet};
-use lume_mir::{
-    BasicBlock, BasicBlockId, BlockBranchSite, Declaration, Function, Instruction, Operand, Register, RegisterId,
-    Terminator,
-};
+use lume_mir::*;
 
 use crate::FunctionTransformer;
 
@@ -142,11 +139,13 @@ impl PassBlockArguments {
 struct ConvertAssignmentExpressions {
     register_count: usize,
     moved_regs: IndexMap<RegisterId, RegisterId>,
+    registers: Registers,
 }
 
 impl ConvertAssignmentExpressions {
     pub fn execute(&mut self, func: &mut Function) {
-        self.register_count = func.registers.iter().count();
+        self.registers = func.registers.clone();
+        self.register_count = self.registers.iter().count();
 
         let mut new_registers = IndexSet::new();
 
@@ -197,11 +196,13 @@ impl ConvertAssignmentExpressions {
 
     fn update_regs_inst(&mut self, inst: &mut Instruction) {
         match inst {
-            Instruction::Let { register, decl } => {
+            Instruction::Let { register, decl, .. } => {
                 self.get_moved_register(register);
                 self.update_regs_decl(decl);
             }
             Instruction::Assign { target, value } => {
+                let ty = self.registers.register_ty(*target).to_owned();
+
                 self.move_register(target);
                 self.update_regs_op(value);
 
@@ -211,6 +212,7 @@ impl ConvertAssignmentExpressions {
                 *inst = Instruction::Let {
                     register: *target,
                     decl: Declaration::Operand(value.clone()),
+                    ty,
                 };
             }
             Instruction::Allocate { register, .. } => {
@@ -377,7 +379,7 @@ impl RenameSsaVariables {
 
     fn update_regs_inst(&mut self, inst: &mut Instruction, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match inst {
-            Instruction::Let { register, decl } => {
+            Instruction::Let { register, decl, .. } => {
                 self.rename_register_index_mut(register, block, mapping);
 
                 Self::update_regs_decl(decl, block, mapping);

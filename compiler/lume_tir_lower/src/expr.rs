@@ -115,7 +115,10 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
-        let function = match self.lower.tcx.lookup_callable(expr)? {
+        let callable = self.lower.tcx.lookup_callable(expr)?;
+        let instantiated_signature = self.lower.tcx.instantiate_call_expression(callable.signature(), expr)?;
+
+        let function = match callable {
             lume_typech::query::Callable::Function(call) => {
                 #[cfg(debug_assertions)]
                 if !call.sig().is_vararg() {
@@ -168,6 +171,7 @@ impl LowerFunction<'_> {
             function,
             arguments,
             type_arguments,
+            return_type: instantiated_signature.ret_ty,
         })))
     }
 

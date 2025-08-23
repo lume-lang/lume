@@ -24,8 +24,8 @@ impl CraneliftBackend<'_> {
             | lume_mir::TypeKind::Struct { .. }
             | lume_mir::TypeKind::Union { .. }
             | lume_mir::TypeKind::Pointer { .. }
-            | lume_mir::TypeKind::Metadata { .. } => self.cl_ptr_type(),
-            lume_mir::TypeKind::Void => unreachable!(),
+            | lume_mir::TypeKind::Metadata { .. }
+            | lume_mir::TypeKind::Void => self.cl_ptr_type(),
         }
     }
 
@@ -115,7 +115,11 @@ impl LowerFunction<'_> {
             lume_mir::Operand::String { .. } | lume_mir::Operand::SlotAddress { .. } => self.backend.cl_ptr_type(),
             lume_mir::Operand::Load { id } => self.retrieve_load_type(*id),
             lume_mir::Operand::LoadField { target, index, .. } => self.retrieve_field_type(*target, *index),
-            lume_mir::Operand::Reference { id } => self.retrieve_var_type(*id),
+            lume_mir::Operand::Reference { id } => {
+                let ty = self.retrieve_var_type(*id);
+
+                self.backend.cl_type_of(ty)
+            }
         }
     }
 

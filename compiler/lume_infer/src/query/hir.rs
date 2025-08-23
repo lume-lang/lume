@@ -84,6 +84,17 @@ impl TyInferCtx {
         self.hir.expressions.get(&id)
     }
 
+    /// Returns the [`lume_hir::CallExpression`] with the given ID, if any.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_call_expr(&self, id: lume_span::ExpressionId) -> Option<lume_hir::CallExpression<'_>> {
+        match &self.hir_expr(id)?.kind {
+            lume_hir::ExpressionKind::InstanceCall(call) => Some(lume_hir::CallExpression::Instanced(call)),
+            lume_hir::ExpressionKind::IntrinsicCall(call) => Some(lume_hir::CallExpression::Intrinsic(call)),
+            lume_hir::ExpressionKind::StaticCall(call) => Some(lume_hir::CallExpression::Static(call)),
+            _ => None,
+        }
+    }
+
     /// Returns the [`lume_hir::Def`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_def(&'_ self, id: lume_span::DefId) -> Option<lume_hir::Def<'_>> {

@@ -48,9 +48,8 @@ impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
         match inst {
-            lume_mir::Instruction::Let { register, decl } => {
-                let ty = self.cl_type_of_declaration(decl);
-                let var = self.declare_var(*register, ty);
+            lume_mir::Instruction::Let { register, decl, ty } => {
+                let var = self.declare_var(*register, ty.to_owned());
 
                 let value = self.cg_declaration(decl);
                 tracing::debug!("define_var {register} = {value}");
@@ -73,7 +72,7 @@ impl LowerFunction<'_> {
                 self.slots.insert(*slot, stack_slot);
             }
             lume_mir::Instruction::Allocate { register, ty } => {
-                let ptr_ty = self.backend.cl_ptr_type();
+                let ptr_ty = lume_mir::Type::pointer(ty.clone());
                 let var = self.declare_var(*register, ptr_ty);
                 let ptr = self.cg_alloc_type(ty);
 
