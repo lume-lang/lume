@@ -10,6 +10,15 @@ permissions:
 
 jobs:
   create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  upload-assets:
+    needs: create-release
     runs-on: ${{ matrix.runner }}
 
     strategy:
@@ -27,9 +36,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
 
-      - run: cargo build --release --workspace
+      - name: Compile runtime
+        run: cargo build --release --package lumert --target ${{ matrix.target }}
 
-      - uses: taiki-e/upload-rust-binary-action@v1
+      - name: Compile workspace and upload binaries
+        uses: taiki-e/upload-rust-binary-action@v1
         with:
           bin: lume
           include: target/release/liblumert.a
