@@ -179,6 +179,10 @@ impl TyCheckCtx {
             return Ok(true);
         }
 
+        if from.type_params.len() != to.type_params.len() {
+            return Ok(false);
+        }
+
         for (from_param_id, to_param_id) in from.type_params.iter().zip(to.type_params.iter()) {
             let from_param = self.tdb().type_parameter(*from_param_id).unwrap();
             let to_param = self.tdb().type_parameter(*to_param_id).unwrap();
