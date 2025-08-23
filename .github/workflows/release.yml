@@ -26,17 +26,21 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             runner: ubuntu-latest
+            release_file_glob: "{lume,liblumert.a}"
 
-          - target: aarch64-apple-darwin
-            runner: macos-latest
+          # - target: aarch64-apple-darwin
+          #   runner: macos-latest
+          #   release_file_glob: "{lume,liblumert.a}"
 
     steps:
       - uses: actions/checkout@v4
-      - uses: taiki-e/github-actions/install-rust@main
+
+      - name: Build workspace
+        run: cargo build --release --locked --workspace
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          toolchain: nightly
-      - uses: taiki-e/upload-rust-binary-action@v1
-        with:
-          bin: lume
-          token: ${{ secrets.GITHUB_TOKEN }}
-          target: ${{ matrix.target }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: target/release/${{ matrix.release_file_glob }}
