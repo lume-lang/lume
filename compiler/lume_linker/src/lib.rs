@@ -132,8 +132,11 @@ fn determine_runtime_path(opts: &Options) -> Result<PathBuf> {
         };
     }
 
-    let profile_name =
-        std::env::var_os("PROFILE").map_or_else(|| String::from("debug"), |env| env.into_string().unwrap());
+    #[cfg(debug_assertions)]
+    let profile_name = "debug";
+
+    #[cfg(not(debug_assertions))]
+    let profile_name = "release";
 
     let root_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../")
