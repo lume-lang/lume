@@ -112,8 +112,8 @@ impl TyCheckCtx {
         if inst_def_sig != inst_impl_sig {
             return Err(crate::check::errors::TraitMethodSignatureMismatch {
                 source: method_impl.location,
-                expected: method_def.signature().to_owned(),
-                found: method_impl.signature().to_owned(),
+                expected: self.sig_to_string(&method_def.name, inst_def_sig.as_ref(), false)?,
+                found: self.sig_to_string(&method_impl.name, inst_impl_sig.as_ref(), false)?,
             }
             .into());
         }
