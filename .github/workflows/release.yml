@@ -16,22 +16,20 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
+            triple: x86_64-linux
             runner: ubuntu-latest
-            release_file_glob: "{lume,liblumert.a}"
 
           # - target: aarch64-apple-darwin
+          #   triple: aarch64-macos
           #   runner: macos-latest
-          #   release_file_glob: "{lume,liblumert.a}"
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build workspace
-        run: cargo build --release --locked --workspace
-
-      - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+      - uses: taiki-e/upload-rust-binary-action@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
-          file: target/release/${{ matrix.release_file_glob }}
+          bin: lume
+          include: target/release/liblumert.a
+          token: ${{ secrets.GITHUB_TOKEN }}
+          archive: lume_$tag_${{ matrix.triple }}
+          target: ${{ matrix.target }}
