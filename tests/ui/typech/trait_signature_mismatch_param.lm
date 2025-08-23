@@ -1,0 +1,7 @@
+trait Foo {
+    pub fn foo(val: Int32);
+}
+
+use Foo in Int32 {
+    pub fn foo(val: Int64) { }
+}
