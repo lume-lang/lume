@@ -101,6 +101,12 @@ impl Parser {
             return self.parse_cast(left);
         }
 
+        if self.peek(TokenKind::Is) {
+            tracing::trace!("expression is instance checking");
+
+            return self.parse_is(left);
+        }
+
         let operator = match self.consume_any() {
             t if t.kind.is_operator() => t,
             t => return Err(err!(self, InvalidExpression, actual, t.kind)),
@@ -593,6 +599,24 @@ impl Parser {
         Ok(Expression::Cast(Box::new(Cast {
             source,
             target_type: ty,
+            location: (start..end).into(),
+        })))
+    }
+
+    /// Parses an instance checking expression on the current cursor position.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn parse_is(&mut self, target: Expression) -> Result<Expression> {
+        // Consume the `is` token
+        self.consume(TokenKind::Is)?;
+
+        let pattern = self.parse_pattern()?;
+
+        let start = target.location().start();
+        let end = self.token().end();
+
+        Ok(Expression::Is(Box::new(Is {
+            target,
+            pattern,
             location: (start..end).into(),
         })))
     }

@@ -21,6 +21,7 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::MulAssign, 1),
     (TokenKind::DivAssign, 1),
     (TokenKind::As, 2),
+    (TokenKind::Is, 2),
     (TokenKind::BinaryAnd, 3),
     (TokenKind::BinaryXor, 3),
     (TokenKind::BinaryOr, 3),
@@ -103,6 +104,7 @@ pub enum TokenKind {
     Impl,
     Import,
     In,
+    Is,
     Increment,
     Integer(u32),
     LeftBracket,
@@ -157,6 +159,7 @@ impl TokenKind {
                 | TokenKind::Impl
                 | TokenKind::Import
                 | TokenKind::In
+                | TokenKind::Is
                 | TokenKind::Loop
                 | TokenKind::Namespace
                 | TokenKind::Priv
@@ -268,6 +271,7 @@ impl From<TokenKind> for &'static str {
             TokenKind::Impl => "impl",
             TokenKind::Import => "import",
             TokenKind::In => "in",
+            TokenKind::Is => "is",
             TokenKind::Increment => "++",
             TokenKind::LeftBracket => "[",
             TokenKind::LeftCurly => "{",
@@ -806,6 +810,7 @@ impl Lexer {
             "impl" => Token::empty(TokenKind::Impl),
             "import" => Token::empty(TokenKind::Import),
             "in" => Token::empty(TokenKind::In),
+            "is" => Token::empty(TokenKind::Is),
             "let" => Token::empty(TokenKind::Let),
             "loop" => Token::empty(TokenKind::Loop),
             "namespace" => Token::empty(TokenKind::Namespace),
@@ -1183,6 +1188,7 @@ mod tests {
         assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
         assert_token!("impl", TokenKind::Impl, None::<String>, 0, 4);
         assert_token!("in", TokenKind::In, None::<String>, 0, 2);
+        assert_token!("is", TokenKind::Is, None::<String>, 0, 2);
         assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
         assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
         assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
