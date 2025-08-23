@@ -321,10 +321,6 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.finalize();
     }
 
-    pub(crate) fn declared_func(&self, id: lume_mir::FunctionId) -> &DeclaredFunction {
-        self.backend.declared_funcs.get(&id).unwrap()
-    }
-
     pub(crate) fn get_func(&mut self, id: cranelift_module::FuncId) -> codegen::ir::FuncRef {
         self.backend.module_mut().declare_func_in_func(id, self.builder.func)
     }
@@ -367,17 +363,11 @@ impl<'ctx> LowerFunction<'ctx> {
 
     pub(crate) fn load_var(&mut self, register: RegisterId) -> Value {
         let val = self.use_var(register);
-        let lume_mir::TypeKind::Pointer { elemental } = &self.retrieve_var_type(register).kind else {
-            panic!("bug!: attempted to load from non-pointer register {register}");
-        };
+        let ty = self.retrieve_load_type(register);
 
-        let inner_ty = self.backend.cl_type_of(elemental);
+        tracing::debug!("loading {val} from {register}, type {ty}");
 
-        tracing::debug!("loading {val} from {register}, type {inner_ty}");
-
-        self.builder
-            .ins()
-            .load(inner_ty, MemFlags::new(), val, Offset32::new(0))
+        self.builder.ins().load(ty, MemFlags::new(), val, Offset32::new(0))
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
@@ -389,10 +379,6 @@ impl<'ctx> LowerFunction<'ctx> {
         tracing::debug!(%ptr, %field_ty);
 
         self.builder.ins().load(field_ty, MemFlags::new(), ptr, offset as i32)
-    }
-
-    pub(crate) fn retrieve_var_type(&self, register: RegisterId) -> &lume_mir::Type {
-        self.variable_types.get(&register).unwrap()
     }
 
     pub(crate) fn retrieve_load_type(&self, register: RegisterId) -> Type {
