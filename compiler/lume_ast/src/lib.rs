@@ -893,6 +893,7 @@ pub enum Expression {
     Construct(Box<Construct>),
     If(Box<IfCondition>),
     IntrinsicCall(Box<IntrinsicCall>),
+    Is(Box<Is>),
     Literal(Box<Literal>),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -915,6 +916,7 @@ impl Node for Expression {
             Self::Construct(e) => &e.location,
             Self::If(e) => &e.location,
             Self::IntrinsicCall(e) => e.location(),
+            Self::Is(e) => &e.location,
             Self::Literal(e) => e.location(),
             Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
@@ -1015,6 +1017,15 @@ pub struct ConstructorField {
 }
 
 node_location!(ConstructorField);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Is {
+    pub target: Expression,
+    pub pattern: Pattern,
+    pub location: Location,
+}
+
+node_location!(Is);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub enum Literal {
