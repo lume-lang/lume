@@ -1112,6 +1112,12 @@ impl TyInferCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::Is(s) => {
+                self.define_expr_scope(tree, s.target, expr_id)?;
+                self.define_pat_scope(tree, &s.pattern, expr_id)?;
+
+                Ok(())
+            }
             lume_hir::ExpressionKind::Logical(s) => {
                 self.define_expr_scope(tree, s.lhs, expr_id)?;
                 self.define_expr_scope(tree, s.rhs, expr_id)?;

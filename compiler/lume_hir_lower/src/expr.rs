@@ -52,6 +52,7 @@ impl LowerModule<'_> {
             lume_ast::Expression::Construct(e) => self.expr_construct(*e)?,
             lume_ast::Expression::If(e) => self.expr_if(*e)?,
             lume_ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
+            lume_ast::Expression::Is(e) => self.expr_is(*e)?,
             lume_ast::Expression::Literal(e) => self.expr_literal(*e),
             lume_ast::Expression::Logical(e) => self.expr_logical(*e)?,
             lume_ast::Expression::Member(e) => self.expr_member(*e)?,
@@ -320,6 +321,25 @@ impl LowerModule<'_> {
                 arguments,
                 location,
             }),
+        })
+    }
+
+    #[tracing::instrument(level = "DEBUG", skip_all)]
+    fn expr_is(&mut self, expr: lume_ast::Is) -> Result<lume_hir::Expression> {
+        let id = self.next_expr_id();
+        let target = self.expression(expr.target)?;
+        let pattern = self.pattern(expr.pattern)?;
+        let location = self.location(expr.location);
+
+        Ok(lume_hir::Expression {
+            id,
+            kind: lume_hir::ExpressionKind::Is(lume_hir::Is {
+                id,
+                target,
+                pattern,
+                location,
+            }),
+            location,
         })
     }
 
