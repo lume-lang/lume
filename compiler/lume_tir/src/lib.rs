@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
-use lume_span::DefId;
-use lume_span::{ExpressionId, Interned, Location, StatementId};
+use lume_span::{DefId, ExpressionId, Interned, Location, StatementId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
 use lume_types::{Field, TypeRef};
 
@@ -408,6 +407,7 @@ pub enum ExpressionKind {
     Call(Box<Call>),
     If(If),
     IntrinsicCall(Box<IntrinsicCall>),
+    Is(Box<Is>),
     Literal(Literal),
     Logical(Box<Logical>),
     Member(Box<Member>),
@@ -558,6 +558,13 @@ pub enum IntrinsicKind {
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Is {
+    pub id: ExpressionId,
+    pub target: Expression,
+    pub pattern: Pattern,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Literal {
     pub id: ExpressionId,
     pub kind: LiteralKind,
@@ -653,4 +660,25 @@ pub struct Variant {
     pub name: Path,
     pub arguments: Vec<Expression>,
     pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Pattern {
+    pub id: DefId,
+    pub kind: PatternKind,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub enum PatternKind {
+    Literal(Literal),
+    Variable,
+    Variant(VariantPattern),
+    Wildcard,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct VariantPattern {
+    pub index: u8,
+    pub ty: TypeRef,
+    pub name: Path,
 }

@@ -104,6 +104,11 @@ pub(crate) trait Visitor {
 
                 Ok(())
             }
+            ExpressionKind::Is(expr) => {
+                self.visit_expression(&mut expr.target)?;
+
+                Ok(())
+            }
             ExpressionKind::Logical(expr) => {
                 self.visit_expression(&mut expr.lhs)?;
                 self.visit_expression(&mut expr.rhs)?;
