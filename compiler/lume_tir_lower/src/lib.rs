@@ -1,6 +1,7 @@
 pub(crate) mod expr;
 pub(crate) mod generic;
 pub(crate) mod path;
+pub(crate) mod pattern;
 pub(crate) mod stmt;
 
 pub mod reify;
