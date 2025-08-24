@@ -22,6 +22,7 @@ impl LowerFunction<'_> {
             }
             lume_hir::ExpressionKind::If(stmt) => self.if_expression(stmt)?,
             lume_hir::ExpressionKind::IntrinsicCall(expr) => self.intrinsic_expression(expr)?,
+            lume_hir::ExpressionKind::Is(expr) => self.is_expression(expr)?,
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
@@ -284,10 +285,28 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[allow(clippy::unused_self)]
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn is_expression(&mut self, expr: &lume_hir::Is) -> Result<lume_tir::ExpressionKind> {
+        let target = self.expression(expr.target)?;
+        let pattern = self.pattern(&expr.pattern)?;
+
+        Ok(lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
+            id: expr.id,
+            target,
+            pattern,
+        })))
+    }
+
     fn literal_expression(&self, expr: &lume_hir::Literal) -> lume_tir::ExpressionKind {
+        let literal = self.literal(expr);
+
+        lume_tir::ExpressionKind::Literal(literal)
+    }
+
+    #[allow(clippy::unused_self)]
+    pub(super) fn literal(&self, expr: &lume_hir::Literal) -> lume_tir::Literal {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let lit = match &expr.kind {
+        let kind = match &expr.kind {
             lume_hir::LiteralKind::Int(int) => match int.kind {
                 lume_hir::IntKind::I8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I8(int.value)),
                 lume_hir::IntKind::U8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U8(int.value)),
@@ -306,11 +325,11 @@ impl LowerFunction<'_> {
             lume_hir::LiteralKind::String(string) => lume_tir::LiteralKind::String(string.value.intern()),
         };
 
-        lume_tir::ExpressionKind::Literal(lume_tir::Literal {
+        lume_tir::Literal {
             id: expr.id,
-            kind: lit,
+            kind,
             location: expr.location,
-        })
+        }
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
