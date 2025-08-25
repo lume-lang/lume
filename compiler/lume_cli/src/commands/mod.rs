@@ -6,7 +6,7 @@ use clap::ValueHint;
 
 use crate::error::*;
 use error_snippet::{IntoDiagnostic, Result};
-use lume_session::{Backend, LinkerPreference, MirPrinting, OptimizationLevel};
+use lume_session::{Backend, DebugInfo, LinkerPreference, MirPrinting, OptimizationLevel};
 use std::env::current_dir;
 use std::path::PathBuf;
 
@@ -72,6 +72,15 @@ pub struct BuildOptions {
     pub print_codegen_ir: bool,
 
     #[arg(
+        long,
+        help = "Debug info emission in executable",
+        default_value_t = DebugInfo::default(),
+        value_parser = clap::value_parser!(DebugInfo),
+        value_name = "LEVEL",
+    )]
+    pub debug_info: DebugInfo,
+
+    #[arg(
         short = 'O',
         long = "optimize",
         default_value = "2",
@@ -101,6 +110,7 @@ impl BuildOptions {
             print_type_context: self.print_type_ctx,
             print_mir: self.print_mir,
             print_codegen_ir: self.print_codegen_ir,
+            debug_info: self.debug_info,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,

@@ -50,6 +50,23 @@ impl Display for LinkerPreference {
     }
 }
 
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
+pub enum DebugInfo {
+    #[default]
+    None,
+    Full,
+}
+
+impl Display for DebugInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::Full => write!(f, "full"),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
@@ -61,6 +78,9 @@ pub struct Options {
 
     /// Defines whether the generated codegen IR should be printed to `stdio`.
     pub print_codegen_ir: bool,
+
+    /// Defines how debugging information should be preserved in the binary.
+    pub debug_info: DebugInfo,
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
