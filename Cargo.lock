@@ -298,7 +298,7 @@ dependencies = [
  "cranelift-control",
  "cranelift-entity",
  "cranelift-isle",
- "gimli",
+ "gimli 0.31.1",
  "hashbrown",
  "log",
  "regalloc2",
@@ -661,6 +661,17 @@ name = "gimli"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07e28edb80900c19c28f1072f2e8aeca7fa06b23cd4169cefe1af5aa3260783f"
+dependencies = [
+ "fallible-iterator",
+ "indexmap",
+ "stable_deref_trait",
+]
+
+[[package]]
+name = "gimli"
+version = "0.32.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd54e8795d97c9f5561c63529d98fcc0c2eed9e982deecc396797f2c04cff298"
 dependencies = [
  "fallible-iterator",
  "indexmap",
@@ -1094,6 +1105,7 @@ dependencies = [
  "cranelift-object",
  "error_snippet",
  "error_snippet_derive",
+ "gimli 0.32.1",
  "indexmap",
  "inkwell",
  "lume_errors",

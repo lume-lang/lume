@@ -16,6 +16,7 @@ lume_type_metadata = { path = "../lume_type_metadata" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+gimli = { version = "=0.32.1" }
 indexmap = { version = "^2.9" }
 tracing = { workspace = true }
 
