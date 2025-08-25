@@ -73,10 +73,14 @@ pub struct BuildOptions {
 
     #[arg(
         long,
+        short = 'g',
         help = "Debug info emission in executable",
         default_value_t = DebugInfo::default(),
+        default_missing_value = "full",
         value_parser = clap::value_parser!(DebugInfo),
         value_name = "LEVEL",
+        num_args(0..=1),
+        require_equals = true
     )]
     pub debug_info: DebugInfo,
 
