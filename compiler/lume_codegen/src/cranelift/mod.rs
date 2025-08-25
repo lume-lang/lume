@@ -1,28 +1,25 @@
+pub(crate) mod dwarf;
 pub(crate) mod inst;
 pub(crate) mod metadata;
 pub(crate) mod ty;
 pub(crate) mod value;
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use cranelift::{
-    codegen::{
-        ir::{BlockArg, GlobalValue, StackSlot, immediates::Offset32},
-        verify_function,
-    },
-    prelude::*,
-};
+use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
+use cranelift::codegen::verify_function;
+use cranelift::prelude::*;
 use cranelift_module::{DataDescription, DataId, Linkage, Module};
 use cranelift_object::{ObjectBuilder, ObjectModule};
+
 use error_snippet::SimpleDiagnostic;
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::{BlockBranchSite, RegisterId, SlotId};
 
 use crate::{Backend, CompiledModule, Context};
+use dwarf::RootDebugContext;
 
 #[derive(Debug, Clone)]
 struct DeclaredFunction {
@@ -67,10 +64,14 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
         let mut ctx = self.module_mut().make_context();
         let mut builder_ctx = FunctionBuilderContext::new();
 
+        let mut debug_ctx = RootDebugContext::new(&self.context, self.module().isa());
+
         for func in functions.values() {
             if func.signature.external {
                 continue;
             }
+
+            debug_ctx.declare_function(func);
 
             self.define_function(func, &mut ctx, &mut builder_ctx)?;
             self.module().clear_context(&mut ctx);
@@ -81,7 +82,23 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
             .into_inner()
             .unwrap();
 
-        let object_binary = module.finish().emit().unwrap();
+        let mut object_product = module.finish();
+
+        for func in functions.values() {
+            if func.signature.external {
+                continue;
+            }
+
+            let Some(declaration) = self.declared_funcs.get(&func.id) else {
+                continue;
+            };
+
+            debug_ctx.define_function(func.id, declaration.id, &object_product);
+        }
+
+        debug_ctx.emit_to(&mut object_product)?;
+
+        let object_binary = object_product.emit().unwrap();
 
         Ok(CompiledModule {
             name: self.context.package.name.clone(),
@@ -367,7 +384,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
         tracing::debug!("loading {val} from {register}, type {ty}");
 
-        self.builder.ins().load(ty, MemFlags::new(), val, Offset32::new(0))
+        self.builder.ins().load(ty, MemFlags::new(), val, 0)
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
