@@ -64,14 +64,20 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
         let mut ctx = self.module_mut().make_context();
         let mut builder_ctx = FunctionBuilderContext::new();
 
-        let mut debug_ctx = RootDebugContext::new(&self.context, self.module().isa());
+        let mut debug_ctx = if self.context.options.debug_info == lume_session::DebugInfo::Full {
+            Some(RootDebugContext::new(&self.context, self.module().isa()))
+        } else {
+            None
+        };
 
         for func in functions.values() {
             if func.signature.external {
                 continue;
             }
 
-            debug_ctx.declare_function(func);
+            if let Some(debug_ctx) = debug_ctx.as_mut() {
+                debug_ctx.declare_function(func);
+            }
 
             self.define_function(func, &mut ctx, &mut builder_ctx)?;
             self.module().clear_context(&mut ctx);
@@ -93,10 +99,14 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
                 continue;
             };
 
-            debug_ctx.define_function(func.id, declaration.id, &object_product);
+            if let Some(debug_ctx) = debug_ctx.as_mut() {
+                debug_ctx.define_function(func.id, declaration.id, &object_product);
+            }
         }
 
-        debug_ctx.emit_to(&mut object_product)?;
+        if let Some(debug_ctx) = debug_ctx.as_mut() {
+            debug_ctx.emit_to(&mut object_product)?;
+        }
 
         let object_binary = object_product.emit().unwrap();
 
