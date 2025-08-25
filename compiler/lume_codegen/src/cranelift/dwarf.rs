@@ -94,6 +94,8 @@ impl RootDebugContext {
         }
     }
 
+    /// Declares the initial debug information for the given function, so the
+    /// layout of the DWARF tag is laid out. Some fields may be unset.
     pub(crate) fn declare_function(&mut self, func: &Function) {
         let root_scope = self.dwarf_unit.unit.root();
 
@@ -117,6 +119,7 @@ impl RootDebugContext {
         self.func_entries.insert(func.id, entry_id);
     }
 
+    /// Defines the start and size of the function to the matching DWARF tag.
     pub(crate) fn define_function(&mut self, func_id: lume_mir::FunctionId, decl_id: FuncId, obj: &ObjectProduct) {
         let Some(entry_id) = self.func_entries.get(&func_id) else {
             return;
@@ -130,6 +133,7 @@ impl RootDebugContext {
         entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size));
     }
 
+    /// Emits the DWARF debug info to the given [`ObjectProduct`] from Cranelift.
     pub(crate) fn emit_to(&mut self, obj: &mut ObjectProduct) -> Result<()> {
         let mut sections = Sections::new(WriterRelocate::new(self.endianess));
         self.dwarf_unit.write(&mut sections).unwrap();
@@ -230,11 +234,14 @@ impl Writer for WriterRelocate {
     }
 
     fn write_offset(&mut self, val: usize, section: SectionId, size: u8) -> gimli::write::Result<()> {
+        #[allow(clippy::cast_possible_wrap)]
+        let addend = val as i64;
+
         self.relocs.push(DebugReloc {
             offset: self.len() as u64,
             size,
             name: DebugRelocName::Section(section),
-            addend: val as i64,
+            addend,
             kind: object::RelocationKind::Absolute,
         });
 
@@ -242,11 +249,14 @@ impl Writer for WriterRelocate {
     }
 
     fn write_offset_at(&mut self, offset: usize, val: usize, section: SectionId, size: u8) -> gimli::write::Result<()> {
+        #[allow(clippy::cast_possible_wrap)]
+        let addend = val as i64;
+
         self.relocs.push(DebugReloc {
             offset: offset as u64,
             size,
             name: DebugRelocName::Section(section),
-            addend: val as i64,
+            addend,
             kind: object::RelocationKind::Absolute,
         });
 
@@ -292,12 +302,13 @@ impl Writer for WriterRelocate {
                 gimli::DW_EH_PE_absptr => {
                     self.relocs.push(DebugReloc {
                         offset: self.len() as u64,
-                        size: size.into(),
+                        size,
                         name: DebugRelocName::Symbol(symbol),
                         addend,
                         kind: object::RelocationKind::Absolute,
                     });
-                    self.write_udata(0, size.into())
+
+                    self.write_udata(0, size)
                 }
                 _ => Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe)),
             },
