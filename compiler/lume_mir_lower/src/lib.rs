@@ -6,6 +6,7 @@ pub(crate) mod ty;
 use std::collections::HashMap;
 
 use lume_mir::{Function, FunctionId, ModuleMap, RegisterId};
+use lume_span::Location;
 use lume_typech::TyCheckCtx;
 
 /// Defines a transformer which will lower a typed HIR map into an MIR map.
@@ -64,7 +65,7 @@ impl<'mir> FunctionTransformer<'mir> {
     pub fn define(transformer: &'mir ModuleTransformer, id: FunctionId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name.to_string()),
+            func: Function::new(id, func.name.to_string(), func.location),
             variables: HashMap::new(),
         };
 
@@ -77,7 +78,7 @@ impl<'mir> FunctionTransformer<'mir> {
     pub fn transform(transformer: &'mir ModuleTransformer, id: FunctionId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name.to_string()),
+            func: Function::new(id, func.name.to_string(), func.location),
             variables: HashMap::new(),
         };
 
@@ -118,8 +119,12 @@ impl<'mir> FunctionTransformer<'mir> {
 
         // Only declare the return value, if the block actually expects a
         // non-void return type.
-        if block.has_return_value() {
-            self.func.current_block_mut().return_any(return_value);
+        if block.has_return_value()
+            && let Some(return_value) = return_value
+        {
+            let location = return_value.location;
+
+            self.func.current_block_mut().return_value(return_value, location);
         }
 
         // If the current block is not returning, add a return statement so
@@ -127,7 +132,7 @@ impl<'mir> FunctionTransformer<'mir> {
         //
         // We're assuming it'll be a void return, since the type checker should
         // have detected a missing return statement in a non-void function.
-        self.func.current_block_mut().return_void();
+        self.func.current_block_mut().return_void(Location::empty());
     }
 
     pub(crate) fn tcx(&self) -> &TyCheckCtx {
@@ -153,14 +158,23 @@ impl<'mir> FunctionTransformer<'mir> {
 
     /// Defines a new register with a value of `null` and return an reference to it.
     fn null_operand(&mut self) -> lume_mir::Operand {
-        let reg = self.declare_value(lume_mir::Operand::Boolean { value: false });
+        let reg = self.declare_value(lume_mir::Operand {
+            kind: lume_mir::OperandKind::Boolean { value: false },
+            location: Location::empty(),
+        });
 
-        lume_mir::Operand::Reference { id: reg }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: reg },
+            location: Location::empty(),
+        }
     }
 
     /// Defines a new operand declaration in the current function block.
     fn declare_value(&mut self, value: lume_mir::Operand) -> RegisterId {
-        self.declare(lume_mir::Declaration::Operand(value))
+        self.declare(lume_mir::Declaration {
+            location: value.location,
+            kind: lume_mir::DeclarationKind::Operand(value),
+        })
     }
 
     /// Defines a new call instruction in the current function block.
@@ -169,6 +183,7 @@ impl<'mir> FunctionTransformer<'mir> {
         func_id: FunctionId,
         mut args: Vec<lume_mir::Operand>,
         ret_ty: lume_mir::Type,
+        location: Location,
     ) -> lume_mir::Operand {
         let func = self.transformer.mir.function(func_id);
         let params = &func.signature.parameters;
@@ -200,14 +215,28 @@ impl<'mir> FunctionTransformer<'mir> {
             }
 
             let arg_ty = self.type_of_value(arg);
-            let slot = self.func.alloc_slot(arg_ty);
-            self.func.current_block_mut().store_slot(slot, arg.clone());
+            let slot = self.func.alloc_slot(arg_ty, arg.location);
+            self.func
+                .current_block_mut()
+                .store_slot(slot, arg.clone(), arg.location);
 
-            *arg = lume_mir::Operand::SlotAddress { id: slot };
+            *arg = lume_mir::Operand {
+                kind: lume_mir::OperandKind::SlotAddress { id: slot },
+                location: arg.location,
+            };
         }
 
-        let call_inst = self.func.declare(ret_ty, lume_mir::Declaration::Call { func_id, args });
+        let call_inst = self.func.declare(
+            ret_ty,
+            lume_mir::Declaration {
+                kind: lume_mir::DeclarationKind::Call { func_id, args },
+                location,
+            },
+        );
 
-        lume_mir::Operand::Reference { id: call_inst }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: call_inst },
+            location,
+        }
     }
 }

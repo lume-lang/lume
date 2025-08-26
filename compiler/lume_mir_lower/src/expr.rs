@@ -1,4 +1,5 @@
 use lume_mir::FunctionId;
+use lume_span::Location;
 
 use crate::FunctionTransformer;
 
@@ -12,7 +13,7 @@ impl FunctionTransformer<'_> {
             lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
             lume_tir::ExpressionKind::If(cond) => self.if_condition(cond),
             lume_tir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
-            lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind),
+            lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind, expr.location()),
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
             lume_tir::ExpressionKind::Member(expr) => self.member(expr),
             lume_tir::ExpressionKind::Scope(expr) => self.scope(expr),
@@ -24,11 +25,18 @@ impl FunctionTransformer<'_> {
             let return_ty = self.lower_type(&expr.ty);
 
             let target_reg = self.load_operand(&op);
-            let loaded_reg = self
-                .func
-                .declare_value_raw(return_ty, lume_mir::Operand::Load { id: target_reg });
+            let loaded_reg = self.func.declare_value_raw(
+                return_ty,
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Load { id: target_reg },
+                    location: expr.location(),
+                },
+            );
 
-            return lume_mir::Operand::Reference { id: loaded_reg };
+            return lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: loaded_reg },
+                location: expr.location(),
+            };
         }
 
         op
@@ -36,28 +44,37 @@ impl FunctionTransformer<'_> {
 
     fn assignment(&mut self, expr: &lume_tir::Assignment) -> lume_mir::Operand {
         let value = self.expression(&expr.value);
+        let target_expr = self.expression(&expr.target);
 
-        match self.expression(&expr.target) {
-            lume_mir::Operand::Reference { id } => {
-                self.func.current_block_mut().assign(id, value);
+        match &target_expr.kind {
+            lume_mir::OperandKind::Reference { id } => {
+                self.func.current_block_mut().assign(*id, value, expr.location);
 
-                lume_mir::Operand::Reference { id }
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Reference { id: *id },
+                    location: expr.location,
+                }
             }
-            lume_mir::Operand::Load { id } => {
-                self.func.current_block_mut().store(id, value);
+            lume_mir::OperandKind::Load { id } => {
+                self.func.current_block_mut().store(*id, value, expr.location);
 
-                lume_mir::Operand::Load { id }
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Load { id: *id },
+                    location: expr.location,
+                }
             }
-            load @ lume_mir::Operand::LoadField { target, offset, .. } => {
-                self.func.current_block_mut().store_field(target, offset, value);
+            lume_mir::OperandKind::LoadField { target, offset, .. } => {
+                self.func
+                    .current_block_mut()
+                    .store_field(*target, *offset, value, expr.location);
 
-                load
+                target_expr
             }
-            lume_mir::Operand::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
-            lume_mir::Operand::Boolean { .. }
-            | lume_mir::Operand::Integer { .. }
-            | lume_mir::Operand::Float { .. }
-            | lume_mir::Operand::String { .. } => panic!("bug!: attempted to assign literal"),
+            lume_mir::OperandKind::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
+            lume_mir::OperandKind::Boolean { .. }
+            | lume_mir::OperandKind::Integer { .. }
+            | lume_mir::OperandKind::Float { .. }
+            | lume_mir::OperandKind::String { .. } => panic!("bug!: attempted to assign literal"),
         }
     }
 
@@ -81,10 +98,17 @@ impl FunctionTransformer<'_> {
             unreachable!()
         };
 
-        let decl = lume_mir::Declaration::Intrinsic { name, args };
+        let decl = lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            location: expr.location,
+        };
+
         let reg = self.declare(decl);
 
-        lume_mir::Operand::Load { id: reg }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id: reg },
+            location: expr.location,
+        }
     }
 
     fn cast(&mut self, expr: &lume_tir::Cast) -> lume_mir::Operand {
@@ -92,14 +116,23 @@ impl FunctionTransformer<'_> {
         debug_assert!(expr_ty.is_integer());
 
         let source = self.expression(&expr.source);
-        let operand = self.declare(lume_mir::Declaration::Operand(source));
+        let operand = self.declare(lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Operand(source),
+            location: expr.location,
+        });
 
-        let decl = lume_mir::Declaration::Cast {
-            operand,
-            bits: expr.target.bitwidth(),
+        let decl = lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Cast {
+                operand,
+                bits: expr.target.bitwidth(),
+            },
+            location: expr.location,
         };
 
-        lume_mir::Operand::Reference { id: self.declare(decl) }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: self.declare(decl) },
+            location: expr.location,
+        }
     }
 
     fn construct(&mut self, expr: &lume_tir::Construct) -> lume_mir::Operand {
@@ -117,19 +150,24 @@ impl FunctionTransformer<'_> {
         let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
         let reg = self.func.add_register(struct_ptr);
-        self.func.current_block_mut().allocate(reg, struct_type);
+        self.func.current_block_mut().allocate(reg, struct_type, expr.location);
 
         let mut offset = 0;
 
         for (field, size) in expr.fields.iter().zip(prop_sizes) {
             let value = self.expression(&field.value);
 
-            self.func.current_block_mut().store_field(reg, offset, value);
+            self.func
+                .current_block_mut()
+                .store_field(reg, offset, value, expr.location);
 
             offset += size;
         }
 
-        lume_mir::Operand::Reference { id: reg }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: reg },
+            location: expr.location,
+        }
     }
 
     fn call_expression(&mut self, expr: &lume_tir::Call) -> lume_mir::Operand {
@@ -150,17 +188,24 @@ impl FunctionTransformer<'_> {
             ret_ty = lume_mir::Type::pointer(ret_ty);
         }
 
-        self.call(func_id, args, ret_ty)
+        self.call(func_id, args, ret_ty, expr.location)
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
         let name = self.intrinsic_of(&expr.kind);
         let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
 
-        let decl = lume_mir::Declaration::Intrinsic { name, args };
+        let decl = lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            location: expr.location,
+        };
+
         let reg = self.declare(decl);
 
-        lume_mir::Operand::Reference { id: reg }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: reg },
+            location: expr.location,
+        }
     }
 
     fn if_condition(&mut self, expr: &lume_tir::If) -> lume_mir::Operand {
@@ -213,7 +258,9 @@ impl FunctionTransformer<'_> {
                     &[]
                 };
 
-                self.func.current_block_mut().branch_with(merge_block, args);
+                self.func
+                    .current_block_mut()
+                    .branch_with(merge_block, args, expr.location);
 
                 self.add_edge(cond_then, merge_block);
                 self.add_edge(cond_else, merge_block);
@@ -240,18 +287,23 @@ impl FunctionTransformer<'_> {
                     &[]
                 };
 
-                self.func.current_block_mut().branch_with(merge_block, args);
+                self.func
+                    .current_block_mut()
+                    .branch_with(merge_block, args, expr.location);
             }
         }
 
         if let Some(merge_block) = merge_block {
-            self.func.current_block_mut().branch(merge_block);
+            self.func.current_block_mut().branch(merge_block, expr.location);
 
             self.func.set_current_block(merge_block);
         }
 
         if let Some(return_reg) = return_reg {
-            lume_mir::Operand::Reference { id: return_reg }
+            lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: return_reg },
+                location: expr.location,
+            }
         } else {
             self.null_operand()
         }
@@ -288,9 +340,12 @@ impl FunctionTransformer<'_> {
                     self.add_edge(self.func.current_block().id, inter_block);
                     self.add_edge(inter_block, else_block);
 
-                    self.func
-                        .current_block_mut()
-                        .conditional_branch(lhs_expr, inter_block, else_block);
+                    self.func.current_block_mut().conditional_branch(
+                        lhs_expr,
+                        inter_block,
+                        else_block,
+                        expr.location(),
+                    );
 
                     self.func.set_current_block(inter_block);
 
@@ -299,7 +354,7 @@ impl FunctionTransformer<'_> {
 
                     self.func
                         .current_block_mut()
-                        .conditional_branch(rhs_expr, then_block, else_block);
+                        .conditional_branch(rhs_expr, then_block, else_block, expr.location());
                 }
 
                 // Build graph for logical OR expressions
@@ -325,9 +380,12 @@ impl FunctionTransformer<'_> {
                     self.add_edge(self.func.current_block().id, inter_block);
                     self.add_edge(inter_block, then_block);
 
-                    self.func
-                        .current_block_mut()
-                        .conditional_branch(lhs_expr, then_block, inter_block);
+                    self.func.current_block_mut().conditional_branch(
+                        lhs_expr,
+                        then_block,
+                        inter_block,
+                        expr.location(),
+                    );
 
                     self.func.set_current_block(inter_block);
 
@@ -336,7 +394,7 @@ impl FunctionTransformer<'_> {
 
                     self.func
                         .current_block_mut()
-                        .conditional_branch(rhs_expr, then_block, else_block);
+                        .conditional_branch(rhs_expr, then_block, else_block, expr.location());
                 }
             }
         } else {
@@ -345,7 +403,7 @@ impl FunctionTransformer<'_> {
 
             self.func
                 .current_block_mut()
-                .conditional_branch(cond_expr, then_block, else_block);
+                .conditional_branch(cond_expr, then_block, else_block, expr.location());
         }
     }
 
@@ -438,9 +496,15 @@ impl FunctionTransformer<'_> {
             lume_tir::LogicalOperator::Or => lume_mir::Intrinsic::BooleanOr,
         };
 
-        let decl = lume_mir::Declaration::Intrinsic { name, args };
+        let decl = lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            location: expr.location,
+        };
 
-        lume_mir::Operand::Reference { id: self.declare(decl) }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: self.declare(decl) },
+            location: expr.location,
+        }
     }
 
     fn member(&mut self, expr: &lume_tir::Member) -> lume_mir::Operand {
@@ -450,10 +514,13 @@ impl FunctionTransformer<'_> {
         let index = expr.field.index;
         let offset = self.field_offset(&expr.field);
 
-        lume_mir::Operand::LoadField {
-            target: target_reg,
-            offset,
-            index,
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::LoadField {
+                target: target_reg,
+                offset,
+                index,
+            },
+            location: expr.location,
         }
     }
 
@@ -473,14 +540,20 @@ impl FunctionTransformer<'_> {
             lume_tir::VariableSource::Variable => *self.variables.get(&expr.reference).unwrap(),
         };
 
-        lume_mir::Operand::Reference { id }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id },
+            location: expr.location,
+        }
     }
 
     fn variant(&mut self, expr: &lume_tir::Variant) -> lume_mir::Operand {
-        let discriminant = lume_mir::Operand::Integer {
-            bits: 8,
-            signed: false,
-            value: i64::from(expr.index),
+        let discriminant = lume_mir::Operand {
+            kind: lume_mir::OperandKind::Integer {
+                bits: 8,
+                signed: false,
+                value: i64::from(expr.index),
+            },
+            location: expr.location,
         };
 
         let enum_ty = self.tcx().type_of(expr.id).unwrap();
@@ -501,30 +574,40 @@ impl FunctionTransformer<'_> {
 
         let union_type = lume_mir::Type::union(expr.ty.clone(), union_cases);
         let reg = self.func.add_register(union_type.clone());
-        self.func.current_block_mut().allocate(reg, union_type);
+        self.func.current_block_mut().allocate(reg, union_type, expr.location);
 
         let mut offset = 0;
 
         // Store the discriminant of the variant first
-        self.func.current_block_mut().store_field(reg, offset, discriminant);
+        self.func
+            .current_block_mut()
+            .store_field(reg, offset, discriminant, expr.location);
         offset += 1;
 
         for argument in &expr.arguments {
             let value = self.expression(argument);
             let operand_size = usize::from(value.bitsize() / 8);
 
-            self.func.current_block_mut().store_field(reg, offset, value);
+            self.func
+                .current_block_mut()
+                .store_field(reg, offset, value, expr.location);
 
             offset += operand_size;
         }
 
-        lume_mir::Operand::Reference { id: reg }
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: reg },
+            location: expr.location,
+        }
     }
 
     #[expect(clippy::unused_self)]
-    fn literal(&self, expr: &lume_tir::LiteralKind) -> lume_mir::Operand {
+    fn literal(&self, expr: &lume_tir::LiteralKind, location: Location) -> lume_mir::Operand {
         match expr {
-            lume_tir::LiteralKind::Boolean(val) => lume_mir::Operand::Boolean { value: *val },
+            lume_tir::LiteralKind::Boolean(val) => lume_mir::Operand {
+                kind: lume_mir::OperandKind::Boolean { value: *val },
+                location,
+            },
             lume_tir::LiteralKind::Int(val) => {
                 let (bits, signed, value) = match val {
                     lume_tir::IntLiteral::I8(val) => (8, true, *val),
@@ -537,7 +620,10 @@ impl FunctionTransformer<'_> {
                     lume_tir::IntLiteral::U64(val) => (64, false, *val),
                 };
 
-                lume_mir::Operand::Integer { value, bits, signed }
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Integer { value, bits, signed },
+                    location,
+                }
             }
             lume_tir::LiteralKind::Float(val) => {
                 let (bits, value) = match val {
@@ -545,14 +631,20 @@ impl FunctionTransformer<'_> {
                     lume_tir::FloatLiteral::F64(val) => (64, *val),
                 };
 
-                lume_mir::Operand::Float { value, bits }
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Float { value, bits },
+                    location,
+                }
             }
-            lume_tir::LiteralKind::String(val) => lume_mir::Operand::String { value: *val },
+            lume_tir::LiteralKind::String(val) => lume_mir::Operand {
+                kind: lume_mir::OperandKind::String { value: *val },
+                location,
+            },
         }
     }
 
     fn load_operand(&mut self, op: &lume_mir::Operand) -> lume_mir::RegisterId {
-        if let lume_mir::Operand::Reference { id } = &op {
+        if let lume_mir::OperandKind::Reference { id } = &op.kind {
             *id
         } else {
             self.declare_value(op.clone())

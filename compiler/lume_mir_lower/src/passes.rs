@@ -101,15 +101,15 @@ impl PassBlockArguments {
             let block_id = block.id;
 
             if let Some(terminator) = block.terminator_mut() {
-                match terminator {
-                    Terminator::Branch(target) => Self::update_branch_terminator(block_id, target, &func_immut),
-                    Terminator::ConditionalBranch {
+                match &mut terminator.kind {
+                    TerminatorKind::Branch(target) => Self::update_branch_terminator(block_id, target, &func_immut),
+                    TerminatorKind::ConditionalBranch {
                         then_block, else_block, ..
                     } => {
                         Self::update_branch_terminator(block_id, then_block, &func_immut);
                         Self::update_branch_terminator(block_id, else_block, &func_immut);
                     }
-                    Terminator::Return(_) | Terminator::Unreachable => {}
+                    TerminatorKind::Return(_) | TerminatorKind::Unreachable => {}
                 }
             }
         }
@@ -195,12 +195,12 @@ impl ConvertAssignmentExpressions {
     }
 
     fn update_regs_inst(&mut self, inst: &mut Instruction) {
-        match inst {
-            Instruction::Let { register, decl, .. } => {
+        match &mut inst.kind {
+            InstructionKind::Let { register, decl, .. } => {
                 self.get_moved_register(register);
                 self.update_regs_decl(decl);
             }
-            Instruction::Assign { target, value } => {
+            InstructionKind::Assign { target, value } => {
                 let ty = self.registers.register_ty(*target).to_owned();
 
                 self.move_register(target);
@@ -209,36 +209,39 @@ impl ConvertAssignmentExpressions {
                 // After the registers of the assignment instruction have been converted
                 // to SSA registers, we transform the instruction itself to declare a new register
                 // instead of attempting to assign a non-existent register.
-                *inst = Instruction::Let {
+                inst.kind = InstructionKind::Let {
                     register: *target,
-                    decl: Declaration::Operand(value.clone()),
+                    decl: Declaration {
+                        kind: DeclarationKind::Operand(value.clone()),
+                        location: inst.location,
+                    },
                     ty,
                 };
             }
-            Instruction::Allocate { register, .. } => {
+            InstructionKind::Allocate { register, .. } => {
                 self.get_moved_register(register);
             }
-            Instruction::Store { target, value } | Instruction::StoreField { target, value, .. } => {
+            InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
                 self.get_moved_register(target);
                 self.update_regs_op(value);
             }
-            Instruction::CreateSlot { .. } | Instruction::StoreSlot { .. } => {}
+            InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
     }
 
     fn update_regs_term(&mut self, term: &mut Terminator) {
-        match term {
-            Terminator::Return(op) => {
+        match &mut term.kind {
+            TerminatorKind::Return(op) => {
                 if let Some(value) = op {
                     self.update_regs_op(value);
                 }
             }
-            Terminator::Branch(site) => {
+            TerminatorKind::Branch(site) => {
                 for arg in &mut site.arguments {
                     self.get_moved_register(arg);
                 }
             }
-            Terminator::ConditionalBranch {
+            TerminatorKind::ConditionalBranch {
                 condition,
                 then_block,
                 else_block,
@@ -253,17 +256,17 @@ impl ConvertAssignmentExpressions {
                     self.get_moved_register(arg);
                 }
             }
-            Terminator::Unreachable => {}
+            TerminatorKind::Unreachable => {}
         }
     }
 
     fn update_regs_decl(&mut self, decl: &mut Declaration) {
-        match decl {
-            Declaration::Operand(op) => self.update_regs_op(op),
-            Declaration::Cast { operand, .. } => {
+        match &mut decl.kind {
+            DeclarationKind::Operand(op) => self.update_regs_op(op),
+            DeclarationKind::Cast { operand, .. } => {
                 self.get_moved_register(operand);
             }
-            Declaration::Call { args, .. } | Declaration::Intrinsic { args, .. } => {
+            DeclarationKind::Call { args, .. } | DeclarationKind::Intrinsic { args, .. } => {
                 for arg in args {
                     self.update_regs_op(arg);
                 }
@@ -272,18 +275,18 @@ impl ConvertAssignmentExpressions {
     }
 
     fn update_regs_op(&mut self, op: &mut Operand) {
-        match op {
-            Operand::Load { id } | Operand::Reference { id } => {
+        match &mut op.kind {
+            OperandKind::Load { id } | OperandKind::Reference { id } => {
                 self.get_moved_register(id);
             }
-            Operand::LoadField { target, .. } => {
+            OperandKind::LoadField { target, .. } => {
                 self.get_moved_register(target);
             }
-            Operand::Boolean { .. }
-            | Operand::Integer { .. }
-            | Operand::Float { .. }
-            | Operand::String { .. }
-            | Operand::SlotAddress { .. } => {}
+            OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::SlotAddress { .. } => {}
         }
     }
 }
@@ -378,37 +381,37 @@ impl RenameSsaVariables {
     }
 
     fn update_regs_inst(&mut self, inst: &mut Instruction, block: BasicBlockId, mapping: &mut RegisterMapping) {
-        match inst {
-            Instruction::Let { register, decl, .. } => {
+        match &mut inst.kind {
+            InstructionKind::Let { register, decl, .. } => {
                 self.rename_register_index_mut(register, block, mapping);
 
                 Self::update_regs_decl(decl, block, mapping);
             }
-            Instruction::Assign { .. } => unreachable!("bug!: assignments should be removed in previous SSA pass"),
-            Instruction::Allocate { register, .. } => {
+            InstructionKind::Assign { .. } => unreachable!("bug!: assignments should be removed in previous SSA pass"),
+            InstructionKind::Allocate { register, .. } => {
                 self.rename_register_index_mut(register, block, mapping);
             }
-            Instruction::Store { target, value } | Instruction::StoreField { target, value, .. } => {
+            InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();
                 Self::update_regs_op(value, block, mapping);
             }
-            Instruction::CreateSlot { .. } | Instruction::StoreSlot { .. } => {}
+            InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
     }
 
     fn update_regs_term(term: &mut Terminator, block: BasicBlockId, mapping: &mut RegisterMapping) {
-        match term {
-            Terminator::Return(op) => {
+        match &mut term.kind {
+            TerminatorKind::Return(op) => {
                 if let Some(value) = op {
                     Self::update_regs_op(value, block, mapping);
                 }
             }
-            Terminator::Branch(site) => {
+            TerminatorKind::Branch(site) => {
                 for arg in &mut site.arguments {
                     *arg = *mapping.get(&(*arg, block)).unwrap();
                 }
             }
-            Terminator::ConditionalBranch {
+            TerminatorKind::ConditionalBranch {
                 condition,
                 then_block,
                 else_block,
@@ -423,17 +426,17 @@ impl RenameSsaVariables {
                     *arg = *mapping.get(&(*arg, block)).unwrap();
                 }
             }
-            Terminator::Unreachable => {}
+            TerminatorKind::Unreachable => {}
         }
     }
 
     fn update_regs_decl(decl: &mut Declaration, block: BasicBlockId, mapping: &mut RegisterMapping) {
-        match decl {
-            Declaration::Operand(op) => Self::update_regs_op(op, block, mapping),
-            Declaration::Cast { operand, .. } => {
+        match &mut decl.kind {
+            DeclarationKind::Operand(op) => Self::update_regs_op(op, block, mapping),
+            DeclarationKind::Cast { operand, .. } => {
                 *operand = *mapping.get(&(*operand, block)).unwrap();
             }
-            Declaration::Call { args, .. } | Declaration::Intrinsic { args, .. } => {
+            DeclarationKind::Call { args, .. } | DeclarationKind::Intrinsic { args, .. } => {
                 for arg in args {
                     Self::update_regs_op(arg, block, mapping);
                 }
@@ -442,18 +445,18 @@ impl RenameSsaVariables {
     }
 
     fn update_regs_op(op: &mut Operand, block: BasicBlockId, mapping: &mut RegisterMapping) {
-        match op {
-            Operand::Load { id } | Operand::Reference { id } => {
+        match &mut op.kind {
+            OperandKind::Load { id } | OperandKind::Reference { id } => {
                 *id = *mapping.get(&(*id, block)).unwrap();
             }
-            Operand::LoadField { target, .. } => {
+            OperandKind::LoadField { target, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();
             }
-            Operand::Boolean { .. }
-            | Operand::Integer { .. }
-            | Operand::Float { .. }
-            | Operand::String { .. }
-            | Operand::SlotAddress { .. } => {}
+            OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::SlotAddress { .. } => {}
         }
     }
 }

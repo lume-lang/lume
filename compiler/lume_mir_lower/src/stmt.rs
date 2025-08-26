@@ -14,8 +14,8 @@ impl FunctionTransformer<'_> {
     pub(super) fn statement(&mut self, stmt: &lume_tir::Statement) -> Option<lume_mir::Operand> {
         match stmt {
             lume_tir::Statement::Variable(decl) => self.declare_variable(decl),
-            lume_tir::Statement::Break(_) => self.break_loop(),
-            lume_tir::Statement::Continue(_) => self.continue_loop(),
+            lume_tir::Statement::Break(stmt) => self.break_loop(stmt),
+            lume_tir::Statement::Continue(stmt) => self.continue_loop(stmt),
             lume_tir::Statement::Final(fin) => Some(self.final_value(fin)),
             lume_tir::Statement::Return(ret) => self.return_value(ret),
             lume_tir::Statement::InfiniteLoop(stmt) => self.infinite_loop(stmt),
@@ -29,9 +29,9 @@ impl FunctionTransformer<'_> {
         let is_ref_ty = self.tcx().tdb().is_reference_type(stmt.value.ty.instance_of).unwrap();
 
         let register = if is_ref_ty {
-            match value {
-                lume_mir::Operand::Reference { id } | lume_mir::Operand::Load { id } => id,
-                lume_mir::Operand::LoadField { target, .. } => target,
+            match &value.kind {
+                lume_mir::OperandKind::Reference { id } | lume_mir::OperandKind::Load { id } => *id,
+                lume_mir::OperandKind::LoadField { target, .. } => *target,
                 _ => self.declare_value(value),
             }
         } else {
@@ -43,19 +43,19 @@ impl FunctionTransformer<'_> {
         None
     }
 
-    fn break_loop(&mut self) -> Option<lume_mir::Operand> {
+    fn break_loop(&mut self, stmt: &lume_tir::Break) -> Option<lume_mir::Operand> {
         let (_, end) = self.func.expect_loop_target();
 
-        self.func.current_block_mut().branch(end);
+        self.func.current_block_mut().branch(end, stmt.location);
         self.add_edge(self.func.current_block().id, end);
 
         None
     }
 
-    fn continue_loop(&mut self) -> Option<lume_mir::Operand> {
+    fn continue_loop(&mut self, stmt: &lume_tir::Continue) -> Option<lume_mir::Operand> {
         let (body, _) = self.func.expect_loop_target();
 
-        self.func.current_block_mut().branch(body);
+        self.func.current_block_mut().branch(body, stmt.location);
         self.add_edge(self.func.current_block().id, body);
 
         None
@@ -68,7 +68,7 @@ impl FunctionTransformer<'_> {
     fn return_value(&mut self, stmt: &lume_tir::Return) -> Option<lume_mir::Operand> {
         let value = stmt.value.clone().map(|val| self.expression(&val));
 
-        self.func.current_block_mut().return_any(value);
+        self.func.current_block_mut().return_any(value, stmt.location);
 
         None
     }
@@ -83,7 +83,7 @@ impl FunctionTransformer<'_> {
         };
 
         self.add_edge(self.func.current_block().id, body_block);
-        self.func.current_block_mut().branch(body_block);
+        self.func.current_block_mut().branch(body_block, stmt.location);
 
         if let Some(merge_block) = merge_block {
             self.add_edge(body_block, body_block);
@@ -99,12 +99,12 @@ impl FunctionTransformer<'_> {
 
         // Loop back to the start of the loop body
         self.add_edge(self.func.current_block().id, body_block);
-        self.func.current_block_mut().branch(body_block);
+        self.func.current_block_mut().branch(body_block, stmt.location);
 
         if let Some(merge_block) = merge_block {
             self.add_edge(self.func.current_block().id, merge_block);
 
-            self.func.current_block_mut().branch(merge_block);
+            self.func.current_block_mut().branch(merge_block, stmt.location);
             self.func.set_current_block(merge_block);
         }
 
