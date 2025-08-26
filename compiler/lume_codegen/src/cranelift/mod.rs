@@ -90,16 +90,16 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
 
         let mut object_product = module.finish();
 
-        for func in functions.values() {
-            if func.signature.external {
-                continue;
-            }
+        if let Some(debug_ctx) = debug_ctx.as_mut() {
+            for func in functions.values() {
+                if func.signature.external {
+                    continue;
+                }
 
-            let Some(declaration) = self.declared_funcs.get(&func.id) else {
-                continue;
-            };
+                let Some(declaration) = self.declared_funcs.get(&func.id) else {
+                    continue;
+                };
 
-            if let Some(debug_ctx) = debug_ctx.as_mut() {
                 debug_ctx.define_function(func.id, declaration.id, &object_product);
             }
         }
