@@ -7,16 +7,17 @@ pub(crate) mod value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
+use cranelift::codegen::ir::{BlockArg, GlobalValue, SourceLoc, StackSlot};
 use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
 use cranelift_module::{DataDescription, DataId, Linkage, Module};
 use cranelift_object::{ObjectBuilder, ObjectModule};
 
 use error_snippet::SimpleDiagnostic;
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
 use lume_mir::{BlockBranchSite, RegisterId, SlotId};
+use lume_span::Location;
 
 use crate::{Backend, CompiledModule, Context};
 use dwarf::RootDebugContext;
@@ -40,6 +41,7 @@ pub(crate) struct CraneliftBackend<'ctx> {
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
+    location_indices: RwLock<IndexSet<Location>>,
 }
 
 impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
@@ -147,6 +149,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
             declared_funcs: IndexMap::new(),
             intrinsics,
             static_data: RwLock::new(HashMap::new()),
+            location_indices: RwLock::new(IndexSet::new()),
         })
     }
 
@@ -287,6 +290,12 @@ impl<'ctx> CraneliftBackend<'ctx> {
 
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
         self.declare_static_data(value, value.as_bytes())
+    }
+
+    pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
+        let (idx, _) = self.location_indices.try_write().unwrap().insert_full(loc);
+
+        SourceLoc::new(idx as u32)
     }
 }
 
@@ -651,5 +660,11 @@ impl<'ctx> LowerFunction<'ctx> {
             cl_else_block,
             else_args.iter().as_ref(),
         );
+    }
+
+    pub(crate) fn set_srcloc(&mut self, loc: Location) {
+        let src_loc = self.backend.calculate_source_loc(loc);
+
+        self.builder.set_srcloc(src_loc);
     }
 }

@@ -47,8 +47,10 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
-        match inst {
-            lume_mir::Instruction::Let { register, decl, ty } => {
+        self.set_srcloc(inst.location);
+
+        match &inst.kind {
+            lume_mir::InstructionKind::Let { register, decl, ty } => {
                 let var = self.declare_var(*register, ty.to_owned());
 
                 let value = self.cg_declaration(decl);
@@ -56,10 +58,10 @@ impl LowerFunction<'_> {
 
                 self.builder.def_var(var, value);
             }
-            lume_mir::Instruction::Assign { .. } => {
+            lume_mir::InstructionKind::Assign { .. } => {
                 panic!("bug!: assignment instructions should not be present in codegen")
             }
-            lume_mir::Instruction::CreateSlot { slot, ty } => {
+            lume_mir::InstructionKind::CreateSlot { slot, ty } => {
                 #[expect(clippy::cast_possible_truncation)]
                 let size = ty.bytesize() as u32;
 
@@ -71,14 +73,14 @@ impl LowerFunction<'_> {
 
                 self.slots.insert(*slot, stack_slot);
             }
-            lume_mir::Instruction::Allocate { register, ty } => {
+            lume_mir::InstructionKind::Allocate { register, ty } => {
                 let ptr_ty = lume_mir::Type::pointer(ty.clone());
                 let var = self.declare_var(*register, ptr_ty);
                 let ptr = self.cg_alloc_type(ty);
 
                 self.builder.def_var(var, ptr);
             }
-            lume_mir::Instruction::Store { target, value } => {
+            lume_mir::InstructionKind::Store { target, value } => {
                 let target = self.use_var(*target);
                 let value = self.cg_operand(value);
 
@@ -86,13 +88,13 @@ impl LowerFunction<'_> {
                     .ins()
                     .store(MemFlags::new(), value, target, Offset32::new(0));
             }
-            lume_mir::Instruction::StoreSlot { target, value } => {
+            lume_mir::InstructionKind::StoreSlot { target, value } => {
                 let slot = self.retrieve_slot(*target);
                 let value = self.cg_operand(value);
 
                 self.builder.ins().stack_store(value, slot, 0);
             }
-            lume_mir::Instruction::StoreField { target, offset, value } => {
+            lume_mir::InstructionKind::StoreField { target, offset, value } => {
                 let target = self.use_var(*target);
                 let value = self.cg_operand(value);
 
@@ -108,8 +110,10 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
-        match term {
-            lume_mir::Terminator::Return(operand) => {
+        self.set_srcloc(term.location);
+
+        match &term.kind {
+            lume_mir::TerminatorKind::Return(operand) => {
                 if let Some(value) = operand {
                     let value = self.cg_operand(value);
 
@@ -118,10 +122,10 @@ impl LowerFunction<'_> {
                     self.builder.ins().return_(&[]);
                 }
             }
-            lume_mir::Terminator::Branch(call) => {
+            lume_mir::TerminatorKind::Branch(call) => {
                 self.branch(call);
             }
-            lume_mir::Terminator::ConditionalBranch {
+            lume_mir::TerminatorKind::ConditionalBranch {
                 condition,
                 then_block,
                 else_block,
@@ -130,7 +134,7 @@ impl LowerFunction<'_> {
 
                 self.conditional_branch(condition, then_block, else_block);
             }
-            lume_mir::Terminator::Unreachable => {
+            lume_mir::TerminatorKind::Unreachable => {
                 let code = TrapCode::user(UNREACHABLE_TRAP_CODE).unwrap();
 
                 self.builder.ins().trap(code);

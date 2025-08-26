@@ -4,9 +4,11 @@ use crate::cranelift::LowerFunction;
 
 impl LowerFunction<'_> {
     pub(crate) fn cg_declaration(&mut self, decl: &lume_mir::Declaration) -> Value {
-        match decl {
-            lume_mir::Declaration::Operand(op) => self.cg_operand(op),
-            lume_mir::Declaration::Cast { operand, bits } => {
+        self.set_srcloc(decl.location);
+
+        match &decl.kind {
+            lume_mir::DeclarationKind::Operand(op) => self.cg_operand(op),
+            lume_mir::DeclarationKind::Cast { operand, bits } => {
                 let operand_ty = self.func.registers.register_ty(*operand);
                 let is_int = matches!(operand_ty.kind, lume_mir::TypeKind::Integer { .. });
 
@@ -16,7 +18,7 @@ impl LowerFunction<'_> {
                     self.fcast(*operand, *bits)
                 }
             }
-            lume_mir::Declaration::Call { func_id, args } => {
+            lume_mir::DeclarationKind::Call { func_id, args } => {
                 let ret = self.call(*func_id, args);
 
                 if ret.is_empty() {
@@ -25,7 +27,7 @@ impl LowerFunction<'_> {
                     ret[0]
                 }
             }
-            lume_mir::Declaration::Intrinsic { name, args } => match name {
+            lume_mir::DeclarationKind::Intrinsic { name, args } => match name {
                 // Floating-pointer comparison
                 lume_mir::Intrinsic::FloatEq { .. } => self.fcmp(FloatCC::Equal, &args[0], &args[1]),
                 lume_mir::Intrinsic::FloatNe { .. } => self.fcmp(FloatCC::NotEqual, &args[0], &args[1]),
@@ -92,30 +94,34 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name), ret(Display))]
     pub(crate) fn cg_operand(&mut self, op: &lume_mir::Operand) -> Value {
-        match op {
-            lume_mir::Operand::Boolean { value } => self.builder.ins().iconst(Self::cl_bool_type(), i64::from(*value)),
-            lume_mir::Operand::Integer { bits, value, .. } => match *bits {
+        self.set_srcloc(op.location);
+
+        match &op.kind {
+            lume_mir::OperandKind::Boolean { value } => {
+                self.builder.ins().iconst(Self::cl_bool_type(), i64::from(*value))
+            }
+            lume_mir::OperandKind::Integer { bits, value, .. } => match *bits {
                 8 => self.builder.ins().iconst(types::I8, *value),
                 16 => self.builder.ins().iconst(types::I16, *value),
                 32 => self.builder.ins().iconst(types::I32, *value),
                 64 => self.builder.ins().iconst(types::I64, *value),
                 _ => unreachable!(),
             },
-            lume_mir::Operand::Float { bits, value } => match *bits {
+            lume_mir::OperandKind::Float { bits, value } => match *bits {
                 #[expect(clippy::cast_possible_truncation)]
                 32 => self.builder.ins().f32const(*value as f32),
                 64 => self.builder.ins().f64const(*value),
                 _ => unreachable!(),
             },
-            lume_mir::Operand::String { value } => self.reference_static_string(value.as_str()),
-            lume_mir::Operand::Load { id } => self.load_var(*id),
-            lume_mir::Operand::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
-            lume_mir::Operand::SlotAddress { id } => {
+            lume_mir::OperandKind::String { value } => self.reference_static_string(value.as_str()),
+            lume_mir::OperandKind::Load { id } => self.load_var(*id),
+            lume_mir::OperandKind::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
+            lume_mir::OperandKind::SlotAddress { id } => {
                 let slot = self.retrieve_slot(*id);
 
                 self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, 0)
             }
-            lume_mir::Operand::Reference { id } => self.use_var(*id),
+            lume_mir::OperandKind::Reference { id } => self.use_var(*id),
         }
     }
 }
