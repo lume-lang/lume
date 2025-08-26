@@ -100,6 +100,7 @@ impl<'tcx> ReificationPass<'tcx> {
                 reference,
                 source: lume_tir::VariableSource::Parameter,
                 name,
+                location: type_arg.location,
             })),
             ty: type_arg.clone(),
         }
@@ -113,6 +114,7 @@ impl<'tcx> ReificationPass<'tcx> {
                 id: lume_span::ExpressionId::default(),
                 kind: lume_tir::IntrinsicKind::Metadata { id },
                 arguments: Vec::new(),
+                location: type_arg.location,
             })),
             ty: TypeRef::pointer(self.tcx.std_type()),
         })

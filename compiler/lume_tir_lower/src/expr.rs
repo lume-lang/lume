@@ -45,6 +45,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             target,
             value,
+            location: expr.location,
         })))
     }
 
@@ -64,6 +65,7 @@ impl LowerFunction<'_> {
             lhs,
             op,
             rhs,
+            location: expr.location,
         })))
     }
 
@@ -76,6 +78,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             source,
             target,
+            location: expr.location,
         })))
     }
 
@@ -102,7 +105,11 @@ impl LowerFunction<'_> {
                 let name = field.name.to_string().intern();
                 let value = self.expression(field.value)?;
 
-                Ok(lume_tir::ConstructorField { name, value })
+                Ok(lume_tir::ConstructorField {
+                    name,
+                    value,
+                    location: field.location,
+                })
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -110,6 +117,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             ty: constructed_type,
             fields: constructed,
+            location: expr.location,
         })))
     }
 
@@ -172,6 +180,7 @@ impl LowerFunction<'_> {
             arguments,
             type_arguments,
             return_type: instantiated_signature.ret_ty,
+            location: expr.location(),
         })))
     }
 
@@ -188,7 +197,11 @@ impl LowerFunction<'_> {
 
                 let block = self.lower_block(&case.block)?;
 
-                Ok(lume_tir::Conditional { condition, block })
+                Ok(lume_tir::Conditional {
+                    condition,
+                    block,
+                    location: case.location,
+                })
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -198,6 +211,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             cases,
             return_type: if return_type.is_void() { None } else { Some(return_type) },
+            location: expr.location,
         }))
     }
 
@@ -215,6 +229,7 @@ impl LowerFunction<'_> {
                 id: expr.id,
                 kind,
                 arguments,
+                location: expr.location,
             },
         )))
     }
@@ -292,7 +307,11 @@ impl LowerFunction<'_> {
             lume_hir::LiteralKind::String(string) => lume_tir::LiteralKind::String(string.value.intern()),
         };
 
-        lume_tir::ExpressionKind::Literal(lume_tir::Literal { id: expr.id, kind: lit })
+        lume_tir::ExpressionKind::Literal(lume_tir::Literal {
+            id: expr.id,
+            kind: lit,
+            location: expr.location,
+        })
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
@@ -310,6 +329,7 @@ impl LowerFunction<'_> {
             lhs,
             op,
             rhs,
+            location: expr.location,
         })))
     }
 
@@ -332,6 +352,7 @@ impl LowerFunction<'_> {
             callee,
             field,
             name,
+            location: expr.location,
         })))
     }
 
@@ -348,6 +369,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             body,
             return_type,
+            location: expr.location,
         })))
     }
 
@@ -370,6 +392,7 @@ impl LowerFunction<'_> {
             name: expr.name.to_string().intern(),
             reference,
             source,
+            location: expr.location,
         }))
     }
 
@@ -399,6 +422,7 @@ impl LowerFunction<'_> {
             name,
             ty,
             arguments,
+            location: expr.location,
         })))
     }
 }

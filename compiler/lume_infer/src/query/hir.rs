@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_query::cached_query;
-use lume_span::{DefId, ExpressionId, ItemId, StatementId};
+use lume_span::{DefId, ExpressionId, ItemId, Location, StatementId};
 
 use crate::TyInferCtx;
 
@@ -423,5 +423,11 @@ impl TyInferCtx {
             lume_hir::Def::Item(item) => self.hir_body_of_item(item.id()),
             ty => panic!("bug!: item type cannot contain a body: {ty:?}"),
         }
+    }
+
+    /// Returns the span of the HIR definition with the given ID.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_span_of_def(&self, def: DefId) -> Location {
+        self.hir_expect_def(def).location()
     }
 }
