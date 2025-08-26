@@ -8,11 +8,15 @@ use cranelift_object::object::write::{Relocation, StandardSegment};
 use cranelift_object::object::{self, BinaryFormat, RelocationEncoding, RelocationFlags, SectionKind};
 
 use error_snippet::IntoDiagnostic;
-use gimli::write::{Address, AttributeValue, DwarfUnit, EndianVec, Sections, UnitEntryId, Writer};
+use gimli::write::{
+    Address, AttributeValue, DwarfUnit, EndianVec, FileId, LineProgram, LineString, LineStringTable, Sections,
+    UnitEntryId, Writer,
+};
 use gimli::{DwLang, Encoding, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::Function;
+use lume_span::Location;
 
 use crate::Context;
 
@@ -69,6 +73,8 @@ pub(crate) struct RootDebugContext {
     endianess: RunTimeEndian,
 
     func_entries: IndexMap<lume_mir::FunctionId, UnitEntryId>,
+    func_locs: IndexMap<lume_mir::FunctionId, Location>,
+    source_locations: IndexMap<Location, FileId>,
 }
 
 impl RootDebugContext {
@@ -91,12 +97,18 @@ impl RootDebugContext {
             dwarf_unit,
             endianess,
             func_entries: IndexMap::new(),
+            func_locs: IndexMap::new(),
+            source_locations: IndexMap::new(),
         }
     }
 
     /// Declares the initial debug information for the given function, so the
     /// layout of the DWARF tag is laid out. Some fields may be unset.
     pub(crate) fn declare_function(&mut self, func: &Function) {
+        self.func_locs.insert(func.id, func.location);
+
+        let (file_id, line, column) = self.get_source_span(func.location);
+
         let root_scope = self.dwarf_unit.unit.root();
 
         let entry_id = self.dwarf_unit.unit.add(root_scope, gimli::DW_TAG_subprogram);
@@ -116,6 +128,11 @@ impl RootDebugContext {
         entry.set(gimli::DW_AT_low_pc, AttributeValue::Udata(0));
         entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(0));
 
+        // Function source info
+        entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
+        entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
+        entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
+
         self.func_entries.insert(func.id, entry_id);
     }
 
@@ -126,10 +143,12 @@ impl RootDebugContext {
         };
 
         let sym_id = obj.function_symbol(decl_id);
+
+        let func_start = address_for_func(decl_id);
         let func_size = obj.object.symbol(sym_id).size;
 
         let entry = self.dwarf_unit.unit.get_mut(*entry_id);
-        entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(address_for_func(decl_id)));
+        entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_start));
         entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size));
     }
 
@@ -164,6 +183,53 @@ impl RootDebugContext {
             .map_err(IntoDiagnostic::into_diagnostic)?;
 
         Ok(())
+    }
+
+    fn get_source_span(&mut self, loc: Location) -> (FileId, usize, usize) {
+        let (line, column) = loc.coordinates();
+        let file_id = self.add_source_file(loc);
+
+        (file_id, line + 1, column + 1)
+    }
+
+    /// Gets the [`FileId`] which corresponds to the file associated with the
+    /// given [`Location`]. If no [`FileId`] exists for the given [`Location`], a
+    /// new one is created and returned.
+    fn add_source_file(&mut self, loc: Location) -> FileId {
+        let line_program: &mut LineProgram = &mut self.dwarf_unit.unit.line_program;
+        let line_strings: &mut LineStringTable = &mut self.dwarf_unit.line_strings;
+
+        *self
+            .source_locations
+            .entry(loc)
+            .or_insert_with(|| match &loc.file.name {
+                lume_span::FileName::Real(path) => {
+                    let dir_name = path
+                        .parent()
+                        .map(|p| p.as_os_str().to_string_lossy().as_bytes().to_vec())
+                        .unwrap_or_default();
+
+                    let file_name = path
+                        .file_name()
+                        .map(|p| p.to_string_lossy().as_bytes().to_vec())
+                        .unwrap_or_default();
+
+                    let dir_id = if !dir_name.is_empty() {
+                        line_program.add_directory(LineString::new(dir_name, line_program.encoding(), line_strings))
+                    } else {
+                        line_program.default_directory()
+                    };
+
+                    let file_name = LineString::new(file_name, line_program.encoding(), line_strings);
+                    line_program.add_file(file_name, dir_id, None)
+                }
+                lume_span::FileName::Internal => {
+                    let dir_id = line_program.default_directory();
+                    let dummy_file_name = LineString::new("<internal>", line_program.encoding(), line_strings);
+
+                    line_program.add_file(dummy_file_name, dir_id, None)
+                }
+            })
     }
 }
 
