@@ -30,6 +30,7 @@ impl LowerFunction<'_> {
             var,
             name: stmt.name.to_string().intern(),
             value,
+            location: stmt.location,
         }))
     }
 
@@ -39,6 +40,7 @@ impl LowerFunction<'_> {
         lume_tir::Statement::Break(lume_tir::Break {
             id: stmt.id,
             target: target.id,
+            location: stmt.location,
         })
     }
 
@@ -48,13 +50,18 @@ impl LowerFunction<'_> {
         lume_tir::Statement::Continue(lume_tir::Continue {
             id: stmt.id,
             target: target.id,
+            location: stmt.location,
         })
     }
 
     fn final_statement(&mut self, stmt: &lume_hir::Final) -> Result<lume_tir::Statement> {
         let value = self.expression(stmt.value)?;
 
-        Ok(lume_tir::Statement::Final(lume_tir::Final { id: stmt.id, value }))
+        Ok(lume_tir::Statement::Final(lume_tir::Final {
+            id: stmt.id,
+            value,
+            location: stmt.location,
+        }))
     }
 
     fn return_statement(&mut self, stmt: &lume_hir::Return) -> Result<lume_tir::Statement> {
@@ -64,7 +71,11 @@ impl LowerFunction<'_> {
             None
         };
 
-        Ok(lume_tir::Statement::Return(lume_tir::Return { id: stmt.id, value }))
+        Ok(lume_tir::Statement::Return(lume_tir::Return {
+            id: stmt.id,
+            value,
+            location: stmt.location,
+        }))
     }
 
     fn infinite_statement(&mut self, stmt: &lume_hir::InfiniteLoop) -> Result<lume_tir::Statement> {
@@ -73,6 +84,7 @@ impl LowerFunction<'_> {
         Ok(lume_tir::Statement::InfiniteLoop(lume_tir::InfiniteLoop {
             id: stmt.id,
             block,
+            location: stmt.location,
         }))
     }
 
@@ -84,6 +96,7 @@ impl LowerFunction<'_> {
             id: stmt.id,
             collection,
             block,
+            location: stmt.location,
         }))
     }
 }

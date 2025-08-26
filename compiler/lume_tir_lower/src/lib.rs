@@ -85,9 +85,11 @@ impl<'tcx> Lower<'tcx> {
 
             tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
 
+            let location = self.tcx.hir_span_of_def(method.hir);
+
             let id = FunctionId::new(FunctionKind::Method, method.id.0);
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(id, method.hir, &method.name, method.sig())?;
+            let func = func_lower.define(id, method.hir, &method.name, method.sig(), location)?;
 
             self.ir.functions.insert(id, func);
         }
@@ -95,9 +97,11 @@ impl<'tcx> Lower<'tcx> {
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "defining function {:+}", func.name);
 
+            let location = self.tcx.hir_span_of_def(lume_span::DefId::Item(func.hir));
+
             let id = FunctionId::new(FunctionKind::Function, func.id.index.as_usize());
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(id, lume_span::DefId::Item(func.hir), &func.name, func.sig())?;
+            let func = func_lower.define(id, lume_span::DefId::Item(func.hir), &func.name, func.sig(), location)?;
 
             self.ir.functions.insert(id, func);
         }
@@ -165,6 +169,7 @@ impl<'tcx> LowerFunction<'tcx> {
         hir_id: lume_span::DefId,
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
+        location: Location,
     ) -> Result<lume_tir::Function> {
         let name = self.path_hir(name, hir_id)?;
         let hir_type_params = self
@@ -186,6 +191,7 @@ impl<'tcx> LowerFunction<'tcx> {
             type_params,
             return_type,
             block: None,
+            location,
         })
     }
 

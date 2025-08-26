@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use lume_span::{ExpressionId, Interned, StatementId};
+use lume_span::{ExpressionId, Interned, Location, StatementId};
 use lume_type_metadata::{FunctionId, StaticMetadata, TypeMetadataId};
 use lume_types::{Field, TypeRef};
 
@@ -161,6 +161,7 @@ pub struct Function {
     pub type_params: TypeParameters,
     pub return_type: TypeRef,
     pub block: Option<Block>,
+    pub location: Location,
 }
 
 #[derive(Debug, Clone, Eq)]
@@ -287,36 +288,42 @@ pub struct VariableDeclaration {
     pub var: VariableId,
     pub name: Interned<String>,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Break {
     pub id: StatementId,
     pub target: StatementId,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Continue {
     pub id: StatementId,
     pub target: StatementId,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Final {
     pub id: StatementId,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Return {
     pub id: StatementId,
     pub value: Option<Expression>,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
     pub id: StatementId,
     pub block: Block,
+    pub location: Location,
 }
 
 impl InfiniteLoop {
@@ -331,6 +338,7 @@ pub struct IteratorLoop {
     pub id: StatementId,
     pub collection: Expression,
     pub block: Block,
+    pub location: Location,
 }
 
 impl IteratorLoop {
@@ -347,6 +355,24 @@ pub struct Expression {
 }
 
 impl Expression {
+    pub fn location(&self) -> Location {
+        match &self.kind {
+            ExpressionKind::Assignment(e) => e.location,
+            ExpressionKind::Binary(e) => e.location,
+            ExpressionKind::Cast(e) => e.location,
+            ExpressionKind::Construct(e) => e.location,
+            ExpressionKind::Call(e) => e.location,
+            ExpressionKind::If(e) => e.location,
+            ExpressionKind::IntrinsicCall(e) => e.location,
+            ExpressionKind::Literal(e) => e.location,
+            ExpressionKind::Logical(e) => e.location,
+            ExpressionKind::Member(e) => e.location,
+            ExpressionKind::Scope(e) => e.location,
+            ExpressionKind::Variable(e) => e.location,
+            ExpressionKind::Variant(e) => e.location,
+        }
+    }
+
     /// Determines whether the given expression or all branches within
     /// the expression branch away from the current control flow.
     pub fn is_returning(&self) -> bool {
@@ -379,6 +405,7 @@ pub struct Assignment {
     pub id: ExpressionId,
     pub target: Expression,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -394,6 +421,7 @@ pub struct Binary {
     pub lhs: Expression,
     pub op: BinaryOperator,
     pub rhs: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -401,6 +429,7 @@ pub struct Cast {
     pub id: ExpressionId,
     pub source: Expression,
     pub target: TypeRef,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -408,12 +437,14 @@ pub struct Construct {
     pub id: ExpressionId,
     pub ty: TypeRef,
     pub fields: Vec<ConstructorField>,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct ConstructorField {
     pub name: Interned<String>,
     pub value: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -423,6 +454,7 @@ pub struct Call {
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
     pub return_type: TypeRef,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -430,6 +462,7 @@ pub struct If {
     pub id: ExpressionId,
     pub cases: Vec<Conditional>,
     pub return_type: Option<TypeRef>,
+    pub location: Location,
 }
 
 impl If {
@@ -454,6 +487,7 @@ impl If {
 pub struct Conditional {
     pub condition: Option<Expression>,
     pub block: Block,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -461,6 +495,7 @@ pub struct IntrinsicCall {
     pub id: ExpressionId,
     pub kind: IntrinsicKind,
     pub arguments: Vec<Expression>,
+    pub location: Location,
 }
 
 impl IntrinsicCall {
@@ -510,6 +545,7 @@ pub enum IntrinsicKind {
 pub struct Literal {
     pub id: ExpressionId,
     pub kind: LiteralKind,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, Copy, PartialEq)]
@@ -558,6 +594,7 @@ pub struct Logical {
     pub lhs: Expression,
     pub op: LogicalOperator,
     pub rhs: Expression,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -566,6 +603,7 @@ pub struct Member {
     pub callee: Expression,
     pub field: Field,
     pub name: Interned<String>,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -573,6 +611,7 @@ pub struct Scope {
     pub id: ExpressionId,
     pub body: Vec<Statement>,
     pub return_type: TypeRef,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -581,6 +620,7 @@ pub struct VariableReference {
     pub reference: VariableId,
     pub source: VariableSource,
     pub name: Interned<String>,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -596,4 +636,5 @@ pub struct Variant {
     pub ty: TypeRef,
     pub name: Path,
     pub arguments: Vec<Expression>,
+    pub location: Location,
 }
