@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
-use lume_span::Interned;
+use lume_span::{Interned, Location};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 
 /// Represents a map of all functions within a compilation
@@ -123,10 +123,12 @@ pub struct Function {
     current_block: BasicBlockId,
 
     scope: Box<Scope>,
+
+    pub location: Location,
 }
 
 impl Function {
-    pub fn new(id: FunctionId, name: String) -> Self {
+    pub fn new(id: FunctionId, name: String, location: Location) -> Self {
         Function {
             id,
             name,
@@ -136,6 +138,7 @@ impl Function {
             signature: Signature::default(),
             current_block: BasicBlockId(0),
             scope: Box::new(Scope::root_scope()),
+            location,
         }
     }
 
@@ -231,8 +234,8 @@ impl Function {
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        if let Declaration::Operand(op) = &decl
-            && let Operand::Load { id } | Operand::Reference { id } = op
+        if let DeclarationKind::Operand(op) = &decl.kind
+            && let OperandKind::Load { id } | OperandKind::Reference { id } = &op.kind
         {
             *id
         } else {
@@ -242,26 +245,40 @@ impl Function {
 
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
-        self.declare(ty, Declaration::Operand(value))
+        self.declare(
+            ty,
+            Declaration {
+                location: value.location,
+                kind: DeclarationKind::Operand(value),
+            },
+        )
     }
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_raw(&mut self, ty: Type, decl: Declaration) -> RegisterId {
+        let loc = decl.location;
+
         let ptr = self.add_register(ty.clone());
-        self.current_block_mut().declare(ptr, decl, ty);
+        self.current_block_mut().declare(ptr, decl, ty, loc);
 
         ptr
     }
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
-        self.declare_raw(ty, Declaration::Operand(value))
+        self.declare_raw(
+            ty,
+            Declaration {
+                location: value.location,
+                kind: DeclarationKind::Operand(value),
+            },
+        )
     }
 
     /// Creates a new stack-allocated slot within the function.
-    pub fn alloc_slot(&mut self, ty: Type) -> SlotId {
+    pub fn alloc_slot(&mut self, ty: Type, loc: Location) -> SlotId {
         let slot = self.add_slot(ty.clone());
-        self.current_block_mut().create_slot(slot, ty);
+        self.current_block_mut().create_slot(slot, ty, loc);
 
         slot
     }
@@ -501,85 +518,129 @@ impl BasicBlock {
     }
 
     /// Declares a new stack-allocated register with the given value.
-    pub fn declare(&mut self, register: RegisterId, decl: Declaration, ty: Type) {
-        self.instructions.push(Instruction::Let { register, decl, ty });
+    pub fn declare(&mut self, register: RegisterId, decl: Declaration, ty: Type, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::Let { register, decl, ty },
+            location: loc,
+        });
     }
 
     /// Assigns a new value to an existing register.
-    pub fn assign(&mut self, target: RegisterId, value: Operand) {
-        self.instructions.push(Instruction::Assign { target, value });
+    pub fn assign(&mut self, target: RegisterId, value: Operand, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::Assign { target, value },
+            location: loc,
+        });
     }
 
     /// Declares a new stack-allocated slot with the given value.
-    pub fn create_slot(&mut self, slot: SlotId, ty: Type) {
-        self.instructions.push(Instruction::CreateSlot { slot, ty });
+    pub fn create_slot(&mut self, slot: SlotId, ty: Type, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::CreateSlot { slot, ty },
+            location: loc,
+        });
     }
 
     /// Declares a new heap-allocated register with the given type.
-    pub fn allocate(&mut self, register: RegisterId, ty: Type) {
-        self.instructions.push(Instruction::Allocate { register, ty });
+    pub fn allocate(&mut self, register: RegisterId, ty: Type, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::Allocate { register, ty },
+            location: loc,
+        });
     }
 
     /// Stores a value in an existing register.
-    pub fn store(&mut self, target: RegisterId, value: Operand) {
-        self.instructions.push(Instruction::Store { target, value });
+    pub fn store(&mut self, target: RegisterId, value: Operand, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::Store { target, value },
+            location: loc,
+        });
     }
 
     /// Stores a value in an existing slot.
-    pub fn store_slot(&mut self, target: SlotId, value: Operand) {
-        self.instructions.push(Instruction::StoreSlot { target, value });
+    pub fn store_slot(&mut self, target: SlotId, value: Operand, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::StoreSlot { target, value },
+            location: loc,
+        });
     }
 
     /// Stores a value in a field of an existing register.
-    pub fn store_field(&mut self, target: RegisterId, offset: usize, value: Operand) {
-        self.instructions
-            .push(Instruction::StoreField { target, offset, value });
+    pub fn store_field(&mut self, target: RegisterId, offset: usize, value: Operand, location: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::StoreField { target, offset, value },
+            location,
+        });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
-    pub fn branch(&mut self, block: BasicBlockId) {
-        self.set_terminator(Terminator::Branch(BlockBranchSite::new(block)));
+    pub fn branch(&mut self, block: BasicBlockId, location: Location) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::Branch(BlockBranchSite::new(block)),
+            location,
+        });
     }
 
     /// Sets the terminator of the current block to an unconditional branch.
-    pub fn branch_with(&mut self, block: BasicBlockId, args: &[RegisterId]) {
-        self.set_terminator(Terminator::Branch(BlockBranchSite {
-            block,
-            arguments: args.to_vec(),
-        }));
+    pub fn branch_with(&mut self, block: BasicBlockId, args: &[RegisterId], location: Location) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::Branch(BlockBranchSite {
+                block,
+                arguments: args.to_vec(),
+            }),
+            location,
+        });
     }
 
     /// Sets the terminator of the current block to a conditional branch.
-    pub fn conditional_branch(&mut self, cond: RegisterId, then_block: BasicBlockId, else_block: BasicBlockId) {
-        self.set_terminator(Terminator::ConditionalBranch {
-            condition: cond,
-            then_block: BlockBranchSite::new(then_block),
-            else_block: BlockBranchSite::new(else_block),
+    pub fn conditional_branch(
+        &mut self,
+        cond: RegisterId,
+        then_block: BasicBlockId,
+        else_block: BasicBlockId,
+        location: Location,
+    ) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::ConditionalBranch {
+                condition: cond,
+                then_block: BlockBranchSite::new(then_block),
+                else_block: BlockBranchSite::new(else_block),
+            },
+            location,
         });
     }
 
     /// Returns the given value, if any is defined. Otherwise, returns `void`.
-    pub fn return_any(&mut self, value: Option<Operand>) {
+    pub fn return_any(&mut self, value: Option<Operand>, location: Location) {
         if let Some(value) = value {
-            self.return_value(value);
+            self.return_value(value, location);
         } else {
-            self.return_void();
+            self.return_void(location);
         }
     }
 
     /// Returns the `void` from the block.
-    pub fn return_void(&mut self) {
-        self.set_terminator(Terminator::Return(None));
+    pub fn return_void(&mut self, location: Location) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::Return(None),
+            location,
+        });
     }
 
     /// Returns the the given value from the block.
-    pub fn return_value(&mut self, value: Operand) {
-        self.set_terminator(Terminator::Return(Some(value)));
+    pub fn return_value(&mut self, value: Operand, location: Location) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::Return(Some(value)),
+            location,
+        });
     }
 
     /// Returns the the given value from the block.
-    pub fn unreachable(&mut self) {
-        self.set_terminator(Terminator::Unreachable);
+    pub fn unreachable(&mut self, location: Location) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::Unreachable,
+            location,
+        });
     }
 }
 
@@ -742,7 +803,13 @@ impl std::fmt::Display for SlotId {
 /// Instructions themselves cannot be referenced by other instructions - only registers
 /// they declare can be referenced.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Instruction {
+pub struct Instruction {
+    pub kind: InstructionKind,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum InstructionKind {
     /// Declares an SSA register within the current function.
     Let {
         register: RegisterId,
@@ -775,47 +842,57 @@ pub enum Instruction {
 
 impl Instruction {
     pub fn register_def(&self) -> Option<RegisterId> {
-        match self {
-            Self::Let { register, .. } | Self::Allocate { register, .. } => Some(*register),
-            Self::Assign { .. }
-            | Self::CreateSlot { .. }
-            | Self::Store { .. }
-            | Self::StoreSlot { .. }
-            | Self::StoreField { .. } => None,
+        match &self.kind {
+            InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => Some(*register),
+            InstructionKind::Assign { .. }
+            | InstructionKind::CreateSlot { .. }
+            | InstructionKind::Store { .. }
+            | InstructionKind::StoreSlot { .. }
+            | InstructionKind::StoreField { .. } => None,
         }
     }
 
     pub fn register_refs(&self) -> Vec<RegisterId> {
-        match self {
-            Self::Let { decl, .. } => decl.register_refs(),
-            Self::Assign { target, value } | Self::Store { target, value } | Self::StoreField { target, value, .. } => {
+        match &self.kind {
+            InstructionKind::Let { decl, .. } => decl.register_refs(),
+            InstructionKind::Assign { target, value }
+            | InstructionKind::Store { target, value }
+            | InstructionKind::StoreField { target, value, .. } => {
                 let mut refs = vec![*target];
                 refs.extend(value.register_refs());
 
                 refs
             }
-            Self::CreateSlot { .. } | Self::Allocate { .. } | Self::StoreSlot { .. } => Vec::new(),
+            InstructionKind::CreateSlot { .. }
+            | InstructionKind::Allocate { .. }
+            | InstructionKind::StoreSlot { .. } => Vec::new(),
         }
     }
 }
 
 impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Self::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
-            Self::Assign { target, value } => write!(f, "{target} = {value}"),
-            Self::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
-            Self::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
-            Self::Store { target, value } => write!(f, "*{target} = {value}"),
-            Self::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
-            Self::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
+        match &self.kind {
+            InstructionKind::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
+            InstructionKind::Assign { target, value } => write!(f, "{target} = {value}"),
+            InstructionKind::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
+            InstructionKind::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
+            InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
+            InstructionKind::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
+            InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
         }
     }
 }
 
 /// Represents the right-hand side of a declaration instruction.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Declaration {
+pub struct Declaration {
+    pub kind: DeclarationKind,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum DeclarationKind {
     /// Represents an operand value.
     Operand(Operand),
 
@@ -831,10 +908,10 @@ pub enum Declaration {
 
 impl Declaration {
     pub fn register_refs(&self) -> Vec<RegisterId> {
-        match self {
-            Self::Operand(op) => op.register_refs(),
-            Self::Cast { operand, .. } => vec![*operand],
-            Self::Intrinsic { args, .. } | Self::Call { args, .. } => {
+        match &self.kind {
+            DeclarationKind::Operand(op) => op.register_refs(),
+            DeclarationKind::Cast { operand, .. } => vec![*operand],
+            DeclarationKind::Intrinsic { args, .. } | DeclarationKind::Call { args, .. } => {
                 args.iter().flat_map(Operand::register_refs).collect()
             }
         }
@@ -843,15 +920,15 @@ impl Declaration {
 
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Self::Operand(op) => op.fmt(f),
-            Self::Cast { operand, bits } => write!(f, "{operand} as i{bits}"),
-            Self::Intrinsic { name, args } => write!(
+        match &self.kind {
+            DeclarationKind::Operand(op) => op.fmt(f),
+            DeclarationKind::Cast { operand, bits } => write!(f, "{operand} as i{bits}"),
+            DeclarationKind::Intrinsic { name, args } => write!(
                 f,
                 "{name}({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
-            Self::Call { func_id, args } => write!(
+            DeclarationKind::Call { func_id, args } => write!(
                 f,
                 "(call {func_id})({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
@@ -918,9 +995,15 @@ impl std::fmt::Display for Intrinsic {
 /// Represents an operand to a call expression.
 ///
 /// Not all values can be used as operands, which means they
-/// must be declared as a stack- or heap-allocated register.
+/// must be declared as a stack- or heap-allocated register.#[derive(Debug, Clone, PartialEq)]
 #[derive(Debug, Clone, PartialEq)]
-pub enum Operand {
+pub struct Operand {
+    pub kind: OperandKind,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum OperandKind {
     /// Represents a literal boolean value.
     Boolean { value: bool },
 
@@ -954,44 +1037,46 @@ impl Operand {
     /// Gets the bitsize of the operand.
     #[expect(clippy::cast_possible_truncation, clippy::missing_panics_doc)]
     pub fn bitsize(&self) -> u8 {
-        match self {
-            Self::Boolean { .. } => 1,
-            Self::Integer { bits, .. } | Self::Float { bits, .. } => *bits,
-            Self::Reference { .. } | Self::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
-            Self::Load { .. } | Self::LoadField { .. } | Self::SlotAddress { .. } => {
+        match &self.kind {
+            OperandKind::Boolean { .. } => 1,
+            OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => *bits,
+            OperandKind::Reference { .. } | OperandKind::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
+            OperandKind::Load { .. } | OperandKind::LoadField { .. } | OperandKind::SlotAddress { .. } => {
                 panic!("cannot get bitsize of load operand")
             }
         }
     }
 
     pub fn register_refs(&self) -> Vec<RegisterId> {
-        match self {
-            Self::Load { id } | Self::Reference { id } => {
+        match &self.kind {
+            OperandKind::Load { id } | OperandKind::Reference { id } => {
                 vec![*id]
             }
-            Self::LoadField { target, .. } => {
+            OperandKind::LoadField { target, .. } => {
                 vec![*target]
             }
-            Self::Boolean { .. }
-            | Self::Integer { .. }
-            | Self::Float { .. }
-            | Self::String { .. }
-            | Self::SlotAddress { .. } => Vec::new(),
+            OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::SlotAddress { .. } => Vec::new(),
         }
     }
 }
 
 impl std::fmt::Display for Operand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Self::Boolean { value } => write!(f, "{value}"),
-            Self::Integer { bits, signed, value } => write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" }),
-            Self::Float { bits, value } => write!(f, "{value}_f{bits}"),
-            Self::Reference { id } => write!(f, "{id}"),
-            Self::Load { id } => write!(f, "*{id}"),
-            Self::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
-            Self::SlotAddress { id } => write!(f, "{id}"),
-            Self::String { value } => write!(f, "\"{value}\""),
+        match &self.kind {
+            OperandKind::Boolean { value } => write!(f, "{value}"),
+            OperandKind::Integer { bits, signed, value } => {
+                write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" })
+            }
+            OperandKind::Float { bits, value } => write!(f, "{value}_f{bits}"),
+            OperandKind::Reference { id } => write!(f, "{id}"),
+            OperandKind::Load { id } => write!(f, "*{id}"),
+            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
+            OperandKind::SlotAddress { id } => write!(f, "{id}"),
+            OperandKind::String { value } => write!(f, "\"{value}\""),
         }
     }
 }
@@ -999,7 +1084,13 @@ impl std::fmt::Display for Operand {
 /// Represents a terminator of a block, which defines how control flow is
 /// transferred.
 #[derive(Debug, Clone, PartialEq)]
-pub enum Terminator {
+pub struct Terminator {
+    pub kind: TerminatorKind,
+    pub location: Location,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum TerminatorKind {
     /// Returns the given value, if any, from the current function.
     ///
     /// If no value is provided, the function returns `void`.
@@ -1022,15 +1113,15 @@ pub enum Terminator {
 
 impl Terminator {
     pub fn register_refs(&self) -> Vec<RegisterId> {
-        match self {
-            Self::Return(operand) => {
+        match &self.kind {
+            TerminatorKind::Return(operand) => {
                 if let Some(operand) = operand {
                     operand.register_refs()
                 } else {
                     Vec::new()
                 }
             }
-            Self::ConditionalBranch {
+            TerminatorKind::ConditionalBranch {
                 condition,
                 then_block,
                 else_block,
@@ -1041,29 +1132,29 @@ impl Terminator {
 
                 refs
             }
-            Self::Branch(site) => site.arguments.clone(),
-            Self::Unreachable => Vec::new(),
+            TerminatorKind::Branch(site) => site.arguments.clone(),
+            TerminatorKind::Unreachable => Vec::new(),
         }
     }
 }
 
 impl std::fmt::Display for Terminator {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self {
-            Self::Return(value) => {
+        match &self.kind {
+            TerminatorKind::Return(value) => {
                 if let Some(value) = value {
                     write!(f, "return {value}")
                 } else {
                     write!(f, "return")
                 }
             }
-            Self::ConditionalBranch {
+            TerminatorKind::ConditionalBranch {
                 condition,
                 then_block,
                 else_block,
             } => write!(f, "if {condition} goto {then_block} else {else_block}"),
-            Self::Branch(block_id) => write!(f, "goto {block_id}"),
-            Self::Unreachable => write!(f, "unreachable"),
+            TerminatorKind::Branch(block_id) => write!(f, "goto {block_id}"),
+            TerminatorKind::Unreachable => write!(f, "unreachable"),
         }
     }
 }
@@ -1085,7 +1176,10 @@ impl BlockBranchSite {
     }
 
     pub fn arg_operands(&self) -> impl Iterator<Item = Operand> {
-        self.arguments.iter().map(|arg| Operand::Reference { id: *arg })
+        self.arguments.iter().map(|arg| Operand {
+            kind: OperandKind::Reference { id: *arg },
+            location: Location::empty(),
+        })
     }
 }
 

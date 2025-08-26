@@ -165,6 +165,36 @@ impl Location {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    #[must_use]
+    pub fn coordinates(&self) -> (usize, usize) {
+        if self.start() > self.len() {
+            return (0, 0);
+        }
+
+        let src = &self.file.content;
+
+        let mut line = 0;
+        let mut col = 0;
+        let mut last_line_start = 0;
+
+        for (i, c) in src.char_indices() {
+            if i == self.start() {
+                return (line, col);
+            }
+
+            if c == '\n' {
+                line += 1;
+                last_line_start = i + 1;
+            }
+
+            if i >= last_line_start {
+                col = i - last_line_start;
+            }
+        }
+
+        (line, src[last_line_start..].chars().count())
+    }
 }
 
 impl std::fmt::Debug for Location {

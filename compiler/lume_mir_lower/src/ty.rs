@@ -29,17 +29,17 @@ impl FunctionTransformer<'_> {
 
     #[allow(clippy::unused_self)]
     pub(super) fn type_of_value(&self, value: &lume_mir::Operand) -> lume_mir::Type {
-        match value {
-            lume_mir::Operand::Boolean { .. } => lume_mir::Type::boolean(),
-            lume_mir::Operand::Integer { bits, signed, .. } => lume_mir::Type::integer(*bits, *signed),
-            lume_mir::Operand::Float { bits, .. } => lume_mir::Type::float(*bits),
-            lume_mir::Operand::String { .. } => lume_mir::Type::string(),
-            lume_mir::Operand::Load { id } => {
+        match &value.kind {
+            lume_mir::OperandKind::Boolean { .. } => lume_mir::Type::boolean(),
+            lume_mir::OperandKind::Integer { bits, signed, .. } => lume_mir::Type::integer(*bits, *signed),
+            lume_mir::OperandKind::Float { bits, .. } => lume_mir::Type::float(*bits),
+            lume_mir::OperandKind::String { .. } => lume_mir::Type::string(),
+            lume_mir::OperandKind::Load { id } => {
                 let elemental = self.func.registers.register_ty(*id).clone();
 
                 lume_mir::Type::pointer(elemental)
             }
-            lume_mir::Operand::LoadField { target, index, .. } => {
+            lume_mir::OperandKind::LoadField { target, index, .. } => {
                 let reg_ty = self.func.registers.register_ty(*target).clone();
                 let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
                     panic!("bug!: attempting to load non-pointer register");
@@ -51,15 +51,15 @@ impl FunctionTransformer<'_> {
 
                 fields[*index].clone()
             }
-            lume_mir::Operand::SlotAddress { .. } => lume_mir::Type::pointer(lume_mir::Type::void()),
-            lume_mir::Operand::Reference { id } => self.func.registers.register_ty(*id).clone(),
+            lume_mir::OperandKind::SlotAddress { .. } => lume_mir::Type::pointer(lume_mir::Type::void()),
+            lume_mir::OperandKind::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }
 
     pub(super) fn type_of_decl(&self, decl: &lume_mir::Declaration) -> lume_mir::Type {
-        match decl {
-            lume_mir::Declaration::Operand(val) => self.type_of_value(val),
-            lume_mir::Declaration::Intrinsic { name, .. } => match name {
+        match &decl.kind {
+            lume_mir::DeclarationKind::Operand(val) => self.type_of_value(val),
+            lume_mir::DeclarationKind::Intrinsic { name, .. } => match name {
                 lume_mir::Intrinsic::IntEq { .. }
                 | lume_mir::Intrinsic::IntNe { .. }
                 | lume_mir::Intrinsic::IntGt { .. }
@@ -99,13 +99,13 @@ impl FunctionTransformer<'_> {
                     }
                 }
             },
-            lume_mir::Declaration::Cast { operand, bits } => {
+            lume_mir::DeclarationKind::Cast { operand, bits } => {
                 let operand_ty = self.func.registers.register_ty(*operand);
                 let signed = operand_ty.is_signed();
 
                 lume_mir::Type::integer(*bits, signed)
             }
-            lume_mir::Declaration::Call { func_id, .. } => self.type_of_function(*func_id),
+            lume_mir::DeclarationKind::Call { func_id, .. } => self.type_of_function(*func_id),
         }
     }
 
