@@ -10,10 +10,10 @@ use cranelift_object::object::{self, BinaryFormat, RelocationEncoding, Relocatio
 
 use error_snippet::IntoDiagnostic;
 use gimli::write::{
-    Address, AttributeValue, DwarfUnit, EndianVec, FileId, LineProgram, LineString, LineStringTable, Sections,
-    UnitEntryId, Writer,
+    Address, AttributeValue, DwarfUnit, EndianVec, Expression, FileId, LineProgram, LineString, LineStringTable,
+    Sections, UnitEntryId, Writer,
 };
-use gimli::{DwLang, Encoding, LineEncoding, RunTimeEndian, SectionId};
+use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::Function;
@@ -83,6 +83,7 @@ pub(super) fn address_for_func(func_id: FuncId) -> Address {
 pub(crate) struct RootDebugContext {
     dwarf_unit: DwarfUnit,
     endianess: RunTimeEndian,
+    stack_register: Register,
 
     func_entries: IndexMap<lume_mir::FunctionId, UnitEntryId>,
     func_locs: IndexMap<lume_mir::FunctionId, Location>,
@@ -105,9 +106,17 @@ impl RootDebugContext {
             Endianness::Little => RunTimeEndian::Little,
         };
 
+        let stack_register = match isa.triple().architecture {
+            target_lexicon::Architecture::Aarch64(_) => gimli::AArch64::SP,
+            target_lexicon::Architecture::Riscv64(_) => gimli::RiscV::SP,
+            target_lexicon::Architecture::X86_64 | target_lexicon::Architecture::X86_64h => gimli::X86_64::RSP,
+            arch => panic!("unsupported ISA archicture: {arch}"),
+        };
+
         Self {
             dwarf_unit,
             endianess,
+            stack_register,
             func_entries: IndexMap::new(),
             func_locs: IndexMap::new(),
             source_locations: IndexMap::new(),
@@ -135,6 +144,11 @@ impl RootDebugContext {
             gimli::DW_AT_calling_convention,
             AttributeValue::CallingConvention(gimli::DW_CC_normal),
         );
+
+        // DW_AT_frame_base
+        let mut frame_base_expr = Expression::new();
+        frame_base_expr.op_reg(self.stack_register);
+        entry.set(gimli::DW_AT_frame_base, AttributeValue::Exprloc(frame_base_expr));
 
         // Will be replaced after the function has been defined.
         entry.set(gimli::DW_AT_low_pc, AttributeValue::Udata(0));

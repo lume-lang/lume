@@ -1113,6 +1113,7 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_type_metadata",
+ "target-lexicon",
  "tracing",
 ]
 
