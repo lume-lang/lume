@@ -277,6 +277,21 @@ impl RootDebugContext {
                     let file_name = LineString::new(file_name, line_program.encoding(), line_strings);
                     line_program.add_file(file_name, dir_id, None)
                 }
+                lume_span::FileName::StandardLibrary(path) => {
+                    let file_name = path
+                        .file_name()
+                        .map(|p| p.to_string_lossy().as_bytes().to_vec())
+                        .unwrap_or_default();
+
+                    let dir_id = line_program.add_directory(LineString::new(
+                        "/<stddir>/",
+                        line_program.encoding(),
+                        line_strings,
+                    ));
+
+                    let file_name = LineString::new(file_name, line_program.encoding(), line_strings);
+                    line_program.add_file(file_name, dir_id, None)
+                }
                 lume_span::FileName::Internal => {
                     let dir_id = line_program.default_directory();
                     let dummy_file_name = LineString::new("<internal>", line_program.encoding(), line_strings);
