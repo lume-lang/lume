@@ -1089,7 +1089,6 @@ dependencies = [
  "lume_errors",
  "lume_linker",
  "lume_session",
- "lumert",
  "tracing",
  "tracing-subscriber",
  "tracing-tracy",
@@ -1237,6 +1236,7 @@ dependencies = [
  "lume_codegen",
  "lume_errors",
  "lume_session",
+ "lumert",
  "rust-embed",
 ]
 
