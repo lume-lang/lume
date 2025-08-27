@@ -178,7 +178,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         let mut sig = self.module().make_signature();
 
         for param in &func.signature.parameters {
-            let param_ty = self.cl_type_of(param);
+            let param_ty = self.cl_type_of(&param.ty);
 
             sig.params.push(AbiParam::new(param_ty));
         }
@@ -205,7 +205,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
 
     #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name), err)]
     fn define_function(
-        &mut self,
+        &self,
         func: &lume_mir::Function,
         ctx: &mut cranelift::codegen::Context,
         builder_ctx: &mut FunctionBuilderContext,

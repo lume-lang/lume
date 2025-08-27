@@ -301,7 +301,7 @@ impl<'a> Compiler<'a> {
         }
 
         tracing::info_span!("codegen")
-            .in_scope(|| lume_codegen::Generator::codegen(self.package, mir, &self.gcx.session.options))
+            .in_scope(|| lume_codegen::Generator::codegen(self.package, mir, tcx, &self.gcx.session.options))
     }
 }
 

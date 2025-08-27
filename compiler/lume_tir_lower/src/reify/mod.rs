@@ -61,6 +61,7 @@ impl<'tcx> ReificationPass<'tcx> {
                 name,
                 ty,
                 vararg: false,
+                location: func.location,
             });
         }
     }

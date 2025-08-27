@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use lume_errors::Result;
 use lume_mir::ModuleMap;
 use lume_session::{Options, Package};
+use lume_typech::TyCheckCtx;
 
 #[cfg(feature = "codegen_cranelift")]
 mod cranelift;
@@ -42,8 +43,18 @@ impl<'ctx> Generator<'ctx> {
     ///
     /// Returns `Err` if the selected backend returned an error while generating object files.
     #[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.path.display()), err)]
-    pub fn codegen(package: &'ctx Package, mir: ModuleMap, options: &'ctx Options) -> Result<CompiledModule> {
-        let context = Context { package, mir, options };
+    pub fn codegen(
+        package: &'ctx Package,
+        mir: ModuleMap,
+        tcx: &'ctx TyCheckCtx,
+        options: &'ctx Options,
+    ) -> Result<CompiledModule> {
+        let context = Context {
+            package,
+            mir,
+            tcx,
+            options,
+        };
 
         let backend: Box<dyn Backend<'_>> = match context.options.backend {
             #[cfg(feature = "codegen_cranelift")]
@@ -70,6 +81,7 @@ pub(crate) struct Context<'ctx> {
     pub package: &'ctx Package,
     pub mir: lume_mir::ModuleMap,
     pub options: &'ctx Options,
+    pub tcx: &'ctx TyCheckCtx,
 }
 
 pub(crate) trait Backend<'ctx> {

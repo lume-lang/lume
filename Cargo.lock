@@ -1108,10 +1108,13 @@ dependencies = [
  "indexmap",
  "inkwell",
  "lume_errors",
+ "lume_infer",
  "lume_mir",
  "lume_session",
  "lume_span",
  "lume_type_metadata",
+ "lume_typech",
+ "lume_types",
  "target-lexicon",
  "tracing",
 ]

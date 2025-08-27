@@ -154,6 +154,7 @@ pub struct Parameter {
     pub name: String,
     pub ty: TypeRef,
     pub vararg: bool,
+    pub location: Location,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
@@ -166,12 +167,13 @@ impl Parameters {
         Self::default()
     }
 
-    pub fn push(&mut self, name: String, ty: TypeRef, vararg: bool) {
+    pub fn push(&mut self, name: String, ty: TypeRef, vararg: bool, location: Location) {
         self.params.push(Parameter {
             idx: self.params.len(),
             name,
             ty,
             vararg,
+            location,
         });
     }
 
@@ -969,6 +971,16 @@ impl TypeRef {
     /// Determines if the type is an `string`.
     pub fn is_string(&self) -> bool {
         self.instance_of == TYPEREF_STRING_ID
+    }
+
+    /// Determines if the type is an `array`.
+    pub fn is_array(&self) -> bool {
+        self.instance_of == TYPEREF_ARRAY_ID
+    }
+
+    /// Determines if the type is a `pointer`.
+    pub fn is_pointer(&self) -> bool {
+        self.instance_of == TYPEREF_POINTER_ID
     }
 
     /// Determines if the type is unknown.

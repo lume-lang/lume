@@ -230,6 +230,7 @@ impl<'tcx> LowerFunction<'tcx> {
                     name: param.name.intern(),
                     ty: param.ty.clone(),
                     vararg: param.vararg,
+                    location: param.location,
                 }
             })
             .collect()

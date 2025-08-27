@@ -326,6 +326,7 @@ impl TyInferCtx {
                 name: param.name.clone(),
                 ty: param_ty.clone(),
                 vararg: param.vararg,
+                location: param.location,
             });
         }
 
