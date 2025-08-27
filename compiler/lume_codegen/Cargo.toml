@@ -9,10 +9,13 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../lume_errors" }
+lume_infer = { path = "../lume_infer" }
 lume_mir = { path = "../lume_mir" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 lume_type_metadata = { path = "../lume_type_metadata" }
+lume_typech = { path = "../lume_typech" }
+lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

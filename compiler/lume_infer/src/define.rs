@@ -722,11 +722,12 @@ impl TyInferCtx {
                         .concat(),
                     )?;
 
-                    self.tdb_mut()
-                        .method_mut(method_id)
-                        .unwrap()
-                        .parameters
-                        .push(name, type_ref, param.vararg);
+                    self.tdb_mut().method_mut(method_id).unwrap().parameters.push(
+                        name,
+                        type_ref,
+                        param.vararg,
+                        param.location,
+                    );
                 }
 
                 self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
@@ -754,7 +755,7 @@ impl TyInferCtx {
                 .function_mut(func_id)
                 .unwrap()
                 .parameters
-                .push(name, type_ref, param.vararg);
+                .push(name, type_ref, param.vararg, param.location);
         }
 
         self.tdb_mut().function_mut(func_id).unwrap().return_type =
@@ -778,11 +779,12 @@ impl TyInferCtx {
                     .concat(),
                 )?;
 
-                self.tdb_mut()
-                    .method_mut(method_id)
-                    .unwrap()
-                    .parameters
-                    .push(name, type_ref, param.vararg);
+                self.tdb_mut().method_mut(method_id).unwrap().parameters.push(
+                    name,
+                    type_ref,
+                    param.vararg,
+                    param.location,
+                );
             }
 
             self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(
@@ -813,11 +815,12 @@ impl TyInferCtx {
                     .concat(),
                 )?;
 
-                self.tdb_mut()
-                    .method_mut(method_id)
-                    .unwrap()
-                    .parameters
-                    .push(name, type_ref, param.vararg);
+                self.tdb_mut().method_mut(method_id).unwrap().parameters.push(
+                    name,
+                    type_ref,
+                    param.vararg,
+                    param.location,
+                );
             }
 
             self.tdb_mut().method_mut(method_id).unwrap().return_type = self.mk_type_ref_generic(

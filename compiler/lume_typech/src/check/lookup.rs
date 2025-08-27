@@ -4,6 +4,15 @@ use lume_types::{TypeKind, TypeRef, UserType};
 use crate::TyCheckCtx;
 
 impl TyCheckCtx {
+    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Struct`].
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub fn is_struct(&self, ty: &TypeRef) -> Result<bool> {
+        match self.tdb().ty_expect(ty.instance_of)?.kind {
+            TypeKind::User(UserType::Struct(_)) => Ok(true),
+            _ => Ok(false),
+        }
+    }
+
     /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Trait`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {

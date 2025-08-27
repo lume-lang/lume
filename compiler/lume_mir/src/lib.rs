@@ -83,7 +83,7 @@ pub struct Signature {
     ///
     /// If the parent function definition refers to an instance method,
     /// the first parameter will be the `self` parameter.
-    pub parameters: Vec<Type>,
+    pub parameters: Vec<Parameter>,
     pub return_type: Type,
 }
 
@@ -104,6 +104,20 @@ impl std::fmt::Display for Signature {
                 .join(", "),
             self.return_type
         )
+    }
+}
+
+/// Defines a parameter in a function signature.
+#[derive(Debug, Clone)]
+pub struct Parameter {
+    pub name: Interned<String>,
+    pub ty: Type,
+    pub location: Location,
+}
+
+impl std::fmt::Display for Parameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{}: {}", self.name, self.ty))
     }
 }
 

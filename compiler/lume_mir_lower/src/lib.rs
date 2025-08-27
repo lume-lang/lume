@@ -99,7 +99,11 @@ impl<'mir> FunctionTransformer<'mir> {
         for param in &func.parameters {
             let param_ty = self.lower_type(&param.ty);
 
-            self.func.signature.parameters.push(param_ty.clone());
+            self.func.signature.parameters.push(lume_mir::Parameter {
+                name: param.name,
+                ty: param_ty.clone(),
+                location: param.location,
+            });
 
             // Offset the register counter by the number of parameters
             self.func.registers.allocate_param(param_ty);
@@ -204,7 +208,7 @@ impl<'mir> FunctionTransformer<'mir> {
         // then we pass the address of the stack slot to the function.
         for (arg, param) in args.iter_mut().zip(params.iter()) {
             // If the parameter isn't generic, we let it be.
-            if !param.is_generic {
+            if !param.ty.is_generic {
                 continue;
             }
 

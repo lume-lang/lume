@@ -171,6 +171,7 @@ pub struct Parameter {
     pub name: Interned<String>,
     pub ty: TypeRef,
     pub vararg: bool,
+    pub location: Location,
 }
 
 impl std::hash::Hash for Parameter {

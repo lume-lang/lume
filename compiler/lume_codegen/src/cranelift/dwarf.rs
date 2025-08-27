@@ -9,15 +9,13 @@ use cranelift_object::object::write::{Relocation, StandardSegment};
 use cranelift_object::object::{self, BinaryFormat, RelocationEncoding, RelocationFlags, SectionKind};
 
 use error_snippet::IntoDiagnostic;
-use gimli::write::{
-    Address, AttributeValue, DwarfUnit, EndianVec, Expression, FileId, LineProgram, LineString, LineStringTable,
-    Sections, UnitEntryId, Writer,
-};
+use gimli::write::*;
 use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
-use lume_mir::Function;
-use lume_span::{Location, SourceFileId};
+use lume_mir::{Function, TypeRef};
+use lume_span::{Location, SourceFileId, hash_id};
+use lume_type_metadata::TypeMetadataId;
 
 use crate::Context;
 use crate::cranelift::CraneliftBackend;
@@ -80,7 +78,8 @@ pub(super) fn address_for_func(func_id: FuncId) -> Address {
 /// Context for creating DWARF debug info, which is defined
 /// on the compilation unit itself, i.e. related to the package as
 /// a whole.
-pub(crate) struct RootDebugContext {
+pub(crate) struct RootDebugContext<'ctx> {
+    ctx: &'ctx Context<'ctx>,
     dwarf_unit: DwarfUnit,
     endianess: RunTimeEndian,
     stack_register: Register,
@@ -88,10 +87,12 @@ pub(crate) struct RootDebugContext {
     func_entries: IndexMap<lume_mir::FunctionId, UnitEntryId>,
     func_locs: IndexMap<lume_mir::FunctionId, Location>,
     source_locations: IndexMap<SourceFileId, FileId>,
+
+    declared_types: HashMap<TypeRef, UnitEntryId>,
 }
 
-impl RootDebugContext {
-    pub(crate) fn new(ctx: &Context<'_>, isa: &dyn TargetIsa) -> Self {
+impl<'ctx> RootDebugContext<'ctx> {
+    pub(crate) fn new(ctx: &'ctx Context<'_>, isa: &dyn TargetIsa) -> Self {
         let encoding = Encoding {
             format: gimli::Format::Dwarf32,
             version: 3,
@@ -114,12 +115,14 @@ impl RootDebugContext {
         };
 
         Self {
+            ctx,
             dwarf_unit,
             endianess,
             stack_register,
             func_entries: IndexMap::new(),
             func_locs: IndexMap::new(),
             source_locations: IndexMap::new(),
+            declared_types: HashMap::new(),
         }
     }
 
@@ -154,10 +157,37 @@ impl RootDebugContext {
         entry.set(gimli::DW_AT_low_pc, AttributeValue::Udata(0));
         entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(0));
 
-        // Function source info
+        // DW_AT_decl_*
         entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
         entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
         entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
+
+        // DW_AT_type
+        let ret_ty = self.declare_type(&func.signature.return_type.id);
+
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+        entry.set(gimli::DW_AT_type, AttributeValue::UnitRef(ret_ty));
+
+        // DW_AT_formal_parameter
+        for param in &func.signature.parameters {
+            let param_ty = self.declare_type(&param.ty.id);
+            let (file_id, line, column) = self.get_source_span(func.location);
+
+            let entry_id = self.dwarf_unit.unit.add(entry_id, gimli::DW_TAG_formal_parameter);
+            let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+            // DW_AT_name
+            let name = self.dwarf_unit.strings.add(param.name.as_str());
+            entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+            // DW_AT_type
+            entry.set(gimli::DW_AT_type, AttributeValue::UnitRef(param_ty));
+
+            // DW_AT_decl_*
+            entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
+            entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
+            entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
+        }
 
         self.func_entries.insert(func.id, entry_id);
     }
@@ -299,6 +329,185 @@ impl RootDebugContext {
                     line_program.add_file(dummy_file_name, dir_id, None)
                 }
             })
+    }
+
+    pub(crate) fn declare_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        if let Some(entry_id) = self.declared_types.get(&type_ref) {
+            return *entry_id;
+        }
+
+        match type_ref {
+            // Base types which aren't based on any other sub-types
+            ty if ty.is_scalar_type() || ty.is_void() => self.declare_base_type(ty),
+
+            // Pointer types which represent the address of another type
+            ty if ty.is_pointer() => self.declare_pointer_type(ty),
+
+            // Array pointer for zero-or-more entries of a given type
+            ty if ty.is_array() => self.declare_array_type(ty),
+
+            // Generic type parameters
+            ty if self.ctx.tcx.is_type_parameter(ty).unwrap() => self.declare_generic_type(ty),
+
+            // Struct types
+            ty if ty.is_string() || self.ctx.tcx.is_struct(ty).unwrap() => self.declare_struct_type(ty),
+
+            ty => panic!(
+                "bug!: missing declaration of type `{}` ({:?})",
+                self.get_type_name(ty),
+                self.ctx.tcx.tdb().ty_expect(ty.instance_of).unwrap().kind
+            ),
+        }
+    }
+
+    pub(crate) fn declare_base_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        let full_name = self.get_type_name(type_ref);
+        let root_scope = self.dwarf_unit.unit.root();
+
+        let metadata_id = TypeMetadataId(hash_id(&full_name));
+        let metadata_entry = self.ctx.mir.metadata.metadata.get(&metadata_id).unwrap();
+
+        let entry_id = self.dwarf_unit.unit.add(root_scope, gimli::DW_TAG_base_type);
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+        self.declared_types.insert(type_ref.clone(), entry_id);
+
+        // DW_AT_name
+        let name = self.dwarf_unit.strings.add(full_name);
+        entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+        // DW_AT_byte_size
+        entry.set(
+            gimli::DW_AT_byte_size,
+            AttributeValue::Udata(metadata_entry.size as u64),
+        );
+
+        // DW_AT_encoding
+        let type_encoding = match type_ref {
+            ty if ty.is_void() | ty.is_u8() | ty.is_u16() | ty.is_u32() | ty.is_u64() => gimli::DW_ATE_unsigned,
+            ty if ty.is_i8() | ty.is_i16() | ty.is_i32() | ty.is_i64() => gimli::DW_ATE_signed,
+            ty if ty.is_bool() => gimli::DW_ATE_boolean,
+            ty if ty.is_float() => gimli::DW_ATE_float,
+            _ => unreachable!(),
+        };
+
+        entry.set(gimli::DW_AT_encoding, AttributeValue::Encoding(type_encoding));
+
+        entry_id
+    }
+
+    pub(crate) fn declare_pointer_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        let full_name = self.get_type_name(type_ref);
+        let root_scope = self.dwarf_unit.unit.root();
+
+        let entry_id = self.dwarf_unit.unit.add(root_scope, gimli::DW_TAG_pointer_type);
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+        self.declared_types.insert(type_ref.clone(), entry_id);
+
+        // DW_AT_name
+        let name = self.dwarf_unit.strings.add(format!("*{full_name}"));
+        entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+        // DW_AT_type
+        let elemental_type_ref = type_ref.type_arguments.first().unwrap();
+        let elemental_type = self.declare_type(elemental_type_ref);
+
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+        entry.set(gimli::DW_AT_type, AttributeValue::UnitRef(elemental_type));
+        entry.set(gimli::DW_AT_address_class, AttributeValue::UnitRef(elemental_type));
+
+        entry_id
+    }
+
+    pub(crate) fn declare_array_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        let full_name = self.get_type_name(type_ref);
+        let root_scope = self.dwarf_unit.unit.root();
+
+        let entry_id = self.dwarf_unit.unit.add(root_scope, gimli::DW_TAG_array_type);
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+        self.declared_types.insert(type_ref.clone(), entry_id);
+
+        // DW_AT_name
+        let name = self.dwarf_unit.strings.add(full_name);
+        entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+        // DW_AT_type
+        let elemental_type_ref = type_ref.type_arguments.first().unwrap();
+        let elemental_type = self.declare_type(elemental_type_ref);
+
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+        entry.set(gimli::DW_AT_type, AttributeValue::UnitRef(elemental_type));
+
+        entry_id
+    }
+
+    pub(crate) fn declare_generic_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        let full_name = self.get_type_name(type_ref);
+        let root_scope = self.dwarf_unit.unit.root();
+
+        let entry_id = self
+            .dwarf_unit
+            .unit
+            .add(root_scope, gimli::DW_TAG_template_type_parameter);
+
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+        self.declared_types.insert(type_ref.clone(), entry_id);
+
+        // DW_AT_name
+        let name = self.dwarf_unit.strings.add(full_name);
+        entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+        entry_id
+    }
+
+    pub(crate) fn declare_struct_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
+        let full_name = self.get_type_name(type_ref);
+        let root_scope = self.dwarf_unit.unit.root();
+
+        let metadata_id = TypeMetadataId(hash_id(&full_name));
+        let metadata_entry = self.ctx.mir.metadata.metadata.get(&metadata_id).unwrap();
+
+        let entry_id = self.dwarf_unit.unit.add(root_scope, gimli::DW_TAG_structure_type);
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+        self.declared_types.insert(type_ref.clone(), entry_id);
+
+        // DW_AT_name
+        let name = self.dwarf_unit.strings.add(full_name);
+        entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+        // DW_AT_byte_size
+        entry.set(
+            gimli::DW_AT_byte_size,
+            AttributeValue::Udata(metadata_entry.size as u64),
+        );
+
+        for prop in self.ctx.tcx.tdb().find_fields(type_ref.instance_of) {
+            let entry_id = self.dwarf_unit.unit.add(entry_id, gimli::DW_TAG_member);
+            let entry = self.dwarf_unit.unit.get_mut(entry_id);
+
+            // DW_AT_name
+            let name = self.dwarf_unit.strings.add(prop.name.clone());
+            entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+
+            // DW_AT_mutable
+            entry.set(gimli::DW_AT_mutable, AttributeValue::FlagPresent);
+
+            // DW_AT_type
+            let prop_type = self.declare_type(&prop.field_type);
+
+            let entry = self.dwarf_unit.unit.get_mut(entry_id);
+            entry.set(gimli::DW_AT_type, AttributeValue::UnitRef(prop_type));
+        }
+
+        entry_id
+    }
+
+    pub(crate) fn get_type_name(&self, type_ref: &TypeRef) -> String {
+        self.ctx.tcx.new_named_type(type_ref, true).unwrap().to_string()
     }
 }
 
