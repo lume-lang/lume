@@ -81,7 +81,7 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
                 debug_ctx.declare_function(func);
             }
 
-            self.define_function(func, &mut ctx, &mut builder_ctx)?;
+            self.define_function(func, &mut ctx, &mut builder_ctx, debug_ctx.as_mut())?;
             self.module().clear_context(&mut ctx);
         }
 
@@ -91,20 +91,6 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
             .unwrap();
 
         let mut object_product = module.finish();
-
-        if let Some(debug_ctx) = debug_ctx.as_mut() {
-            for func in functions.values() {
-                if func.signature.external {
-                    continue;
-                }
-
-                let Some(declaration) = self.declared_funcs.get(&func.id) else {
-                    continue;
-                };
-
-                debug_ctx.define_function(func.id, declaration.id, &object_product);
-            }
-        }
 
         if let Some(debug_ctx) = debug_ctx.as_mut() {
             debug_ctx.emit_to(&mut object_product)?;
@@ -223,6 +209,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
         func: &lume_mir::Function,
         ctx: &mut cranelift::codegen::Context,
         builder_ctx: &mut FunctionBuilderContext,
+        debug_ctx: Option<&mut RootDebugContext>,
     ) -> Result<()> {
         let declared_func = self.declared_funcs.get(&func.id).unwrap();
         ctx.func.signature = declared_func.sig.clone();
@@ -249,6 +236,10 @@ impl<'ctx> CraneliftBackend<'ctx> {
                 .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
 
             return Err(diagnostic.into());
+        }
+
+        if let Some(debug_ctx) = debug_ctx {
+            debug_ctx.define_function(func.id, declared_func.id, self, &ctx);
         }
 
         Ok(())
@@ -296,6 +287,12 @@ impl<'ctx> CraneliftBackend<'ctx> {
         let (idx, _) = self.location_indices.try_write().unwrap().insert_full(loc);
 
         SourceLoc::new(idx as u32)
+    }
+
+    pub(crate) fn lookup_source_loc(&self, loc: SourceLoc) -> Location {
+        let map = self.location_indices.try_read().unwrap();
+
+        *map.get_index(loc.bits() as usize).unwrap()
     }
 }
 
