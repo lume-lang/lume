@@ -17,7 +17,7 @@ use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::Function;
-use lume_span::Location;
+use lume_span::{Location, SourceFileId};
 
 use crate::Context;
 use crate::cranelift::CraneliftBackend;
@@ -87,7 +87,7 @@ pub(crate) struct RootDebugContext {
 
     func_entries: IndexMap<lume_mir::FunctionId, UnitEntryId>,
     func_locs: IndexMap<lume_mir::FunctionId, Location>,
-    source_locations: IndexMap<Location, FileId>,
+    source_locations: IndexMap<SourceFileId, FileId>,
 }
 
 impl RootDebugContext {
@@ -255,7 +255,7 @@ impl RootDebugContext {
 
         *self
             .source_locations
-            .entry(loc)
+            .entry(loc.file.id)
             .or_insert_with(|| match &loc.file.name {
                 lume_span::FileName::Real(path) => {
                     let dir_name = path
