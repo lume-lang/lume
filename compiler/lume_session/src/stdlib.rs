@@ -1,6 +1,6 @@
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
-use lume_span::{PackageId, SourceFile};
+use lume_span::{FileName, PackageId, SourceFile, SourceFileId};
 use rust_embed::Embed;
 
 #[derive(Embed)]
@@ -17,7 +17,12 @@ impl Assets {
             let embedded_file = Assets::get(name).unwrap();
             let content = std::str::from_utf8(embedded_file.data.as_ref()).unwrap();
 
-            Arc::new(SourceFile::new(package, name.to_string(), content.to_string()))
+            Arc::new(SourceFile {
+                id: SourceFileId::new(package, name),
+                name: FileName::StandardLibrary(PathBuf::from(name)),
+                content: content.to_string(),
+                package,
+            })
         })
     }
 }

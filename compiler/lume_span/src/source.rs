@@ -22,6 +22,10 @@ pub enum FileName {
 
     /// A file name which physically exists on the file system.
     Real(PathBuf),
+
+    /// A file name which exists within the standard library, which
+    /// may or may not be available on the file system.
+    StandardLibrary(PathBuf),
 }
 
 impl FileName {
@@ -30,8 +34,9 @@ impl FileName {
         static EMPTY_BUF: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(PathBuf::new);
 
         match self {
-            FileName::Real(buf) => buf,
             FileName::Internal => &EMPTY_BUF,
+            FileName::Real(buf) => buf,
+            FileName::StandardLibrary(buf) => buf,
         }
     }
 }
@@ -40,7 +45,8 @@ impl std::fmt::Display for FileName {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FileName::Internal => write!(fmt, "<internal>"),
-            FileName::Real(name) => write!(fmt, "{}", name.to_string_lossy()),
+            FileName::Real(name) => write!(fmt, "{}", name.display()),
+            FileName::StandardLibrary(name) => write!(fmt, "std({})", name.display()),
         }
     }
 }
@@ -117,6 +123,7 @@ impl error_snippet::Source for SourceFile {
         match &self.name {
             FileName::Internal => None,
             FileName::Real(name) => name.as_os_str().to_str(),
+            FileName::StandardLibrary(name) => name.as_os_str().to_str(),
         }
     }
 
