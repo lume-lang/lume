@@ -12,6 +12,7 @@ doctest = false
 lume_codegen = { path = "../lume_codegen" }
 lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session" }
+lumert = { path = "../../rt" }
 
 clap = { workspace = true, optional = true }
 dirs = { version = "=6.0.0" }
