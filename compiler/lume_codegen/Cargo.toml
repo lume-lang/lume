@@ -18,6 +18,7 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 gimli = { version = "=0.32.1" }
 indexmap = { version = "^2.9" }
+target-lexicon = { version = "=0.13.2" }
 tracing = { workspace = true }
 
 # codegen_llvm
