@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use cranelift::codegen::MachSrcLoc;
 use cranelift::codegen::ir::Endianness;
 use cranelift::prelude::isa::TargetIsa;
 use cranelift_module::{DataId, FuncId};
@@ -12,13 +13,14 @@ use gimli::write::{
     Address, AttributeValue, DwarfUnit, EndianVec, FileId, LineProgram, LineString, LineStringTable, Sections,
     UnitEntryId, Writer,
 };
-use gimli::{DwLang, Encoding, RunTimeEndian, SectionId};
+use gimli::{DwLang, Encoding, LineEncoding, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::Function;
 use lume_span::Location;
 
 use crate::Context;
+use crate::cranelift::CraneliftBackend;
 
 /// DWARF identifier for the Lume language
 pub const DW_LANG_LUME: DwLang = DwLang(0x00D8_u16);
@@ -53,6 +55,16 @@ pub(crate) fn populate_dwarf_unit(ctx: &Context<'_>, dwarf_unit: &mut DwarfUnit)
     // DW_AT_comp_dir
     let comp_dir = dwarf_unit.strings.add(format!("{}", ctx.package.path.display()));
     root.set(gimli::DW_AT_comp_dir, AttributeValue::StringRef(comp_dir));
+
+    // Define line program
+    let encoding = dwarf_unit.unit.encoding();
+    let line_strings = &mut dwarf_unit.line_strings;
+
+    let working_dir = LineString::new(ctx.package.path.display().to_string(), encoding, line_strings);
+    let source_file = LineString::new("", encoding, line_strings);
+
+    dwarf_unit.unit.line_program =
+        LineProgram::new(encoding, LineEncoding::default(), working_dir, None, source_file, None);
 }
 
 pub(super) fn address_for_func(func_id: FuncId) -> Address {
@@ -137,19 +149,47 @@ impl RootDebugContext {
     }
 
     /// Defines the start and size of the function to the matching DWARF tag.
-    pub(crate) fn define_function(&mut self, func_id: lume_mir::FunctionId, decl_id: FuncId, obj: &ObjectProduct) {
-        let Some(entry_id) = self.func_entries.get(&func_id) else {
+    pub(crate) fn define_function(
+        &mut self,
+        func_id: lume_mir::FunctionId,
+        decl_id: FuncId,
+        backend: &CraneliftBackend,
+        ctx: &cranelift::codegen::Context,
+    ) {
+        let Some(entry_id) = self.func_entries.get(&func_id).copied() else {
             return;
         };
 
-        let sym_id = obj.function_symbol(decl_id);
-
         let func_start = address_for_func(decl_id);
-        let func_size = obj.object.symbol(sym_id).size;
 
-        let entry = self.dwarf_unit.unit.get_mut(*entry_id);
+        self.dwarf_unit.unit.line_program.begin_sequence(Some(func_start));
+
+        let mcr = ctx.compiled_code().unwrap();
+        for &MachSrcLoc { start, loc, .. } in mcr.buffer.get_srclocs_sorted() {
+            self.dwarf_unit.unit.line_program.row().address_offset = u64::from(start);
+
+            let location = if !loc.is_default() {
+                backend.lookup_source_loc(loc)
+            } else {
+                *self.func_locs.get(&func_id).unwrap()
+            };
+
+            let (file_id, line, column) = self.get_source_span(location);
+
+            self.dwarf_unit.unit.line_program.row().file = file_id;
+            self.dwarf_unit.unit.line_program.row().line = line as u64;
+            self.dwarf_unit.unit.line_program.row().column = column as u64;
+            self.dwarf_unit.unit.line_program.generate_row();
+        }
+
+        let func_size = mcr.buffer.total_size();
+        assert_ne!(func_size, 0);
+
+        self.dwarf_unit.unit.line_program.end_sequence(u64::from(func_size));
+
+        let entry = self.dwarf_unit.unit.get_mut(entry_id);
         entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_start));
-        entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size));
+        entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(u64::from(func_size)));
     }
 
     /// Emits the DWARF debug info to the given [`ObjectProduct`] from Cranelift.
