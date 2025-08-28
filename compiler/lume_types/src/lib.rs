@@ -1349,10 +1349,16 @@ impl TypeDatabaseContext {
         methods.into_iter().flatten()
     }
 
-    /// Gets an iterator which iterates all [`Item`]-instances where
+    /// Gets an iterator which iterates all [`Use`]-instances where
     /// the item refers to a [`Use`], which are implementation on the given [`Item`].
     pub fn uses_on(&self, on: &TypeRef) -> impl Iterator<Item = &Use> {
         self.uses().filter(move |u| &u.target == on)
+    }
+
+    /// Gets an iterator which iterates all [`Use`]-instances which implement
+    /// the given trait item.
+    pub fn uses_of(&self, on: &TypeRef) -> impl Iterator<Item = &Use> {
+        self.uses().filter(move |u| &u.trait_ == on)
     }
 
     /// Attempts to find a [`Type`] with the given name, if any.
