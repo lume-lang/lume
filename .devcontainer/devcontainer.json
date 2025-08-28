@@ -1,0 +1,26 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/refs/heads/main/schemas/devContainer.base.schema.json",
+  "name": "Lume",
+  "build": {
+    "dockerfile": "./Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true,
+      "username": "dev"
+    },
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.88",
+      "profile": "minimal"
+    }
+  },
+  "capAdd": [
+    "SYS_PTRACE"
+  ],
+  "securityOpt": [
+    "seccomp=unconfined"
+  ],
+  "remoteUser": "dev",
+  "containerUser": "dev",
+  "postCreateCommand": "rustc --version"
+}
