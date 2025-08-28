@@ -11,6 +11,17 @@ use super::diagnostics::{self};
 /// Defines the maximum Levenshtein distance allowed for method name suggestions.
 pub const MAX_LEVENSHTEIN_DISTANCE: usize = 3;
 
+/// Represents the option of whether a lookup should include
+/// blanket implementations or not.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlanketLookup {
+    /// Include blanket implementations in the lookup.
+    Include,
+
+    /// Exclude blanket implementations from the lookup.
+    Exclude,
+}
+
 impl TyInferCtx {
     /// Gets the [`Callable`] with the given ID.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
@@ -41,10 +52,45 @@ impl TyInferCtx {
     /// context, such as visibility, arguments or type arguments. To check whether any given
     /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
-    pub fn lookup_methods_on<'a>(&self, ty: &'a lume_types::TypeRef, name: &'a Identifier) -> Vec<&'_ Method> {
-        self.methods_defined_on(ty)
-            .filter(|method| method.name.name() == name)
-            .collect()
+    pub fn lookup_methods_on(
+        &self,
+        ty: &'_ lume_types::TypeRef,
+        name: &'_ Identifier,
+        blanket_lookup: BlanketLookup,
+    ) -> Vec<&'_ Method> {
+        let direct_impl = self
+            .methods_defined_on(ty)
+            .filter(move |method| method.name.name() == name);
+
+        match blanket_lookup {
+            BlanketLookup::Exclude => direct_impl.collect(),
+            BlanketLookup::Include => {
+                let blanket_impl = self.tdb().methods().filter(move |method| method.name.name() == name);
+
+                direct_impl.chain(blanket_impl).collect()
+            }
+        }
+    }
+
+    /// Looks up the first [`Method`] on the given [`TypeRef`] of name `name`.
+    ///
+    /// The method returned by this method is not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn lookup_method_on(&self, ty: &'_ lume_types::TypeRef, name: &'_ Identifier) -> Option<&Method> {
+        // First check whether any method is defined directly on the type
+        let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);
+
+        match methods.first() {
+            Some(method) => Some(method),
+
+            // If not, attempt to look for blanket implementations as well.
+            None => self
+                .lookup_methods_on(ty, name, BlanketLookup::Include)
+                .first()
+                .map(|m| *m),
+        }
     }
 
     /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't an
@@ -186,9 +232,9 @@ impl TyInferCtx {
         match expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
                 let callee_type = self.type_of(call.callee)?;
-                let methods = self.lookup_methods_on(&callee_type, call.name.name());
+                let method = self.lookup_method_on(&callee_type, call.name.name());
 
-                let Some(method) = methods.first() else {
+                let Some(method) = method else {
                     let missing_method_err = self.fold_method_suggestions(expr)?;
 
                     return Err(missing_method_err.into());
@@ -198,9 +244,9 @@ impl TyInferCtx {
             }
             expr @ lume_hir::CallExpression::Intrinsic(call) => {
                 let callee_type = self.type_of(call.callee())?;
-                let methods = self.lookup_methods_on(&callee_type, call.name.name());
+                let method = self.lookup_method_on(&callee_type, call.name.name());
 
-                let Some(method) = methods.first() else {
+                let Some(method) = method else {
                     let missing_method_err = self.fold_method_suggestions(expr)?;
 
                     return Err(missing_method_err.into());
@@ -213,9 +259,9 @@ impl TyInferCtx {
                     && callee_ty_name.is_type()
                 {
                     let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
-                    let methods = self.lookup_methods_on(&callee_type, call.name.name());
+                    let method = self.lookup_method_on(&callee_type, call.name.name());
 
-                    let Some(method) = methods.first() else {
+                    let Some(method) = method else {
                         let missing_method_err = self.fold_method_suggestions(expr)?;
 
                         return Err(missing_method_err.into());
