@@ -177,7 +177,7 @@ impl Location {
 
     #[must_use]
     pub fn coordinates(&self) -> (usize, usize) {
-        if self.start() > self.len() {
+        if self.start() > self.file.content.len() {
             return (0, 0);
         }
 
