@@ -65,7 +65,7 @@ impl<'mir> FunctionTransformer<'mir> {
     pub fn define(transformer: &'mir ModuleTransformer, id: FunctionId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name.to_string(), func.location),
+            func: Function::new(id, func.name_as_str(), func.location),
             variables: HashMap::new(),
         };
 
@@ -78,7 +78,7 @@ impl<'mir> FunctionTransformer<'mir> {
     pub fn transform(transformer: &'mir ModuleTransformer, id: FunctionId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name.to_string(), func.location),
+            func: Function::new(id, func.name_as_str(), func.location),
             variables: HashMap::new(),
         };
 
