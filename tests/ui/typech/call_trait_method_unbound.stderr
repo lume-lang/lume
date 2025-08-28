@@ -1,7 +1,7 @@
-× error[LM4113]: could not find method
-   ╭─[call_trait_method_unbound.lm:8:24]
+× error[LM4002]: trait is not implemented
+   ╭─[call_trait_method_unbound.lm:8:20]
  7 │ fn foo<T>(val: T) {
  8 │     let _: Int32 = val.value();
-   │                        ^^^^^^ could not find method value on type T
+   │                    ^^^ the trait B is not implemented for the type T
  9 │ }
    ╰──
