@@ -1,0 +1,6 @@
+//# test-outcome=success
+
+struct Foo<T> {
+    a: T;
+    b: T;
+}
