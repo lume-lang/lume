@@ -322,7 +322,9 @@ impl TyInferCtx {
     }
 
     fn define_trait_impl_methods(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
-        let type_ref = self.mk_type_ref(trait_impl.target.as_ref())?;
+        self.define_trait_impl_type_params(trait_impl)?;
+
+        let type_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.as_refs())?;
 
         for method in &mut trait_impl.methods {
             let method_name = method.name.clone();
@@ -346,6 +348,29 @@ impl TyInferCtx {
 
         Ok(())
     }
+
+    fn define_trait_impl_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
+        let use_id = trait_impl.use_id.unwrap();
+        let package_id = trait_impl.id.package;
+
+        for type_param in &mut trait_impl.type_parameters.iter_mut() {
+            let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+
+            type_param.type_param_id = Some(type_param_id);
+            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+
+            self.tdb_mut().push_type_param(use_id, type_param_id)?;
+        }
+
+        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.as_refs())?;
+        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.as_refs())?;
+
+        let trait_impl_ref = self.tdb_mut().use_mut(use_id).unwrap();
+        trait_impl_ref.trait_ = trait_ref;
+        trait_impl_ref.target = target_ref;
+
+        Ok(())
+    }
 }
 
 impl TyInferCtx {
@@ -357,7 +382,7 @@ impl TyInferCtx {
             match item {
                 lume_hir::Item::Type(t) => self.define_type_type_params(t)?,
                 lume_hir::Item::Impl(i) => self.define_impl_type_params(i)?,
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_type_params(u)?,
+                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_method_type_params(u)?,
                 lume_hir::Item::Function(f) => self.define_func_type_params(f)?,
             }
         }
@@ -485,26 +510,8 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_trait_impl_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
-        let use_id = trait_impl.use_id.unwrap();
+    fn define_trait_impl_method_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         let package_id = trait_impl.id.package;
-
-        for type_param in &mut trait_impl.type_parameters.iter_mut() {
-            let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
-
-            type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
-
-            self.tdb_mut().push_type_param(use_id, type_param_id)?;
-        }
-
-        let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.as_refs())?;
-
-        let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.as_refs())?;
-
-        let trait_impl_ref = self.tdb_mut().use_mut(use_id).unwrap();
-        trait_impl_ref.trait_ = trait_ref;
-        trait_impl_ref.target = target_ref;
 
         for method in &mut trait_impl.methods {
             let method_id = method.method_id.unwrap();
