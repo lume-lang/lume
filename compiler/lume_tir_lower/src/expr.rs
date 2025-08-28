@@ -126,6 +126,12 @@ impl LowerFunction<'_> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.instantiate_call_expression(callable.signature(), expr)?;
 
+        tracing::debug!(
+            "resolved callable `{:+}` from call expression `{}`",
+            callable.name(),
+            expr.name()
+        );
+
         let function = match callable {
             lume_typech::query::Callable::Function(call) => {
                 #[cfg(debug_assertions)]

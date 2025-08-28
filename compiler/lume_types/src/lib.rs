@@ -293,12 +293,12 @@ pub struct Field {
     pub field_type: TypeRef,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum MethodKind {
     Implementation,
     Intrinsic,
-    TraitDefinition,
     TraitImplementation,
+    TraitDefinition,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -400,6 +400,7 @@ pub struct Use {
     pub trait_: TypeRef,
     pub target: TypeRef,
     pub type_parameters: Vec<TypeParameterId>,
+    pub methods: Vec<MethodId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1448,6 +1449,7 @@ impl TypeDatabaseContext {
             trait_: TypeRef::unknown(),
             target: TypeRef::unknown(),
             type_parameters: Vec::new(),
+            methods: Vec::new(),
         });
 
         id
