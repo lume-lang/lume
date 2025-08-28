@@ -109,7 +109,8 @@ impl std::fmt::Display for PathSegment {
                         "<{}>",
                         type_arguments
                             .iter()
-                            .map(std::string::ToString::to_string)
+                            .enumerate()
+                            .map(|(idx, _)| format!("`{}", idx + 1))
                             .collect::<Vec<_>>()
                             .join(", ")
                     )?;
@@ -162,6 +163,12 @@ pub struct Function {
     pub return_type: TypeRef,
     pub block: Option<Block>,
     pub location: Location,
+}
+
+impl Function {
+    pub fn name_as_str(&self) -> String {
+        format!("{:+}", self.name)
+    }
 }
 
 #[derive(Debug, Clone, Eq)]
