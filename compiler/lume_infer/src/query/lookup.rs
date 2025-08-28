@@ -4,7 +4,7 @@ use crate::query::{CallReference, Callable};
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
-use lume_types::{Function, FunctionSigOwned, Method, TypeKind, TypeRef};
+use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
 
@@ -46,6 +46,75 @@ impl TyInferCtx {
         }
     }
 
+    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which are
+    /// implemented via an `impl` tag on the type.
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn lookup_impl_methods_on(
+        &self,
+        ty: &'_ lume_types::TypeRef,
+        name: &'_ Identifier,
+    ) -> impl Iterator<Item = &'_ Method> {
+        self.methods_defined_on(ty)
+            .filter(move |method| method.name.name() == name)
+    }
+
+    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which are
+    /// implemented through trait implementations.
+    ///
+    /// Methods returned by this method are not checked for validity within the current
+    /// context, such as visibility, arguments or type arguments. To check whether any given
+    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    pub fn lookup_trait_methods_on(
+        &self,
+        ty: &'_ TypeRef,
+        name: &'_ Identifier,
+        blanket_lookup: BlanketLookup,
+    ) -> Vec<&'_ Method> {
+        match blanket_lookup {
+            BlanketLookup::Exclude => self
+                .tdb()
+                .uses_on(ty)
+                .filter_map(|trait_impl| {
+                    for method_id in &trait_impl.methods {
+                        let method = self.tdb().method(*method_id).unwrap();
+
+                        if method.name.name() == name {
+                            return Some(method);
+                        }
+                    }
+
+                    None
+                })
+                .collect(),
+            BlanketLookup::Include => {
+                let mut methods = self
+                    .tdb()
+                    .methods()
+                    .filter(|method| {
+                        matches!(
+                            method.kind,
+                            MethodKind::TraitDefinition | MethodKind::TraitImplementation
+                        ) && method.name.name() == name
+                    })
+                    .collect::<Vec<_>>();
+
+                // We need to prioritize the methods defined in the trait implementation,
+                // as any method defined on a trait definition should only function as a fallback.
+                //
+                // The `MethodKind` enum is implemented via derive-macro and will place any
+                // trait implementation methods before trait definition methods.
+                methods.sort_by_key(|m| m.kind);
+
+                methods
+            }
+        }
+    }
+
     /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`.
     ///
     /// Methods returned by this method are not checked for validity within the current
@@ -58,16 +127,14 @@ impl TyInferCtx {
         name: &'_ Identifier,
         blanket_lookup: BlanketLookup,
     ) -> Vec<&'_ Method> {
-        let direct_impl = self
-            .methods_defined_on(ty)
-            .filter(move |method| method.name.name() == name);
+        let direct_impl = self.lookup_impl_methods_on(ty, name);
 
         match blanket_lookup {
-            BlanketLookup::Exclude => direct_impl.collect(),
+            BlanketLookup::Exclude => self.lookup_impl_methods_on(ty, name).collect(),
             BlanketLookup::Include => {
-                let blanket_impl = self.tdb().methods().filter(move |method| method.name.name() == name);
+                let trait_impl = self.lookup_trait_methods_on(ty, name, blanket_lookup);
 
-                direct_impl.chain(blanket_impl).collect()
+                direct_impl.chain(trait_impl).collect()
             }
         }
     }

@@ -343,6 +343,9 @@ impl TyInferCtx {
                 lume_types::MethodKind::TraitImplementation,
             )?;
 
+            let trait_use_ty = self.tdb_mut().use_mut(trait_impl.use_id.unwrap()).unwrap();
+            trait_use_ty.methods.push(method_id);
+
             method.method_id = Some(method_id);
         }
 
