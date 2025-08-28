@@ -92,6 +92,13 @@ pub fn link_objects(objects: &CodegenObjects, output: &PathBuf, opts: &Options) 
     // of the argument list, so we must add all source object files first.
     cmd.arg(runtime_path);
 
+    // Target specific linker options.
+    if cfg!(target_os = "linux") {
+        cmd.arg("-ldl");
+        cmd.arg("-lm");
+        cmd.arg("-lpthread");
+    }
+
     cmd.stdin(Stdio::null());
     cmd.stdout(Stdio::null());
     cmd.stderr(Stdio::piped());
