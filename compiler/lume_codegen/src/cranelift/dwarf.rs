@@ -131,7 +131,7 @@ impl<'ctx> RootDebugContext<'ctx> {
     pub(crate) fn declare_function(&mut self, func: &Function) {
         self.func_locs.insert(func.id, func.location);
 
-        let (file_id, line, column) = self.get_source_span(func.location);
+        let (file_id, line, _) = self.get_source_span(func.location);
 
         let root_scope = self.dwarf_unit.unit.root();
 
@@ -160,7 +160,6 @@ impl<'ctx> RootDebugContext<'ctx> {
         // DW_AT_decl_*
         entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
         entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
-        entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
 
         // DW_AT_type
         let ret_ty = self.declare_type(&func.signature.return_type.id);
@@ -218,11 +217,11 @@ impl<'ctx> RootDebugContext<'ctx> {
                 *self.func_locs.get(&func_id).unwrap()
             };
 
-            let (file_id, line, column) = self.get_source_span(location);
+            let (file_id, line, _) = self.get_source_span(location);
 
             self.dwarf_unit.unit.line_program.row().file = file_id;
             self.dwarf_unit.unit.line_program.row().line = line as u64;
-            self.dwarf_unit.unit.line_program.row().column = column as u64;
+            self.dwarf_unit.unit.line_program.row().column = 0;
             self.dwarf_unit.unit.line_program.generate_row();
         }
 
@@ -280,31 +279,33 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// given [`Location`]. If no [`FileId`] exists for the given [`Location`], a
     /// new one is created and returned.
     fn add_source_file(&mut self, loc: Location) -> FileId {
-        let line_program: &mut LineProgram = &mut self.dwarf_unit.unit.line_program;
-        let line_strings: &mut LineStringTable = &mut self.dwarf_unit.line_strings;
+        *self.source_locations.entry(loc.file.id).or_insert_with(|| {
+            let line_program: &mut LineProgram = &mut self.dwarf_unit.unit.line_program;
+            let line_strings: &mut LineStringTable = &mut self.dwarf_unit.line_strings;
 
-        *self
-            .source_locations
-            .entry(loc.file.id)
-            .or_insert_with(|| match &loc.file.name {
+            let encoding = line_program.encoding();
+
+            match &loc.file.name {
                 lume_span::FileName::Real(path) => {
-                    let dir_name = path
+                    let absolute_path = self.ctx.package.root().join(path);
+
+                    let dir_name = absolute_path
                         .parent()
                         .map(|p| p.as_os_str().to_string_lossy().as_bytes().to_vec())
                         .unwrap_or_default();
 
-                    let file_name = path
+                    let file_name = absolute_path
                         .file_name()
                         .map(|p| p.to_string_lossy().as_bytes().to_vec())
                         .unwrap_or_default();
 
                     let dir_id = if !dir_name.is_empty() {
-                        line_program.add_directory(LineString::new(dir_name, line_program.encoding(), line_strings))
+                        line_program.add_directory(LineString::new(dir_name, encoding, line_strings))
                     } else {
                         line_program.default_directory()
                     };
 
-                    let file_name = LineString::new(file_name, line_program.encoding(), line_strings);
+                    let file_name = LineString::new(file_name, encoding, line_strings);
                     line_program.add_file(file_name, dir_id, None)
                 }
                 lume_span::FileName::StandardLibrary(path) => {
@@ -328,7 +329,8 @@ impl<'ctx> RootDebugContext<'ctx> {
 
                     line_program.add_file(dummy_file_name, dir_id, None)
                 }
-            })
+            }
+        })
     }
 
     pub(crate) fn declare_type(&mut self, type_ref: &TypeRef) -> UnitEntryId {
