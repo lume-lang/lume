@@ -208,7 +208,7 @@ impl<'mir> FunctionTransformer<'mir> {
         // then we pass the address of the stack slot to the function.
         for (arg, param) in args.iter_mut().zip(params.iter()) {
             // If the parameter isn't generic, we let it be.
-            if !param.ty.is_generic {
+            if !param.ty.is_generic && !param.ty.kind.is_reference_type() {
                 continue;
             }
 
