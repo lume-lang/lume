@@ -96,6 +96,15 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
+            lume_hir::ExpressionKind::Array(e) => {
+                if let Some(first_value) = e.values.first() {
+                    let elemental_type = self.type_of(*first_value)?;
+
+                    TypeRef::array(elemental_type)
+                } else {
+                    TypeRef::array(TypeRef::unknown())
+                }
+            }
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {

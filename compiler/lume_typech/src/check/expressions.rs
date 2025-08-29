@@ -212,6 +212,13 @@ impl TyCheckCtx {
         let _ = self.type_of_expr(expr)?;
 
         match &expr.kind {
+            lume_hir::ExpressionKind::Array(expr) => {
+                for value in &expr.values {
+                    self.expression(*value)?;
+                }
+
+                self.array_expression(expr)
+            }
             lume_hir::ExpressionKind::Assignment(expr) => {
                 self.expression(expr.target)?;
                 self.expression(expr.value)?;
@@ -313,6 +320,40 @@ impl TyCheckCtx {
             | lume_hir::ExpressionKind::Field(_)
             | lume_hir::ExpressionKind::Variable(_) => Ok(()),
         }
+    }
+
+    /// Asserts that all values within an array expression are compatible
+    /// with the first value type in the array. For instance, given the following statement:
+    ///
+    /// ```lm
+    /// [0_i32, false];
+    /// ```
+    ///
+    /// this expression would raise an error, since `false` is a type of `Boolean` which isn't
+    /// compatible with the first element in the array, an `Int32`.
+    fn array_expression(&self, expr: &lume_hir::Array) -> Result<()> {
+        let Some(first_value) = expr.values.first() else {
+            return Ok(());
+        };
+
+        let expected_type = self.type_of(*first_value)?;
+
+        for value in expr.values.iter().skip(1) {
+            let value_type = self.type_of(*value)?;
+
+            if !self.check_type_compatibility(&value_type, &expected_type)? {
+                return Err(NonMatchingArrayElements {
+                    source: expr.location,
+                    expected: expected_type.location,
+                    found: value_type.location,
+                    expected_ty: self.new_named_type(&expected_type, false)?.to_string(),
+                    found_ty: self.new_named_type(&value_type, false)?.to_string(),
+                }
+                .into());
+            }
+        }
+
+        Ok(())
     }
 
     /// Asserts that an assignment expression assigns a value which is valid for the
