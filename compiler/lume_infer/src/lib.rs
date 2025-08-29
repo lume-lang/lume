@@ -9,6 +9,8 @@ use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef}
 mod define;
 mod errors;
 pub mod query;
+mod unification;
+
 #[cfg(test)]
 mod tests;
 
@@ -114,6 +116,12 @@ impl TyInferCtx {
         self.infer_type_arguments()?;
 
         tracing::debug!(target: "inference", "finished inference");
+
+        tracing::debug_span!(target: "inference", "type unification").in_scope(|| {
+            let pass = unification::UnificationPass::default();
+
+            pass.invoke(self)
+        })?;
 
         self.dcx().ensure_untainted()?;
 
@@ -450,9 +458,9 @@ impl TyInferCtx {
 
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub fn hir_lift_type(&self, ty: TypeRef) -> Result<lume_hir::Type> {
-        let id = lume_span::ItemId::from_name(ty.instance_of.package, &ty);
-        let name = self.type_ref_name(&ty)?.to_owned();
+    pub fn hir_lift_type(&self, ty: &TypeRef) -> Result<lume_hir::Type> {
+        let id = lume_span::ItemId::from_name(ty.instance_of.package, ty);
+        let name = self.type_ref_name(ty)?.to_owned();
         let location = ty.location;
 
         Ok(lume_hir::Type { id, name, location })
