@@ -1191,13 +1191,12 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     let callable = self.probe_callable_static(call)?;
 
-                    let replacement =
-                        match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
-                            TypeArgumentInference::Fulfilled => continue,
-                            TypeArgumentInference::Replace { replacement } => replacement,
-                        };
-
-                    call.name.place_type_arguments(replacement);
+                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
+                        TypeArgumentInference::Fulfilled => (),
+                        TypeArgumentInference::Replace { replacement } => {
+                            call.name.place_type_arguments(replacement);
+                        }
+                    };
                 }
                 _ => continue,
             };
@@ -1231,7 +1230,7 @@ impl TyInferCtx {
 
         for type_param in type_params.iter().skip(type_args.len()) {
             if let Some(inferred_type_arg) = self.infer_type_arg_param(*type_param, params, &args)? {
-                type_args.push(self.hir_lift_type(inferred_type_arg)?);
+                type_args.push(self.hir_lift_type(&inferred_type_arg)?);
             } else {
                 let type_param_name = self.tdb().type_parameter(*type_param).unwrap().name.clone();
 
@@ -1250,7 +1249,7 @@ impl TyInferCtx {
     }
 
     /// Attempts to infer the type of the type parameter, given the arguments and parameter types.
-    fn infer_type_arg_param(
+    pub(crate) fn infer_type_arg_param(
         &self,
         type_param: TypeParameterId,
         params: &lume_types::Parameters,

@@ -157,6 +157,12 @@ pub struct Parameter {
     pub location: Location,
 }
 
+impl Parameter {
+    pub fn is_self(&self) -> bool {
+        self.idx == 0 && self.name == "self"
+    }
+}
+
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Parameters {
     pub params: Vec<Parameter>,
@@ -189,10 +195,10 @@ impl Parameters {
         self.params.is_empty()
     }
 
-    // /// Determines whether the method is instanced, as opposed to static.
+    /// Determines whether the method is instanced, as opposed to static.
     pub fn is_instanced(&self) -> bool {
         if let Some(param) = self.params.first() {
-            &param.name == "self"
+            param.is_self()
         } else {
             false
         }
@@ -842,7 +848,7 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Array`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
     pub fn array(elemental: TypeRef) -> Self {
         Self {
             instance_of: TYPEREF_ARRAY_ID,
