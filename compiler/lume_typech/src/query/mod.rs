@@ -426,7 +426,7 @@ impl TyCheckCtx {
         }
 
         // Ensure that all possible combinations of conditions return a value
-        if !self.is_void(&expected_type)? {
+        if !expected_type.is_void() {
             let Some(else_block) = cases.iter().rfind(|case| case.condition.is_none()) else {
                 return Err(crate::check::errors::MissingReturnBranch {
                     source: last_case.location,
