@@ -62,14 +62,6 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
-        let array_path = lume_ast::Path::with_root(
-            vec![
-                lume_ast::PathSegment::namespace("std"),
-                lume_ast::PathSegment::ty(ARRAY_STD_TYPE),
-            ],
-            lume_ast::PathSegment::callable(ARRAY_NEW_FUNC),
-        );
-
         let id = self.next_expr_id();
         let values = self.expressions(expr.values);
         let location = self.location(expr.location);
@@ -77,12 +69,7 @@ impl LowerModule<'_> {
         Ok(lume_hir::Expression {
             id,
             location,
-            kind: lume_hir::ExpressionKind::StaticCall(lume_hir::StaticCall {
-                id,
-                name: self.resolve_symbol_name(&array_path)?,
-                arguments: values,
-                location,
-            }),
+            kind: lume_hir::ExpressionKind::Array(lume_hir::Array { id, values, location }),
         })
     }
 

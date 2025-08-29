@@ -377,6 +377,7 @@ impl PrettyPrint for Expression {
 impl PrettyPrint for ExpressionKind {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Array(e) => e.pretty_fmt(map, f),
             Self::Assignment(e) => e.pretty_fmt(map, f),
             Self::Binary(e) => e.pretty_fmt(map, f),
             Self::Cast(e) => e.pretty_fmt(map, f),
@@ -394,6 +395,15 @@ impl PrettyPrint for ExpressionKind {
             Self::Variable(e) => e.pretty_fmt(map, f),
             Self::Variant(e) => e.pretty_fmt(map, f),
         }
+    }
+}
+
+impl PrettyPrint for Array {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Array")
+            .field("values", &pretty_list!(self.values, map))
+            .field("location", &self.location)
+            .finish()
     }
 }
 

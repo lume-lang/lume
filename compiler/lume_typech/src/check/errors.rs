@@ -110,6 +110,22 @@ pub struct TraitMethodSignatureMismatch {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "array contains non-matching types", code = "LM4368")]
+pub(crate) struct NonMatchingArrayElements {
+    #[label(source, "all elements in an array must have the same type")]
+    pub source: lume_span::Location,
+
+    #[label(source, note, "expected type {expected_ty} because of element here...")]
+    pub expected: lume_span::Location,
+
+    #[label(source, error, "...but found element of type {found_ty} here")]
+    pub found: lume_span::Location,
+
+    pub expected_ty: String,
+    pub found_ty: String,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "binary operation on non-matching types", code = "LM4372")]
 pub(crate) struct NonMatchingBinaryOp {
     #[label(source, "cannot perform binary operation between non-matching types")]

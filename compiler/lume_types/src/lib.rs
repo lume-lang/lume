@@ -842,7 +842,7 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
+    /// Creates a new [`Type`] with an inner type of [`TypeKind::Array`].
     pub fn array(elemental: TypeRef) -> Self {
         Self {
             instance_of: TYPEREF_ARRAY_ID,

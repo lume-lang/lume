@@ -1171,6 +1171,7 @@ expr_lit_int!(lit_u32, U32, u32);
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
+    Array(Array),
     Assignment(Assignment),
     Binary(Binary),
     Cast(Cast),
@@ -1291,6 +1292,13 @@ impl CallExpression<'_> {
     pub fn is_instance(&self) -> bool {
         matches!(self, Self::Instanced(_))
     }
+}
+
+#[derive(Hash, Node, Debug, Clone, PartialEq)]
+pub struct Array {
+    pub id: ExpressionId,
+    pub values: Vec<ExpressionId>,
+    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
