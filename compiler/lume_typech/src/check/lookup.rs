@@ -22,15 +22,6 @@ impl TyCheckCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Void`].
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub fn is_void(&self, ty: &TypeRef) -> Result<bool> {
-        match self.tdb().ty_expect(ty.instance_of)?.kind {
-            TypeKind::Void => Ok(true),
-            _ => Ok(false),
-        }
-    }
-
     /// Determines whether the given [`TypeRef`], `ty`, implements the given trait, `trait_id`.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {

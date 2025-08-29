@@ -48,7 +48,7 @@ impl TyCheckCtx {
 
         // Special case for `void` types, since they are always identical, no matter
         // whether they have different underlying IDs.
-        match (self.is_void(from)?, self.is_void(to)?) {
+        match (from.is_void(), to.is_void()) {
             // void => value OR value => void
             (false, true) | (true, false) => {
                 return Err(errors::MismatchedTypes {
