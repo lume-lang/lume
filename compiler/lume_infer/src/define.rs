@@ -1151,57 +1151,55 @@ enum TypeArgumentInference {
 impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn infer_type_arguments(&mut self) -> Result<()> {
-        let mut new_type_arg_mapping = HashMap::new();
+        let mut replacements = HashMap::new();
 
-        for (expr_id, expr) in self.hir.expressions() {
-            let new_type_args = match &expr.kind {
+        for expr_id in self.hir.expressions().keys().map(|key| *key) {
+            let mut expr = self.hir.expect_expression(expr_id)?.to_owned();
+
+            match &mut expr.kind {
                 lume_hir::ExpressionKind::InstanceCall(call) => {
                     let callable = self.probe_callable_instance(call)?;
 
-                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Instanced(call), callable)? {
+                    let replacement = match self
+                        .infer_type_arguments_callable(lume_hir::CallExpression::Instanced(call), callable)?
+                    {
                         TypeArgumentInference::Fulfilled => continue,
                         TypeArgumentInference::Replace { replacement } => replacement,
-                    }
+                    };
+
+                    call.name.place_type_arguments(replacement);
                 }
                 lume_hir::ExpressionKind::IntrinsicCall(call) => {
                     let callable = self.probe_callable_intrinsic(call)?;
 
-                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Intrinsic(call), callable)? {
+                    let replacement = match self
+                        .infer_type_arguments_callable(lume_hir::CallExpression::Intrinsic(call), callable)?
+                    {
                         TypeArgumentInference::Fulfilled => continue,
                         TypeArgumentInference::Replace { replacement } => replacement,
-                    }
+                    };
+
+                    call.name.place_type_arguments(replacement);
                 }
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     let callable = self.probe_callable_static(call)?;
 
-                    match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
-                        TypeArgumentInference::Fulfilled => continue,
-                        TypeArgumentInference::Replace { replacement } => replacement,
-                    }
+                    let replacement =
+                        match self.infer_type_arguments_callable(lume_hir::CallExpression::Static(call), callable)? {
+                            TypeArgumentInference::Fulfilled => continue,
+                            TypeArgumentInference::Replace { replacement } => replacement,
+                        };
+
+                    call.name.place_type_arguments(replacement);
                 }
                 _ => continue,
             };
 
-            new_type_arg_mapping.insert(*expr_id, new_type_args);
+            replacements.insert(expr_id, expr);
         }
 
-        for (expr_id, expr) in self.hir.expressions_mut() {
-            let Some(new_type_args) = new_type_arg_mapping.get(expr_id) else {
-                continue;
-            };
-
-            match &mut expr.kind {
-                lume_hir::ExpressionKind::InstanceCall(call) => {
-                    call.name.place_type_arguments(new_type_args.to_owned());
-                }
-                lume_hir::ExpressionKind::IntrinsicCall(call) => {
-                    call.name.place_type_arguments(new_type_args.to_owned());
-                }
-                lume_hir::ExpressionKind::StaticCall(call) => {
-                    call.name.place_type_arguments(new_type_args.to_owned());
-                }
-                _ => {}
-            }
+        for (expr_id, expr) in replacements {
+            self.hir.expressions.insert(expr_id, expr);
         }
 
         Ok(())
