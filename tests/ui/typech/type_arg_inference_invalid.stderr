@@ -5,4 +5,4 @@
    │     ^^^^^^ could not infer type argument T on callable foo
  5 │ }
    ╰──
-   help: try specifying the type argments explicitly
+   help: try specifying the type arguments explicitly
