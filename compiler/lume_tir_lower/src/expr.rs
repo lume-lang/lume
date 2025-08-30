@@ -124,7 +124,7 @@ impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
-        let instantiated_signature = self.lower.tcx.instantiate_call_expression(callable.signature(), expr)?;
+        let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
 
         tracing::debug!(
             "resolved callable `{:+}` from call expression `{}`",
