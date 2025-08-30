@@ -120,7 +120,23 @@ impl TyInferCtx {
         tracing::debug_span!(target: "inference", "type unification").in_scope(|| {
             let pass = unification::UnificationPass::default();
 
-            pass.invoke(self)
+            pass.invoke(self)?;
+
+            // We need to invalidate the global cache for method calls, since the unification
+            // pass has altered some items in the HIR, making those entries in the cache
+            // incorrect and/or invalid.
+            //
+            // Very few method calls would've been cached at this point in the compile process,
+            // so we can safetly clear the entire thing, without having to worry too much about
+            // the potential performance loss.
+            tracing::debug_span!("unification cache invalidation").in_scope(|| {
+                let ctx: &lume_session::GlobalCtx = &*self;
+                let store = lume_query::CacheContext::store(ctx);
+
+                store.clear();
+            });
+
+            Result::Ok(())
         })?;
 
         self.dcx().ensure_untainted()?;
