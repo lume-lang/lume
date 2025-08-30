@@ -4,6 +4,7 @@ use crate::query::{CallReference, Callable};
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
+use lume_span::DefId;
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
@@ -325,7 +326,10 @@ impl TyInferCtx {
                 if let Some(callee_ty_name) = call.name.clone().parent()
                     && callee_ty_name.is_type()
                 {
-                    let callee_type = self.find_type_ref(&callee_ty_name)?.unwrap();
+                    let callee_type = self
+                        .find_type_ref_from(&callee_ty_name, DefId::Expression(call.id))?
+                        .unwrap();
+
                     let method = self.lookup_method_on(&callee_type, call.name.name());
 
                     let Some(method) = method else {

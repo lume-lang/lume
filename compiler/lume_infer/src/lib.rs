@@ -281,7 +281,21 @@ impl TyInferCtx {
     /// to type IDs.
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
     pub fn find_type_ref_generic(&self, name: &Path, ty_params: &[&TypeParameter]) -> Result<Option<TypeRef>> {
-        let Some(ty) = self.tdb().find_type(name) else {
+        let found_ty = 'find: {
+            if name.root.is_empty() {
+                let param_type_id = ty_params
+                    .iter()
+                    .find_map(|ty| if &ty.name == name.name() { ty.type_id } else { None });
+
+                if let Some(param_type_id) = param_type_id {
+                    break 'find self.tdb().type_(param_type_id);
+                }
+            }
+
+            self.tdb().find_type(name)
+        };
+
+        let Some(ty) = found_ty else {
             return Ok(None);
         };
 
