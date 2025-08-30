@@ -1,3 +1,65 @@
 namespace std::io
 
+pub trait ToString {
+    pub fn to_string(self) -> String;
+}
+
+use ToString in Boolean {
+    pub fn to_string(self) -> String {
+        if self {
+            "true"
+        } else {
+            "false"
+        }
+    }
+}
+
+use ToString in Int8 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in Int16 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in Int32 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in Int64 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in UInt8 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in UInt16 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in UInt32 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in UInt64 {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in Float {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in Double {
+    pub fn external to_string(self) -> String
+}
+
+use ToString in String {
+    pub fn to_string(self) -> String {
+        self
+    }
+}
+
 pub fn external print(fmt: String, ...args: String)
+
+pub fn external println(fmt: String, ...args: String)

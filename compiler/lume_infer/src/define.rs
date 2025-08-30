@@ -113,6 +113,17 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         "std::Double::-",
         "std::Double::*",
         "std::Double::/",
+        "std::Boolean::to_string",
+        "std::Int8::to_string",
+        "std::Int16::to_string",
+        "std::Int32::to_string",
+        "std::Int64::to_string",
+        "std::UInt8::to_string",
+        "std::UInt16::to_string",
+        "std::UInt32::to_string",
+        "std::UInt64::to_string",
+        "std::Float::to_string",
+        "std::Double::to_string",
     ])
 });
 
@@ -335,12 +346,18 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
+            let method_kind = if INTRINSIC_METHODS.contains(format!("{qualified_name:+}").as_str()) {
+                lume_types::MethodKind::Intrinsic
+            } else {
+                lume_types::MethodKind::Implementation
+            };
+
             let method_id = self.tdb_mut().method_alloc(
                 method.id,
                 type_ref.clone(),
                 qualified_name,
                 method.visibility,
-                lume_types::MethodKind::TraitImplementation,
+                method_kind,
             )?;
 
             let trait_use_ty = self.tdb_mut().use_mut(trait_impl.use_id.unwrap()).unwrap();
