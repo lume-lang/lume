@@ -437,13 +437,13 @@ impl TyInferCtx {
             inst.params.params.push(lume_types::Parameter {
                 idx: param.idx,
                 name: param.name.clone(),
-                ty: param_ty.clone(),
+                ty: param_ty,
                 vararg: param.vararg,
                 location: param.location,
             });
         }
 
-        inst.ret_ty = self.instantiate_type_from(sig.ret_ty, type_params, type_args).clone();
+        inst.ret_ty = self.instantiate_type_from(sig.ret_ty, type_params, type_args);
 
         inst
     }
@@ -451,6 +451,28 @@ impl TyInferCtx {
     /// Instantiates a a single type reference against the given type arguments.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn instantiate_type_from<'a>(
+        &self,
+        ty: &'a lume_types::TypeRef,
+        type_params: &[lume_hir::TypeParameterId],
+        type_args: &'a [TypeRef],
+    ) -> lume_types::TypeRef {
+        let mut inst_ty = self.instantiate_flat_type_from(ty, type_params, type_args).to_owned();
+
+        inst_ty.type_arguments.clear();
+        inst_ty.type_arguments.reserve_exact(ty.type_arguments.len());
+
+        for type_arg in &ty.type_arguments {
+            let inst_type_arg = self.instantiate_type_from(type_arg, type_params, type_args).to_owned();
+
+            inst_ty.type_arguments.push(inst_type_arg);
+        }
+
+        inst_ty
+    }
+
+    /// Instantiates a a single flat type reference against the given type arguments.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_flat_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
         type_params: &[lume_hir::TypeParameterId],
@@ -552,7 +574,7 @@ impl TyInferCtx {
     ///
     /// The resulting variable `a` will have the type of `Boolean`, since it was resolved from the
     /// type arguments on the callable expression.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[tracing::instrument(level = "TRACE", skip_all, fields(callable = %callable.name()), err, ret)]
     pub fn signature_of_instantiated(
         &self,
         callable: Callable,

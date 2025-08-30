@@ -344,7 +344,7 @@ impl TyInferCtx {
 
     /// Returns the return type of the given [`lume_hir::CallExpression`].
     #[cached_query(result)]
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[tracing::instrument(level = "TRACE", skip(self), fields(name = %expr.name()), err, ret)]
     pub fn type_of_call(&self, expr: lume_hir::CallExpression) -> Result<TypeRef> {
         let callable = self.probe_callable(expr)?;
         let signature = self.signature_of_instantiated(callable, expr)?;

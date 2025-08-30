@@ -34,6 +34,7 @@ pub(crate) struct UnificationPass {
 }
 
 impl UnificationPass {
+    #[tracing::instrument(level = "INFO", skip_all, err)]
     pub(crate) fn invoke<'tcx>(mut self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         self.unify(tcx)?;
         self.substitute_type_args(tcx)?;
@@ -43,6 +44,7 @@ impl UnificationPass {
 }
 
 impl UnificationPass {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn unify<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
         for (_, item) in &tcx.hir.items {
             match item {
@@ -285,6 +287,7 @@ impl UnificationPass {
 }
 
 impl UnificationPass {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn substitute_type_args<'tcx>(self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         for (reference, type_arg) in &self.substitution_map {
             let TypeParameterReference { entry, .. } = reference;
