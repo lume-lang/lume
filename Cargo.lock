@@ -1355,6 +1355,7 @@ name = "lume_tir_lower"
 version = "0.1.1"
 dependencies = [
  "error_snippet",
+ "error_snippet_derive",
  "indexmap",
  "lume_errors",
  "lume_hir",

@@ -126,6 +126,19 @@ impl LowerFunction<'_> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
 
+        if let lume_typech::query::Callable::Method(method) = callable
+            && method.kind == lume_types::MethodKind::TraitDefinition
+        {
+            self.lower.tcx.dcx().emit(
+                crate::errors::DynamicDispatchUnimplemented {
+                    source: expr.location(),
+                }
+                .into(),
+            );
+
+            self.lower.tcx.dcx().ensure_untainted()?;
+        }
+
         tracing::debug!(
             "resolved callable `{:+}` from call expression `{}`",
             callable.name(),
