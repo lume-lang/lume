@@ -34,55 +34,242 @@ Map {
             block: Block {
                 statements: [
                     IteratorLoop {
-                        collection: StaticCall {
-                            name: Path {
-                                root: [
-                                    Namespace {
-                                        name: Identifier {
-                                            name: "std",
-                                            location: loop_iter_loop_continue.lm:0:0,
+                        collection: Scope {
+                            body: [
+                                VariableDeclaration {
+                                    name: "!array",
+                                    declared_type: None,
+                                    value: StaticCall {
+                                        name: Path {
+                                            root: [
+                                                Namespace {
+                                                    name: Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                },
+                                                Type {
+                                                    name: Identifier {
+                                                        name: "Array",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    type_arguments: [],
+                                                    location: <internal>:0:0,
+                                                },
+                                            ],
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "new",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                            location: <internal>:0:0,
                                         },
+                                        arguments: [],
+                                        location: loop_iter_loop_continue.lm:27:28,
                                     },
-                                    Type {
+                                    location: loop_iter_loop_continue.lm:27:28,
+                                },
+                                InstanceCall {
+                                    name: Callable {
                                         name: Identifier {
-                                            name: "Array",
-                                            location: loop_iter_loop_continue.lm:0:0,
+                                            name: "push",
+                                            location: <internal>:0:0,
                                         },
                                         type_arguments: [],
-                                        location: loop_iter_loop_continue.lm:0:0,
+                                        location: <internal>:0:0,
                                     },
-                                ],
-                                name: Callable {
-                                    name: Identifier {
-                                        name: "new",
-                                        location: loop_iter_loop_continue.lm:0:0,
+                                    callee: StaticCall {
+                                        name: Path {
+                                            root: [
+                                                Namespace {
+                                                    name: Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                },
+                                                Type {
+                                                    name: Identifier {
+                                                        name: "Array",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    type_arguments: [],
+                                                    location: <internal>:0:0,
+                                                },
+                                            ],
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "new",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                            location: <internal>:0:0,
+                                        },
+                                        arguments: [],
+                                        location: loop_iter_loop_continue.lm:27:28,
                                     },
-                                    type_arguments: [],
-                                    location: loop_iter_loop_continue.lm:0:0,
+                                    arguments: [
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 1,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_continue.lm:28:29,
+                                        },
+                                    ],
+                                    location: loop_iter_loop_continue.lm:27:28,
                                 },
-                                location: loop_iter_loop_continue.lm:0:0,
-                            },
-                            arguments: [
-                                Literal {
-                                    kind: IntLiteral {
-                                        value: 1,
-                                        kind: I32,
+                                InstanceCall {
+                                    name: Callable {
+                                        name: Identifier {
+                                            name: "push",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
                                     },
-                                    location: loop_iter_loop_continue.lm:28:29,
+                                    callee: StaticCall {
+                                        name: Path {
+                                            root: [
+                                                Namespace {
+                                                    name: Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                },
+                                                Type {
+                                                    name: Identifier {
+                                                        name: "Array",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    type_arguments: [],
+                                                    location: <internal>:0:0,
+                                                },
+                                            ],
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "new",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                            location: <internal>:0:0,
+                                        },
+                                        arguments: [],
+                                        location: loop_iter_loop_continue.lm:27:28,
+                                    },
+                                    arguments: [
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 2,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_continue.lm:31:32,
+                                        },
+                                    ],
+                                    location: loop_iter_loop_continue.lm:27:28,
                                 },
-                                Literal {
-                                    kind: IntLiteral {
-                                        value: 2,
-                                        kind: I32,
+                                InstanceCall {
+                                    name: Callable {
+                                        name: Identifier {
+                                            name: "push",
+                                            location: <internal>:0:0,
+                                        },
+                                        type_arguments: [],
+                                        location: <internal>:0:0,
                                     },
-                                    location: loop_iter_loop_continue.lm:31:32,
+                                    callee: StaticCall {
+                                        name: Path {
+                                            root: [
+                                                Namespace {
+                                                    name: Identifier {
+                                                        name: "std",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                },
+                                                Type {
+                                                    name: Identifier {
+                                                        name: "Array",
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    type_arguments: [],
+                                                    location: <internal>:0:0,
+                                                },
+                                            ],
+                                            name: Callable {
+                                                name: Identifier {
+                                                    name: "new",
+                                                    location: <internal>:0:0,
+                                                },
+                                                type_arguments: [],
+                                                location: <internal>:0:0,
+                                            },
+                                            location: <internal>:0:0,
+                                        },
+                                        arguments: [],
+                                        location: loop_iter_loop_continue.lm:27:28,
+                                    },
+                                    arguments: [
+                                        Literal {
+                                            kind: IntLiteral {
+                                                value: 3,
+                                                kind: I32,
+                                            },
+                                            location: loop_iter_loop_continue.lm:34:35,
+                                        },
+                                    ],
+                                    location: loop_iter_loop_continue.lm:27:28,
                                 },
-                                Literal {
-                                    kind: IntLiteral {
-                                        value: 3,
-                                        kind: I32,
+                                Final {
+                                    value: Variable {
+                                        name: Identifier {
+                                            name: "!array",
+                                            location: <internal>:0:0,
+                                        },
+                                        reference: VariableDeclaration {
+                                            name: "!array",
+                                            declared_type: None,
+                                            value: StaticCall {
+                                                name: Path {
+                                                    root: [
+                                                        Namespace {
+                                                            name: Identifier {
+                                                                name: "std",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                        },
+                                                        Type {
+                                                            name: Identifier {
+                                                                name: "Array",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            type_arguments: [],
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ],
+                                                    name: Callable {
+                                                        name: Identifier {
+                                                            name: "new",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        type_arguments: [],
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    location: <internal>:0:0,
+                                                },
+                                                arguments: [],
+                                                location: loop_iter_loop_continue.lm:27:28,
+                                            },
+                                            location: loop_iter_loop_continue.lm:27:28,
+                                        },
+                                        location: loop_iter_loop_continue.lm:27:28,
                                     },
-                                    location: loop_iter_loop_continue.lm:34:35,
+                                    location: loop_iter_loop_continue.lm:27:28,
                                 },
                             ],
                             location: loop_iter_loop_continue.lm:27:28,
