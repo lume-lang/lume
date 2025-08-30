@@ -1031,13 +1031,6 @@ impl TyInferCtx {
         let expr = self.hir.expression(expr).unwrap();
 
         match &expr.kind {
-            lume_hir::ExpressionKind::Array(s) => {
-                for value in &s.values {
-                    self.define_expr_scope(tree, *value, expr_id)?;
-                }
-
-                Ok(())
-            }
             lume_hir::ExpressionKind::Assignment(s) => {
                 self.define_expr_scope(tree, s.target, expr_id)?;
                 self.define_expr_scope(tree, s.value, expr_id)?;

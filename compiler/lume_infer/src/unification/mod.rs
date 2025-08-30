@@ -8,6 +8,7 @@ use lume_types::TypeRef;
 
 use crate::{TyInferCtx, query::Callable};
 
+#[expect(dead_code)]
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum Entry {
     Statement(StatementId),
@@ -134,11 +135,6 @@ impl UnificationPass {
         let expr = tcx.hir_expect_expr(expr);
 
         match &expr.kind {
-            lume_hir::ExpressionKind::Array(s) => {
-                for value in &s.values {
-                    self.unify_expr(tcx, *value)?;
-                }
-            }
             lume_hir::ExpressionKind::Assignment(s) => {
                 self.unify_expr(tcx, s.target)?;
                 self.unify_expr(tcx, s.value)?;

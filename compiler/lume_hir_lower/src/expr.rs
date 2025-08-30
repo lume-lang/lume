@@ -1,11 +1,30 @@
+use std::sync::LazyLock;
+
 use error_snippet::Result;
 
 use crate::LowerModule;
 use crate::err;
 use crate::errors::*;
-use crate::{ARRAY_NEW_FUNC, ARRAY_STD_TYPE, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE};
+use crate::{
+    ARRAY_NEW_FUNC, ARRAY_PUSH_FUNC, ARRAY_STD_TYPE, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE,
+};
 
 use lume_ast::Node;
+
+static ARRAY_INTERNAL_NAME: &str = "!array";
+
+static ARRAY_NEW_PATH: LazyLock<lume_hir::Path> = LazyLock::new(|| {
+    lume_hir::Path::from_parts(
+        Some(vec![
+            lume_hir::PathSegment::namespace("std"),
+            lume_hir::PathSegment::ty(ARRAY_STD_TYPE),
+        ]),
+        lume_hir::PathSegment::callable(ARRAY_NEW_FUNC),
+    )
+});
+
+static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> =
+    LazyLock::new(|| lume_hir::PathSegment::callable(ARRAY_PUSH_FUNC));
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
@@ -62,14 +81,56 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
-        let values = self.expressions(expr.values);
         let location = self.location(expr.location);
+
+        let (var, var_value) = {
+            let val_id = self.next_expr_id();
+            let val = lume_hir::Expression::static_call(val_id, ARRAY_NEW_PATH.clone(), vec![], location);
+            self.map.expressions.insert(val_id, val);
+
+            let var_id = self.next_stmt_id();
+            let var = lume_hir::Statement::define_variable(var_id, ARRAY_INTERNAL_NAME.into(), val_id, location);
+            self.map.statements.insert(var_id, var.clone());
+
+            (var, val_id)
+        };
+
+        let mut body = vec![var.id];
+
+        for value in expr.values {
+            let value = self.expression(value)?;
+
+            let val_id = self.next_expr_id();
+            let val = lume_hir::Expression::call(val_id, ARRAY_PUSH_PATH.clone(), var_value, vec![value], location);
+            self.map.expressions.insert(val_id, val);
+
+            let push_id = self.next_stmt_id();
+            let push = lume_hir::Statement::expression(push_id, val_id, location);
+            self.map.statements.insert(push_id, push);
+
+            body.push(push_id);
+        }
+
+        let lume_hir::StatementKind::Variable(decl) = &var.kind else {
+            unreachable!()
+        };
+
+        let var_ref_id = self.next_expr_id();
+        let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
+        self.map.expressions.insert(var_ref_id, var_ref);
+
+        let res_id = self.next_stmt_id();
+        let res = lume_hir::Statement::final_ref(res_id, var_ref_id, location);
+        self.map.statements.insert(res_id, res);
+
+        body.push(res_id);
+
+        let id = self.next_expr_id();
 
         Ok(lume_hir::Expression {
             id,
             location,
-            kind: lume_hir::ExpressionKind::Array(lume_hir::Array { id, values, location }),
+            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope { id, body, location }),
         })
     }
 

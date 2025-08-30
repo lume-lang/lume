@@ -1019,6 +1019,39 @@ impl Statement {
             StatementKind::InfiniteLoop(_) | StatementKind::IteratorLoop(_)
         )
     }
+
+    /// Creates a new [`Statement`] with a [`VariableDeclaration`] value.
+    pub fn define_variable(id: StatementId, name: Identifier, value: ExpressionId, location: Location) -> Self {
+        Self {
+            id,
+            location,
+            kind: StatementKind::Variable(VariableDeclaration {
+                id,
+                name,
+                declared_type: None,
+                value,
+                location,
+            }),
+        }
+    }
+
+    /// Creates a new [`Statement`] with a [`Expression`] value.
+    pub fn expression(id: StatementId, value: ExpressionId, location: Location) -> Self {
+        Self {
+            id,
+            location,
+            kind: StatementKind::Expression(value),
+        }
+    }
+
+    /// Creates a new [`Statement`] with a [`Final`] value.
+    pub fn final_ref(id: StatementId, value: ExpressionId, location: Location) -> Self {
+        Self {
+            id,
+            location,
+            kind: StatementKind::Final(Final { id, value, location }),
+        }
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -1140,6 +1173,55 @@ impl Expression {
             kind: IntKind::U64,
         }))))
     }
+
+    /// Creates a new [`Expression`] with a [`InstanceCall`] value.
+    pub fn call(
+        id: ExpressionId,
+        name: PathSegment,
+        callee: ExpressionId,
+        args: Vec<ExpressionId>,
+        location: Location,
+    ) -> Self {
+        Self {
+            id,
+            location,
+            kind: ExpressionKind::InstanceCall(InstanceCall {
+                id,
+                name,
+                callee,
+                arguments: args,
+                location,
+            }),
+        }
+    }
+
+    /// Creates a new [`Expression`] with a [`StaticCall`] value.
+    pub fn static_call(id: ExpressionId, name: Path, args: Vec<ExpressionId>, location: Location) -> Self {
+        Self {
+            id,
+            location,
+            kind: ExpressionKind::StaticCall(StaticCall {
+                id,
+                name,
+                arguments: args,
+                location,
+            }),
+        }
+    }
+
+    /// Creates a new [`Expression`] with a [`Variable`] value.
+    pub fn variable(id: ExpressionId, name: Identifier, decl: VariableDeclaration, location: Location) -> Self {
+        Self {
+            id,
+            location,
+            kind: ExpressionKind::Variable(Variable {
+                id,
+                reference: VariableSource::Variable(decl),
+                name,
+                location,
+            }),
+        }
+    }
 }
 
 macro_rules! expr_lit_int {
@@ -1171,7 +1253,6 @@ expr_lit_int!(lit_u32, U32, u32);
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
-    Array(Array),
     Assignment(Assignment),
     Binary(Binary),
     Cast(Cast),
@@ -1292,13 +1373,6 @@ impl CallExpression<'_> {
     pub fn is_instance(&self) -> bool {
         matches!(self, Self::Instanced(_))
     }
-}
-
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
-pub struct Array {
-    pub id: ExpressionId,
-    pub values: Vec<ExpressionId>,
-    pub location: Location,
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
