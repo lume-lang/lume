@@ -194,7 +194,7 @@ impl<'mir> FunctionTransformer<'mir> {
 
         #[cfg(debug_assertions)]
         if func.signature.vararg {
-            debug_assert!(params.len() <= args.len());
+            debug_assert!(params.len() - 1 <= args.len());
         } else {
             debug_assert!(params.len() == args.len());
         }

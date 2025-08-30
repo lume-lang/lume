@@ -77,9 +77,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            // Intrinsic methods are only defined so they can be type-checked against.
-            // They do not need to exist within the binary.
-            if method.kind == lume_types::MethodKind::Intrinsic {
+            if self.should_skip_method(method) {
                 continue;
             }
 
@@ -111,7 +109,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if method.kind == lume_types::MethodKind::Intrinsic {
+            if self.should_skip_method(method) {
                 continue;
             }
 
@@ -143,6 +141,16 @@ impl<'tcx> Lower<'tcx> {
         self.ir.functions.get_mut(&id).unwrap().block = block;
 
         Ok(())
+    }
+
+    fn should_skip_method(&self, method: &lume_types::Method) -> bool {
+        // Intrinsic methods are only defined so they can be type-checked against.
+        // They do not need to exist within the binary.
+        if method.kind == lume_types::MethodKind::Intrinsic {
+            return true;
+        }
+
+        false
     }
 }
 

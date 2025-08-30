@@ -1,6 +1,11 @@
+pub mod array;
 pub mod mem;
 pub mod metadata;
 pub mod pointer;
+pub mod print;
+pub mod string;
+
+pub use string::*;
 
 /// Retrieves of the type metadata of the first type parameter.
 ///
