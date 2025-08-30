@@ -49,6 +49,11 @@ impl CacheStore {
         self.inner.write().unwrap()
     }
 
+    /// Clears the entire [`CacheStore`] of items.
+    pub fn clear(&self) {
+        self.write().clear();
+    }
+
     /// Attempts to retrieve the value with the given key from the
     /// [`CacheStore`], if it exists. If the value is found within the store,
     /// it is cloned and returned as `Some(...)`. Otherwise, returns `None`.
