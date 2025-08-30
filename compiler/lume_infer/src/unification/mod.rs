@@ -8,13 +8,13 @@ use lume_types::TypeRef;
 
 use crate::{TyInferCtx, query::Callable};
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum Entry {
     Statement(StatementId),
     Expression(ExpressionId),
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct TypeParameterReference {
     pub(crate) entry: Entry,
     pub(crate) param: TypeParameterId,
@@ -100,7 +100,12 @@ impl UnificationPass {
         let stmt = tcx.hir_expect_stmt(stmt);
 
         match &stmt.kind {
-            lume_hir::StatementKind::Variable(s) => self.unify_expr(tcx, s.value),
+            lume_hir::StatementKind::Variable(decl) => {
+                self.unify_expr(tcx, decl.value)?;
+                self.try_resolve_variable_decl(tcx, decl)?;
+
+                Ok(())
+            }
             lume_hir::StatementKind::Break(_) | lume_hir::StatementKind::Continue(_) => Ok(()),
             lume_hir::StatementKind::Final(s) => {
                 self.unify_expr(tcx, s.value)?;
@@ -234,6 +239,52 @@ impl UnificationPass {
         Ok(())
     }
 
+    fn try_resolve_variable_decl<'tcx>(
+        &mut self,
+        tcx: &'tcx TyInferCtx,
+        decl: &lume_hir::VariableDeclaration,
+    ) -> Result<()> {
+        // If the declaration doesn't have any explicit type, we can't use it
+        // to infer type parameters on it's value.
+        let Some(declared_type) = &decl.declared_type else {
+            return Ok(());
+        };
+
+        let declared_type_ref = tcx.mk_type_ref_from_expr(declared_type, decl.value)?;
+        let value_type_ref = tcx.type_of(decl.value)?;
+
+        if let Some(type_param_ref) = tcx.as_type_parameter(&value_type_ref)? {
+            let work_key = TypeParameterReference {
+                entry: Entry::Expression(decl.value),
+                param: type_param_ref.id,
+            };
+
+            self.add_substitution(0, work_key, value_type_ref);
+
+            return Ok(());
+        };
+
+        for (idx, (decl_type_arg, type_param_arg)) in declared_type_ref
+            .type_arguments
+            .iter()
+            .zip(value_type_ref.type_arguments.iter())
+            .enumerate()
+        {
+            let Some(type_param_ref) = tcx.as_type_parameter(type_param_arg)? else {
+                continue;
+            };
+
+            let work_key = TypeParameterReference {
+                entry: Entry::Expression(decl.value),
+                param: type_param_ref.id,
+            };
+
+            self.add_substitution(idx, work_key, decl_type_arg.to_owned());
+        }
+
+        Ok(())
+    }
+
     fn try_resolve_instance_call<'tcx>(&mut self, tcx: &'tcx TyInferCtx, call: &lume_hir::InstanceCall) -> Result<()> {
         let mut callee = call.callee;
 
@@ -260,29 +311,30 @@ impl UnificationPass {
                 continue;
             };
 
+            let Some(inferred_type_param) = tcx.infer_type_arg_param(type_param.id, &params, &args)? else {
+                continue;
+            };
+
             let work_key = TypeParameterReference {
                 entry: Entry::Expression(callee),
                 param: type_param.id,
             };
 
-            if !self.work_map.contains(&work_key) {
-                continue;
-            }
-
-            let Some(inferred_type_param) = tcx.infer_type_arg_param(type_param.id, &params, &args)? else {
-                continue;
-            };
-
-            let substitute = TypeArgumentSubstitute {
-                idx,
-                ty: inferred_type_param,
-            };
-
-            self.work_map.remove(&work_key);
-            self.substitution_map.insert(work_key, substitute);
+            self.add_substitution(idx, work_key, inferred_type_param);
         }
 
         Ok(())
+    }
+
+    fn add_substitution(&mut self, idx: usize, work_key: TypeParameterReference, replacement: TypeRef) {
+        if !self.work_map.contains(&work_key) {
+            return;
+        }
+
+        let substitute = TypeArgumentSubstitute { idx, ty: replacement };
+
+        self.work_map.remove(&work_key);
+        self.substitution_map.insert(work_key, substitute);
     }
 }
 
