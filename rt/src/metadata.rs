@@ -16,6 +16,9 @@ pub struct FunctionId(usize);
 #[repr(C)]
 #[derive(Debug)]
 pub struct TypeMetadata {
+    /// Gets the unique ID of the type, used mostly for internal referencing.
+    pub type_id: TypeId,
+
     /// Gets the fully qualified name of the type, including namespace.
     pub full_name: *const c_char,
 
@@ -24,9 +27,6 @@ pub struct TypeMetadata {
 
     /// Gets the canonical alignment of the type, in bytes.
     pub alignment: usize,
-
-    /// Gets the unique ID of the type, used mostly for internal referencing.
-    pub type_id: TypeId,
 
     /// Gets all the fields defined on the type, in the order that they're declared.
     pub fields: *const List<FieldMetadata>,
@@ -52,11 +52,11 @@ pub struct FieldMetadata {
 #[repr(C)]
 #[derive(Debug)]
 pub struct MethodMetadata {
-    /// Gets the fully-qualified name of the method, including namespace and type name.
-    pub full_name: *const c_char,
-
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: FunctionId,
+
+    /// Gets the fully-qualified name of the method, including namespace and type name.
+    pub full_name: *const c_char,
 
     /// Gets all the parameters defined on the method, in the order that they're declared.
     pub parameters: *const List<ParameterMetadata>,

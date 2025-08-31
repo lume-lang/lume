@@ -167,6 +167,21 @@ impl TyInferCtx {
         ty
     }
 
+    /// Returns the [`lume_hir::TraitDefinition`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::TraitDefinition`] with the given ID was found.
+    #[track_caller]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_trait(&self, id: ItemId) -> &lume_hir::TraitDefinition {
+        let lume_hir::TypeDefinition::Trait(ty) = self.hir_expect_type(id) else {
+            panic!("expected HIR trait with ID of {id:?}")
+        };
+
+        ty
+    }
+
     /// Returns the [`lume_hir::Expression`] with the given ID, if any.
     ///
     /// # Panics
@@ -423,6 +438,47 @@ impl TyInferCtx {
             lume_hir::Def::Item(item) => self.hir_body_of_item(item.id()),
             ty => panic!("bug!: item type cannot contain a body: {ty:?}"),
         }
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_trait_def_of_impl(
+        &self,
+        trait_impl: &lume_hir::TraitImplementation,
+    ) -> Result<&lume_hir::TraitDefinition> {
+        let trait_name = &trait_impl.name.name;
+        let Some(trait_def_ty) = self.tdb().find_type(trait_name) else {
+            panic!("bug!: trait definition with name `{trait_name:+}` does not exist");
+        };
+
+        let lume_types::TypeKind::User(lume_types::UserType::Trait(trait_kind)) = &trait_def_ty.kind else {
+            panic!("bug!: expected trait definition type to be trait");
+        };
+
+        Ok(self.hir_expect_trait(trait_kind.id))
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_trait_method_def_of_impl(
+        &self,
+        trait_method_impl: &lume_hir::TraitMethodImplementation,
+    ) -> Result<&lume_hir::TraitMethodDefinition> {
+        for parent in self.hir_parent_iter(trait_method_impl.id) {
+            if let lume_hir::Def::Item(lume_hir::Item::TraitImpl(trait_impl)) = parent {
+                let trait_def = self.hir_trait_def_of_impl(trait_impl)?;
+
+                let Some(trait_method_def) = trait_def
+                    .methods
+                    .iter()
+                    .find(|method| method.name == trait_method_impl.name)
+                else {
+                    panic!("bug!: trait method implementation exists without trait method definition");
+                };
+
+                return Ok(trait_method_def);
+            }
+        }
+
+        panic!("bug!: trait method implementation defined outside trait implementation");
     }
 
     /// Returns the span of the HIR definition with the given ID.

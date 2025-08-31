@@ -1,6 +1,9 @@
 namespace std
 
 pub struct Type {
+    /// Gets the unique ID of the type, used mostly for internal referencing.
+    pub type_id: UInt64;
+
     /// Gets the fully qualified name of the type, including namespace.
     pub full_name: String;
 
@@ -9,9 +12,6 @@ pub struct Type {
 
     /// Gets the canonical alignment of the type, in bytes.
     pub alignment: UInt64;
-
-    /// Gets the unique ID of the type, used mostly for internal referencing.
-    pub type_id: UInt64;
 
     /// Gets all the fields defined on the type, in the order that they're declared.
     pub fields: Array<Field>;
@@ -33,6 +33,9 @@ pub struct Field {
 }
 
 pub struct Method {
+    /// Gets the unique ID of the method.
+    pub id: UInt64;
+
     /// Gets the fully-qualified name of the method, including namespace and type name.
     pub full_name: String;
 
@@ -41,6 +44,9 @@ pub struct Method {
 
     /// Gets the return type of the method.
     pub return_type: Type;
+
+    /// Gets the address of the method in memory.
+    pub address: UInt64;
 }
 
 pub struct Parameter {

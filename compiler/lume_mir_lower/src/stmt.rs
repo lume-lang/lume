@@ -1,6 +1,6 @@
 use crate::FunctionTransformer;
 
-impl FunctionTransformer<'_> {
+impl FunctionTransformer<'_, '_> {
     pub(super) fn block(&mut self, block: &lume_tir::Block) -> Option<lume_mir::Operand> {
         let mut val = None;
 

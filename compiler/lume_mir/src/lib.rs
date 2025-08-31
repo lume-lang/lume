@@ -53,7 +53,7 @@ impl std::fmt::Display for ModuleMap {
 
 /// Defines a function signature, such as parameter types and return type,
 /// as well as any declared modifiers such as `external` or `inline`.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Signature {
     /// Defines whether the function is externally defined or not.
     ///
@@ -94,7 +94,7 @@ impl std::fmt::Display for Signature {
 }
 
 /// Defines a parameter in a function signature.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
     pub name: Interned<String>,
     pub ty: Type,
@@ -610,6 +610,32 @@ impl BasicBlock {
         });
     }
 
+    /// Sets the terminator of the current block to a conditional branch.
+    pub fn conditional_branch_with(
+        &mut self,
+        cond: RegisterId,
+        then_block: BasicBlockId,
+        then_block_args: Vec<RegisterId>,
+        else_block: BasicBlockId,
+        else_block_args: Vec<RegisterId>,
+        location: Location,
+    ) {
+        self.set_terminator(Terminator {
+            kind: TerminatorKind::ConditionalBranch {
+                condition: cond,
+                then_block: BlockBranchSite {
+                    block: then_block,
+                    arguments: then_block_args,
+                },
+                else_block: BlockBranchSite {
+                    block: else_block,
+                    arguments: else_block_args,
+                },
+            },
+            location,
+        });
+    }
+
     /// Returns the given value, if any is defined. Otherwise, returns `void`.
     pub fn return_any(&mut self, value: Option<Operand>, location: Location) {
         if let Some(value) = value {
@@ -773,6 +799,11 @@ impl Registers {
         self.regs.iter_mut()
     }
 
+    /// Iterates over all parameter registers.
+    pub fn iter_params(&self) -> impl Iterator<Item = &Register> {
+        self.regs.iter().filter(|reg| reg.block.is_none())
+    }
+
     /// Replaces all the existing registers within the function.
     pub fn replace_all(&mut self, replacement: impl Iterator<Item = Register>) {
         self.regs = replacement.collect();
@@ -904,6 +935,13 @@ pub enum DeclarationKind {
 
     /// Represents a call to a function.
     Call { func_id: DefId, args: Vec<Operand> },
+
+    /// Represents an indirect call to a function.
+    IndirectCall {
+        ptr: RegisterId,
+        signature: Signature,
+        args: Vec<Operand>,
+    },
 }
 
 impl Declaration {
@@ -913,6 +951,12 @@ impl Declaration {
             DeclarationKind::Cast { operand, .. } => vec![*operand],
             DeclarationKind::Intrinsic { args, .. } | DeclarationKind::Call { args, .. } => {
                 args.iter().flat_map(Operand::register_refs).collect()
+            }
+            DeclarationKind::IndirectCall { ptr, args, .. } => {
+                let mut args = args.iter().flat_map(Operand::register_refs).collect::<Vec<_>>();
+                args.push(*ptr);
+
+                args
             }
         }
     }
@@ -931,6 +975,11 @@ impl std::fmt::Display for Declaration {
             DeclarationKind::Call { func_id, args } => write!(
                 f,
                 "(call {func_id})({})",
+                args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
+            ),
+            DeclarationKind::IndirectCall { ptr, args, .. } => write!(
+                f,
+                "(call {ptr})({})",
                 args.iter().map(|arg| format!("{arg}")).collect::<Vec<_>>().join(", ")
             ),
         }
@@ -974,10 +1023,10 @@ impl std::fmt::Display for Intrinsic {
         match &self {
             Self::FloatEq { .. } | Self::IntEq { .. } | Self::BooleanEq => write!(f, "=="),
             Self::FloatNe { .. } | Self::IntNe { .. } | Self::BooleanNe => write!(f, "!="),
-            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<"),
-            Self::FloatLt { .. } | Self::IntLt { .. } => write!(f, "<="),
-            Self::FloatGe { .. } | Self::IntGe { .. } => write!(f, ">"),
-            Self::FloatGt { .. } | Self::IntGt { .. } => write!(f, ">="),
+            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<<"),
+            Self::FloatLt { .. } | Self::IntLt { .. } => write!(f, "<"),
+            Self::FloatGe { .. } | Self::IntGe { .. } => write!(f, ">="),
+            Self::FloatGt { .. } | Self::IntGt { .. } => write!(f, ">"),
             Self::FloatAdd { .. } | Self::IntAdd { .. } => write!(f, "+"),
             Self::FloatSub { .. } | Self::IntSub { .. } => write!(f, "-"),
             Self::FloatMul { .. } | Self::IntMul { .. } => write!(f, "*"),

@@ -1,3 +1,4 @@
+pub(crate) mod dynamic;
 pub(crate) mod expr;
 pub(crate) mod passes;
 pub(crate) mod stmt;
@@ -8,6 +9,8 @@ use std::collections::HashMap;
 use lume_mir::{Function, ModuleMap, RegisterId};
 use lume_span::{DefId, Location};
 use lume_typech::TyCheckCtx;
+
+use crate::dynamic::DynamicShimBuilder;
 
 /// Defines a transformer which will lower a typed HIR map into an MIR map.
 pub struct ModuleTransformer<'tcx> {
@@ -51,8 +54,8 @@ impl<'tcx> ModuleTransformer<'tcx> {
     }
 }
 
-pub(crate) struct FunctionTransformer<'mir> {
-    transformer: &'mir ModuleTransformer<'mir>,
+pub(crate) struct FunctionTransformer<'mir, 'tcx> {
+    transformer: &'mir mut ModuleTransformer<'tcx>,
 
     /// Defines the MIR function which is being created.
     func: Function,
@@ -60,9 +63,9 @@ pub(crate) struct FunctionTransformer<'mir> {
     variables: HashMap<lume_tir::VariableId, RegisterId>,
 }
 
-impl<'mir> FunctionTransformer<'mir> {
+impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines the MIR function which is being created.
-    pub fn define(transformer: &'mir ModuleTransformer, id: DefId, func: &lume_tir::Function) -> Function {
+    pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: DefId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
             func: Function::new(id, func.name_as_str(), func.location),
@@ -75,7 +78,7 @@ impl<'mir> FunctionTransformer<'mir> {
     }
 
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(transformer: &'mir ModuleTransformer, id: DefId, func: &lume_tir::Function) -> Function {
+    pub fn transform(transformer: &'mir mut ModuleTransformer<'tcx>, id: DefId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
             func: Function::new(id, func.name_as_str(), func.location),
@@ -84,13 +87,22 @@ impl<'mir> FunctionTransformer<'mir> {
 
         transformer.lower_signature(func);
 
-        if let Some(body) = &func.block {
-            transformer.lower(body);
-        } else {
-            transformer.func.signature.external = true;
-        }
+        match func.kind {
+            lume_tir::FunctionKind::Static => {
+                if let Some(body) = &func.block {
+                    transformer.lower(body);
+                } else {
+                    transformer.func.signature.external = true;
+                }
 
-        transformer.run_passes();
+                transformer.run_passes();
+            }
+            lume_tir::FunctionKind::Dynamic => {
+                DynamicShimBuilder::new(&mut transformer, id).build();
+
+                passes::RenameSsaVariables::default().execute(&mut transformer.func);
+            }
+        }
 
         transformer.func
     }
@@ -185,19 +197,67 @@ impl<'mir> FunctionTransformer<'mir> {
     fn call(
         &mut self,
         func_id: DefId,
-        mut args: Vec<lume_mir::Operand>,
+        args: Vec<lume_mir::Operand>,
         ret_ty: lume_mir::Type,
         location: Location,
     ) -> lume_mir::Operand {
-        let func = self.transformer.mir.function(func_id);
-        let params = &func.signature.parameters;
+        let func_sig = self.transformer.mir.function(func_id).signature.clone();
+        let args = self.normalize_call_argumets(&func_sig.parameters, &args);
 
         #[cfg(debug_assertions)]
-        if func.signature.vararg {
-            debug_assert!(params.len() - 1 <= args.len());
-        } else {
-            debug_assert!(params.len() == args.len());
+        {
+            if func_sig.vararg {
+                debug_assert!(func_sig.parameters.len() - 1 <= args.len());
+            } else {
+                debug_assert!(func_sig.parameters.len() == args.len());
+            }
         }
+
+        let call_inst = self.func.declare(
+            ret_ty,
+            lume_mir::Declaration {
+                kind: lume_mir::DeclarationKind::Call { func_id, args },
+                location,
+            },
+        );
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: call_inst },
+            location,
+        }
+    }
+
+    /// Defines a new indirect call instruction in the current function block.
+    fn call_indirect(
+        &mut self,
+        ptr: RegisterId,
+        signature: lume_mir::Signature,
+        args: Vec<lume_mir::Operand>,
+        ret_ty: lume_mir::Type,
+        location: Location,
+    ) -> lume_mir::Operand {
+        let args = self.normalize_call_argumets(&signature.parameters, &args);
+
+        let call_inst = self.func.declare(
+            ret_ty,
+            lume_mir::Declaration {
+                kind: lume_mir::DeclarationKind::IndirectCall { ptr, signature, args },
+                location,
+            },
+        );
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: call_inst },
+            location,
+        }
+    }
+
+    fn normalize_call_argumets(
+        &mut self,
+        params: &[lume_mir::Parameter],
+        args: &[lume_mir::Operand],
+    ) -> Vec<lume_mir::Operand> {
+        let mut args = args.to_vec();
 
         // Generic parameters are lowering into accepting pointer types, so all
         // types of argument can be passed.
@@ -230,17 +290,6 @@ impl<'mir> FunctionTransformer<'mir> {
             };
         }
 
-        let call_inst = self.func.declare(
-            ret_ty,
-            lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Call { func_id, args },
-                location,
-            },
-        );
-
-        lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: call_inst },
-            location,
-        }
+        args
     }
 }
