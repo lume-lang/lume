@@ -1,29 +1,6 @@
 use indexmap::IndexMap;
+use lume_span::DefId;
 use lume_types::TypeId;
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub enum FunctionKind {
-    Function,
-    Method,
-}
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(usize);
-
-impl FunctionId {
-    pub fn new(kind: FunctionKind, id: usize) -> Self {
-        // Used to prevent `hash_id` from creating a value of 0 when the kind is
-        // `FunctionKind::Function` and the ID is 0. A function ID of 0 can look
-        // wrong or misleading, so we're explicitly removing that possiblity.
-        static HASH_OFFSET: usize = 0x4D6B_0189;
-
-        Self(lume_span::hash_id(&(kind, id + HASH_OFFSET)))
-    }
-
-    pub fn as_usize(self) -> usize {
-        self.0
-    }
-}
 
 #[derive(Default, Debug, Clone)]
 pub struct StaticMetadata {
@@ -104,7 +81,7 @@ pub struct MethodMetadata {
     pub full_name: String,
 
     /// Gets the unique ID of the method, used mostly for internal referencing.
-    pub func_id: FunctionId,
+    pub func_id: DefId,
 
     /// Gets all the parameters defined on the method, in the order that they're declared.
     pub parameters: Vec<ParameterMetadata>,

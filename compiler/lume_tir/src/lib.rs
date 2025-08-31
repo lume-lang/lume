@@ -1,12 +1,13 @@
 use indexmap::IndexMap;
+use lume_span::DefId;
 use lume_span::{ExpressionId, Interned, Location, StatementId};
-use lume_type_metadata::{FunctionId, StaticMetadata, TypeMetadataId};
+use lume_type_metadata::{StaticMetadata, TypeMetadataId};
 use lume_types::{Field, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<FunctionId, Function>,
+    pub functions: IndexMap<DefId, Function>,
 }
 
 #[derive(Debug, Clone, Eq)]
@@ -156,7 +157,7 @@ pub struct VariableId(pub usize);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
-    pub id: FunctionId,
+    pub id: DefId,
     pub name: Path,
     pub parameters: Vec<Parameter>,
     pub type_params: TypeParameters,
@@ -458,7 +459,7 @@ pub struct ConstructorField {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Call {
     pub id: ExpressionId,
-    pub function: FunctionId,
+    pub function: DefId,
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
     pub return_type: TypeRef,

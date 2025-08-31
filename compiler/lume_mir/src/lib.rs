@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
-use lume_span::{Interned, Location};
+use lume_span::{DefId, Interned, Location};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 
 /// Represents a map of all functions within a compilation
@@ -10,7 +10,7 @@ use lume_type_metadata::{StaticMetadata, TypeMetadata};
 #[derive(Default, Debug, Clone)]
 pub struct ModuleMap {
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<FunctionId, Function>,
+    pub functions: IndexMap<DefId, Function>,
 }
 
 impl ModuleMap {
@@ -27,7 +27,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
-    pub fn function(&self, id: FunctionId) -> &Function {
+    pub fn function(&self, id: DefId) -> &Function {
         self.functions.get(&id).unwrap()
     }
 
@@ -36,7 +36,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
-    pub fn function_mut(&mut self, id: FunctionId) -> &mut Function {
+    pub fn function_mut(&mut self, id: DefId) -> &mut Function {
         self.functions.get_mut(&id).unwrap()
     }
 }
@@ -48,20 +48,6 @@ impl std::fmt::Display for ModuleMap {
         }
 
         Ok(())
-    }
-}
-
-/// Unique identifier for a function within a module.
-///
-/// [`FunctionId`]s refer to the specific MIR function which
-/// is being referred to, so it can be used to optimize call
-/// site expressions.
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct FunctionId(pub usize);
-
-impl std::fmt::Display for FunctionId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "F{:?}", self.0)
     }
 }
 
@@ -127,7 +113,7 @@ impl std::fmt::Display for Parameter {
 /// functions and methods are represented by this struct.
 #[derive(Debug, Clone)]
 pub struct Function {
-    pub id: FunctionId,
+    pub id: DefId,
     pub name: String,
     pub signature: Signature,
 
@@ -142,7 +128,7 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(id: FunctionId, name: String, location: Location) -> Self {
+    pub fn new(id: DefId, name: String, location: Location) -> Self {
         Function {
             id,
             name,
@@ -917,7 +903,7 @@ pub enum DeclarationKind {
     Intrinsic { name: Intrinsic, args: Vec<Operand> },
 
     /// Represents a call to a function.
-    Call { func_id: FunctionId, args: Vec<Operand> },
+    Call { func_id: DefId, args: Vec<Operand> },
 }
 
 impl Declaration {

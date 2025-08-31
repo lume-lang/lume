@@ -8,9 +8,8 @@ pub mod reify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_span::{Internable, Location};
+use lume_span::{DefId, Internable, Location};
 use lume_tir::{TypedIR, VariableId, VariableSource};
-use lume_type_metadata::{FunctionId, FunctionKind};
 use lume_typech::TyCheckCtx;
 
 pub use lume_type_metadata::StaticMetadata;
@@ -86,11 +85,10 @@ impl<'tcx> Lower<'tcx> {
 
             let location = self.tcx.hir_span_of_def(method.hir);
 
-            let id = FunctionId::new(FunctionKind::Method, method.id.0);
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(id, method.hir, &method.name, method.sig(), location)?;
+            let func = func_lower.define(method.hir, &method.name, method.sig(), location)?;
 
-            self.ir.functions.insert(id, func);
+            self.ir.functions.insert(func.id, func);
         }
 
         for func in self.tcx.tdb().functions() {
@@ -98,11 +96,10 @@ impl<'tcx> Lower<'tcx> {
 
             let location = self.tcx.hir_span_of_def(lume_span::DefId::Item(func.hir));
 
-            let id = FunctionId::new(FunctionKind::Function, func.id.index.as_usize());
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(id, lume_span::DefId::Item(func.hir), &func.name, func.sig(), location)?;
+            let func = func_lower.define(DefId::Item(func.hir), &func.name, func.sig(), location)?;
 
-            self.ir.functions.insert(id, func);
+            self.ir.functions.insert(func.id, func);
         }
 
         Ok(())
@@ -116,22 +113,20 @@ impl<'tcx> Lower<'tcx> {
 
             tracing::debug!(target: "tir_lower", "lowering method {:+}", method.name);
 
-            let id = FunctionId::new(FunctionKind::Method, method.id.0);
-            self.lower_block(id, method.hir)?;
+            self.lower_block(method.hir)?;
         }
 
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "lowering function {:+}", func.name);
 
-            let id = FunctionId::new(FunctionKind::Function, func.id.index.as_usize());
-            self.lower_block(id, lume_span::DefId::Item(func.hir))?;
+            self.lower_block(DefId::Item(func.hir))?;
         }
 
         Ok(())
     }
 
-    fn lower_block(&mut self, id: FunctionId, hir: lume_span::DefId) -> Result<()> {
-        let block = if let Some(body) = self.tcx.hir_body_of_def(hir) {
+    fn lower_block(&mut self, id: DefId) -> Result<()> {
+        let block = if let Some(body) = self.tcx.hir_body_of_def(id) {
             let mut func_lower = LowerFunction::new(self);
 
             Some(func_lower.lower_block(body)?)
@@ -174,17 +169,16 @@ impl<'tcx> LowerFunction<'tcx> {
 
     fn define(
         &mut self,
-        id: FunctionId,
-        hir_id: lume_span::DefId,
+        id: DefId,
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
         location: Location,
     ) -> Result<lume_tir::Function> {
-        let name = self.path_hir(name, hir_id)?;
+        let name = self.path_hir(name, id)?;
         let hir_type_params = self
             .lower
             .tcx
-            .hir_avail_type_params(hir_id)
+            .hir_avail_type_params(id)
             .iter()
             .map(|param| param.type_param_id.unwrap())
             .collect::<Vec<_>>();

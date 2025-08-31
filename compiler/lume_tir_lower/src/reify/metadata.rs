@@ -157,7 +157,7 @@ impl ReificationPass<'_> {
 
         for method in self.tcx.methods_defined_on(type_ref) {
             let full_name = format!("{:+}", method.name);
-            let func_id = FunctionId::new(FunctionKind::Method, method.id.0);
+            let func_id = method.hir;
 
             let parameters = method
                 .parameters
