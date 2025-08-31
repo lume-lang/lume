@@ -52,8 +52,6 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
-        self.declare_type_metadata();
-
         let functions = std::mem::take(&mut self.context.mir.functions);
 
         for func in functions.values() {
@@ -62,6 +60,9 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
             self.declared_funcs
                 .insert(func.id, DeclaredFunction { id: func_id, sig });
         }
+
+        self.context.mir.functions = functions;
+        self.declare_type_metadata();
 
         let mut ctx = self.module_mut().make_context();
         let mut builder_ctx = FunctionBuilderContext::new();
@@ -72,7 +73,7 @@ impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
             None
         };
 
-        for func in functions.values() {
+        for func in self.context.mir.functions.values() {
             if func.signature.external {
                 continue;
             }

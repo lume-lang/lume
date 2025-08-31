@@ -77,7 +77,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if self.should_skip_method(method) {
+            if should_skip_method(method, self.tcx.hir_body_of_def(method.hir).is_some()) {
                 continue;
             }
 
@@ -107,7 +107,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if self.should_skip_method(method) {
+            if should_skip_method(method, self.tcx.hir_body_of_def(method.hir).is_some()) {
                 continue;
             }
 
@@ -138,16 +138,22 @@ impl<'tcx> Lower<'tcx> {
 
         Ok(())
     }
+}
 
-    fn should_skip_method(&self, method: &lume_types::Method) -> bool {
-        // Intrinsic methods are only defined so they can be type-checked against.
-        // They do not need to exist within the binary.
-        if method.kind == lume_types::MethodKind::Intrinsic {
-            return true;
-        }
-
-        false
+pub(crate) fn should_skip_method(method: &lume_types::Method, has_body: bool) -> bool {
+    // Intrinsic methods are only defined so they can be type-checked against.
+    // They do not need to exist within the binary.
+    if method.kind == lume_types::MethodKind::Intrinsic {
+        return true;
     }
+
+    // Trait method definitions without any default implementation have no reason to be in the
+    // binary, since they have no body to codegen from.
+    if method.kind == lume_types::MethodKind::TraitDefinition && !has_body {
+        return true;
+    }
+
+    false
 }
 
 struct LowerFunction<'tcx> {

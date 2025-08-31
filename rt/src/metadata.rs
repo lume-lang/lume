@@ -3,7 +3,7 @@
 //! None of these structs are meant to be exported - they exist purely to
 //! better read type information from passed metadata arguments.
 
-use std::os::raw::c_char;
+use std::os::raw::{c_char, c_void};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -67,6 +67,9 @@ pub struct MethodMetadata {
 
     /// Gets the return type of the method.
     pub return_type: *const TypeMetadata,
+
+    /// Gets the address of the method.
+    pub func_ptr: *const c_void,
 }
 
 #[repr(C)]
