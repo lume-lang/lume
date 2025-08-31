@@ -77,16 +77,21 @@ impl<'tcx> Lower<'tcx> {
 
     fn define_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if should_skip_method(method, self.tcx.hir_body_of_def(method.hir).is_some()) {
+            if method.is_intrinsic() {
                 continue;
             }
 
             tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
 
             let location = self.tcx.hir_span_of_def(method.hir);
+            let kind = if is_dynamic_dispatch(method, self.tcx.hir_body_of_def(method.hir).is_some()) {
+                lume_tir::FunctionKind::Dynamic
+            } else {
+                lume_tir::FunctionKind::Static
+            };
 
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(method.hir, &method.name, method.sig(), location)?;
+            let func = func_lower.define(method.hir, &method.name, method.sig(), kind, location)?;
 
             self.ir.functions.insert(func.id, func);
         }
@@ -97,7 +102,13 @@ impl<'tcx> Lower<'tcx> {
             let location = self.tcx.hir_span_of_def(lume_span::DefId::Item(func.hir));
 
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(DefId::Item(func.hir), &func.name, func.sig(), location)?;
+            let func = func_lower.define(
+                DefId::Item(func.hir),
+                &func.name,
+                func.sig(),
+                lume_tir::FunctionKind::Static,
+                location,
+            )?;
 
             self.ir.functions.insert(func.id, func);
         }
@@ -143,17 +154,24 @@ impl<'tcx> Lower<'tcx> {
 pub(crate) fn should_skip_method(method: &lume_types::Method, has_body: bool) -> bool {
     // Intrinsic methods are only defined so they can be type-checked against.
     // They do not need to exist within the binary.
-    if method.kind == lume_types::MethodKind::Intrinsic {
+    if method.is_intrinsic() {
         return true;
     }
 
     // Trait method definitions without any default implementation have no reason to be in the
     // binary, since they have no body to codegen from.
-    if method.kind == lume_types::MethodKind::TraitDefinition && !has_body {
+    if is_dynamic_dispatch(method, has_body) {
         return true;
     }
 
     false
+}
+
+/// Determines whether the given method is meant to be invoked dynamically via dynamic dispatch.
+#[inline]
+#[must_use]
+pub(crate) fn is_dynamic_dispatch(method: &lume_types::Method, has_body: bool) -> bool {
+    method.kind == lume_types::MethodKind::TraitDefinition && !has_body
 }
 
 struct LowerFunction<'tcx> {
@@ -178,6 +196,7 @@ impl<'tcx> LowerFunction<'tcx> {
         id: DefId,
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
+        kind: lume_tir::FunctionKind,
         location: Location,
     ) -> Result<lume_tir::Function> {
         let name = self.path_hir(name, id)?;
@@ -196,6 +215,7 @@ impl<'tcx> LowerFunction<'tcx> {
         Ok(lume_tir::Function {
             id,
             name,
+            kind,
             parameters,
             type_params,
             return_type,

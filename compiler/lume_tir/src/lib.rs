@@ -155,10 +155,17 @@ impl std::fmt::Display for Path {
 #[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct VariableId(pub usize);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FunctionKind {
+    Static,
+    Dynamic,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub id: DefId,
     pub name: Path,
+    pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub type_params: TypeParameters,
     pub return_type: TypeRef,

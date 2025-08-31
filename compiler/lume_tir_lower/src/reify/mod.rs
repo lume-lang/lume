@@ -2,7 +2,7 @@ pub mod metadata;
 mod visitor;
 
 use lume_errors::Result;
-use lume_span::Internable;
+use lume_span::{DefId, Internable};
 use lume_tir::{Call, ExpressionKind, Function, Parameter};
 use lume_type_metadata::*;
 use lume_typech::TyCheckCtx;
@@ -64,6 +64,30 @@ impl<'tcx> ReificationPass<'tcx> {
                 location: func.location,
             });
         }
+
+        if self.is_dynamic_dispatch_call(func.id) {
+            let name = String::from("$_dyn").intern();
+            let ty = self.tcx.std_type();
+
+            func.parameters.push(Parameter {
+                index: func.parameters.len(),
+                var: lume_tir::VariableId(usize::MAX),
+                name,
+                ty,
+                vararg: false,
+                location: func.location,
+            });
+        }
+    }
+
+    fn is_dynamic_dispatch_call(&self, id: DefId) -> bool {
+        if let lume_hir::Def::TraitMethodDef(method_def) = self.tcx.hir_expect_def(id)
+            && method_def.signature().is_instanced()
+        {
+            true
+        } else {
+            false
+        }
     }
 
     fn add_metadata_calls(&mut self, func: &mut Function) -> Result<()> {
@@ -78,6 +102,19 @@ impl<'tcx> ReificationPass<'tcx> {
                 self.add_metadata_argument_inherited(call, idx, type_arg)
             } else {
                 self.add_metadata_argument_concrete(type_arg)?
+            };
+
+            metadata_args.push(argument);
+        }
+
+        if self.is_dynamic_dispatch_call(call.function) {
+            let idx = call.type_arguments.len();
+            let instance_ty = &call.arguments.first().unwrap().ty;
+
+            let argument = if self.tcx.is_type_parameter(instance_ty)? {
+                self.add_metadata_argument_inherited(call, idx, instance_ty)
+            } else {
+                self.add_metadata_argument_concrete(instance_ty)?
             };
 
             metadata_args.push(argument);
