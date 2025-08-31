@@ -91,11 +91,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             lume_tir::FunctionKind::Static => {
                 if let Some(body) = &func.block {
                     transformer.lower(body);
+                    transformer.run_passes();
                 } else {
                     transformer.func.signature.external = true;
                 }
-
-                transformer.run_passes();
             }
             lume_tir::FunctionKind::Dynamic => {
                 DynamicShimBuilder::new(&mut transformer, id).build();

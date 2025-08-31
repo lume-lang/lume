@@ -75,7 +75,9 @@ impl UnificationPass {
                 }
                 lume_hir::Item::TraitImpl(trait_impl) => {
                     for method in &trait_impl.methods {
-                        self.unify_block(tcx, &method.block)?;
+                        if let Some(block) = &method.block {
+                            self.unify_block(tcx, block)?;
+                        }
                     }
                 }
                 lume_hir::Item::Function(func) => {

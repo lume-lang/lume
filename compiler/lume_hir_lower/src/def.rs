@@ -409,8 +409,13 @@ impl LowerModule<'_> {
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
-        let block = self.isolated_block(expr.block, &parameters);
         let location = self.location(expr.location);
+
+        let block = if expr.external {
+            None
+        } else {
+            Some(self.isolated_block(expr.block, &parameters))
+        };
 
         Ok(hir::TraitMethodImplementation {
             id,

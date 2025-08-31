@@ -434,7 +434,7 @@ impl TyInferCtx {
         match &def {
             lume_hir::Def::Method(method) => method.block.as_ref(),
             lume_hir::Def::TraitMethodDef(func) => func.block.as_ref(),
-            lume_hir::Def::TraitMethodImpl(func) => Some(&func.block),
+            lume_hir::Def::TraitMethodImpl(func) => func.block.as_ref(),
             lume_hir::Def::Item(item) => self.hir_body_of_item(item.id()),
             ty => panic!("bug!: item type cannot contain a body: {ty:?}"),
         }
