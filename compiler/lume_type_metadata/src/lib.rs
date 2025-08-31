@@ -83,6 +83,9 @@ pub struct MethodMetadata {
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: DefId,
 
+    /// Gets the unique ID of the method definition, which this method implements.
+    pub definition_id: DefId,
+
     /// Gets all the parameters defined on the method, in the order that they're declared.
     pub parameters: Vec<ParameterMetadata>,
 

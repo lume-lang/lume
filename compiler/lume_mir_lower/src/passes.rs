@@ -3,7 +3,7 @@ use lume_mir::*;
 
 use crate::FunctionTransformer;
 
-impl FunctionTransformer<'_> {
+impl FunctionTransformer<'_, '_> {
     pub(crate) fn run_passes(&mut self) {
         DefineBlockParameters::default().execute(&mut self.func);
         PassBlockArguments::execute(&mut self.func);
@@ -271,6 +271,13 @@ impl ConvertAssignmentExpressions {
                     self.update_regs_op(arg);
                 }
             }
+            DeclarationKind::IndirectCall { ptr, args, .. } => {
+                self.get_moved_register(ptr);
+
+                for arg in args {
+                    self.update_regs_op(arg);
+                }
+            }
         }
     }
 
@@ -294,7 +301,7 @@ impl ConvertAssignmentExpressions {
 type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 
 #[derive(Default, Debug)]
-struct RenameSsaVariables {
+pub(crate) struct RenameSsaVariables {
     register_counter: usize,
 }
 
@@ -437,6 +444,13 @@ impl RenameSsaVariables {
                 *operand = *mapping.get(&(*operand, block)).unwrap();
             }
             DeclarationKind::Call { args, .. } | DeclarationKind::Intrinsic { args, .. } => {
+                for arg in args {
+                    Self::update_regs_op(arg, block, mapping);
+                }
+            }
+            DeclarationKind::IndirectCall { ptr, args, .. } => {
+                *ptr = *mapping.get(&(*ptr, block)).unwrap();
+
                 for arg in args {
                     Self::update_regs_op(arg, block, mapping);
                 }

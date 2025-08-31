@@ -27,6 +27,15 @@ impl LowerFunction<'_> {
                     ret[0]
                 }
             }
+            lume_mir::DeclarationKind::IndirectCall { ptr, signature, args } => {
+                let ret = self.indirect_call(*ptr, signature.to_owned(), args);
+
+                if ret.is_empty() {
+                    self.builder.ins().iconst(self.backend.cl_ptr_type(), 0)
+                } else {
+                    ret[0]
+                }
+            }
             lume_mir::DeclarationKind::Intrinsic { name, args } => match name {
                 // Floating-pointer comparison
                 lume_mir::Intrinsic::FloatEq { .. } => self.fcmp(FloatCC::Equal, &args[0], &args[1]),

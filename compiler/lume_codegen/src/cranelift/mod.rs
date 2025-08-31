@@ -176,19 +176,7 @@ impl<'ctx> CraneliftBackend<'ctx> {
 
     #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
     fn declare_function(&mut self, func: &lume_mir::Function) -> Result<(cranelift_module::FuncId, Signature)> {
-        let mut sig = self.module().make_signature();
-
-        for param in &func.signature.parameters {
-            let param_ty = self.cl_type_of(&param.ty);
-
-            sig.params.push(AbiParam::new(param_ty));
-        }
-
-        if func.signature.return_type.kind != lume_mir::TypeKind::Void {
-            let ret_ty = self.cl_type_of(&func.signature.return_type);
-
-            sig.returns.push(AbiParam::new(ret_ty));
-        }
+        let sig = self.create_signature_of(&func.signature);
 
         let linkage = if func.signature.external {
             cranelift_module::Linkage::Import
@@ -202,6 +190,25 @@ impl<'ctx> CraneliftBackend<'ctx> {
             .map_error()?;
 
         Ok((func_id, sig))
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn create_signature_of(&self, signature: &lume_mir::Signature) -> Signature {
+        let mut sig = self.module().make_signature();
+
+        for param in &signature.parameters {
+            let param_ty = self.cl_type_of(&param.ty);
+
+            sig.params.push(AbiParam::new(param_ty));
+        }
+
+        if signature.return_type.kind != lume_mir::TypeKind::Void {
+            let ret_ty = self.cl_type_of(&signature.return_type);
+
+            sig.returns.push(AbiParam::new(ret_ty));
+        }
+
+        sig
     }
 
     #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name), err)]
@@ -618,6 +625,22 @@ impl<'ctx> LowerFunction<'ctx> {
 
         let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
         let call = self.builder.ins().call(cl_func_ref, &args);
+
+        self.builder.inst_results(call)
+    }
+
+    pub(crate) fn indirect_call(
+        &mut self,
+        ptr: RegisterId,
+        sig: lume_mir::Signature,
+        args: &[lume_mir::Operand],
+    ) -> &[Value] {
+        let cl_func_sig = self.backend.create_signature_of(&sig);
+        let cl_sig_ref = self.builder.import_signature(cl_func_sig);
+
+        let callee = self.use_var(ptr);
+        let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
+        let call = self.builder.ins().call_indirect(cl_sig_ref, callee, &args);
 
         self.builder.inst_results(call)
     }

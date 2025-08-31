@@ -2,7 +2,7 @@ use lume_span::Location;
 
 use crate::FunctionTransformer;
 
-impl FunctionTransformer<'_> {
+impl FunctionTransformer<'_, '_> {
     pub(super) fn expression(&mut self, expr: &lume_tir::Expression) -> lume_mir::Operand {
         let op = match &expr.kind {
             lume_tir::ExpressionKind::Assignment(expr) => self.assignment(expr),

@@ -2,7 +2,7 @@ use lume_span::DefId;
 
 use crate::FunctionTransformer;
 
-impl FunctionTransformer<'_> {
+impl FunctionTransformer<'_, '_> {
     pub(super) fn lower_type(&self, type_ref: &lume_types::TypeRef) -> lume_mir::Type {
         let ty = self.tcx().db().type_(type_ref.instance_of).unwrap();
 
@@ -108,6 +108,7 @@ impl FunctionTransformer<'_> {
                 lume_mir::Type::integer(*bits, signed)
             }
             lume_mir::DeclarationKind::Call { func_id, .. } => self.type_of_function(*func_id),
+            lume_mir::DeclarationKind::IndirectCall { signature, .. } => signature.return_type.clone(),
         }
     }
 

@@ -2,7 +2,7 @@ use lume_errors::Result;
 use lume_span::{DefId, hash_id};
 use lume_type_metadata::*;
 
-use crate::{reify::ReificationPass, should_skip_method};
+use crate::reify::ReificationPass;
 
 /// Defines the byte size of the current build architecture.
 const PTR_SIZE: usize = std::mem::size_of::<usize>();
@@ -156,12 +156,18 @@ impl ReificationPass<'_> {
         let mut methods = Vec::new();
 
         for method in self.tcx.methods_defined_on(type_ref) {
-            if should_skip_method(method, self.tcx.hir_body_of_def(method.hir).is_some()) {
+            if method.is_intrinsic() {
                 continue;
             }
 
             let full_name = format!("{:+}", method.name);
             let func_id = method.hir;
+
+            let definition_id = if let lume_hir::Def::TraitMethodImpl(method_impl) = self.tcx.hir_expect_def(func_id) {
+                self.tcx.hir_trait_method_def_of_impl(method_impl)?.id
+            } else {
+                func_id
+            };
 
             let parameters = method
                 .parameters
@@ -190,6 +196,7 @@ impl ReificationPass<'_> {
             methods.push(MethodMetadata {
                 full_name,
                 func_id,
+                definition_id,
                 parameters,
                 type_parameters,
                 return_type,

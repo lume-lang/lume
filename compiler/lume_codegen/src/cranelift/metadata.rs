@@ -160,6 +160,12 @@ impl CraneliftBackend<'_> {
         for metadata in iter {
             let metadata_name = metadata.symbol_name();
 
+            let array_name = format!("{}__type_args", metadata.symbol_name());
+
+            self.module_mut()
+                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                .unwrap();
+
             tracing::debug!("declaring type metadata: {metadata_name}");
 
             self.module_mut()
@@ -172,6 +178,12 @@ impl CraneliftBackend<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_field_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
+            let array_name = format!("{}__fields", metadata.symbol_name());
+
+            self.module_mut()
+                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                .unwrap();
+
             for field in &metadata.fields {
                 let metadata_name = self.metadata_name_of_field(field, metadata);
 
@@ -188,6 +200,12 @@ impl CraneliftBackend<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_method_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
+            let array_name = format!("{}__methods", metadata.symbol_name());
+
+            self.module_mut()
+                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                .unwrap();
+
             for method in &metadata.methods {
                 let metadata_name = method.symbol_name();
 
@@ -209,6 +227,12 @@ impl CraneliftBackend<'_> {
     fn declare_all_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             for method in &metadata.methods {
+                let array_name = format!("{}__params", method.symbol_name());
+
+                self.module_mut()
+                    .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                    .unwrap();
+
                 for param in &method.parameters {
                     let metadata_name = self.metadata_name_of_param(param, method);
 
@@ -227,6 +251,12 @@ impl CraneliftBackend<'_> {
     fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             for method in &metadata.methods {
+                let array_name = format!("{}__type_params", method.symbol_name());
+
+                self.module_mut()
+                    .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                    .unwrap();
+
                 for type_param in &method.type_parameters {
                     let metadata_name = self.metadata_name_of_type_param(type_param, method);
 
@@ -253,6 +283,9 @@ impl CraneliftBackend<'_> {
         let data_id = self.find_type_decl(metadata.id);
         let mut builder = MemoryBlockBuilder::new(self);
 
+        // Type.type_id
+        builder.append(metadata.type_id_usize());
+
         // Type.name
         builder.append_str_address(metadata.full_name.clone());
 
@@ -262,30 +295,39 @@ impl CraneliftBackend<'_> {
         // Type.alignment
         builder.append(metadata.alignment);
 
-        // Type.type_id
-        builder.append(metadata.type_id_usize());
-
         // Type.fields
-        builder.append_slice_of(&metadata.fields, |builder, field| {
-            let name = self.metadata_name_of_field(field, metadata);
-            let data_id = self.find_decl_by_name(&name);
+        builder.append_slice_ptr_of(
+            format!("{}__fields", metadata.symbol_name()),
+            &metadata.fields,
+            |builder, field| {
+                let name = self.metadata_name_of_field(field, metadata);
+                let data_id = self.find_decl_by_name(&name);
 
-            builder.append_data_address(data_id);
-        });
+                builder.append_data_address(data_id);
+            },
+        );
 
         // Type.methods
-        builder.append_slice_of(&metadata.methods, |builder, method| {
-            let name = method.symbol_name();
-            let data_id = self.find_decl_by_name(&name);
+        builder.append_slice_ptr_of(
+            format!("{}__methods", metadata.symbol_name()),
+            &metadata.methods,
+            |builder, method| {
+                let name = method.symbol_name();
+                let data_id = self.find_decl_by_name(&name);
 
-            builder.append_data_address(data_id);
-        });
+                builder.append_data_address(data_id);
+            },
+        );
 
         // Type.type_arguments
-        builder.append_slice_of(&metadata.type_arguments, |builder, type_arg| {
-            let data_id = self.find_type_decl(*type_arg);
-            builder.append_data_address(data_id);
-        });
+        builder.append_slice_ptr_of(
+            format!("{}__type_args", metadata.symbol_name()),
+            &metadata.type_arguments,
+            |builder, type_arg| {
+                let data_id = self.find_type_decl(*type_arg);
+                builder.append_data_address(data_id);
+            },
+        );
 
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }
@@ -312,27 +354,35 @@ impl CraneliftBackend<'_> {
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
 
+        // Method.id
+        builder.append(metadata.definition_id.as_usize());
+
         // Method.full_name
         builder.append_str_address(metadata.full_name.clone());
 
-        // Method.func_id
-        builder.append(metadata.func_id.as_usize());
-
         // Method.parameters
-        builder.append_slice_of(&metadata.parameters, |builder, param| {
-            let name = self.metadata_name_of_param(param, metadata);
-            let data_id = self.find_decl_by_name(&name);
+        builder.append_slice_ptr_of(
+            format!("{}__params", metadata.symbol_name()),
+            &metadata.parameters,
+            |builder, param| {
+                let name = self.metadata_name_of_param(param, metadata);
+                let data_id = self.find_decl_by_name(&name);
 
-            builder.append_data_address(data_id);
-        });
+                builder.append_data_address(data_id);
+            },
+        );
 
         // Method.type_parameters
-        builder.append_slice_of(&metadata.type_parameters, |builder, param| {
-            let name = self.metadata_name_of_type_param(param, metadata);
-            let data_id = self.find_decl_by_name(&name);
+        builder.append_slice_ptr_of(
+            format!("{}__type_params", metadata.symbol_name()),
+            &metadata.type_parameters,
+            |builder, param| {
+                let name = self.metadata_name_of_type_param(param, metadata);
+                let data_id = self.find_decl_by_name(&name);
 
-            builder.append_data_address(data_id);
-        });
+                builder.append_data_address(data_id);
+            },
+        );
 
         // Method.return_type
         let type_data_id = self.find_type_decl(metadata.return_type);
@@ -341,6 +391,7 @@ impl CraneliftBackend<'_> {
         // Method.func_ptr
         if let Some(func_ptr) = self.declared_funcs.get(&metadata.func_id) {
             builder.append_func_address(func_ptr.id);
+        } else {
         }
 
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
@@ -539,6 +590,28 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
         for item in slice {
             f(self, item);
         }
+
+        self
+    }
+
+    /// Appends a slice of items, where each item is built from the given closure.
+    pub fn append_slice_ptr_of<T, F: Fn(&mut MemoryBlockBuilder<'back, 'ctx>, &T)>(
+        &mut self,
+        decl_name: String,
+        slice: &[T],
+        f: F,
+    ) -> &mut Self {
+        let data_id = self.backend.find_decl_by_name(&decl_name);
+        let mut builder = MemoryBlockBuilder::new(self.backend);
+
+        builder.append(slice.len());
+
+        for item in slice {
+            f(&mut builder, item);
+        }
+
+        self.backend.define_metadata(data_id, decl_name, &builder.finish());
+        self.append_data_address(data_id);
 
         self
     }
