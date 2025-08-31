@@ -987,7 +987,7 @@ pub struct TraitMethodImplementation {
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
 }
 

@@ -389,10 +389,8 @@ impl CraneliftBackend<'_> {
         builder.append_data_address(type_data_id);
 
         // Method.func_ptr
-        if let Some(func_ptr) = self.declared_funcs.get(&metadata.func_id) {
-            builder.append_func_address(func_ptr.id);
-        } else {
-        }
+        let func_ptr = self.declared_funcs.get(&metadata.func_id).unwrap();
+        builder.append_func_address(func_ptr.id);
 
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }

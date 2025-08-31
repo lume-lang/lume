@@ -113,16 +113,6 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         "std::Double::-",
         "std::Double::*",
         "std::Double::/",
-        "std::Int8::to_string",
-        "std::Int16::to_string",
-        "std::Int32::to_string",
-        "std::Int64::to_string",
-        "std::UInt8::to_string",
-        "std::UInt16::to_string",
-        "std::UInt32::to_string",
-        "std::UInt64::to_string",
-        "std::Float::to_string",
-        "std::Double::to_string",
     ])
 });
 
@@ -950,7 +940,9 @@ impl TyInferCtx {
         for method in &trait_impl.methods {
             let _ = tree.insert(method.id, parent);
 
-            self.define_block_scope(tree, &method.block, method.id)?;
+            if let Some(block) = &method.block {
+                self.define_block_scope(tree, block, method.id)?;
+            }
         }
 
         Ok(())
