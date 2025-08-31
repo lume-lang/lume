@@ -2,7 +2,7 @@ use error_snippet::Result;
 use lume_span::{DefId, Internable};
 use lume_tir::VariableId;
 
-use crate::{LowerFunction, is_dynamic_dispatch};
+use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
@@ -124,20 +124,6 @@ impl LowerFunction<'_> {
     fn call_expression(&mut self, expr: lume_hir::CallExpression) -> Result<lume_tir::ExpressionKind> {
         let callable = self.lower.tcx.lookup_callable(expr)?;
         let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
-
-        if let lume_typech::query::Callable::Method(method) = callable
-            && is_dynamic_dispatch(method, self.lower.tcx.hir_body_of_def(method.hir).is_some())
-            && !method.is_instanced()
-        {
-            self.lower.tcx.dcx().emit(
-                crate::errors::DynamicDispatchUnimplemented {
-                    source: expr.location(),
-                }
-                .into(),
-            );
-
-            self.lower.tcx.dcx().ensure_untainted()?;
-        }
 
         tracing::debug!(
             "resolved callable `{:+}` from call expression `{}`",

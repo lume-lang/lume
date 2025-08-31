@@ -160,6 +160,17 @@ pub(crate) struct NonMatchingAssignment {
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(
+    message = "trait implementation cannot be inferred",
+    code = "LM4379",
+    help = "specify a specific implementation of the trait"
+)]
+pub struct DispatchCannotBeInferred {
+    #[label(source, "cannot infer trait implementation from static call")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
     message = "mismatched types in branch",
     code = "LM4384",
     help = "expected type {expected}\n   found type {found}",

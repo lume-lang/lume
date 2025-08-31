@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+import std::io (ToString)
+
+fn foo<T: ToString>(val: T) -> String {
+    ToString::to_string(val)
+}
