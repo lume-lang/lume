@@ -17,7 +17,7 @@ use error_snippet::SimpleDiagnostic;
 use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
 use lume_mir::{BlockBranchSite, RegisterId, SlotId};
-use lume_span::Location;
+use lume_span::{DefId, Location};
 
 use crate::{Backend, CompiledModule, Context};
 use dwarf::RootDebugContext;
@@ -37,7 +37,7 @@ pub(crate) struct CraneliftBackend<'ctx> {
     context: Context<'ctx>,
     module: Option<Arc<RwLock<ObjectModule>>>,
 
-    declared_funcs: IndexMap<lume_mir::FunctionId, DeclaredFunction>,
+    declared_funcs: IndexMap<DefId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
@@ -611,7 +611,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id)
     }
 
-    pub(crate) fn call(&mut self, func: lume_mir::FunctionId, args: &[lume_mir::Operand]) -> &[Value] {
+    pub(crate) fn call(&mut self, func: DefId, args: &[lume_mir::Operand]) -> &[Value] {
         let cl_func_id = self.backend.declared_funcs.get(&func).unwrap().id;
         let cl_func_ref = self.get_func(cl_func_id);
 

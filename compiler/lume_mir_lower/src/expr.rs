@@ -1,4 +1,3 @@
-use lume_mir::FunctionId;
 use lume_span::Location;
 
 use crate::FunctionTransformer;
@@ -171,8 +170,6 @@ impl FunctionTransformer<'_> {
     }
 
     fn call_expression(&mut self, expr: &lume_tir::Call) -> lume_mir::Operand {
-        let func_id = FunctionId(expr.function.as_usize());
-
         let args = expr
             .arguments
             .iter()
@@ -188,7 +185,7 @@ impl FunctionTransformer<'_> {
             ret_ty = lume_mir::Type::pointer(ret_ty);
         }
 
-        self.call(func_id, args, ret_ty, expr.location)
+        self.call(expr.function, args, ret_ty, expr.location)
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {

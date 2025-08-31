@@ -14,7 +14,7 @@ use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_mir::{Function, TypeRef};
-use lume_span::{Location, SourceFileId, hash_id};
+use lume_span::{DefId, Location, SourceFileId, hash_id};
 use lume_type_metadata::TypeMetadataId;
 
 use crate::Context;
@@ -84,8 +84,8 @@ pub(crate) struct RootDebugContext<'ctx> {
     endianess: RunTimeEndian,
     stack_register: Register,
 
-    func_entries: IndexMap<lume_mir::FunctionId, UnitEntryId>,
-    func_locs: IndexMap<lume_mir::FunctionId, Location>,
+    func_entries: IndexMap<DefId, UnitEntryId>,
+    func_locs: IndexMap<DefId, Location>,
     source_locations: IndexMap<SourceFileId, FileId>,
 
     declared_types: HashMap<TypeRef, UnitEntryId>,
@@ -194,7 +194,7 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Defines the start and size of the function to the matching DWARF tag.
     pub(crate) fn define_function(
         &mut self,
-        func_id: lume_mir::FunctionId,
+        func_id: DefId,
         decl_id: FuncId,
         backend: &CraneliftBackend,
         ctx: &cranelift::codegen::Context,

@@ -1,7 +1,6 @@
 use error_snippet::Result;
 use lume_span::{DefId, Internable};
 use lume_tir::VariableId;
-use lume_type_metadata::{FunctionId, FunctionKind};
 
 use crate::LowerFunction;
 
@@ -146,15 +145,8 @@ impl LowerFunction<'_> {
         );
 
         let function = match callable {
-            lume_typech::query::Callable::Function(call) => {
-                #[cfg(debug_assertions)]
-                if !call.sig().is_vararg() {
-                    debug_assert!(call.parameters.len() == expr.arguments().len());
-                }
-
-                FunctionId::new(FunctionKind::Function, call.id.index.as_usize())
-            }
-            lume_typech::query::Callable::Method(call) => FunctionId::new(FunctionKind::Method, call.id.0),
+            lume_typech::query::Callable::Function(call) => DefId::Item(call.hir),
+            lume_typech::query::Callable::Method(call) => call.hir,
         };
 
         let mut arguments = Vec::with_capacity(expr.arguments().len());
