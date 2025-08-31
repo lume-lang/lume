@@ -113,7 +113,6 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
         "std::Double::-",
         "std::Double::*",
         "std::Double::/",
-        "std::Boolean::to_string",
         "std::Int8::to_string",
         "std::Int16::to_string",
         "std::Int32::to_string",

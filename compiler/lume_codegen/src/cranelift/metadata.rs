@@ -1,6 +1,6 @@
 use std::ops::Rem;
 
-use cranelift_module::{DataDescription, DataId, FuncOrDataId, Module};
+use cranelift_module::{DataDescription, DataId, FuncId, FuncOrDataId, Module};
 use indexmap::{IndexMap, IndexSet};
 use lume_type_metadata::*;
 
@@ -338,6 +338,11 @@ impl CraneliftBackend<'_> {
         let type_data_id = self.find_type_decl(metadata.return_type);
         builder.append_data_address(type_data_id);
 
+        // Method.func_ptr
+        if let Some(func_ptr) = self.declared_funcs.get(&metadata.func_id) {
+            builder.append_func_address(func_ptr.id);
+        }
+
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }
 
@@ -440,6 +445,7 @@ struct MemoryBlockBuilder<'back, 'ctx> {
 
     data: Vec<u8>,
     data_relocs: Vec<(usize, DataId)>,
+    func_relocs: Vec<(usize, FuncId)>,
     offset: usize,
 }
 
@@ -449,6 +455,7 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
             backend,
             data: Vec::new(),
             data_relocs: Vec::new(),
+            func_relocs: Vec::new(),
             offset: 0,
         }
     }
@@ -536,6 +543,15 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
         self
     }
 
+    /// Appends a pointer (relocation) to the given function to the data block.
+    pub fn append_func_address(&mut self, id: FuncId) -> &mut Self {
+        self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
+
+        self.func_relocs.push((self.offset, id));
+        self.offset += NATIVE_PTR_SIZE;
+        self
+    }
+
     /// Appends a pointer (relocation) of the given data to the data block.
     pub fn append_data_address(&mut self, id: DataId) -> &mut Self {
         self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
@@ -569,6 +585,13 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
 
             #[allow(clippy::cast_possible_truncation)]
             ctx.write_data_addr(offset as u32, gv, 0);
+        }
+
+        for (offset, func_reloc) in self.func_relocs {
+            let gv = self.backend.module_mut().declare_func_in_data(func_reloc, &mut ctx);
+
+            #[allow(clippy::cast_possible_truncation)]
+            ctx.write_function_addr(offset as u32, gv);
         }
 
         ctx
