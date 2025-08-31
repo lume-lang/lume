@@ -421,7 +421,20 @@ impl TyCheckCtx {
     /// is valid for the given context it is in. This includes whether the method exists,
     /// takes the correct amount of parameters, as well as their parameter types.
     fn call_expression(&self, expr: lume_hir::CallExpression) -> Result<()> {
-        let _ = self.lookup_callable(expr)?;
+        let callable = self.lookup_callable(expr)?;
+
+        if let lume_infer::query::Callable::Method(method) = callable
+            && method.kind == lume_types::MethodKind::TraitDefinition
+            && self.hir_body_of_def(method.hir).is_none()
+            && !method.is_instanced()
+        {
+            self.dcx().emit(
+                DispatchCannotBeInferred {
+                    source: expr.location(),
+                }
+                .into(),
+            );
+        }
 
         Ok(())
     }

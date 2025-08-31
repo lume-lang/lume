@@ -1,4 +1,3 @@
-mod errors;
 pub(crate) mod expr;
 pub(crate) mod generic;
 pub(crate) mod path;

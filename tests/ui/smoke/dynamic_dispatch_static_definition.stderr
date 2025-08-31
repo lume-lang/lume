@@ -1,0 +1,8 @@
+× error[LM4379]: trait implementation cannot be inferred
+    ╭─[dynamic_dispatch_static_definition.lm:10:10]
+ 9  │ fn foo<T: Foo>(val: T) {
+ 10 │     Foo::foo()
+    │          ^^^ cannot infer trait implementation from static call
+ 11 │ }
+    ╰──
+   help: specify a specific implementation of the trait
