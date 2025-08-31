@@ -2,7 +2,7 @@ use error_snippet::Result;
 use lume_span::{DefId, Internable};
 use lume_tir::VariableId;
 
-use crate::LowerFunction;
+use crate::{LowerFunction, is_dynamic_dispatch};
 
 impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
@@ -126,7 +126,8 @@ impl LowerFunction<'_> {
         let instantiated_signature = self.lower.tcx.signature_of_instantiated(callable, expr)?;
 
         if let lume_typech::query::Callable::Method(method) = callable
-            && method.kind == lume_types::MethodKind::TraitDefinition
+            && is_dynamic_dispatch(method, self.lower.tcx.hir_body_of_def(method.hir).is_some())
+            && !method.is_instanced()
         {
             self.lower.tcx.dcx().emit(
                 crate::errors::DynamicDispatchUnimplemented {

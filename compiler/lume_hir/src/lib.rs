@@ -521,6 +521,10 @@ impl Signature<'_> {
             return_type: self.return_type.clone(),
         }
     }
+
+    pub fn is_instanced(&self) -> bool {
+        self.parameters.first().map_or(false, |param| param.is_self())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

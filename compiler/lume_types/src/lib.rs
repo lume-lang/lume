@@ -330,9 +330,15 @@ impl Method {
         }
     }
 
-    // /// Determines whether the method is instanced, as opposed to static.
+    /// Determines whether the method is instanced, as opposed to static.
     pub fn is_instanced(&self) -> bool {
         self.parameters.is_instanced()
+    }
+
+    /// Determines whether the method is intrinsic.
+    #[inline]
+    pub fn is_intrinsic(&self) -> bool {
+        self.kind == MethodKind::Intrinsic
     }
 }
 
