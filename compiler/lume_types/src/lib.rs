@@ -12,7 +12,7 @@ use lume_span::{DefId, ItemId, Location, PackageId};
 
 pub mod errors;
 
-pub trait WithTypeParameters {
+pub trait WithTypeParameters: Clone + Copy {
     /// Gets the type parameters of the current instance.
     ///
     /// # Errors
@@ -1561,7 +1561,9 @@ impl TypeDatabaseContext {
     /// Returns `Err` if no type with the given ID was found in the context,
     /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
     pub fn push_type_param(&mut self, id: impl WithTypeParameters, type_id: TypeParameterId) -> Result<()> {
-        id.type_params_mut(self)?.push(type_id);
+        if !id.type_params(self)?.contains(&type_id) {
+            id.type_params_mut(self)?.push(type_id);
+        }
 
         Ok(())
     }

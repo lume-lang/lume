@@ -409,7 +409,11 @@ impl TyInferCtx {
                 let type_id = struct_def.type_id.unwrap();
 
                 for type_param in &mut struct_def.type_parameters.iter_mut() {
-                    let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                    let type_param_id = match type_id {
+                        lume_types::TYPEREF_POINTER_ID => lume_hir::TypeParameterId(0),
+                        lume_types::TYPEREF_ARRAY_ID => lume_hir::TypeParameterId(1),
+                        _ => self.tdb_mut().type_param_alloc(type_param.name.name.clone()),
+                    };
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
