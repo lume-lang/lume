@@ -1,3 +1,5 @@
+mod diagnostics;
+
 use std::collections::HashSet;
 
 use indexmap::IndexMap;
@@ -52,6 +54,8 @@ impl UnificationPass {
                 lume_hir::Item::Type(ty) => match ty.as_ref() {
                     lume_hir::TypeDefinition::Struct(struct_def) => {
                         for field in &struct_def.fields {
+                            self.verify_type_name(tcx, &field.field_type.name)?;
+
                             if let Some(default) = field.default_value {
                                 self.unify_expr(tcx, default)?;
                             }
@@ -59,28 +63,63 @@ impl UnificationPass {
                     }
                     lume_hir::TypeDefinition::Trait(trait_def) => {
                         for method in &trait_def.methods {
+                            for param in &method.parameters {
+                                self.verify_type_name(tcx, &param.param_type.name)?;
+                            }
+
+                            self.verify_type_name(tcx, &method.return_type.name)?;
+
                             if let Some(block) = &method.block {
                                 self.unify_block(tcx, block)?;
                             }
                         }
                     }
-                    lume_hir::TypeDefinition::Enum(_) => {}
+                    lume_hir::TypeDefinition::Enum(enum_def) => {
+                        for case in &enum_def.cases {
+                            for param in &case.parameters {
+                                self.verify_type_name(tcx, &param.name)?;
+                            }
+                        }
+                    }
                 },
                 lume_hir::Item::Impl(impl_block) => {
+                    self.verify_type_name(tcx, &impl_block.target.name)?;
+
                     for method in &impl_block.methods {
+                        for param in &method.parameters {
+                            self.verify_type_name(tcx, &param.param_type.name)?;
+                        }
+
+                        self.verify_type_name(tcx, &method.return_type.name)?;
+
                         if let Some(block) = &method.block {
                             self.unify_block(tcx, block)?;
                         }
                     }
                 }
                 lume_hir::Item::TraitImpl(trait_impl) => {
+                    self.verify_type_name(tcx, &trait_impl.name.name)?;
+                    self.verify_type_name(tcx, &trait_impl.target.name)?;
+
                     for method in &trait_impl.methods {
+                        for param in &method.parameters {
+                            self.verify_type_name(tcx, &param.param_type.name)?;
+                        }
+
+                        self.verify_type_name(tcx, &method.return_type.name)?;
+
                         if let Some(block) = &method.block {
                             self.unify_block(tcx, block)?;
                         }
                     }
                 }
                 lume_hir::Item::Function(func) => {
+                    for param in &func.parameters {
+                        self.verify_type_name(tcx, &param.param_type.name)?;
+                    }
+
+                    self.verify_type_name(tcx, &func.return_type.name)?;
+
                     if let Some(block) = &func.block {
                         self.unify_block(tcx, block)?;
                     }
@@ -141,7 +180,9 @@ impl UnificationPass {
                 self.unify_expr(tcx, s.target)?;
                 self.unify_expr(tcx, s.value)?;
             }
-            lume_hir::ExpressionKind::Cast(s) => self.unify_expr(tcx, s.source)?,
+            lume_hir::ExpressionKind::Cast(s) => {
+                self.unify_expr(tcx, s.source)?;
+            }
             lume_hir::ExpressionKind::Construct(s) => {
                 for field in &s.fields {
                     self.unify_expr(tcx, field.value)?;
@@ -201,6 +242,40 @@ impl UnificationPass {
             | lume_hir::ExpressionKind::Field(_)
             | lume_hir::ExpressionKind::Variant(_) => (),
         };
+
+        Ok(())
+    }
+
+    fn verify_type_name<'tcx>(&mut self, tcx: &'tcx TyInferCtx, path: &lume_hir::Path) -> Result<()> {
+        let mut type_path = path.clone();
+
+        // Strip back the path until we have the actual type of the path.
+        //
+        // This is mostly for when a method path is passed, which would throw off the method.
+        while !type_path.is_type() {
+            if let Some(parent) = type_path.parent() {
+                type_path = parent;
+            } else {
+                return Ok(());
+            }
+        }
+
+        let Some(matching_type) = tcx.tdb().find_type(&type_path) else {
+            return Ok(());
+        };
+
+        let expected_arg_count = matching_type.kind.type_parameters().len();
+        let declared_arg_count = type_path.type_arguments().len();
+
+        if expected_arg_count != declared_arg_count {
+            return Err(diagnostics::TypeArgumentCountMismatch {
+                source: path.location,
+                type_name: path.clone(),
+                expected: expected_arg_count,
+                actual: declared_arg_count,
+            }
+            .into());
+        }
 
         Ok(())
     }

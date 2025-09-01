@@ -518,6 +518,21 @@ impl TypeKind {
         }
     }
 
+    pub fn type_parameters(&self) -> &[TypeParameterId] {
+        match self {
+            TypeKind::Void
+            | TypeKind::Bool
+            | TypeKind::Int(_)
+            | TypeKind::UInt(_)
+            | TypeKind::Float(_)
+            | TypeKind::String
+            | TypeKind::TypeParameter(_) => &[],
+            TypeKind::User(UserType::Struct(def)) => &def.type_parameters,
+            TypeKind::User(UserType::Trait(def)) => &def.type_parameters,
+            TypeKind::User(UserType::Enum(def)) => &def.type_parameters,
+        }
+    }
+
     pub fn is_generic(&self) -> bool {
         match self {
             TypeKind::Void
