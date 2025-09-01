@@ -143,7 +143,7 @@ impl LowerModule<'_> {
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
         let id = self.next_item_id();
 
-        let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
+        let name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
         let visibility = lower_visibility(&expr.visibility);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
@@ -428,6 +428,29 @@ impl LowerModule<'_> {
             block,
             location,
         })
+    }
+
+    fn expand_self_name(
+        &self,
+        name: lume_ast::Identifier,
+        type_params: &[lume_ast::TypeParameter],
+    ) -> Result<lume_hir::Path> {
+        let self_type_args = type_params
+            .iter()
+            .map(|param| {
+                lume_ast::Type::Named(Box::new(lume_ast::NamedType {
+                    name: lume_ast::Path::rooted(ast::PathSegment::ty(param.name.name.clone())),
+                }))
+            })
+            .collect::<Vec<_>>();
+
+        let self_name = lume_ast::PathSegment::Type {
+            location: name.location.clone(),
+            name,
+            type_arguments: self_type_args,
+        };
+
+        self.expand_name(self_name)
     }
 }
 
