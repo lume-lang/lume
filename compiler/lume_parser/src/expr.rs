@@ -657,7 +657,11 @@ impl Parser {
                 })))
             }
             PathSegment::Variant { location, .. } => {
-                let arguments = self.parse_call_arguments()?;
+                let arguments = if self.peek(TokenKind::LeftParen) {
+                    self.parse_call_arguments()?
+                } else {
+                    Vec::new()
+                };
 
                 Ok(Expression::Variant(Box::new(Variant {
                     location: (location.start()..location.end()).into(),
