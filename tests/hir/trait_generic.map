@@ -9,7 +9,31 @@ Map {
                         name: "Add",
                         location: trait_generic.lm:6:9,
                     },
-                    type_arguments: [],
+                    type_arguments: [
+                        Type {
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    8901637729188007634,
+                                ),
+                            },
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T",
+                                        location: trait_generic.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: trait_generic.lm:0:0,
+                                },
+                                location: trait_generic.lm:0:0,
+                            },
+                            location: trait_generic.lm:0:0,
+                        },
+                    ],
                     location: trait_generic.lm:6:9,
                 },
                 location: trait_generic.lm:6:9,
