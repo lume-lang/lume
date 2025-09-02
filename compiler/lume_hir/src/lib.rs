@@ -1377,6 +1377,13 @@ impl CallExpression<'_> {
     pub fn is_instance(&self) -> bool {
         matches!(self, Self::Instanced(_))
     }
+
+    pub fn find_arg_idx(&self, id: ExpressionId) -> Option<usize> {
+        self.arguments()
+            .iter()
+            .enumerate()
+            .find_map(|(idx, arg)| if *arg == id { Some(idx) } else { None })
+    }
 }
 
 #[derive(Hash, Node, Debug, Clone, PartialEq)]

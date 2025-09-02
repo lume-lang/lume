@@ -1,6 +1,6 @@
 use crate::{TyInferCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, FunctionId, Identifier, MethodId, Path, UseId};
+use lume_hir::{self, CallExpression, FunctionId, Identifier, MethodId, Path, UseId};
 use lume_query::cached_query;
 use lume_span::ExpressionId;
 use lume_types::{Function, Method, Trait, TypeRef};
@@ -96,7 +96,13 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
+            lume_hir::ExpressionKind::Assignment(e) => {
+                if self.is_value_expected(expr.id)? {
+                    self.type_of(e.value)?
+                } else {
+                    TypeRef::void()
+                }
+            }
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, DefId::Expression(e.id))? else {
@@ -539,7 +545,7 @@ impl TyInferCtx {
     pub fn constructer_field_of(
         &self,
         expr: &lume_hir::Construct,
-        prop_name: &String,
+        prop_name: &str,
     ) -> Option<lume_hir::ConstructorField> {
         if let Some(field) = expr.fields.iter().find(|field| field.name.as_str() == prop_name) {
             return Some(field.clone());
@@ -554,7 +560,7 @@ impl TyInferCtx {
     pub fn constructer_default_field_of(
         &self,
         expr: &lume_hir::Construct,
-        prop_name: &String,
+        prop_name: &str,
     ) -> Option<lume_hir::ConstructorField> {
         let construct_type = self.find_type_ref(&expr.path).ok()??;
         let struct_type = self.tdb().ty_expect_struct(construct_type.instance_of).ok()?;
@@ -562,14 +568,206 @@ impl TyInferCtx {
 
         let matching_field = struct_hir_type.fields().find(|prop| prop.name.as_str() == prop_name)?;
 
-        if let Some(default_value) = &matching_field.default_value {
+        if let Some(default_value) = matching_field.default_value {
             return Some(lume_hir::ConstructorField {
                 name: lume_hir::Identifier::from(prop_name),
-                value: *default_value,
-                location: lume_span::Location::empty(),
+                value: default_value,
+                location: self.hir_span_of_def(DefId::Expression(default_value)),
             });
         }
 
         None
+    }
+
+    /// Determines whether a value is expected from the given expression.
+    ///
+    /// For example, given an expression like this:
+    /// ```lm
+    /// if a { b } else { c }
+    /// ```
+    ///
+    /// Even though the `if` statement returns a value of `Boolean`, the resulting value is never assigned
+    /// to anything, so no value is expected.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub fn is_value_expected(&self, id: ExpressionId) -> Result<bool> {
+        let Some(parent_id) = self.hir_parent_of(DefId::Expression(id)) else {
+            return Ok(false);
+        };
+
+        match parent_id {
+            DefId::Expression(parent_id) => match &self.hir_expect_expr(parent_id).kind {
+                lume_hir::ExpressionKind::Assignment(e) => {
+                    if e.target == id {
+                        self.is_value_expected(e.id)
+                    } else {
+                        Ok(false)
+                    }
+                }
+                _ => Ok(true),
+            },
+            DefId::Statement(parent_id) => match &self.hir_expect_stmt(parent_id).kind {
+                lume_hir::StatementKind::Variable(_) => Ok(true),
+                lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
+                lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
+                lume_hir::StatementKind::Final(_) => Ok(true),
+                lume_hir::StatementKind::Return(_) => Ok(true),
+                lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
+                lume_hir::StatementKind::IteratorLoop(_) => Ok(true),
+                lume_hir::StatementKind::Expression(_) => Ok(false),
+            },
+            DefId::Field(_) => Ok(true),
+            _ => panic!("bug!: expression not contained within statement, expression or field"),
+        }
+    }
+
+    /// Attempts to get the expected type of the [`Expression`] with the given ID, in the
+    /// context in which it is defined. For example, given an expression like this:
+    /// ```lm
+    /// let _: std::Array<Int32> = std::Array::new();
+    /// ```
+    ///
+    /// We can infer the expected type of the expression `std::Array::new()` since it
+    /// is explicitly declared on the variable declaration. In another instances it might
+    /// not be as explicit, which may cause the method to return [`None`]. For example, an
+    /// expression like:
+    /// ```lm
+    /// let _ = std::Array::new();
+    /// ```
+    ///
+    /// would be impossible to solve, since no explicit type is declared.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn expected_type_of(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
+        let parent_id = self
+            .hir_parent_of(DefId::Expression(id))
+            .expect("bug!: expression exists without parent");
+
+        match parent_id {
+            DefId::Expression(parent_id) => match &self.hir_expect_expr(parent_id).kind {
+                lume_hir::ExpressionKind::Assignment(assignment) => self.expected_type_of(assignment.id),
+                lume_hir::ExpressionKind::Binary(_) => todo!("expected_type_of binary expression"),
+                lume_hir::ExpressionKind::Cast(_) => todo!("expected_type_of cast expression"),
+                lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
+                lume_hir::ExpressionKind::InstanceCall(call) => self
+                    .expected_type_of_call(id, CallExpression::Instanced(call))
+                    .map(|ty| Some(ty)),
+                lume_hir::ExpressionKind::IntrinsicCall(call) => self
+                    .expected_type_of_call(id, CallExpression::Intrinsic(call))
+                    .map(|ty| Some(ty)),
+                lume_hir::ExpressionKind::StaticCall(call) => self
+                    .expected_type_of_call(id, CallExpression::Static(call))
+                    .map(|ty| Some(ty)),
+                lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool())),
+                lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
+                lume_hir::ExpressionKind::Logical(_) => todo!("expected_type_of logical expression"),
+                lume_hir::ExpressionKind::Member(_) => Ok(None),
+                lume_hir::ExpressionKind::Field(_) => todo!("expected_type_of field expression"),
+                lume_hir::ExpressionKind::Scope(_) => todo!("expected_type_of scope expression"),
+                lume_hir::ExpressionKind::Switch(_) => todo!("expected_type_of switch expression"),
+                lume_hir::ExpressionKind::Variable(_) => {
+                    unreachable!("variable references cannot have sub expressions")
+                }
+                lume_hir::ExpressionKind::Variant(_) => todo!("expected_type_of variant expression"),
+            },
+            DefId::Statement(parent_id) => match &self.hir_expect_stmt(parent_id).kind {
+                lume_hir::StatementKind::Variable(decl) => {
+                    if let Some(declared_type) = &decl.declared_type {
+                        let type_ref = self.mk_type_ref_from(declared_type, DefId::Statement(decl.id))?;
+
+                        Ok(Some(type_ref))
+                    } else {
+                        Ok(None)
+                    }
+                }
+                lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
+                lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
+                lume_hir::StatementKind::Final(fin) => {
+                    if let Some(DefId::Expression(parent)) = self.hir_parent_of(DefId::Statement(fin.id)) {
+                        return self.expected_type_of(parent);
+                    };
+
+                    self.hir_ctx_return_type(DefId::Statement(fin.id)).map(|ty| Some(ty))
+                }
+                lume_hir::StatementKind::Return(ret) => {
+                    self.hir_ctx_return_type(DefId::Statement(ret.id)).map(|ty| Some(ty))
+                }
+                lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
+                lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
+                lume_hir::StatementKind::Expression(_) => Ok(Some(TypeRef::void())),
+            },
+            DefId::Field(parent_id) => {
+                let field = self.hir_expect_field(parent_id);
+                let type_ref = self.mk_type_ref_from(&field.field_type, DefId::Field(parent_id))?;
+
+                Ok(Some(type_ref))
+            }
+            _ => panic!("bug!: expression not contained within statement, expression or field"),
+        }
+    }
+
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn expected_type_of_construct(
+        &self,
+        expr: ExpressionId,
+        construct: &lume_hir::Construct,
+    ) -> Result<Option<TypeRef>> {
+        let Some(constructed_type) = self.find_type_ref_from(&construct.path, DefId::Expression(construct.id))? else {
+            return Ok(None);
+        };
+
+        let field_name = construct
+            .fields
+            .iter()
+            .find_map(|field| {
+                if field.value == expr {
+                    Some(field.name.as_str())
+                } else {
+                    None
+                }
+            })
+            .expect("could not find expression in constructer fields");
+
+        let Some(field) = self.constructer_field_of(construct, field_name) else {
+            return Ok(None);
+        };
+
+        for type_field in self.tdb().find_fields(constructed_type.instance_of) {
+            if type_field.name != field.name.name {
+                continue;
+            }
+
+            return Ok(Some(type_field.field_type.clone()));
+        }
+
+        Result::Ok(None)
+    }
+
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    fn expected_type_of_call(&self, expr: ExpressionId, call: CallExpression<'_>) -> Result<TypeRef> {
+        let callable = self.probe_callable(call)?;
+
+        // If the ID refers to the callee of an instance method, return the type
+        // expected from the instance method we found.
+        if let CallExpression::Instanced(instance_call) = call
+            && let Callable::Method(method) = callable
+            && expr == instance_call.callee
+        {
+            return Ok(method.callee.clone());
+        }
+
+        let mut argument_idx = call.find_arg_idx(expr).expect("could not find expression in arg list");
+
+        if let CallExpression::Instanced(_) = call
+            && let Callable::Method(method) = callable
+            && method.is_instanced()
+        {
+            argument_idx += 1;
+        }
+
+        let parameter = &callable.signature().params.inner()[argument_idx];
+
+        Result::Ok(parameter.ty.clone())
     }
 }

@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_query::cached_query;
-use lume_span::{DefId, ExpressionId, ItemId, Location, StatementId};
+use lume_span::{DefId, ExpressionId, FieldId, ItemId, Location, StatementId};
 
 use crate::TyInferCtx;
 
@@ -120,6 +120,21 @@ impl TyInferCtx {
             Some(item) => item,
             None => panic!("expected HIR item with ID of {id:?}"),
         }
+    }
+
+    /// Returns the [`lume_hir::Field`] with the given ID, if any.
+    ///
+    /// # Panics
+    ///
+    /// Panics if no [`lume_hir::Field`] with the given ID was found.
+    #[track_caller]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_expect_field(&self, id: FieldId) -> &lume_hir::Field {
+        let Some(field) = self.hir_prop(id) else {
+            panic!("expected HIR field with ID of {id:?}")
+        };
+
+        field
     }
 
     /// Returns the [`lume_hir::TypeDefinition`] with the given ID, if any.
