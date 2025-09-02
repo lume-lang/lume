@@ -37,17 +37,18 @@ pub(crate) struct UnificationPass {
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "INFO", skip_all, err)]
+    #[tracing::instrument(level = "INFO", name = "lume_infer::UnificationPass::invoke", skip_all, err)]
     pub(crate) fn invoke<'tcx>(mut self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         self.unify(tcx)?;
         self.substitute_type_args(tcx)?;
+        self.verify_fulfilled_paths(tcx)?;
 
         Ok(())
     }
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[tracing::instrument(level = "DEBUG", name = "lume_infer::UnificationPass::unify", skip_all, err)]
     fn unify<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
         for (_, item) in &tcx.hir.items {
             match item {
@@ -127,9 +128,12 @@ impl UnificationPass {
             }
         }
 
+        tcx.dcx().ensure_untainted()?;
+
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn unify_block<'tcx>(&mut self, tcx: &'tcx TyInferCtx, block: &lume_hir::Block) -> Result<()> {
         for stmt in &block.statements {
             self.unify_stmt(tcx, *stmt)?;
@@ -138,6 +142,7 @@ impl UnificationPass {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
     fn unify_stmt<'tcx>(&mut self, tcx: &'tcx TyInferCtx, stmt: lume_span::StatementId) -> Result<()> {
         let stmt = tcx.hir_expect_stmt(stmt);
 
@@ -172,6 +177,7 @@ impl UnificationPass {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
     fn unify_expr<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: lume_span::ExpressionId) -> Result<()> {
         let expr = tcx.hir_expect_expr(expr);
 
@@ -246,7 +252,8 @@ impl UnificationPass {
         Ok(())
     }
 
-    fn verify_type_name<'tcx>(&mut self, tcx: &'tcx TyInferCtx, path: &lume_hir::Path) -> Result<()> {
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    fn verify_type_name<'tcx>(&self, tcx: &'tcx TyInferCtx, path: &lume_hir::Path) -> Result<()> {
         let mut type_path = path.clone();
 
         // Strip back the path until we have the actual type of the path.
@@ -268,13 +275,15 @@ impl UnificationPass {
         let declared_arg_count = type_path.type_arguments().len();
 
         if expected_arg_count != declared_arg_count {
-            return Err(diagnostics::TypeArgumentCountMismatch {
-                source: path.location,
-                type_name: path.clone(),
-                expected: expected_arg_count,
-                actual: declared_arg_count,
-            }
-            .into());
+            tcx.dcx().emit(
+                diagnostics::TypeArgumentCountMismatch {
+                    source: path.location,
+                    type_name: path.clone(),
+                    expected: expected_arg_count,
+                    actual: declared_arg_count,
+                }
+                .into(),
+            );
         }
 
         Ok(())
@@ -312,6 +321,7 @@ impl UnificationPass {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn try_resolve_variable_decl<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
@@ -358,6 +368,7 @@ impl UnificationPass {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn try_resolve_instance_call<'tcx>(&mut self, tcx: &'tcx TyInferCtx, call: &lume_hir::InstanceCall) -> Result<()> {
         let mut callee = call.callee;
 
@@ -399,21 +410,19 @@ impl UnificationPass {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn add_substitution(&mut self, idx: usize, work_key: TypeParameterReference, replacement: TypeRef) {
-        if !self.work_map.contains(&work_key) {
-            return;
+        if self.work_map.remove(&work_key) {
+            let substitute = TypeArgumentSubstitute { idx, ty: replacement };
+
+            self.substitution_map.insert(work_key, substitute);
         }
-
-        let substitute = TypeArgumentSubstitute { idx, ty: replacement };
-
-        self.work_map.remove(&work_key);
-        self.substitution_map.insert(work_key, substitute);
     }
 }
 
 impl UnificationPass {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn substitute_type_args<'tcx>(self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
+    fn substitute_type_args<'tcx>(&self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         for (reference, type_arg) in &self.substitution_map {
             let TypeParameterReference { entry, .. } = reference;
             let TypeArgumentSubstitute { idx, ty } = type_arg;
@@ -437,12 +446,12 @@ impl UnificationPass {
             }
         }
 
-        for TypeParameterReference { entry, param } in self.work_map {
-            let param = tcx.tdb().type_parameter(param).unwrap();
+        for TypeParameterReference { entry, param } in &self.work_map {
+            let param = tcx.tdb().type_parameter(*param).unwrap();
 
             let location = match entry {
-                Entry::Statement(stmt) => tcx.hir_span_of_def(DefId::Statement(stmt)),
-                Entry::Expression(expr) => tcx.hir_span_of_def(DefId::Expression(expr)),
+                Entry::Statement(stmt) => tcx.hir_span_of_def(DefId::Statement(*stmt)),
+                Entry::Expression(expr) => tcx.hir_span_of_def(DefId::Expression(*expr)),
             };
 
             tcx.dcx.emit(
@@ -452,6 +461,41 @@ impl UnificationPass {
                 }
                 .into(),
             );
+        }
+
+        tcx.dcx().ensure_untainted()?;
+
+        Ok(())
+    }
+}
+
+impl UnificationPass {
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    fn verify_fulfilled_paths<'tcx>(&self, tcx: &'tcx TyInferCtx) -> Result<()> {
+        for stmt in tcx.hir.statements.values() {
+            if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
+                && let Some(declared_type) = &decl.declared_type
+            {
+                self.verify_type_name(tcx, &declared_type.name)?;
+            }
+        }
+
+        for expr in tcx.hir.expressions.values() {
+            match &expr.kind {
+                lume_hir::ExpressionKind::Cast(expr) => {
+                    self.verify_type_name(tcx, &expr.target.name)?;
+                }
+                lume_hir::ExpressionKind::Construct(expr) => {
+                    self.verify_type_name(tcx, &expr.path)?;
+                }
+                lume_hir::ExpressionKind::StaticCall(expr) => {
+                    self.verify_type_name(tcx, &expr.name)?;
+                }
+                lume_hir::ExpressionKind::Variant(expr) => {
+                    self.verify_type_name(tcx, &expr.name)?;
+                }
+                _ => {}
+            }
         }
 
         tcx.dcx().ensure_untainted()?;
