@@ -9,7 +9,16 @@ impl Parser {
     /// Parses the next token as a symbol path.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn parse_path(&mut self) -> Result<Path> {
-        let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_path_segment)?;
+        let mut segments = Vec::new();
+
+        loop {
+            segments.push(self.parse_path_segment(segments.last())?);
+
+            if self.consume_if(IDENTIFIER_SEPARATOR).is_none() {
+                break;
+            }
+        }
+
         let (name, root) = segments.split_last().unwrap();
 
         Ok(Path {
@@ -21,7 +30,7 @@ impl Parser {
 
     /// Parses the next token as a single segment of a symbol path.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_path_segment(&mut self) -> Result<PathSegment> {
+    fn parse_path_segment(&mut self, prev_segment: Option<&PathSegment>) -> Result<PathSegment> {
         let name = self.parse_identifier()?;
         let start = name.location.start();
 
@@ -49,9 +58,15 @@ impl Parser {
         }
         // If the name starts with an upper case, it refers to a type.
         else {
+            let is_after_type_segment = if let Some(PathSegment::Type { .. }) = prev_segment {
+                true
+            } else {
+                false
+            };
+
             // If we spot a `(` token, we know it's the start of an argument list,
             // which can only be defined on variant expressions.
-            if self.peek(TokenKind::LeftParen) {
+            if self.peek(TokenKind::LeftParen) || is_after_type_segment {
                 let end = self.previous_token().end();
 
                 return Ok(PathSegment::Variant {
