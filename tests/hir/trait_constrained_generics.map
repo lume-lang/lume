@@ -9,7 +9,54 @@ Map {
                         name: "Add",
                         location: trait_constrained_generics.lm:6:9,
                     },
-                    type_arguments: [],
+                    type_arguments: [
+                        Type {
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    16354669630239520454,
+                                ),
+                            },
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T1",
+                                        location: trait_constrained_generics.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: trait_constrained_generics.lm:0:0,
+                                },
+                                location: trait_constrained_generics.lm:0:0,
+                            },
+                            location: trait_constrained_generics.lm:0:0,
+                        },
+                        Type {
+                            id: ItemId {
+                                package: PackageId(
+                                    0,
+                                ),
+                                index: Idx(
+                                    3439629086382124550,
+                                ),
+                            },
+                            name: Path {
+                                root: [],
+                                name: Type {
+                                    name: Identifier {
+                                        name: "T2",
+                                        location: trait_constrained_generics.lm:0:0,
+                                    },
+                                    type_arguments: [],
+                                    location: trait_constrained_generics.lm:0:0,
+                                },
+                                location: trait_constrained_generics.lm:0:0,
+                            },
+                            location: trait_constrained_generics.lm:0:0,
+                        },
+                    ],
                     location: trait_constrained_generics.lm:6:9,
                 },
                 location: trait_constrained_generics.lm:6:9,
