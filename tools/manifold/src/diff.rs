@@ -33,6 +33,8 @@ pub(crate) fn diff_output_of(output: String, path: PathBuf, output_path: PathBuf
             return Ok(TestResult::Success);
         }
 
+        std::fs::write(&output_path_new, output.clone()).map_err(IntoDiagnostic::into_diagnostic)?;
+
         let write_failure_report: TestFailureCallback =
             Box::new(move || print_diff_output(&path, &output_path, &output, &expected_output).unwrap());
 

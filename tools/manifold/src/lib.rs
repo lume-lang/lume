@@ -2,6 +2,8 @@ mod diff;
 mod hir;
 mod ui;
 
+use std::fmt::Display;
+use std::io::Write;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
 use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
@@ -93,12 +95,39 @@ fn run_test_suite(root: &PathBuf) -> Result<()> {
         .map(|test_file_path| {
             let test_type = determine_test_type(root, &test_file_path)?;
 
-            let status = match test_type {
-                ManifoldTestType::Ui => ui::run_test(test_file_path)?,
-                ManifoldTestType::Hir => hir::run_test(test_file_path)?,
+            let result = match std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
+                Ok(result) => result?,
+                Err(panic_info) => {
+                    let mut f = Vec::new();
+
+                    let panic_msg = if let Some(msg) = panic_info.downcast_ref::<&str>() {
+                        Some(msg as &dyn Display)
+                    } else if let Some(msg) = panic_info.downcast_ref::<String>() {
+                        Some(msg as &dyn Display)
+                    } else {
+                        None
+                    };
+
+                    writeln!(&mut f, "Panic occured during test")?;
+                    writeln!(
+                        &mut f,
+                        "Source file:    {}",
+                        test_file_path.display().cyan().underline()
+                    )?;
+
+                    if let Some(panic_msg) = panic_msg {
+                        writeln!(&mut f, "\n{panic_msg}")?;
+                    }
+
+                    let report = String::from_utf8_lossy(&f).to_string();
+
+                    TestResult::Failure {
+                        write_failure_report: Box::new(|| report),
+                    }
+                }
             };
 
-            Ok(status)
+            Ok(result)
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -133,6 +162,13 @@ fn run_test_suite(root: &PathBuf) -> Result<()> {
     eprintln!("tests passed: {success_count}, tests failed: {failure_count}");
 
     Ok(())
+}
+
+fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Result<TestResult> {
+    Ok(match test_type {
+        ManifoldTestType::Ui => ui::run_test(test_file_path)?,
+        ManifoldTestType::Hir => hir::run_test(test_file_path)?,
+    })
 }
 
 /// Attempts to determine the test type from the path the file is declared within.
