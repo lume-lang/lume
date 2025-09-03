@@ -97,14 +97,13 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                             ),
                                         },
                                     ],
-                                    name: Type {
+                                    name: Variant {
                                         name: Identifier {
                                             name: "None",
                                             location: Location(
                                                 45..49,
                                             ),
                                         },
-                                        type_arguments: [],
                                         location: Location(
                                             45..49,
                                         ),
