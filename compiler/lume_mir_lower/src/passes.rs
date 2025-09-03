@@ -109,6 +109,13 @@ impl PassBlockArguments {
                         Self::update_branch_terminator(block_id, then_block, &func_immut);
                         Self::update_branch_terminator(block_id, else_block, &func_immut);
                     }
+                    TerminatorKind::Switch { arms, fallback, .. } => {
+                        for arm in arms {
+                            Self::update_branch_terminator(block_id, &mut arm.1, &func_immut);
+                        }
+
+                        Self::update_branch_terminator(block_id, fallback, &func_immut);
+                    }
                     TerminatorKind::Return(_) | TerminatorKind::Unreachable => {}
                 }
             }
@@ -253,6 +260,23 @@ impl ConvertAssignmentExpressions {
                 }
 
                 for arg in &mut else_block.arguments {
+                    self.get_moved_register(arg);
+                }
+            }
+            TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            } => {
+                self.get_moved_register(operand);
+
+                for arm in arms {
+                    for arg in &mut arm.1.arguments {
+                        self.get_moved_register(arg);
+                    }
+                }
+
+                for arg in &mut fallback.arguments {
                     self.get_moved_register(arg);
                 }
             }
@@ -430,6 +454,23 @@ impl RenameSsaVariables {
                 }
 
                 for arg in &mut else_block.arguments {
+                    *arg = *mapping.get(&(*arg, block)).unwrap();
+                }
+            }
+            TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            } => {
+                *operand = *mapping.get(&(*operand, block)).unwrap();
+
+                for arm in arms {
+                    for arg in &mut arm.1.arguments {
+                        *arg = *mapping.get(&(*arg, block)).unwrap();
+                    }
+                }
+
+                for arg in &mut fallback.arguments {
                     *arg = *mapping.get(&(*arg, block)).unwrap();
                 }
             }

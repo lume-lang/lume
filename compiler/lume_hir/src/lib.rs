@@ -1707,6 +1707,28 @@ pub enum PatternKind {
     Wildcard(WildcardPattern),
 }
 
+impl PatternKind {
+    #[track_caller]
+    #[expect(clippy::missing_panics_doc)]
+    pub fn expect_lit(&self) -> &Literal {
+        if let Self::Literal(lit) = self {
+            &lit.literal
+        } else {
+            panic!("expectation failed: expected literal pattern");
+        }
+    }
+
+    #[track_caller]
+    #[expect(clippy::missing_panics_doc)]
+    pub fn expect_int_lit(&self) -> i64 {
+        if let LiteralKind::Int(int) = &self.expect_lit().kind {
+            int.value
+        } else {
+            panic!("expectation failed: expected integer literal pattern");
+        }
+    }
+}
+
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct LiteralPattern {
     pub literal: Literal,

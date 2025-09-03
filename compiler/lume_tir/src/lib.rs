@@ -385,6 +385,7 @@ impl Expression {
             ExpressionKind::Member(e) => e.location,
             ExpressionKind::Scope(e) => e.location,
             ExpressionKind::Variable(e) => e.location,
+            ExpressionKind::Switch(e) => e.location,
             ExpressionKind::Variant(e) => e.location,
         }
     }
@@ -412,6 +413,7 @@ pub enum ExpressionKind {
     Logical(Box<Logical>),
     Member(Box<Member>),
     Scope(Box<Scope>),
+    Switch(Box<Switch>),
     Variable(Box<VariableReference>),
     Variant(Box<Variant>),
 }
@@ -611,6 +613,21 @@ pub struct Logical {
     pub op: LogicalOperator,
     pub rhs: Expression,
     pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub struct Switch {
+    pub id: ExpressionId,
+    pub operand: Expression,
+    pub entries: Vec<(SwitchConstantPattern, Expression)>,
+    pub fallback: Expression,
+    pub location: Location,
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub enum SwitchConstantPattern {
+    Literal(i64),
+    Variable(VariableId),
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

@@ -1155,6 +1155,13 @@ pub enum TerminatorKind {
         else_block: BlockBranchSite,
     },
 
+    /// Switch table with constant integer patterns.
+    Switch {
+        operand: RegisterId,
+        arms: Vec<(i64, BlockBranchSite)>,
+        fallback: BlockBranchSite,
+    },
+
     /// Defines the terminator as being unreachable, which may happen when
     /// calling `noret` functions or panic.
     Unreachable,
@@ -1181,6 +1188,20 @@ impl Terminator {
 
                 refs
             }
+            TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            } => {
+                let mut refs = vec![*operand];
+                for arm in arms {
+                    refs.extend(&arm.1.arguments);
+                }
+
+                refs.extend(&fallback.arguments);
+
+                refs
+            }
             TerminatorKind::Branch(site) => site.arguments.clone(),
             TerminatorKind::Unreachable => Vec::new(),
         }
@@ -1202,6 +1223,20 @@ impl std::fmt::Display for Terminator {
                 then_block,
                 else_block,
             } => write!(f, "if {condition} goto {then_block} else {else_block}"),
+            TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            } => {
+                writeln!(f, "switch {operand} [")?;
+
+                for arm in arms {
+                    writeln!(f, "      {} => {}", arm.0, arm.1)?;
+                }
+
+                writeln!(f, "      _ => {fallback}")?;
+                write!(f, "    ]")
+            }
             TerminatorKind::Branch(block_id) => write!(f, "goto {block_id}"),
             TerminatorKind::Unreachable => write!(f, "unreachable"),
         }

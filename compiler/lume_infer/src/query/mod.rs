@@ -852,4 +852,24 @@ impl TyInferCtx {
 
         Ok(refs)
     }
+
+    /// Determines whether all the arms in the given switch expression have a
+    /// pattern which refer to constant integers.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    pub fn switch_table_const_int(&self, expr: &lume_hir::Switch) -> bool {
+        for case in &expr.cases {
+            match &case.pattern.kind {
+                lume_hir::PatternKind::Variant(_) => return false,
+                lume_hir::PatternKind::Literal(lit) => {
+                    if !matches!(lit.literal.kind, lume_hir::LiteralKind::Int(_)) {
+                        return false;
+                    }
+                }
+                lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {}
+            }
+        }
+
+        true
+    }
 }

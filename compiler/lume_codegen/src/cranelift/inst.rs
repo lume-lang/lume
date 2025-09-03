@@ -134,6 +134,15 @@ impl LowerFunction<'_> {
 
                 self.conditional_branch(condition, then_block, else_block);
             }
+            lume_mir::TerminatorKind::Switch {
+                operand,
+                arms,
+                fallback,
+            } => {
+                let operand = self.use_var(*operand);
+
+                self.switch(operand, arms, fallback);
+            }
             lume_mir::TerminatorKind::Unreachable => {
                 let code = TrapCode::user(UNREACHABLE_TRAP_CODE).unwrap();
 

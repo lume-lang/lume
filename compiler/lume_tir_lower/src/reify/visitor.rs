@@ -110,6 +110,15 @@ pub(crate) trait Visitor {
 
                 Ok(())
             }
+            ExpressionKind::Switch(expr) => {
+                self.visit_expression(&mut expr.operand)?;
+
+                for (_, branch) in &mut expr.entries {
+                    self.visit_expression(branch)?;
+                }
+
+                Ok(())
+            }
             ExpressionKind::Member(expr) => self.visit_expression(&mut expr.callee),
             ExpressionKind::Scope(expr) => {
                 for stmt in &mut expr.body {

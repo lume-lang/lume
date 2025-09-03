@@ -16,6 +16,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
             lume_tir::ExpressionKind::Member(expr) => self.member(expr),
             lume_tir::ExpressionKind::Scope(expr) => self.scope(expr),
+            lume_tir::ExpressionKind::Switch(var) => self.switch(var),
             lume_tir::ExpressionKind::Variable(var) => self.variable_reference(var),
             lume_tir::ExpressionKind::Variant(var) => self.variant(var),
         };
@@ -529,6 +530,69 @@ impl FunctionTransformer<'_, '_> {
         }
 
         val.unwrap_or_else(|| self.null_operand())
+    }
+
+    fn switch(&mut self, expr: &lume_tir::Switch) -> lume_mir::Operand {
+        let mut arms = Vec::new();
+
+        let entry_block = self.func.current_block().id;
+        let merge_block = self.func.new_block();
+
+        let value_ty = self.lower_type(&expr.fallback.ty);
+        let value_slot = self.func.alloc_slot(value_ty, expr.location);
+
+        for (pattern, branch) in &expr.entries {
+            let block = self.func.new_active_block();
+
+            let arm_pattern = match pattern {
+                lume_tir::SwitchConstantPattern::Literal(int) => *int,
+                lume_tir::SwitchConstantPattern::Variable(_) => todo!(),
+            };
+
+            let value = self.expression(branch);
+            self.func
+                .current_block_mut()
+                .store_slot(value_slot, value, expr.location);
+            self.func.current_block_mut().branch(merge_block, expr.location);
+
+            arms.push((arm_pattern, lume_mir::BlockBranchSite::new(block)));
+        }
+
+        let fallback_block = self.func.new_active_block();
+
+        let value = self.expression(&expr.fallback);
+        self.func
+            .current_block_mut()
+            .store_slot(value_slot, value, expr.location);
+        self.func.current_block_mut().branch(merge_block, expr.location);
+
+        let fallback = lume_mir::BlockBranchSite::new(fallback_block);
+
+        self.func.set_current_block(entry_block);
+
+        let operand_val = self.expression(&expr.operand);
+        let operand_reg = self.load_operand(&operand_val);
+
+        self.func.current_block_mut().set_terminator(lume_mir::Terminator {
+            kind: lume_mir::TerminatorKind::Switch {
+                operand: operand_reg,
+                arms,
+                fallback,
+            },
+            location: expr.location,
+        });
+
+        self.func.set_current_block(merge_block);
+
+        let slot_addr = self.declare_value(lume_mir::Operand {
+            kind: lume_mir::OperandKind::SlotAddress { id: value_slot },
+            location: expr.location,
+        });
+
+        lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id: slot_addr },
+            location: expr.location,
+        }
     }
 
     fn variable_reference(&mut self, expr: &lume_tir::VariableReference) -> lume_mir::Operand {

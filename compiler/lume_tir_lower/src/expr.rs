@@ -25,7 +25,8 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
-            lume_hir::ExpressionKind::Field(_) | lume_hir::ExpressionKind::Switch(_) => todo!(),
+            lume_hir::ExpressionKind::Field(expr) => self.field_expression(expr),
+            lume_hir::ExpressionKind::Switch(expr) => self.switch_expression(expr)?,
             lume_hir::ExpressionKind::Scope(expr) => self.scope_expression(expr)?,
             lume_hir::ExpressionKind::Variable(expr) => self.variable_expression(expr),
             lume_hir::ExpressionKind::Variant(expr) => self.variant_expression(expr)?,
@@ -372,17 +373,71 @@ impl LowerFunction<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all)]
+    fn field_expression(&self, _expr: &lume_hir::PatternField) -> lume_tir::ExpressionKind {
+        todo!("tir: field expression")
+    }
+
+    fn switch_expression(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
+        if self.lower.tcx.switch_table_const_int(expr) {
+            self.switch_expression_constant(expr)
+        } else {
+            self.switch_expression_dynamic(expr)
+        }
+    }
+
+    fn switch_expression_constant(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
+        let operand = self.expression(expr.operand)?;
+        let mut fallback: Option<lume_tir::Expression> = None;
+
+        let mut entries = Vec::with_capacity(expr.cases.len());
+
+        for case in &expr.cases {
+            let branch = self.expression(case.branch)?;
+
+            let pattern = match &case.pattern.kind {
+                lume_hir::PatternKind::Literal(_) => {
+                    lume_tir::SwitchConstantPattern::Literal(case.pattern.kind.expect_int_lit())
+                }
+                lume_hir::PatternKind::Identifier(_) => todo!(),
+                lume_hir::PatternKind::Wildcard(_) => {
+                    fallback = Some(branch);
+                    continue;
+                }
+                lume_hir::PatternKind::Variant(_) => unreachable!(),
+            };
+
+            entries.push((pattern, branch));
+        }
+
+        Ok(lume_tir::ExpressionKind::Switch(Box::new(lume_tir::Switch {
+            id: expr.id,
+            operand,
+            entries,
+            fallback: fallback.unwrap(),
+            location: expr.location,
+        })))
+    }
+
+    fn switch_expression_dynamic(&self, _expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
+        todo!("switch expressions (dynamic)")
+    }
+
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
             lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
-            lume_hir::VariableSource::Pattern(_) => todo!(),
+            lume_hir::VariableSource::Pattern(pat) => {
+                let _switch_expr = self.lower.tcx.hir_switch_expression(pat.id).unwrap();
+
+                todo!()
+            }
         };
 
         let source = match expr.reference {
             lume_hir::VariableSource::Parameter(_) => lume_tir::VariableSource::Parameter,
-            lume_hir::VariableSource::Variable(_) => lume_tir::VariableSource::Variable,
-            lume_hir::VariableSource::Pattern(_) => todo!(),
+            lume_hir::VariableSource::Variable(_) | lume_hir::VariableSource::Pattern(_) => {
+                lume_tir::VariableSource::Variable
+            }
         };
 
         lume_tir::ExpressionKind::Variable(Box::new(lume_tir::VariableReference {

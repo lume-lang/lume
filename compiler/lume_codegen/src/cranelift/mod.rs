@@ -688,4 +688,17 @@ impl<'ctx> LowerFunction<'ctx> {
 
         self.builder.set_srcloc(src_loc);
     }
+
+    pub(crate) fn switch(&mut self, operand: Value, arms: &[(i64, BlockBranchSite)], fallback: &BlockBranchSite) {
+        let mut switch = cranelift::frontend::Switch::new();
+        let fallback = *self.blocks.get(&fallback.block).unwrap();
+
+        for (index, block) in arms {
+            let arm_block = *self.blocks.get(&block.block).unwrap();
+
+            switch.set_entry(*index as u128, arm_block);
+        }
+
+        switch.emit(&mut self.builder, operand, fallback);
+    }
 }
