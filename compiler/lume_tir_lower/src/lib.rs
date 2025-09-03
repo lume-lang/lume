@@ -1,3 +1,4 @@
+pub(crate) mod diagnostics;
 pub(crate) mod expr;
 pub(crate) mod generic;
 pub(crate) mod path;

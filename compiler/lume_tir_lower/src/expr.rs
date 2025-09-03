@@ -409,11 +409,15 @@ impl LowerFunction<'_> {
             entries.push((pattern, branch));
         }
 
+        let Some(fallback) = fallback else {
+            return Err(crate::diagnostics::MissingWildcardCase { source: expr.location }.into());
+        };
+
         Ok(lume_tir::ExpressionKind::Switch(Box::new(lume_tir::Switch {
             id: expr.id,
             operand,
             entries,
-            fallback: fallback.unwrap(),
+            fallback,
             location: expr.location,
         })))
     }

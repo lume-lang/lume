@@ -470,7 +470,11 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_def_of_name(&self, name: &Path) -> Result<&lume_hir::EnumDefinition> {
         let Some(parent_ty) = self.tdb().find_type(name) else {
-            return Err(lume_types::errors::TypeNameNotFound { name: name.clone() }.into());
+            return Err(lume_types::errors::TypeNameNotFound {
+                name: name.clone(),
+                location: name.location,
+            }
+            .into());
         };
 
         let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
@@ -501,7 +505,11 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_cases_of_name(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {
         let Some(parent_ty) = self.tdb().find_type(name) else {
-            return Err(lume_types::errors::TypeNameNotFound { name: name.clone() }.into());
+            return Err(lume_types::errors::TypeNameNotFound {
+                name: name.clone(),
+                location: name.location,
+            }
+            .into());
         };
 
         self.enum_cases_of(parent_ty.id)

@@ -244,11 +244,41 @@ impl UnificationPass {
             lume_hir::ExpressionKind::Variant(variant) => {
                 self.enqueue_path_unification(tcx, expr.id, &variant.name)?;
             }
-            lume_hir::ExpressionKind::Switch(_) => todo!(),
+            lume_hir::ExpressionKind::Switch(switch) => {
+                self.unify_expr(tcx, switch.operand)?;
+
+                for case in &switch.cases {
+                    self.unify_expr(tcx, case.branch)?;
+                    self.unify_pattern(tcx, expr.id, &case.pattern)?;
+                }
+            }
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
             | lume_hir::ExpressionKind::Field(_) => (),
         };
+
+        Ok(())
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    fn unify_pattern<'tcx>(
+        &mut self,
+        tcx: &'tcx TyInferCtx,
+        expr: ExpressionId,
+        pattern: &lume_hir::Pattern,
+    ) -> Result<()> {
+        match &pattern.kind {
+            lume_hir::PatternKind::Literal(_) => {}
+            lume_hir::PatternKind::Identifier(_) => {}
+            lume_hir::PatternKind::Variant(variant) => {
+                self.enqueue_path_unification(tcx, expr, &variant.name)?;
+
+                for field in &variant.fields {
+                    self.unify_pattern(tcx, expr, field)?;
+                }
+            }
+            lume_hir::PatternKind::Wildcard(_) => {}
+        }
 
         Ok(())
     }

@@ -1,5 +1,6 @@
 use error_snippet_derive::Diagnostic;
 use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, TypeId, UseId};
+use lume_span::Location;
 
 use crate::{Item, TypeKindRef};
 
@@ -40,9 +41,12 @@ pub struct TypeNotFound {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find item {name:+} in context")]
+#[diagnostic(message = "could not find item")]
 pub struct TypeNameNotFound {
     pub name: Path,
+
+    #[label(source, "could not find {name:+} in context")]
+    pub location: Location,
 }
 
 #[derive(Diagnostic, Debug)]
