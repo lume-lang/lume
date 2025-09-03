@@ -363,7 +363,9 @@ impl TyInferCtx {
         let package_id = trait_impl.id.package;
 
         for type_param in &mut trait_impl.type_parameters.iter_mut() {
-            let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self
+                .tdb_mut()
+                .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -410,9 +412,17 @@ impl TyInferCtx {
 
                 for type_param in &mut struct_def.type_parameters.iter_mut() {
                     let type_param_id = match type_id {
-                        lume_types::TYPEREF_POINTER_ID => lume_hir::TypeParameterId(0),
-                        lume_types::TYPEREF_ARRAY_ID => lume_hir::TypeParameterId(1),
-                        _ => self.tdb_mut().type_param_alloc(type_param.name.name.clone()),
+                        lume_types::TYPEREF_POINTER_ID => {
+                            self.tdb_mut().type_parameters[0].location = type_param.location;
+                            lume_hir::TypeParameterId(0)
+                        }
+                        lume_types::TYPEREF_ARRAY_ID => {
+                            self.tdb_mut().type_parameters[1].location = type_param.location;
+                            lume_hir::TypeParameterId(1)
+                        }
+                        _ => self
+                            .tdb_mut()
+                            .type_param_alloc(type_param.name.name.clone(), type_param.location),
                     };
 
                     type_param.type_param_id = Some(type_param_id);
@@ -425,7 +435,9 @@ impl TyInferCtx {
                 let type_id = trait_def.type_id.unwrap();
 
                 for type_param in &mut trait_def.type_parameters.iter_mut() {
-                    let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                    let type_param_id = self
+                        .tdb_mut()
+                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -437,7 +449,9 @@ impl TyInferCtx {
                     let method_id = method.method_id.unwrap();
 
                     for type_param in &mut method.type_parameters.iter_mut() {
-                        let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                        let type_param_id = self
+                            .tdb_mut()
+                            .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                         type_param.type_param_id = Some(type_param_id);
                         type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -450,7 +464,9 @@ impl TyInferCtx {
                 let type_id = enum_def.type_id.unwrap();
 
                 for type_param in &mut enum_def.type_parameters.iter_mut() {
-                    let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                    let type_param_id = self
+                        .tdb_mut()
+                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -468,7 +484,9 @@ impl TyInferCtx {
         let package_id = implementation.id.package;
 
         for type_param in &mut implementation.type_parameters.iter_mut() {
-            let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self
+                .tdb_mut()
+                .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -511,7 +529,9 @@ impl TyInferCtx {
             method.method_id = Some(method_id);
 
             for type_param in &mut method.type_parameters.iter_mut() {
-                let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                let type_param_id = self
+                    .tdb_mut()
+                    .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                 type_param.type_param_id = Some(type_param_id);
                 type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -530,7 +550,9 @@ impl TyInferCtx {
             let method_id = method.method_id.unwrap();
 
             for type_param in &mut method.type_parameters.iter_mut() {
-                let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+                let type_param_id = self
+                    .tdb_mut()
+                    .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                 type_param.type_param_id = Some(type_param_id);
                 type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -546,7 +568,9 @@ impl TyInferCtx {
         let func_id = func.func_id.unwrap();
 
         for type_param in &mut func.type_parameters.iter_mut() {
-            let type_param_id = self.tdb_mut().type_param_alloc(type_param.name.name.clone());
+            let type_param_id = self
+                .tdb_mut()
+                .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
             type_param.type_id = Some(self.wrap_type_param(func.id.package, type_param_id));
@@ -1212,6 +1236,8 @@ impl TyInferCtx {
         for (expr_id, expr) in replacements {
             self.hir.expressions.insert(expr_id, expr);
         }
+
+        self.tcx.dcx().ensure_untainted()?;
 
         Ok(())
     }
