@@ -163,13 +163,22 @@ fn determine_dev_runtime_path() -> Result<PathBuf> {
             ) as error_snippet::Error
         })?;
 
-    Ok(root_dir.join("target").join(profile_name).join(LIB_RUNTIME_NAME))
+    let library_path = root_dir.join("target").join(profile_name).join(LIB_RUNTIME_NAME);
+    if !library_path.exists() {
+        return Err(SimpleDiagnostic::new("could not find runtime library in binary")
+            .with_help("was the library built correctly?")
+            .with_help("use `cargo build --release --workspace` to build the runtime")
+            .into());
+    }
+
+    Ok(library_path)
 }
 
 #[derive(Embed)]
 #[folder = "$CARGO_MANIFEST_DIR/../../target"]
 #[include = "debug/liblumert.{a,lib}"]
 #[include = "release/liblumert.{a,lib}"]
+#[allow_missing = true]
 struct RuntimeLibrary;
 
 /// Determines the full path of the runtime library in the system library directory.
