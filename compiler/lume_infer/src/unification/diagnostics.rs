@@ -4,6 +4,15 @@ use lume_hir::Path;
 use lume_span::Location;
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find callable", code = "LM4108")]
+pub(crate) struct CallableNotFound {
+    #[label(source, "could not find any callable with the name of {name:+}")]
+    pub source: Location,
+
+    pub name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "type argument mismatch", code = "LM4119")]
 pub(crate) struct TypeArgumentCountMismatch {
     #[label(

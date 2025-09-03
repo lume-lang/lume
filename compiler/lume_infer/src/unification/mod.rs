@@ -302,7 +302,11 @@ impl UnificationPass {
         match &path.name {
             lume_hir::PathSegment::Type { .. } => {
                 let Some(matching_type) = tcx.tdb().find_type(path) else {
-                    todo!()
+                    return Err(crate::errors::MissingType {
+                        name: path.to_owned(),
+                        source: tcx.hir_span_of_def(DefId::Expression(expr)),
+                    }
+                    .into());
                 };
 
                 if expected_type_args == matching_type.kind.type_parameters().len() {
@@ -325,7 +329,11 @@ impl UnificationPass {
                 } else if let Some(func) = tcx.tdb().find_function(path) {
                     Callable::Function(func)
                 } else {
-                    todo!()
+                    return Err(diagnostics::CallableNotFound {
+                        source: tcx.hir_span_of_def(DefId::Expression(expr)),
+                        name: path.to_owned(),
+                    }
+                    .into());
                 };
 
                 let type_args = callable.name().all_root_type_arguments().len();
