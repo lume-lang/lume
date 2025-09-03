@@ -35,14 +35,13 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                             ),
                                         },
                                     ],
-                                    name: Type {
+                                    name: Variant {
                                         name: Identifier {
                                             name: "V4",
                                             location: Location(
                                                 20..22,
                                             ),
                                         },
-                                        type_arguments: [],
                                         location: Location(
                                             20..22,
                                         ),
@@ -90,14 +89,13 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                             ),
                                         },
                                     ],
-                                    name: Type {
+                                    name: Variant {
                                         name: Identifier {
                                             name: "V6",
                                             location: Location(
                                                 38..40,
                                             ),
                                         },
-                                        type_arguments: [],
                                         location: Location(
                                             38..40,
                                         ),
