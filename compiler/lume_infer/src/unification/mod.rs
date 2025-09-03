@@ -1,7 +1,5 @@
 mod diagnostics;
 
-use std::collections::HashSet;
-
 use indexmap::IndexMap;
 use lume_errors::Result;
 use lume_hir::TypeParameterId;
@@ -32,8 +30,6 @@ struct TypeArgumentSubstitute {
 #[derive(Default)]
 pub(crate) struct UnificationPass {
     substitution_map: IndexMap<TypeParameterReference, TypeArgumentSubstitute>,
-
-    work_map: HashSet<TypeParameterReference>,
 }
 
 impl UnificationPass {
@@ -148,8 +144,11 @@ impl UnificationPass {
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(decl) => {
+                if let Some(declared_type) = &decl.declared_type {
+                    self.verify_type_name(tcx, &declared_type.name)?;
+                }
+
                 self.unify_expr(tcx, decl.value)?;
-                self.try_resolve_variable_decl(tcx, decl)?;
 
                 Ok(())
             }
@@ -186,13 +185,17 @@ impl UnificationPass {
                 self.unify_expr(tcx, s.target)?;
                 self.unify_expr(tcx, s.value)?;
             }
-            lume_hir::ExpressionKind::Cast(s) => {
-                self.unify_expr(tcx, s.source)?;
+            lume_hir::ExpressionKind::Cast(cast) => {
+                self.unify_expr(tcx, cast.source)?;
+
+                self.enqueue_path_unification(tcx, expr.id, &cast.target.name)?;
             }
-            lume_hir::ExpressionKind::Construct(s) => {
-                for field in &s.fields {
+            lume_hir::ExpressionKind::Construct(construct) => {
+                for field in &construct.fields {
                     self.unify_expr(tcx, field.value)?;
                 }
+
+                self.enqueue_path_unification(tcx, expr.id, &construct.path)?;
             }
             lume_hir::ExpressionKind::Binary(s) => {
                 self.unify_expr(tcx, s.lhs)?;
@@ -204,8 +207,6 @@ impl UnificationPass {
                 for arg in &call.arguments {
                     self.unify_expr(tcx, *arg)?;
                 }
-
-                self.try_resolve_instance_call(tcx, call)?;
             }
             lume_hir::ExpressionKind::IntrinsicCall(s) => {
                 self.unify_expr(tcx, s.callee())?;
@@ -233,20 +234,20 @@ impl UnificationPass {
                     self.unify_expr(tcx, *arg)?;
                 }
 
-                if let Callable::Method(method) = tcx.probe_callable_static(call)? {
-                    self.unify_method_call(tcx, call, method)?;
-                }
+                self.enqueue_path_unification(tcx, expr.id, &call.name)?;
             }
             lume_hir::ExpressionKind::Scope(s) => {
                 for stmt in &s.body {
                     self.unify_stmt(tcx, *stmt)?;
                 }
             }
+            lume_hir::ExpressionKind::Variant(variant) => {
+                self.enqueue_path_unification(tcx, expr.id, &variant.name)?;
+            }
             lume_hir::ExpressionKind::Switch(_) => todo!(),
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
-            | lume_hir::ExpressionKind::Field(_)
-            | lume_hir::ExpressionKind::Variant(_) => (),
+            | lume_hir::ExpressionKind::Field(_) => (),
         };
 
         Ok(())
@@ -289,134 +290,143 @@ impl UnificationPass {
         Ok(())
     }
 
-    fn unify_method_call<'tcx>(
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    fn enqueue_path_unification<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
-        call: &lume_hir::StaticCall,
-        method: &lume_types::Method,
+        expr: ExpressionId,
+        path: &lume_hir::Path,
     ) -> Result<()> {
-        let full_method_name = &method.name;
-        let full_type_name = full_method_name.clone().parent().expect("method name should have type");
-        let invoked_method_name = call.name.clone().parent().expect("method name should have type");
+        let expected_type_args = path.all_type_arguments().len();
 
-        let expected_arg_count = full_type_name.type_arguments().len();
-        let declared_arg_count = invoked_method_name.type_arguments().len();
+        match &path.name {
+            lume_hir::PathSegment::Type { .. } => {
+                let Some(matching_type) = tcx.tdb().find_type(path) else {
+                    todo!()
+                };
 
-        if expected_arg_count == declared_arg_count {
-            return Ok(());
-        }
+                if expected_type_args == matching_type.kind.type_parameters().len() {
+                    return Ok(());
+                }
 
-        for method_type_param in full_type_name.type_arguments() {
-            let type_param_ref = tcx.mk_type_ref_from(method_type_param, method.hir)?;
-            let Some(type_param) = tcx.as_type_parameter(&type_param_ref)? else {
-                continue;
-            };
-
-            self.work_map.insert(TypeParameterReference {
-                entry: Entry::Expression(call.id),
-                param: type_param.id,
-            });
-        }
-
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn try_resolve_variable_decl<'tcx>(
-        &mut self,
-        tcx: &'tcx TyInferCtx,
-        decl: &lume_hir::VariableDeclaration,
-    ) -> Result<()> {
-        // If the declaration doesn't have any explicit type, we can't use it
-        // to infer type parameters on it's value.
-        let Some(declared_type) = &decl.declared_type else {
-            return Ok(());
-        };
-
-        let declared_type_ref = tcx.mk_type_ref_from_expr(declared_type, decl.value)?;
-        let value_type_ref = tcx.type_of(decl.value)?;
-
-        if let Some(type_param_ref) = tcx.as_type_parameter(&value_type_ref)? {
-            let work_key = TypeParameterReference {
-                entry: Entry::Expression(decl.value),
-                param: type_param_ref.id,
-            };
-
-            self.add_substitution(0, work_key, value_type_ref);
-
-            return Ok(());
-        };
-
-        for (idx, (decl_type_arg, type_param_arg)) in declared_type_ref
-            .type_arguments
-            .iter()
-            .zip(value_type_ref.type_arguments.iter())
-            .enumerate()
-        {
-            let Some(type_param_ref) = tcx.as_type_parameter(type_param_arg)? else {
-                continue;
-            };
-
-            let work_key = TypeParameterReference {
-                entry: Entry::Expression(decl.value),
-                param: type_param_ref.id,
-            };
-
-            self.add_substitution(idx, work_key, decl_type_arg.to_owned());
-        }
-
-        Ok(())
-    }
-
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
-    fn try_resolve_instance_call<'tcx>(&mut self, tcx: &'tcx TyInferCtx, call: &lume_hir::InstanceCall) -> Result<()> {
-        let mut callee = call.callee;
-
-        while let lume_hir::ExpressionKind::Variable(var_ref) = &tcx.hir_expect_expr(callee).kind {
-            if let lume_hir::VariableSource::Variable(decl) = &var_ref.reference {
-                callee = decl.value;
-            } else {
-                break;
+                for (idx, type_param) in matching_type
+                    .kind
+                    .type_parameters()
+                    .iter()
+                    .enumerate()
+                    .skip(expected_type_args)
+                {
+                    self.resolve_type_param(tcx, idx, expr, *type_param)?;
+                }
             }
-        }
+            lume_hir::PathSegment::Callable { .. } => {
+                let callable = if let Some(method) = tcx.tdb().find_method(path) {
+                    Callable::Method(method)
+                } else if let Some(func) = tcx.tdb().find_function(path) {
+                    Callable::Function(func)
+                } else {
+                    todo!()
+                };
 
-        let method = tcx.probe_callable_instance(call)?;
-        let args = tcx.hir.expect_expressions(&call.arguments)?;
+                let type_args = callable.name().all_root_type_arguments().len();
+                let method_args = callable.signature().type_params.len();
 
-        // We skip the `self` parameter, since the type argument inference will
-        // just resolve the type parameter on the callee, which is what we're currently trying to resolve.
-        let method_params = method.signature().params.inner().to_vec();
-        let params = lume_types::Parameters {
-            params: method_params.into_iter().skip_while(|p| p.is_self()).collect(),
-        };
+                if expected_type_args == type_args + method_args {
+                    return Ok(());
+                }
 
-        for (idx, call_type_arg) in tcx.type_of(call.callee)?.type_arguments.iter().enumerate() {
-            let Some(type_param) = tcx.as_type_parameter(call_type_arg)? else {
-                continue;
-            };
+                for (idx, type_param) in callable
+                    .name()
+                    .all_root_type_arguments()
+                    .iter()
+                    .enumerate()
+                    .skip(path.all_root_type_arguments().len())
+                {
+                    let type_param_ref = tcx.mk_type_ref_from(type_param, callable.id())?;
+                    let Some(type_param) = tcx.as_type_parameter(&type_param_ref)? else {
+                        continue;
+                    };
 
-            let Some(inferred_type_param) = tcx.infer_type_arg_param(type_param.id, &params, &args)? else {
-                continue;
-            };
+                    self.resolve_type_param(tcx, idx, expr, type_param.id)?;
+                }
 
-            let work_key = TypeParameterReference {
-                entry: Entry::Expression(callee),
-                param: type_param.id,
-            };
+                for (idx, type_param) in callable
+                    .signature()
+                    .type_params
+                    .iter()
+                    .enumerate()
+                    .skip(path.type_arguments().len())
+                {
+                    self.resolve_type_param(tcx, idx, expr, *type_param)?;
+                }
+            }
+            lume_hir::PathSegment::Variant { .. } => {
+                let enum_def = tcx.enum_def_of_name(&path.clone().parent().unwrap())?;
 
-            self.add_substitution(idx, work_key, inferred_type_param);
+                if expected_type_args == enum_def.type_parameters.len() {
+                    return Ok(());
+                }
+
+                for (idx, type_param) in enum_def.type_parameters.iter().enumerate().skip(expected_type_args) {
+                    self.resolve_type_param(tcx, idx, expr, type_param.type_param_id.unwrap())?;
+                }
+            }
+            lume_hir::PathSegment::Namespace { .. } => return Ok(()),
         }
 
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn add_substitution(&mut self, idx: usize, work_key: TypeParameterReference, replacement: TypeRef) {
-        if self.work_map.remove(&work_key) {
-            let substitute = TypeArgumentSubstitute { idx, ty: replacement };
+    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    fn resolve_type_param<'tcx>(
+        &mut self,
+        tcx: &'tcx TyInferCtx,
+        idx: usize,
+        expr: ExpressionId,
+        type_param: TypeParameterId,
+    ) -> Result<()> {
+        let Some(expected_type_of_expr) = tcx.expected_type_of(expr)? else {
+            let span = tcx.hir_span_of_def(DefId::Expression(expr));
+            let type_param_name = tcx.tdb().type_parameter(type_param).unwrap().name.to_owned();
 
-            self.substitution_map.insert(work_key, substitute);
-        }
+            tcx.dcx().emit(
+                crate::errors::TypeArgumentInferenceFailed {
+                    source: span,
+                    type_param_name,
+                }
+                .into(),
+            );
+
+            return Ok(());
+        };
+
+        let Some(expected_type_of_param) = expected_type_of_expr.type_arguments.get(idx) else {
+            let type_param = tcx.tdb().type_parameter(type_param).unwrap();
+
+            tcx.dcx().emit(
+                crate::errors::TypeArgumentInferenceFailed {
+                    source: type_param.location,
+                    type_param_name: type_param.name.clone(),
+                }
+                .into(),
+            );
+
+            return Ok(());
+        };
+
+        let work_key = TypeParameterReference {
+            entry: Entry::Expression(expr),
+            param: type_param,
+        };
+
+        let substitute = TypeArgumentSubstitute {
+            idx,
+            ty: expected_type_of_param.to_owned(),
+        };
+
+        self.substitution_map.insert(work_key, substitute);
+
+        Ok(())
     }
 }
 
@@ -433,34 +443,21 @@ impl UnificationPass {
                 Entry::Expression(expr) => {
                     let expr = tcx.hir.expression_mut(expr).unwrap();
 
-                    if let lume_hir::ExpressionKind::StaticCall(call) = &mut expr.kind {
-                        let type_segment = call.name.root.last_mut().unwrap();
+                    let segment = match &mut expr.kind {
+                        lume_hir::ExpressionKind::Cast(cast) => &mut cast.target.name.name,
+                        lume_hir::ExpressionKind::Construct(construct) => &mut construct.path.name,
+                        lume_hir::ExpressionKind::StaticCall(call) => call.name.root.last_mut().unwrap(),
+                        lume_hir::ExpressionKind::Variant(variant) => &mut variant.name.name,
+                        kind => unreachable!("bug!: unimplemented expression substitute: {kind:#?}"),
+                    };
 
-                        let mut existing_type_args = type_segment.type_arguments().to_vec();
-                        existing_type_args.insert(*idx, hir_ty);
+                    let mut existing_type_args = segment.type_arguments().to_vec();
+                    existing_type_args.insert(*idx, hir_ty);
 
-                        type_segment.place_type_arguments(existing_type_args);
-                    }
+                    segment.place_type_arguments(existing_type_args);
                 }
                 Entry::Statement(_) => todo!(),
             }
-        }
-
-        for TypeParameterReference { entry, param } in &self.work_map {
-            let param = tcx.tdb().type_parameter(*param).unwrap();
-
-            let location = match entry {
-                Entry::Statement(stmt) => tcx.hir_span_of_def(DefId::Statement(*stmt)),
-                Entry::Expression(expr) => tcx.hir_span_of_def(DefId::Expression(*expr)),
-            };
-
-            tcx.dcx.emit(
-                crate::errors::TypeArgumentInferenceFailed {
-                    source: location,
-                    type_param_name: param.name.clone(),
-                }
-                .into(),
-            );
         }
 
         tcx.dcx().ensure_untainted()?;

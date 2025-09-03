@@ -1100,6 +1100,7 @@ pub struct TypeParameter {
     pub id: TypeParameterId,
     pub name: String,
     pub constraints: Vec<TypeRef>,
+    pub location: Location,
 }
 
 #[derive(Debug)]
@@ -1547,12 +1548,13 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`TypeParameter`] with the given name and kind.
     #[inline]
-    pub fn type_param_alloc(&mut self, name: String) -> TypeParameterId {
+    pub fn type_param_alloc(&mut self, name: String, loc: Location) -> TypeParameterId {
         let id = TypeParameterId(self.type_parameters.len());
         let param = TypeParameter {
             id,
             name,
             constraints: Vec::new(),
+            location: loc,
         };
 
         self.type_parameters.push(param);
@@ -1623,11 +1625,13 @@ impl Default for TypeDatabaseContext {
                     id: TypeParameterId(0),
                     name: String::from("T"),
                     constraints: Vec::new(),
+                    location: Location::empty(),
                 },
                 TypeParameter {
                     id: TypeParameterId(1),
                     name: String::from("T"),
                     constraints: Vec::new(),
+                    location: Location::empty(),
                 },
             ],
             implementations: Vec::new(),
