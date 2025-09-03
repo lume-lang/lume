@@ -28,6 +28,13 @@ pub enum Callable<'a> {
 }
 
 impl Callable<'_> {
+    pub fn id(&self) -> DefId {
+        match self {
+            Self::Method(method) => method.hir,
+            Self::Function(function) => DefId::Item(function.hir),
+        }
+    }
+
     pub fn name(&self) -> &Path {
         match self {
             Self::Method(method) => &method.name,
@@ -96,13 +103,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
         let ty = match &expr.kind {
-            lume_hir::ExpressionKind::Assignment(e) => {
-                if self.is_value_expected(expr.id)? {
-                    self.type_of(e.value)?
-                } else {
-                    TypeRef::void()
-                }
-            }
+            lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
                 let Some(ty_opt) = self.find_type_ref_from(&e.path, DefId::Expression(e.id))? else {
@@ -636,17 +637,44 @@ impl TyInferCtx {
     /// ```
     ///
     /// would be impossible to solve, since no explicit type is declared.
+    ///
+    /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to attempt
+    /// to infer the type from other expressions and statements which reference the target expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn expected_type_of(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
+        if let Some(expected_type) = self.try_expected_type_of(id)? {
+            Ok(Some(expected_type))
+        } else {
+            self.guess_type_of_ctx(id)
+        }
+    }
+
+    /// Attempts to get the expected type of the [`Expression`] with the given ID, in the
+    /// context in which it is defined. For example, given an expression like this:
+    /// ```lm
+    /// let _: std::Array<Int32> = std::Array::new();
+    /// ```
+    ///
+    /// We can infer the expected type of the expression `std::Array::new()` since it
+    /// is explicitly declared on the variable declaration. In another instances it might
+    /// not be as explicit, which may cause the method to return [`None`]. For example, an
+    /// expression like:
+    /// ```lm
+    /// let _ = std::Array::new();
+    /// ```
+    ///
+    /// would be impossible to solve, since no explicit type is declared.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn try_expected_type_of(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
         let parent_id = self
             .hir_parent_of(DefId::Expression(id))
             .expect("bug!: expression exists without parent");
 
         match parent_id {
             DefId::Expression(parent_id) => match &self.hir_expect_expr(parent_id).kind {
-                lume_hir::ExpressionKind::Assignment(assignment) => self.expected_type_of(assignment.id),
-                lume_hir::ExpressionKind::Binary(_) => todo!("expected_type_of binary expression"),
-                lume_hir::ExpressionKind::Cast(_) => todo!("expected_type_of cast expression"),
+                lume_hir::ExpressionKind::Assignment(_) => self.try_expected_type_of(parent_id),
+                lume_hir::ExpressionKind::Binary(_) => Ok(None),
+                lume_hir::ExpressionKind::Cast(_) => Ok(None),
                 lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
                 lume_hir::ExpressionKind::InstanceCall(call) => self
                     .expected_type_of_call(id, CallExpression::Instanced(call))
@@ -659,10 +687,10 @@ impl TyInferCtx {
                     .map(|ty| Some(ty)),
                 lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
-                lume_hir::ExpressionKind::Logical(_) => todo!("expected_type_of logical expression"),
+                lume_hir::ExpressionKind::Logical(_) => Ok(None),
                 lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Field(_) => todo!("expected_type_of field expression"),
-                lume_hir::ExpressionKind::Scope(_) => todo!("expected_type_of scope expression"),
+                lume_hir::ExpressionKind::Scope(_) => self.try_expected_type_of(parent_id),
                 lume_hir::ExpressionKind::Switch(_) => todo!("expected_type_of switch expression"),
                 lume_hir::ExpressionKind::Variable(_) => {
                     unreachable!("variable references cannot have sub expressions")
@@ -683,7 +711,7 @@ impl TyInferCtx {
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
                 lume_hir::StatementKind::Final(fin) => {
                     if let Some(DefId::Expression(parent)) = self.hir_parent_of(DefId::Statement(fin.id)) {
-                        return self.expected_type_of(parent);
+                        return self.try_expected_type_of(parent);
                     };
 
                     self.hir_ctx_return_type(DefId::Statement(fin.id)).map(|ty| Some(ty))
@@ -747,14 +775,16 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn expected_type_of_call(&self, expr: ExpressionId, call: CallExpression<'_>) -> Result<TypeRef> {
         let callable = self.probe_callable(call)?;
+        let signature = self.instantiate_signature_from_args(callable, call)?;
 
         // If the ID refers to the callee of an instance method, return the type
         // expected from the instance method we found.
         if let CallExpression::Instanced(instance_call) = call
-            && let Callable::Method(method) = callable
             && expr == instance_call.callee
         {
-            return Ok(method.callee.clone());
+            let callee_type = &signature.params.params.first().unwrap().ty;
+
+            return Ok(callee_type.clone());
         }
 
         let mut argument_idx = call.find_arg_idx(expr).expect("could not find expression in arg list");
@@ -766,8 +796,60 @@ impl TyInferCtx {
             argument_idx += 1;
         }
 
-        let parameter = &callable.signature().params.inner()[argument_idx];
+        let parameter = &signature.params.inner()[argument_idx];
 
         Result::Ok(parameter.ty.clone())
+    }
+
+    /// Attempts to guess the expected type of the given expression, based on other statements
+    /// and expressions which refer to the target expression.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn guess_type_of_ctx(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
+        for expr_def_ref in self.indirect_expression_refs(id)? {
+            match expr_def_ref {
+                DefId::Statement(stmt_id) => match &self.hir_expect_stmt(stmt_id).kind {
+                    lume_hir::StatementKind::Variable(decl) => {
+                        if let Some(declared_type) = &decl.declared_type {
+                            return Ok(Some(self.mk_type_ref_from(declared_type, DefId::Statement(decl.id))?));
+                        } else {
+                            continue;
+                        }
+                    }
+                    _ => continue,
+                },
+                DefId::Expression(expr_id) => {
+                    if let Some(expected_type) = self.try_expected_type_of(expr_id)? {
+                        return Ok(Some(expected_type));
+                    }
+                }
+                _ => continue,
+            }
+        }
+
+        Ok(None)
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn indirect_expression_refs(&self, id: ExpressionId) -> Result<Vec<DefId>> {
+        let Some(parent_id) = self.hir_parent_of(DefId::Expression(id)) else {
+            return Ok(Vec::new());
+        };
+
+        let mut refs = vec![parent_id];
+
+        if let DefId::Statement(parent_id) = parent_id
+            && let lume_hir::StatementKind::Variable(decl) = &self.hir_expect_stmt(parent_id).kind
+        {
+            for (hir_id, hir_expr) in self.hir.expressions() {
+                if let lume_hir::ExpressionKind::Variable(var_ref) = &hir_expr.kind
+                    && let lume_hir::VariableSource::Variable(var_source) = &var_ref.reference
+                    && var_source.id == decl.id
+                {
+                    refs.push(DefId::Expression(*hir_id));
+                }
+            }
+        }
+
+        Ok(refs)
     }
 }

@@ -409,6 +409,92 @@ impl TyInferCtx {
         Ok(self.instantiate_function(signature, &type_arguments))
     }
 
+    /// Attempt to instantiate the given callable purely from the arguments
+    /// passed to the callable.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_signature_from_args<'a>(
+        &self,
+        callable: Callable<'a>,
+        expr: lume_hir::CallExpression<'a>,
+    ) -> Result<lume_types::FunctionSigOwned> {
+        let signature = self.signature_of(callable)?;
+
+        self.instantiate_function_from_args(signature.as_ref(), expr)
+    }
+
+    /// Attempt to instantiate the given signature purely from the arguments
+    /// passed to the callable.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn instantiate_function_from_args<'a>(
+        &self,
+        signature: lume_types::FunctionSig<'a>,
+        expr: lume_hir::CallExpression<'a>,
+    ) -> Result<lume_types::FunctionSigOwned> {
+        let mut inst = lume_types::FunctionSigOwned {
+            params: signature.params.clone(),
+            ret_ty: TypeRef::unknown(),
+            type_params: Vec::new(),
+        };
+
+        let callable = self.probe_callable(expr)?;
+        let params = &callable.signature().params;
+
+        let args = match (expr, callable.is_instance()) {
+            (lume_hir::CallExpression::Instanced(call), true) => &[&[call.callee][..], &call.arguments[..]].concat(),
+            (lume_hir::CallExpression::Intrinsic(call), true) => &call.arguments,
+            (lume_hir::CallExpression::Static(call), _) => &call.arguments,
+            (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
+                return Err(crate::errors::InstanceCallOnStaticMethod {
+                    source: expr.location(),
+                    method_name: callable.name().clone(),
+                }
+                .into());
+            }
+        };
+
+        debug_assert_eq!(params.len(), args.len());
+
+        let mut type_args = Vec::new();
+
+        for type_param in signature.type_params {
+            for (param, arg) in params.inner().iter().zip(args.iter()) {
+                let param_ty = &param.ty;
+                let arg_ty = self.type_of(*arg)?;
+
+                // We skip the `self` parameter since it would likely just resolve to the
+                // same type parameter as the one we're trying to resolve.
+                if callable.is_instance() && param.is_self() {
+                    continue;
+                }
+
+                // If the parameter type doesn't have any generic components, we might
+                // as well not check it.
+                if !self.is_type_generic(param_ty)? {
+                    continue;
+                }
+
+                if let Some(type_arg) = self.instantiate_argument_type(*type_param, param_ty, &arg_ty)? {
+                    type_args.push(type_arg);
+                    break;
+                }
+            }
+        }
+
+        debug_assert_eq!(signature.type_params.len(), type_args.len());
+
+        for (idx, param) in signature.params.inner().iter().enumerate() {
+            let param_ty = self.instantiate_type_from(&param.ty, signature.type_params, &type_args);
+
+            inst.params.params[idx].ty = param_ty.to_owned();
+        }
+
+        inst.ret_ty = self
+            .instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
+            .to_owned();
+
+        Ok(inst)
+    }
+
     /// Instantiates a function signature against the given type arguments, resolving
     /// the parameters and return type within the signature.
     #[tracing::instrument(level = "TRACE", skip(self))]
@@ -528,6 +614,32 @@ impl TyInferCtx {
         }
     }
 
+    /// Attempts the infer the instantiated type of `type_param_id` from the given
+    /// set of parameter type and matching argument type.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    fn instantiate_argument_type<'a>(
+        &self,
+        type_param_id: lume_hir::TypeParameterId,
+        param_type: &TypeRef,
+        arg_type: &TypeRef,
+    ) -> Result<Option<TypeRef>> {
+        if let Some(type_param_ref) = self.as_type_parameter(param_type)?
+            && type_param_ref.id == type_param_id
+        {
+            return Ok(Some(arg_type.to_owned()));
+        }
+
+        for (param_type_arg, arg_type_arg) in param_type.type_arguments.iter().zip(arg_type.type_arguments.iter()) {
+            if let Some(type_param_ref) = self.as_type_parameter(param_type_arg)?
+                && type_param_ref.id == type_param_id
+            {
+                return Ok(Some(arg_type_arg.to_owned()));
+            }
+        }
+
+        Ok(None)
+    }
+
     /// Gets the expanded signature of the given [`Callable`].
     ///
     /// The expanded signature of a [`Callable`] will include all the type parameters
@@ -615,5 +727,21 @@ impl TyInferCtx {
             TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
             _ => Ok(None),
         }
+    }
+
+    /// Determines whether the given [`TypeRef`] has any generic components.
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    pub fn is_type_generic(&self, ty: &TypeRef) -> Result<bool> {
+        if self.is_type_parameter(ty)? {
+            return Ok(true);
+        }
+
+        for type_arg in &ty.type_arguments {
+            if self.is_type_parameter(type_arg)? {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 }
