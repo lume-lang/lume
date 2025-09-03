@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+fn foo(arr: std::Array<Int32>) { }
+
+fn bar() {
+    foo(std::Array::new());
+}
