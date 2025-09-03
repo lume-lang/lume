@@ -73,6 +73,15 @@ pub struct MissingField {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(message = "attempted instance call on static method", code = "LM4124")]
+pub(crate) struct InstanceCallOnStaticMethod {
+    #[label(source, "cannot call static method {method_name} on an instance")]
+    pub source: Location,
+
+    pub method_name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(
     message = "could not infer type argument",
     code = "LM4139",
