@@ -378,7 +378,7 @@ impl<'ctx> LowerFunction<'ctx> {
         let cg_ty = self.backend.cl_type_of(&ty);
         let var = self.builder.declare_var(cg_ty);
 
-        tracing::debug!("declare_var {register}[{ty}] = {var}");
+        tracing::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
 
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
