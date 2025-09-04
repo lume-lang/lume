@@ -53,7 +53,11 @@ impl FunctionTransformer<'_, '_> {
 
                 fields[*index].clone()
             }
-            lume_mir::OperandKind::SlotAddress { .. } => lume_mir::Type::pointer(lume_mir::Type::void()),
+            lume_mir::OperandKind::SlotAddress { id } => {
+                let slot_ty = self.func.slots.get(id).unwrap();
+
+                lume_mir::Type::pointer(slot_ty.to_owned())
+            }
             lume_mir::OperandKind::Reference { id } => self.func.registers.register_ty(*id).clone(),
         }
     }
