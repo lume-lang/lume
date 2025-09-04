@@ -388,8 +388,12 @@ impl LowerFunction<'_> {
     fn switch_expression_constant(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         let operand = self.expression(expr.operand)?;
         let mut fallback: Option<lume_tir::Expression> = None;
-
         let mut entries = Vec::with_capacity(expr.cases.len());
+
+        let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
+
+        self.variable_mapping
+            .insert(lume_span::BodyItem::Expression(expr.operand), operand_var);
 
         for case in &expr.cases {
             let branch = self.expression(case.branch)?;
@@ -398,8 +402,7 @@ impl LowerFunction<'_> {
                 lume_hir::PatternKind::Literal(_) => {
                     lume_tir::SwitchConstantPattern::Literal(case.pattern.kind.expect_int_lit())
                 }
-                lume_hir::PatternKind::Identifier(_) => todo!(),
-                lume_hir::PatternKind::Wildcard(_) => {
+                lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
                     fallback = Some(branch);
                     continue;
                 }
@@ -416,6 +419,7 @@ impl LowerFunction<'_> {
         Ok(lume_tir::ExpressionKind::Switch(Box::new(lume_tir::Switch {
             id: expr.id,
             operand,
+            operand_var,
             entries,
             fallback,
             location: expr.location,
@@ -429,11 +433,21 @@ impl LowerFunction<'_> {
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
+            lume_hir::VariableSource::Variable(var) => *self
+                .variable_mapping
+                .get(&lume_span::BodyItem::Statement(var.id))
+                .unwrap(),
             lume_hir::VariableSource::Pattern(pat) => {
-                let _switch_expr = self.lower.tcx.hir_switch_expression(pat.id).unwrap();
+                let switch_expr = self.lower.tcx.hir_switch_expression(pat.id).unwrap();
 
-                todo!()
+                match &pat.kind {
+                    lume_hir::PatternKind::Identifier(_) => *self
+                        .variable_mapping
+                        .get(&lume_span::BodyItem::Expression(switch_expr.operand))
+                        .unwrap(),
+                    lume_hir::PatternKind::Variant(_) => unimplemented!("tir: variable reference to variant pattern"),
+                    lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Wildcard(_) => unreachable!(),
+                }
             }
         };
 

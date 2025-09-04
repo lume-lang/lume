@@ -619,6 +619,7 @@ pub struct Logical {
 pub struct Switch {
     pub id: ExpressionId,
     pub operand: Expression,
+    pub operand_var: VariableId,
     pub entries: Vec<(SwitchConstantPattern, Expression)>,
     pub fallback: Expression,
     pub location: Location,
