@@ -403,7 +403,8 @@ impl LowerFunction<'_> {
                     let const_literal = match &literal.literal.kind {
                         lume_hir::LiteralKind::Int(lit) => lume_tir::SwitchConstantLiteral::Integer(lit.value),
                         lume_hir::LiteralKind::Boolean(lit) => lume_tir::SwitchConstantLiteral::Boolean(lit.value),
-                        lume_hir::LiteralKind::Float(_) | lume_hir::LiteralKind::String(_) => unreachable!(),
+                        lume_hir::LiteralKind::Float(lit) => lume_tir::SwitchConstantLiteral::Float(lit.value),
+                        lume_hir::LiteralKind::String(_) => unreachable!(),
                     };
 
                     lume_tir::SwitchConstantPattern::Literal(const_literal)

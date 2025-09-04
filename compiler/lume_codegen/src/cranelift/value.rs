@@ -123,6 +123,12 @@ impl LowerFunction<'_> {
                 _ => unreachable!(),
             },
             lume_mir::OperandKind::String { value } => self.reference_static_string(value.as_str()),
+            lume_mir::OperandKind::Bitcast { source, target } => {
+                let source = self.use_var(*source);
+                let target_type = self.backend.cl_type_of(target);
+
+                self.builder.ins().bitcast(target_type, MemFlags::new(), source)
+            }
             lume_mir::OperandKind::Load { id } => self.load_var(*id),
             lume_mir::OperandKind::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
             lume_mir::OperandKind::SlotAddress { id } => {

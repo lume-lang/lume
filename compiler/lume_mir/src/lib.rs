@@ -1065,6 +1065,9 @@ pub enum OperandKind {
     /// Represents a literal string value.
     String { value: Interned<String> },
 
+    /// Represents a bitcast register of another type.
+    Bitcast { source: RegisterId, target: Type },
+
     /// Represents a loaded value from an existing register.
     Load { id: RegisterId },
 
@@ -1090,6 +1093,7 @@ impl Operand {
             OperandKind::Boolean { .. } => 1,
             OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => *bits,
             OperandKind::Reference { .. } | OperandKind::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
+            OperandKind::Bitcast { .. } => panic!("cannot get bitsize of bitcast operand"),
             OperandKind::Load { .. } | OperandKind::LoadField { .. } | OperandKind::SlotAddress { .. } => {
                 panic!("cannot get bitsize of load operand")
             }
@@ -1103,6 +1107,9 @@ impl Operand {
             }
             OperandKind::LoadField { target, .. } => {
                 vec![*target]
+            }
+            OperandKind::Bitcast { source, .. } => {
+                vec![*source]
             }
             OperandKind::Boolean { .. }
             | OperandKind::Integer { .. }
@@ -1121,6 +1128,7 @@ impl std::fmt::Display for Operand {
                 write!(f, "{value}_{}{bits}", if *signed { "i" } else { "u" })
             }
             OperandKind::Float { bits, value } => write!(f, "{value}_f{bits}"),
+            OperandKind::Bitcast { source, target } => write!(f, "{source} as {target}"),
             OperandKind::Reference { id } => write!(f, "{id}"),
             OperandKind::Load { id } => write!(f, "*{id}"),
             OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),

@@ -70,6 +70,7 @@ impl FunctionTransformer<'_, '_> {
 
                 target_expr
             }
+            lume_mir::OperandKind::Bitcast { .. } => panic!("bug!: attempted to assign bitcast"),
             lume_mir::OperandKind::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
             lume_mir::OperandKind::Boolean { .. }
             | lume_mir::OperandKind::Integer { .. }
@@ -541,7 +542,23 @@ impl FunctionTransformer<'_, '_> {
 
         self.func.set_current_block(entry_block);
 
-        let operand_val = self.expression(&expr.operand);
+        let operand_val_orig = self.expression(&expr.operand);
+        let operand_val = if expr.operand.ty.is_float() {
+            let source = self.load_operand(&operand_val_orig);
+            let target = match expr.operand.ty.bitwidth() {
+                32 => lume_mir::Type::i32(),
+                64 => lume_mir::Type::i64(),
+                _ => unreachable!(),
+            };
+
+            lume_mir::Operand {
+                kind: lume_mir::OperandKind::Bitcast { source, target },
+                location,
+            }
+        } else {
+            self.expression(&expr.operand)
+        };
+
         let operand_reg = self.load_operand(&operand_val);
 
         self.variables.insert(expr.operand_var, operand_reg);
@@ -555,6 +572,7 @@ impl FunctionTransformer<'_, '_> {
             let arm_pattern = match pattern {
                 lume_tir::SwitchConstantPattern::Literal(lit) => match lit {
                     lume_tir::SwitchConstantLiteral::Boolean(lit) => *lit as i64,
+                    lume_tir::SwitchConstantLiteral::Float(lit) => lit.to_bits().cast_signed(),
                     lume_tir::SwitchConstantLiteral::Integer(lit) => *lit,
                 },
                 lume_tir::SwitchConstantPattern::Variable(_) => todo!(),

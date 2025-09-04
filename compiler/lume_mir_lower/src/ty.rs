@@ -36,6 +36,7 @@ impl FunctionTransformer<'_, '_> {
             lume_mir::OperandKind::Integer { bits, signed, .. } => lume_mir::Type::integer(*bits, *signed),
             lume_mir::OperandKind::Float { bits, .. } => lume_mir::Type::float(*bits),
             lume_mir::OperandKind::String { .. } => lume_mir::Type::string(),
+            lume_mir::OperandKind::Bitcast { target, .. } => target.to_owned(),
             lume_mir::OperandKind::Load { id } => {
                 let elemental = self.func.registers.register_ty(*id).clone();
 

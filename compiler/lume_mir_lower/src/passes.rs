@@ -313,6 +313,9 @@ impl ConvertAssignmentExpressions {
             OperandKind::LoadField { target, .. } => {
                 self.get_moved_register(target);
             }
+            OperandKind::Bitcast { source, .. } => {
+                self.get_moved_register(source);
+            }
             OperandKind::Boolean { .. }
             | OperandKind::Integer { .. }
             | OperandKind::Float { .. }
@@ -506,6 +509,9 @@ impl RenameSsaVariables {
             }
             OperandKind::LoadField { target, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();
+            }
+            OperandKind::Bitcast { source, .. } => {
+                *source = *mapping.get(&(*source, block)).unwrap();
             }
             OperandKind::Boolean { .. }
             | OperandKind::Integer { .. }

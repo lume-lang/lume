@@ -872,7 +872,9 @@ impl TyInferCtx {
                 lume_hir::PatternKind::Literal(lit) => {
                     if !matches!(
                         lit.literal.kind,
-                        lume_hir::LiteralKind::Int(_) | lume_hir::LiteralKind::Boolean(_)
+                        lume_hir::LiteralKind::Int(_)
+                            | lume_hir::LiteralKind::Float(_)
+                            | lume_hir::LiteralKind::Boolean(_)
                     ) {
                         return false;
                     }

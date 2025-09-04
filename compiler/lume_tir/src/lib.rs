@@ -592,6 +592,22 @@ pub enum FloatLiteral {
     F64(f64),
 }
 
+impl FloatLiteral {
+    pub fn bits(self) -> u8 {
+        match self {
+            Self::F32(_) => 32,
+            Self::F64(_) => 64,
+        }
+    }
+
+    pub fn value(self) -> f64 {
+        match self {
+            Self::F32(val) => val as f64,
+            Self::F64(val) => val,
+        }
+    }
+}
+
 impl std::hash::Hash for FloatLiteral {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
@@ -631,10 +647,21 @@ pub enum SwitchConstantPattern {
     Variable(VariableId),
 }
 
-#[derive(Hash, Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SwitchConstantLiteral {
     Integer(i64),
+    Float(f64),
     Boolean(bool),
+}
+
+impl std::hash::Hash for SwitchConstantLiteral {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Integer(lit) => lit.hash(state),
+            Self::Float(lit) => lit.to_bits().hash(state),
+            Self::Boolean(lit) => lit.hash(state),
+        }
+    }
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
