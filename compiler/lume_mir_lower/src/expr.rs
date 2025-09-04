@@ -553,7 +553,10 @@ impl FunctionTransformer<'_, '_> {
             let block = self.func.new_active_block();
 
             let arm_pattern = match pattern {
-                lume_tir::SwitchConstantPattern::Literal(int) => *int,
+                lume_tir::SwitchConstantPattern::Literal(lit) => match lit {
+                    lume_tir::SwitchConstantLiteral::Boolean(lit) => *lit as i64,
+                    lume_tir::SwitchConstantLiteral::Integer(lit) => *lit,
+                },
                 lume_tir::SwitchConstantPattern::Variable(_) => todo!(),
             };
 

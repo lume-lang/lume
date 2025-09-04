@@ -627,8 +627,14 @@ pub struct Switch {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum SwitchConstantPattern {
-    Literal(i64),
+    Literal(SwitchConstantLiteral),
     Variable(VariableId),
+}
+
+#[derive(Hash, Debug, Clone, PartialEq)]
+pub enum SwitchConstantLiteral {
+    Integer(i64),
+    Boolean(bool),
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

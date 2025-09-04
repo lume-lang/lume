@@ -378,7 +378,7 @@ impl LowerFunction<'_> {
     }
 
     fn switch_expression(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
-        if self.lower.tcx.switch_table_const_int(expr) {
+        if self.lower.tcx.switch_table_const_literal(expr) {
             self.switch_expression_constant(expr)
         } else {
             self.switch_expression_dynamic(expr)
@@ -399,8 +399,14 @@ impl LowerFunction<'_> {
             let branch = self.expression(case.branch)?;
 
             let pattern = match &case.pattern.kind {
-                lume_hir::PatternKind::Literal(_) => {
-                    lume_tir::SwitchConstantPattern::Literal(case.pattern.kind.expect_int_lit())
+                lume_hir::PatternKind::Literal(literal) => {
+                    let const_literal = match &literal.literal.kind {
+                        lume_hir::LiteralKind::Int(lit) => lume_tir::SwitchConstantLiteral::Integer(lit.value),
+                        lume_hir::LiteralKind::Boolean(lit) => lume_tir::SwitchConstantLiteral::Boolean(lit.value),
+                        lume_hir::LiteralKind::Float(_) | lume_hir::LiteralKind::String(_) => unreachable!(),
+                    };
+
+                    lume_tir::SwitchConstantPattern::Literal(const_literal)
                 }
                 lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
                     fallback = Some(branch);
