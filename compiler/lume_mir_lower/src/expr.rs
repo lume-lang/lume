@@ -194,7 +194,11 @@ impl FunctionTransformer<'_, '_> {
     fn is_expression(&mut self, expr: &lume_tir::Is) -> lume_mir::Operand {
         let operand = self.expression(&expr.target);
 
-        match &expr.pattern.kind {
+        self.pattern(operand, &expr.pattern)
+    }
+
+    fn pattern(&mut self, operand: lume_mir::Operand, pattern: &lume_tir::Pattern) -> lume_mir::Operand {
+        match &pattern.kind {
             // Matching against a literal is effectively the same as testing
             // the equality against the operand, so we replace it will an intrinsic call,
             // depending on the type of the operand.
@@ -245,12 +249,12 @@ impl FunctionTransformer<'_, '_> {
 
                 let result = self.declare(lume_mir::Declaration {
                     kind: intrinsic,
-                    location: expr.location,
+                    location: pattern.location,
                 });
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Reference { id: result },
-                    location: expr.location,
+                    location: pattern.location,
                 }
             }
 
@@ -261,7 +265,7 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Boolean { value: true },
-                    location: expr.location,
+                    location: pattern.location,
                 }
             }
 
@@ -278,9 +282,9 @@ impl FunctionTransformer<'_, '_> {
                     lume_mir::Declaration {
                         kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
                             kind: lume_mir::OperandKind::Load { id: loaded_op },
-                            location: expr.location,
+                            location: pattern.location,
                         }),
-                        location: expr.location,
+                        location: pattern.location,
                     },
                 );
 
@@ -289,7 +293,7 @@ impl FunctionTransformer<'_, '_> {
                     args: vec![
                         lume_mir::Operand {
                             kind: lume_mir::OperandKind::Reference { id: operand_disc },
-                            location: expr.location,
+                            location: pattern.location,
                         },
                         lume_mir::Operand {
                             kind: lume_mir::OperandKind::Integer {
@@ -297,26 +301,26 @@ impl FunctionTransformer<'_, '_> {
                                 signed: false,
                                 value: (discriminant_value as u64).cast_signed(),
                             },
-                            location: expr.location,
+                            location: pattern.location,
                         },
                     ],
                 };
 
-                let result = self.declare(lume_mir::Declaration {
+                let mut cmp_result = self.declare(lume_mir::Declaration {
                     kind: cmp_intrinsic,
-                    location: expr.location,
+                    location: pattern.location,
                 });
 
                 lume_mir::Operand {
-                    kind: lume_mir::OperandKind::Reference { id: result },
-                    location: expr.location,
+                    kind: lume_mir::OperandKind::Reference { id: cmp_result },
+                    location: pattern.location,
                 }
             }
 
             // Wildcard patterns are always true, so we implicitly replace it with a `true` expression.
             lume_tir::PatternKind::Wildcard => lume_mir::Operand {
                 kind: lume_mir::OperandKind::Boolean { value: true },
-                location: expr.location,
+                location: pattern.location,
             },
         }
     }

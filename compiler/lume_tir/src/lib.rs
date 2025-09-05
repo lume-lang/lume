@@ -750,6 +750,7 @@ pub struct Variant {
 pub struct Pattern {
     pub id: PatternId,
     pub kind: PatternKind,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]

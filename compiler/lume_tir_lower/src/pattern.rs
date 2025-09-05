@@ -12,6 +12,7 @@ impl LowerFunction<'_> {
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
                     kind: lume_tir::PatternKind::Literal(literal),
+                    location: pattern.location,
                 })
             }
             lume_hir::PatternKind::Identifier(_) => {
@@ -21,6 +22,7 @@ impl LowerFunction<'_> {
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
                     kind: lume_tir::PatternKind::Variable(var),
+                    location: pattern.location,
                 })
             }
             lume_hir::PatternKind::Variant(pat) => {
@@ -38,11 +40,13 @@ impl LowerFunction<'_> {
                         ty,
                         name,
                     }),
+                    location: pattern.location,
                 })
             }
             lume_hir::PatternKind::Wildcard(_) => Ok(lume_tir::Pattern {
                 id: pattern.id,
                 kind: lume_tir::PatternKind::Wildcard,
+                location: pattern.location,
             }),
         }
     }
