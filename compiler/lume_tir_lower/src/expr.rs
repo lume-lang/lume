@@ -1,6 +1,7 @@
 use error_snippet::Result;
-use lume_span::{DefId, Internable};
+use lume_span::{DefId, ExpressionId, Internable};
 use lume_tir::VariableId;
+use lume_types::TypeRef;
 
 use crate::LowerFunction;
 
@@ -397,6 +398,7 @@ impl LowerFunction<'_> {
         todo!("tir: field expression")
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn switch_expression(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         if self.lower.tcx.switch_table_const_literal(expr) {
             self.switch_expression_constant(expr)
@@ -405,6 +407,7 @@ impl LowerFunction<'_> {
         }
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn switch_expression_constant(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
         let operand = self.expression(expr.operand)?;
         let mut fallback: Option<lume_tir::Expression> = None;
@@ -453,10 +456,68 @@ impl LowerFunction<'_> {
         })))
     }
 
-    fn switch_expression_dynamic(&self, _expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
-        todo!("switch expressions (dynamic)")
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn switch_expression_dynamic(&mut self, expr: &lume_hir::Switch) -> Result<lume_tir::ExpressionKind> {
+        let operand = self.expression(expr.operand)?;
+        let mut cases = Vec::with_capacity(expr.cases.len());
+        let switch_ret_type = self.lower.tcx.type_of(expr.id)?;
+
+        let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
+
+        self.variable_mapping
+            .insert(lume_span::DefId::Expression(expr.operand), operand_var);
+
+        for case in &expr.cases {
+            let branch = self.expression(case.branch)?;
+            let return_type = self.lower.tcx.type_of(case.branch)?;
+
+            let pattern = match &case.pattern.kind {
+                lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Variant(_) => self.pattern(&case.pattern)?,
+                lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
+                    cases.push(lume_tir::Conditional {
+                        condition: None,
+                        block: lume_tir::Block {
+                            statements: vec![lume_tir::Statement::Expression(branch)],
+                            return_type,
+                        },
+                        location: case.location,
+                    });
+
+                    // If a fallback is present, there's no reason to process
+                    // the rest of the cases, since they can never be met.
+                    break;
+                }
+            };
+
+            let conditional = lume_tir::Conditional {
+                condition: Some(lume_tir::Expression {
+                    kind: lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
+                        id: ExpressionId::empty(case.branch.def),
+                        target: operand.clone(),
+                        pattern,
+                        location: case.location,
+                    })),
+                    ty: TypeRef::bool(),
+                }),
+                block: lume_tir::Block {
+                    statements: vec![lume_tir::Statement::Expression(branch)],
+                    return_type,
+                },
+                location: case.location,
+            };
+
+            cases.push(conditional);
+        }
+
+        Ok(lume_tir::ExpressionKind::If(lume_tir::If {
+            id: ExpressionId::empty(expr.id.def),
+            cases,
+            return_type: Some(switch_ret_type),
+            location: expr.location,
+        }))
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
