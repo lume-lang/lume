@@ -384,11 +384,11 @@ impl TyInferCtx {
                     match parent {
                         // If the pattern is not a sub-pattern, we return the type of the operand
                         // which was passed to the parent `switch` expression.
-                        lume_hir::Def::Expression(expr) => {
-                            if let lume_hir::ExpressionKind::Switch(switch) = &expr.kind {
-                                return self.type_of(switch.operand);
-                            }
-                        }
+                        lume_hir::Def::Expression(expr) => match &expr.kind {
+                            lume_hir::ExpressionKind::Is(is) => return self.type_of(is.target),
+                            lume_hir::ExpressionKind::Switch(switch) => return self.type_of(switch.operand),
+                            _ => continue,
+                        },
 
                         // If the pattern is a sub-pattern, we get the variant pattern it was nested within.
                         // From the variant pattern, we can deduce the type of the subpattern, by the type of

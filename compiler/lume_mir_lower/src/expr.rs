@@ -195,6 +195,9 @@ impl FunctionTransformer<'_, '_> {
         let operand = self.expression(&expr.target);
 
         match &expr.pattern.kind {
+            // Matching against a literal is effectively the same as testing
+            // the equality against the operand, so we replace it will an intrinsic call,
+            // depending on the type of the operand.
             lume_tir::PatternKind::Literal(lit) => {
                 let intrinsic = match &lit.kind {
                     lume_tir::LiteralKind::Boolean(bool) => lume_mir::DeclarationKind::Intrinsic {
@@ -250,8 +253,12 @@ impl FunctionTransformer<'_, '_> {
                     location: expr.location,
                 }
             }
-            lume_tir::PatternKind::Variable => todo!(),
+
+            // Testing against a variable is effectively a noop, since it will always be true.
+            lume_tir::PatternKind::Variable => operand,
             lume_tir::PatternKind::Variant(_) => todo!(),
+
+            // Wildcard patterns are always true, so we implicitly replace it with a `true` expression.
             lume_tir::PatternKind::Wildcard => lume_mir::Operand {
                 kind: lume_mir::OperandKind::Boolean { value: true },
                 location: expr.location,
