@@ -401,8 +401,9 @@ impl LowerFunction<'_> {
 
         let source = match expr.reference {
             lume_hir::VariableSource::Parameter(_) => lume_tir::VariableSource::Parameter,
-            lume_hir::VariableSource::Variable(_) => lume_tir::VariableSource::Variable,
-            lume_hir::VariableSource::Pattern(_) => todo!(),
+            lume_hir::VariableSource::Variable(_) | lume_hir::VariableSource::Pattern(_) => {
+                lume_tir::VariableSource::Variable
+            }
         };
 
         lume_tir::ExpressionKind::Variable(Box::new(lume_tir::VariableReference {
