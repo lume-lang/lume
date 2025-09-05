@@ -3,18 +3,20 @@
 //! None of these structs are meant to be exported - they exist purely to
 //! better read type information from passed metadata arguments.
 
-use std::os::raw::{c_char, c_void};
+use std::{
+    marker::PhantomData,
+    os::raw::{c_char, c_void},
+};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeId(usize);
+pub struct TypeId(pub usize);
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId(usize);
+pub struct FunctionId(pub usize);
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct TypeMetadata {
     /// Gets the unique ID of the type, used mostly for internal referencing.
     pub type_id: TypeId,
@@ -29,18 +31,17 @@ pub struct TypeMetadata {
     pub alignment: usize,
 
     /// Gets all the fields defined on the type, in the order that they're declared.
-    pub fields: *const List<FieldMetadata>,
+    pub fields: List<FieldMetadata>,
 
     /// Gets all the methods defined on the type, in the order that they're declared.
-    pub methods: *const List<MethodMetadata>,
+    pub methods: List<MethodMetadata>,
 
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
-    pub type_arguments: *const List<TypeMetadata>,
+    pub type_arguments: List<TypeMetadata>,
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct FieldMetadata {
     /// Gets the name of the field.
     pub name: *const c_char,
@@ -50,7 +51,6 @@ pub struct FieldMetadata {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct MethodMetadata {
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: FunctionId,
@@ -59,11 +59,11 @@ pub struct MethodMetadata {
     pub full_name: *const c_char,
 
     /// Gets all the parameters defined on the method, in the order that they're declared.
-    pub parameters: *const List<ParameterMetadata>,
+    pub parameters: List<ParameterMetadata>,
 
     /// Gets all the type parameters defined on the method, in the order
     /// that they're declared.
-    pub type_parameters: *const List<TypeParameterMetadata>,
+    pub type_parameters: List<TypeParameterMetadata>,
 
     /// Gets the return type of the method.
     pub return_type: *const TypeMetadata,
@@ -73,7 +73,6 @@ pub struct MethodMetadata {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct ParameterMetadata {
     /// Gets the name of the parameter.
     pub name: *const c_char,
@@ -86,22 +85,43 @@ pub struct ParameterMetadata {
 }
 
 #[repr(C)]
-#[derive(Debug)]
 pub struct TypeParameterMetadata {
     /// Gets the name of the type parameter.
     pub name: *const c_char,
 
     /// Gets all the constraints defined on the type parameter, in the order
     /// that they're declared.
-    pub constraints: *const List<TypeMetadata>,
+    pub constraints: List<TypeMetadata>,
 }
 
+/// Owned list data structure.
+///
+/// The [`List<T>`] structure follows a memory layout where the
+/// length, a 64-bit unsigned integer, is followed directory with `N`
+/// pointers to each of the elements in the list.
 #[repr(C)]
-#[derive(Debug)]
 pub struct List<T> {
-    /// Defines the amount of items within the list.
-    pub length: usize,
+    /// Provides a pointer to the base of the list.
+    base: *const (),
 
-    /// Defines all the items in the list.
-    pub items: [T; 0],
+    _marker: PhantomData<T>,
+}
+
+impl<T> List<T> {
+    /// Gets the length of the list.
+    #[inline]
+    #[must_use]
+    pub fn len(&self) -> usize {
+        unsafe { (self.base as *const usize).read() }
+    }
+
+    /// Gets a slice of all items in the list, as a slice of pointer.
+    #[inline]
+    #[must_use]
+    pub fn items(&self) -> &[*const T] {
+        let len = self.len();
+        let ptr = unsafe { self.base.byte_add(std::mem::size_of::<usize>()) as *const *const T };
+
+        unsafe { std::slice::from_raw_parts(ptr, len) }
+    }
 }
