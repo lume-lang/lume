@@ -32,49 +32,41 @@ pub struct CodegenObject {
     pub path: PathBuf,
 }
 
-pub struct Generator<'ctx> {
-    backend: Box<dyn Backend<'ctx> + 'ctx>,
-}
+/// Generates object files using the given backend.
+///
+/// # Errors
+///
+/// Returns `Err` if the selected backend returned an error while generating object files.
+#[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.path.display()), err)]
+pub fn generate<'ctx>(
+    package: &'ctx Package,
+    mir: ModuleMap,
+    tcx: &'ctx TyCheckCtx,
+    options: &'ctx Options,
+) -> Result<CompiledModule> {
+    let context = Context {
+        package,
+        mir,
+        tcx,
+        options,
+    };
 
-impl<'ctx> Generator<'ctx> {
-    /// Generates object files using the given backend.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the selected backend returned an error while generating object files.
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(package = %package.path.display()), err)]
-    pub fn codegen(
-        package: &'ctx Package,
-        mir: ModuleMap,
-        tcx: &'ctx TyCheckCtx,
-        options: &'ctx Options,
-    ) -> Result<CompiledModule> {
-        let context = Context {
-            package,
-            mir,
-            tcx,
-            options,
-        };
+    let mut backend: Box<dyn Backend<'_>> = match context.options.backend {
+        #[cfg(feature = "codegen_cranelift")]
+        lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)?),
+        #[cfg(feature = "codegen_llvm")]
+        lume_session::Backend::Llvm => Box::new(llvm::LlvmBackend::new(context)),
+        _ => {
+            return Err(error_snippet::SimpleDiagnostic::new(format!(
+                "selected backend not enabled in build: {}",
+                context.options.backend
+            ))
+            .into());
+        }
+    };
 
-        let backend: Box<dyn Backend<'_>> = match context.options.backend {
-            #[cfg(feature = "codegen_cranelift")]
-            lume_session::Backend::Cranelift => Box::new(cranelift::CraneliftBackend::new(context)?),
-            #[cfg(feature = "codegen_llvm")]
-            lume_session::Backend::Llvm => Box::new(llvm::LlvmBackend::new(context)),
-            _ => {
-                return Err(error_snippet::SimpleDiagnostic::new(format!(
-                    "selected backend not enabled in build: {}",
-                    context.options.backend
-                ))
-                .into());
-            }
-        };
-
-        let mut generator = Generator { backend };
-
-        generator.backend.initialize()?;
-        generator.backend.generate()
-    }
+    backend.initialize()?;
+    backend.generate()
 }
 
 pub(crate) struct Context<'ctx> {
