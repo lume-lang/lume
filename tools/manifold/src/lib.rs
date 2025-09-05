@@ -1,3 +1,4 @@
+mod binary;
 mod diff;
 mod hir;
 mod ui;
@@ -79,6 +80,13 @@ pub(crate) enum ManifoldTestType {
     /// HIR tests are stored in the `hir/` subdirectory and verify the lowered HIR
     /// maps of different Lume programs and packages.
     Hir,
+
+    /// # Binary Tests
+    ///
+    /// Binary tests are stored in the `bin/` subdirectory and verify that an entire
+    /// executable can be created from a given source file. Optionally, the output
+    /// of the executed code will also be verified.
+    Binary,
 }
 
 fn run_test_suite(root: &PathBuf) -> Result<()> {
@@ -168,6 +176,7 @@ fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Resu
     Ok(match test_type {
         ManifoldTestType::Ui => ui::run_test(test_file_path)?,
         ManifoldTestType::Hir => hir::run_test(test_file_path)?,
+        ManifoldTestType::Binary => binary::run_test(test_file_path)?,
     })
 }
 
@@ -186,6 +195,7 @@ fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> 
     match subfolder {
         Some("ui") => Ok(ManifoldTestType::Ui),
         Some("hir") => Ok(ManifoldTestType::Hir),
+        Some("bin") => Ok(ManifoldTestType::Binary),
         _ => Err(SimpleDiagnostic::new(format!("could not determine type of test: {relative_path_str}")).into()),
     }
 }

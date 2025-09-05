@@ -1,10 +1,11 @@
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
-use lume_codegen::CodegenObjects;
+use lume_codegen::{CodegenObject, CodegenObjects, CodegenResult};
 use lume_errors::Result;
-use lume_session::{LinkerPreference, Options};
+use lume_session::{GlobalCtx, LinkerPreference, Options};
 use rust_embed::Embed;
 
 #[cfg(all(target_family = "windows", target_env = "msvc"))]
@@ -12,6 +13,38 @@ const LIB_RUNTIME_NAME: &str = "liblumert.lib";
 
 #[cfg(not(all(target_family = "windows", target_env = "msvc")))]
 const LIB_RUNTIME_NAME: &str = "liblumert.a";
+
+/// Writes the object files of the given codegen result to disk in
+/// the current workspace directory.
+pub fn write_object_files(gcx: &Arc<GlobalCtx>, result: CodegenResult) -> Result<CodegenObjects> {
+    use error_snippet::IntoDiagnostic;
+    use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
+    std::fs::create_dir_all(gcx.obj_path()).map_err(IntoDiagnostic::into_diagnostic)?;
+    std::fs::create_dir_all(gcx.obj_bc_path()).map_err(IntoDiagnostic::into_diagnostic)?;
+
+    let objects = result
+        .modules
+        .into_par_iter()
+        .map(|module| {
+            use std::io::Write;
+
+            let output_file_path = gcx.obj_bc_path().join(format!("{}.o", module.name));
+            let mut output_file = std::fs::File::create(&output_file_path).map_err(IntoDiagnostic::into_diagnostic)?;
+
+            output_file
+                .write_all(&module.bytecode)
+                .map_err(IntoDiagnostic::into_diagnostic)?;
+
+            Ok(CodegenObject {
+                name: module.name,
+                path: output_file_path,
+            })
+        })
+        .collect::<Result<Vec<CodegenObject>>>()?;
+
+    Ok(CodegenObjects { objects })
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Linker {
