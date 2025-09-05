@@ -424,6 +424,11 @@ impl<'ctx> LowerFunction<'ctx> {
 
     pub(crate) fn retrieve_load_type(&self, register: RegisterId) -> Type {
         let reg_ty = self.func.registers.register_ty(register);
+
+        if let lume_mir::TypeKind::Union { .. } = &reg_ty.kind {
+            return types::I8;
+        };
+
         let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
             panic!("bug!: attempting to load non-pointer register");
         };
