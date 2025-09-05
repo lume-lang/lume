@@ -242,33 +242,11 @@ impl PatternId {
     }
 }
 
-/// Uniquely identifies any local expression, such as variables, arguments, calls or otherwise.
-///
-/// [`LocalId`] instances are unique within the parent item, referenced by it's [`ItemId`] in [`LocalId::def`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialEq, Eq)]
-pub struct LocalId {
-    pub def: ItemId,
-    pub index: Idx,
-}
-
-impl LocalId {
-    /// Creates a new [`LocalId`] without a unique ID.
-    ///
-    /// If an [`LocalId`] with a valid ID is required, see [`LocalId::next()`].
-    #[inline]
-    pub fn empty(def: ItemId) -> Self {
-        Self { def, index: Idx::new() }
-    }
-
-    /// Creates a new [`LocalId`] with a unique ID.
-    #[inline]
-    #[must_use]
-    pub fn next(def: ItemId, prev: Self) -> Self {
-        Self {
-            def,
-            index: Idx::next(prev.index),
-        }
-    }
+/// Uniquely identifies any single item within a body.
+#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BodyItem {
+    Statement(StatementId),
+    Expression(ExpressionId),
 }
 
 /// Uniquely identifies any local statement.

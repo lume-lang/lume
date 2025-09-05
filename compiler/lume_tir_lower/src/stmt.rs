@@ -23,7 +23,7 @@ impl LowerFunction<'_> {
         let var = self.mark_variable(lume_tir::VariableSource::Variable);
         let value = self.expression(stmt.value)?;
 
-        self.variable_mapping.insert(stmt.id, var);
+        self.variable_mapping.insert(lume_span::DefId::Statement(stmt.id), var);
 
         Ok(lume_tir::Statement::Variable(lume_tir::VariableDeclaration {
             id: stmt.id,
