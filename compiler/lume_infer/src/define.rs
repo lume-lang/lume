@@ -1161,7 +1161,7 @@ impl TyInferCtx {
         pat: &lume_hir::Pattern,
         parent: DefId,
     ) -> Result<()> {
-        let def_id = pat.id;
+        let def_id = DefId::Pattern(pat.id);
         let _ = tree.insert(def_id, parent);
 
         match &pat.kind {
