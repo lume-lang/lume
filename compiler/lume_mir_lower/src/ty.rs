@@ -61,6 +61,14 @@ impl FunctionTransformer<'_, '_> {
                     panic!("bug!: attempting to load non-pointer register");
                 };
 
+                if let lume_mir::TypeKind::Union { cases } = &elemental.kind {
+                    let case = cases
+                        .get(*index)
+                        .expect("bug!: attempted to load union field out of bounds");
+
+                    return case.clone();
+                };
+
                 let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
                     panic!("bug!: attempting to load field from non-struct register");
                 };

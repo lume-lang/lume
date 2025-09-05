@@ -456,6 +456,10 @@ impl<'ctx> LowerFunction<'ctx> {
             panic!("bug!: attempting to load non-pointer register");
         };
 
+        if let lume_mir::TypeKind::Union { cases } = &elemental.kind {
+            return self.backend.cl_ptr_type();
+        };
+
         let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
             panic!("bug!: attempting to load field from non-struct register");
         };
