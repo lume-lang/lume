@@ -838,7 +838,7 @@ impl FunctionTransformer<'_, '_> {
 
         for argument in &expr.arguments {
             let value = self.expression(argument);
-            let operand_size = usize::from(value.bitsize() / 8);
+            let operand_size = usize::from(value.bitsize().div_ceil(8));
 
             self.func
                 .current_block_mut()
