@@ -458,7 +458,7 @@ impl TyInferCtx {
         let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
             return Err(lume_types::errors::UnexpectedTypeKind {
                 found: parent_ty.kind.as_kind_ref(),
-                expected: lume_types::TypeKindRef::Trait,
+                expected: lume_types::TypeKindRef::Enum,
             }
             .into());
         };
@@ -547,6 +547,17 @@ impl TyInferCtx {
             name: variant.clone(),
         }
         .into())
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn discriminant_of_variant_ty(&self, type_id: TypeId, name: &str) -> Result<usize> {
+        for case in self.enum_cases_of(type_id)? {
+            if case.name.name().as_str() == name {
+                return Ok(case.idx);
+            }
+        }
+
+        panic!("bug!: could not find variant in {type_id:?} with name {name:?}")
     }
 
     /// Returns the field of the constructor expression, matching the given field.

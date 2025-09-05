@@ -264,7 +264,54 @@ impl FunctionTransformer<'_, '_> {
                     location: expr.location,
                 }
             }
-            lume_tir::PatternKind::Variant(_) => todo!(),
+
+            lume_tir::PatternKind::Variant(variant) => {
+                let loaded_op = self.load_operand(&operand);
+
+                let discriminant_value = self
+                    .tcx()
+                    .discriminant_of_variant_ty(variant.ty.instance_of, variant.name.name.name())
+                    .unwrap();
+
+                let operand_disc = self.func.declare_raw(
+                    lume_mir::Type::u8(),
+                    lume_mir::Declaration {
+                        kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Load { id: loaded_op },
+                            location: expr.location,
+                        }),
+                        location: expr.location,
+                    },
+                );
+
+                let cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
+                    name: lume_mir::Intrinsic::IntEq { bits: 8, signed: false },
+                    args: vec![
+                        lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Reference { id: operand_disc },
+                            location: expr.location,
+                        },
+                        lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Integer {
+                                bits: 8,
+                                signed: false,
+                                value: (discriminant_value as u64).cast_signed(),
+                            },
+                            location: expr.location,
+                        },
+                    ],
+                };
+
+                let result = self.declare(lume_mir::Declaration {
+                    kind: cmp_intrinsic,
+                    location: expr.location,
+                });
+
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Reference { id: result },
+                    location: expr.location,
+                }
+            }
 
             // Wildcard patterns are always true, so we implicitly replace it with a `true` expression.
             lume_tir::PatternKind::Wildcard => lume_mir::Operand {
