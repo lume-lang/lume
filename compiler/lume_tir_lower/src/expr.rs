@@ -460,16 +460,15 @@ impl LowerFunction<'_> {
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => *self
-                .variable_mapping
-                .get(&lume_span::BodyItem::Statement(var.id))
-                .unwrap(),
+            lume_hir::VariableSource::Variable(var) => {
+                *self.variable_mapping.get(&lume_span::DefId::Statement(var.id)).unwrap()
+            }
             lume_hir::VariableSource::Pattern(pat) => {
                 if let Some(switch_expr) = self.lower.tcx.hir_switch_expression(DefId::Pattern(pat.id)) {
                     match &pat.kind {
                         lume_hir::PatternKind::Identifier(_) => *self
                             .variable_mapping
-                            .get(&lume_span::BodyItem::Expression(switch_expr.operand))
+                            .get(&lume_span::DefId::Expression(switch_expr.operand))
                             .unwrap(),
                         lume_hir::PatternKind::Variant(_) => {
                             unimplemented!("tir: variable reference to variant pattern")

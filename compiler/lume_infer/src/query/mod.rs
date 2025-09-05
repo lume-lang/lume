@@ -157,7 +157,7 @@ impl TyInferCtx {
                 field.field_type.clone()
             }
             lume_hir::ExpressionKind::Field(field) => {
-                let pattern = self.hir_expect_pattern(field.pattern);
+                let pattern = self.hir_expect_pattern(DefId::Pattern(field.pattern));
                 let lume_hir::PatternKind::Variant(variant_pat) = &pattern.kind else {
                     panic!("bug!: found field expression referencing non-variant pattern");
                 };
@@ -380,7 +380,7 @@ impl TyInferCtx {
             lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
                 let def_id = pat.id;
 
-                for parent in self.hir_parent_iter(def_id) {
+                for parent in self.hir_parent_iter(DefId::Pattern(def_id)) {
                     match parent {
                         // If the pattern is not a sub-pattern, we return the type of the operand
                         // which was passed to the parent `switch` expression.

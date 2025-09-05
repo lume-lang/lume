@@ -1641,7 +1641,7 @@ pub struct Member {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct PatternField {
     pub id: ExpressionId,
-    pub pattern: DefId,
+    pub pattern: PatternId,
     pub field: usize,
     pub location: Location,
 }
