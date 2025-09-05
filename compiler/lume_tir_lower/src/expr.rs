@@ -413,7 +413,7 @@ impl LowerFunction<'_> {
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
 
         self.variable_mapping
-            .insert(lume_span::BodyItem::Expression(expr.operand), operand_var);
+            .insert(lume_span::DefId::Expression(expr.operand), operand_var);
 
         for case in &expr.cases {
             let branch = self.expression(case.branch)?;
