@@ -89,7 +89,11 @@ impl ReificationPass<'_> {
                         let param_type_ref = self.tcx.mk_type_ref_from(param, DefId::Item(def.id))?;
                         let param_ty = self.tcx.tdb().ty_expect(param_type_ref.instance_of)?;
 
-                        size += self.size_of_ty(param_ty)?;
+                        size += if param_ty.kind.is_ref_type() {
+                            PTR_SIZE
+                        } else {
+                            self.size_of_ty(param_ty)?
+                        };
                     }
                 }
 
