@@ -395,8 +395,10 @@ impl LowerFunction<'_> {
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
-            lume_hir::VariableSource::Pattern(_) => todo!(),
+            lume_hir::VariableSource::Variable(var) => {
+                *self.variable_mapping.get(&lume_span::DefId::Statement(var.id)).unwrap()
+            }
+            lume_hir::VariableSource::Pattern(var) => *self.variable_mapping.get(&var.id).unwrap(),
         };
 
         let source = match expr.reference {

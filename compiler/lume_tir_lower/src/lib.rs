@@ -178,7 +178,7 @@ struct LowerFunction<'tcx> {
     /// Defines the parent lowering context.
     lower: &'tcx Lower<'tcx>,
 
-    variable_mapping: IndexMap<lume_span::StatementId, VariableId>,
+    variable_mapping: IndexMap<lume_span::DefId, VariableId>,
     variable_source: IndexMap<VariableId, VariableSource>,
 }
 
