@@ -224,6 +224,9 @@ impl UnificationPass {
                     self.unify_block(tcx, &case.block)?;
                 }
             }
+            lume_hir::ExpressionKind::Is(s) => {
+                self.unify_expr(tcx, s.target)?;
+            }
             lume_hir::ExpressionKind::Logical(s) => {
                 self.unify_expr(tcx, s.lhs)?;
                 self.unify_expr(tcx, s.rhs)?;

@@ -694,7 +694,7 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::StaticCall(call) => self
                     .expected_type_of_call(id, CallExpression::Static(call))
                     .map(|ty| Some(ty)),
-                lume_hir::ExpressionKind::If(_) => Ok(Some(TypeRef::bool())),
+                lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
                 lume_hir::ExpressionKind::Logical(_) => Ok(None),
                 lume_hir::ExpressionKind::Member(_) => Ok(None),

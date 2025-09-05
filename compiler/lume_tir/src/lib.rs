@@ -378,6 +378,7 @@ impl Expression {
             ExpressionKind::Construct(e) => e.location,
             ExpressionKind::Call(e) => e.location,
             ExpressionKind::If(e) => e.location,
+            ExpressionKind::Is(e) => e.location,
             ExpressionKind::IntrinsicCall(e) => e.location,
             ExpressionKind::Literal(e) => e.location,
             ExpressionKind::Logical(e) => e.location,
@@ -564,6 +565,7 @@ pub struct Is {
     pub id: ExpressionId,
     pub target: Expression,
     pub pattern: Pattern,
+    pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
@@ -593,6 +595,37 @@ pub enum IntLiteral {
     U64(i64),
 }
 
+impl IntLiteral {
+    pub fn signed(self) -> bool {
+        match self {
+            Self::U8(_) | Self::U16(_) | Self::U32(_) | Self::U64(_) => false,
+            Self::I8(_) | Self::I16(_) | Self::I32(_) | Self::I64(_) => true,
+        }
+    }
+
+    pub fn bits(self) -> u8 {
+        match self {
+            Self::I8(_) | Self::U8(_) => 8,
+            Self::I16(_) | Self::U16(_) => 16,
+            Self::I32(_) | Self::U32(_) => 32,
+            Self::I64(_) | Self::U64(_) => 64,
+        }
+    }
+
+    pub fn value(self) -> i64 {
+        match self {
+            Self::I8(value) => value,
+            Self::U8(value) => value,
+            Self::I16(value) => value,
+            Self::U16(value) => value,
+            Self::I32(value) => value,
+            Self::U32(value) => value,
+            Self::I64(value) => value,
+            Self::U64(value) => value,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FloatLiteral {
     F32(f64),
@@ -609,8 +642,8 @@ impl FloatLiteral {
 
     pub fn value(self) -> f64 {
         match self {
-            Self::F32(val) => val as f64,
-            Self::F64(val) => val,
+            Self::F32(value) => value,
+            Self::F64(value) => value,
         }
     }
 }
