@@ -22,7 +22,12 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Type::pointer(struct_ty)
             }
-            lume_types::TypeKind::User(lume_types::UserType::Trait(_) | lume_types::UserType::Enum(_)) => {
+            lume_types::TypeKind::User(lume_types::UserType::Enum(_)) => {
+                let enum_ty = lume_mir::Type::union(type_ref.clone(), Vec::new());
+
+                lume_mir::Type::pointer(enum_ty)
+            }
+            lume_types::TypeKind::User(lume_types::UserType::Trait(_)) => {
                 lume_mir::Type::pointer(lume_mir::Type::void())
             }
             lume_types::TypeKind::TypeParameter(_) => lume_mir::Type::type_param(),
@@ -43,6 +48,15 @@ impl FunctionTransformer<'_, '_> {
             }
             lume_mir::OperandKind::LoadField { target, index, .. } => {
                 let reg_ty = self.func.registers.register_ty(*target).clone();
+
+                if let lume_mir::TypeKind::Union { cases } = &reg_ty.kind {
+                    let case = cases
+                        .get(*index)
+                        .expect("bug!: attempted to load union field out of bounds");
+
+                    return case.clone();
+                };
+
                 let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
                     panic!("bug!: attempting to load non-pointer register");
                 };
