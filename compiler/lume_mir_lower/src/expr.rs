@@ -1,4 +1,4 @@
-use lume_span::Location;
+use lume_span::{DefId, Location};
 
 use crate::FunctionTransformer;
 
@@ -308,6 +308,41 @@ impl FunctionTransformer<'_, '_> {
                     kind: cmp_intrinsic,
                     location: pattern.location,
                 });
+
+                for (idx, field_pattern) in variant.fields.iter().enumerate() {
+                    // We intentionally ignore wildcard patterns, as they are always true and
+                    // have no other side effects.
+                    if matches!(field_pattern.kind, lume_tir::PatternKind::Wildcard) {
+                        continue;
+                    }
+
+                    let field_offset = self.variant_field_offset(pattern.id, idx);
+                    let field_operand = lume_mir::Operand {
+                        kind: lume_mir::OperandKind::LoadField {
+                            target: loaded_op,
+                            offset: field_offset,
+                            index: idx,
+                        },
+                        location: field_pattern.location,
+                    };
+
+                    let field_cmp_operand = self.pattern(field_operand, field_pattern);
+                    let field_cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
+                        name: lume_mir::Intrinsic::BooleanAnd,
+                        args: vec![
+                            lume_mir::Operand {
+                                kind: lume_mir::OperandKind::Reference { id: cmp_result },
+                                location: pattern.location,
+                            },
+                            field_cmp_operand,
+                        ],
+                    };
+
+                    cmp_result = self.declare(lume_mir::Declaration {
+                        kind: field_cmp_intrinsic,
+                        location: field_pattern.location,
+                    });
+                }
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Reference { id: cmp_result },
@@ -792,6 +827,30 @@ impl FunctionTransformer<'_, '_> {
             }
 
             let prop_ty = self.lower_type(&prop.field_type);
+            offset += prop_ty.bytesize();
+        }
+
+        offset
+    }
+
+    fn variant_field_offset(&self, id: lume_span::PatternId, field_idx: usize) -> usize {
+        // We start off with the size of the discriminant of the variant.
+        let mut offset = lume_mir::Type::u8().bytesize();
+
+        let pattern = self.tcx().hir_expect_pattern(DefId::Pattern(id));
+        let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
+            panic!("bug!: attempting to get field offset of non-variant pattern");
+        };
+
+        let enum_case = self.tcx().enum_case_with_name(&variant_pattern.name).unwrap();
+
+        for (idx, field_type) in enum_case.parameters.iter().enumerate() {
+            if idx == field_idx {
+                break;
+            }
+
+            let field_type_ty = self.tcx().mk_type_ref_from(field_type, DefId::Pattern(id)).unwrap();
+            let prop_ty = self.lower_type(&field_type_ty);
             offset += prop_ty.bytesize();
         }
 

@@ -1123,7 +1123,7 @@ impl std::fmt::Display for Operand {
             OperandKind::Float { bits, value } => write!(f, "{value}_f{bits}"),
             OperandKind::Reference { id } => write!(f, "{id}"),
             OperandKind::Load { id } => write!(f, "*{id}"),
-            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
+            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset:X}]"),
             OperandKind::SlotAddress { id } => write!(f, "{id}"),
             OperandKind::String { value } => write!(f, "\"{value}\""),
         }

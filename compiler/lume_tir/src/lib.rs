@@ -731,4 +731,5 @@ pub struct VariantPattern {
     pub index: u8,
     pub ty: TypeRef,
     pub name: Path,
+    pub fields: Vec<Pattern>,
 }
