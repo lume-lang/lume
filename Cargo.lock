@@ -126,10 +126,12 @@ name = "build_stage"
 version = "0.1.1"
 dependencies = [
  "arc",
+ "lume_codegen",
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
+ "lume_linker",
  "lume_mir",
  "lume_mir_lower",
  "lume_session",
@@ -1140,7 +1142,6 @@ dependencies = [
  "lume_tir_lower",
  "lume_typech",
  "lume_types",
- "rayon",
  "tracing",
 ]
 
@@ -1240,6 +1241,7 @@ dependencies = [
  "lume_errors",
  "lume_session",
  "lumert",
+ "rayon",
  "rust-embed",
 ]
 

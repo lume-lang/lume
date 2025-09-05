@@ -26,7 +26,6 @@ lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-rayon = { version = "1.10.0" }
 tracing = { workspace = true }
 
 [features]
