@@ -3,7 +3,7 @@ use error_snippet::Result;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    pub(crate) fn pattern(&self, pattern: &lume_hir::Pattern) -> Result<lume_tir::Pattern> {
+    pub(crate) fn pattern(&mut self, pattern: &lume_hir::Pattern) -> Result<lume_tir::Pattern> {
         match &pattern.kind {
             lume_hir::PatternKind::Literal(lit) => {
                 let literal = self.literal(&lit.literal);
@@ -13,10 +13,15 @@ impl LowerFunction<'_> {
                     kind: lume_tir::PatternKind::Literal(literal),
                 })
             }
-            lume_hir::PatternKind::Identifier(_) => Ok(lume_tir::Pattern {
-                id: pattern.id,
-                kind: lume_tir::PatternKind::Variable,
-            }),
+            lume_hir::PatternKind::Identifier(_) => {
+                let var = self.mark_variable(lume_tir::VariableSource::Variable);
+                self.variable_mapping.insert(pattern.id, var);
+
+                Ok(lume_tir::Pattern {
+                    id: pattern.id,
+                    kind: lume_tir::PatternKind::Variable(var),
+                })
+            }
             lume_hir::PatternKind::Variant(pat) => {
                 let enum_type = pat.enum_name();
 

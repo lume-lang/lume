@@ -255,7 +255,15 @@ impl FunctionTransformer<'_, '_> {
             }
 
             // Testing against a variable is effectively a noop, since it will always be true.
-            lume_tir::PatternKind::Variable => operand,
+            lume_tir::PatternKind::Variable(var) => {
+                let loaded_op = self.load_operand(&operand);
+                self.variables.insert(*var, loaded_op);
+
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Boolean { value: true },
+                    location: expr.location,
+                }
+            }
             lume_tir::PatternKind::Variant(_) => todo!(),
 
             // Wildcard patterns are always true, so we implicitly replace it with a `true` expression.

@@ -242,14 +242,6 @@ impl PatternId {
     }
 }
 
-/// Uniquely identifies any item within a body, whether it's a statement or
-/// an expression.
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum BodyItem {
-    Statement(StatementId),
-    Expression(ExpressionId),
-}
-
 /// Uniquely identifies any local statement.
 ///
 /// [`StatementId`] instances are unique within the parent item, referenced

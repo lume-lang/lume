@@ -755,7 +755,7 @@ pub struct Pattern {
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum PatternKind {
     Literal(Literal),
-    Variable,
+    Variable(VariableId),
     Variant(VariantPattern),
     Wildcard,
 }
