@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use lume_macros::Node;
-use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, StatementId};
+use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, PatternId, StatementId};
 
 pub mod map;
 pub mod pretty;
@@ -623,7 +623,7 @@ impl Def<'_> {
             Def::Method(def) => def.id,
             Def::TraitMethodDef(def) => def.id,
             Def::TraitMethodImpl(def) => def.id,
-            Def::Pattern(def) => def.id,
+            Def::Pattern(def) => DefId::Pattern(def.id),
             Def::Statement(def) => DefId::Statement(def.id),
             Def::Expression(def) => DefId::Expression(def.id),
             Def::Field(def) => def.id,
@@ -1641,7 +1641,7 @@ pub struct Member {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct PatternField {
     pub id: ExpressionId,
-    pub pattern: DefId,
+    pub pattern: PatternId,
     pub field: usize,
     pub location: Location,
 }
@@ -1703,7 +1703,7 @@ pub struct Variant {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
-    pub id: DefId,
+    pub id: PatternId,
     pub kind: PatternKind,
     pub location: Location,
 }

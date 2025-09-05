@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use lume_span::{DefId, ExpressionId, Interned, Location, StatementId};
+use lume_span::{DefId, ExpressionId, Interned, Location, PatternId, StatementId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
 use lume_types::{Field, TypeRef};
 
@@ -713,7 +713,7 @@ pub struct Variant {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
-    pub id: DefId,
+    pub id: PatternId,
     pub kind: PatternKind,
 }
 

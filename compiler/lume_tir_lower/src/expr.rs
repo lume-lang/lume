@@ -398,7 +398,7 @@ impl LowerFunction<'_> {
             lume_hir::VariableSource::Variable(var) => {
                 *self.variable_mapping.get(&lume_span::DefId::Statement(var.id)).unwrap()
             }
-            lume_hir::VariableSource::Pattern(var) => *self.variable_mapping.get(&var.id).unwrap(),
+            lume_hir::VariableSource::Pattern(var) => *self.variable_mapping.get(&DefId::Pattern(var.id)).unwrap(),
         };
 
         let source = match expr.reference {
