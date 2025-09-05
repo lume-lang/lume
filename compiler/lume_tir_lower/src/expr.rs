@@ -293,6 +293,7 @@ impl LowerFunction<'_> {
             id: expr.id,
             target,
             pattern,
+            location: expr.location,
         })))
     }
 

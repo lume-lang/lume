@@ -11,6 +11,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::ExpressionKind::Construct(expr) => self.construct(expr),
             lume_tir::ExpressionKind::Call(expr) => self.call_expression(expr),
             lume_tir::ExpressionKind::If(cond) => self.if_condition(cond),
+            lume_tir::ExpressionKind::Is(expr) => self.is_expression(expr),
             lume_tir::ExpressionKind::IntrinsicCall(call) => self.intrinsic_call(call),
             lume_tir::ExpressionKind::Literal(lit) => self.literal(&lit.kind, expr.location()),
             lume_tir::ExpressionKind::Logical(expr) => self.logical(expr),
@@ -186,6 +187,74 @@ impl FunctionTransformer<'_, '_> {
         }
 
         self.call(expr.function, args, ret_ty, expr.location)
+    }
+
+    fn is_expression(&mut self, expr: &lume_tir::Is) -> lume_mir::Operand {
+        let operand = self.expression(&expr.target);
+
+        match &expr.pattern.kind {
+            lume_tir::PatternKind::Literal(lit) => {
+                let intrinsic = match &lit.kind {
+                    lume_tir::LiteralKind::Boolean(bool) => lume_mir::DeclarationKind::Intrinsic {
+                        name: lume_mir::Intrinsic::BooleanEq,
+                        args: vec![
+                            operand,
+                            lume_mir::Operand {
+                                kind: lume_mir::OperandKind::Boolean { value: *bool },
+                                location: lit.location,
+                            },
+                        ],
+                    },
+                    lume_tir::LiteralKind::Int(int) => lume_mir::DeclarationKind::Intrinsic {
+                        name: lume_mir::Intrinsic::IntEq {
+                            bits: int.bits(),
+                            signed: int.signed(),
+                        },
+                        args: vec![
+                            operand,
+                            lume_mir::Operand {
+                                kind: lume_mir::OperandKind::Integer {
+                                    bits: int.bits(),
+                                    signed: int.signed(),
+                                    value: int.value(),
+                                },
+                                location: lit.location,
+                            },
+                        ],
+                    },
+                    lume_tir::LiteralKind::Float(float) => lume_mir::DeclarationKind::Intrinsic {
+                        name: lume_mir::Intrinsic::FloatEq { bits: float.bits() },
+                        args: vec![
+                            operand,
+                            lume_mir::Operand {
+                                kind: lume_mir::OperandKind::Float {
+                                    bits: float.bits(),
+                                    value: float.value(),
+                                },
+                                location: lit.location,
+                            },
+                        ],
+                    },
+                    lume_tir::LiteralKind::String(_) => unimplemented!(),
+                };
+
+                let result = self.declare(lume_mir::Declaration {
+                    kind: intrinsic,
+                    location: expr.location,
+                });
+
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Reference { id: result },
+                    location: expr.location,
+                }
+            }
+            lume_tir::PatternKind::Variable => todo!(),
+            lume_tir::PatternKind::Variant(_) => todo!(),
+            lume_tir::PatternKind::Wildcard => lume_mir::Operand {
+                kind: lume_mir::OperandKind::Boolean { value: true },
+                location: expr.location,
+            },
+        }
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
