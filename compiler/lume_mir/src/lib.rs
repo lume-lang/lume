@@ -1131,8 +1131,8 @@ impl std::fmt::Display for Operand {
             OperandKind::Bitcast { source, target } => write!(f, "{source} as {target}"),
             OperandKind::Reference { id } => write!(f, "{id}"),
             OperandKind::Load { id } => write!(f, "*{id}"),
-            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset}]"),
-            OperandKind::SlotAddress { id } => write!(f, "&{id}"),
+            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset:X}]"),
+            OperandKind::SlotAddress { id } => write!(f, "{id}"),
             OperandKind::String { value } => write!(f, "\"{value}\""),
         }
     }

@@ -439,6 +439,15 @@ impl<'ctx> LowerFunction<'ctx> {
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
     pub(crate) fn retrieve_field_type(&self, register: RegisterId, index: usize) -> Type {
         let reg_ty = self.func.registers.register_ty(register);
+
+        if let lume_mir::TypeKind::Union { cases } = &reg_ty.kind {
+            let case = cases
+                .get(index)
+                .expect("bug!: attempted to load union field out of bounds");
+
+            return self.backend.cl_type_of(case);
+        };
+
         let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
             panic!("bug!: attempting to load non-pointer register");
         };
