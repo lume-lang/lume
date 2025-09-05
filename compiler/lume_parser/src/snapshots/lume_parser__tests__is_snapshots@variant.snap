@@ -34,14 +34,13 @@ expression: "parse_expr(\"0 is Foo::A;\")"
                                     ),
                                 },
                             ],
-                            name: Type {
+                            name: Variant {
                                 name: Identifier {
                                     name: "A",
                                     location: Location(
                                         10..11,
                                     ),
                                 },
-                                type_arguments: [],
                                 location: Location(
                                     10..11,
                                 ),

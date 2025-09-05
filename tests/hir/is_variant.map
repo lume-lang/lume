@@ -54,12 +54,11 @@ Map {
                                             location: is_variant.lm:17:20,
                                         },
                                     ],
-                                    name: Type {
+                                    name: Variant {
                                         name: Identifier {
                                             name: "A",
                                             location: is_variant.lm:22:23,
                                         },
-                                        type_arguments: [],
                                         location: is_variant.lm:22:23,
                                     },
                                     location: is_variant.lm:22:23,
