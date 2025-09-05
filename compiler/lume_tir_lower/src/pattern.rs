@@ -33,12 +33,19 @@ impl LowerFunction<'_> {
                 let ty = self.lower.tcx.find_type_ref_from(&enum_type, def_id)?.unwrap();
                 let name = self.path_hir(&pat.name, def_id)?;
 
+                let fields = pat
+                    .fields
+                    .iter()
+                    .map(|field| self.pattern(field))
+                    .collect::<Result<Vec<_>>>()?;
+
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
                     kind: lume_tir::PatternKind::Variant(lume_tir::VariantPattern {
                         index: index as u8,
                         ty,
                         name,
+                        fields,
                     }),
                     location: pattern.location,
                 })
