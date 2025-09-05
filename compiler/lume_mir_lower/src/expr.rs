@@ -193,11 +193,23 @@ impl FunctionTransformer<'_, '_> {
 
     fn is_expression(&mut self, expr: &lume_tir::Is) -> lume_mir::Operand {
         let operand = self.expression(&expr.target);
+        let operand_type = self.type_of_value(&operand);
 
-        self.pattern(operand, &expr.pattern)
+        self.pattern(&expr.pattern, operand, operand_type)
     }
 
-    fn pattern(&mut self, operand: lume_mir::Operand, pattern: &lume_tir::Pattern) -> lume_mir::Operand {
+    fn pattern(
+        &mut self,
+        pattern: &lume_tir::Pattern,
+        operand: lume_mir::Operand,
+        operand_type: lume_mir::Type,
+    ) -> lume_mir::Operand {
+        let loaded_op = if let lume_mir::OperandKind::Reference { id } = &operand.kind {
+            *id
+        } else {
+            self.func.declare_value(operand_type, operand.clone())
+        };
+
         match &pattern.kind {
             // Matching against a literal is effectively the same as testing
             // the equality against the operand, so we replace it will an intrinsic call,
@@ -260,7 +272,6 @@ impl FunctionTransformer<'_, '_> {
 
             // Testing against a variable is effectively a noop, since it will always be true.
             lume_tir::PatternKind::Variable(var) => {
-                let loaded_op = self.load_operand(&operand);
                 self.variables.insert(*var, loaded_op);
 
                 lume_mir::Operand {
@@ -270,8 +281,6 @@ impl FunctionTransformer<'_, '_> {
             }
 
             lume_tir::PatternKind::Variant(variant) => {
-                let loaded_op = self.load_operand(&operand);
-
                 let discriminant_value = self
                     .tcx()
                     .discriminant_of_variant_ty(variant.ty.instance_of, variant.name.name.name())
@@ -319,6 +328,8 @@ impl FunctionTransformer<'_, '_> {
                     }
 
                     let field_offset = self.variant_field_offset(pattern.id, idx);
+                    let field_type = self.variant_field_type(pattern.id, idx);
+
                     let field_operand = lume_mir::Operand {
                         kind: lume_mir::OperandKind::LoadField {
                             target: loaded_op,
@@ -328,7 +339,7 @@ impl FunctionTransformer<'_, '_> {
                         location: field_pattern.location,
                     };
 
-                    let field_cmp_operand = self.pattern(field_operand, field_pattern);
+                    let field_cmp_operand = self.pattern(field_pattern, field_operand, field_type);
                     let field_cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::BooleanAnd,
                         args: vec![
@@ -916,6 +927,23 @@ impl FunctionTransformer<'_, '_> {
         }
 
         offset
+    }
+
+    fn variant_field_type(&self, id: lume_span::PatternId, field_idx: usize) -> lume_mir::Type {
+        let pattern = self.tcx().hir_expect_pattern(DefId::Pattern(id));
+        let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
+            panic!("bug!: attempting to get field offset of non-variant pattern");
+        };
+
+        let enum_case = self.tcx().enum_case_with_name(&variant_pattern.name).unwrap();
+        let field_type = enum_case
+            .parameters
+            .get(field_idx)
+            .expect("bug!: pattern {:+} with field id of {field_idx} is out of bounds");
+
+        let field_type_ty = self.tcx().mk_type_ref_from(field_type, DefId::Pattern(id)).unwrap();
+
+        self.lower_type(&field_type_ty)
     }
 
     fn variant_field_offset(&self, id: lume_span::PatternId, field_idx: usize) -> usize {
