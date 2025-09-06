@@ -226,6 +226,7 @@ impl UnificationPass {
             }
             lume_hir::ExpressionKind::Is(s) => {
                 self.unify_expr(tcx, s.target)?;
+                self.unify_pattern(tcx, expr.id, &s.pattern)?;
             }
             lume_hir::ExpressionKind::Logical(s) => {
                 self.unify_expr(tcx, s.lhs)?;
@@ -409,7 +410,15 @@ impl UnificationPass {
                 }
 
                 for (idx, type_param) in enum_def.type_parameters.iter().enumerate().skip(expected_type_args) {
-                    self.resolve_type_param(tcx, idx, expr, type_param.type_param_id.unwrap())?;
+                    let type_param = type_param.type_param_id.unwrap();
+
+                    if let lume_hir::ExpressionKind::Variant(variant) = &tcx.hir_expect_expr(expr).kind
+                        && self.resolve_variant_type_param(tcx, idx, variant, type_param)?
+                    {
+                        continue;
+                    }
+
+                    self.resolve_type_param(tcx, idx, expr, type_param)?;
                 }
             }
             lume_hir::PathSegment::Namespace { .. } => return Ok(()),
@@ -442,11 +451,12 @@ impl UnificationPass {
         };
 
         let Some(expected_type_of_param) = expected_type_of_expr.type_arguments.get(idx) else {
+            let span = tcx.hir_span_of_def(DefId::Expression(expr));
             let type_param = tcx.tdb().type_parameter(type_param).unwrap();
 
             tcx.dcx().emit(
                 crate::errors::TypeArgumentInferenceFailed {
-                    source: type_param.location,
+                    source: span,
                     type_param_name: type_param.name.clone(),
                 }
                 .into(),
@@ -469,6 +479,84 @@ impl UnificationPass {
 
         Ok(())
     }
+
+    #[tracing::instrument(level = "TRACE", skip(self, tcx, variant), err)]
+    fn resolve_variant_type_param<'tcx>(
+        &mut self,
+        tcx: &'tcx TyInferCtx,
+        idx: usize,
+        variant: &lume_hir::Variant,
+        type_param: TypeParameterId,
+    ) -> Result<bool> {
+        let work_key = TypeParameterReference {
+            entry: Entry::Expression(variant.id),
+            param: type_param,
+        };
+
+        for arg in &variant.arguments {
+            let arg_type = tcx.type_of(*arg)?;
+
+            let Some(expected_type_of_arg) = tcx.expected_type_of(*arg)? else {
+                continue;
+            };
+
+            if self.resolve_variant_type_param_nested(
+                tcx,
+                work_key,
+                idx,
+                &expected_type_of_arg,
+                &arg_type,
+                type_param,
+            )? {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn resolve_variant_type_param_nested<'tcx>(
+        &mut self,
+        tcx: &'tcx TyInferCtx,
+        work_key: TypeParameterReference,
+        idx: usize,
+        expected_type: &TypeRef,
+        found_type: &TypeRef,
+        type_param: TypeParameterId,
+    ) -> Result<bool> {
+        if let Some(arg_type_param) = tcx.as_type_parameter(expected_type)?
+            && arg_type_param.id == type_param
+        {
+            let substitute = TypeArgumentSubstitute {
+                idx,
+                ty: found_type.to_owned(),
+            };
+
+            self.substitution_map.insert(work_key, substitute);
+
+            return Ok(true);
+        }
+
+        for (expected_type_arg, found_type_arg) in expected_type
+            .type_arguments
+            .iter()
+            .zip(found_type.type_arguments.iter())
+        {
+            if self.resolve_variant_type_param_nested(
+                tcx,
+                work_key,
+                idx,
+                expected_type_arg,
+                found_type_arg,
+                type_param,
+            )? {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
 }
 
 impl UnificationPass {
@@ -488,7 +576,7 @@ impl UnificationPass {
                         lume_hir::ExpressionKind::Cast(cast) => &mut cast.target.name.name,
                         lume_hir::ExpressionKind::Construct(construct) => &mut construct.path.name,
                         lume_hir::ExpressionKind::StaticCall(call) => call.name.root.last_mut().unwrap(),
-                        lume_hir::ExpressionKind::Variant(variant) => &mut variant.name.name,
+                        lume_hir::ExpressionKind::Variant(variant) => variant.name.root.last_mut().unwrap(),
                         kind => unreachable!("bug!: unimplemented expression substitute: {kind:#?}"),
                     };
 

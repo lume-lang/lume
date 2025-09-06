@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+import std (Optional)
+
+fn main() {
+    let a = Optional::Some(5);
+
+    if a is Optional<Int32>::None {
+        // ...
+    }
+}

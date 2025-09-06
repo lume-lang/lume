@@ -720,7 +720,23 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::Variable(_) => {
                     unreachable!("variable references cannot have sub expressions")
                 }
-                lume_hir::ExpressionKind::Variant(_) => todo!("expected_type_of variant expression"),
+                lume_hir::ExpressionKind::Variant(variant) => {
+                    let idx = variant
+                        .arguments
+                        .iter()
+                        .enumerate()
+                        .find_map(|(idx, arg)| if *arg == id { Some(idx) } else { None })
+                        .expect("bug!: expression not contained in variant arg list");
+
+                    let enum_name = variant.name.clone().parent().unwrap();
+
+                    let enum_def = self.enum_def_of_name(&enum_name)?;
+                    let enum_case_def = self.enum_case_with_name(&variant.name)?;
+                    let enum_field_type = enum_case_def.parameters.get(idx).unwrap();
+
+                    self.mk_type_ref_from(enum_field_type, DefId::Item(enum_def.id))
+                        .map(|ty| Some(ty))
+                }
             },
             DefId::Statement(parent_id) => match &self.hir_expect_stmt(parent_id).kind {
                 lume_hir::StatementKind::Variable(decl) => {

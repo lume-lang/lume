@@ -1147,10 +1147,16 @@ impl TyInferCtx {
 
                 Ok(())
             }
+            lume_hir::ExpressionKind::Variant(variant) => {
+                for field in &variant.arguments {
+                    self.define_expr_scope(tree, *field, expr_id)?;
+                }
+
+                Ok(())
+            }
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
-            | lume_hir::ExpressionKind::Field(_)
-            | lume_hir::ExpressionKind::Variant(_) => Ok(()),
+            | lume_hir::ExpressionKind::Field(_) => Ok(()),
         }
     }
 
