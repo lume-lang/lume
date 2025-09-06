@@ -82,13 +82,9 @@ fn compile(path: &Path, content: String) -> Result<PathBuf> {
     let mut package_name = path.to_path_buf();
     package_name.set_extension("");
 
-    let root_dir = std::env::var("CARGO_MANIFEST_DIR")
-        .map(|e| PathBuf::from(e.to_string()).join("../../"))
-        .unwrap_or_else(|_| std::env::current_dir().unwrap());
-
     let mut stub_package = build_stage::stub_package_with(|pkg| pkg.add_source(Arc::new(source_file)));
     stub_package.name = package_name.file_name().unwrap().display().to_string();
-    stub_package.path = root_dir.join("tests/bin/");
+    stub_package.path = path.parent().unwrap().to_path_buf();
     stub_package.add_std_sources();
 
     let dcx = DiagCtx::new();
