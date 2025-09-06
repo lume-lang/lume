@@ -1076,6 +1076,7 @@ pub enum OperandKind {
         target: RegisterId,
         offset: usize,
         index: usize,
+        field_type: Type,
     },
 
     /// Represents an address to an existing stack slot.
@@ -1479,6 +1480,14 @@ impl Type {
         }
     }
 
+    pub fn tuple(id: TypeRef, items: Vec<Type>) -> Self {
+        Self {
+            id,
+            kind: TypeKind::Tuple { items },
+            is_generic: false,
+        }
+    }
+
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
     }
@@ -1504,6 +1513,7 @@ impl Type {
 
                 discriminator_size + max_case_size
             }
+            TypeKind::Tuple { items } => items.iter().map(Type::bytesize).sum(),
             TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
             TypeKind::Boolean => 1,
             TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => {
@@ -1533,6 +1543,9 @@ pub enum TypeKind {
 
     /// Represents a union type with zero-or-more cases.
     Union { cases: Vec<Type> },
+
+    /// Represents an unnamed tuple type with zero-or-more items.
+    Tuple { items: Vec<Type> },
 
     /// Defines an integer type with a specified number of bits and signedness.
     Integer { bits: u8, signed: bool },
@@ -1576,6 +1589,15 @@ impl std::fmt::Display for TypeKind {
                 f,
                 "(u8, {})",
                 cases
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            ),
+            Self::Tuple { items } => write!(
+                f,
+                "({})",
+                items
                     .iter()
                     .map(std::string::ToString::to_string)
                     .collect::<Vec<_>>()

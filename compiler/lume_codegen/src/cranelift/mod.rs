@@ -412,14 +412,20 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
-    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize) -> Value {
-        let ptr = self.use_var(register);
         let field_ty = self.retrieve_field_type(register, field);
 
-        tracing::debug!(%ptr, %field_ty);
+        self.load_field_as(register, field, offset, field_ty)
+    }
 
-        self.builder.ins().load(field_ty, MemFlags::new(), ptr, offset as i32)
+    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+    pub(crate) fn load_field_as(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
+        let ptr = self.use_var(register);
+
+        tracing::debug!(%ptr, %ty, %register, field);
+
+        self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
     }
 
     pub(crate) fn retrieve_load_type(&self, register: RegisterId) -> Type {

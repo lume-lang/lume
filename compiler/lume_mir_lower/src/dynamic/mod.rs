@@ -392,9 +392,14 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
     /// Loads a field into a new register and returns it.
     pub fn load_field(&mut self, target: RegisterId, ty: lume_mir::Type, index: usize, offset: usize) -> RegisterId {
         self.builder.func.declare_value(
-            ty,
+            ty.clone(),
             lume_mir::Operand {
-                kind: lume_mir::OperandKind::LoadField { target, index, offset },
+                kind: lume_mir::OperandKind::LoadField {
+                    target,
+                    index,
+                    offset,
+                    field_type: ty,
+                },
                 location: Location::empty(),
             },
         )

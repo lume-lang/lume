@@ -468,12 +468,13 @@ impl LowerFunction<'_> {
             .insert(lume_span::DefId::Expression(expr.operand), operand_var);
 
         for case in &expr.cases {
-            let branch = self.expression(case.branch)?;
             let return_type = self.lower.tcx.type_of(case.branch)?;
 
             let pattern = match &case.pattern.kind {
                 lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Variant(_) => self.pattern(&case.pattern)?,
                 lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
+                    let branch = self.expression(case.branch)?;
+
                     cases.push(lume_tir::Conditional {
                         condition: None,
                         block: lume_tir::Block {
@@ -488,6 +489,8 @@ impl LowerFunction<'_> {
                     break;
                 }
             };
+
+            let branch = self.expression(case.branch)?;
 
             let conditional = lume_tir::Conditional {
                 condition: Some(lume_tir::Expression {
@@ -525,20 +528,7 @@ impl LowerFunction<'_> {
                 *self.variable_mapping.get(&lume_span::DefId::Statement(var.id)).unwrap()
             }
             lume_hir::VariableSource::Pattern(pat) => {
-                if let Some(switch_expr) = self.lower.tcx.hir_switch_expression(DefId::Pattern(pat.id)) {
-                    match &pat.kind {
-                        lume_hir::PatternKind::Identifier(_) => *self
-                            .variable_mapping
-                            .get(&lume_span::DefId::Expression(switch_expr.operand))
-                            .unwrap(),
-                        lume_hir::PatternKind::Variant(_) => {
-                            unimplemented!("tir: variable reference to variant pattern")
-                        }
-                        lume_hir::PatternKind::Literal(_) | lume_hir::PatternKind::Wildcard(_) => unreachable!(),
-                    }
-                } else {
-                    *self.variable_mapping.get(&lume_span::DefId::Pattern(pat.id)).unwrap()
-                }
+                *self.variable_mapping.get(&lume_span::DefId::Pattern(pat.id)).unwrap()
             }
         };
 

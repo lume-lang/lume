@@ -130,7 +130,12 @@ impl LowerFunction<'_> {
                 self.builder.ins().bitcast(target_type, MemFlags::new(), source)
             }
             lume_mir::OperandKind::Load { id } => self.load_var(*id),
-            lume_mir::OperandKind::LoadField { target, index, offset } => self.load_field(*target, *index, *offset),
+            lume_mir::OperandKind::LoadField {
+                target,
+                index,
+                offset,
+                field_type,
+            } => self.load_field_as(*target, *index, *offset, self.backend.cl_type_of(field_type)),
             lume_mir::OperandKind::SlotAddress { id } => {
                 let slot = self.retrieve_slot(*id);
 

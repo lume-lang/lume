@@ -154,7 +154,7 @@ impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type) -> Value {
         match &ty.kind {
-            lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } => {
+            lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } | lume_mir::TypeKind::Tuple { .. } => {
                 let size = ty.bytesize();
 
                 self.alloca(size)

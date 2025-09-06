@@ -23,6 +23,7 @@ impl CraneliftBackend<'_> {
             lume_mir::TypeKind::String
             | lume_mir::TypeKind::Struct { .. }
             | lume_mir::TypeKind::Union { .. }
+            | lume_mir::TypeKind::Tuple { .. }
             | lume_mir::TypeKind::Pointer { .. }
             | lume_mir::TypeKind::Metadata { .. }
             | lume_mir::TypeKind::Void => self.cl_ptr_type(),

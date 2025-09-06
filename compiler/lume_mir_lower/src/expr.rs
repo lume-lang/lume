@@ -334,7 +334,8 @@ impl FunctionTransformer<'_, '_> {
                         kind: lume_mir::OperandKind::LoadField {
                             target: loaded_op,
                             offset: field_offset,
-                            index: idx,
+                            index: idx + 1,
+                            field_type: field_type.clone(),
                         },
                         location: field_pattern.location,
                     };
@@ -681,12 +682,14 @@ impl FunctionTransformer<'_, '_> {
 
         let index = expr.field.index;
         let offset = self.field_offset(&expr.field);
+        let field_type = self.field_type(&expr.field);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::LoadField {
                 target: target_reg,
                 offset,
                 index,
+                field_type,
             },
             location: expr.location,
         }
@@ -814,13 +817,17 @@ impl FunctionTransformer<'_, '_> {
         let mut union_cases = Vec::new();
 
         for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
+            let mut items = Vec::new();
+
             let params = &variant.parameters;
             let case_refs = self.tcx().mk_type_refs_from(params, def).unwrap();
 
             union_cases.reserve_exact(case_refs.len());
             for case_ref in case_refs {
-                union_cases.push(self.lower_type(&case_ref));
+                items.push(self.lower_type(&case_ref));
             }
+
+            union_cases.push(lume_mir::Type::tuple(enum_ty.clone(), items));
         }
 
         let union_type = lume_mir::Type::union(expr.ty.clone(), union_cases);
@@ -915,6 +922,16 @@ impl FunctionTransformer<'_, '_> {
         }
 
         offset
+    }
+
+    fn field_type(&self, field: &lume_types::Field) -> lume_mir::Type {
+        for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
+            if idx == field.index {
+                return self.lower_type(&prop.field_type);
+            }
+        }
+
+        panic!("bug!: field index of {} is out of bounds", field.index)
     }
 
     fn variant_field_type(&self, id: lume_span::PatternId, field_idx: usize) -> lume_mir::Type {
