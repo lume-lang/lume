@@ -1,0 +1,17 @@
+//# test-return = 3
+
+enum Foo {
+    A,
+    B,
+    C
+}
+
+fn main() -> Int32 {
+    let a = Foo::C;
+
+    if a is Foo::C {
+        3
+    } else {
+        1
+    }
+}

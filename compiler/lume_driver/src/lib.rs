@@ -113,7 +113,7 @@ impl Driver {
             codegen_mods.modules.push(module);
         }
 
-        let objects = Self::write_object_files(&gcx, codegen_mods)?;
+        let objects = lume_linker::write_object_files(&gcx, codegen_mods)?;
         let output_file_path = gcx.binary_output_path(&self.package.name);
 
         lume_linker::link_objects(&objects, &output_file_path, &gcx.session.options)?;
@@ -154,43 +154,6 @@ impl Driver {
         }
 
         Ok(graph)
-    }
-
-    /// Writes the object files of the given codegen result to disk in
-    /// the current workspace directory.
-    #[cfg(feature = "codegen")]
-    fn write_object_files(
-        gcx: &Arc<GlobalCtx>,
-        result: lume_codegen::CodegenResult,
-    ) -> Result<lume_codegen::CodegenObjects> {
-        use error_snippet::IntoDiagnostic;
-        use rayon::iter::{IntoParallelIterator, ParallelIterator};
-
-        std::fs::create_dir_all(gcx.obj_path()).map_err(IntoDiagnostic::into_diagnostic)?;
-        std::fs::create_dir_all(gcx.obj_bc_path()).map_err(IntoDiagnostic::into_diagnostic)?;
-
-        let objects = result
-            .modules
-            .into_par_iter()
-            .map(|module| {
-                use std::io::Write;
-
-                let output_file_path = gcx.obj_bc_path().join(format!("{}.o", module.name));
-                let mut output_file =
-                    std::fs::File::create(&output_file_path).map_err(IntoDiagnostic::into_diagnostic)?;
-
-                output_file
-                    .write_all(&module.bytecode)
-                    .map_err(IntoDiagnostic::into_diagnostic)?;
-
-                Ok(lume_codegen::CodegenObject {
-                    name: module.name,
-                    path: output_file_path,
-                })
-            })
-            .collect::<Result<Vec<lume_codegen::CodegenObject>>>()?;
-
-        Ok(lume_codegen::CodegenObjects { objects })
     }
 }
 
@@ -301,7 +264,7 @@ impl<'a> Compiler<'a> {
         }
 
         tracing::info_span!("codegen")
-            .in_scope(|| lume_codegen::Generator::codegen(self.package, mir, tcx, &self.gcx.session.options))
+            .in_scope(|| lume_codegen::generate(self.package, mir, tcx, &self.gcx.session.options))
     }
 }
 
