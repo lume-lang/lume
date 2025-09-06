@@ -47,7 +47,6 @@ impl FunctionTransformer<'_, '_> {
         let (_, end) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(end, stmt.location);
-        self.add_edge(self.func.current_block().id, end);
 
         None
     }
@@ -56,7 +55,6 @@ impl FunctionTransformer<'_, '_> {
         let (body, _) = self.func.expect_loop_target();
 
         self.func.current_block_mut().branch(body, stmt.location);
-        self.add_edge(self.func.current_block().id, body);
 
         None
     }
@@ -82,11 +80,9 @@ impl FunctionTransformer<'_, '_> {
             Some(self.func.new_block())
         };
 
-        self.add_edge(self.func.current_block().id, body_block);
         self.func.current_block_mut().branch(body_block, stmt.location);
 
         if let Some(merge_block) = merge_block {
-            self.add_edge(body_block, body_block);
             self.func.enter_loop_scope(body_block, merge_block);
         }
 
@@ -98,12 +94,9 @@ impl FunctionTransformer<'_, '_> {
         }
 
         // Loop back to the start of the loop body
-        self.add_edge(self.func.current_block().id, body_block);
         self.func.current_block_mut().branch(body_block, stmt.location);
 
         if let Some(merge_block) = merge_block {
-            self.add_edge(self.func.current_block().id, merge_block);
-
             self.func.current_block_mut().branch(merge_block, stmt.location);
             self.func.set_current_block(merge_block);
         }

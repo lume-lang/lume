@@ -165,12 +165,6 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         self.func.declare(ty, decl)
     }
 
-    /// Adds a new edge between the two blocks.
-    fn add_edge(&mut self, from: lume_mir::BasicBlockId, to: lume_mir::BasicBlockId) {
-        self.func.block_mut(to).push_predecessor(from);
-        self.func.block_mut(from).push_successor(to);
-    }
-
     /// Defines a new register with a value of `null` and return an reference to it.
     fn null_operand(&mut self) -> lume_mir::Operand {
         let reg = self.declare_value(lume_mir::Operand {

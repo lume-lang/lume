@@ -5,10 +5,49 @@ use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_, '_> {
     pub(crate) fn run_passes(&mut self) {
+        DefineBlockEdges.execute(&mut self.func);
         DefineBlockParameters::default().execute(&mut self.func);
         PassBlockArguments::execute(&mut self.func);
         ConvertAssignmentExpressions::default().execute(&mut self.func);
         RenameSsaVariables::default().execute(&mut self.func);
+    }
+}
+
+#[derive(Default, Debug)]
+struct DefineBlockEdges;
+
+impl DefineBlockEdges {
+    pub fn execute(&self, func: &mut Function) {
+        let mut edges = IndexSet::<(BasicBlockId, BasicBlockId)>::new();
+
+        for block in &func.blocks {
+            let terminator = block.terminator().unwrap();
+
+            match &terminator.kind {
+                lume_mir::TerminatorKind::Branch(term) => {
+                    edges.insert((block.id, term.block));
+                }
+                lume_mir::TerminatorKind::ConditionalBranch {
+                    then_block, else_block, ..
+                } => {
+                    edges.insert((block.id, then_block.block));
+                    edges.insert((block.id, else_block.block));
+                }
+                lume_mir::TerminatorKind::Switch { arms, fallback, .. } => {
+                    for (_, arm) in arms {
+                        edges.insert((block.id, arm.block));
+                    }
+
+                    edges.insert((block.id, fallback.block));
+                }
+                lume_mir::TerminatorKind::Return(_) | lume_mir::TerminatorKind::Unreachable => {}
+            }
+        }
+
+        for (succ, pred) in edges {
+            func.block_mut(pred).push_predecessor(succ);
+            func.block_mut(succ).push_successor(pred);
+        }
     }
 }
 

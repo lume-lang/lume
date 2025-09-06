@@ -415,9 +415,6 @@ impl FunctionTransformer<'_, '_> {
             let cond_then = self.func.new_block();
             let cond_else = self.func.new_block();
 
-            self.add_edge(self.func.current_block().id, cond_then);
-            self.add_edge(self.func.current_block().id, cond_else);
-
             self.build_conditional_graph(condition, cond_then, cond_else);
 
             self.func.set_current_block(cond_then);
@@ -441,9 +438,6 @@ impl FunctionTransformer<'_, '_> {
                 self.func
                     .current_block_mut()
                     .branch_with(merge_block, args, expr.location);
-
-                self.add_edge(cond_then, merge_block);
-                self.add_edge(cond_else, merge_block);
             }
 
             self.func.set_current_block(cond_else);
@@ -517,9 +511,6 @@ impl FunctionTransformer<'_, '_> {
                     let lhs_val = self.expression(&comp_expr.lhs);
                     let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
 
-                    self.add_edge(self.func.current_block().id, inter_block);
-                    self.add_edge(inter_block, else_block);
-
                     self.func.current_block_mut().conditional_branch(
                         lhs_expr,
                         inter_block,
@@ -556,9 +547,6 @@ impl FunctionTransformer<'_, '_> {
 
                     let lhs_val = self.expression(&comp_expr.lhs);
                     let lhs_expr = self.func.declare_value(lume_mir::Type::boolean(), lhs_val);
-
-                    self.add_edge(self.func.current_block().id, inter_block);
-                    self.add_edge(inter_block, then_block);
 
                     self.func.current_block_mut().conditional_branch(
                         lhs_expr,
