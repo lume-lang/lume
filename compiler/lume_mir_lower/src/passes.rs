@@ -13,6 +13,12 @@ impl FunctionTransformer<'_, '_> {
     }
 }
 
+/// Detects edges between all blocks within a function, which is used
+/// for later passes.
+///
+/// After edge detection has finished, the function can effectively be
+/// remapped into a directed graph of blocks, where each node corresponds
+/// to a block and each directed edge corresponds to a call between blocks A and B.
 #[derive(Default, Debug)]
 struct DefineBlockEdges;
 
@@ -51,6 +57,40 @@ impl DefineBlockEdges {
     }
 }
 
+/// Determines which parameters are required for a given block, as well
+/// as any subsequent successor blocks, so that matching registers can be
+/// passed from any successor blocks.
+///
+/// For example, given MIR like the following:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     goto B1
+/// B1:
+///     #1 = 7_i32
+///     #2: i32 = +(#0, #1)
+///     goto B2
+/// B2:
+///     #3: i32 = *(#2, #0)
+///     return #3
+/// ```
+///
+/// Each successor block, except for `B0`, requires a register from a previous blocks. This
+/// pass will look for all registers required for each block and declare them as parameters
+/// of the block, if they cannot be found in the block itself. After the pass, the same
+/// MIR will look like this:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     goto B1
+/// B1(#0):       <-- notice the added block parameters
+///     #1 = 7_i32
+///     #2: i32 = +(#0, #1)
+///     goto B2
+/// B2(#2, #0):   <-- notice the added block parameters
+///     #3: i32 = *(#2, #0)
+///     return #3
+/// ```
 #[derive(Default, Debug)]
 struct DefineBlockParameters {
     params: IndexMap<BasicBlockId, IndexSet<RegisterId>>,
@@ -126,6 +166,38 @@ impl DefineBlockParameters {
     }
 }
 
+/// Using the result of the previous pass, [`DefineBlockParameters`], traverses through
+/// each block and passes the appropriate registers to each call to any successor blocks.
+///
+/// For example, given MIR like the following:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     goto B1
+/// B1(#0):
+///     #1 = 7_i32
+///     #2: i32 = +(#0, #1)
+///     goto B2
+/// B2(#2, #0):
+///     #3: i32 = *(#2, #0)
+///     return #3
+/// ```
+///
+/// Each successor block, except for `B2`, is meant to pass one-or-more registers to their
+/// successor blocks. This pass will look through each block and update their terminator to pass
+/// the required registers. After the pass, the same MIR will look like this:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     goto B1(#0)          <-- notice the added block arguments
+/// B1(#0):
+///     #1 = 7_i32
+///     #2: i32 = +(#0, #1)
+///     goto B2(#2, #0)
+/// B2(#2, #0):
+///     #3: i32 = *(#2, #0)  <-- notice the added block arguments
+///     return #3
+/// ```
 #[derive(Default, Debug)]
 struct PassBlockArguments;
 
@@ -181,6 +253,27 @@ impl PassBlockArguments {
     }
 }
 
+/// This pass converts any found direct assignment expressions, turns them into
+/// a new declaration and uses that declaration for any following register references.
+/// This is done because SSA, by design, does not support altering existing register values
+/// directly.
+///
+/// For example, MIR like the following:
+/// ```mir
+///     let #0 = 4_i32
+///     call foo(#0)
+///     #0 = 6_i32     <-- invalid! SSA forbids reassigning existing registers
+///     return #0
+/// ```
+///
+/// is invalid SSA, since `#0` has now been reassigned. This pass attempts to convert the
+/// assignment instruction into the following MIR:
+/// ```mir
+///     let #0 = 4_i32
+///     call foo(#0)
+///     let #1 = 6_i32
+///     return #1
+/// ```
 #[derive(Default, Debug)]
 struct ConvertAssignmentExpressions {
     register_count: usize,
@@ -366,6 +459,60 @@ impl ConvertAssignmentExpressions {
 
 type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 
+/// Some backend implementations, specifically Cranelift, does not allow using the same register
+/// across block boundaries. Because of the *conservative* nature of Cranelift optimization, we must
+/// do this preprocessing ourselves.
+///
+/// It will attempt to rename registers in an MIR function, so that each block start it's register
+/// index at 0, then increments it when a new register is declared. This also include block parameters.
+///
+/// As an example, take the given MIR:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     #1 = 1_i32
+///     #2: i32 = -(#0, #1)
+///     goto B1(#2)
+/// B1(#2):
+///     #3 = 7_i32
+///     #4: i32 = +(#0, #2)
+///     goto B2(#2, #4)
+/// B2(#2, #4):
+///     #5: i32 = *(#2, #4)
+///     return #5
+/// ```
+///
+/// This is not valid in Cranelift, since most registers are used across multiple blocks. Look at `#0`
+/// specifically; it is referenced in all of the blocks in the function!
+///
+/// To circumvent this ~pedantry~ *requirement*, this pass renames all the registers to be local to
+/// the block in which they're declared. Using the given MIR from before, we transform it into:
+/// ```mir
+/// B0:
+///     #0 = 4_i32
+///     #1 = 1_i32
+///     #2: i32 = -(#0, #1)
+///     goto B1(#2)
+/// B1(#0):
+///     #1 = 7_i32
+///     #2: i32 = +(#0, #1)
+///     goto B2(#2, #0)
+/// B2(#0, #1):
+///     #2: i32 = *(#0, #1)
+///     return #2
+/// ```
+///
+/// <div class="warning">
+///
+/// **Here be dragons!**
+///
+/// On a more serious note, this is quite possibly the most error-prone part of the MIR lowering process.
+/// The reason for this is mostly because of the awkward implementation of "phi" nodes between
+/// blocks in some instances.
+///
+/// This pass should receive a refactor at some point, but is currently not planned.
+///
+/// </div>
 #[derive(Default, Debug)]
 pub(crate) struct RenameSsaVariables {
     register_counter: usize,
