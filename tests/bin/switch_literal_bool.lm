@@ -1,0 +1,10 @@
+//# test-return = 0
+
+fn main() -> Int32 {
+    let a = false;
+
+    switch a {
+        true => 1,
+        .. => 0,
+    }
+}

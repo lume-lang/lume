@@ -1,0 +1,20 @@
+//# test-return = 4
+
+enum Foo {
+    A(Boolean),
+    B(Int32),
+    C(Float)
+}
+
+fn main() -> Int32 {
+    let a = Foo::B(4);
+
+    switch a {
+        Foo::A(true) => 1,
+        Foo::A(false) => 2,
+        Foo::B(2) => 3,
+        Foo::B(n) => n,
+        Foo::C(..) => 5,
+        .. => 0,
+    }
+}

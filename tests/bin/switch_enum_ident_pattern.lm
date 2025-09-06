@@ -1,0 +1,18 @@
+//# test-return = 10
+
+enum Foo {
+    A(Int32),
+    B(Int32),
+    C(Int32)
+}
+
+fn main() -> Int32 {
+    let foo = Foo::B(5);
+
+    switch foo {
+        Foo::A(a) => a + 1,
+        Foo::B(b) => b * 2,
+        Foo::C(c) => c - 3,
+        .. => 0,
+    }
+}
