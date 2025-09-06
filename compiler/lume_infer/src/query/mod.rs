@@ -365,9 +365,14 @@ impl TyInferCtx {
             lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal),
             lume_hir::PatternKind::Variant(var) => {
                 let enum_name = var.name.clone().parent().unwrap();
+                let type_args = self.mk_type_refs_from(enum_name.type_arguments(), DefId::Pattern(pat.id))?;
 
                 match self.tdb().find_type(&enum_name) {
-                    Some(ty) => TypeRef::new(ty.id, pat.location),
+                    Some(ty) => TypeRef {
+                        instance_of: ty.id,
+                        type_arguments: type_args,
+                        location: pat.location,
+                    },
                     None => {
                         return Err(self.missing_type_err(&lume_hir::Type {
                             id: lume_span::ItemId::empty(),
