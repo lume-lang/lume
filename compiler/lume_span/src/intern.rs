@@ -77,6 +77,26 @@ impl<T: Ord + 'static> Ord for Interned<T> {
     }
 }
 
+impl<T: serde::Serialize + 'static> serde::Serialize for Interned<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.deref().serialize(serializer)
+    }
+}
+
+impl<'de, T: serde::Deserialize<'de> + Clone + Hash + Eq + Send + Sync + 'static> serde::Deserialize<'de>
+    for Interned<T>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        T::deserialize(deserializer).map(|t| t.intern())
+    }
+}
+
 impl<T: Hash + 'static> Hash for Interned<T> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         Interned::<T>::deref(self).hash(state);

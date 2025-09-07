@@ -1,16 +1,17 @@
 use indexmap::IndexMap;
 use lume_span::DefId;
 use lume_types::TypeId;
+use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct StaticMetadata {
     pub metadata: IndexMap<TypeMetadataId, TypeMetadata>,
 }
 
-#[derive(Hash, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeMetadataId(pub usize);
 
-#[derive(Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct TypeMetadata {
     /// Gets the unique ID of the type metadata.
     pub id: TypeMetadataId,
@@ -66,7 +67,7 @@ impl PartialEq for TypeMetadata {
 
 impl Eq for TypeMetadata {}
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FieldMetadata {
     /// Gets the name of the field.
     pub name: String,
@@ -75,7 +76,7 @@ pub struct FieldMetadata {
     pub ty: TypeMetadataId,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MethodMetadata {
     /// Gets the fully-qualified name of the method, including namespace and type name.
     pub full_name: String,
@@ -105,7 +106,7 @@ impl MethodMetadata {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ParameterMetadata {
     /// Gets the name of the parameter.
     pub name: String,
@@ -117,7 +118,7 @@ pub struct ParameterMetadata {
     pub vararg: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeParameterMetadata {
     /// Gets the name of the type parameter.
     pub name: String,

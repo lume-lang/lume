@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 /// Uniquely identifies some definition or value, independently of
 /// the parent package or item.
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct Idx(usize);
 
 impl Idx {
@@ -48,7 +50,7 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
 ///
 /// Packages are identified by a unique ID, which is used to locate the package's source files.
 /// The ID is generated from the name of the package using a hash function.
-#[derive(Hash, Debug, Default, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct PackageId(usize);
 
 impl PackageId {
@@ -100,7 +102,7 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
 }
 
 /// Uniquely identifies a top-level item within the package [`ItemId::package`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct ItemId {
     pub package: PackageId,
     pub index: Idx,
@@ -150,7 +152,7 @@ impl ItemId {
 ///
 /// [`FieldId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`FieldId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct FieldId {
     pub item: ItemId,
     pub index: Idx,
@@ -182,7 +184,7 @@ impl FieldId {
 ///
 /// [`MethodId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`MethodId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct MethodId {
     pub item: ItemId,
     pub index: Idx,
@@ -214,7 +216,7 @@ impl MethodId {
 ///
 /// [`PatternId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`PatternId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct PatternId {
     pub item: ItemId,
     pub index: Idx,
@@ -246,7 +248,7 @@ impl PatternId {
 ///
 /// [`StatementId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`StatementId::def`].
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StatementId {
     pub def: ItemId,
     pub index: Idx,
@@ -291,7 +293,7 @@ impl StatementId {
 ///
 /// [`ExpressionId`] instances are unique within the parent item, referenced
 /// by it's [`ItemId`] in [`ExpressionId::def`].
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ExpressionId {
     pub def: ItemId,
     pub index: Idx,
@@ -326,7 +328,7 @@ impl ExpressionId {
     }
 }
 
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DefId {
     Item(ItemId),
     Field(FieldId),

@@ -4,6 +4,7 @@ use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_errors::DiagCtx;
 use lume_session::GlobalCtx;
+use serde::{Deserialize, Serialize};
 
 use crate::errors::*;
 pub use lume_hir::TypeId;
@@ -718,10 +719,12 @@ impl Type {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeRef {
     pub instance_of: TypeId,
     pub type_arguments: Vec<TypeRef>,
+
+    #[serde(skip)]
     pub location: Location,
 }
 

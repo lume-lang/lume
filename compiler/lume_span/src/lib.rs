@@ -49,3 +49,9 @@ impl From<Location> for error_snippet::SpanRange {
         error_snippet::SpanRange(value.index.start..value.index.end)
     }
 }
+
+impl Default for Location {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
