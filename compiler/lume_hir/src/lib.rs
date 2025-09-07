@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use serde::{Deserialize, Serialize};
+
 use lume_macros::Node;
 use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, PatternId, StatementId};
 
@@ -15,7 +17,7 @@ pub struct FunctionId {
     pub index: Idx,
 }
 
-#[derive(Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
 pub struct TypeId {
     pub package: PackageId,
     pub index: Idx,

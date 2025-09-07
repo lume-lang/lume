@@ -3,11 +3,12 @@ use std::hash::Hash;
 use indexmap::{IndexMap, IndexSet};
 use lume_span::{DefId, Interned, Location};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
+use serde::{Deserialize, Serialize};
 
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
 /// which is referenced by later expressions, such as call sites.
-#[derive(Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct ModuleMap {
     pub metadata: StaticMetadata,
     pub functions: IndexMap<DefId, Function>,
@@ -53,7 +54,7 @@ impl std::fmt::Display for ModuleMap {
 
 /// Defines a function signature, such as parameter types and return type,
 /// as well as any declared modifiers such as `external` or `inline`.
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone, PartialEq, Eq)]
 pub struct Signature {
     /// Defines whether the function is externally defined or not.
     ///
@@ -94,10 +95,12 @@ impl std::fmt::Display for Signature {
 }
 
 /// Defines a parameter in a function signature.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
     pub name: Interned<String>,
     pub ty: Type,
+
+    #[serde(skip)]
     pub location: Location,
 }
 
@@ -111,7 +114,7 @@ impl std::fmt::Display for Parameter {
 ///
 /// Even though they're called "functions" in the MIR map, both
 /// functions and methods are represented by this struct.
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
     pub id: DefId,
     pub name: String,
@@ -122,8 +125,10 @@ pub struct Function {
     pub blocks: IndexMap<BasicBlockId, BasicBlock>,
     current_block: BasicBlockId,
 
+    #[serde(skip)]
     scope: Box<Scope>,
 
+    #[serde(skip)]
     pub location: Location,
 }
 
@@ -387,7 +392,13 @@ impl Scope {
     }
 }
 
-#[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
+impl Default for Scope {
+    fn default() -> Self {
+        Self::root_scope()
+    }
+}
+
+#[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub struct BasicBlockId(pub usize);
 
 impl std::fmt::Display for BasicBlockId {
@@ -397,7 +408,7 @@ impl std::fmt::Display for BasicBlockId {
 }
 
 /// Represents a basic block in the control flow graph.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BasicBlock {
     pub id: BasicBlockId,
 
@@ -713,7 +724,7 @@ impl std::fmt::Display for BasicBlock {
     }
 }
 
-#[derive(Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct RegisterId(usize);
 
 impl RegisterId {
@@ -737,7 +748,7 @@ impl std::fmt::Display for RegisterId {
 /// Registers cannot be altered after they are created, as they follow
 /// the SSA (Single Static Assignment) principle. If register needs to be updated,
 /// it should define an allocation which can be used to store the new value.
-#[derive(Default, Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
     pub id: RegisterId,
 
@@ -748,7 +759,7 @@ pub struct Register {
     pub block: Option<BasicBlockId>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct Registers {
     regs: Vec<Register>,
 }
@@ -823,7 +834,7 @@ impl Registers {
     }
 }
 
-#[derive(Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct SlotId(usize);
 
 impl SlotId {
@@ -846,13 +857,15 @@ impl std::fmt::Display for SlotId {
 ///
 /// Instructions themselves cannot be referenced by other instructions - only registers
 /// they declare can be referenced.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub kind: InstructionKind,
+
+    #[serde(skip)]
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum InstructionKind {
     /// Declares an SSA register within the current function.
     Let {
@@ -929,13 +942,15 @@ impl std::fmt::Display for Instruction {
 }
 
 /// Represents the right-hand side of a declaration instruction.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Declaration {
     pub kind: DeclarationKind,
+
+    #[serde(skip)]
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum DeclarationKind {
     /// Represents an operand value.
     Operand(Operand),
@@ -999,7 +1014,7 @@ impl std::fmt::Display for Declaration {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Intrinsic {
     FloatEq { bits: u8 },
     FloatNe { bits: u8 },
@@ -1058,13 +1073,15 @@ impl std::fmt::Display for Intrinsic {
 ///
 /// Not all values can be used as operands, which means they
 /// must be declared as a stack- or heap-allocated register.#[derive(Debug, Clone, PartialEq)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Operand {
     pub kind: OperandKind,
+
+    #[serde(skip)]
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum OperandKind {
     /// Represents a literal boolean value.
     Boolean { value: bool },
@@ -1154,13 +1171,15 @@ impl std::fmt::Display for Operand {
 
 /// Represents a terminator of a block, which defines how control flow is
 /// transferred.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Terminator {
     pub kind: TerminatorKind,
+
+    #[serde(skip)]
     pub location: Location,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum TerminatorKind {
     /// Returns the given value, if any, from the current function.
     ///
@@ -1267,7 +1286,7 @@ impl std::fmt::Display for Terminator {
 
 /// Represents a call site for a branch instruction, branching to a block
 /// with a set of arguments.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BlockBranchSite {
     pub block: BasicBlockId,
     pub arguments: Vec<RegisterId>,
@@ -1314,7 +1333,7 @@ pub type TypeId = lume_types::TypeId;
 pub type TypeRef = lume_types::TypeRef;
 
 /// Defines a type within the MIR.
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Type {
     pub id: TypeRef,
     pub kind: TypeKind,
@@ -1549,7 +1568,7 @@ impl Default for Type {
     }
 }
 
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 pub enum TypeKind {
     /// Represents a struct type with zero-or-more fields.
     Struct { name: String, fields: Vec<Type> },

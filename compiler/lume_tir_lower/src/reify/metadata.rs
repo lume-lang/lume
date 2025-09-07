@@ -12,7 +12,7 @@ const PTR_ALIGNMENT: usize = std::mem::align_of::<usize>();
 
 impl ReificationPass<'_> {
     pub(crate) fn build_type_metadata_of(&mut self, type_ref: &lume_types::TypeRef) -> Result<TypeMetadataId> {
-        let full_name = self.tcx.new_named_type(type_ref, true)?.to_string();
+        let full_name = format!("{:+}", self.tcx.tdb().ty_expect(type_ref.instance_of)?.name);
         let id = TypeMetadataId(hash_id(&full_name));
 
         if self.static_metadata.metadata.contains_key(&id) {
