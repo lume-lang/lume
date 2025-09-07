@@ -200,6 +200,7 @@ impl TokenKind {
             TokenKind::Add
                 | TokenKind::AddAssign
                 | TokenKind::And
+                | TokenKind::Assign
                 | TokenKind::BinaryAnd
                 | TokenKind::BinaryOr
                 | TokenKind::BinaryXor
