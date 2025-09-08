@@ -4,15 +4,15 @@ use cranelift_module::{DataDescription, DataId, FuncId, FuncOrDataId, Module};
 use indexmap::{IndexMap, IndexSet};
 use lume_type_metadata::*;
 
-use crate::cranelift::CraneliftBackend;
+use crate::CraneliftBackend;
 
 const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const u8>();
 const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const u8>();
 
-impl CraneliftBackend<'_> {
+impl CraneliftBackend {
     #[tracing::instrument(level = "DEBUG", skip(self))]
     pub(crate) fn declare_type_metadata(&mut self) {
-        let metadata_store = &self.context.mir.metadata;
+        let metadata_store = &self.context.metadata;
         let mut found_types = IndexMap::new();
 
         for metadata_entry in metadata_store.metadata.values() {
@@ -55,7 +55,7 @@ impl CraneliftBackend<'_> {
     }
 }
 
-impl CraneliftBackend<'_> {
+impl CraneliftBackend {
     /// Recursively finds all the types on the given metadata type. Children types
     /// can be defined within a parameter, field, type argument, etc.
     ///
@@ -100,7 +100,7 @@ impl CraneliftBackend<'_> {
     /// Finds an existing [`TypeMetadata`] instance from the given ID.
     #[inline]
     fn find_metadata(&self, id: TypeMetadataId) -> &TypeMetadata {
-        self.context.mir.metadata.metadata.get(&id).unwrap()
+        self.context.metadata.metadata.get(&id).unwrap()
     }
 
     #[inline]
@@ -271,7 +271,7 @@ impl CraneliftBackend<'_> {
     }
 }
 
-impl CraneliftBackend<'_> {
+impl CraneliftBackend {
     #[tracing::instrument(level = "TRACE", skip(self, desc))]
     fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
         self.module_mut().define_data(data_id, desc).unwrap();
@@ -489,8 +489,8 @@ impl<T: Encode> Encode for Vec<T> {
     }
 }
 
-struct MemoryBlockBuilder<'back, 'ctx> {
-    backend: &'back CraneliftBackend<'ctx>,
+struct MemoryBlockBuilder<'back> {
+    backend: &'back CraneliftBackend,
 
     data: Vec<u8>,
     data_relocs: Vec<(usize, DataId)>,
@@ -498,8 +498,8 @@ struct MemoryBlockBuilder<'back, 'ctx> {
     offset: usize,
 }
 
-impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
-    pub fn new(backend: &'back CraneliftBackend<'ctx>) -> Self {
+impl<'back> MemoryBlockBuilder<'back> {
+    pub fn new(backend: &'back CraneliftBackend) -> Self {
         Self {
             backend,
             data: Vec::new(),
@@ -578,11 +578,7 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
     }
 
     /// Appends a slice of items, where each item is built from the given closure.
-    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder<'back, 'ctx>, &T)>(
-        &mut self,
-        slice: &[T],
-        f: F,
-    ) -> &mut Self {
+    pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(&mut self, slice: &[T], f: F) -> &mut Self {
         self.append(slice.len());
 
         for item in slice {
@@ -593,7 +589,7 @@ impl<'back, 'ctx> MemoryBlockBuilder<'back, 'ctx> {
     }
 
     /// Appends a slice of items, where each item is built from the given closure.
-    pub fn append_slice_ptr_of<T, F: Fn(&mut MemoryBlockBuilder<'back, 'ctx>, &T)>(
+    pub fn append_slice_ptr_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(
         &mut self,
         decl_name: String,
         slice: &[T],

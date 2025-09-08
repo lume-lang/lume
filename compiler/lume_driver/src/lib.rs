@@ -45,16 +45,15 @@ impl Driver {
         Driver { package, dcx }
     }
 
-    /// Locates the [`Package`] from the given path and builds it into an executable or library.
+    /// Locates the [`Package`] from the given path and builds it into an executable.
     ///
     /// # Errors
     ///
     /// Returns `Err` if:
     /// - the given path has no `Arcfile` within it,
     /// - an error occured while compiling the package,
-    /// - an error occured while linking the package
+    /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[cfg(feature = "codegen")]
     #[allow(clippy::needless_pass_by_value)]
     pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
         let driver = Self::from_root(root, dcx.clone())?;
@@ -81,15 +80,14 @@ impl Driver {
         Ok(())
     }
 
-    /// Builds the given compiler state into an executable or library.
+    /// Builds the given compiler state into an executable.
     ///
     /// # Errors
     ///
     /// Returns `Err` if:
     /// - an error occured while compiling the package,
-    /// - an error occured while linking the package
+    /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[cfg(feature = "codegen")]
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
     pub fn build(mut self, options: Options) -> Result<CompiledExecutable> {
         let session = Session {
@@ -105,18 +103,14 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut codegen_mods = lume_codegen::CodegenResult::default();
-        codegen_mods.modules.reserve_exact(dependencies.len());
+        let mut merged_map = lume_mir::ModuleMap::default();
 
         for dependency in dependencies {
-            let module = Compiler::build_package(dependency, gcx.clone())?;
-            codegen_mods.modules.push(module);
+            Compiler::build_package(dependency, gcx.clone())?.merge_into(&mut merged_map);
         }
 
-        let objects = lume_linker::write_object_files(&gcx, codegen_mods)?;
         let output_file_path = gcx.binary_output_path(&self.package.name);
-
-        lume_linker::link_objects(&objects, &output_file_path, &gcx.session.options)?;
+        lume_fuse::fuse_binary_file(&gcx, merged_map, &output_file_path)?;
 
         Ok(CompiledExecutable {
             binary: output_file_path,
@@ -169,17 +163,15 @@ pub struct Compiler<'a> {
 }
 
 impl<'a> Compiler<'a> {
-    /// Builds the [`Package`] with the given ID from the [`Project`] into an executable or library.
+    /// Builds the [`Package`] with the given ID from the [`Project`] into an MIR map.
     ///
     /// # Errors
     ///
     /// Returns `Err` if:
     /// - an error occured while compiling the project,
-    /// - an error occured while linking the project
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[cfg(feature = "codegen")]
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<lume_codegen::CompiledModule> {
+    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<lume_mir::ModuleMap> {
         let mut compiler = Self {
             package,
             gcx,
@@ -250,10 +242,9 @@ impl<'a> Compiler<'a> {
         Ok((tccx, typed_ir))
     }
 
-    /// Generates LLVM IR for all the modules within the given state object.
-    #[cfg(feature = "codegen")]
+    /// Generates MIR for all the modules within the given state object.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_codegen::CompiledModule> {
+    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
         let mir =
             tracing::info_span!("mir lowering").in_scope(|| lume_mir_lower::ModuleTransformer::transform(tcx, tir));
 
@@ -263,8 +254,7 @@ impl<'a> Compiler<'a> {
             lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
-        tracing::info_span!("codegen")
-            .in_scope(|| lume_codegen::generate(self.package, mir, tcx, &self.gcx.session.options))
+        Ok(mir)
     }
 }
 

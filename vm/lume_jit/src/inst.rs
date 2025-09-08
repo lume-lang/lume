@@ -47,8 +47,6 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
-        self.set_srcloc(inst.location);
-
         match &inst.kind {
             lume_mir::InstructionKind::Let { register, decl, ty } => {
                 let var = self.declare_var(*register, ty.to_owned());
@@ -110,8 +108,6 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
-        self.set_srcloc(term.location);
-
         match &term.kind {
             lume_mir::TerminatorKind::Return(operand) => {
                 if let Some(value) = operand {

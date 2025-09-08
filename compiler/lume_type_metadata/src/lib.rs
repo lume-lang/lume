@@ -8,6 +8,13 @@ pub struct StaticMetadata {
     pub metadata: IndexMap<TypeMetadataId, TypeMetadata>,
 }
 
+impl StaticMetadata {
+    /// Merges the current [`StaticMetadata`] into the other given map.
+    pub fn merge_into(mut self, dest: &mut StaticMetadata) {
+        dest.metadata.append(&mut self.metadata);
+    }
+}
+
 #[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeMetadataId(pub usize);
 

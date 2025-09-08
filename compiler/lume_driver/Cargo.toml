@@ -9,12 +9,12 @@ doctest = false
 
 [dependencies]
 arc = { path = "../arc" }
-lume_codegen = { path = "../lume_codegen", optional = true }
 lume_errors = { path = "../lume_errors" }
+lume_fuse = { path = "../lume_fuse" }
 lume_hir = { path = "../lume_hir" }
 lume_hir_lower = { path = "../lume_hir_lower" }
 lume_infer = { path = "../lume_infer" }
-lume_linker = { path = "../lume_linker" }
+lume_jit = { path = "../../vm/lume_jit" }
 lume_mir = { path = "../lume_mir" }
 lume_mir_lower = { path = "../lume_mir_lower" }
 lume_session = { path = "../lume_session" }
@@ -27,10 +27,6 @@ lume_types = { path = "../lume_types" }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
-
-[features]
-codegen = ["dep:lume_codegen", "lume_codegen/codegen_cranelift"]
-codegen_llvm = ["lume_codegen/codegen_llvm"]
 
 [lints]
 workspace = true
