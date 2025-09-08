@@ -1,11 +1,9 @@
 use cranelift::prelude::*;
 
-use crate::cranelift::LowerFunction;
+use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     pub(crate) fn cg_declaration(&mut self, decl: &lume_mir::Declaration) -> Value {
-        self.set_srcloc(decl.location);
-
         match &decl.kind {
             lume_mir::DeclarationKind::Operand(op) => self.cg_operand(op),
             lume_mir::DeclarationKind::Cast { operand, bits } => {
@@ -103,8 +101,6 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name), ret(Display))]
     pub(crate) fn cg_operand(&mut self, op: &lume_mir::Operand) -> Value {
-        self.set_srcloc(op.location);
-
         match &op.kind {
             lume_mir::OperandKind::Boolean { value } => {
                 self.builder.ins().iconst(Self::cl_bool_type(), i64::from(*value))

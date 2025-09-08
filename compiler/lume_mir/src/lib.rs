@@ -40,6 +40,12 @@ impl ModuleMap {
     pub fn function_mut(&mut self, id: DefId) -> &mut Function {
         self.functions.get_mut(&id).unwrap()
     }
+
+    /// Merges the current [`ModuleMap`] into the other given map.
+    pub fn merge_into(mut self, dest: &mut ModuleMap) {
+        self.metadata.merge_into(&mut dest.metadata);
+        dest.functions.append(&mut self.functions);
+    }
 }
 
 impl std::fmt::Display for ModuleMap {

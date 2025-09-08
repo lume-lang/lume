@@ -1,6 +1,7 @@
 use std::{io::Write, os::raw::c_char};
 
-use crate::{LumeString, array::Array};
+use crate::array::Array;
+use crate::string::{LumeString, cstr_from_string};
 
 #[unsafe(export_name = "std::io::print")]
 pub extern "C" fn print(fmt: *const c_char, args: *const Array<*const c_char>) {
@@ -78,51 +79,51 @@ fn internal_format_str(fmt: String, args: &[String]) -> String {
 }
 
 #[unsafe(export_name = "std::Int8::to_string")]
-pub extern "C" fn intr_int8_tostring(val: i8) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn int8_tostring(val: i8) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int16::to_string")]
-pub extern "C" fn intr_int16_tostring(val: i16) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn int16_tostring(val: i16) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int32::to_string")]
-pub extern "C" fn intr_int32_tostring(val: i32) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn int32_tostring(val: i32) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Int64::to_string")]
-pub extern "C" fn intr_int64_tostring(val: i64) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn int64_tostring(val: i64) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt8::to_string")]
-pub extern "C" fn intr_uint8_tostring(val: u8) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn uint8_tostring(val: u8) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt16::to_string")]
-pub extern "C" fn intr_uint16_tostring(val: u16) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn uint16_tostring(val: u16) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt32::to_string")]
-pub extern "C" fn intr_uint32_tostring(val: u32) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn uint32_tostring(val: u32) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::UInt64::to_string")]
-pub extern "C" fn intr_uint64_tostring(val: u64) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn uint64_tostring(val: u64) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Float::to_string")]
-pub extern "C" fn intr_float_tostring(val: f32) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn float_tostring(val: f32) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }
 
 #[unsafe(export_name = "std::Double::to_string")]
-pub extern "C" fn intr_double_tostring(val: f64) -> LumeString {
-    crate::cstr_from_string(format!("{val}"))
+pub extern "C" fn double_tostring(val: f64) -> LumeString {
+    cstr_from_string(format!("{val}"))
 }

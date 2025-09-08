@@ -1,4 +1,3 @@
-pub(crate) mod dwarf;
 pub(crate) mod inst;
 pub(crate) mod metadata;
 pub(crate) mod ty;
@@ -7,20 +6,18 @@ pub(crate) mod value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
-use cranelift::codegen::ir::{BlockArg, GlobalValue, SourceLoc, StackSlot};
+use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
 use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
+use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataDescription, DataId, Linkage, Module};
-use cranelift_object::{ObjectBuilder, ObjectModule};
 
-use error_snippet::SimpleDiagnostic;
-use indexmap::{IndexMap, IndexSet};
-use lume_errors::Result;
-use lume_mir::{BlockBranchSite, RegisterId, SlotId};
-use lume_span::{DefId, Location};
+use indexmap::IndexMap;
+use lume_errors::{Result, SimpleDiagnostic};
+use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
+use lume_span::DefId;
 
-use crate::{Backend, CompiledModule, Context};
-use dwarf::RootDebugContext;
+pub type EntrypointAddress = extern "C" fn() -> i32;
 
 #[derive(Debug, Clone)]
 struct DeclaredFunction {
@@ -33,97 +30,35 @@ struct IntrinsicFunctions {
     pub malloc: cranelift_module::FuncId,
 }
 
-pub(crate) struct CraneliftBackend<'ctx> {
-    context: Context<'ctx>,
-    module: Option<Arc<RwLock<ObjectModule>>>,
+/// Generates object files using the given backend.
+///
+/// # Errors
+///
+/// Returns `Err` if the selected backend returned an error while generating object files.
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
+pub fn generate<'ctx>(mir: ModuleMap) -> Result<EntrypointAddress> {
+    CraneliftBackend::new(mir)?.generate()
+}
+
+pub(crate) struct CraneliftBackend {
+    context: ModuleMap,
+    module: Option<Arc<RwLock<JITModule>>>,
 
     declared_funcs: IndexMap<DefId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
-    location_indices: RwLock<IndexSet<Location>>,
 }
 
-impl<'ctx> Backend<'ctx> for CraneliftBackend<'ctx> {
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn initialize(&mut self) -> lume_errors::Result<()> {
-        Ok(())
-    }
+impl CraneliftBackend {
+    pub fn new(context: ModuleMap) -> Result<Self> {
+        let mut builder = JITBuilder::new(cranelift_module::default_libcall_names()).map_error()?;
 
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn generate(&mut self) -> lume_errors::Result<CompiledModule> {
-        let functions = std::mem::take(&mut self.context.mir.functions);
-
-        for func in functions.values() {
-            let (func_id, sig) = self.declare_function(func)?;
-
-            self.declared_funcs
-                .insert(func.id, DeclaredFunction { id: func_id, sig });
+        for (name, ptr) in lume_runtime::INTRINSIC_FUNCTIONS {
+            builder.symbol(*name, *ptr);
         }
 
-        self.context.mir.functions = functions;
-        self.declare_type_metadata();
-
-        let mut ctx = self.module_mut().make_context();
-        let mut builder_ctx = FunctionBuilderContext::new();
-
-        let mut debug_ctx = if self.context.options.debug_info == lume_session::DebugInfo::Full {
-            Some(RootDebugContext::new(&self.context, self.module().isa()))
-        } else {
-            None
-        };
-
-        for func in self.context.mir.functions.values() {
-            if func.signature.external {
-                continue;
-            }
-
-            if let Some(debug_ctx) = debug_ctx.as_mut() {
-                debug_ctx.declare_function(func);
-            }
-
-            self.define_function(func, &mut ctx, &mut builder_ctx, debug_ctx.as_mut())?;
-            self.module().clear_context(&mut ctx);
-        }
-
-        let module = Arc::into_inner(self.module.take().unwrap())
-            .unwrap()
-            .into_inner()
-            .unwrap();
-
-        let mut object_product = module.finish();
-
-        if let Some(debug_ctx) = debug_ctx.as_mut() {
-            debug_ctx.emit_to(&mut object_product)?;
-        }
-
-        let object_binary = object_product.emit().unwrap();
-
-        Ok(CompiledModule {
-            name: self.context.package.name.clone(),
-            bytecode: object_binary,
-        })
-    }
-}
-
-impl<'ctx> CraneliftBackend<'ctx> {
-    pub fn new(context: Context<'ctx>) -> Result<Self> {
-        let mut settings = cranelift::codegen::settings::builder();
-        settings.enable("is_pic").unwrap();
-
-        let isa = cranelift_native::builder()
-            .unwrap()
-            .finish(cranelift::codegen::settings::Flags::new(settings))
-            .unwrap();
-
-        let builder = ObjectBuilder::new(
-            isa,
-            context.package.name.clone(),
-            cranelift_module::default_libcall_names(),
-        )
-        .unwrap();
-
-        let mut module = ObjectModule::new(builder);
+        let mut module = JITModule::new(builder);
         let ptr_type = module.target_config().pointer_type();
 
         let intrinsics = IntrinsicFunctions {
@@ -136,23 +71,68 @@ impl<'ctx> CraneliftBackend<'ctx> {
             declared_funcs: IndexMap::new(),
             intrinsics,
             static_data: RwLock::new(HashMap::new()),
-            location_indices: RwLock::new(IndexSet::new()),
         })
     }
 
+    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    fn generate(&mut self) -> lume_errors::Result<EntrypointAddress> {
+        let functions = std::mem::take(&mut self.context.functions);
+
+        for func in functions.values() {
+            let (func_id, sig) = self.declare_function(func)?;
+
+            self.declared_funcs
+                .insert(func.id, DeclaredFunction { id: func_id, sig });
+        }
+
+        self.context.functions = functions;
+        self.declare_type_metadata();
+
+        let mut ctx = self.module_mut().make_context();
+        let mut builder_ctx = FunctionBuilderContext::new();
+
+        let mut main_func = None;
+
+        for func in self.context.functions.values() {
+            if func.signature.external {
+                continue;
+            }
+
+            if func.name == "main" {
+                let declared_func = self.declared_funcs.get(&func.id).unwrap();
+                main_func = Some(declared_func.id);
+            }
+
+            self.define_function(func, &mut ctx, &mut builder_ctx)?;
+            self.module().clear_context(&mut ctx);
+        }
+
+        let mut module = Arc::into_inner(self.module.take().unwrap())
+            .unwrap()
+            .into_inner()
+            .unwrap();
+
+        module.finalize_definitions().map_error()?;
+
+        let main_func_id = main_func.expect("could not find main function");
+        let main_func_ptr = module.get_finalized_function(main_func_id);
+
+        Ok(unsafe { std::mem::transmute(main_func_ptr) })
+    }
+
     #[track_caller]
-    pub(crate) fn module(&self) -> RwLockReadGuard<'_, ObjectModule> {
+    pub(crate) fn module(&self) -> RwLockReadGuard<'_, JITModule> {
         self.module.as_ref().unwrap().try_read().unwrap()
     }
 
     #[track_caller]
-    pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, ObjectModule> {
+    pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, JITModule> {
         self.module.as_ref().unwrap().try_write().unwrap()
     }
 
     #[tracing::instrument(level = "TRACE", skip(module), err)]
-    fn declare_external_function(
-        module: &mut ObjectModule,
+    fn declare_external_function<TModule: Module>(
+        module: &mut TModule,
         name: &'static str,
         params: &[types::Type],
         ret: Option<types::Type>,
@@ -217,7 +197,6 @@ impl<'ctx> CraneliftBackend<'ctx> {
         func: &lume_mir::Function,
         ctx: &mut cranelift::codegen::Context,
         builder_ctx: &mut FunctionBuilderContext,
-        debug_ctx: Option<&mut RootDebugContext>,
     ) -> Result<()> {
         let declared_func = self.declared_funcs.get(&func.id).unwrap();
         ctx.func.signature = declared_func.sig.clone();
@@ -244,10 +223,6 @@ impl<'ctx> CraneliftBackend<'ctx> {
                 .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
 
             return Err(diagnostic.into());
-        }
-
-        if let Some(debug_ctx) = debug_ctx {
-            debug_ctx.define_function(func.id, declared_func.id, self, &ctx);
         }
 
         Ok(())
@@ -290,32 +265,20 @@ impl<'ctx> CraneliftBackend<'ctx> {
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
         self.declare_static_data(value, value.as_bytes())
     }
-
-    pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
-        let (idx, _) = self.location_indices.try_write().unwrap().insert_full(loc);
-
-        SourceLoc::new(idx as u32)
-    }
-
-    pub(crate) fn lookup_source_loc(&self, loc: SourceLoc) -> Location {
-        let map = self.location_indices.try_read().unwrap();
-
-        *map.get_index(loc.bits() as usize).unwrap()
-    }
 }
 
 trait MapModuleResult<T> {
     fn map_error(self) -> T;
 }
 
-impl<T> MapModuleResult<error_snippet::Result<T>> for cranelift_module::ModuleResult<T> {
-    fn map_error(self) -> error_snippet::Result<T> {
-        self.map_err(error_snippet::IntoDiagnostic::into_diagnostic)
+impl<T> MapModuleResult<Result<T>> for cranelift_module::ModuleResult<T> {
+    fn map_error(self) -> Result<T> {
+        self.map_err(lume_errors::IntoDiagnostic::into_diagnostic)
     }
 }
 
 struct LowerFunction<'ctx> {
-    backend: &'ctx CraneliftBackend<'ctx>,
+    backend: &'ctx CraneliftBackend,
     func: &'ctx lume_mir::Function,
 
     builder: FunctionBuilder<'ctx>,
@@ -328,7 +291,7 @@ struct LowerFunction<'ctx> {
 
 impl<'ctx> LowerFunction<'ctx> {
     pub fn new(
-        backend: &'ctx CraneliftBackend<'ctx>,
+        backend: &'ctx CraneliftBackend,
         func: &'ctx lume_mir::Function,
         builder: FunctionBuilder<'ctx>,
     ) -> Self {
@@ -709,12 +672,6 @@ impl<'ctx> LowerFunction<'ctx> {
             cl_else_block,
             else_args.iter().as_ref(),
         );
-    }
-
-    pub(crate) fn set_srcloc(&mut self, loc: Location) {
-        let src_loc = self.backend.calculate_source_loc(loc);
-
-        self.builder.set_srcloc(src_loc);
     }
 
     pub(crate) fn switch(&mut self, operand: Value, arms: &[(i64, BlockBranchSite)], fallback: &BlockBranchSite) {

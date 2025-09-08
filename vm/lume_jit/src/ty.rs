@@ -1,9 +1,9 @@
 use cranelift::prelude::*;
 use cranelift_module::Module;
 
-use crate::cranelift::{CraneliftBackend, LowerFunction};
+use crate::{CraneliftBackend, LowerFunction};
 
-impl CraneliftBackend<'_> {
+impl CraneliftBackend {
     #[tracing::instrument(level = "TRACE", skip(self, ty), fields(ty = %ty), ret(Display))]
     pub(crate) fn cl_type_of(&self, ty: &lume_mir::Type) -> types::Type {
         match &ty.kind {

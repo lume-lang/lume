@@ -1,6 +1,5 @@
 use std::{path::PathBuf, sync::Arc};
 
-use lume_codegen::CodegenResult;
 use lume_errors::{DiagCtx, Result};
 use lume_hir::map::Map;
 use lume_infer::TyInferCtx;
@@ -101,16 +100,8 @@ impl ManifoldDriver {
         let (tcx, tir) = self.build_tir()?;
         let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
 
-        let compiled_module = lume_codegen::generate(&self.package, mir, &tcx, &self.gcx.session.options)?;
-        let objects = lume_linker::write_object_files(
-            &self.gcx,
-            CodegenResult {
-                modules: vec![compiled_module],
-            },
-        )?;
-
         let output_file_path = self.gcx.binary_output_path(&self.package.name);
-        lume_linker::link_objects(&objects, &output_file_path, &self.gcx.session.options)?;
+        lume_fuse::fuse_binary_file(&self.gcx, mir, &output_file_path)?;
 
         Ok(output_file_path)
     }
