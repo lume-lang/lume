@@ -99,7 +99,8 @@ struct DefineBlockParameters {
 impl DefineBlockParameters {
     pub fn execute(&mut self, func: &mut Function) {
         for block in &func.blocks {
-            self.find_required_input_registers(func, block);
+            let mut visited = IndexSet::new();
+            self.find_required_input_registers(func, block, &mut visited);
         }
 
         for block in &mut func.blocks {
@@ -110,28 +111,31 @@ impl DefineBlockParameters {
                 continue;
             }
 
-            let Some(params) = self.params.get(&block.id) else {
+            let Some(params) = self.params.swap_remove(&block.id) else {
                 continue;
             };
 
-            // TODO: is there maybe a better way to convert an `IndexSet` to a `Vec`?
-            block.parameters = params.clone().into_iter().collect();
+            block.parameters = params.into_iter().collect();
         }
     }
 
-    fn find_required_input_registers(&mut self, func: &Function, block: &BasicBlock) {
-        if self.params.contains_key(&block.id) {
-            return;
-        }
-
-        // Prevent a stack overflow from self-referencing blocks, such as loops.
-        self.params.insert(block.id, IndexSet::new());
-
+    fn find_required_input_registers(
+        &mut self,
+        func: &Function,
+        block: &BasicBlock,
+        visited: &mut IndexSet<BasicBlockId>,
+    ) {
         let mut regs = IndexSet::new();
 
         for successor in block.successors() {
+            if visited.contains(&successor) {
+                continue;
+            }
+
+            visited.insert(successor);
+
             let successor_block = func.block(successor);
-            self.find_required_input_registers(func, successor_block);
+            self.find_required_input_registers(func, successor_block, visited);
 
             if let Some(successor_params) = self.params.get(&successor) {
                 for successor_param in successor_params {
