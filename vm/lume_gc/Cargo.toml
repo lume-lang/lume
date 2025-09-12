@@ -1,11 +1,18 @@
 [package]
-name = "lume_runtime"
+name = "lume_gc"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-lume_gc = { path = "../lume_gc" }
+indexmap = { version = "^2.9" }
+
+[lib]
+doctest = false
+
+[features]
+default = ["paranoid"]
+paranoid = []
 
 [lints]
 workspace = true

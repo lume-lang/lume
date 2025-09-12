@@ -704,9 +704,9 @@ dependencies = [
 
 [[package]]
 name = "gimli"
-version = "0.32.1"
+version = "0.32.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd54e8795d97c9f5561c63529d98fcc0c2eed9e982deecc396797f2c04cff298"
+checksum = "cc6298e594375a7fead9efd5568f0a46e6a154fb6a9bdcbe3c06946ffd81a5f6"
 dependencies = [
  "fallible-iterator",
  "indexmap",
@@ -976,9 +976,9 @@ checksum = "db13adb97ab515a3691f56e4dbab09283d0b86cb45abd991d8634a9d6f501760"
 
 [[package]]
 name = "libc"
-version = "0.2.172"
+version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d750af042f7ef4f724306de029d18836c26c1765a54a6a3f094cbd23a7267ffa"
+checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -1180,6 +1180,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_gc"
+version = "0.1.1"
+dependencies = [
+ "indexmap",
+]
+
+[[package]]
 name = "lume_hir"
 version = "0.1.1"
 dependencies = [
@@ -1240,11 +1247,13 @@ name = "lume_jit"
 version = "0.1.1"
 dependencies = [
  "cranelift",
+ "cranelift-codegen",
  "cranelift-jit",
  "cranelift-module",
  "cranelift-native",
  "indexmap",
  "lume_errors",
+ "lume_gc",
  "lume_mir",
  "lume_runtime",
  "lume_span",
@@ -1349,6 +1358,9 @@ dependencies = [
 [[package]]
 name = "lume_runtime"
 version = "0.1.1"
+dependencies = [
+ "lume_gc",
+]
 
 [[package]]
 name = "lume_session"

@@ -9,6 +9,7 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../../compiler/lume_errors" }
+lume_gc = { path = "../lume_gc" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_runtime = { path = "../lume_runtime" }
 lume_span = { path = "../../compiler/lume_span" }
@@ -20,6 +21,7 @@ serde = { version = "=1.0.219", features = ["derive"] }
 tracing = { workspace = true }
 
 cranelift = "=0.123.2"
+cranelift-codegen = { version = "=0.123.2", features = ["unwind"] }
 cranelift-jit = "=0.123.2"
 cranelift-module = "=0.123.2"
 cranelift-native = "=0.123.2"
