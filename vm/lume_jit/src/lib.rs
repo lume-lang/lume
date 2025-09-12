@@ -48,11 +48,18 @@ pub(crate) struct CraneliftBackend {
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
+    flags: settings::Flags,
 }
 
 impl CraneliftBackend {
     pub fn new(context: ModuleMap) -> Result<Self> {
-        let mut builder = JITBuilder::new(cranelift_module::default_libcall_names()).map_error()?;
+        let mut settings = cranelift::codegen::settings::builder();
+        settings.set("preserve_frame_pointers", "true").unwrap();
+        settings.set("unwind_info", "true").unwrap();
+
+        let flags = settings::Flags::new(settings);
+        let isa = cranelift_native::builder().unwrap().finish(flags.clone()).unwrap();
+        let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
 
         for (name, ptr) in lume_runtime::INTRINSIC_FUNCTIONS {
             builder.symbol(*name, *ptr);
@@ -70,6 +77,7 @@ impl CraneliftBackend {
             module: Some(Arc::new(RwLock::new(module))),
             declared_funcs: IndexMap::new(),
             intrinsics,
+            flags,
             static_data: RwLock::new(HashMap::new()),
         })
     }
@@ -206,12 +214,23 @@ impl CraneliftBackend {
 
         tracing::debug!(name: "lowered_func", name = %func.name, function = %ctx.func);
 
-        let verify_flags = settings::Flags::new(settings::builder());
-        if let Err(err) = verify_function(&ctx.func, &verify_flags) {
-            let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
-                .add_cause(SimpleDiagnostic::new(err.to_string()));
+        {
+            // We have to pass the same flags to the verifier function as we used
+            // to create the function. Otherwise, the verifier might complain about
+            // missing ISA, disabled flags or similar.
+            let module = self.module();
 
-            return Err(diagnostic.into());
+            let foi = settings::FlagsOrIsa {
+                flags: &self.flags,
+                isa: Some(module.isa()),
+            };
+
+            if let Err(err) = verify_function(&ctx.func, foi) {
+                let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
+                    .add_cause(SimpleDiagnostic::new(err.to_string()));
+
+                return Err(diagnostic.into());
+            }
         }
 
         if let Err(err) = self.module_mut().define_function(declared_func.id, ctx) {
