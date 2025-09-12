@@ -368,6 +368,12 @@ impl ConvertAssignmentExpressions {
                 self.get_moved_register(target);
                 self.update_regs_op(value);
             }
+            InstructionKind::ObjectRegister { register } => {
+                self.get_moved_register(register);
+            }
+            InstructionKind::ObjectValue { value } => {
+                self.update_regs_op(value);
+            }
             InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
     }
@@ -617,6 +623,12 @@ impl RenameSsaVariables {
             }
             InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
                 *target = *mapping.get(&(*target, block)).unwrap();
+                Self::update_regs_op(value, block, mapping);
+            }
+            InstructionKind::ObjectRegister { register } => {
+                *register = *mapping.get(&(*register, block)).unwrap();
+            }
+            InstructionKind::ObjectValue { value } => {
                 Self::update_regs_op(value, block, mapping);
             }
             InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}

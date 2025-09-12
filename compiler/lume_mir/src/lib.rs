@@ -685,6 +685,22 @@ impl BasicBlock {
             location,
         });
     }
+
+    /// Marks the given register as being a GC reference
+    pub fn mark_gc_register(&mut self, register: RegisterId, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::ObjectRegister { register },
+            location: loc,
+        });
+    }
+
+    /// Marks the given value as being a GC reference
+    pub fn mark_gc_value(&mut self, value: Operand, loc: Location) {
+        self.instructions.push(Instruction {
+            kind: InstructionKind::ObjectValue { value },
+            location: loc,
+        });
+    }
 }
 
 impl std::fmt::Display for BasicBlock {
@@ -888,6 +904,12 @@ pub enum InstructionKind {
         offset: usize,
         value: Operand,
     },
+
+    /// Marks the given register as a GC reference
+    ObjectRegister { register: RegisterId },
+
+    /// Marks the given value as a GC reference
+    ObjectValue { value: Operand },
 }
 
 impl Instruction {
@@ -898,7 +920,9 @@ impl Instruction {
             | InstructionKind::CreateSlot { .. }
             | InstructionKind::Store { .. }
             | InstructionKind::StoreSlot { .. }
-            | InstructionKind::StoreField { .. } => None,
+            | InstructionKind::StoreField { .. }
+            | InstructionKind::ObjectRegister { .. }
+            | InstructionKind::ObjectValue { .. } => None,
         }
     }
 
@@ -913,9 +937,11 @@ impl Instruction {
 
                 refs
             }
+            InstructionKind::ObjectRegister { register } => vec![*register],
             InstructionKind::CreateSlot { .. }
             | InstructionKind::Allocate { .. }
-            | InstructionKind::StoreSlot { .. } => Vec::new(),
+            | InstructionKind::StoreSlot { .. }
+            | InstructionKind::ObjectValue { .. } => Vec::new(),
         }
     }
 }
@@ -930,6 +956,8 @@ impl std::fmt::Display for Instruction {
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
+            InstructionKind::ObjectRegister { register } => write!(f, "mark object({register})"),
+            InstructionKind::ObjectValue { value } => write!(f, "mark object({value})"),
         }
     }
 }
