@@ -14,6 +14,7 @@ use cranelift_module::{DataDescription, DataId, Linkage, Module};
 
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
+use lume_gc::{CompiledFunctionMetadata, FunctionPtr, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_span::DefId;
 
@@ -26,8 +27,16 @@ struct DeclaredFunction {
 }
 
 #[derive(Debug, Clone)]
+struct FunctionMetadata {
+    pub total_size: usize,
+    pub stack_locations: FunctionStackMap,
+}
+
+#[derive(Debug, Clone)]
+#[expect(dead_code)]
 struct IntrinsicFunctions {
-    pub malloc: cranelift_module::FuncId,
+    pub gc_step: cranelift_module::FuncId,
+    pub gc_alloc: cranelift_module::FuncId,
 }
 
 /// Generates object files using the given backend.
@@ -65,11 +74,15 @@ impl CraneliftBackend {
             builder.symbol(*name, *ptr);
         }
 
+        builder.symbol("gc_step", lume_gc::trigger_collection as *const u8);
+        builder.symbol("gc_alloc", lume_gc::allocate_object as *const u8);
+
         let mut module = JITModule::new(builder);
-        let ptr_type = module.target_config().pointer_type();
+        let ptr_ty = module.target_config().pointer_type();
 
         let intrinsics = IntrinsicFunctions {
-            malloc: Self::declare_external_function(&mut module, "malloc", &[types::I64], Some(ptr_type))?,
+            gc_step: Self::declare_external_function(&mut module, "gc_step", &[], None)?,
+            gc_alloc: Self::declare_external_function(&mut module, "gc_alloc", &[ptr_ty], Some(ptr_ty))?,
         };
 
         Ok(Self {
@@ -100,18 +113,39 @@ impl CraneliftBackend {
         let mut builder_ctx = FunctionBuilderContext::new();
 
         let mut main_func = None;
+        let mut function_metadata = HashMap::new();
 
         for func in self.context.functions.values() {
             if func.signature.external {
                 continue;
             }
 
+            let declared_func = self.declared_funcs.get(&func.id).unwrap();
+
             if func.name == "main" {
-                let declared_func = self.declared_funcs.get(&func.id).unwrap();
                 main_func = Some(declared_func.id);
             }
 
             self.define_function(func, &mut ctx, &mut builder_ctx)?;
+
+            let compiled_code = ctx.compiled_code().expect("expected context to be compiled");
+            let code_len = compiled_code.buffer.total_size() as usize;
+
+            let mut stack_locations = Vec::new();
+            for (offset, _, map) in compiled_code.buffer.user_stack_maps() {
+                let refs = map.entries().map(|(_, offset)| offset as usize).collect();
+
+                stack_locations.push((*offset as usize, refs));
+            }
+
+            function_metadata.insert(
+                func.id,
+                FunctionMetadata {
+                    total_size: code_len,
+                    stack_locations,
+                },
+            );
+
             self.module().clear_context(&mut ctx);
         }
 
@@ -121,6 +155,28 @@ impl CraneliftBackend {
             .unwrap();
 
         module.finalize_definitions().map_error()?;
+
+        let mut func_stack_maps = Vec::new();
+
+        for (def, func) in &self.declared_funcs {
+            let func_def = self.context.functions.get(def).unwrap();
+            if func_def.signature.external {
+                continue;
+            }
+
+            let ptr = FunctionPtr::new(module.get_finalized_function(func.id));
+            let Some(metadata) = function_metadata.remove(def) else {
+                continue;
+            };
+
+            func_stack_maps.push(CompiledFunctionMetadata {
+                ptr,
+                len: metadata.total_size,
+                stack_locations: metadata.stack_locations,
+            });
+        }
+
+        lume_gc::declare_stack_maps(func_stack_maps);
 
         let main_func_id = main_func.expect("could not find main function");
         let main_func_ptr = module.get_finalized_function(main_func_id);
@@ -136,6 +192,30 @@ impl CraneliftBackend {
     #[track_caller]
     pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, JITModule> {
         self.module.as_ref().unwrap().try_write().unwrap()
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(module), err)]
+    fn declare_local_function<TModule: Module>(
+        module: &mut TModule,
+        name: &'static str,
+        params: &[types::Type],
+        ret: Option<types::Type>,
+    ) -> Result<cranelift_module::FuncId> {
+        let mut sig = module.make_signature();
+
+        for param in params {
+            sig.params.push(AbiParam::new(*param));
+        }
+
+        if let Some(ret_ty) = ret {
+            sig.returns.push(AbiParam::new(ret_ty));
+        }
+
+        let func_id = module
+            .declare_function(name, cranelift_module::Linkage::Hidden, &sig)
+            .map_error()?;
+
+        Ok(func_id)
     }
 
     #[tracing::instrument(level = "TRACE", skip(module), err)]
@@ -602,7 +682,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
     #[allow(clippy::cast_lossless, clippy::cast_possible_wrap)]
     pub(crate) fn alloca(&mut self, size: usize) -> Value {
-        let malloc_id = self.backend.intrinsics.malloc;
+        let malloc_id = self.backend.intrinsics.gc_alloc;
         let malloc = self.get_func(malloc_id);
 
         let size = self.builder.ins().iconst(types::I64, size as i64);
