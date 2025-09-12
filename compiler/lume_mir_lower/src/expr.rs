@@ -153,6 +153,7 @@ impl FunctionTransformer<'_, '_> {
 
         let reg = self.func.add_register(struct_ptr);
         self.func.current_block_mut().allocate(reg, struct_type, expr.location);
+        self.func.current_block_mut().mark_gc_register(reg, expr.location);
 
         let mut offset = 0;
 
