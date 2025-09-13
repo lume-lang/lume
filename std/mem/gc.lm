@@ -1,0 +1,12 @@
+namespace std::mem
+
+pub struct GC { }
+
+impl GC {
+    /// Invokes the garbage collector and deallocates all unused objects,
+    /// making the memory available usable by new allocations.
+    ///
+    /// This method also allows the user to define when a GC collection should
+    /// trigger, as to prevent collection in the middle of a hot path.
+    pub fn external invoke()
+}

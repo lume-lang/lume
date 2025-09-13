@@ -1,4 +1,5 @@
-use cranelift::{codegen::ir::immediates::Offset32, prelude::*};
+use cranelift::codegen::ir::immediates::Offset32;
+use cranelift::prelude::*;
 
 use super::LowerFunction;
 
@@ -120,6 +121,8 @@ impl LowerFunction<'_> {
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
         match &term.kind {
             lume_mir::TerminatorKind::Return(operand) => {
+                self.insert_gc_trigger();
+
                 if let Some(value) = operand {
                     let value = self.cg_operand(value);
 
