@@ -197,12 +197,6 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let func_sig = self.transformer.mir.function(func_id).signature.clone();
         let args = self.normalize_call_argumets(&func_sig.parameters, &args);
 
-        for arg in &args {
-            if self.type_of_value(arg).is_reference_type() {
-                self.func.current_block_mut().mark_gc_value(arg.clone(), location);
-            }
-        }
-
         #[cfg(debug_assertions)]
         {
             if func_sig.vararg {
