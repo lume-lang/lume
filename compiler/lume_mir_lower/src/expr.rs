@@ -40,6 +40,10 @@ impl FunctionTransformer<'_, '_> {
             };
         }
 
+        if self.type_of_value(&op).is_reference_type() {
+            self.func.current_block_mut().mark_gc_value(op.clone(), expr.location());
+        }
+
         op
     }
 
