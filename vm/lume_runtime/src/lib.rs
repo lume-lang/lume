@@ -7,7 +7,6 @@ pub mod string;
 pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::type_of", type_of as *const u8),
     ("std::mem::alloc", mem::lumert_alloc as *const u8),
-    ("std::mem::alloca", mem::lumert_alloca as *const u8),
     ("std::mem::realloc", mem::lumert_realloc as *const u8),
     ("std::mem::ptr_read", mem::lumert_ptr_read as *const u8),
     ("std::mem::ptr_write", mem::lumert_ptr_write as *const u8),

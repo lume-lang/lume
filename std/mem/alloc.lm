@@ -6,13 +6,6 @@ namespace std::mem
 /// it may not have it's content initialized and/or zeroed.
 pub fn external alloc<T>(size: UInt64) -> Pointer<T>
 
-/// Allocates the given amount of bytes using the global allocator, aligned
-/// to the defined alignment.
-///
-/// The returned memory block may be larger than the requested size and
-/// it may not have it's content initialized and/or zeroed.
-pub fn external alloca<T>(size: UInt64, align: UInt64) -> Pointer<T>
-
 /// Reallocates an existing pointer to a new size.
 pub fn external realloc<T>(ptr: Pointer<T>, size: UInt64) -> Pointer<T>
 
