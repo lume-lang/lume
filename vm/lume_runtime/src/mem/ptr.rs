@@ -9,7 +9,7 @@ unsafe extern "C" {
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_ptr_read(ptr: *mut u8, offset: usize, metadata: *const TypeMetadata) -> *mut u8 {
     let value_size = unsafe { metadata.read().size };
-    let dest = unsafe { crate::mem::lumert_alloc(value_size) };
+    let dest = unsafe { crate::mem::lumert_alloc(value_size, metadata) };
 
     unsafe { memcpy(dest, ptr.byte_add(offset), value_size) };
 
