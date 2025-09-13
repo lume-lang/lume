@@ -3,6 +3,7 @@ use crate::info::TypeMetadata;
 unsafe extern "C" {
     pub fn malloc(size: usize) -> *mut u8;
     pub fn realloc(ptr: *mut u8, new_size: usize) -> *mut u8;
+    pub fn free(ptr: *mut u8);
 }
 
 /// Allocates the given amount of bytes using the global allocator.
@@ -23,4 +24,11 @@ pub unsafe extern "C" fn lumert_alloc(size: usize, _: *const TypeMetadata) -> *m
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_realloc(ptr: *mut u8, new_size: usize, _: *const TypeMetadata) -> *mut u8 {
     unsafe { realloc(ptr, new_size) }
+}
+
+/// Deallocates the memory block pointed to by `ptr`, so that it can be used
+/// for future allocations.
+#[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
+pub unsafe extern "C" fn lumert_dealloc(ptr: *mut u8, _: *const TypeMetadata) {
+    unsafe { free(ptr) }
 }
