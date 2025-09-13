@@ -127,21 +127,9 @@ impl YoungGeneration {
     /// is to facilitate the GC moving the underlying allocation to a different address,
     /// whereafter it can write the new address to the pointer in the stack frame.
     pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
-        let stack_locations = frame
-            .stack_locations()
-            .expect("bug!: could not find stack references from frame");
-
-        let live_stack_objects = stack_locations
-            .map(|ptr| {
-                let gc_ref = unsafe { ptr.read() };
-
-                (ptr, gc_ref)
-            })
-            .collect::<Vec<_>>();
-
         self.allocations.iter().filter_map(move |(alloc, _)| {
-            live_stack_objects
-                .iter()
+            frame
+                .iter_stack_value_locations()
                 .find(|probe| probe.1 == alloc.cast_const())
                 .map(|obj| obj.0)
         })
@@ -175,7 +163,7 @@ unsafe impl Sync for GenerationalAllocator {}
 impl GenerationalAllocator {
     pub fn new() -> Self {
         Self {
-            young: YoungGeneration::new(128),
+            young: YoungGeneration::new(1 * 1024 * 1024),
             old: OldGeneration::new(64 * 1024 * 1024),
         }
     }
@@ -195,6 +183,8 @@ impl GenerationalAllocator {
             return ptr;
         }
 
+        println!("  [GA] Collection triggered, 1st generation exhausted");
+
         // Promote all living allocations to the 2nd generation, effectively clearing
         // the entire 1st generation for new allocations.
         self.promote_allocations(frame);
@@ -204,20 +194,46 @@ impl GenerationalAllocator {
             return ptr;
         }
 
+        // While it is completely expected to allocate successfully, the fallback
+        // of use the 2nd generation allocator exists, in case of allocator changes.
+        eprintln!("warning: expected allocation to G1 after promotion, but it failed");
+
         self.old.alloc(size)
+    }
+
+    /// Determines whether the current allocator needs to be collected or not.
+    pub(crate) fn is_collection_required(&self) -> bool {
+        let mem_in_use = self.young.allocator.current_size();
+        let mem_available = self.young.allocator.total_size();
+
+        if (mem_in_use as f32) / (mem_available as f32) >= 0.95 {
+            return true;
+        }
+
+        false
     }
 
     /// Promote all living allocations from the 1st generation to the 2nd
     /// generation, moving all allocations to that generation. All the objects
     /// who where not alive in the 1st generation are deallocated. After
     /// all the allocations have been handled, the 1st generation is cleared.
-    fn promote_allocations(&mut self, frame: &FrameStackMap) {
+    pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
         for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
             let live_obj = unsafe { stack_ptr.read() }.cast_mut();
             let obj_size = self.young.allocations.swap_remove(&live_obj).unwrap();
 
+            // Copy the 1st generation object to the 2nd generation.
             let new_live_ptr = self.old.alloc(obj_size);
             unsafe { memcpy(new_live_ptr, live_obj, obj_size) };
+
+            println!("[G1->G2] Promoted {live_obj:p} (now {new_live_ptr:p})");
+
+            // Replace the pointer on the stack with newly moved object pointer,
+            // so when the function reloads the object register from the stack,
+            // it'll be to the new object.
+            unsafe {
+                *stack_ptr.cast_mut() = new_live_ptr.cast_const();
+            }
         }
 
         self.young.clear();

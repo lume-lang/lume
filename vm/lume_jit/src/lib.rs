@@ -33,7 +33,6 @@ struct FunctionMetadata {
 }
 
 #[derive(Debug, Clone)]
-#[expect(dead_code)]
 struct IntrinsicFunctions {
     pub gc_step: cranelift_module::FuncId,
     pub gc_alloc: cranelift_module::FuncId,
@@ -435,6 +434,19 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.seal_block(cg_block);
     }
 
+    /// Inserts a conditional call for the garbage collection to trigger
+    /// at the current builder location.
+    ///
+    /// Whether the garbage collector is actually triggered depends on when
+    /// the last invocation occured and whether any memory actually needs to be
+    /// collected.
+    #[inline]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub(crate) fn insert_gc_trigger(&mut self) {
+        let cl_gc_step = self.get_func(self.backend.intrinsics.gc_step);
+        self.builder.ins().call(cl_gc_step, &[]);
+    }
+
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn declare_var(&mut self, register: RegisterId, ty: lume_mir::Type) -> Variable {
         let cg_ty = self.backend.cl_type_of(&ty);
@@ -716,6 +728,8 @@ impl<'ctx> LowerFunction<'ctx> {
         let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
         let call = self.builder.ins().call(cl_func_ref, &args);
 
+        self.insert_gc_trigger();
+
         self.builder.inst_results(call)
     }
 
@@ -731,6 +745,8 @@ impl<'ctx> LowerFunction<'ctx> {
         let callee = self.use_var(ptr);
         let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
         let call = self.builder.ins().call_indirect(cl_sig_ref, callee, &args);
+
+        self.insert_gc_trigger();
 
         self.builder.inst_results(call)
     }

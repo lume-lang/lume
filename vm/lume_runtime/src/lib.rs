@@ -11,6 +11,7 @@ pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::mem::dealloc", mem::lumert_dealloc as *const u8),
     ("std::mem::ptr_read", mem::lumert_ptr_read as *const u8),
     ("std::mem::ptr_write", mem::lumert_ptr_write as *const u8),
+    ("std::mem::GC::invoke", lume_gc::trigger_collection_force as *const u8),
     ("std::io::format", io::format as *const u8),
     ("std::io::print", io::print as *const u8),
     ("std::io::println", io::println as *const u8),

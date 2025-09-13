@@ -2,7 +2,7 @@ pub(crate) mod alloc;
 pub(crate) mod arch;
 
 use std::fmt::Display;
-use std::sync::{LazyLock, OnceLock};
+use std::sync::OnceLock;
 
 use alloc::GA;
 
@@ -98,24 +98,62 @@ pub(crate) struct FrameStackMap {
 }
 
 impl FrameStackMap {
+    /// Creates a list of frame stack maps in ascending order.
+    ///
+    /// This means the first element is the first frame stack map, followed
+    /// by it's parent map and so on. The iteration will stop when no parent
+    /// frame can be found.
+    #[inline]
+    pub(crate) fn create_frame_hierarchy(&self) -> Vec<FrameStackMap> {
+        let mut maps = Vec::new();
+        let mut fp = self.frame_pointer.addr();
+
+        while fp != 0 {
+            let pc = unsafe { arch::return_addr_of_frame(fp) };
+
+            if let Some(map) = find_current_stack_map_of_addr(pc as *const u8) {
+                maps.push(FrameStackMap {
+                    map,
+                    frame_pointer: fp as *const u8,
+                    program_counter: pc as *const u8,
+                });
+            }
+
+            fp = unsafe { arch::parent_frame_pointer(fp) };
+        }
+
+        maps
+    }
+
+    /// Gets the offset of the stack frame from the first
+    /// instruction in the associated function.
     #[inline]
     pub(crate) fn offset(&self) -> usize {
         self.program_counter.addr() - self.map.ptr.as_usize()
     }
 
+    /// Gets the stack pointer which is associated with the frame.
     #[inline]
     pub(crate) fn stack_pointer(&self) -> *const u8 {
         unsafe { self.frame_pointer.byte_add(arch::PARENT_SP_FROM_FP_OFFSET) }
     }
 
+    /// Gets all the stack location offsets of the current frame stack map.
+    ///
+    /// The returned slice will be a list of offsets relative to the stack pointer
+    /// of the frame, which will contain a pointer to a GC reference.
+    ///
+    /// For more information, see [`stack_locations`] which will get the absolute
+    /// addresses of the GC references.
     #[inline]
-    pub(crate) fn stack_offsets(&self) -> Option<&[usize]> {
+    pub(crate) fn stack_offsets(&self) -> &[usize] {
         let offset = self.offset();
 
         self.map
             .stack_locations
             .iter()
             .find_map(|loc| if loc.0 == offset { Some(loc.1.as_slice()) } else { None })
+            .unwrap_or_else(|| &[])
     }
 
     /// Attempts to find all GC references found inside of the stack map for the current
@@ -126,11 +164,32 @@ impl FrameStackMap {
     /// is to facilitate the GC moving the underlying allocation to a different address,
     /// whereafter it can write the new address to the pointer in the stack frame.
     #[inline]
-    pub(crate) fn stack_locations(&self) -> Option<impl Iterator<Item = *const *const u8>> {
-        self.stack_offsets().map(|offsets| {
-            offsets
-                .iter()
-                .map(|offset| unsafe { self.stack_pointer().byte_add(*offset) } as *const *const u8)
+    pub(crate) fn stack_locations(&self) -> impl Iterator<Item = *const *const u8> {
+        self.stack_offsets()
+            .iter()
+            .map(|offset| unsafe { self.stack_pointer().byte_add(*offset) } as *const *const u8)
+    }
+
+    /// Attempts to find all GC references found inside of the stack map for the current
+    /// program counter.
+    ///
+    /// The returned iterator will iterate over a list of tuples. The first element in the
+    /// tuple is an entry in the current stack frame containing the GC reference and the
+    /// second element is a pointer to the GC reference itself.
+    #[inline]
+    pub(crate) fn stack_value_locations(&self) -> impl Iterator<Item = (*const *const u8, *const u8)> {
+        self.stack_locations().map(|ptr| {
+            let gc_ref = unsafe { ptr.read() };
+
+            (ptr, gc_ref)
+        })
+    }
+
+    #[inline]
+    pub(crate) fn iter_stack_value_locations(&self) -> impl Iterator<Item = (*const *const u8, *const u8)> {
+        self.create_frame_hierarchy().into_iter().flat_map(|frame| {
+            // TODO: can we rewrite this, so we don't need to collect the iterator first?
+            frame.stack_value_locations().collect::<Vec<_>>()
         })
     }
 }
@@ -166,10 +225,33 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
     None
 }
 
-/// Static version of [`GarbageCollector::trigger_collection`], so it can be
+/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so it can be
 /// used as a function pointer in Cranelift.
+///
+/// This function *might* trigger a collection, depending on the current state
+/// of the allocator. To force a collection, use [`trigger_collection_force`].
+///
+/// To see whether a collection is required, use [`alloc::GenerationalAllocator::is_collection_required`].
 pub fn trigger_collection() {
-    GC.trigger_collection();
+    if GA.try_read().unwrap().is_collection_required() {
+        trigger_collection_force();
+    }
+}
+
+/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so it can be
+/// used as a function pointer in Cranelift.
+///
+/// This function *will* trigger a collection. To only trigger a collection if necessary,
+/// use [`trigger_collection`].
+///
+/// To see whether a collection is required, use [`alloc::GenerationalAllocator::is_collection_required`].
+#[inline]
+pub fn trigger_collection_force() {
+    let Some(frame) = find_current_stack_map() else {
+        panic!("bug!: could not find stack map for allocation call");
+    };
+
+    GA.try_write().unwrap().promote_allocations(&frame);
 }
 
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
@@ -180,13 +262,4 @@ pub fn allocate_object(size: usize) -> *mut u8 {
     };
 
     GA.try_write().unwrap().alloc(size, &frame)
-}
-
-pub static GC: LazyLock<GarbageCollector> = LazyLock::new(|| GarbageCollector::default());
-
-#[derive(Default)]
-pub struct GarbageCollector {}
-
-impl GarbageCollector {
-    pub fn trigger_collection(&self) {}
 }
