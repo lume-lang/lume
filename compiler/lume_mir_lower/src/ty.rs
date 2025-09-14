@@ -14,6 +14,12 @@ impl FunctionTransformer<'_, '_> {
             lume_types::TypeKind::Float(n) => lume_mir::Type::float(*n),
             lume_types::TypeKind::String => lume_mir::Type::string(),
             lume_types::TypeKind::User(lume_types::UserType::Struct(def)) => {
+                if type_ref.is_pointer() {
+                    let elemental_type = self.lower_type(&type_ref.type_arguments[0]);
+
+                    return lume_mir::Type::pointer(elemental_type);
+                }
+
                 let name = format!("{:+}", def.name);
                 let ty_props = self.tcx().db().find_fields(type_ref.instance_of);
                 let props = ty_props.map(|p| self.lower_type(&p.field_type)).collect::<Vec<_>>();

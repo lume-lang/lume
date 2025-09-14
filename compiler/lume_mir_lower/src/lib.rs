@@ -63,6 +63,7 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
     variables: HashMap<lume_tir::VariableId, RegisterId>,
 }
 
+#[expect(dead_code)]
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines the MIR function which is being created.
     pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: DefId, func: &lume_tir::Function) -> Function {
@@ -130,6 +131,16 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     fn lower(&mut self, block: &lume_tir::Block) {
         let _entry_block = self.func.new_active_block();
 
+        for idx in 0..self.func.signature.parameters.len() {
+            let register = RegisterId::new(idx);
+            let loaded_op = lume_mir::Operand {
+                kind: lume_mir::OperandKind::Reference { id: register },
+                location: Location::empty(),
+            };
+
+            self.mark_gc_value(&loaded_op, Location::empty());
+        }
+
         let return_value = self.block(block);
 
         // Only declare the return value, if the block actually expects a
@@ -156,6 +167,43 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
     pub(crate) fn function(&self, func_id: DefId) -> &Function {
         self.transformer.mir.function(func_id)
+    }
+
+    /// Determines whether the given register is a heap reference.
+    fn is_register_heap_reference(&self, register: lume_mir::RegisterId) -> bool {
+        let register_ty = self.func.registers.register_ty(register);
+
+        register_ty.requires_stack_map()
+    }
+
+    /// Determines whether the given value is a heap reference.
+    fn is_value_heap_reference(&self, value: &lume_mir::Operand) -> bool {
+        match &value.kind {
+            lume_mir::OperandKind::Boolean { .. }
+            | lume_mir::OperandKind::Integer { .. }
+            | lume_mir::OperandKind::Float { .. }
+            | lume_mir::OperandKind::Bitcast { .. }
+            | lume_mir::OperandKind::String { .. }
+            | lume_mir::OperandKind::SlotAddress { .. } => false,
+            lume_mir::OperandKind::Reference { id } | lume_mir::OperandKind::Load { id } => {
+                self.is_register_heap_reference(*id)
+            }
+            lume_mir::OperandKind::LoadField { field_type, .. } => field_type.requires_stack_map(),
+        }
+    }
+
+    /// Marks the given register as being a GC reference.
+    fn mark_gc_register(&mut self, register: lume_mir::RegisterId, loc: Location) {
+        if self.is_register_heap_reference(register) {
+            self.func.current_block_mut().mark_gc_register(register, loc);
+        }
+    }
+
+    /// Marks the given value as being a GC reference.
+    fn mark_gc_value(&mut self, value: &lume_mir::Operand, loc: Location) {
+        if self.is_value_heap_reference(value) {
+            self.func.current_block_mut().mark_gc_value(value.clone(), loc);
+        }
     }
 
     /// Defines a new declaration in the current function block.
@@ -213,10 +261,6 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                 location,
             },
         );
-
-        if self.func.registers.register_ty(call_inst).is_reference_type() {
-            self.func.current_block_mut().mark_gc_register(call_inst, location);
-        }
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: call_inst },
