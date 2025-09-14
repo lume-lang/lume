@@ -127,9 +127,11 @@ impl YoungGeneration {
     /// is to facilitate the GC moving the underlying allocation to a different address,
     /// whereafter it can write the new address to the pointer in the stack frame.
     pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
+        let stack_values = frame.iter_stack_value_locations().collect::<Vec<_>>();
+
         self.allocations.iter().filter_map(move |(alloc, _)| {
-            frame
-                .iter_stack_value_locations()
+            stack_values
+                .iter()
                 .find(|probe| probe.1 == alloc.cast_const())
                 .map(|obj| obj.0)
         })
