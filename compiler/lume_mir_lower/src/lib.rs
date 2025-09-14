@@ -1,6 +1,6 @@
 pub(crate) mod dynamic;
 pub(crate) mod expr;
-pub(crate) mod passes;
+pub(crate) mod pass;
 pub(crate) mod stmt;
 pub(crate) mod ty;
 
@@ -100,7 +100,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             lume_tir::FunctionKind::Dynamic => {
                 DynamicShimBuilder::new(&mut transformer, id).build();
 
-                passes::RenameSsaVariables::default().execute(&mut transformer.func);
+                pass::RenameSsaVariables::default().execute(&mut transformer.func);
             }
         }
 

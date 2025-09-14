@@ -413,6 +413,18 @@ impl std::fmt::Display for BasicBlockId {
     }
 }
 
+/// Defines how a block is used in the context of the function.
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlockUsage {
+    /// The block is used as a regular block, which can be jumped to and from.
+    #[default]
+    Regular,
+
+    /// The block is unused, either because it was optimized away or because it
+    /// was never used in the original MIR.
+    Unused,
+}
+
 /// Represents a basic block in the control flow graph.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BasicBlock {
@@ -440,6 +452,9 @@ pub struct BasicBlock {
     /// Defines all the input registers, which are the result of phi
     /// node instructions.
     phi_registers: IndexMap<RegisterId, RegisterId>,
+
+    /// Defines the usage of the block.
+    usage: BlockUsage,
 }
 
 impl BasicBlock {
@@ -452,6 +467,7 @@ impl BasicBlock {
             predecessors: IndexSet::new(),
             successors: IndexSet::new(),
             phi_registers: IndexMap::new(),
+            usage: BlockUsage::default(),
         }
     }
 
@@ -490,6 +506,11 @@ impl BasicBlock {
     /// Sets the terminator of the block, whether one has been set already or not.
     pub fn set_terminator_full(&mut self, term: Terminator) {
         self.terminator = Some(term);
+    }
+
+    /// Sets the usage of the block.
+    pub fn set_usage(&mut self, usage: BlockUsage) {
+        self.usage = usage;
     }
 
     /// Gets an iterator for all the predecessors of the current block.
@@ -705,6 +726,10 @@ impl BasicBlock {
 
 impl std::fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.usage == BlockUsage::Unused {
+            return Ok(());
+        }
+
         write!(f, "{}", self.id)?;
 
         if !self.parameters.is_empty() {
@@ -955,7 +980,7 @@ impl std::fmt::Display for Instruction {
             InstructionKind::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
-            InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset}] = {value}"),
+            InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset:X}] = {value}"),
             InstructionKind::ObjectRegister { register } => write!(f, "mark object({register})"),
             InstructionKind::ObjectValue { value } => write!(f, "mark object({value})"),
         }
