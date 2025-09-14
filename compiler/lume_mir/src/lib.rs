@@ -1562,6 +1562,30 @@ impl Type {
         matches!(self.kind, TypeKind::Metadata { .. })
     }
 
+    pub fn requires_stack_map(&self) -> bool {
+        // void-pointers are only really used for type arguments, which do not
+        // require a stack map.
+        if let TypeKind::Pointer { elemental } = &self.kind
+            && let TypeKind::Void = &elemental.kind
+        {
+            return true;
+        }
+
+        // All other types of pointers, it depends on the inner type.
+        if let TypeKind::Pointer { elemental } = &self.kind {
+            return elemental.requires_stack_map();
+        }
+
+        // Structs should have a stack map, but type metadata should not.
+        if let TypeKind::Struct { name, .. } = &self.kind
+            && name == "std::Type"
+        {
+            return false;
+        }
+
+        matches!(&self.kind, TypeKind::Struct { .. } | TypeKind::String)
+    }
+
     pub fn is_signed(&self) -> bool {
         if let TypeKind::Integer { signed, .. } = &self.kind {
             *signed
