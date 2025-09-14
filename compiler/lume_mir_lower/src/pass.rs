@@ -1,5 +1,3 @@
-pub(crate) mod inline_blocks;
-
 use indexmap::{IndexMap, IndexSet};
 use lume_mir::*;
 
@@ -7,7 +5,6 @@ use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_, '_> {
     pub(crate) fn run_passes(&mut self) {
-        inline_blocks::InlineBlocks.execute(&mut self.func);
         DefineBlockEdges.execute(&mut self.func);
         RemoveOrphanBlocks.execute(&mut self.func);
         DefineBlockParameters::default().execute(&mut self.func);
