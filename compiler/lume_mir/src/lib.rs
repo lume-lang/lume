@@ -756,6 +756,14 @@ pub struct Registers {
 impl Registers {
     /// Gets a reference to the [`Register`] with the given ID.
     #[track_caller]
+    pub fn next_id(&self) -> RegisterId {
+        let next = self.regs.iter().map(|reg| reg.id.as_usize() + 1).max().unwrap_or(0);
+
+        RegisterId(next)
+    }
+
+    /// Gets a reference to the [`Register`] with the given ID.
+    #[track_caller]
     pub fn register(&self, id: RegisterId) -> &Register {
         &self.regs[id.0]
     }
@@ -775,7 +783,7 @@ impl Registers {
     /// Allocates a new register with the given type and block.
     #[tracing::instrument(level = "TRACE", skip_all, fields(%ty, %block), ret)]
     pub fn allocate(&mut self, ty: Type, block: BasicBlockId) -> RegisterId {
-        let id = RegisterId(self.regs.len());
+        let id = self.next_id();
         self.regs.push(Register {
             id,
             ty,
@@ -788,7 +796,7 @@ impl Registers {
     /// Allocates a new parameter register with the given type.
     #[tracing::instrument(level = "TRACE" skip_all, fields(%ty), ret)]
     pub fn allocate_param(&mut self, ty: Type) -> RegisterId {
-        let id = RegisterId(self.regs.len());
+        let id = self.next_id();
         self.regs.push(Register { id, ty, block: None });
 
         id

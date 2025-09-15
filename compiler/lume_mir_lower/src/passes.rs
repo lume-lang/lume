@@ -314,14 +314,14 @@ impl PassBlockArguments {
 #[derive(Default, Debug)]
 struct ConvertAssignmentExpressions {
     register_count: usize,
-    moved_regs: IndexMap<RegisterId, RegisterId>,
+    moved_regs: Vec<(RegisterId, RegisterId)>,
     registers: Registers,
 }
 
 impl ConvertAssignmentExpressions {
     pub fn execute(&mut self, func: &mut Function) {
         self.registers = func.registers.clone();
-        self.register_count = self.registers.iter().count();
+        self.register_count = self.registers.next_id().as_usize();
 
         let mut new_registers = IndexSet::new();
 
@@ -357,7 +357,7 @@ impl ConvertAssignmentExpressions {
     fn move_register(&mut self, old: &mut RegisterId) -> RegisterId {
         let new = RegisterId::new(self.register_count);
 
-        self.moved_regs.insert(*old, new);
+        self.moved_regs.push((*old, new));
         self.register_count += 1;
 
         *old = new;
@@ -365,8 +365,8 @@ impl ConvertAssignmentExpressions {
     }
 
     fn get_moved_register(&self, reg: &mut RegisterId) {
-        if let Some(moved) = self.moved_regs.get(reg) {
-            *reg = *moved;
+        if let Some(moved) = self.moved_regs.iter().rfind(|r| r.0 == *reg) {
+            *reg = moved.1;
         }
     }
 
@@ -379,8 +379,8 @@ impl ConvertAssignmentExpressions {
             InstructionKind::Assign { target, value } => {
                 let ty = self.registers.register_ty(*target).to_owned();
 
-                self.move_register(target);
                 self.update_regs_op(value);
+                self.move_register(target);
 
                 // After the registers of the assignment instruction have been converted
                 // to SSA registers, we transform the instruction itself to declare a new register
