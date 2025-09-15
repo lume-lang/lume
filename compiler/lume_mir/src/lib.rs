@@ -491,6 +491,11 @@ impl BasicBlock {
         self.predecessors.insert(block);
     }
 
+    /// Removes the given block to be a predecessor to the current block.
+    pub fn remove_predecessor(&mut self, block: BasicBlockId) {
+        self.predecessors.shift_remove(&block);
+    }
+
     /// Pushes the given block to be a successor to the current block.
     pub fn push_successor(&mut self, block: BasicBlockId) {
         self.successors.reserve_exact(1);
