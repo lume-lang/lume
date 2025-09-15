@@ -346,7 +346,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
     pub fn define(mut self) {
         // Allocate all blocks, so they can be referenced by earlier blocks
-        for (idx, block) in self.func.blocks.iter().enumerate() {
+        for (idx, block) in self.func.blocks.values().enumerate() {
             if idx == 0 {
                 self.cg_block_alloc_entry(block);
             } else {
@@ -354,7 +354,7 @@ impl<'ctx> LowerFunction<'ctx> {
             }
         }
 
-        for block in &self.func.blocks {
+        for block in self.func.blocks.values() {
             self.cg_block_in(block);
         }
 

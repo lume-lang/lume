@@ -26,7 +26,7 @@ impl DefineBlockEdges {
     pub fn execute(&self, func: &mut Function) {
         let mut edges = IndexSet::<(BasicBlockId, BasicBlockId)>::new();
 
-        for block in &func.blocks {
+        for block in func.blocks.values() {
             let terminator = block.terminator().unwrap();
 
             match &terminator.kind {
@@ -98,12 +98,12 @@ struct DefineBlockParameters {
 
 impl DefineBlockParameters {
     pub fn execute(&mut self, func: &mut Function) {
-        for block in &func.blocks {
+        for block in func.blocks.values() {
             let mut visited = IndexSet::new();
             self.find_required_input_registers(func, block, &mut visited);
         }
 
-        for block in &mut func.blocks {
+        for block in func.blocks.values_mut() {
             // Skip blocks which don't have any predecessors, since they cannot
             // have any input parameters. This is mostly for entry blocks, as they
             // get their parameters implictly from the function itself.
@@ -212,7 +212,7 @@ impl PassBlockArguments {
         // phase, yet. But, this is certainly not a good solution to a lifetime issue.
         let func_immut = func.clone();
 
-        for block in &mut func.blocks {
+        for block in func.blocks.values_mut() {
             let block_id = block.id;
 
             if let Some(terminator) = block.terminator_mut() {
@@ -292,7 +292,7 @@ impl ConvertAssignmentExpressions {
 
         let mut new_registers = IndexSet::new();
 
-        for block in &mut func.blocks {
+        for block in func.blocks.values_mut() {
             for inst in block.instructions_mut() {
                 self.update_regs_inst(inst);
             }
@@ -533,7 +533,7 @@ impl RenameSsaVariables {
 
         let mut register_mapping = RegisterMapping::new();
 
-        for block in &mut func.blocks {
+        for block in func.blocks.values_mut() {
             let block_id = block.id;
 
             for param_idx in 0..func.signature.parameters.len() {

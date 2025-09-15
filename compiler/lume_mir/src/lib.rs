@@ -119,7 +119,7 @@ pub struct Function {
 
     pub registers: Registers,
     pub slots: IndexMap<SlotId, Type>,
-    pub blocks: Vec<BasicBlock>,
+    pub blocks: IndexMap<BasicBlockId, BasicBlock>,
     current_block: BasicBlockId,
 
     scope: Box<Scope>,
@@ -134,7 +134,7 @@ impl Function {
             name,
             registers: Registers::default(),
             slots: IndexMap::new(),
-            blocks: Vec::new(),
+            blocks: IndexMap::new(),
             signature: Signature::default(),
             current_block: BasicBlockId(0),
             scope: Box::new(Scope::root_scope()),
@@ -163,7 +163,7 @@ impl Function {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn block(&self, id: BasicBlockId) -> &BasicBlock {
-        self.blocks.get(id.0).unwrap()
+        self.blocks.get(&id).unwrap()
     }
 
     /// Returns a mutable reference to the basic block with the given ID.
@@ -172,14 +172,14 @@ impl Function {
     ///
     /// Panics if the given ID is invalid or out of bounds.
     pub fn block_mut(&mut self, id: BasicBlockId) -> &mut BasicBlock {
-        self.blocks.get_mut(id.0).unwrap()
+        self.blocks.get_mut(&id).unwrap()
     }
 
     /// Allocates a new basic block and returns its ID.
     pub fn new_block(&mut self) -> BasicBlockId {
         let id = BasicBlockId(self.blocks.len());
 
-        self.blocks.push(BasicBlock::new(id));
+        self.blocks.insert(id, BasicBlock::new(id));
 
         id
     }
@@ -350,7 +350,7 @@ impl std::fmt::Display for Function {
 
         writeln!(f, "@{} fn {:?} {} {{", self.id, self.name, self.signature)?;
 
-        for block in &self.blocks {
+        for block in self.blocks.values() {
             write!(f, "{block}")?;
         }
 
