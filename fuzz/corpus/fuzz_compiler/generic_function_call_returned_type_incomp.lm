@@ -1,0 +1,7 @@
+fn foo<T>(val: T) -> T {
+    return val;
+}
+
+fn bar() {
+    let _: Int32 = foo<Boolean>(false);
+}

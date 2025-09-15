@@ -1066,7 +1066,9 @@ dependencies = [
 name = "lume-fuzz"
 version = "0.0.0"
 dependencies = [
+ "build_stage",
  "libfuzzer-sys",
+ "lume_errors",
  "lume_lexer",
  "lume_parser",
  "lume_span",

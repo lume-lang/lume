@@ -1,0 +1,15 @@
+//# test-outcome=success
+
+trait Test {}
+
+use Test in Int32 { }
+
+struct Foo<T> {}
+
+fn func<T: Test>(val: Foo<T>) { }
+
+fn main() {
+    let foo = Foo<Int32> { };
+
+    func(foo);
+}

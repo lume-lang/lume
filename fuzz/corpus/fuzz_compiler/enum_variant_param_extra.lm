@@ -1,0 +1,5 @@
+enum Foo { A, B }
+
+fn foo() {
+    let a = Foo::B(false);
+}

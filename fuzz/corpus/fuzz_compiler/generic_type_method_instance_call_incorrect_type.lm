@@ -1,0 +1,11 @@
+struct A<T> {}
+
+impl<T> A<T> {
+    pub fn bar(self, val:  T) { }
+}
+
+fn bar() {
+    let a: A<Boolean> = A<Boolean> { };
+
+    a.bar(0);
+}

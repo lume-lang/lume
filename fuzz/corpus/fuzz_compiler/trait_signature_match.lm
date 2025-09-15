@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+trait Default<T> {
+    pub fn default() -> T;
+}
+
+use Default<Int32> in Int32 {
+    pub fn default() -> Int32 {
+        return 0_i32;
+    }
+}
