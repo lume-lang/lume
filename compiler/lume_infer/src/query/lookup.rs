@@ -326,9 +326,14 @@ impl TyInferCtx {
                 if let Some(callee_ty_name) = call.name.clone().parent()
                     && callee_ty_name.is_type()
                 {
-                    let callee_type = self
-                        .find_type_ref_from(&callee_ty_name, DefId::Expression(call.id))?
-                        .unwrap();
+                    let Some(callee_type) = self.find_type_ref_from(&callee_ty_name, DefId::Expression(call.id))?
+                    else {
+                        return Err(self.missing_type_err(&lume_hir::Type {
+                            id: lume_span::ItemId::empty(),
+                            name: callee_ty_name.clone(),
+                            location: callee_ty_name.name().location,
+                        }));
+                    };
 
                     let method = self.lookup_method_on(&callee_type, call.name.name());
 

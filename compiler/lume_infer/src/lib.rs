@@ -329,7 +329,6 @@ impl TyInferCtx {
     }
 
     /// Returns an error indicating that the given type was not found.
-    #[allow(clippy::unused_self, clippy::redundant_else)]
     fn missing_type_err(&self, ty: &lume_hir::Type) -> error_snippet::Error {
         for (newcomer_name, lume_name) in NEWCOMER_TYPE_NAMES {
             if newcomer_name == &ty.name.name().as_str() {
