@@ -211,7 +211,7 @@ impl TyInferCtx {
                 lume_hir::FloatKind::F32 => TypeRef::f32(),
                 lume_hir::FloatKind::F64 => TypeRef::f64(),
             },
-            lume_hir::LiteralKind::String(_) => TypeRef::string(),
+            lume_hir::LiteralKind::String(_) => self.std_ref_string(),
             lume_hir::LiteralKind::Boolean(_) => TypeRef::bool(),
         };
 
@@ -222,28 +222,11 @@ impl TyInferCtx {
     /// ancestry tree has been initialized.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_parameter_pre(
-        &self,
-        param: &lume_hir::Parameter,
-        type_params: &[&TypeParameter],
-    ) -> Result<TypeRef> {
+    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, type_params: &[&TypeParameter]) -> Result<TypeRef> {
         let elemental_type = self.mk_type_ref_generic(&param.param_type, type_params)?;
 
         if param.vararg {
-            Result::Ok(TypeRef::array(elemental_type))
-        } else {
-            Result::Ok(elemental_type)
-        }
-    }
-
-    /// Returns the *type* of the given [`lume_hir::Parameter`].
-    #[cached_query(result)]
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, owner: lume_span::ItemId) -> Result<TypeRef> {
-        let elemental_type = self.mk_type_ref_from(&param.param_type, lume_span::DefId::Item(owner))?;
-
-        if param.vararg {
-            Result::Ok(TypeRef::array(elemental_type))
+            Result::Ok(self.std_ref_array(elemental_type))
         } else {
             Result::Ok(elemental_type)
         }

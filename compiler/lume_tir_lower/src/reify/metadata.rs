@@ -120,7 +120,7 @@ impl ReificationPass<'_> {
             }
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
                 // Arrays are aligned to their elemental type alignment
-                if type_ref.instance_of == lume_types::TYPEREF_ARRAY_ID {
+                if self.tcx.is_std_array(type_ref) {
                     return self.alignment_of_ty(type_ref.type_arguments.first().unwrap());
                 }
 

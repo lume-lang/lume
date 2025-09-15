@@ -18,12 +18,12 @@ impl FunctionTransformer<'_, '_> {
                 let ty_props = self.tcx().db().find_fields(type_ref.instance_of);
                 let props = ty_props.map(|p| self.lower_type(&p.field_type)).collect::<Vec<_>>();
 
-                let struct_ty = lume_mir::Type::structure(type_ref.clone(), name, props);
+                let struct_ty = lume_mir::Type::structure(name, props);
 
                 lume_mir::Type::pointer(struct_ty)
             }
             lume_types::TypeKind::User(lume_types::UserType::Enum(_)) => {
-                let enum_ty = lume_mir::Type::union(type_ref.clone(), Vec::new());
+                let enum_ty = lume_mir::Type::union(Vec::new());
 
                 lume_mir::Type::pointer(enum_ty)
             }
@@ -116,17 +116,12 @@ impl FunctionTransformer<'_, '_> {
                 | lume_mir::Intrinsic::FloatSub { bits }
                 | lume_mir::Intrinsic::FloatMul { bits }
                 | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::float(*bits),
-                lume_mir::Intrinsic::Metadata { metadata } => {
-                    let id = self.tcx().std_type();
-
-                    lume_mir::Type {
-                        id,
-                        kind: lume_mir::TypeKind::Metadata {
-                            inner: metadata.clone(),
-                        },
-                        is_generic: false,
-                    }
-                }
+                lume_mir::Intrinsic::Metadata { metadata } => lume_mir::Type {
+                    kind: lume_mir::TypeKind::Metadata {
+                        inner: metadata.clone(),
+                    },
+                    is_generic: false,
+                },
             },
             lume_mir::DeclarationKind::Cast { operand, bits } => {
                 let operand_ty = self.func.registers.register_ty(*operand);

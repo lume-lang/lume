@@ -148,7 +148,7 @@ impl FunctionTransformer<'_, '_> {
 
         let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
 
-        let struct_type = lume_mir::Type::structure(expr.ty.clone(), name, prop_types);
+        let struct_type = lume_mir::Type::structure(name, prop_types);
         let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
         let reg = self.func.add_register(struct_ptr);
@@ -827,10 +827,10 @@ impl FunctionTransformer<'_, '_> {
                 items.push(self.lower_type(&case_ref));
             }
 
-            union_cases.push(lume_mir::Type::tuple(enum_ty.clone(), items));
+            union_cases.push(lume_mir::Type::tuple(items));
         }
 
-        let union_type = lume_mir::Type::union(expr.ty.clone(), union_cases);
+        let union_type = lume_mir::Type::union(union_cases);
         let reg = self.func.add_register(union_type.clone());
         self.func.current_block_mut().allocate(reg, union_type, expr.location);
 

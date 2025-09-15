@@ -1117,8 +1117,6 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_type_metadata",
- "lume_typech",
- "lume_types",
  "target-lexicon",
  "tracing",
 ]
@@ -1264,7 +1262,6 @@ dependencies = [
  "lume_errors",
  "lume_span",
  "lume_type_metadata",
- "lume_types",
  "tracing",
 ]
 

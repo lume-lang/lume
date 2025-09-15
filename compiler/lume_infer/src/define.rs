@@ -179,9 +179,6 @@ fn std_type_id(name: &Path) -> Option<TypeId> {
         n if n.is_name_match(&Path::u64()) => Some(lume_types::TYPEREF_UINT64_ID),
         n if n.is_name_match(&Path::f32()) => Some(lume_types::TYPEREF_FLOAT32_ID),
         n if n.is_name_match(&Path::f64()) => Some(lume_types::TYPEREF_FLOAT64_ID),
-        n if n.is_name_match(&Path::string()) => Some(lume_types::TYPEREF_STRING_ID),
-        n if n.is_name_match(&Path::pointer()) => Some(lume_types::TYPEREF_POINTER_ID),
-        n if n.is_name_match(&Path::array()) => Some(lume_types::TYPEREF_ARRAY_ID),
         _ => None,
     }
 }
@@ -411,19 +408,9 @@ impl TyInferCtx {
                 let type_id = struct_def.type_id.unwrap();
 
                 for type_param in &mut struct_def.type_parameters.iter_mut() {
-                    let type_param_id = match type_id {
-                        lume_types::TYPEREF_POINTER_ID => {
-                            self.tdb_mut().type_parameters[0].location = type_param.location;
-                            lume_hir::TypeParameterId(0)
-                        }
-                        lume_types::TYPEREF_ARRAY_ID => {
-                            self.tdb_mut().type_parameters[1].location = type_param.location;
-                            lume_hir::TypeParameterId(1)
-                        }
-                        _ => self
-                            .tdb_mut()
-                            .type_param_alloc(type_param.name.name.clone(), type_param.location),
-                    };
+                    let type_param_id = self
+                        .tdb_mut()
+                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
                     type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
@@ -757,7 +744,7 @@ impl TyInferCtx {
 
                 for param in &method.parameters {
                     let name = param.name.name.clone();
-                    let type_ref = self.type_of_parameter_pre(
+                    let type_ref = self.type_of_parameter(
                         param,
                         &[
                             &trait_def.type_parameters.as_refs()[..],
@@ -793,7 +780,7 @@ impl TyInferCtx {
 
         for param in &func.parameters {
             let name = param.name.name.clone();
-            let type_ref = self.type_of_parameter_pre(param, &func.type_parameters.as_refs())?;
+            let type_ref = self.type_of_parameter(param, &func.type_parameters.as_refs())?;
 
             self.tdb_mut()
                 .function_mut(func_id)
@@ -814,7 +801,7 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.type_of_parameter_pre(
+                let type_ref = self.type_of_parameter(
                     param,
                     &[
                         &trait_impl.type_parameters.as_refs()[..],
@@ -850,7 +837,7 @@ impl TyInferCtx {
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
-                let type_ref = self.type_of_parameter_pre(
+                let type_ref = self.type_of_parameter(
                     param,
                     &[
                         &implementation.type_parameters.as_refs()[..],

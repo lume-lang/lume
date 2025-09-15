@@ -263,8 +263,7 @@ impl<'a> Compiler<'a> {
             lume_session::MirPrinting::Debug => println!("{mir:#?}"),
         }
 
-        tracing::info_span!("codegen")
-            .in_scope(|| lume_codegen::generate(self.package, mir, tcx, &self.gcx.session.options))
+        tracing::info_span!("codegen").in_scope(|| lume_codegen::generate(self.package, mir, &self.gcx.session.options))
     }
 }
 

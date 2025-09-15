@@ -101,7 +101,7 @@ impl ManifoldDriver {
         let (tcx, tir) = self.build_tir()?;
         let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
 
-        let compiled_module = lume_codegen::generate(&self.package, mir, &tcx, &self.gcx.session.options)?;
+        let compiled_module = lume_codegen::generate(&self.package, mir, &self.gcx.session.options)?;
         let objects = lume_linker::write_object_files(
             &self.gcx,
             CodegenResult {
