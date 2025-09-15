@@ -1,0 +1,7 @@
+fn foo() -> Int32 {
+    while true {
+        return true;
+    }
+
+    return 0_i32;
+}

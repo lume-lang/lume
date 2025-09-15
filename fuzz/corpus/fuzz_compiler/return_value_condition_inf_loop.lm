@@ -1,0 +1,7 @@
+fn foo() -> Int32 {
+    loop {
+        return true;
+    }
+
+    return 0_i32;
+}

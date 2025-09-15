@@ -1,0 +1,3 @@
+struct A {
+    foo: Boolean = 0;
+}

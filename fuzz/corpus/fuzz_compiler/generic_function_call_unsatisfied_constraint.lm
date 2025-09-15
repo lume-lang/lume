@@ -1,0 +1,7 @@
+trait A {}
+
+fn foo<T: A>() { }
+
+fn bar() {
+    foo<Boolean>();
+}

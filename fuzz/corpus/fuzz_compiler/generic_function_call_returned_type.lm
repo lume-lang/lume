@@ -1,0 +1,9 @@
+//# test-outcome=success
+
+fn foo<T>(val: T) -> T {
+    return val;
+}
+
+fn bar() {
+    let _: Boolean = foo<Boolean>(false);
+}

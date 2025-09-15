@@ -1,0 +1,9 @@
+trait B {
+    fn value(self) -> Int32 {
+        return 0;
+    }
+}
+
+fn foo<T>(val: T) {
+    let _: Int32 = val.value();
+}

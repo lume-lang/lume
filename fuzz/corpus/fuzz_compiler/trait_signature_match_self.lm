@@ -1,0 +1,9 @@
+//# test-outcome=success
+
+trait Foo {
+    pub fn foo(self);
+}
+
+use Foo in Int32 {
+    pub fn foo(self) { }
+}

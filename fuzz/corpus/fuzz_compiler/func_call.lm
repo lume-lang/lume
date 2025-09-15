@@ -1,0 +1,9 @@
+fn foo() -> Int32 {
+    return 4 + 8;
+}
+
+fn main() -> Int32 {
+    let a: Int32 = foo();
+
+    return a;
+}

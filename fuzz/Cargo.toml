@@ -10,6 +10,8 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
+build_stage = { path = "../tools/build_stage" }
+lume_errors = { path = "../compiler/lume_errors" }
 lume_lexer = { path = "../compiler/lume_lexer" }
 lume_parser = { path = "../compiler/lume_parser" }
 lume_span = { path = "../compiler/lume_span" }
@@ -31,6 +33,13 @@ bench = false
 [[bin]]
 name = "fuzz_parser_expr"
 path = "fuzz_targets/lume_parser_expr.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_compiler"
+path = "fuzz_targets/lume_mutation.rs"
 test = false
 doc = false
 bench = false
