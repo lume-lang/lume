@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use error_snippet::Result;
-use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
+use lume_hir::{Path, PathSegment};
 use lume_span::{DefId, PackageId};
 use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
 
@@ -122,7 +122,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, symbol) in &mut hir.items {
-            if let lume_hir::Item::Type(ty) = symbol {
+            if let lume_hir::Def::Type(ty) = symbol {
                 self.define_type(ty);
             }
         }
@@ -136,36 +136,32 @@ impl TyInferCtx {
                 let name = struct_def.name.clone();
                 let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
 
-                let type_id = if let Some(first_root) = name.root.first()
+                if let Some(first_root) = name.root.first()
                     && first_root.name().as_str() == "std"
                     && let Some(std_id) = std_type_id(&name)
                 {
-                    std_id
+                    struct_def.id = std_id;
                 } else {
-                    self.tdb_mut().type_alloc(struct_def.id.package, name, kind)
-                };
-
-                struct_def.type_id = Some(type_id);
+                    self.tdb_mut().type_alloc(struct_def.id.package, name, kind);
+                }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
                 let kind = TypeKind::User(UserType::Trait(Box::new(Trait::new(trait_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(trait_def.id.package, name, kind);
 
-                trait_def.type_id = Some(type_id);
+                self.tdb_mut().type_alloc(trait_def.id.package, name, kind);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
                 let kind = TypeKind::User(UserType::Enum(Box::new(Enum::new(enum_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(enum_def.id.package, name, kind);
 
-                enum_def.type_id = Some(type_id);
+                self.tdb_mut().type_alloc(enum_def.id.package, name, kind);
             }
         }
     }
 }
 
-fn std_type_id(name: &Path) -> Option<TypeId> {
+fn std_type_id(name: &Path) -> Option<DefId> {
     match name {
         n if n.is_name_match(&Path::void()) => Some(lume_types::TYPEREF_VOID_ID),
         n if n.is_name_match(&Path::boolean()) => Some(lume_types::TYPEREF_BOOL_ID),
@@ -189,7 +185,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Function(func) = item {
+            if let lume_hir::Def::Function(func) = item {
                 let name = func.name.clone();
                 let visibility = func.visibility;
                 let func_id = self.tdb_mut().func_alloc(func.id, name, visibility);
@@ -208,7 +204,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Impl(implementation) = item {
+            if let lume_hir::Def::Impl(implementation) = item {
                 let target = implementation.target.name.clone();
                 let impl_id = self.tdb_mut().impl_alloc(target);
 
@@ -226,7 +222,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
-            if let lume_hir::Item::TraitImpl(trait_impl) = item {
+            if let lume_hir::Def::TraitImpl(trait_impl) = item {
                 trait_impl.use_id = Some(self.tdb_mut().use_alloc());
             }
         }
@@ -241,7 +237,7 @@ impl TyInferCtx {
         let mut hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Type(ty) = item {
+            if let lume_hir::Def::Type(ty) = item {
                 self.define_fields_type(ty)?;
             }
         }
@@ -278,12 +274,12 @@ impl TyInferCtx {
 
         for (_, item) in &mut hir.items {
             match item {
-                lume_hir::Item::Type(ty) => {
+                lume_hir::Def::Type(ty) => {
                     if let lume_hir::TypeDefinition::Trait(tr) = &mut **ty {
                         self.define_trait_def_methods(tr)?;
                     }
                 }
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_methods(u)?,
+                lume_hir::Def::TraitImpl(u) => self.define_trait_impl_methods(u)?,
                 _ => (),
             }
         }
@@ -388,10 +384,10 @@ impl TyInferCtx {
 
         for (_, item) in &mut hir.items {
             match item {
-                lume_hir::Item::Type(t) => self.define_type_type_params(t)?,
-                lume_hir::Item::Impl(i) => self.define_impl_type_params(i)?,
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_method_type_params(u)?,
-                lume_hir::Item::Function(f) => self.define_func_type_params(f)?,
+                lume_hir::Def::Type(t) => self.define_type_type_params(t)?,
+                lume_hir::Def::Impl(i) => self.define_impl_type_params(i)?,
+                lume_hir::Def::TraitImpl(u) => self.define_trait_impl_method_type_params(u)?,
+                lume_hir::Def::Function(f) => self.define_func_type_params(f)?,
             }
         }
 
@@ -589,10 +585,10 @@ impl TyInferCtx {
 
         for (_, item) in &mut hir.items {
             match item {
-                lume_hir::Item::Type(t) => self.define_type_type_constraints(t)?,
-                lume_hir::Item::Impl(i) => self.define_impl_type_constraints(i)?,
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_type_constraints(u)?,
-                lume_hir::Item::Function(f) => self.define_func_type_constraints(f)?,
+                lume_hir::Def::Type(t) => self.define_type_type_constraints(t)?,
+                lume_hir::Def::Impl(i) => self.define_impl_type_constraints(i)?,
+                lume_hir::Def::TraitImpl(u) => self.define_trait_impl_type_constraints(u)?,
+                lume_hir::Def::Function(f) => self.define_func_type_constraints(f)?,
             }
         }
 
@@ -697,7 +693,7 @@ impl TyInferCtx {
         let hir = std::mem::take(&mut self.hir);
 
         for (_, item) in &hir.items {
-            if let lume_hir::Item::Type(ty) = item {
+            if let lume_hir::Def::Type(ty) = item {
                 self.define_field_type_on_type(ty)?;
             }
         }
@@ -727,10 +723,10 @@ impl TyInferCtx {
         // TODO: this is not a very good way of handling mutability issues.
         for (_, item) in &self.hir.clone().items {
             match item {
-                lume_hir::Item::Type(t) => self.define_method_bodies_type(t)?,
-                lume_hir::Item::Function(f) => self.define_func_body(f)?,
-                lume_hir::Item::TraitImpl(u) => self.define_method_bodies_trait_impl(u)?,
-                lume_hir::Item::Impl(i) => self.define_method_bodies_impl(i)?,
+                lume_hir::Def::Type(t) => self.define_method_bodies_type(t)?,
+                lume_hir::Def::Function(f) => self.define_func_body(f)?,
+                lume_hir::Def::TraitImpl(u) => self.define_method_bodies_trait_impl(u)?,
+                lume_hir::Def::Impl(i) => self.define_method_bodies_impl(i)?,
             }
         }
 
@@ -875,14 +871,14 @@ impl TyInferCtx {
 
         for (_, item) in &self.hir.items {
             match item {
-                lume_hir::Item::Type(ty) => match ty.as_ref() {
+                lume_hir::Def::Type(ty) => match ty.as_ref() {
                     lume_hir::TypeDefinition::Struct(f) => self.define_struct_scope(&mut tree, f)?,
                     lume_hir::TypeDefinition::Trait(f) => self.define_trait_scope(&mut tree, f)?,
                     lume_hir::TypeDefinition::Enum(_) => {}
                 },
-                lume_hir::Item::Impl(f) => self.define_impl_scope(&mut tree, f)?,
-                lume_hir::Item::TraitImpl(f) => self.define_use_scope(&mut tree, f)?,
-                lume_hir::Item::Function(f) => self.define_function_scope(&mut tree, f)?,
+                lume_hir::Def::Impl(f) => self.define_impl_scope(&mut tree, f)?,
+                lume_hir::Def::TraitImpl(f) => self.define_use_scope(&mut tree, f)?,
+                lume_hir::Def::Function(f) => self.define_function_scope(&mut tree, f)?,
             }
         }
 

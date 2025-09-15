@@ -5,7 +5,7 @@ use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
 
 use crate::*;
-use lume_span::{ExpressionId, ItemId, PatternId, StatementId};
+use lume_span::{DefId, ExpressionId, StatementId};
 
 #[derive(Default, Clone, PartialEq)]
 pub struct Map {
@@ -13,16 +13,13 @@ pub struct Map {
     pub package: PackageId,
 
     /// Defines all the items within the module.
-    pub items: IndexMap<ItemId, Item>,
+    pub items: IndexMap<DefId, Def>,
 
     /// Defines all the local statements within the current scope.
     pub statements: IndexMap<StatementId, Statement>,
 
     /// Defines all the local expressions within the current scope.
     pub expressions: IndexMap<ExpressionId, Expression>,
-
-    /// Defines all the local patterns within the current scope.
-    pub patterns: IndexMap<PatternId, Pattern>,
 
     /// Defines all the imported paths within the HIR map.
     pub imports: IndexSet<Path>,
@@ -36,13 +33,12 @@ impl Map {
             items: IndexMap::new(),
             statements: IndexMap::new(),
             expressions: IndexMap::new(),
-            patterns: IndexMap::new(),
             imports: IndexSet::new(),
         }
     }
 
     /// Gets all the items within the HIR map.
-    pub fn items(&self) -> &IndexMap<ItemId, Item> {
+    pub fn items(&self) -> &IndexMap<DefId, Def> {
         &self.items
     }
 

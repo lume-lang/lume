@@ -1,43 +1,13 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, TypeId, UseId};
-use lume_span::Location;
+use lume_hir::Path;
+use lume_span::{DefId, Location};
 
 use crate::{Item, TypeKindRef};
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find function {id:?} in context")]
-pub struct FunctionNotFound {
-    pub id: FunctionId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find field {id:?} in context")]
-pub struct FieldNotFound {
-    pub id: FieldId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find method {id:?} in context")]
-pub struct MethodNotFound {
-    pub id: MethodId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find implementation {id:?} in context")]
-pub struct ImplNotFound {
-    pub id: ImplId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find trait implementation {id:?} in context")]
-pub struct UseNotFound {
-    pub id: UseId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find item {id:?} in context")]
-pub struct TypeNotFound {
-    pub id: TypeId,
+#[diagnostic(message = "could not find definition {id:?} in context")]
+pub struct DefNotFound {
+    pub id: DefId,
 }
 
 #[derive(Diagnostic, Debug)]

@@ -1,55 +1,11 @@
-use std::fmt::Display;
-
 use lume_macros::Node;
-use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, PatternId, StatementId};
+use lume_span::{DefId, ExpressionId, Location, PackageId, StatementId};
 
 pub mod map;
 pub mod pretty;
 pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId {
-    pub package: PackageId,
-    pub index: Idx,
-}
-
-#[derive(Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeId {
-    pub package: PackageId,
-    pub index: Idx,
-}
-
-impl TypeId {
-    pub const fn new(package: PackageId, idx: usize) -> Self {
-        Self {
-            package,
-            index: Idx::from_usize(idx),
-        }
-    }
-}
-
-impl Display for TypeId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TypeId({}, {})", self.package.as_usize(), self.index.as_usize())
-    }
-}
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ImplId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UseId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FieldId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MethodId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeParameterId(pub usize);
 
 #[derive(Debug, Node, Clone, Eq)]
 pub struct Identifier {
@@ -579,7 +535,7 @@ pub enum Item {
 }
 
 impl Item {
-    pub fn id(&self) -> ItemId {
+    pub fn id(&self) -> DefId {
         match self {
             Item::Function(symbol) => symbol.id,
             Item::Type(symbol) => symbol.id(),
@@ -605,27 +561,27 @@ impl Item {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Def<'a> {
-    Item(&'a Item),
-    Field(&'a Field),
-    Method(&'a MethodDefinition),
-    TraitMethodDef(&'a TraitMethodDefinition),
-    TraitMethodImpl(&'a TraitMethodImplementation),
-    Pattern(&'a Pattern),
-    Statement(&'a Statement),
-    Expression(&'a Expression),
+pub enum Def {
+    Item(Item),
+    Field(Field),
+    Method(MethodDefinition),
+    TraitMethodDef(TraitMethodDefinition),
+    TraitMethodImpl(TraitMethodImplementation),
+    Pattern(Pattern),
+    Statement(Statement),
+    Expression(Expression),
 }
 
-impl Def<'_> {
+impl Def {
     pub fn id(&self) -> DefId {
         match self {
-            Def::Item(def) => DefId::Item(def.id()),
+            Def::Item(def) => def.id(),
             Def::Method(def) => def.id,
             Def::TraitMethodDef(def) => def.id,
             Def::TraitMethodImpl(def) => def.id,
-            Def::Pattern(def) => DefId::Pattern(def.id),
-            Def::Statement(def) => DefId::Statement(def.id),
-            Def::Expression(def) => DefId::Expression(def.id),
+            Def::Pattern(def) => def.id,
+            Def::Statement(def) => def.id.def,
+            Def::Expression(def) => def.id.def,
             Def::Field(def) => def.id,
         }
     }
@@ -652,25 +608,6 @@ impl Def<'_> {
             Def::Expression(def) => def.location(),
             Def::Field(def) => def.location(),
             Def::Pattern(def) => def.location,
-        }
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
-pub enum Symbol {
-    Function(Box<FunctionDefinition>),
-    Type(Box<TypeDefinition>),
-    Use(Box<TraitImplementation>),
-    Impl(Box<Implementation>),
-}
-
-impl Symbol {
-    pub fn id(&self) -> ItemId {
-        match self {
-            Symbol::Function(symbol) => symbol.id,
-            Symbol::Type(symbol) => symbol.id(),
-            Symbol::Use(symbol) => symbol.id,
-            Symbol::Impl(symbol) => symbol.id,
         }
     }
 }
@@ -706,8 +643,7 @@ impl std::fmt::Display for Visibility {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
-    pub id: ItemId,
-    pub func_id: Option<FunctionId>,
+    pub id: DefId,
     pub visibility: Visibility,
     pub name: Path,
     pub parameters: Vec<Parameter>,
@@ -771,7 +707,7 @@ pub enum TypeDefinition {
 }
 
 impl TypeDefinition {
-    pub fn id(&self) -> ItemId {
+    pub fn id(&self) -> DefId {
         match self {
             TypeDefinition::Enum(def) => def.id,
             TypeDefinition::Struct(def) => def.id,
@@ -790,8 +726,7 @@ impl TypeDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: DefId,
     pub name: Path,
     pub type_parameters: TypeParameters,
     pub visibility: Visibility,
@@ -815,8 +750,7 @@ pub struct EnumDefinitionCase {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: DefId,
     pub name: Path,
     pub visibility: Visibility,
     pub builtin: bool,
@@ -847,8 +781,7 @@ impl WithTypeParameters for StructDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Implementation {
-    pub id: ItemId,
-    pub impl_id: Option<ImplId>,
+    pub id: DefId,
     pub target: Box<Type>,
     pub methods: Vec<MethodDefinition>,
     pub type_parameters: TypeParameters,
@@ -870,7 +803,6 @@ pub enum StructMember {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct Field {
     pub id: DefId,
-    pub field_id: Option<FieldId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub field_type: Type,
@@ -881,7 +813,6 @@ pub struct Field {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub id: DefId,
-    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -899,8 +830,7 @@ impl WithTypeParameters for MethodDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: DefId,
     pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: TypeParameters,
@@ -923,7 +853,6 @@ impl WithTypeParameters for TraitDefinition {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub id: DefId,
-    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -952,8 +881,7 @@ impl WithTypeParameters for TraitMethodDefinition {
 
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
-    pub id: ItemId,
-    pub use_id: Option<UseId>,
+    pub id: DefId,
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub visibility: Visibility,
@@ -981,7 +909,6 @@ impl WithTypeParameters for TraitImplementation {
 #[derive(Node, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: DefId,
-    pub method_id: Option<MethodId>,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -1641,7 +1568,7 @@ pub struct Member {
 #[derive(Hash, Node, Debug, Clone, PartialEq)]
 pub struct PatternField {
     pub id: ExpressionId,
-    pub pattern: PatternId,
+    pub pattern: DefId,
     pub field: usize,
     pub location: Location,
 }
@@ -1703,7 +1630,7 @@ pub struct Variant {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
-    pub id: PatternId,
+    pub id: DefId,
     pub kind: PatternKind,
     pub location: Location,
 }
@@ -1772,8 +1699,8 @@ pub struct WildcardPattern {
 #[derive(Node, Debug, Clone, Eq)]
 pub struct TypeParameter {
     pub name: Identifier,
-    pub type_id: Option<TypeId>,
-    pub type_param_id: Option<TypeParameterId>,
+    pub type_id: Option<DefId>,
+    pub type_param_id: Option<DefId>,
     pub constraints: Vec<Type>,
     pub location: Location,
 }
@@ -1829,7 +1756,7 @@ impl TypeParameters {
         self.iter().map(AsRef::as_ref).collect::<Vec<_>>()
     }
 
-    pub fn as_id_refs(&self) -> Vec<TypeParameterId> {
+    pub fn as_id_refs(&self) -> Vec<DefId> {
         self.iter()
             .map(|param| param.type_param_id.unwrap())
             .collect::<Vec<_>>()
@@ -1844,7 +1771,7 @@ impl From<Vec<TypeParameter>> for TypeParameters {
 
 #[derive(Node, Debug, Clone, Eq)]
 pub struct Type {
-    pub id: ItemId,
+    pub id: DefId,
     pub name: Path,
     pub location: Location,
 }
@@ -1852,7 +1779,7 @@ pub struct Type {
 impl Type {
     pub fn void() -> Type {
         Self {
-            id: ItemId::new(PackageId::empty()),
+            id: DefId::new(PackageId::empty()),
             name: Path::void(),
             location: Location::empty(),
         }

@@ -101,13 +101,13 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
 
 /// Uniquely identifies a top-level item within the package [`ItemId::package`].
 #[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct ItemId {
+pub struct DefId {
     pub package: PackageId,
     pub index: Idx,
 }
 
-impl ItemId {
-    /// Creates a new [`ItemId`].
+impl DefId {
+    /// Creates a new [`DefId`].
     #[inline]
     pub fn new(package: PackageId) -> Self {
         Self {
@@ -116,7 +116,16 @@ impl ItemId {
         }
     }
 
-    /// Creates a new [`ItemId`] from the given value.
+    /// Creates a new [`DefId`].
+    #[inline]
+    pub const fn with_id(package: PackageId, index: usize) -> Self {
+        Self {
+            package,
+            index: Idx(index),
+        }
+    }
+
+    /// Creates a new [`DefId`] from the given value.
     #[inline]
     pub fn from_name<T: std::hash::Hash + ?Sized>(package: PackageId, value: &T) -> Self {
         Self {
@@ -125,7 +134,7 @@ impl ItemId {
         }
     }
 
-    /// Creates a new [`ItemId`] from the next item in the sequence.
+    /// Creates a new [`DefId`] from the next item in the sequence.
     #[inline]
     #[must_use]
     pub fn next(self) -> Self {
@@ -135,7 +144,7 @@ impl ItemId {
         }
     }
 
-    /// Creates an empty [`ItemId`] without a valid ID.
+    /// Creates an empty [`DefId`] without a valid ID.
     #[inline]
     #[must_use]
     pub const fn empty() -> Self {
@@ -144,101 +153,20 @@ impl ItemId {
             index: Idx::new(),
         }
     }
-}
 
-/// Uniquely identifies a field within a given parent item.
-///
-/// [`FieldId`] instances are unique within the parent item, referenced
-/// by it's [`ItemId`] in [`FieldId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct FieldId {
-    pub item: ItemId,
-    pub index: Idx,
-}
+    pub fn as_usize(self) -> usize {
+        // Used to prevent `hash_id` from creating a value of 0 when the kind is
+        // `FunctionKind::Function` and the ID is 0. A function ID of 0 can look
+        // wrong or misleading, so we're explicitly removing that possiblity.
+        static HASH_OFFSET: usize = 0x4D6B_0189;
 
-impl FieldId {
-    /// Creates a new [`FieldId`] without a unique ID.
-    ///
-    /// If an [`FieldId`] with a valid ID is required, see [`FieldId::next()`].
-    #[inline]
-    pub fn empty(item: ItemId) -> Self {
-        Self {
-            item,
-            index: Idx::new(),
-        }
-    }
-
-    /// Creates a new [`FieldId`] with the given ID.
-    #[inline]
-    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
-        Self {
-            item,
-            index: index.into(),
-        }
+        crate::hash_id(&(self, HASH_OFFSET))
     }
 }
 
-/// Uniquely identifies a method within a given parent item.
-///
-/// [`MethodId`] instances are unique within the parent item, referenced
-/// by it's [`ItemId`] in [`MethodId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct MethodId {
-    pub item: ItemId,
-    pub index: Idx,
-}
-
-impl MethodId {
-    /// Creates a new [`MethodId`] without a unique ID.
-    ///
-    /// If an [`MethodId`] with a valid ID is required, see [`MethodId::next()`].
-    #[inline]
-    pub fn empty(item: ItemId) -> Self {
-        Self {
-            item,
-            index: Idx::new(),
-        }
-    }
-
-    /// Creates a new [`MethodId`] with the given ID.
-    #[inline]
-    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
-        Self {
-            item,
-            index: index.into(),
-        }
-    }
-}
-
-/// Uniquely identifies a pattern within a given parent item.
-///
-/// [`PatternId`] instances are unique within the parent item, referenced
-/// by it's [`ItemId`] in [`PatternId::item`].
-#[derive(Hash, Default, Debug, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
-pub struct PatternId {
-    pub item: ItemId,
-    pub index: Idx,
-}
-
-impl PatternId {
-    /// Creates a new [`PatternId`] without a unique ID.
-    ///
-    /// If an [`PatternId`] with a valid ID is required, see [`PatternId::next()`].
-    #[inline]
-    pub fn empty(item: ItemId) -> Self {
-        Self {
-            item,
-            index: Idx::new(),
-        }
-    }
-
-    /// Creates a new [`PatternId`] with the given ID.
-    #[inline]
-    pub fn new(item: ItemId, index: impl Into<Idx>) -> Self {
-        Self {
-            item,
-            index: index.into(),
-        }
+impl std::fmt::Display for DefId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "F{:?}", self.as_usize())
     }
 }
 
@@ -248,7 +176,7 @@ impl PatternId {
 /// by it's [`ItemId`] in [`StatementId::def`].
 #[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct StatementId {
-    pub def: ItemId,
+    pub def: DefId,
     pub index: Idx,
 }
 
@@ -257,14 +185,14 @@ impl StatementId {
     ///
     /// If an [`StatementId`] with a valid ID is required, see [`StatementId::next()`].
     #[inline]
-    pub fn empty(def: ItemId) -> Self {
+    pub fn empty(def: DefId) -> Self {
         Self { def, index: Idx::new() }
     }
 
     /// Creates a new [`StatementId`] with a unique ID.
     #[inline]
     #[must_use]
-    pub fn next(def: ItemId, prev: Self) -> Self {
+    pub fn next(def: DefId, prev: Self) -> Self {
         Self {
             def,
             index: Idx::next(prev.index),
@@ -273,7 +201,7 @@ impl StatementId {
 
     /// Creates a new [`StatementId`] with the given parameters.
     #[inline]
-    pub fn from_id(def: ItemId, index: impl Into<Idx>) -> Self {
+    pub fn from_id(def: DefId, index: impl Into<Idx>) -> Self {
         Self {
             def,
             index: index.into(),
@@ -293,7 +221,7 @@ impl StatementId {
 /// by it's [`ItemId`] in [`ExpressionId::def`].
 #[derive(Hash, Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ExpressionId {
-    pub def: ItemId,
+    pub def: DefId,
     pub index: Idx,
 }
 
@@ -302,14 +230,14 @@ impl ExpressionId {
     ///
     /// If an [`ExpressionId`] with a valid ID is required, see [`ExpressionId::next()`].
     #[inline]
-    pub fn empty(def: ItemId) -> Self {
+    pub fn empty(def: DefId) -> Self {
         Self { def, index: Idx::new() }
     }
 
     /// Creates a new [`ExpressionId`] with a unique ID.
     #[inline]
     #[must_use]
-    pub fn next(def: ItemId, prev: Self) -> Self {
+    pub fn next(def: DefId, prev: Self) -> Self {
         Self {
             def,
             index: Idx::next(prev.index),
@@ -318,37 +246,10 @@ impl ExpressionId {
 
     /// Creates a new [`ExpressionId`] with the given parameters.
     #[inline]
-    pub fn from_id(def: ItemId, index: impl Into<Idx>) -> Self {
+    pub fn from_id(def: DefId, index: impl Into<Idx>) -> Self {
         Self {
             def,
             index: index.into(),
         }
-    }
-}
-
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum DefId {
-    Item(ItemId),
-    Field(FieldId),
-    Method(MethodId),
-    Pattern(PatternId),
-    Statement(StatementId),
-    Expression(ExpressionId),
-}
-
-impl DefId {
-    pub fn as_usize(self) -> usize {
-        // Used to prevent `hash_id` from creating a value of 0 when the kind is
-        // `FunctionKind::Function` and the ID is 0. A function ID of 0 can look
-        // wrong or misleading, so we're explicitly removing that possiblity.
-        static HASH_OFFSET: usize = 0x4D6B_0189;
-
-        crate::hash_id(&(self, HASH_OFFSET))
-    }
-}
-
-impl std::fmt::Display for DefId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "F{:?}", self.as_usize())
     }
 }

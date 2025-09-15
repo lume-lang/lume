@@ -80,6 +80,21 @@ impl PrettyPrint for Item {
     }
 }
 
+impl PrettyPrint for Def {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Def::Item(def) => def.pretty_fmt(map, f),
+            Def::Method(def) => def.pretty_fmt(map, f),
+            Def::TraitMethodDef(def) => def.pretty_fmt(map, f),
+            Def::TraitMethodImpl(def) => def.pretty_fmt(map, f),
+            Def::Pattern(def) => def.pretty_fmt(map, f),
+            Def::Statement(def) => def.pretty_fmt(map, f),
+            Def::Expression(def) => def.pretty_fmt(map, f),
+            Def::Field(def) => def.pretty_fmt(map, f),
+        }
+    }
+}
+
 impl PrettyPrint for FunctionDefinition {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         let parameters = pretty_list!(self.parameters, map);

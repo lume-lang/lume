@@ -10,7 +10,7 @@ use lume_hir::{self as hir, SELF_TYPE_NAME};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
+    pub(super) fn type_ref(&mut self, expr: ast::Type) -> Result<hir::Type> {
         match expr {
             ast::Type::Named(t) => self.type_named(*t),
             ast::Type::Array(t) => self.type_array(*t),
@@ -19,7 +19,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<hir::Type> {
+    pub(super) fn opt_type_ref(&mut self, expr: Option<ast::Type>) -> Result<hir::Type> {
         match expr {
             Some(e) => Ok(self.type_ref(e)?),
             None => Ok(hir::Type::void()),
@@ -27,17 +27,16 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_named(&self, expr: ast::NamedType) -> Result<hir::Type> {
+    fn type_named(&mut self, expr: ast::NamedType) -> Result<hir::Type> {
+        let id = self.next_def_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
-
-        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
 
         Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
+    fn type_array(&mut self, expr: ast::ArrayType) -> Result<hir::Type> {
         self.type_std(ast::PathSegment::Type {
             name: ARRAY_STD_TYPE.into(),
             type_arguments: vec![*expr.element_type],
@@ -46,7 +45,8 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_self(&self, expr: ast::SelfType) -> Result<hir::Type> {
+    fn type_self(&mut self, expr: ast::SelfType) -> Result<hir::Type> {
+        let id = self.next_def_id();
         let location = self.location(expr.location);
         let name = match &self.self_type {
             Some(ty) => ty.clone(),
@@ -60,14 +60,12 @@ impl LowerModule<'_> {
             }
         };
 
-        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
-
         Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_std(&self, name: ast::PathSegment) -> Result<hir::Type> {
-        let id = lume_span::ItemId::from_name(lume_span::PackageId::empty(), &name);
+    fn type_std(&mut self, name: ast::PathSegment) -> Result<hir::Type> {
+        let id = self.next_def_id();
         let location = self.location(name.location().clone());
 
         let name = self.path_segment(name)?;

@@ -1,9 +1,6 @@
 use std::collections::HashSet;
 
 use error_snippet::Result;
-use lume_span::DefId;
-use lume_span::FieldId;
-use lume_span::MethodId;
 
 use crate::DefinedItem;
 use crate::LowerModule;
@@ -24,7 +21,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_struct(&mut self, expr: ast::StructDefinition) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
 
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(&expr.visibility);
@@ -36,8 +33,8 @@ impl LowerModule<'_> {
         self.self_type = Some(name.clone());
 
         let mut fields = Vec::with_capacity(expr.fields.len());
-        for (idx, field) in expr.fields.into_iter().enumerate() {
-            fields.push(self.def_field(idx, field)?);
+        for field in expr.fields {
+            fields.push(self.def_field(field)?);
         }
 
         self.self_type = None;
@@ -45,7 +42,6 @@ impl LowerModule<'_> {
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Struct(Box::new(
             hir::StructDefinition {
                 id,
-                type_id: None,
                 name,
                 visibility,
                 builtin: expr.builtin,
@@ -57,8 +53,8 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_field(&mut self, idx: usize, expr: ast::Field) -> Result<hir::Field> {
-        let id = DefId::Field(FieldId::new(self.current_item, idx));
+    fn def_field(&mut self, expr: ast::Field) -> Result<hir::Field> {
+        let id = self.next_def_id();
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -74,7 +70,6 @@ impl LowerModule<'_> {
         Ok(hir::Field {
             id,
             name,
-            field_id: None,
             visibility,
             field_type,
             default_value,
@@ -84,7 +79,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_impl(&mut self, expr: ast::Implementation) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
 
         let target = self.type_ref(*expr.name)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -93,15 +88,14 @@ impl LowerModule<'_> {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        for (idx, method) in expr.methods.into_iter().enumerate() {
-            methods.push(self.def_impl_method(idx, method)?);
+        for method in expr.methods {
+            methods.push(self.def_impl_method(method)?);
         }
 
         self.self_type = None;
 
         Ok(lume_hir::Item::Impl(Box::new(hir::Implementation {
             id,
-            impl_id: None,
             target: Box::new(target),
             methods,
             type_parameters,
@@ -110,8 +104,8 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_impl_method(&mut self, idx: usize, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
-        let id = DefId::Method(MethodId::new(self.current_item, idx));
+    fn def_impl_method(&mut self, expr: ast::MethodDefinition) -> Result<hir::MethodDefinition> {
+        let id = self.next_def_id();
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -128,7 +122,6 @@ impl LowerModule<'_> {
 
         Ok(hir::MethodDefinition {
             id,
-            method_id: None,
             name,
             visibility,
             type_parameters,
@@ -141,7 +134,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: ast::TraitDefinition) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
 
         let name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
         let visibility = lower_visibility(&expr.visibility);
@@ -153,8 +146,8 @@ impl LowerModule<'_> {
         self.self_type = Some(name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        for (idx, method) in expr.methods.into_iter().enumerate() {
-            methods.push(self.def_trait_methods(idx, method)?);
+        for method in expr.methods {
+            methods.push(self.def_trait_methods(method)?);
         }
 
         self.self_type = None;
@@ -162,7 +155,6 @@ impl LowerModule<'_> {
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Trait(Box::new(
             hir::TraitDefinition {
                 id,
-                type_id: None,
                 name,
                 visibility,
                 type_parameters,
@@ -173,12 +165,8 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_trait_methods(
-        &mut self,
-        idx: usize,
-        expr: ast::TraitMethodDefinition,
-    ) -> Result<hir::TraitMethodDefinition> {
-        let id = DefId::Method(MethodId::new(self.current_item, idx));
+    fn def_trait_methods(&mut self, expr: ast::TraitMethodDefinition) -> Result<hir::TraitMethodDefinition> {
+        let id = self.next_def_id();
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -190,7 +178,6 @@ impl LowerModule<'_> {
 
         Ok(hir::TraitMethodDefinition {
             id,
-            method_id: None,
             name,
             visibility,
             type_parameters,
@@ -202,7 +189,7 @@ impl LowerModule<'_> {
     }
 
     fn def_enum(&mut self, expr: ast::EnumDefinition) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
 
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -219,7 +206,6 @@ impl LowerModule<'_> {
         Ok(lume_hir::Item::Type(Box::new(hir::TypeDefinition::Enum(Box::new(
             hir::EnumDefinition {
                 id,
-                type_id: None,
                 name,
                 type_parameters,
                 visibility,
@@ -230,7 +216,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_enum_case(&self, idx: usize, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
+    fn def_enum_case(&mut self, idx: usize, expr: ast::EnumDefinitionCase) -> Result<hir::EnumDefinitionCase> {
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
 
@@ -251,7 +237,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_function(&mut self, expr: ast::FunctionDefinition) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.expand_name(ast::PathSegment::ty(expr.name))?;
@@ -270,7 +256,6 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::Item::Function(Box::new(hir::FunctionDefinition {
             id,
-            func_id: None,
             visibility,
             name,
             type_parameters,
@@ -366,7 +351,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn def_trait_impl(&mut self, expr: ast::ImplTrait) -> Result<lume_hir::Item> {
-        let id = self.next_item_id();
+        let id = self.next_def_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
 
         let visibility = lower_visibility(&expr.visibility);
@@ -376,8 +361,8 @@ impl LowerModule<'_> {
         self.self_type = Some(target.name.clone());
 
         let mut methods = Vec::with_capacity(expr.methods.len());
-        for (idx, method) in expr.methods.into_iter().enumerate() {
-            methods.push(self.def_use_method(idx, method)?);
+        for method in expr.methods {
+            methods.push(self.def_use_method(method)?);
         }
 
         let location = self.location(expr.location);
@@ -386,7 +371,6 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::Item::TraitImpl(Box::new(hir::TraitImplementation {
             id,
-            use_id: None,
             name: Box::new(name),
             target: Box::new(target),
             visibility,
@@ -397,12 +381,8 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_use_method(
-        &mut self,
-        idx: usize,
-        expr: ast::TraitMethodImplementation,
-    ) -> Result<hir::TraitMethodImplementation> {
-        let id = DefId::Method(MethodId::new(self.current_item, idx));
+    fn def_use_method(&mut self, expr: ast::TraitMethodImplementation) -> Result<hir::TraitMethodImplementation> {
+        let id = self.next_def_id();
 
         let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
@@ -419,7 +399,6 @@ impl LowerModule<'_> {
 
         Ok(hir::TraitMethodImplementation {
             id,
-            method_id: None,
             visibility,
             name,
             parameters,
@@ -431,7 +410,7 @@ impl LowerModule<'_> {
     }
 
     fn expand_self_name(
-        &self,
+        &mut self,
         name: lume_ast::Identifier,
         type_params: &[lume_ast::TypeParameter],
     ) -> Result<lume_hir::Path> {
