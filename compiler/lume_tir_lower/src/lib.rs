@@ -172,7 +172,7 @@ pub(crate) fn should_skip_method(method: &lume_types::Method, has_body: bool) ->
 #[inline]
 #[must_use]
 pub(crate) fn is_dynamic_dispatch(method: &lume_types::Method, has_body: bool) -> bool {
-    method.kind == lume_types::MethodKind::TraitDefinition && !has_body
+    method.kind == lume_types::MethodKind::TraitDefinition && method.parameters.is_instanced() && !has_body
 }
 
 struct LowerFunction<'tcx> {
