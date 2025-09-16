@@ -824,19 +824,16 @@ impl MarkObjectReferences {
                             DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
                         }
 
-                        if self.register_gc_object(func, block.id, *register) {
-                            self.offset += 1;
-                        }
+                        self.offset += 1;
+                        self.register_gc_object(func, block.id, *register);
                     }
                     InstructionKind::Allocate { register, .. } => {
-                        if self.register_gc_object(func, block.id, *register) {
-                            self.offset += 1;
-                        }
+                        self.offset += 1;
+                        self.register_gc_object(func, block.id, *register);
                     }
                     InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
-                        if self.register_gc_object(func, block.id, *target) {
-                            self.offset += 1;
-                        }
+                        self.offset += 1;
+                        self.register_gc_object(func, block.id, *target);
 
                         self.find_object_references_operand(func, block.id, value);
                     }
