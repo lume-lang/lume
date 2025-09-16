@@ -251,6 +251,8 @@ pub fn trigger_collection_force() {
         panic!("bug!: could not find stack map for allocation call");
     };
 
+    lume_trace::trace!("collection triggered");
+
     GA.try_write().unwrap().promote_allocations(&frame);
 }
 

@@ -166,7 +166,7 @@ impl CraneliftBackend {
                 .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
                 .unwrap();
 
-            tracing::debug!("declaring type metadata: {metadata_name}");
+            lume_trace::debug!("declaring type metadata: {metadata_name}");
 
             self.module_mut()
                 .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -187,7 +187,7 @@ impl CraneliftBackend {
             for field in &metadata.fields {
                 let metadata_name = self.metadata_name_of_field(field, metadata);
 
-                tracing::debug!("declaring field metadata: {metadata_name}");
+                lume_trace::debug!("declaring field metadata: {metadata_name}");
 
                 self.module_mut()
                     .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -213,7 +213,7 @@ impl CraneliftBackend {
                     continue;
                 }
 
-                tracing::debug!("declaring method metadata: {metadata_name}");
+                lume_trace::debug!("declaring method metadata: {metadata_name}");
 
                 self.module_mut()
                     .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -236,7 +236,7 @@ impl CraneliftBackend {
                 for param in &method.parameters {
                     let metadata_name = self.metadata_name_of_param(param, method);
 
-                    tracing::debug!("declaring parameter metadata: {metadata_name}");
+                    lume_trace::debug!("declaring parameter metadata: {metadata_name}");
 
                     self.module_mut()
                         .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -260,7 +260,7 @@ impl CraneliftBackend {
                 for type_param in &method.type_parameters {
                     let metadata_name = self.metadata_name_of_type_param(type_param, method);
 
-                    tracing::debug!("declaring type parameter metadata: {metadata_name}");
+                    lume_trace::debug!("declaring type parameter metadata: {metadata_name}");
 
                     self.module_mut()
                         .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
