@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 indexmap = { version = "^2.9" }
+lume_trace = { path = "../../crates/lume_trace" }
 
 [lib]
 doctest = false
@@ -13,6 +14,7 @@ doctest = false
 [features]
 default = ["paranoid"]
 paranoid = []
+tracing = ["lume_trace/enable"]
 
 [lints]
 workspace = true

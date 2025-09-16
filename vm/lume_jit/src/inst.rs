@@ -53,7 +53,7 @@ impl LowerFunction<'_> {
                 let var = self.declare_var(*register, ty.to_owned());
 
                 let value = self.cg_declaration(decl);
-                tracing::debug!("define_var {register}({var}) = {value} ({decl})");
+                lume_trace::debug!("define_var {register}({var}) = {value} ({decl})");
 
                 self.builder.def_var(var, value);
             }

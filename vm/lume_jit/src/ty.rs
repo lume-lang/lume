@@ -1,13 +1,17 @@
 use cranelift::prelude::*;
 use cranelift_module::Module;
 
-use crate::{CraneliftBackend, LowerFunction};
+use crate::CraneliftBackend;
+
+pub(crate) fn cl_bool_type() -> types::Type {
+    types::I8
+}
 
 impl CraneliftBackend {
     #[tracing::instrument(level = "TRACE", skip(self, ty), fields(ty = %ty), ret(Display))]
     pub(crate) fn cl_type_of(&self, ty: &lume_mir::Type) -> types::Type {
         match &ty.kind {
-            lume_mir::TypeKind::Boolean => Self::cl_bool_type(),
+            lume_mir::TypeKind::Boolean => crate::ty::cl_bool_type(),
             lume_mir::TypeKind::Integer { bits, .. } => match *bits {
                 8 => types::I8,
                 16 => types::I16,
@@ -30,17 +34,7 @@ impl CraneliftBackend {
         }
     }
 
-    pub(crate) fn cl_bool_type() -> types::Type {
-        types::I8
-    }
-
     pub(crate) fn cl_ptr_type(&self) -> types::Type {
         self.module().target_config().pointer_type()
-    }
-}
-
-impl LowerFunction<'_> {
-    pub(crate) fn cl_bool_type() -> types::Type {
-        CraneliftBackend::cl_bool_type()
     }
 }

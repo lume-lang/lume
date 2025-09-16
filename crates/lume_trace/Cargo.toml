@@ -1,0 +1,18 @@
+[package]
+name = "lume_trace"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+tracing = { version = "=0.1.41" }
+
+[features]
+enable = []
+
+[lints]
+workspace = true

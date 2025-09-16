@@ -103,7 +103,7 @@ impl YoungGeneration {
 
     pub(crate) fn alloc(&mut self, size: usize) -> Option<*mut u8> {
         if let Some(ptr) = self.allocator.alloc(size) {
-            println!("[G1] allocated {size} bytes ({ptr:p})");
+            lume_trace::trace!("[G1] allocated {size} bytes ({ptr:p})");
             self.allocations.insert(ptr, size);
 
             Some(ptr)
@@ -115,6 +115,12 @@ impl YoungGeneration {
     /// "Clears" the generation by resetting the bump pointer, as well
     /// as clearing the set of allocations made by the allocator.
     pub(crate) fn clear(&mut self) {
+        if lume_trace::enabled!(lume_trace::Level::TRACE) {
+            for (alloc, size) in &self.allocations {
+                lume_trace::trace!("[G1] deallocated {size} bytes ({:p})", *alloc);
+            }
+        }
+
         self.allocations.clear();
         self.allocator.clear();
     }
@@ -185,7 +191,7 @@ impl GenerationalAllocator {
             return ptr;
         }
 
-        println!("  [GA] Collection triggered, 1st generation exhausted");
+        lume_trace::trace!("collection triggered, 1st generation exhausted");
 
         // Promote all living allocations to the 2nd generation, effectively clearing
         // the entire 1st generation for new allocations.
@@ -198,7 +204,7 @@ impl GenerationalAllocator {
 
         // While it is completely expected to allocate successfully, the fallback
         // of use the 2nd generation allocator exists, in case of allocator changes.
-        eprintln!("warning: expected allocation to G1 after promotion, but it failed");
+        lume_trace::error!("warning: expected allocation to G1 after promotion, but it failed");
 
         self.old.alloc(size)
     }
@@ -207,8 +213,11 @@ impl GenerationalAllocator {
     pub(crate) fn is_collection_required(&self) -> bool {
         let mem_in_use = self.young.allocator.current_size();
         let mem_available = self.young.allocator.total_size();
+        let ratio = (mem_in_use as f32) / (mem_available as f32);
 
-        if (mem_in_use as f32) / (mem_available as f32) >= 0.95 {
+        if ratio >= 0.95 {
+            lume_trace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
+
             return true;
         }
 
@@ -228,7 +237,7 @@ impl GenerationalAllocator {
             let new_live_ptr = self.old.alloc(obj_size);
             unsafe { memcpy(new_live_ptr, live_obj, obj_size) };
 
-            println!("[G1->G2] Promoted {live_obj:p} (now {new_live_ptr:p})");
+            lume_trace::trace!("[G1->G2] promoted {live_obj:p} (now {new_live_ptr:p})");
 
             // Replace the pointer on the stack with newly moved object pointer,
             // so when the function reloads the object register from the stack,

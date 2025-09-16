@@ -13,6 +13,7 @@ lume_gc = { path = "../lume_gc" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_runtime = { path = "../lume_runtime" }
 lume_span = { path = "../../compiler/lume_span" }
+lume_trace = { path = "../../crates/lume_trace" }
 lume_type_metadata = { path = "../../compiler/lume_type_metadata" }
 
 indexmap = { version = "^2.9" }
@@ -25,6 +26,9 @@ cranelift-codegen = { version = "=0.123.2", features = ["unwind"] }
 cranelift-jit = "=0.123.2"
 cranelift-module = "=0.123.2"
 cranelift-native = "=0.123.2"
+
+[features]
+tracing = ["lume_trace/enable"]
 
 [lints]
 workspace = true

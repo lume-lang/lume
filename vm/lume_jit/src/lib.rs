@@ -291,7 +291,7 @@ impl CraneliftBackend {
         let builder = FunctionBuilder::new(&mut ctx.func, builder_ctx);
         LowerFunction::new(self, func, builder).define();
 
-        tracing::debug!(name: "lowered_func", name = %func.name, function = %ctx.func);
+        lume_trace::debug!(name: "lowered_func", name = %func.name, function = %ctx.func);
 
         {
             // We have to pass the same flags to the verifier function as we used
@@ -452,7 +452,7 @@ impl<'ctx> LowerFunction<'ctx> {
         let cg_ty = self.backend.cl_type_of(&ty);
         let var = self.builder.declare_var(cg_ty);
 
-        tracing::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
+        lume_trace::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
 
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
@@ -461,10 +461,13 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub(crate) fn retrieve_var(&self, register: RegisterId) -> Variable {
-        *self
-            .variables
-            .get(&register)
-            .unwrap_or_else(|| panic!("should have register {register} present"))
+        *self.variables.get(&register).unwrap_or_else(|| {
+            panic!(
+                "should have register {register} present ({}, {})",
+                self.func.name,
+                self.func.current_block().id
+            )
+        })
     }
 
     pub(crate) fn use_var(&mut self, register: RegisterId) -> Value {
@@ -480,7 +483,7 @@ impl<'ctx> LowerFunction<'ctx> {
         let val = self.use_var(register);
         let ty = self.retrieve_load_type(register);
 
-        tracing::debug!("loading {val} from {register}, type {ty}");
+        lume_trace::debug!("loading {val} from {register}, type {ty}");
 
         self.builder.ins().load(ty, MemFlags::new(), val, 0)
     }
@@ -497,7 +500,7 @@ impl<'ctx> LowerFunction<'ctx> {
     pub(crate) fn load_field_as(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
         let ptr = self.use_var(register);
 
-        tracing::debug!(%ptr, %ty, %register, field);
+        lume_trace::debug!(%ptr, %ty, %register, field);
 
         self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
     }
@@ -545,7 +548,7 @@ impl<'ctx> LowerFunction<'ctx> {
         };
 
         let field = &fields[index];
-        tracing::debug!(%reg_ty, %field, index);
+        lume_trace::debug!(%reg_ty, %field, index);
 
         self.backend.cl_type_of(field)
     }
