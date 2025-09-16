@@ -729,10 +729,10 @@ impl<'ctx> LowerFunction<'ctx> {
         let cl_func_ref = self.get_func(cl_func_id);
 
         let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
-        let call = self.builder.ins().call(cl_func_ref, &args);
 
         self.insert_gc_trigger();
 
+        let call = self.builder.ins().call(cl_func_ref, &args);
         self.builder.inst_results(call)
     }
 
@@ -747,10 +747,10 @@ impl<'ctx> LowerFunction<'ctx> {
 
         let callee = self.use_var(ptr);
         let args = args.iter().map(|arg| self.cg_operand(arg)).collect::<Vec<_>>();
-        let call = self.builder.ins().call_indirect(cl_sig_ref, callee, &args);
 
         self.insert_gc_trigger();
 
+        let call = self.builder.ins().call_indirect(cl_sig_ref, callee, &args);
         self.builder.inst_results(call)
     }
 
