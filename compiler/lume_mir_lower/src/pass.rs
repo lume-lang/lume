@@ -733,7 +733,7 @@ struct MarkObjectReferences {
 
     /// Defines all the currently marked objects, to prevent multiple instructions from being
     /// inserted, all referencing the same register.
-    marked: HashSet<(BasicBlockId, RegisterId)>,
+    marked: HashSet<RegisterId>,
 
     /// List of all instructions which require an object register instruction.
     ///
@@ -768,40 +768,88 @@ impl MarkObjectReferences {
     fn find_object_references(&mut self, func: &Function) {
         for block in func.blocks.values() {
             for param in &block.parameters {
-                self.register_gc_object(func, block.id, *param);
-                self.offset += 1;
+                if self.register_gc_object(func, block.id, *param) {
+                    self.offset += 1;
+                }
             }
 
             for inst in block.instructions() {
-                // We increment the offset before the main loop body, as the
-                // object reference instruction needs to be declared *after* the
-                // instruction which declares the register.
-                self.offset += 1;
-
                 match &inst.kind {
-                    InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => {
-                        self.register_gc_object(func, block.id, *register);
+                    InstructionKind::Let { register, decl, .. } => {
+                        match &decl.kind {
+                            DeclarationKind::Operand(op) => self.find_object_references_operand(func, block.id, op),
+                            DeclarationKind::Call { args, .. } => {
+                                for arg in args {
+                                    self.find_object_references_operand(func, block.id, arg);
+                                }
+                            }
+                            DeclarationKind::IndirectCall { args, .. } => {
+                                for arg in args {
+                                    self.find_object_references_operand(func, block.id, arg);
+                                }
+                            }
+                            DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
+                        }
+
+                        if self.register_gc_object(func, block.id, *register) {
+                            self.offset += 1;
+                        }
                     }
-                    InstructionKind::Store { target, .. } | InstructionKind::StoreField { target, .. } => {
-                        self.register_gc_object(func, block.id, *target);
+                    InstructionKind::Allocate { register, .. } => {
+                        if self.register_gc_object(func, block.id, *register) {
+                            self.offset += 1;
+                        }
+                    }
+                    InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
+                        if self.register_gc_object(func, block.id, *target) {
+                            self.offset += 1;
+                        }
+
+                        self.find_object_references_operand(func, block.id, value);
                     }
                     InstructionKind::ObjectRegister { .. }
                     | InstructionKind::Assign { .. }
                     | InstructionKind::CreateSlot { .. }
-                    | InstructionKind::StoreSlot { .. } => {}
+                    | InstructionKind::StoreSlot { .. } => {
+                        self.offset += 1;
+                    }
                 }
             }
 
+            self.marked.clear();
             self.offset = 0;
         }
     }
 
-    fn register_gc_object(&mut self, func: &Function, block: BasicBlockId, register: RegisterId) {
-        if self.marked.contains(&(block, register)) || !func.registers.register_ty(register).requires_stack_map() {
-            return;
+    fn find_object_references_operand(&mut self, func: &Function, block: BasicBlockId, op: &Operand) {
+        match &op.kind {
+            OperandKind::Load { id } | OperandKind::Reference { id } => {
+                if self.register_gc_object(func, block, *id) {
+                    self.offset += 1;
+                }
+            }
+            OperandKind::LoadField { target, .. } => {
+                if self.register_gc_object(func, block, *target) {
+                    self.offset += 1;
+                }
+            }
+            OperandKind::Bitcast { .. }
+            | OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::SlotAddress { .. } => {}
+        }
+    }
+
+    fn register_gc_object(&mut self, func: &Function, block: BasicBlockId, register: RegisterId) -> bool {
+        if self.marked.contains(&register) || !func.registers.register_ty(register).requires_stack_map() {
+            return false;
         }
 
-        self.marked.insert((block, register));
+        self.marked.insert(register);
         self.reference_inst.push((block, self.offset, register));
+
+        true
     }
 }

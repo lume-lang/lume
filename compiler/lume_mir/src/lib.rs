@@ -706,14 +706,6 @@ impl BasicBlock {
             location,
         });
     }
-
-    /// Marks the given register as being a GC reference
-    pub fn mark_gc_register(&mut self, register: RegisterId, loc: Location) {
-        self.instructions.push(Instruction {
-            kind: InstructionKind::ObjectRegister { register },
-            location: loc,
-        });
-    }
 }
 
 impl std::fmt::Display for BasicBlock {
