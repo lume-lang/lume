@@ -1410,6 +1410,7 @@ name = "lume_runner"
 version = "0.1.1"
 dependencies = [
  "env_logger",
+ "lume_gc",
  "lume_jit",
  "lume_mir",
  "memmap2",

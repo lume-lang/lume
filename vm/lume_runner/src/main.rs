@@ -30,5 +30,7 @@ fn main() {
     let main_ptr = lume_jit::generate(bytecode_map).unwrap();
     let exit_code = main_ptr();
 
+    lume_gc::drop_allocations();
+
     std::process::exit(exit_code);
 }

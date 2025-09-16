@@ -5,6 +5,7 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+lume_gc = { path = "../lume_gc" }
 lume_jit = { path = "../lume_jit" }
 lume_mir = { path = "../../compiler/lume_mir" }
 
