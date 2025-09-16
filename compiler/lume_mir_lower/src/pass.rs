@@ -1,5 +1,8 @@
+use std::collections::HashSet;
+
 use indexmap::{IndexMap, IndexSet};
 use lume_mir::*;
+use lume_span::Location;
 
 use crate::FunctionTransformer;
 
@@ -11,6 +14,7 @@ impl FunctionTransformer<'_, '_> {
         PassBlockArguments::execute(&mut self.func);
         ConvertAssignmentExpressions::default().execute(&mut self.func);
         RenameSsaVariables::default().execute(&mut self.func);
+        MarkObjectReferences::default().execute(&mut self.func);
     }
 }
 
@@ -748,5 +752,89 @@ impl RenameSsaVariables {
             | OperandKind::String { .. }
             | OperandKind::SlotAddress { .. } => {}
         }
+    }
+}
+
+/// Attempts to mark managed objects as GC references, by adding [`InstructionKind::ObjectRegister`]
+/// instructions to the MIR, wherever fitting. These instructions are used when the garbage collector
+/// looks for live objects in any given location.
+#[derive(Default, Debug)]
+struct MarkObjectReferences {
+    /// Current offset into the current block where the instruction
+    /// should be placed.
+    offset: usize,
+
+    /// Defines all the currently marked objects, to prevent multiple instructions from being
+    /// inserted, all referencing the same register.
+    marked: HashSet<(BasicBlockId, RegisterId)>,
+
+    /// List of all instructions which require an object register instruction.
+    ///
+    /// The tuple in each list entry is:
+    ///  - the block in which the instruction was found,
+    ///  - the offset of where to place the instruction
+    ///  - and the register which needs to marked as an object.
+    reference_inst: Vec<(BasicBlockId, usize, RegisterId)>,
+}
+
+impl MarkObjectReferences {
+    pub fn execute(&mut self, func: &mut Function) {
+        self.find_object_references(func);
+
+        while let Some((block, offset, register)) = self.reference_inst.pop() {
+            let block = func.block_mut(block);
+            let inst = lume_mir::Instruction {
+                kind: lume_mir::InstructionKind::ObjectRegister { register },
+                location: Location::empty(),
+            };
+
+            // Even though it's valid for the offset to be the same length
+            // as the instruction list, `insert` will panic if that's the case.
+            if block.instructions.len() + 1 == offset {
+                block.instructions.push(inst);
+            } else {
+                block.instructions.insert(offset, inst);
+            }
+        }
+    }
+
+    fn find_object_references(&mut self, func: &Function) {
+        for block in func.blocks.values() {
+            for param in &block.parameters {
+                self.register_gc_object(func, block.id, *param);
+                self.offset += 1;
+            }
+
+            for inst in block.instructions() {
+                // We increment the offset before the main loop body, as the
+                // object reference instruction needs to be declared *after* the
+                // instruction which declares the register.
+                self.offset += 1;
+
+                match &inst.kind {
+                    InstructionKind::Let { register, .. } | InstructionKind::Allocate { register, .. } => {
+                        self.register_gc_object(func, block.id, *register);
+                    }
+                    InstructionKind::Store { target, .. } | InstructionKind::StoreField { target, .. } => {
+                        self.register_gc_object(func, block.id, *target);
+                    }
+                    InstructionKind::ObjectRegister { .. }
+                    | InstructionKind::Assign { .. }
+                    | InstructionKind::CreateSlot { .. }
+                    | InstructionKind::StoreSlot { .. } => {}
+                }
+            }
+
+            self.offset = 0;
+        }
+    }
+
+    fn register_gc_object(&mut self, func: &Function, block: BasicBlockId, register: RegisterId) {
+        if self.marked.contains(&(block, register)) || !func.registers.register_ty(register).requires_stack_map() {
+            return;
+        }
+
+        self.marked.insert((block, register));
+        self.reference_inst.push((block, self.offset, register));
     }
 }

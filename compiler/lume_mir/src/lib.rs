@@ -435,7 +435,7 @@ pub struct BasicBlock {
     pub parameters: Vec<RegisterId>,
 
     /// Defines all non-terminator instructions in the block.
-    instructions: Vec<Instruction>,
+    pub instructions: Vec<Instruction>,
 
     /// Defines the terminator of the block.
     ///
