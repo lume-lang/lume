@@ -132,13 +132,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let _entry_block = self.func.new_active_block();
 
         for idx in 0..self.func.signature.parameters.len() {
-            let register = RegisterId::new(idx);
-            let loaded_op = lume_mir::Operand {
-                kind: lume_mir::OperandKind::Reference { id: register },
-                location: Location::empty(),
-            };
-
-            self.mark_gc_value(&loaded_op, Location::empty());
+            self.mark_gc_register(RegisterId::new(idx), Location::empty());
         }
 
         let return_value = self.block(block);
@@ -196,13 +190,6 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     fn mark_gc_register(&mut self, register: lume_mir::RegisterId, loc: Location) {
         if self.is_register_heap_reference(register) {
             self.func.current_block_mut().mark_gc_register(register, loc);
-        }
-    }
-
-    /// Marks the given value as being a GC reference.
-    fn mark_gc_value(&mut self, value: &lume_mir::Operand, loc: Location) {
-        if self.is_value_heap_reference(value) {
-            self.func.current_block_mut().mark_gc_value(value.clone(), loc);
         }
     }
 

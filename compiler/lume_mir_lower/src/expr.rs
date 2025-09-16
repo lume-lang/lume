@@ -40,7 +40,9 @@ impl FunctionTransformer<'_, '_> {
             };
         }
 
-        self.mark_gc_value(&op, expr.location());
+        if let lume_mir::OperandKind::Reference { id } | lume_mir::OperandKind::Load { id } = &op.kind {
+            self.mark_gc_register(*id, expr.location());
+        }
 
         op
     }

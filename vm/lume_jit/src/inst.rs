@@ -105,14 +105,13 @@ impl LowerFunction<'_> {
                     .store(MemFlags::new(), value, target, Offset32::new(offset));
             }
             lume_mir::InstructionKind::ObjectRegister { register } => {
-                let register = self.retrieve_var(*register);
+                if let Some(param) = self.parameters.get(register) {
+                    self.builder.declare_value_needs_stack_map(*param);
+                } else {
+                    let register = self.retrieve_var(*register);
 
-                self.builder.declare_var_needs_stack_map(register);
-            }
-            lume_mir::InstructionKind::ObjectValue { value } => {
-                let value = self.cg_operand(value);
-
-                self.builder.declare_value_needs_stack_map(value);
+                    self.builder.declare_var_needs_stack_map(register);
+                }
             }
         }
     }
