@@ -1,7 +1,8 @@
 extern crate alloc;
 
-use alloc::alloc::{Layout, alloc, dealloc};
+use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
 use indexmap::IndexMap;
+use mimalloc::MiMalloc;
 
 use std::sync::{LazyLock, RwLock};
 
@@ -12,6 +13,7 @@ unsafe extern "C" {
 }
 
 const PAGE_SIZE: usize = 0x1000;
+const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
 pub(crate) struct BumpAllocator {
     /// Defines the layouf of the memory block which backs the allocator.
@@ -27,8 +29,14 @@ pub(crate) struct BumpAllocator {
 
 impl BumpAllocator {
     pub(crate) fn new(total_size: usize) -> Self {
+        debug_assert_ne!(total_size, 0);
+
         let layout = Layout::from_size_align(total_size, PAGE_SIZE).unwrap();
         let base = unsafe { alloc(layout) };
+
+        if base == std::ptr::null_mut() {
+            std::alloc::handle_alloc_error(layout);
+        }
 
         Self {
             layout,
@@ -93,6 +101,9 @@ pub(crate) struct YoungGeneration {
 
 impl YoungGeneration {
     pub(crate) fn new(initial_size: usize) -> Self {
+        // This is a very rough estimate, but we're assuming most allocations
+        // will average out to be ~32 bytes in size. So we're just reserving
+        // enough room for that amount of items in the `allocations` map.
         let alloc_size = initial_size.div_ceil(32);
 
         Self {
@@ -145,18 +156,23 @@ impl YoungGeneration {
 }
 
 pub(crate) struct OldGeneration {
-    allocator: BumpAllocator,
+    allocator: MiMalloc,
 }
 
 impl OldGeneration {
-    pub(crate) fn new(initial_size: usize) -> Self {
-        Self {
-            allocator: BumpAllocator::new(initial_size),
-        }
+    pub(crate) fn new() -> Self {
+        Self { allocator: MiMalloc }
     }
 
     pub(crate) fn alloc(&mut self, size: usize) -> *mut u8 {
-        self.allocator.alloc(size).unwrap()
+        let layout = Layout::from_size_align(size, POINTER_ALIGNMENT).unwrap();
+        let ptr = unsafe { self.allocator.alloc(layout) };
+
+        if ptr == std::ptr::null_mut() {
+            std::alloc::handle_alloc_error(layout);
+        }
+
+        ptr
     }
 }
 
@@ -172,7 +188,7 @@ impl GenerationalAllocator {
     pub fn new() -> Self {
         Self {
             young: YoungGeneration::new(1 * 1024 * 1024),
-            old: OldGeneration::new(64 * 1024 * 1024),
+            old: OldGeneration::new(),
         }
     }
 
