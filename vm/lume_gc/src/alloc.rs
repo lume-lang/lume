@@ -185,11 +185,33 @@ unsafe impl Send for GenerationalAllocator {}
 unsafe impl Sync for GenerationalAllocator {}
 
 impl GenerationalAllocator {
-    pub fn new() -> Self {
+    /// Creates a new [`GenerationalAllocator`], where the initial size of the
+    /// 1st generation is the given value.
+    pub fn new(gen1_size: usize) -> Self {
         Self {
-            young: YoungGeneration::new(1 * 1024 * 1024),
+            young: YoungGeneration::new(gen1_size),
             old: OldGeneration::new(),
         }
+    }
+
+    /// Creates a new [`GenerationalAllocator`], where the initial size of the
+    /// 1st generation is a *n*th root of the total amount of memory installed on
+    /// the host system. In practice, the total amount of memory, in bytes, will
+    /// be bit-shifted right *n* times.
+    ///
+    /// For example, passing `6` on a system with 16GB of total system memory,
+    /// the 1st generation would allocate 256MB of memory, since
+    /// `16GB >> 6 = 256MB` (`17179869184 >> 6 = 268435456`).
+    pub fn with_root(root: u8) -> Self {
+        assert!(root != 0, "root must not be 0");
+        assert!(root <= 24, "dividend must be between 0 and 24");
+
+        let total_memory = get_total_memory();
+        let g1_size = total_memory.unbounded_shr(root as u32);
+
+        lume_trace::trace!("[G1] initial memory block of {g1_size}B ({} MB)", g1_size / 1024 / 1024);
+
+        Self::new(g1_size)
     }
 
     pub fn alloc(&mut self, size: usize, frame: &FrameStackMap) -> *mut u8 {
@@ -267,4 +289,12 @@ impl GenerationalAllocator {
     }
 }
 
-pub static GA: LazyLock<RwLock<GenerationalAllocator>> = LazyLock::new(|| RwLock::new(GenerationalAllocator::new()));
+fn get_total_memory() -> usize {
+    let mut sys = sysinfo::System::new();
+    sys.refresh_memory_specifics(sysinfo::MemoryRefreshKind::nothing().with_ram());
+
+    sys.total_memory() as usize
+}
+
+pub static GA: LazyLock<RwLock<GenerationalAllocator>> =
+    LazyLock::new(|| RwLock::new(GenerationalAllocator::with_root(8)));

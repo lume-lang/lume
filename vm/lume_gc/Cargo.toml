@@ -9,6 +9,7 @@ lume_trace = { path = "../../crates/lume_trace" }
 
 indexmap = { version = "^2.9" }
 mimalloc = { version = "=0.1.48" }
+sysinfo = { version = "=0.37.0" }
 
 [lib]
 doctest = false
