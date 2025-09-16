@@ -265,3 +265,15 @@ pub fn allocate_object(size: usize) -> *mut u8 {
 
     GA.try_write().unwrap().alloc(size, &frame)
 }
+
+/// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it can be
+/// used as a function pointer in Cranelift.
+///
+/// This function will drop all allocations which have been made with the global allocator,
+/// [`GA`].
+#[inline]
+pub fn drop_allocations() {
+    lume_trace::trace!("dropping all allocations");
+
+    GA.try_write().unwrap().drop_allocations();
+}

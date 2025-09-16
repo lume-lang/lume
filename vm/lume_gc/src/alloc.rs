@@ -157,11 +157,15 @@ impl YoungGeneration {
 
 pub(crate) struct OldGeneration {
     allocator: MiMalloc,
+    allocations: IndexMap<*mut u8, usize>,
 }
 
 impl OldGeneration {
     pub(crate) fn new() -> Self {
-        Self { allocator: MiMalloc }
+        Self {
+            allocator: MiMalloc,
+            allocations: IndexMap::new(),
+        }
     }
 
     pub(crate) fn alloc(&mut self, size: usize) -> *mut u8 {
@@ -172,7 +176,24 @@ impl OldGeneration {
             std::alloc::handle_alloc_error(layout);
         }
 
+        self.allocations.insert(ptr, size);
+
         ptr
+    }
+
+    /// Clears the generation deallocating all allocations made by the allocator.
+    pub(crate) fn clear(&mut self) {
+        if lume_trace::enabled!(lume_trace::Level::TRACE) {
+            for (alloc, size) in &self.allocations {
+                lume_trace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
+            }
+        }
+
+        for (ptr, size) in self.allocations.drain(..) {
+            let layout = Layout::from_size_align(size, POINTER_ALIGNMENT).unwrap();
+
+            unsafe { self.allocator.dealloc(ptr, layout) }
+        }
     }
 }
 
@@ -287,6 +308,13 @@ impl GenerationalAllocator {
 
         self.young.clear();
     }
+
+    /// Drops all allocations made with the allocator, effectively resetting
+    /// all the state within the allocator.
+    pub(crate) fn drop_allocations(&mut self) {
+        self.young.clear();
+        self.old.clear();
+    }
 }
 
 fn get_total_memory() -> usize {
@@ -297,4 +325,4 @@ fn get_total_memory() -> usize {
 }
 
 pub static GA: LazyLock<RwLock<GenerationalAllocator>> =
-    LazyLock::new(|| RwLock::new(GenerationalAllocator::with_root(8)));
+    LazyLock::new(|| RwLock::new(GenerationalAllocator::with_root(6)));
