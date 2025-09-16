@@ -404,9 +404,6 @@ impl ConvertAssignmentExpressions {
             InstructionKind::ObjectRegister { register } => {
                 self.get_moved_register(register);
             }
-            InstructionKind::ObjectValue { value } => {
-                self.update_regs_op(value);
-            }
             InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
     }
@@ -660,9 +657,6 @@ impl RenameSsaVariables {
             }
             InstructionKind::ObjectRegister { register } => {
                 *register = *mapping.get(&(*register, block)).unwrap();
-            }
-            InstructionKind::ObjectValue { value } => {
-                Self::update_regs_op(value, block, mapping);
             }
             InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
