@@ -5,8 +5,10 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-indexmap = { version = "^2.9" }
 lume_trace = { path = "../../crates/lume_trace" }
+
+indexmap = { version = "^2.9" }
+mimalloc = { version = "=0.1.48" }
 
 [lib]
 doctest = false
