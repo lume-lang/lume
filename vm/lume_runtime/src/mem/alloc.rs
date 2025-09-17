@@ -1,4 +1,4 @@
-use crate::info::TypeMetadata;
+use lume_metadata::TypeMetadata;
 
 unsafe extern "C" {
     pub fn malloc(size: usize) -> *mut u8;

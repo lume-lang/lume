@@ -1,4 +1,3 @@
-use cranelift::codegen::ir::immediates::Offset32;
 use cranelift::prelude::*;
 
 use super::LowerFunction;
@@ -83,9 +82,7 @@ impl LowerFunction<'_> {
                 let target = self.use_var(*target);
                 let value = self.cg_operand(value);
 
-                self.builder
-                    .ins()
-                    .store(MemFlags::new(), value, target, Offset32::new(0));
+                self.builder.ins().store(MemFlags::new(), value, target, 0);
             }
             lume_mir::InstructionKind::StoreSlot { target, value } => {
                 let slot = self.retrieve_slot(*target);
@@ -100,9 +97,7 @@ impl LowerFunction<'_> {
                 #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
                 let offset = *offset as i32;
 
-                self.builder
-                    .ins()
-                    .store(MemFlags::new(), value, target, Offset32::new(offset));
+                self.builder.ins().store(MemFlags::new(), value, target, offset);
             }
             lume_mir::InstructionKind::ObjectRegister { register } => {
                 if let Some(param) = self.parameters.get(register) {
