@@ -96,43 +96,24 @@ impl Drop for BumpAllocator {
 
 pub(crate) struct YoungGeneration {
     allocator: BumpAllocator,
-    allocations: IndexMap<*mut u8, usize>,
 }
 
 impl YoungGeneration {
     pub(crate) fn new(initial_size: usize) -> Self {
-        // This is a very rough estimate, but we're assuming most allocations
-        // will average out to be ~32 bytes in size. So we're just reserving
-        // enough room for that amount of items in the `allocations` map.
-        let alloc_size = initial_size.div_ceil(32);
-
         Self {
             allocator: BumpAllocator::new(initial_size),
-            allocations: IndexMap::with_capacity(alloc_size),
         }
     }
 
     pub(crate) fn alloc(&mut self, size: usize) -> Option<*mut u8> {
-        if let Some(ptr) = self.allocator.alloc(size) {
-            lume_trace::trace!("[G1] allocated {size} bytes ({ptr:p})");
-            self.allocations.insert(ptr, size);
-
-            Some(ptr)
-        } else {
-            None
-        }
+        self.allocator
+            .alloc(size)
+            .inspect(|ptr| lume_trace::trace!("[G1] allocated {size} bytes ({ptr:p})"))
     }
 
     /// "Clears" the generation by resetting the bump pointer, as well
     /// as clearing the set of allocations made by the allocator.
     pub(crate) fn clear(&mut self) {
-        if lume_trace::enabled!(lume_trace::Level::TRACE) {
-            for (alloc, size) in &self.allocations {
-                lume_trace::trace!("[G1] deallocated {size} bytes ({:p})", *alloc);
-            }
-        }
-
-        self.allocations.clear();
         self.allocator.clear();
     }
 
@@ -289,7 +270,8 @@ impl GenerationalAllocator {
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
         for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
             let live_obj = unsafe { stack_ptr.read() }.cast_mut();
-            let obj_size = self.young.allocations.swap_remove(&live_obj).unwrap();
+            let metadata_ptr = live_obj.cast_const() as *const *const lume_metadata::TypeMetadata;
+            let obj_size = unsafe { metadata_ptr.read().read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.
             let new_live_ptr = self.old.alloc(obj_size);
