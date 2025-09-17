@@ -66,7 +66,8 @@ impl ReificationPass<'_> {
             | lume_types::TypeKind::TypeParameter(_)
             | lume_types::TypeKind::User(lume_types::UserType::Trait(_)) => PTR_SIZE,
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
-                let mut size = 0;
+                // Take metadata pointer into account when calculating the size.
+                let mut size = PTR_SIZE;
 
                 for prop in self.tcx.tdb().find_fields(ty.id) {
                     let prop_ty = self.tcx.tdb().ty_expect(prop.field_type.instance_of)?;
@@ -81,8 +82,9 @@ impl ReificationPass<'_> {
                 size
             }
             lume_types::TypeKind::User(lume_types::UserType::Enum(def)) => {
-                // We start with 1 byte for the discriminant.
-                let mut size = 1;
+                // We start with 1 byte for the discriminant, plus the size
+                // of the metadata pointer.
+                let mut size = PTR_SIZE + 1;
 
                 for variant in self.tcx.enum_cases_of_name(&def.name)? {
                     for param in &variant.parameters {
