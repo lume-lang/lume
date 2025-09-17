@@ -5,6 +5,8 @@ use lume_span::{DefId, Interned, Location};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use serde::{Deserialize, Serialize};
 
+const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
+
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
 /// which is referenced by later expressions, such as call sites.
@@ -1599,19 +1601,23 @@ impl Type {
 
     pub fn bytesize(&self) -> usize {
         match &self.kind {
-            TypeKind::Struct { fields, .. } => fields.iter().map(Type::bytesize).sum(),
+            TypeKind::Struct { fields, .. } => {
+                let metadata_ptr_size = POINTER_SIZE;
+                let fields_sum_size: usize = fields.iter().map(Type::bytesize).sum();
+
+                metadata_ptr_size + fields_sum_size
+            }
             TypeKind::Union { cases } => {
+                let metadata_ptr_size = POINTER_SIZE;
                 let discriminator_size = Self::i8().bytesize();
                 let max_case_size = cases.iter().map(Type::bytesize).max().unwrap_or_default();
 
-                discriminator_size + max_case_size
+                metadata_ptr_size + discriminator_size + max_case_size
             }
             TypeKind::Tuple { items } => items.iter().map(Type::bytesize).sum(),
             TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
             TypeKind::Boolean => 1,
-            TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => {
-                std::mem::size_of::<*const u32>()
-            }
+            TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => POINTER_SIZE,
             TypeKind::Void => 0,
         }
     }

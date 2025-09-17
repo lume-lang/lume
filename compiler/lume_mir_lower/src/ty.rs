@@ -53,35 +53,7 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Type::pointer(elemental)
             }
-            lume_mir::OperandKind::LoadField { target, index, .. } => {
-                let reg_ty = self.func.registers.register_ty(*target).clone();
-
-                if let lume_mir::TypeKind::Union { cases } = &reg_ty.kind {
-                    let case = cases
-                        .get(*index)
-                        .expect("bug!: attempted to load union field out of bounds");
-
-                    return case.clone();
-                };
-
-                let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
-                    panic!("bug!: attempting to load non-pointer register");
-                };
-
-                if let lume_mir::TypeKind::Union { cases } = &elemental.kind {
-                    let case = cases
-                        .get(*index)
-                        .expect("bug!: attempted to load union field out of bounds");
-
-                    return case.clone();
-                };
-
-                let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
-                    panic!("bug!: attempting to load field from non-struct register");
-                };
-
-                fields[*index].clone()
-            }
+            lume_mir::OperandKind::LoadField { field_type, .. } => field_type.clone(),
             lume_mir::OperandKind::SlotAddress { id } => {
                 let slot_ty = self.func.slots.get(id).unwrap();
 

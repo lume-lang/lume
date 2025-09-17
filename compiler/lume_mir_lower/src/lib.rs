@@ -8,6 +8,7 @@ use std::collections::HashMap;
 
 use lume_mir::{Function, ModuleMap, RegisterId};
 use lume_span::{DefId, Location};
+use lume_type_metadata::{TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
 
 use crate::dynamic::DynamicShimBuilder;
@@ -283,5 +284,44 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         }
 
         args
+    }
+
+    /// Gets the metadata entry of the given type.
+    fn metadata_entry_of(&self, type_ref: &lume_types::TypeRef) -> &TypeMetadata {
+        let metadata_id = TypeMetadataId::from(type_ref);
+
+        self.transformer.mir.metadata.metadata.get(&metadata_id).unwrap()
+    }
+
+    /// Gets the metadata MIR type of the given type.
+    fn metadata_type_of(&self, type_ref: &lume_types::TypeRef) -> lume_mir::Type {
+        let metadata_entry = self.metadata_entry_of(type_ref);
+
+        lume_mir::Type {
+            id: self.tcx().std_type(),
+            kind: lume_mir::TypeKind::Metadata {
+                inner: metadata_entry.to_owned(),
+            },
+            is_generic: false,
+        }
+    }
+
+    /// Declares a new register with the metadata entry of the given type.
+    fn declare_metadata_of(&mut self, type_ref: &lume_types::TypeRef, location: Location) -> RegisterId {
+        let metadata_entry = self.metadata_entry_of(type_ref);
+        let metadata_type = self.metadata_type_of(type_ref);
+
+        self.func.declare(
+            metadata_type,
+            lume_mir::Declaration {
+                kind: lume_mir::DeclarationKind::Intrinsic {
+                    name: lume_mir::Intrinsic::Metadata {
+                        metadata: metadata_entry.to_owned(),
+                    },
+                    args: Vec::new(),
+                },
+                location,
+            },
+        )
     }
 }

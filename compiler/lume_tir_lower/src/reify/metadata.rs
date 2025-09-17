@@ -1,5 +1,5 @@
 use lume_errors::Result;
-use lume_span::{DefId, hash_id};
+use lume_span::DefId;
 use lume_type_metadata::*;
 
 use crate::reify::ReificationPass;
@@ -12,8 +12,7 @@ const PTR_ALIGNMENT: usize = std::mem::align_of::<usize>();
 
 impl ReificationPass<'_> {
     pub(crate) fn build_type_metadata_of(&mut self, type_ref: &lume_types::TypeRef) -> Result<TypeMetadataId> {
-        let full_name = format!("{:+}", self.tcx.tdb().ty_expect(type_ref.instance_of)?.name);
-        let id = TypeMetadataId(hash_id(&full_name));
+        let id = TypeMetadataId::from(type_ref);
 
         if self.static_metadata.metadata.contains_key(&id) {
             return Ok(id);
@@ -22,6 +21,7 @@ impl ReificationPass<'_> {
         // Insert a temporary type metadata structure, so we can prevent recursive lookups
         self.static_metadata.metadata.insert(id, TypeMetadata::default());
 
+        let full_name = format!("{:+}", self.tcx.tdb().ty_expect(type_ref.instance_of)?.name);
         let ty = self.tcx.tdb().ty_expect(type_ref.instance_of)?;
         let type_id = ty.id;
 
