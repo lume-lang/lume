@@ -1,5 +1,4 @@
 pub mod array;
-pub mod info;
 pub mod io;
 pub mod mem;
 pub mod string;

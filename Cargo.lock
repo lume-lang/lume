@@ -1241,6 +1241,7 @@ name = "lume_gc"
 version = "0.1.1"
 dependencies = [
  "indexmap",
+ "lume_metadata",
  "lume_trace",
  "mimalloc",
  "sysinfo",
@@ -1343,6 +1344,10 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "lume_metadata"
+version = "0.1.1"
 
 [[package]]
 name = "lume_mir"

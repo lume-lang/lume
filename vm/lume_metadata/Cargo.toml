@@ -1,12 +1,11 @@
 [package]
-name = "lume_runtime"
+name = "lume_metadata"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
-[dependencies]
-lume_gc = { path = "../lume_gc" }
-lume_metadata = { path = "../lume_metadata" }
+[lib]
+doctest = false
 
 [lints]
 workspace = true
