@@ -14,6 +14,7 @@ lume_span = { path = "../lume_span" }
 lume_tir = { path = "../lume_tir" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
+lume_type_metadata = { path = "../lume_type_metadata" }
 
 indexmap = { version = "^2.9" }
 

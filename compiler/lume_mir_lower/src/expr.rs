@@ -146,15 +146,30 @@ impl FunctionTransformer<'_, '_> {
             .map(|prop| self.lower_type(&prop.field_type))
             .collect::<Vec<_>>();
 
-        let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
+        // The first type in all object allocations must be a pointer to the metadata
+        // of the type, so it can be reflected at runtime.
+        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
+        let metadata_ptr_size = std::mem::size_of::<*const u32>();
 
+        let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
         let struct_type = lume_mir::Type::structure(expr.ty.clone(), name, prop_types);
         let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
         let reg = self.func.add_register(struct_ptr);
         self.func.current_block_mut().allocate(reg, struct_type, expr.location);
 
-        let mut offset = 0;
+        // Store the metadata reference in the first element in the structure.
+        let metadata_value = lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: metadata_reg },
+            location: expr.location,
+        };
+
+        self.func
+            .current_block_mut()
+            .store_field(reg, 0, metadata_value, expr.location);
+
+        // Since the element at offset 0 is the metadata, we start just after it.
+        let mut offset = metadata_ptr_size;
 
         for (field, size) in expr.fields.iter().zip(prop_sizes) {
             let value = self.expression(&field.value);
@@ -814,6 +829,11 @@ impl FunctionTransformer<'_, '_> {
         let enum_def = self.tcx().enum_def_type(enum_ty.instance_of).unwrap();
         let def = lume_span::DefId::Item(enum_def.id);
 
+        // The first type in all object allocations must be a pointer to the metadata
+        // of the type, so it can be reflected at runtime.
+        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
+        let metadata_ptr_size = std::mem::size_of::<*const u32>();
+
         let mut union_cases = Vec::new();
 
         for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
@@ -834,12 +854,24 @@ impl FunctionTransformer<'_, '_> {
         let reg = self.func.add_register(union_type.clone());
         self.func.current_block_mut().allocate(reg, union_type, expr.location);
 
-        let mut offset = 0;
+        // Store the metadata reference in the first element in the union.
+        let metadata_value = lume_mir::Operand {
+            kind: lume_mir::OperandKind::Reference { id: metadata_reg },
+            location: expr.location,
+        };
 
-        // Store the discriminant of the variant first
+        self.func
+            .current_block_mut()
+            .store_field(reg, 0, metadata_value, expr.location);
+
+        // Since the element at offset 0 is the metadata, we start just after it.
+        let mut offset = metadata_ptr_size;
+
+        // Store the discriminant of the variant right after the metadata
         self.func
             .current_block_mut()
             .store_field(reg, offset, discriminant, expr.location);
+
         offset += 1;
 
         for argument in &expr.arguments {
@@ -910,7 +942,8 @@ impl FunctionTransformer<'_, '_> {
     }
 
     fn field_offset(&self, field: &lume_types::Field) -> usize {
-        let mut offset = 0;
+        let metadata_ptr_size = std::mem::size_of::<*const u32>();
+        let mut offset = metadata_ptr_size;
 
         for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
             if idx == field.index {

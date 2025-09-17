@@ -1,5 +1,5 @@
 use indexmap::IndexMap;
-use lume_span::DefId;
+use lume_span::{DefId, hash_id};
 use lume_types::TypeId;
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +17,12 @@ impl StaticMetadata {
 
 #[derive(Serialize, Deserialize, Hash, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TypeMetadataId(pub usize);
+
+impl From<&lume_types::TypeRef> for TypeMetadataId {
+    fn from(value: &lume_types::TypeRef) -> Self {
+        Self(hash_id(&value.instance_of))
+    }
+}
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct TypeMetadata {

@@ -1367,6 +1367,7 @@ dependencies = [
  "lume_mir",
  "lume_span",
  "lume_tir",
+ "lume_type_metadata",
  "lume_typech",
  "lume_types",
 ]
