@@ -17,7 +17,7 @@ clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 glob = "^0"
-indexmap = { version = "=2.9.0" }
+indexmap = { workspace = true }
 petgraph = { version = "=0.8.2" }
 rust-embed = { version = "=8.7.0", features = [
     "interpolate-folder-path",
