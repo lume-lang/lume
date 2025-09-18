@@ -42,10 +42,17 @@ unsafe impl Sync for FunctionPtr {}
 /// GC reference.
 pub type FunctionStackMap = Vec<(usize, Vec<usize>)>;
 
+/// Metadata entry for a single compiled function.
 #[derive(Debug)]
 pub struct CompiledFunctionMetadata {
+    /// Defines the address of the first instruction in the function.
     pub start: FunctionPtr,
+
+    /// Defines the address of the last instruction in the function.
     pub end: FunctionPtr,
+
+    /// Defines a list of all stack maps found within the function,
+    /// keyed by offset from [`CompiledFunctionMetadata::start`].
     pub stack_locations: FunctionStackMap,
 }
 
@@ -114,6 +121,14 @@ pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
         .expect("function stack maps should only be assigned once");
 }
 
+/// Attempts to find the stack map for the function, which contains the given
+/// program counter address. If no function is found for the given address or if
+/// no stack map is attached to the found function, returns [`None`].
+///
+/// # Panics
+///
+/// This function will panic if the stack maps have not yet been declared. To declare
+/// them, use [`declare_stack_maps`].
 fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunctionMetadata> {
     let stack_maps = FUNC_STACK_MAPS.get().expect("expected function stack map to be set");
 
@@ -124,6 +139,8 @@ fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunc
     None
 }
 
+/// Represents a single stack map, corresponding to a specific
+/// safepoint location within a compiled Lume function.
 #[derive(Debug)]
 pub(crate) struct FrameStackMap {
     pub map: &'static CompiledFunctionMetadata,
@@ -219,6 +236,12 @@ impl FrameStackMap {
         })
     }
 
+    /// Attempts to find all GC references found inside of the stack map for the current
+    /// program counter, as well as any parent stack maps from predecessor frames.
+    ///
+    /// The returned iterator will iterate over a list of tuples. The first element in the
+    /// tuple is an entry in the current stack frame containing the GC reference and the
+    /// second element is a pointer to the GC reference itself.
     #[inline]
     pub(crate) fn iter_stack_value_locations(&self) -> impl Iterator<Item = (*const *const u8, *const u8)> {
         self.create_frame_hierarchy().into_iter().flat_map(|frame| {
@@ -239,9 +262,18 @@ impl Display for FrameStackMap {
     }
 }
 
+/// Attempts to find a frame stack map which corresponds to the current frame pointer.
+///
+/// If no frame stack map can be found for the current frame pointer, the function
+/// iterates through all parent frames, until a frame stack map is found.
+///
+/// If no frame stack maps are found in any parent frames, the functions returns [`None`].
 fn find_current_stack_map() -> Option<FrameStackMap> {
     let mut fp = arch::read_frame_pointer();
 
+    // NOTE: We're reasonably sure that the frame pointer will be 0 when no
+    //       more frames are actually present, but it might be better
+    //       to compare to the frame pointer of the entry function.
     while fp != 0 {
         let pc = unsafe { arch::return_addr_of_frame(fp) };
 
