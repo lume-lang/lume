@@ -96,8 +96,8 @@ pub struct BuildOptions {
     #[arg(long, default_value = None, help = "Linker to use when linking objects")]
     pub linker: Option<LinkerPreference>,
 
-    #[arg(long, help = "Linker to use when linking objects", value_name = "LIB", value_hint = ValueHint::FilePath)]
-    pub runtime_path: Option<PathBuf>,
+    #[arg(long, help = "Path to the runner executable to fuse with", value_name = "LIB", value_hint = ValueHint::FilePath)]
+    pub runner_path: Option<PathBuf>,
 
     #[arg(
         long = "codegen-backend",
@@ -126,7 +126,7 @@ impl BuildOptions {
             },
             backend: self.backend,
             linker: self.linker,
-            runtime_path: self.runtime_path.clone(),
+            runner_path: self.runner_path.clone(),
         }
     }
 }
