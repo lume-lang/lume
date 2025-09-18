@@ -45,7 +45,7 @@ pub fn fuse_binary_file(gcx: &Arc<GlobalCtx>, mir: lume_mir::ModuleMap, dest: &P
 
 /// Determines the full path of the runner binary.
 fn determine_runner_path(opts: &Options) -> Result<PathBuf> {
-    if let Some(defined_path) = &opts.runtime_path {
+    if let Some(defined_path) = &opts.runner_path {
         return if defined_path.is_absolute() {
             Ok(defined_path.clone())
         } else {
