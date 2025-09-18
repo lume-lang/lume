@@ -16,7 +16,6 @@ sysinfo = { version = "=0.37.0" }
 doctest = false
 
 [features]
-default = ["paranoid"]
 paranoid = []
 tracing = ["lume_trace/enable"]
 
