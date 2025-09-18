@@ -163,14 +163,16 @@ impl CraneliftBackend {
                 continue;
             }
 
-            let ptr = FunctionPtr::new(module.get_finalized_function(func.id));
             let Some(metadata) = function_metadata.remove(def) else {
                 continue;
             };
 
+            let start = FunctionPtr::new(module.get_finalized_function(func.id));
+            let end = FunctionPtr::new(unsafe { start.ptr().byte_add(metadata.total_size) });
+
             func_stack_maps.push(CompiledFunctionMetadata {
-                ptr,
-                len: metadata.total_size,
+                start,
+                end,
                 stack_locations: metadata.stack_locations,
             });
         }

@@ -1,24 +1,28 @@
 pub(crate) mod alloc;
 pub(crate) mod arch;
 
+use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::OnceLock;
 
 use alloc::GA;
 
 /// Immutable, thread-transportable pointer type.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct FunctionPtr(*const u8);
 
 impl FunctionPtr {
+    #[inline]
     pub fn new(ptr: *const u8) -> Self {
         FunctionPtr(ptr)
     }
 
+    #[inline]
     pub fn ptr(self) -> *const u8 {
         self.0
     }
 
+    #[inline]
     pub fn as_usize(self) -> usize {
         self.0.addr()
     }
@@ -40,28 +44,58 @@ pub type FunctionStackMap = Vec<(usize, Vec<usize>)>;
 
 #[derive(Debug)]
 pub struct CompiledFunctionMetadata {
-    pub ptr: FunctionPtr,
-    pub len: usize,
+    pub start: FunctionPtr,
+    pub end: FunctionPtr,
     pub stack_locations: FunctionStackMap,
 }
 
 impl CompiledFunctionMetadata {
+    /// Gets the length of the function machine code, in bytes.
     #[inline]
     #[must_use]
-    pub fn end(&self) -> *const u8 {
-        unsafe { self.ptr.0.byte_add(self.len) }
+    pub fn len(&self) -> usize {
+        self.end.as_usize() - self.start.as_usize()
     }
 
+    /// Gets the offset of the given address inside the function
+    /// address interval as [`Some(offset)`], if the address exists within it.
+    ///
+    /// Otherwise, returns [`None`].
     #[inline]
     #[must_use]
     pub fn offset_of(&self, addr: *const u8) -> Option<usize> {
-        if addr >= self.ptr.0 && addr < self.end() {
-            let offset = addr.addr() - self.ptr.0.addr();
+        if addr >= self.start.0 && addr < self.end.0 {
+            let offset = addr.addr() - self.start.0.addr();
 
             return Some(offset);
         }
 
         None
+    }
+
+    /// Gets the [`Ordering`] of the given address, in reference to the interval of
+    /// the current metadata entry. This method is used for iterating over a list of
+    /// metadata entries using a binary search.
+    ///
+    /// The truth table for the method is as such[^note]:
+    ///
+    /// | Input                      | Output ([`Ordering`]) |
+    /// |----------------------------|-----------------------|
+    /// | `start` > `addr`           | [`Ordering::Greater`] |
+    /// | `end` < `addr`             | [`Ordering::Less`]    |
+    /// | `start` <= `addr` <= `end` | [`Ordering::Equal`]   |
+    ///
+    /// [^note]: `start` and `end` denotes the `start` and `end` field in
+    /// [`CompiledFunctionMetadata`], respectively.
+    #[inline]
+    pub fn ordering_of(&self, addr: *const u8) -> Ordering {
+        if self.start.0 > addr {
+            Ordering::Greater
+        } else if addr > self.end.0 {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
     }
 }
 
@@ -72,7 +106,9 @@ static FUNC_STACK_MAPS: OnceLock<Vec<CompiledFunctionMetadata>> = OnceLock::new(
 /// # Panics
 ///
 /// This function **will** panic if the stack maps are declared more than once.
-pub fn declare_stack_maps(stack_maps: Vec<CompiledFunctionMetadata>) {
+pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
+    stack_maps.sort_by_key(|func| func.start.as_usize());
+
     FUNC_STACK_MAPS
         .set(stack_maps)
         .expect("function stack maps should only be assigned once");
@@ -81,10 +117,8 @@ pub fn declare_stack_maps(stack_maps: Vec<CompiledFunctionMetadata>) {
 fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunctionMetadata> {
     let stack_maps = FUNC_STACK_MAPS.get().expect("expected function stack map to be set");
 
-    for stack_map in stack_maps {
-        if stack_map.offset_of(pc).is_some() {
-            return Some(stack_map);
-        }
+    if let Ok(idx) = stack_maps.binary_search_by(|probe| probe.ordering_of(pc)) {
+        return stack_maps.get(idx);
     }
 
     None
@@ -129,7 +163,7 @@ impl FrameStackMap {
     /// instruction in the associated function.
     #[inline]
     pub(crate) fn offset(&self) -> usize {
-        self.program_counter.addr() - self.map.ptr.as_usize()
+        self.program_counter.addr() - self.map.start.as_usize()
     }
 
     /// Gets the stack pointer which is associated with the frame.
