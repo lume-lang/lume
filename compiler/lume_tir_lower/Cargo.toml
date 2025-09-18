@@ -18,7 +18,7 @@ lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-indexmap = { version = "^2.9" }
+indexmap = { workspace = true }
 tracing = { workspace = true }
 
 [lints]

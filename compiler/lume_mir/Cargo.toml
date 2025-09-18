@@ -14,9 +14,9 @@ lume_span = { path = "../lume_span" }
 lume_type_metadata = { path = "../lume_type_metadata" }
 lume_types = { path = "../lume_types" }
 
-indexmap = { version = "^2.9" }
+indexmap = { workspace = true }
 postcard = "=1.1.3"
-serde = { version = "=1.0.219", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
 tracing = { workspace = true }
 
 [lints]

@@ -9,7 +9,7 @@ test = false
 doctest = false
 
 [dependencies]
-indexmap = { version = "^2.9" }
+indexmap = { workspace = true }
 
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
