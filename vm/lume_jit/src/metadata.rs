@@ -329,6 +329,15 @@ impl CraneliftBackend {
             },
         );
 
+        // Type.drop_ptr
+        if let Some(drop_method) = metadata.drop_method {
+            let drop_ptr = self.declared_funcs.get(&drop_method).unwrap();
+
+            builder.append_func_address(drop_ptr.id);
+        } else {
+            builder.append_null_ptr();
+        }
+
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }
 
@@ -546,6 +555,11 @@ impl<'back> MemoryBlockBuilder<'back> {
         self.align_offset();
 
         self
+    }
+
+    /// Appends a null pointer onto the data block.
+    pub fn append_null_ptr(&mut self) -> &mut Self {
+        self.append_bytes(&vec![0x00; NATIVE_PTR_SIZE])
     }
 
     /// Append a raw byte onto the data block.

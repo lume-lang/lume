@@ -30,6 +30,7 @@ impl ReificationPass<'_> {
 
         let fields = self.fields_on_type(ty)?;
         let methods = self.methods_on_type(type_ref)?;
+        let drop_method = self.find_drop_method(type_ref);
 
         let type_arguments = type_ref
             .type_arguments
@@ -49,6 +50,7 @@ impl ReificationPass<'_> {
                 fields,
                 methods,
                 type_arguments,
+                drop_method,
             },
         );
 
@@ -214,6 +216,16 @@ impl ReificationPass<'_> {
         }
 
         Ok(methods)
+    }
+
+    fn find_drop_method(&self, type_ref: &lume_types::TypeRef) -> Option<DefId> {
+        for method in self.tcx.methods_defined_on(type_ref) {
+            if self.tcx.is_method_dropper(method.hir) {
+                return Some(method.hir);
+            }
+        }
+
+        None
     }
 
     fn type_parameter_metadata(&mut self, id: lume_hir::TypeParameterId) -> Result<TypeParameterMetadata> {

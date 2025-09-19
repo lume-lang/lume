@@ -749,4 +749,45 @@ impl TyInferCtx {
 
         Ok(false)
     }
+
+    /// Returns the [`DefId`] of the `std::ops::Drop::drop()` method from the
+    /// standard library, if found.
+    ///
+    /// If the method is not found, returns [`None`].
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn drop_method_def(&self) -> Option<DefId> {
+        let drop_type_path = lume_hir::Path::from_parts(
+            Some([
+                lume_hir::PathSegment::namespace("std"),
+                lume_hir::PathSegment::namespace("ops"),
+            ]),
+            lume_hir::PathSegment::ty("Drop"),
+        );
+
+        let drop_type_ref = self.find_type_ref(&drop_type_path).unwrap()?;
+        let drop_method_name = Identifier::from("drop");
+
+        let method = self.lookup_impl_methods_on(&drop_type_ref, &drop_method_name).next()?;
+
+        Some(method.hir)
+    }
+
+    /// Determines whether the given method is a dropper.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    pub fn is_method_dropper(&self, method: DefId) -> bool {
+        let Some(dropper_method_id) = self.drop_method_def() else {
+            return false;
+        };
+
+        if let lume_hir::Def::TraitMethodImpl(method_impl) = self.hir_expect_def(method)
+            && let Ok(method_def) = self.hir_trait_method_def_of_impl(method_impl)
+            && method_def.id == dropper_method_id
+        {
+            return true;
+        }
+
+        false
+    }
 }

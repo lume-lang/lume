@@ -50,6 +50,9 @@ pub struct TypeMetadata {
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
     pub type_arguments: Vec<TypeMetadataId>,
+
+    /// Gets the definition of the `Drop` method implementation, if any.
+    pub drop_method: Option<DefId>,
 }
 
 impl TypeMetadata {

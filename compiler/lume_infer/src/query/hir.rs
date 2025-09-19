@@ -473,27 +473,35 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn hir_trait_method_def_of_impl(
+    pub fn hir_trait_def_of_method_impl(
         &self,
         trait_method_impl: &lume_hir::TraitMethodImplementation,
-    ) -> Result<&lume_hir::TraitMethodDefinition> {
+    ) -> Result<&lume_hir::TraitDefinition> {
         for parent in self.hir_parent_iter(trait_method_impl.id) {
             if let lume_hir::Def::Item(lume_hir::Item::TraitImpl(trait_impl)) = parent {
-                let trait_def = self.hir_trait_def_of_impl(trait_impl)?;
-
-                let Some(trait_method_def) = trait_def
-                    .methods
-                    .iter()
-                    .find(|method| method.name == trait_method_impl.name)
-                else {
-                    panic!("bug!: trait method implementation exists without trait method definition");
-                };
-
-                return Ok(trait_method_def);
+                return self.hir_trait_def_of_impl(trait_impl);
             }
         }
 
         panic!("bug!: trait method implementation defined outside trait implementation");
+    }
+
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_trait_method_def_of_impl(
+        &self,
+        trait_method_impl: &lume_hir::TraitMethodImplementation,
+    ) -> Result<&lume_hir::TraitMethodDefinition> {
+        let trait_def = self.hir_trait_def_of_method_impl(trait_method_impl)?;
+
+        let Some(trait_method_def) = trait_def
+            .methods
+            .iter()
+            .find(|method| method.name == trait_method_impl.name)
+        else {
+            panic!("bug!: trait method implementation exists without trait method definition");
+        };
+
+        Ok(trait_method_def)
     }
 
     /// Returns the span of the HIR definition with the given ID.

@@ -39,6 +39,11 @@ pub struct TypeMetadata {
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
     pub type_arguments: List<TypeMetadata>,
+
+    /// Gets the address of the `Drop` method implementation, if any.
+    ///
+    /// If no `Drop` method is defined, returns `null`.
+    pub drop_ptr: *const c_void,
 }
 
 #[repr(C)]
