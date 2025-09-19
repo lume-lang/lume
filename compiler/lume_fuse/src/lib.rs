@@ -96,7 +96,7 @@ fn determine_dev_runner_path() -> Result<PathBuf> {
 #[include = "debug/lume_runner"]
 #[include = "release/lume_runner"]
 #[allow_missing = true]
-struct RuntimeLibrary;
+struct EmbeddedRunner;
 
 /// Determines the full path of the runtime library in the system library directory.
 fn determine_release_runner_path() -> Result<PathBuf> {
@@ -113,7 +113,7 @@ fn determine_release_runner_path() -> Result<PathBuf> {
 
     let library_file_name = format!("{}/{}", profile_name(), BIN_RUNNER_NAME);
 
-    let Some(runtime_file) = RuntimeLibrary::get(&library_file_name) else {
+    let Some(runtime_file) = EmbeddedRunner::get(&library_file_name) else {
         return Err(SimpleDiagnostic::new("could not find runner binary in project")
             .with_help("was the library built correctly?")
             .with_help("use `cargo build --release --workspace` to build the runner")
