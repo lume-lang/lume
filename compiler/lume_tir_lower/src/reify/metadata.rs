@@ -123,7 +123,11 @@ impl ReificationPass<'_> {
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
                 // Arrays are aligned to their elemental type alignment
                 if type_ref.instance_of == lume_types::TYPEREF_ARRAY_ID {
-                    return self.alignment_of_ty(type_ref.type_arguments.first().unwrap());
+                    let Some(elemental_type) = type_ref.type_arguments.first() else {
+                        return Ok(PTR_SIZE);
+                    };
+
+                    return self.alignment_of_ty(elemental_type);
                 }
 
                 // Otherwise, use the maximum alignment of all fields on the type.

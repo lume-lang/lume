@@ -45,12 +45,6 @@ impl<'tcx> Lower<'tcx> {
         let mut reification_pass = reify::ReificationPass::new(self.tcx);
 
         for ty in self.tcx.db().types() {
-            // We only build type metadata of concrete types, so we skip
-            // generic types and type parameters.
-            if ty.is_generic() || ty.is_type_parameter() {
-                continue;
-            }
-
             let type_ref = lume_types::TypeRef::new(ty.id, Location::empty());
             reification_pass.build_type_metadata_of(&type_ref)?;
         }
