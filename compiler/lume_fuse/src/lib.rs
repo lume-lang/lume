@@ -40,6 +40,21 @@ pub fn fuse_binary_file(gcx: &Arc<GlobalCtx>, mir: lume_mir::ModuleMap, dest: &P
         .write_all(&(serialized_mir.len() as u64).to_ne_bytes())
         .map_err(IntoDiagnostic::into_diagnostic)?;
 
+    #[cfg(all(not(target_os = "hermit"), unix))]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        // Allow the owner to read and execute the file.
+        let file_mode = 0o500_u32;
+
+        let mut perms = binary_path.metadata()?.permissions();
+        perms.set_mode(perms.mode() | file_mode);
+
+        // No need to error if we can't set the persmissions, so
+        // we just ignore it here.
+        let _ = binary_path.set_permissions(perms);
+    }
+
     Ok(())
 }
 
