@@ -5,7 +5,7 @@ use lume_span::{DefId, Interned, Location};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use serde::{Deserialize, Serialize};
 
-const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
+pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,

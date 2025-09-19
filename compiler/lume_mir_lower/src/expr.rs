@@ -305,7 +305,12 @@ impl FunctionTransformer<'_, '_> {
                     lume_mir::Type::u8(),
                     lume_mir::Declaration {
                         kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
-                            kind: lume_mir::OperandKind::Load { id: loaded_op },
+                            kind: lume_mir::OperandKind::LoadField {
+                                target: loaded_op,
+                                offset: lume_mir::POINTER_SIZE,
+                                index: 0,
+                                field_type: lume_mir::Type::u8(),
+                            },
                             location: pattern.location,
                         }),
                         location: pattern.location,
