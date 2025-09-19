@@ -18,6 +18,29 @@ use lume_gc::{CompiledFunctionMetadata, FunctionPtr, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_span::DefId;
 
+pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
+    ("std::type_of", lume_runtime::type_of as *const u8),
+    ("std::mem::alloc", lume_runtime::mem::lumert_alloc as *const u8),
+    ("std::mem::realloc", lume_runtime::mem::lumert_realloc as *const u8),
+    ("std::mem::dealloc", lume_runtime::mem::lumert_dealloc as *const u8),
+    ("std::mem::ptr_read", lume_runtime::mem::lumert_ptr_read as *const u8),
+    ("std::mem::ptr_write", lume_runtime::mem::lumert_ptr_write as *const u8),
+    ("std::mem::GC::invoke", lume_gc::trigger_collection_force as *const u8),
+    ("std::io::format", lume_runtime::io::format as *const u8),
+    ("std::io::print", lume_runtime::io::print as *const u8),
+    ("std::io::println", lume_runtime::io::println as *const u8),
+    ("std::Int8::to_string", lume_runtime::io::int8_tostring as *const u8),
+    ("std::Int16::to_string", lume_runtime::io::int16_tostring as *const u8),
+    ("std::Int32::to_string", lume_runtime::io::int32_tostring as *const u8),
+    ("std::Int64::to_string", lume_runtime::io::int64_tostring as *const u8),
+    ("std::Int8::to_string", lume_runtime::io::uint8_tostring as *const u8),
+    ("std::UInt16::to_string", lume_runtime::io::uint16_tostring as *const u8),
+    ("std::UInt32::to_string", lume_runtime::io::uint32_tostring as *const u8),
+    ("std::UInt64::to_string", lume_runtime::io::uint64_tostring as *const u8),
+    ("std::Float::to_string", lume_runtime::io::float_tostring as *const u8),
+    ("std::Double::to_string", lume_runtime::io::double_tostring as *const u8),
+];
+
 pub type EntrypointAddress = extern "C" fn() -> i32;
 
 #[derive(Debug, Clone)]
@@ -94,7 +117,7 @@ impl CraneliftBackend {
         let isa = cranelift_native::builder().unwrap().finish(flags.clone()).unwrap();
         let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
 
-        for (name, ptr) in lume_runtime::INTRINSIC_FUNCTIONS {
+        for (name, ptr) in INTRINSIC_FUNCTIONS {
             builder.symbol(*name, *ptr);
         }
 
@@ -105,8 +128,8 @@ impl CraneliftBackend {
         let ptr_ty = module.target_config().pointer_type();
 
         let intrinsics = IntrinsicFunctions {
-            gc_step: Self::declare_external_function(&mut module, "gc_step", &[], None)?,
-            gc_alloc: Self::declare_external_function(&mut module, "gc_alloc", &[ptr_ty], Some(ptr_ty))?,
+            gc_step: import_function(&mut module, "gc_step", &[], None)?,
+            gc_alloc: import_function(&mut module, "gc_alloc", &[ptr_ty], Some(ptr_ty))?,
         };
 
         Ok(Self {
@@ -208,54 +231,6 @@ impl CraneliftBackend {
     #[track_caller]
     pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, JITModule> {
         self.module.as_ref().unwrap().try_write().unwrap()
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(module), err)]
-    fn declare_local_function<TModule: Module>(
-        module: &mut TModule,
-        name: &'static str,
-        params: &[types::Type],
-        ret: Option<types::Type>,
-    ) -> Result<cranelift_module::FuncId> {
-        let mut sig = module.make_signature();
-
-        for param in params {
-            sig.params.push(AbiParam::new(*param));
-        }
-
-        if let Some(ret_ty) = ret {
-            sig.returns.push(AbiParam::new(ret_ty));
-        }
-
-        let func_id = module
-            .declare_function(name, cranelift_module::Linkage::Hidden, &sig)
-            .map_error()?;
-
-        Ok(func_id)
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(module), err)]
-    fn declare_external_function<TModule: Module>(
-        module: &mut TModule,
-        name: &'static str,
-        params: &[types::Type],
-        ret: Option<types::Type>,
-    ) -> Result<cranelift_module::FuncId> {
-        let mut sig = module.make_signature();
-
-        for param in params {
-            sig.params.push(AbiParam::new(*param));
-        }
-
-        if let Some(ret_ty) = ret {
-            sig.returns.push(AbiParam::new(ret_ty));
-        }
-
-        let func_id = module
-            .declare_function(name, cranelift_module::Linkage::Import, &sig)
-            .map_error()?;
-
-        Ok(func_id)
     }
 
     #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
@@ -380,6 +355,30 @@ impl CraneliftBackend {
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
         self.declare_static_data(value, value.as_bytes())
     }
+}
+
+#[tracing::instrument(level = "TRACE", skip(module), err)]
+fn import_function<TModule: Module>(
+    module: &mut TModule,
+    name: &'static str,
+    params: &[types::Type],
+    ret: Option<types::Type>,
+) -> Result<cranelift_module::FuncId> {
+    let mut sig = module.make_signature();
+
+    for param in params {
+        sig.params.push(AbiParam::new(*param));
+    }
+
+    if let Some(ret_ty) = ret {
+        sig.returns.push(AbiParam::new(ret_ty));
+    }
+
+    let func_id = module
+        .declare_function(name, cranelift_module::Linkage::Import, &sig)
+        .map_error()?;
+
+    Ok(func_id)
 }
 
 trait MapModuleResult<T> {
