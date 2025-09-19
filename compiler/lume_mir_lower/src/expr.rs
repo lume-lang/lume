@@ -990,8 +990,9 @@ impl FunctionTransformer<'_, '_> {
     }
 
     fn variant_field_offset(&self, id: lume_span::PatternId, field_idx: usize) -> usize {
-        // We start off with the size of the discriminant of the variant.
-        let mut offset = lume_mir::Type::u8().bytesize();
+        // We start off with the size of the discriminant of the variant plus the size
+        // of the metadata pointer.
+        let mut offset = lume_mir::POINTER_SIZE + lume_mir::Type::u8().bytesize();
 
         let pattern = self.tcx().hir_expect_pattern(DefId::Pattern(id));
         let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
