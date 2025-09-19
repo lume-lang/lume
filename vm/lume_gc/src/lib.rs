@@ -41,7 +41,7 @@ unsafe impl Sync for FunctionPtr {}
 /// The spilled GC references are defined as a list of offsets,
 /// relative to the stack pointer which contain a reference to a living
 /// GC reference.
-pub type FunctionStackMap = Vec<(usize, Vec<usize>)>;
+pub type FunctionStackMap = Vec<(usize, usize, Vec<usize>)>;
 
 /// Metadata entry for a single compiled function.
 #[derive(Debug)]
@@ -204,7 +204,13 @@ impl FrameStackMap {
         self.map
             .stack_locations
             .iter()
-            .find_map(|loc| if loc.0 == offset { Some(loc.1.as_slice()) } else { None })
+            .find_map(|loc| {
+                if loc.0 <= offset && loc.0 + loc.1 >= offset {
+                    Some(loc.2.as_slice())
+                } else {
+                    None
+                }
+            })
             .unwrap_or_else(|| &[])
     }
 

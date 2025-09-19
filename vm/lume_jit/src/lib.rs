@@ -171,10 +171,10 @@ impl CraneliftBackend {
             let code_len = compiled_code.buffer.total_size() as usize;
 
             let mut stack_locations = Vec::new();
-            for (offset, _, map) in compiled_code.buffer.user_stack_maps() {
+            for (offset, length, map) in compiled_code.buffer.user_stack_maps() {
                 let refs = map.entries().map(|(_, offset)| offset as usize).collect();
 
-                stack_locations.push((*offset as usize, refs));
+                stack_locations.push((*offset as usize, *length as usize, refs));
             }
 
             function_metadata.insert(
