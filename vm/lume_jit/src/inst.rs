@@ -117,7 +117,9 @@ impl LowerFunction<'_> {
             lume_mir::TerminatorKind::Return(operand) => {
                 self.insert_gc_trigger();
 
-                if let Some(value) = operand {
+                if let Some(value) = operand
+                    && !self.func.signature.return_type.is_void()
+                {
                     let value = self.cg_operand(value);
 
                     self.builder.ins().return_(&[value]);

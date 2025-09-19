@@ -1559,6 +1559,10 @@ impl Type {
         }
     }
 
+    pub fn is_void(&self) -> bool {
+        self.kind == TypeKind::Void
+    }
+
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
     }
