@@ -114,9 +114,8 @@ fn determine_release_runner_path() -> Result<PathBuf> {
     let library_file_name = format!("{}/{}", profile_name(), BIN_RUNNER_NAME);
 
     let Some(runtime_file) = EmbeddedRunner::get(&library_file_name) else {
-        return Err(SimpleDiagnostic::new("could not find runner binary in project")
-            .with_help("was the library built correctly?")
-            .with_help("use `cargo build --release --workspace` to build the runner")
+        return Err(SimpleDiagnostic::new("could not find embedded runner")
+            .with_help("was the Lume binary built correctly?")
             .into());
     };
 
