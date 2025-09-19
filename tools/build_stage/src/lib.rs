@@ -95,7 +95,17 @@ impl ManifoldDriver {
         Ok(mir)
     }
 
-    /// Compiles an object file from the current [`ManifoldDriver`] instance.
+    /// JIT compiles the MIR map from the current [`ManifoldDriver`] instance in-memory.
+    pub fn jit(&self) -> Result<()> {
+        let (tcx, tir) = self.build_tir()?;
+        let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
+
+        lume_jit::generate(mir).unwrap();
+
+        Ok(())
+    }
+
+    /// Compiles  from the current [`ManifoldDriver`] instance.
     pub fn compile(&self) -> Result<PathBuf> {
         let (tcx, tir) = self.build_tir()?;
         let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);

@@ -10,7 +10,7 @@ use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
 use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
-use cranelift_module::{DataDescription, DataId, Linkage, Module};
+use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
 
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
@@ -38,14 +38,39 @@ struct IntrinsicFunctions {
     pub gc_alloc: cranelift_module::FuncId,
 }
 
-/// Generates object files using the given backend.
+/// JIT compiles the given MIR map and returns the fully-compiled [`JITModule`].
 ///
 /// # Errors
 ///
-/// Returns `Err` if the selected backend returned an error while generating object files.
+/// Returns `Err` if the compiler returned an error while compiling the MIR.
 #[tracing::instrument(level = "DEBUG", skip_all, err)]
-pub fn generate<'ctx>(mir: ModuleMap) -> Result<EntrypointAddress> {
+pub fn generate<'ctx>(mir: ModuleMap) -> Result<JITModule> {
     CraneliftBackend::new(mir)?.generate()
+}
+
+/// JIT compiles the given MIR map and returns an address pointer to the
+/// compiled `main` function.
+///
+/// # Errors
+///
+/// Returns `Err` if the compiler returned an error while compiling the MIR.
+#[tracing::instrument(level = "DEBUG", skip_all, err)]
+pub fn generate_main<'ctx>(mir: ModuleMap) -> Result<EntrypointAddress> {
+    let module = generate(mir)?;
+
+    let main_func = match module.get_name("main") {
+        Some(FuncOrDataId::Func(func_id)) => func_id,
+        Some(FuncOrDataId::Data(_)) => {
+            return Err(
+                SimpleDiagnostic::new("expected `main` to be function declaration, found data declartion").into(),
+            );
+        }
+        None => return Err(SimpleDiagnostic::new("could not find declaration with name `main`").into()),
+    };
+
+    let main_ptr = module.get_finalized_function(main_func);
+
+    Ok(unsafe { std::mem::transmute(main_ptr) })
 }
 
 pub(crate) struct CraneliftBackend {
@@ -95,7 +120,7 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn generate(&mut self) -> lume_errors::Result<EntrypointAddress> {
+    fn generate(&mut self) -> lume_errors::Result<JITModule> {
         let functions = std::mem::take(&mut self.context.functions);
 
         for func in functions.values() {
@@ -110,19 +135,11 @@ impl CraneliftBackend {
 
         let mut ctx = self.module_mut().make_context();
         let mut builder_ctx = FunctionBuilderContext::new();
-
-        let mut main_func = None;
         let mut function_metadata = HashMap::new();
 
         for func in self.context.functions.values() {
             if func.signature.external {
                 continue;
-            }
-
-            let declared_func = self.declared_funcs.get(&func.id).unwrap();
-
-            if func.name == "main" {
-                main_func = Some(declared_func.id);
             }
 
             self.define_function(func, &mut ctx, &mut builder_ctx)?;
@@ -179,10 +196,7 @@ impl CraneliftBackend {
 
         lume_gc::declare_stack_maps(func_stack_maps);
 
-        let main_func_id = main_func.expect("could not find main function");
-        let main_func_ptr = module.get_finalized_function(main_func_id);
-
-        Ok(unsafe { std::mem::transmute(main_func_ptr) })
+        Ok(module)
     }
 
     #[track_caller]

@@ -15,6 +15,7 @@ lume_fuse = { path = "../../compiler/lume_fuse" }
 lume_hir = { path = "../../compiler/lume_hir" }
 lume_hir_lower = { path = "../../compiler/lume_hir_lower" }
 lume_infer = { path = "../../compiler/lume_infer" }
+lume_jit = { path = "../../vm/lume_jit" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_mir_lower = { path = "../../compiler/lume_mir_lower" }
 lume_session = { path = "../../compiler/lume_session" }

@@ -152,6 +152,7 @@ dependencies = [
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
+ "lume_jit",
  "lume_mir",
  "lume_mir_lower",
  "lume_session",
