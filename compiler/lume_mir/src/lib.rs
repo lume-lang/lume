@@ -587,9 +587,9 @@ impl BasicBlock {
     }
 
     /// Declares a new heap-allocated register with the given type.
-    pub fn allocate(&mut self, register: RegisterId, ty: Type, loc: Location) {
+    pub fn allocate(&mut self, register: RegisterId, ty: Type, metadata: RegisterId, loc: Location) {
         self.instructions.push(Instruction {
-            kind: InstructionKind::Allocate { register, ty },
+            kind: InstructionKind::Allocate { register, ty, metadata },
             location: loc,
         });
     }
@@ -914,7 +914,11 @@ pub enum InstructionKind {
     CreateSlot { slot: SlotId, ty: Type },
 
     /// Declares a heap-allocated register within the current function.
-    Allocate { register: RegisterId, ty: Type },
+    Allocate {
+        register: RegisterId,
+        ty: Type,
+        metadata: RegisterId,
+    },
 
     /// Stores the value into the target register.
     Store { target: RegisterId, value: Operand },
@@ -971,7 +975,7 @@ impl std::fmt::Display for Instruction {
             InstructionKind::Let { register, decl, ty } => write!(f, "let {register}: {ty} = {decl}"),
             InstructionKind::Assign { target, value } => write!(f, "{target} = {value}"),
             InstructionKind::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
-            InstructionKind::Allocate { register, ty } => write!(f, "{register} = alloc {ty}"),
+            InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {ty}"),
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
             InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset:X}] = {value}"),

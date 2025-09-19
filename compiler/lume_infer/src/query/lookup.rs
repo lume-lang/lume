@@ -4,6 +4,7 @@ use crate::query::{CallReference, Callable};
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{self, Identifier, Node, Path};
+use lume_query::cached_query;
 use lume_span::DefId;
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 

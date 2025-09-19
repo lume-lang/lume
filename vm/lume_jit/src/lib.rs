@@ -129,7 +129,7 @@ impl CraneliftBackend {
 
         let intrinsics = IntrinsicFunctions {
             gc_step: import_function(&mut module, "gc_step", &[], None)?,
-            gc_alloc: import_function(&mut module, "gc_alloc", &[ptr_ty], Some(ptr_ty))?,
+            gc_alloc: import_function(&mut module, "gc_alloc", &[ptr_ty, ptr_ty], Some(ptr_ty))?,
         };
 
         Ok(Self {
@@ -331,7 +331,6 @@ impl CraneliftBackend {
                 .unwrap();
 
             self.static_data.try_write().unwrap().insert(key.to_owned(), data_id);
-
             self.module_mut().define_data(data_id, ctx).unwrap();
 
             data_id
@@ -706,18 +705,19 @@ impl<'ctx> LowerFunction<'ctx> {
         }
     }
 
-    #[allow(clippy::cast_lossless)]
-    pub(crate) fn alloc(&mut self, ty: types::Type) -> Value {
-        self.alloca(ty.bytes() as usize)
-    }
-
     #[allow(clippy::cast_lossless, clippy::cast_possible_wrap)]
-    pub(crate) fn alloca(&mut self, size: usize) -> Value {
-        let malloc_id = self.backend.intrinsics.gc_alloc;
-        let malloc = self.get_func(malloc_id);
+    pub(crate) fn alloca(&mut self, size: usize, metadata: Option<RegisterId>) -> Value {
+        let alloc_id = self.backend.intrinsics.gc_alloc;
+        let alloc = self.get_func(alloc_id);
+
+        let metadata_arg = if let Some(metadata) = metadata {
+            self.use_var(metadata)
+        } else {
+            self.builder.ins().iconst(self.backend.cl_ptr_type(), 0)
+        };
 
         let size = self.builder.ins().iconst(types::I64, size as i64);
-        let call = self.builder.ins().call(malloc, &[size]);
+        let call = self.builder.ins().call(alloc, &[size, metadata_arg]);
 
         self.builder.inst_results(call)[0]
     }

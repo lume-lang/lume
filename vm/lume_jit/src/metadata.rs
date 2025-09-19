@@ -159,7 +159,6 @@ impl CraneliftBackend {
     fn declare_all_type_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             let metadata_name = metadata.symbol_name();
-
             let array_name = format!("{}__type_args", metadata.symbol_name());
 
             self.module_mut()

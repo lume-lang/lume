@@ -6,6 +6,7 @@ use std::fmt::Display;
 use std::sync::OnceLock;
 
 use alloc::GA;
+use lume_metadata::TypeMetadata;
 
 /// Immutable, thread-transportable pointer type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -324,12 +325,12 @@ pub fn trigger_collection_force() {
 
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
 /// used as a function pointer in Cranelift.
-pub fn allocate_object(size: usize) -> *mut u8 {
+pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
     let Some(frame) = find_current_stack_map() else {
         panic!("bug!: could not find stack map for allocation call");
     };
 
-    GA.try_write().unwrap().alloc(size, &frame)
+    GA.try_write().unwrap().alloc(size, metadata, &frame)
 }
 
 /// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it can be

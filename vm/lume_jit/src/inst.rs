@@ -71,10 +71,10 @@ impl LowerFunction<'_> {
 
                 self.slots.insert(*slot, stack_slot);
             }
-            lume_mir::InstructionKind::Allocate { register, ty } => {
+            lume_mir::InstructionKind::Allocate { register, ty, metadata } => {
                 let ptr_ty = lume_mir::Type::pointer(ty.clone());
                 let var = self.declare_var(*register, ptr_ty);
-                let ptr = self.cg_alloc_type(ty);
+                let ptr = self.cg_alloc_type(ty, *metadata);
 
                 self.builder.def_var(var, ptr);
             }
@@ -157,22 +157,19 @@ impl LowerFunction<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
-    pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type) -> Value {
+    pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type, metadata: lume_mir::RegisterId) -> Value {
         match &ty.kind {
-            lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } | lume_mir::TypeKind::Tuple { .. } => {
+            lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } => {
                 let size = ty.bytesize();
 
-                self.alloca(size)
+                self.alloca(size, Some(metadata))
             }
-            lume_mir::TypeKind::Integer { .. }
+            lume_mir::TypeKind::Tuple { .. }
+            | lume_mir::TypeKind::Integer { .. }
             | lume_mir::TypeKind::Float { .. }
             | lume_mir::TypeKind::Boolean
             | lume_mir::TypeKind::String
-            | lume_mir::TypeKind::Pointer { .. } => {
-                let cl_type = self.backend.cl_type_of(ty);
-
-                self.alloc(cl_type)
-            }
+            | lume_mir::TypeKind::Pointer { .. } => self.alloca(ty.bytesize(), None),
             lume_mir::TypeKind::Metadata { .. } | lume_mir::TypeKind::Void => unreachable!(),
         }
     }

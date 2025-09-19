@@ -156,7 +156,9 @@ impl FunctionTransformer<'_, '_> {
         let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
         let reg = self.func.add_register(struct_ptr);
-        self.func.current_block_mut().allocate(reg, struct_type, expr.location);
+        self.func
+            .current_block_mut()
+            .allocate(reg, struct_type, metadata_reg, expr.location);
 
         // Store the metadata reference in the first element in the structure.
         let metadata_value = lume_mir::Operand {
@@ -857,7 +859,9 @@ impl FunctionTransformer<'_, '_> {
 
         let union_type = lume_mir::Type::union(expr.ty.clone(), union_cases);
         let reg = self.func.add_register(union_type.clone());
-        self.func.current_block_mut().allocate(reg, union_type, expr.location);
+        self.func
+            .current_block_mut()
+            .allocate(reg, union_type, metadata_reg, expr.location);
 
         // Store the metadata reference in the first element in the union.
         let metadata_value = lume_mir::Operand {
