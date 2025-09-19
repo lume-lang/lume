@@ -79,7 +79,7 @@ impl<'tcx> Lower<'tcx> {
             tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
 
             let location = self.tcx.hir_span_of_def(method.hir);
-            let kind = determine_method_kind(method, self.tcx.hir_body_of_def(method.hir).is_some());
+            let kind = self.determine_method_kind(method, self.tcx.hir_body_of_def(method.hir).is_some());
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(method.hir, &method.name, method.sig(), kind, location)?;
@@ -141,6 +141,34 @@ impl<'tcx> Lower<'tcx> {
         Ok(())
     }
 
+    /// Determines the [`lume_tir::FunctionKind`] of the given method.
+    pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
+        // Checks whether the method is an implementation of `std::ops::Drop::drop()`.
+        if self.tcx.is_method_dropper(method.hir) {
+            return lume_tir::FunctionKind::Dropper;
+        }
+
+        // Intrinsic methods are only defined so they can be type-checked against.
+        // They do not need to exist within the binary.
+        if method.is_intrinsic() {
+            return lume_tir::FunctionKind::Dynamic;
+        }
+
+        // Trait method definitions without any default implementation have no reason to be in the
+        // binary, since they have no body to codegen from.
+        if is_dynamic_dispatch(method, has_body) {
+            return lume_tir::FunctionKind::Dynamic;
+        }
+
+        // Static trait method definitions cannot be called, if they do not have a default
+        // body to be invoked.
+        if method.is_static() && method.is_trait_definition() && !has_body {
+            return lume_tir::FunctionKind::Unreachable;
+        }
+
+        lume_tir::FunctionKind::Static
+    }
+
     /// Determines whether the given method should be lowered into TIR
     /// or if it should stay as a declaration without body.
     pub(crate) fn should_lower_method(&self, method: &lume_types::Method) -> bool {
@@ -168,29 +196,6 @@ impl<'tcx> Lower<'tcx> {
 
         true
     }
-}
-
-/// Determines the [`lume_tir::FunctionKind`] of the given method.
-pub(crate) fn determine_method_kind(method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
-    // Intrinsic methods are only defined so they can be type-checked against.
-    // They do not need to exist within the binary.
-    if method.is_intrinsic() {
-        return lume_tir::FunctionKind::Dynamic;
-    }
-
-    // Trait method definitions without any default implementation have no reason to be in the
-    // binary, since they have no body to codegen from.
-    if is_dynamic_dispatch(method, has_body) {
-        return lume_tir::FunctionKind::Dynamic;
-    }
-
-    // Static trait method definitions cannot be called, if they do not have a default
-    // body to be invoked.
-    if method.is_static() && method.is_trait_definition() && !has_body {
-        return lume_tir::FunctionKind::Unreachable;
-    }
-
-    lume_tir::FunctionKind::Static
 }
 
 /// Determines whether the given method is meant to be invoked dynamically via dynamic dispatch.

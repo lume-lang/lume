@@ -158,6 +158,7 @@ pub struct VariableId(pub usize);
 pub enum FunctionKind {
     Static,
     Dynamic,
+    Dropper,
     Unreachable,
 }
 

@@ -89,7 +89,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         transformer.lower_signature(func);
 
         match func.kind {
-            lume_tir::FunctionKind::Static => {
+            lume_tir::FunctionKind::Static | lume_tir::FunctionKind::Dropper => {
                 if let Some(body) = &func.block {
                     transformer.lower(body);
                     transformer.run_passes();
@@ -127,6 +127,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             if param.vararg {
                 self.func.signature.vararg = true;
             }
+        }
+
+        if func.kind == lume_tir::FunctionKind::Dropper {
+            self.func.signature.is_dropper = true;
         }
 
         self.func.signature.return_type = self.lower_type(&func.return_type);

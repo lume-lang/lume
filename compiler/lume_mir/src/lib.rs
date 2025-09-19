@@ -80,6 +80,9 @@ pub struct Signature {
     /// the first parameter will be the `self` parameter.
     pub parameters: Vec<Parameter>,
     pub return_type: Type,
+
+    /// Determines whether the current function is a drop-method.
+    pub is_dropper: bool,
 }
 
 impl std::fmt::Display for Signature {

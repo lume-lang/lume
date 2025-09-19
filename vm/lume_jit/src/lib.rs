@@ -458,6 +458,10 @@ impl<'ctx> LowerFunction<'ctx> {
     #[inline]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub(crate) fn insert_gc_trigger(&mut self) {
+        if self.func.signature.is_dropper {
+            return;
+        }
+
         let cl_gc_step = self.get_func(self.backend.intrinsics.gc_step);
         self.builder.ins().call(cl_gc_step, &[]);
     }
