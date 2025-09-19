@@ -591,8 +591,6 @@ impl Item {
     }
 
     pub fn type_parameters(&self) -> &TypeParameters {
-        static EMPTY: TypeParameters = TypeParameters::new();
-
         match self {
             Item::Function(symbol) => &symbol.type_parameters,
             Item::Type(symbol) => match &**symbol {
@@ -601,7 +599,7 @@ impl Item {
                 TypeDefinition::Enum(e) => &e.type_parameters,
             },
             Item::Impl(symbol) => &symbol.type_parameters,
-            Item::TraitImpl(_) => &EMPTY,
+            Item::TraitImpl(symbol) => &symbol.type_parameters,
         }
     }
 }
