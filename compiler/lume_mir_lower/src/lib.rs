@@ -102,6 +102,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
                 pass::RenameSsaVariables::default().execute(&mut transformer.func);
             }
+            lume_tir::FunctionKind::Unreachable => {
+                let _entry_block = transformer.func.new_active_block();
+                transformer.func.current_block_mut().unreachable(func.location);
+            }
         }
 
         transformer.func

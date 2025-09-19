@@ -331,7 +331,14 @@ impl Method {
         }
     }
 
+    /// Determines whether the method is static, as opposed to instanced.
+    #[inline]
+    pub fn is_static(&self) -> bool {
+        !self.parameters.is_instanced()
+    }
+
     /// Determines whether the method is instanced, as opposed to static.
+    #[inline]
     pub fn is_instanced(&self) -> bool {
         self.parameters.is_instanced()
     }
@@ -340,6 +347,12 @@ impl Method {
     #[inline]
     pub fn is_intrinsic(&self) -> bool {
         self.kind == MethodKind::Intrinsic
+    }
+
+    /// Determines whether the method is a trait method definition.
+    #[inline]
+    pub fn is_trait_definition(&self) -> bool {
+        self.kind == MethodKind::TraitDefinition
     }
 }
 
