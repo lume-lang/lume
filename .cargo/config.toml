@@ -1,2 +1,11 @@
 [alias]
 test-manifold = "run --package manifold"
+
+# The garbage collector requires frame pointers to exist
+# in the compiled binary - otherwise, the stack walking won't
+# return any usable values, making the GC useless.
+#
+# Only x86_64 Linux seems to build without frame pointers by
+# default, but I am not taking any chances.
+[build]
+rustflags = ["-Cforce-frame-pointers"]
