@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = "0.4"
 
-build_stage = { path = "../tools/build_stage" }
+build_stage = { path = "../tools/build_stage", features = ["fuzzing"] }
 lume_errors = { path = "../compiler/lume_errors" }
 lume_lexer = { path = "../compiler/lume_lexer" }
 lume_parser = { path = "../compiler/lume_parser" }

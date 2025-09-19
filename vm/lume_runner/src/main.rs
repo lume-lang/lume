@@ -27,7 +27,7 @@ fn main() {
     let bytecode_byte_slice = mapped_file.get(start_idx..end_idx).unwrap();
     let bytecode_map: lume_mir::ModuleMap = postcard::from_bytes(bytecode_byte_slice).unwrap();
 
-    let main_ptr = lume_jit::generate(bytecode_map).unwrap();
+    let main_ptr = lume_jit::generate_main(bytecode_map).unwrap();
     let exit_code = main_ptr();
 
     lume_gc::drop_allocations();
