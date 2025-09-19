@@ -279,6 +279,8 @@ impl TyCheckCtx {
                     self.define_block_scope(&case.block)?;
                 }
 
+                self.matching_type_of_cond(cond.id, &cond.cases)?;
+
                 Ok(())
             }
             lume_hir::ExpressionKind::Is(is) => {

@@ -188,6 +188,21 @@ pub struct MismatchedTypesBranches {
 }
 
 #[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "mismatched types in branch",
+    code = "LM4384",
+    help = "expected type {expected}\n   found type {found}",
+    help = "all branches must return the same type"
+)]
+pub struct MismatchedTypesBranchesCondition {
+    #[label(source, "expected type {expected}, but found type {found}...")]
+    pub found_loc: Location,
+
+    pub expected: NamedTypeRef,
+    pub found: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "missing structure field", code = "LM4385")]
 pub struct MissingField {
     #[label(source, "constructor is missing field {field}")]

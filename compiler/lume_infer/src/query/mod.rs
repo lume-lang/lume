@@ -299,6 +299,23 @@ impl TyInferCtx {
         self.type_of_block(&cond.block)
     }
 
+    /// Returns the returned type of the given [`lume_hir::Condition`].
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn type_of_condition_scope(&self, cond: &lume_hir::Condition) -> Result<TypeRef> {
+        let Some(last_statement) = cond.block.statements.last() else {
+            return Ok(TypeRef::void());
+        };
+
+        let stmt = self.hir.expect_statement(*last_statement)?;
+
+        if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
+            self.type_of(fin.value)
+        } else {
+            Ok(TypeRef::void())
+        }
+    }
+
     /// Returns the *type* of the given [`lume_hir::VariableDeclaration`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]

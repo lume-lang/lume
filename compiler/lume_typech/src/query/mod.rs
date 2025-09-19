@@ -3,6 +3,7 @@ pub(crate) mod diagnostics;
 use crate::TyCheckCtx;
 use error_snippet::Result;
 pub use lume_infer::query::Callable;
+use lume_span::ExpressionId;
 use lume_types::{Function, Method, TypeRef};
 
 impl TyCheckCtx {
@@ -382,7 +383,7 @@ impl TyCheckCtx {
                 let expr = self.hir().expect_expression(*expr)?;
 
                 if let lume_hir::ExpressionKind::If(cond) = &expr.kind {
-                    self.matching_type_of_cond(&cond.cases)
+                    self.matching_type_of_cond(cond.id, &cond.cases)
                 } else {
                     self.type_of_stmt(stmt)
                 }
@@ -404,24 +405,44 @@ impl TyCheckCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub(crate) fn matching_type_of_cond(&self, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
+    pub(crate) fn matching_type_of_cond(&self, id: ExpressionId, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
         let first_case = cases.first().expect("expected at least 1 case");
         let last_case = cases.last().expect("expected at least 1 case");
 
-        let expected_type = self.type_of_condition(first_case)?;
+        let has_else_case = cases.iter().any(|case| case.condition.is_none());
 
-        // Ensure that all branches return the same type
-        for case in cases.iter().skip(1) {
-            let found_type = self.type_of_condition(case)?;
+        // If there is no `else` block, we expect the condition to return `void`,
+        // since there would otherwise be no fallback.
+        let expected_type = if has_else_case {
+            self.type_of_condition_scope(first_case)?
+        } else {
+            self.expected_type_of(id)?.unwrap_or_else(|| TypeRef::void())
+        };
+
+        // Ensure that all branches return the same type.
+        for case in cases {
+            let found_type = self.type_of_condition_scope(case)?;
 
             if found_type != expected_type {
-                return Err(crate::check::errors::MismatchedTypesBranches {
-                    found: self.new_named_type(&found_type, false)?,
-                    expected: self.new_named_type(&expected_type, false)?,
-                    found_loc: found_type.location,
-                    reason_loc: expected_type.location,
+                let found = self.new_named_type(&found_type, false)?;
+                let expected = self.new_named_type(&expected_type, false)?;
+
+                if has_else_case {
+                    return Err(crate::check::errors::MismatchedTypesBranches {
+                        found,
+                        expected,
+                        found_loc: found_type.location,
+                        reason_loc: expected_type.location,
+                    }
+                    .into());
+                } else {
+                    return Err(crate::check::errors::MismatchedTypesBranchesCondition {
+                        found,
+                        expected,
+                        found_loc: found_type.location,
+                    }
+                    .into());
                 }
-                .into());
             }
         }
 
