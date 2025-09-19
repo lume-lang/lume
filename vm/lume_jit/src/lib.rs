@@ -33,7 +33,7 @@ pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::Int16::to_string", lume_runtime::io::int16_tostring as *const u8),
     ("std::Int32::to_string", lume_runtime::io::int32_tostring as *const u8),
     ("std::Int64::to_string", lume_runtime::io::int64_tostring as *const u8),
-    ("std::Int8::to_string", lume_runtime::io::uint8_tostring as *const u8),
+    ("std::UInt8::to_string", lume_runtime::io::uint8_tostring as *const u8),
     ("std::UInt16::to_string", lume_runtime::io::uint16_tostring as *const u8),
     ("std::UInt32::to_string", lume_runtime::io::uint32_tostring as *const u8),
     ("std::UInt64::to_string", lume_runtime::io::uint64_tostring as *const u8),
