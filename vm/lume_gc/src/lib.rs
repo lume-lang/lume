@@ -300,7 +300,7 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
 ///
 /// To see whether a collection is required, use [`alloc::GenerationalAllocator::is_collection_required`].
 pub fn trigger_collection() {
-    if GA.try_read().unwrap().is_collection_required() {
+    if GA.try_read().is_ok_and(|alloc| alloc.is_collection_required()) {
         trigger_collection_force();
     }
 }
