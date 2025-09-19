@@ -36,14 +36,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
 
-      - name: Compile runtime
-        run: cargo build --release --package lumert
+      - name: Compile runner
+        run: cargo build --release --package lume_runner
 
       - name: Compile workspace and upload binaries
         uses: taiki-e/upload-rust-binary-action@v1
         with:
           bin: lume
-          include: target/release/liblumert.a
           token: ${{ secrets.GITHUB_TOKEN }}
           archive: lume_$tag_${{ matrix.triple }}
           target: ${{ matrix.target }}
