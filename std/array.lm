@@ -2,7 +2,7 @@ namespace std
 
 import std (Optional)
 import std::mem (alloc, realloc, dealloc)
-import std::ops (Drop)
+import std::ops (Dispose)
 
 /// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
 /// is a generic type, all values within the array must be of the same type.
@@ -108,8 +108,8 @@ impl<T> Array<T> {
     }
 }
 
-use<T> Drop in Array<T> {
-    pub fn drop(self) {
+use<T> Dispose in Array<T> {
+    pub fn dispose(self) {
         dealloc<T>(self.ptr);
     }
 }

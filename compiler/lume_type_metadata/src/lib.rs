@@ -51,7 +51,7 @@ pub struct TypeMetadata {
     /// that they're declared.
     pub type_arguments: Vec<TypeMetadataId>,
 
-    /// Gets the definition of the `Drop` method implementation, if any.
+    /// Gets the definition of the `Dispose` method implementation, if any.
     pub drop_method: Option<DefId>,
 }
 

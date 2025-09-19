@@ -1,0 +1,7 @@
+namespace std::ops
+
+/// Custom handler to execute whenever the parent object
+/// is dropped and/or deallocated.
+trait Dispose {
+    pub fn dispose(self);
+}

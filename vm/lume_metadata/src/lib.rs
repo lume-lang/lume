@@ -40,9 +40,9 @@ pub struct TypeMetadata {
     /// that they're declared.
     pub type_arguments: List<TypeMetadata>,
 
-    /// Gets the address of the `Drop` method implementation, if any.
+    /// Gets the address of the `Dispose` method implementation, if any.
     ///
-    /// If no `Drop` method is defined, returns `null`.
+    /// If no `Dispose` method is defined, returns `null`.
     pub drop_ptr: *const c_void,
 }
 

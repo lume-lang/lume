@@ -751,7 +751,7 @@ impl TyInferCtx {
         Ok(false)
     }
 
-    /// Returns the [`DefId`] of the `std::ops::Drop::drop()` method from the
+    /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from the
     /// standard library, if found.
     ///
     /// If the method is not found, returns [`None`].
@@ -763,7 +763,7 @@ impl TyInferCtx {
                 lume_hir::PathSegment::namespace("std"),
                 lume_hir::PathSegment::namespace("ops"),
             ]),
-            lume_hir::PathSegment::ty("Drop"),
+            lume_hir::PathSegment::ty("Dispose"),
         );
 
         let drop_type_ref = self.find_type_ref(&drop_type_path).unwrap()?;

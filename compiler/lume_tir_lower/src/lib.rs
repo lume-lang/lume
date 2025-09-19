@@ -143,7 +143,7 @@ impl<'tcx> Lower<'tcx> {
 
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
     pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
-        // Checks whether the method is an implementation of `std::ops::Drop::drop()`.
+        // Checks whether the method is an implementation of `std::ops::Dispose::dispose()`.
         if self.tcx.is_method_dropper(method.hir) {
             return lume_tir::FunctionKind::Dropper;
         }

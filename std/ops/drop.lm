@@ -1,5 +1,0 @@
-namespace std::ops
-
-trait Drop {
-    pub fn drop(self);
-}
