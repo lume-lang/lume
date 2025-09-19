@@ -13,6 +13,7 @@ use regex::Regex;
 use crate::TestResult;
 
 pub(crate) struct TestCase {
+    source_path: PathBuf,
     binary_path: PathBuf,
     file_content: String,
 }
@@ -25,6 +26,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     let binary_path = compile(&path, file_content.clone())?;
 
     let test_case = TestCase {
+        source_path: path.clone(),
         binary_path,
         file_content,
     };
@@ -54,7 +56,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
             writeln!(
                 &mut f,
                 "Source file:    {}",
-                test_case.binary_path.display().cyan().underline()
+                test_case.source_path.display().cyan().underline()
             )
             .unwrap();
 
