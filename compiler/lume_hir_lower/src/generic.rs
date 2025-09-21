@@ -38,7 +38,6 @@ impl LowerModule<'_> {
 
             type_params.push(hir::TypeParameter {
                 id,
-                type_id: None,
                 name,
                 constraints,
                 location,

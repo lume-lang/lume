@@ -1785,7 +1785,6 @@ pub struct WildcardPattern {
 pub struct TypeParameter {
     pub id: NodeId,
     pub name: Identifier,
-    pub type_id: Option<NodeId>,
     pub constraints: Vec<Type>,
     pub location: Location,
 }
@@ -1799,7 +1798,6 @@ impl PartialEq for TypeParameter {
 impl std::hash::Hash for TypeParameter {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
-        self.type_id.hash(state);
         self.constraints.hash(state);
     }
 }

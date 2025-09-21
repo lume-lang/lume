@@ -346,7 +346,7 @@ impl TyInferCtx {
             self.tdb_mut()
                 .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-            type_param.type_id = Some(self.wrap_type_param(type_param.id));
+            self.alloc_type_param_as_type(type_param.id);
 
             self.tdb_mut().push_type_param(id, type_param.id)?;
         }
@@ -392,7 +392,7 @@ impl TyInferCtx {
                     self.tdb_mut()
                         .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-                    type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                    self.alloc_type_param_as_type(type_param.id);
 
                     self.tdb_mut().push_type_param(id, type_param.id)?;
                 }
@@ -404,7 +404,7 @@ impl TyInferCtx {
                     self.tdb_mut()
                         .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-                    type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                    self.alloc_type_param_as_type(type_param.id);
 
                     self.tdb_mut().push_type_param(id, type_param.id)?;
                 }
@@ -419,7 +419,7 @@ impl TyInferCtx {
                             type_param.location,
                         );
 
-                        type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                        self.alloc_type_param_as_type(type_param.id);
 
                         self.tdb_mut().push_type_param(id, type_param.id)?;
                     }
@@ -432,7 +432,7 @@ impl TyInferCtx {
                     self.tdb_mut()
                         .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-                    type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                    self.alloc_type_param_as_type(type_param.id);
 
                     self.tdb_mut().push_type_param(id, type_param.id)?;
                 }
@@ -450,7 +450,7 @@ impl TyInferCtx {
             self.tdb_mut()
                 .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-            type_param.type_id = Some(self.wrap_type_param(type_param.id));
+            self.alloc_type_param_as_type(type_param.id);
 
             self.tdb_mut().push_type_param(id, type_param.id)?;
         }
@@ -491,7 +491,7 @@ impl TyInferCtx {
                 self.tdb_mut()
                     .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-                type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                self.alloc_type_param_as_type(type_param.id);
 
                 self.tdb_mut().push_type_param(method_id, type_param.id)?;
             }
@@ -509,7 +509,7 @@ impl TyInferCtx {
                 self.tdb_mut()
                     .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-                type_param.type_id = Some(self.wrap_type_param(type_param.id));
+                self.alloc_type_param_as_type(type_param.id);
 
                 self.tdb_mut().push_type_param(id, type_param.id)?;
             }
@@ -526,7 +526,7 @@ impl TyInferCtx {
             self.tdb_mut()
                 .type_param_alloc(type_param.id, type_param.name.name.clone(), type_param.location);
 
-            type_param.type_id = Some(self.wrap_type_param(type_param.id));
+            self.alloc_type_param_as_type(type_param.id);
 
             self.tdb_mut().push_type_param(id, type_param.id)?;
         }
@@ -535,14 +535,9 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all)]
-    fn wrap_type_param(&mut self, type_param: NodeId) -> NodeId {
+    fn alloc_type_param_as_type(&mut self, type_param: NodeId) -> NodeId {
         let name = self.tdb().type_parameter(type_param).unwrap().name.clone();
-
-        let symbol_name = Path {
-            name: PathSegment::ty(name),
-            root: Vec::new(),
-            location: lume_span::Location::empty(),
-        };
+        let symbol_name = Path::rooted(PathSegment::ty(name));
 
         self.tdb_mut()
             .type_alloc(type_param, symbol_name, TypeKind::TypeParameter(type_param))
