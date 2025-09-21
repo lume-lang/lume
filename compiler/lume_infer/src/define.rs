@@ -136,9 +136,11 @@ impl TyInferCtx {
                 let name = struct_def.name.clone();
                 let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
 
-                if std_type_id(&name).is_none() {
-                    self.tdb_mut().type_alloc(struct_def.id, name, kind);
-                }
+                struct_def.id = if let Some(std_id) = std_type_id(&name) {
+                    std_id
+                } else {
+                    self.tdb_mut().type_alloc(struct_def.id, name, kind)
+                };
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
