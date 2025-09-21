@@ -135,9 +135,6 @@ pub const TYPEREF_UINT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_000
 pub const TYPEREF_UINT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00009);
 pub const TYPEREF_FLOAT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000A);
 pub const TYPEREF_FLOAT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000B);
-pub const TYPEREF_STRING_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000C);
-pub const TYPEREF_POINTER_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000D);
-pub const TYPEREF_ARRAY_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000E);
 pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId::new(PackageId::empty(), 0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq)]
@@ -688,41 +685,6 @@ impl Type {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::String`].
-    pub fn string() -> Self {
-        Self {
-            id: TYPEREF_STRING_ID,
-            kind: TypeKind::String,
-            name: Path::string(),
-        }
-    }
-
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
-    pub fn pointer() -> Self {
-        Self {
-            id: TYPEREF_POINTER_ID,
-            kind: TypeKind::User(UserType::Struct(Box::new(Struct {
-                id: ItemId::from_name(PackageId::empty(), &Path::pointer()),
-                name: Path::pointer(),
-                type_parameters: vec![TypeParameterId(0)],
-            }))),
-            name: Path::pointer(),
-        }
-    }
-
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
-    pub fn array() -> Self {
-        Self {
-            id: TYPEREF_ARRAY_ID,
-            kind: TypeKind::User(UserType::Struct(Box::new(Struct {
-                id: ItemId::from_name(PackageId::empty(), &Path::array()),
-                name: Path::array(),
-                type_parameters: vec![TypeParameterId(1)],
-            }))),
-            name: Path::array(),
-        }
-    }
-
     pub fn is_type_parameter(&self) -> bool {
         matches!(self.kind, TypeKind::TypeParameter(_))
     }
@@ -867,33 +829,6 @@ impl TypeRef {
         }
     }
 
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::String`].
-    pub fn string() -> Self {
-        Self {
-            instance_of: TYPEREF_STRING_ID,
-            type_arguments: vec![],
-            location: Location::empty(),
-        }
-    }
-
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
-    pub fn pointer(elemental: TypeRef) -> Self {
-        Self {
-            instance_of: TYPEREF_POINTER_ID,
-            type_arguments: vec![elemental],
-            location: Location::empty(),
-        }
-    }
-
-    /// Creates a new [`Type`] with an inner type of [`TypeKind::Pointer`].
-    pub fn array(elemental: TypeRef) -> Self {
-        Self {
-            instance_of: TYPEREF_ARRAY_ID,
-            type_arguments: vec![elemental],
-            location: Location::empty(),
-        }
-    }
-
     /// Creates a new [`TypeRef`] with an invalid inner type, meant to
     /// be used before any types are actually resolved.
     pub fn unknown() -> Self {
@@ -1010,21 +945,6 @@ impl TypeRef {
     /// Determines if the type is an `f64`.
     pub fn is_f64(&self) -> bool {
         self.instance_of == TYPEREF_FLOAT64_ID
-    }
-
-    /// Determines if the type is an `string`.
-    pub fn is_string(&self) -> bool {
-        self.instance_of == TYPEREF_STRING_ID
-    }
-
-    /// Determines if the type is an `array`.
-    pub fn is_array(&self) -> bool {
-        self.instance_of == TYPEREF_ARRAY_ID
-    }
-
-    /// Determines if the type is a `pointer`.
-    pub fn is_pointer(&self) -> bool {
-        self.instance_of == TYPEREF_POINTER_ID
     }
 
     /// Determines if the type is unknown.
@@ -1629,27 +1549,11 @@ impl Default for TypeDatabaseContext {
                 TYPEREF_UINT64_ID => Type::u64(),
                 TYPEREF_FLOAT32_ID => Type::f32(),
                 TYPEREF_FLOAT64_ID => Type::f64(),
-                TYPEREF_STRING_ID => Type::string(),
-                TYPEREF_POINTER_ID => Type::pointer(),
-                TYPEREF_ARRAY_ID => Type::array(),
             },
             fields: Vec::new(),
             methods: Vec::new(),
             functions: IndexMap::new(),
-            type_parameters: vec![
-                TypeParameter {
-                    id: TypeParameterId(0),
-                    name: String::from("T"),
-                    constraints: Vec::new(),
-                    location: Location::empty(),
-                },
-                TypeParameter {
-                    id: TypeParameterId(1),
-                    name: String::from("T"),
-                    constraints: Vec::new(),
-                    location: Location::empty(),
-                },
-            ],
+            type_parameters: Vec::new(),
             implementations: Vec::new(),
             uses: Vec::new(),
         }

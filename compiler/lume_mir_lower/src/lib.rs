@@ -306,7 +306,6 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let metadata_entry = self.metadata_entry_of(type_ref);
 
         lume_mir::Type {
-            id: self.tcx().std_type(),
             kind: lume_mir::TypeKind::Metadata {
                 inner: metadata_entry.to_owned(),
             },

@@ -406,16 +406,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
     }
 
     fn method_metadata_type(&self) -> lume_mir::Type {
-        let method_type_name = lume_hir::Path::from_parts(
-            Some([lume_hir::PathSegment::namespace("std")]),
-            lume_hir::PathSegment::ty("Method"),
-        );
-
-        let id = self.builder.tcx().db().find_type(&method_type_name).unwrap().id;
-        let type_ref = lume_types::TypeRef::new(id, Location::empty());
-
         lume_mir::Type::pointer(lume_mir::Type::structure(
-            type_ref,
             String::from("std::Method"),
             vec![
                 lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
