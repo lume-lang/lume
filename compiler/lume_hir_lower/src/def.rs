@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use error_snippet::Result;
+use lume_hir::Node;
 
 use crate::DefinedItem;
 use crate::LowerModule;
@@ -88,7 +89,10 @@ impl LowerModule<'_> {
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         for method in expr.methods {
-            methods.push(self.def_impl_method(method)?);
+            let method = self.def_impl_method(method)?;
+            self.map.nodes.insert(method.id, Node::Method(method.clone()));
+
+            methods.push(method);
         }
 
         self.self_type = None;
@@ -146,7 +150,10 @@ impl LowerModule<'_> {
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         for method in expr.methods {
-            methods.push(self.def_trait_methods(method)?);
+            let method = self.def_trait_methods(method)?;
+            self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
+
+            methods.push(method);
         }
 
         self.self_type = None;
@@ -361,7 +368,10 @@ impl LowerModule<'_> {
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         for method in expr.methods {
-            methods.push(self.def_use_method(method)?);
+            let method = self.def_use_method(method)?;
+            self.map.nodes.insert(method.id, Node::TraitMethodImpl(method.clone()));
+
+            methods.push(method);
         }
 
         let location = self.location(expr.location);
