@@ -217,7 +217,7 @@ impl CraneliftBackend {
             });
         }
 
-        #[cfg(not(feature = "fuzzing"))]
+        #[cfg(not(fuzzing))]
         lume_gc::declare_stack_maps(func_stack_maps);
 
         Ok(module)
