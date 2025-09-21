@@ -3,9 +3,9 @@ Map {
         TraitDefinition {
             visibility: Private,
             name: Type {
-                id: ItemId {
+                id: NodeId {
                     package: PackageId(
-                        0,
+                        1881,
                     ),
                     index: Idx(
                         15441871705290034520,
@@ -20,9 +20,9 @@ Map {
                         },
                         type_arguments: [
                             Type {
-                                id: ItemId {
+                                id: NodeId {
                                     package: PackageId(
-                                        0,
+                                        1881,
                                     ),
                                     index: Idx(
                                         6143724420395906933,
@@ -50,9 +50,9 @@ Map {
                                 location: use_trait_generics.lm:8:13,
                             },
                             Type {
-                                id: ItemId {
+                                id: NodeId {
                                     package: PackageId(
-                                        0,
+                                        1881,
                                     ),
                                     index: Idx(
                                         6005476461629404090,
@@ -87,9 +87,9 @@ Map {
                 location: use_trait_generics.lm:4:21,
             },
             target: Type {
-                id: ItemId {
+                id: NodeId {
                     package: PackageId(
-                        0,
+                        1881,
                     ),
                     index: Idx(
                         6143724420395906933,
@@ -130,9 +130,9 @@ Map {
                                 location: use_trait_generics.lm:48:53,
                             },
                             param_type: Type {
-                                id: ItemId {
+                                id: NodeId {
                                     package: PackageId(
-                                        0,
+                                        1881,
                                     ),
                                     index: Idx(
                                         6143724420395906933,

@@ -3,9 +3,9 @@ Map {
         TraitDefinition {
             visibility: Private,
             name: Type {
-                id: ItemId {
+                id: NodeId {
                     package: PackageId(
-                        0,
+                        1881,
                     ),
                     index: Idx(
                         14345299609846936440,
@@ -26,9 +26,9 @@ Map {
                 location: use_trait_methods.lm:4:8,
             },
             target: Type {
-                id: ItemId {
+                id: NodeId {
                     package: PackageId(
-                        0,
+                        1881,
                     ),
                     index: Idx(
                         6143724420395906933,

@@ -11,9 +11,9 @@ Map {
                     },
                     type_arguments: [
                         Type {
-                            id: ItemId {
+                            id: NodeId {
                                 package: PackageId(
-                                    0,
+                                    1881,
                                 ),
                                 index: Idx(
                                     8901637729188007634,

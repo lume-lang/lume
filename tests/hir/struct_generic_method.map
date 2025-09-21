@@ -2,9 +2,9 @@ Map {
     items: [
         Implementation {
             target: Type {
-                id: ItemId {
+                id: NodeId {
                     package: PackageId(
-                        0,
+                        1881,
                     ),
                     index: Idx(
                         5175167619020667705,

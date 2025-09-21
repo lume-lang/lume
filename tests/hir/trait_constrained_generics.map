@@ -11,9 +11,9 @@ Map {
                     },
                     type_arguments: [
                         Type {
-                            id: ItemId {
+                            id: NodeId {
                                 package: PackageId(
-                                    0,
+                                    1881,
                                 ),
                                 index: Idx(
                                     16354669630239520454,
@@ -34,9 +34,9 @@ Map {
                             location: trait_constrained_generics.lm:0:0,
                         },
                         Type {
-                            id: ItemId {
+                            id: NodeId {
                                 package: PackageId(
-                                    0,
+                                    1881,
                                 ),
                                 index: Idx(
                                     3439629086382124550,

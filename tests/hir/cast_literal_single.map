@@ -42,9 +42,9 @@ Map {
                             location: cast_literal_single.lm:12:13,
                         },
                         target: Type {
-                            id: ItemId {
+                            id: NodeId {
                                 package: PackageId(
-                                    0,
+                                    1881,
                                 ),
                                 index: Idx(
                                     13902787388289951280,

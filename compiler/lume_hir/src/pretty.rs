@@ -53,10 +53,11 @@ impl Map {
         let nodes = self
             .nodes
             .values()
+            .filter(|node| node.is_item())
             .map(|item| PrettyItem { value: item, map: self })
             .collect::<Vec<_>>();
 
-        f.debug_struct("Map").field("nodes", &nodes).finish()
+        f.debug_struct("Map").field("items", &nodes).finish()
     }
 }
 
