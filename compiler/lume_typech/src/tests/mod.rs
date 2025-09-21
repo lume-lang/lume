@@ -20,7 +20,7 @@ use crate::TyCheckCtx;
 #[track_caller]
 fn package_with_src(input: &str) -> Package {
     let mut project = Package::default();
-    project.id = PackageId::from_name(input);
+    project.id = PackageId::from_usize(1);
 
     project.add_std_sources();
     project.add_source(Arc::new(SourceFile::internal(input)));

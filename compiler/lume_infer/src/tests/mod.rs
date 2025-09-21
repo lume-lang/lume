@@ -5,7 +5,7 @@ use lume_errors::DiagCtx;
 use lume_hir::map::Map;
 use lume_hir_lower::LowerState;
 use lume_session::{GlobalCtx, Package};
-use lume_span::{SourceFile, SourceMap};
+use lume_span::{PackageId, SourceFile, SourceMap};
 use lume_types::TyCtx;
 
 use crate::TyInferCtx;
@@ -17,6 +17,7 @@ mod inference;
 #[track_caller]
 fn package_with_src(input: &str) -> Package {
     let mut project = Package::default();
+    project.id = PackageId::from_usize(1);
 
     project.add_std_sources();
     project.add_source(Arc::new(SourceFile::internal(input)));
