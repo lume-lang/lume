@@ -398,15 +398,13 @@ impl UnificationPass {
                 }
 
                 for (idx, type_param) in enum_def.type_parameters.iter().enumerate().skip(expected_type_args) {
-                    let type_param = type_param.type_param_id.unwrap();
-
                     if let lume_hir::ExpressionKind::Variant(variant) = &tcx.hir_expect_expr(expr).kind
-                        && self.resolve_variant_type_param(tcx, idx, variant, type_param)?
+                        && self.resolve_variant_type_param(tcx, idx, variant, type_param.id)?
                     {
                         continue;
                     }
 
-                    self.resolve_type_param(tcx, idx, expr, type_param)?;
+                    self.resolve_type_param(tcx, idx, expr, type_param.id)?;
                 }
             }
             lume_hir::PathSegment::Namespace { .. } => return Ok(()),
