@@ -874,7 +874,9 @@ impl TyInferCtx {
         let parent = struct_def.id;
 
         for field in &struct_def.fields {
-            let _ = tree.insert(field.id, parent);
+            if let Some(existing) = tree.insert(field.id, parent) {
+                assert_eq!(existing, parent);
+            }
 
             if let Some(default) = field.default_value {
                 self.define_expr_scope(tree, default, field.id)?;
@@ -892,7 +894,9 @@ impl TyInferCtx {
         let parent = trait_def.id;
 
         for method in &trait_def.methods {
-            let _ = tree.insert(method.id, parent);
+            if let Some(existing) = tree.insert(method.id, parent) {
+                assert_eq!(existing, parent);
+            }
 
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
@@ -910,7 +914,9 @@ impl TyInferCtx {
         let parent = implementation.id;
 
         for method in &implementation.methods {
-            let _ = tree.insert(method.id, parent);
+            if let Some(existing) = tree.insert(method.id, parent) {
+                assert_eq!(existing, parent);
+            }
 
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
@@ -928,7 +934,9 @@ impl TyInferCtx {
         let parent = trait_impl.id;
 
         for method in &trait_impl.methods {
-            let _ = tree.insert(method.id, parent);
+            if let Some(existing) = tree.insert(method.id, parent) {
+                assert_eq!(existing, parent);
+            }
 
             if let Some(block) = &method.block {
                 self.define_block_scope(tree, block, method.id)?;
@@ -966,7 +974,10 @@ impl TyInferCtx {
     }
 
     fn define_stmt_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, stmt_id: NodeId, parent: NodeId) -> Result<()> {
-        let _ = tree.insert(stmt_id, parent);
+        if let Some(existing) = tree.insert(stmt_id, parent) {
+            assert_eq!(existing, parent);
+        }
+
         let stmt = self.hir.statement(stmt_id).unwrap();
 
         match &stmt.kind {
@@ -1011,7 +1022,10 @@ impl TyInferCtx {
     }
 
     fn define_expr_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, expr_id: NodeId, parent: NodeId) -> Result<()> {
-        let _ = tree.insert(expr_id, parent);
+        if let Some(existing) = tree.insert(expr_id, parent) {
+            assert_eq!(existing, parent);
+        }
+
         let expr = self.hir.expression(expr_id).unwrap();
 
         match &expr.kind {
@@ -1115,8 +1129,9 @@ impl TyInferCtx {
         pat: &lume_hir::Pattern,
         parent: NodeId,
     ) -> Result<()> {
-        let def_id = pat.id;
-        let _ = tree.insert(def_id, parent);
+        if let Some(existing) = tree.insert(pat.id, parent) {
+            assert_eq!(existing, parent);
+        }
 
         match &pat.kind {
             lume_hir::PatternKind::Literal(_)
@@ -1124,7 +1139,7 @@ impl TyInferCtx {
             | lume_hir::PatternKind::Wildcard(_) => Ok(()),
             lume_hir::PatternKind::Variant(var) => {
                 for field in &var.fields {
-                    self.define_pat_scope(tree, field, def_id)?;
+                    self.define_pat_scope(tree, field, pat.id)?;
                 }
 
                 Ok(())
