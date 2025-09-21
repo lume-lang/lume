@@ -5,7 +5,6 @@ use std::sync::Arc;
 use error_snippet::{IntoDiagnostic, SimpleDiagnostic};
 use lume_errors::Result;
 use lume_session::{GlobalCtx, Options};
-use rust_embed::Embed;
 
 #[cfg(all(target_family = "windows", target_env = "msvc"))]
 const BIN_RUNNER_NAME: &str = "lume_runner.exe";
@@ -106,12 +105,11 @@ fn determine_dev_runner_path() -> Result<PathBuf> {
     Ok(library_path)
 }
 
-#[derive(Embed)]
-#[folder = "$CARGO_MANIFEST_DIR/../../target"]
-#[include = "debug/lume_runner"]
-#[include = "release/lume_runner"]
-#[allow_missing = true]
-struct EmbeddedRunner;
+#[cfg(debug_assertions)]
+static RUNNER_BINARY: &[u8] = include_bytes!("../../../target/debug/lume_runner");
+
+#[cfg(not(debug_assertions))]
+static RUNNER_BINARY: &[u8] = include_bytes!("../../../target/release/lume_runner");
 
 /// Determines the full path of the runtime library in the system library directory.
 fn determine_release_runner_path() -> Result<PathBuf> {
@@ -126,16 +124,8 @@ fn determine_release_runner_path() -> Result<PathBuf> {
     // Ensure the data directory exists before writing anything to disk
     std::fs::create_dir_all(system_runtime_dir).map_err(IntoDiagnostic::into_diagnostic)?;
 
-    let library_file_name = format!("{}/{}", profile_name(), BIN_RUNNER_NAME);
-
-    let Some(runtime_file) = EmbeddedRunner::get(&library_file_name) else {
-        return Err(SimpleDiagnostic::new("could not find embedded runner")
-            .with_help("was the Lume binary built correctly?")
-            .into());
-    };
-
     // Write the runtime library to disk so the linker can use it.
-    std::fs::write(&system_runtime_path, runtime_file.data).map_err(IntoDiagnostic::into_diagnostic)?;
+    std::fs::write(&system_runtime_path, RUNNER_BINARY).map_err(IntoDiagnostic::into_diagnostic)?;
 
     Ok(system_runtime_path)
 }
