@@ -1,4 +1,4 @@
-use lume_span::{DefId, Location};
+use lume_span::Location;
 
 use crate::FunctionTransformer;
 
@@ -834,7 +834,7 @@ impl FunctionTransformer<'_, '_> {
 
         let enum_ty = self.tcx().type_of(expr.id).unwrap();
         let enum_def = self.tcx().enum_def_type(enum_ty.instance_of).unwrap();
-        let def = lume_span::DefId::Item(enum_def.id);
+        let enum_def_id = enum_def.id;
 
         // The first type in all object allocations must be a pointer to the metadata
         // of the type, so it can be reflected at runtime.
@@ -843,11 +843,11 @@ impl FunctionTransformer<'_, '_> {
 
         let mut union_cases = Vec::new();
 
-        for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
+        for variant in self.tcx().enum_cases_of(expr.id).unwrap() {
             let mut items = Vec::new();
 
             let params = &variant.parameters;
-            let case_refs = self.tcx().mk_type_refs_from(params, def).unwrap();
+            let case_refs = self.tcx().mk_type_refs_from(params, enum_def_id).unwrap();
 
             union_cases.reserve_exact(case_refs.len());
             for case_ref in case_refs {
@@ -976,8 +976,8 @@ impl FunctionTransformer<'_, '_> {
         panic!("bug!: field index of {} is out of bounds", field.index)
     }
 
-    fn variant_field_type(&self, id: lume_span::PatternId, field_idx: usize) -> lume_mir::Type {
-        let pattern = self.tcx().hir_expect_pattern(DefId::Pattern(id));
+    fn variant_field_type(&self, id: lume_span::NodeId, field_idx: usize) -> lume_mir::Type {
+        let pattern = self.tcx().hir_expect_pattern(id);
         let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
             panic!("bug!: attempting to get field offset of non-variant pattern");
         };
@@ -988,17 +988,17 @@ impl FunctionTransformer<'_, '_> {
             .get(field_idx)
             .expect("bug!: pattern {:+} with field id of {field_idx} is out of bounds");
 
-        let field_type_ty = self.tcx().mk_type_ref_from(field_type, DefId::Pattern(id)).unwrap();
+        let field_type_ty = self.tcx().mk_type_ref_from(field_type, id).unwrap();
 
         self.lower_type(&field_type_ty)
     }
 
-    fn variant_field_offset(&self, id: lume_span::PatternId, field_idx: usize) -> usize {
+    fn variant_field_offset(&self, id: lume_span::NodeId, field_idx: usize) -> usize {
         // We start off with the size of the discriminant of the variant plus the size
         // of the metadata pointer.
         let mut offset = lume_mir::POINTER_SIZE + lume_mir::Type::u8().bytesize();
 
-        let pattern = self.tcx().hir_expect_pattern(DefId::Pattern(id));
+        let pattern = self.tcx().hir_expect_pattern(id);
         let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
             panic!("bug!: attempting to get field offset of non-variant pattern");
         };
@@ -1010,7 +1010,7 @@ impl FunctionTransformer<'_, '_> {
                 break;
             }
 
-            let field_type_ty = self.tcx().mk_type_ref_from(field_type, DefId::Pattern(id)).unwrap();
+            let field_type_ty = self.tcx().mk_type_ref_from(field_type, id).unwrap();
             let prop_ty = self.lower_type(&field_type_ty);
             offset += prop_ty.bytesize();
         }

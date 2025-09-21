@@ -221,16 +221,14 @@ mod tests {
     use crate::*;
 
     fn var(name: &str) -> VariableDeclaration {
-        let statement_id = StatementId::default();
-
         VariableDeclaration {
-            id: statement_id,
+            id: NodeId::default(),
             name: Identifier {
                 name: name.to_string(),
                 location: Location::empty(),
             },
             declared_type: None,
-            value: ExpressionId::default(),
+            value: NodeId::default(),
             location: Location::empty(),
         }
     }

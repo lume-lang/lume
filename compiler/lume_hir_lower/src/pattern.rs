@@ -5,7 +5,7 @@ use error_snippet::Result;
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
-        let id = self.next_pat_id();
+        let id = self.next_node_id();
 
         let pat = match pattern {
             lume_ast::Pattern::Literal(pat) => {
@@ -63,7 +63,7 @@ impl LowerModule<'_> {
             }
         };
 
-        self.map.patterns.insert(id, pat.clone());
+        self.map.nodes.insert(id, lume_hir::Node::Pattern(pat.clone()));
 
         Ok(pat)
     }
@@ -75,7 +75,7 @@ impl LowerModule<'_> {
                 self.pattern(pattern)
             }
             lume_ast::Pattern::Identifier(pat) => {
-                let id = self.next_pat_id();
+                let id = self.next_node_id();
                 let name = self.identifier(pat);
                 let location = name.location;
 

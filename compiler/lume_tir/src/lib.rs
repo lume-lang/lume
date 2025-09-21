@@ -1,12 +1,12 @@
 use indexmap::IndexMap;
-use lume_span::{DefId, ExpressionId, Interned, Location, PatternId, StatementId};
+use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadataId};
 use lume_types::{Field, TypeRef};
 
 #[derive(Debug, Default)]
 pub struct TypedIR {
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<DefId, Function>,
+    pub functions: IndexMap<NodeId, Function>,
 }
 
 #[derive(Debug, Clone, Eq)]
@@ -175,7 +175,7 @@ impl FunctionKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
-    pub id: DefId,
+    pub id: NodeId,
     pub name: Path,
     pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
@@ -312,7 +312,7 @@ impl Statement {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
-    pub id: StatementId,
+    pub id: NodeId,
     pub var: VariableId,
     pub name: Interned<String>,
     pub value: Expression,
@@ -321,35 +321,35 @@ pub struct VariableDeclaration {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Break {
-    pub id: StatementId,
-    pub target: StatementId,
+    pub id: NodeId,
+    pub target: NodeId,
     pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Continue {
-    pub id: StatementId,
-    pub target: StatementId,
+    pub id: NodeId,
+    pub target: NodeId,
     pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Final {
-    pub id: StatementId,
+    pub id: NodeId,
     pub value: Expression,
     pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Return {
-    pub id: StatementId,
+    pub id: NodeId,
     pub value: Option<Expression>,
     pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
-    pub id: StatementId,
+    pub id: NodeId,
     pub block: Block,
     pub location: Location,
 }
@@ -363,7 +363,7 @@ impl InfiniteLoop {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
-    pub id: StatementId,
+    pub id: NodeId,
     pub collection: Expression,
     pub block: Block,
     pub location: Location,
@@ -434,7 +434,7 @@ pub enum ExpressionKind {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Assignment {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub target: Expression,
     pub value: Expression,
     pub location: Location,
@@ -449,7 +449,7 @@ pub enum BinaryOperator {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Binary {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub lhs: Expression,
     pub op: BinaryOperator,
     pub rhs: Expression,
@@ -458,7 +458,7 @@ pub struct Binary {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Cast {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub source: Expression,
     pub target: TypeRef,
     pub location: Location,
@@ -466,7 +466,7 @@ pub struct Cast {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Construct {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub ty: TypeRef,
     pub fields: Vec<ConstructorField>,
     pub location: Location,
@@ -481,8 +481,8 @@ pub struct ConstructorField {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Call {
-    pub id: ExpressionId,
-    pub function: DefId,
+    pub id: NodeId,
+    pub function: NodeId,
     pub arguments: Vec<Expression>,
     pub type_arguments: Vec<TypeRef>,
     pub return_type: TypeRef,
@@ -491,7 +491,7 @@ pub struct Call {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct If {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub cases: Vec<Conditional>,
     pub return_type: Option<TypeRef>,
     pub location: Location,
@@ -524,7 +524,7 @@ pub struct Conditional {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct IntrinsicCall {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub kind: IntrinsicKind,
     pub arguments: Vec<Expression>,
     pub location: Location,
@@ -575,7 +575,7 @@ pub enum IntrinsicKind {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Is {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub target: Expression,
     pub pattern: Pattern,
     pub location: Location,
@@ -583,7 +583,7 @@ pub struct Is {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Literal {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub kind: LiteralKind,
     pub location: Location,
 }
@@ -677,7 +677,7 @@ pub enum LogicalOperator {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Logical {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub lhs: Expression,
     pub op: LogicalOperator,
     pub rhs: Expression,
@@ -686,7 +686,7 @@ pub struct Logical {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Switch {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub operand: Expression,
     pub operand_var: VariableId,
     pub entries: Vec<(SwitchConstantPattern, Expression)>,
@@ -719,7 +719,7 @@ impl std::hash::Hash for SwitchConstantLiteral {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Member {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub callee: Expression,
     pub field: Field,
     pub name: Interned<String>,
@@ -728,7 +728,7 @@ pub struct Member {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Scope {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub body: Vec<Statement>,
     pub return_type: TypeRef,
     pub location: Location,
@@ -736,7 +736,7 @@ pub struct Scope {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct VariableReference {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub reference: VariableId,
     pub source: VariableSource,
     pub name: Interned<String>,
@@ -751,7 +751,7 @@ pub enum VariableSource {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Variant {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub index: u8,
     pub ty: TypeRef,
     pub name: Path,
@@ -761,7 +761,7 @@ pub struct Variant {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
-    pub id: PatternId,
+    pub id: NodeId,
     pub kind: PatternKind,
     pub location: Location,
 }

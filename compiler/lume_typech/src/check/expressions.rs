@@ -1,7 +1,7 @@
 use error_snippet::Result;
 use indexmap::IndexSet;
 use lume_hir::Path;
-use lume_span::DefId;
+use lume_span::NodeId;
 use lume_types::TypeRef;
 
 use crate::TyCheckCtx;
@@ -12,7 +12,7 @@ impl TyCheckCtx {
     /// their expected type, depending on the surrounding context.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn typech_expressions(&mut self) -> Result<()> {
-        for (_, item) in &self.hir().items {
+        for (_, item) in &self.hir().nodes {
             if let Err(err) = self.typech_expr_item(item) {
                 self.dcx().emit(err);
             }
@@ -21,23 +21,23 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    fn typech_expr_item(&self, symbol: &lume_hir::Item) -> Result<()> {
+    fn typech_expr_item(&self, symbol: &lume_hir::Node) -> Result<()> {
         match symbol {
-            lume_hir::Item::Type(ty) => match &**ty {
+            lume_hir::Node::Type(ty) => match ty {
                 lume_hir::TypeDefinition::Struct(struct_def) => self.define_struct_type(struct_def),
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
                 lume_hir::TypeDefinition::Enum(_) => Ok(()),
             },
-            lume_hir::Item::Impl(impl_def) => self.define_impl_type(impl_def),
-            lume_hir::Item::Function(func) => self.define_function_scope(func),
-            lume_hir::Item::TraitImpl(_) => Ok(()),
+            lume_hir::Node::Impl(impl_def) => self.define_impl_type(impl_def),
+            lume_hir::Node::Function(func) => self.define_function_scope(func),
+            _ => Ok(()),
         }
     }
 
     fn define_struct_type(&self, struct_def: &lume_hir::StructDefinition) -> Result<()> {
         for field in &struct_def.fields {
             if let Some(default_value) = &field.default_value {
-                let field_type = self.mk_type_ref_from(&field.field_type, DefId::Item(struct_def.id))?;
+                let field_type = self.mk_type_ref_from(&field.field_type, struct_def.id)?;
                 let default_value_type = self.type_of(*default_value)?;
 
                 if let Err(err) = self.ensure_type_compatibility(&default_value_type, &field_type) {
@@ -87,7 +87,7 @@ impl TyCheckCtx {
         if let Some(block) = &func.block {
             self.define_block_scope(block)?;
 
-            let return_type = self.mk_type_ref_from(&func.return_type, DefId::Item(func.id))?;
+            let return_type = self.mk_type_ref_from(&func.return_type, func.id)?;
 
             self.ensure_block_ty_match(block, &return_type)?;
         }
@@ -104,7 +104,7 @@ impl TyCheckCtx {
     }
 
     /// Type checks the given HIR statement.
-    fn statement(&self, stmt: lume_span::StatementId) -> Result<()> {
+    fn statement(&self, stmt: NodeId) -> Result<()> {
         let stmt = self.hir().expect_statement(stmt)?;
 
         match &stmt.kind {
@@ -177,7 +177,7 @@ impl TyCheckCtx {
     /// this method would raise an error, since the value expands to be of type `Boolean`,
     /// which is incompatible with `Int32`.
     fn return_statement(&self, stmt: &lume_hir::Return) -> Result<()> {
-        let expected = self.hir_ctx_return_type(lume_span::DefId::Statement(stmt.id))?;
+        let expected = self.hir_ctx_return_type(stmt.id)?;
 
         let actual = match stmt.value {
             Some(val) => self.type_of(val)?,
@@ -203,7 +203,7 @@ impl TyCheckCtx {
     }
 
     /// Type checks the given HIR expression.
-    fn expression(&self, expr: lume_span::ExpressionId) -> Result<()> {
+    fn expression(&self, expr: NodeId) -> Result<()> {
         let expr = self.hir().expect_expression(expr)?;
 
         // Even if the expression type is not yet handled, we still
@@ -432,7 +432,7 @@ impl TyCheckCtx {
 
         if let lume_infer::query::Callable::Method(method) = callable
             && method.kind == lume_types::MethodKind::TraitDefinition
-            && self.hir_body_of_def(method.hir).is_none()
+            && self.hir_body_of_node(method.id).is_none()
             && !method.is_instanced()
         {
             self.dcx().emit(
@@ -463,9 +463,7 @@ impl TyCheckCtx {
     /// this method would raise an error, since the field `bar` expands to be of type `String`,
     /// which is incompatible with `Int32`.
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
-        let constructed_type = self
-            .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
-            .unwrap();
+        let constructed_type = self.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
         let fields = self.tdb().find_fields(constructed_type.instance_of);
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
@@ -598,7 +596,7 @@ impl TyCheckCtx {
 
         for (arg, param) in expr.arguments.iter().zip(enum_case_def.parameters.iter()) {
             let arg_type = self.type_of(*arg)?;
-            let param_ty = self.mk_type_ref_from(param, DefId::Item(enum_def.id))?;
+            let param_ty = self.mk_type_ref_from(param, enum_def.id)?;
 
             if let Err(err) = self.ensure_type_compatibility(&arg_type, &param_ty) {
                 self.dcx().emit(err);

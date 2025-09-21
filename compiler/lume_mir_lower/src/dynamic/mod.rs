@@ -1,5 +1,5 @@
 use lume_mir::{BasicBlockId, RegisterId, Signature};
-use lume_span::{DefId, Location};
+use lume_span::{Location, NodeId};
 
 use crate::FunctionTransformer;
 
@@ -7,11 +7,11 @@ pub(crate) struct DynamicShimBuilder<'shim, 'mir, 'tcx> {
     builder: &'shim mut FunctionTransformer<'mir, 'tcx>,
     signature: Signature,
     param_registers: Vec<RegisterId>,
-    func_id: DefId,
+    func_id: NodeId,
 }
 
 impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
-    pub(crate) fn new(builder: &'shim mut FunctionTransformer<'mir, 'tcx>, func_id: DefId) -> Self {
+    pub(crate) fn new(builder: &'shim mut FunctionTransformer<'mir, 'tcx>, func_id: NodeId) -> Self {
         builder.func.name = format!("$_dyn_{}", builder.func.name);
 
         let regs = &builder.func.registers;
@@ -31,7 +31,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
     /// Creates the shim function around the function with the given ID and
     /// returns the ID if the created shim.
-    pub(crate) fn build(mut self) -> DefId {
+    pub(crate) fn build(mut self) -> NodeId {
         let entry_block = self.builder.func.new_block();
         let loop_header = self.builder.func.new_block();
         let loop_body = self.builder.func.new_block();

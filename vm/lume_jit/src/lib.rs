@@ -16,7 +16,7 @@ use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_gc::{CompiledFunctionMetadata, FunctionPtr, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
-use lume_span::DefId;
+use lume_span::NodeId;
 
 pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::type_of", lume_runtime::type_of as *const u8),
@@ -100,7 +100,7 @@ pub(crate) struct CraneliftBackend {
     context: ModuleMap,
     module: Option<Arc<RwLock<JITModule>>>,
 
-    declared_funcs: IndexMap<DefId, DeclaredFunction>,
+    declared_funcs: IndexMap<NodeId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
@@ -744,7 +744,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().symbol_value(self.backend.cl_ptr_type(), local_id)
     }
 
-    pub(crate) fn call(&mut self, func: DefId, args: &[lume_mir::Operand]) -> &[Value] {
+    pub(crate) fn call(&mut self, func: NodeId, args: &[lume_mir::Operand]) -> &[Value] {
         let cl_func_id = self.backend.declared_funcs.get(&func).unwrap().id;
         let cl_func_ref = self.get_func(cl_func_id);
 

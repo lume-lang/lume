@@ -31,7 +31,7 @@ impl LowerModule<'_> {
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
 
-        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
+        let id = lume_span::NodeId::from_name(self.current_node.package, &name);
 
         Ok(hir::Type { id, name, location })
     }
@@ -60,14 +60,14 @@ impl LowerModule<'_> {
             }
         };
 
-        let id = lume_span::ItemId::from_name(self.current_item.package, &name);
+        let id = lume_span::NodeId::from_name(self.current_node.package, &name);
 
         Ok(hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn type_std(&self, name: ast::PathSegment) -> Result<hir::Type> {
-        let id = lume_span::ItemId::from_name(lume_span::PackageId::empty(), &name);
+        let id = lume_span::NodeId::from_name(lume_span::PackageId::empty(), &name);
         let location = self.location(name.location().clone());
 
         let name = self.path_segment(name)?;

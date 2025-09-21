@@ -3,12 +3,11 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet::Result;
-use lume_ast::{self as ast};
 use lume_errors::DiagCtxHandle;
 use lume_hir::{Identifier, Path, PathSegment, map::Map, symbols::*};
 use lume_parser::Parser;
 use lume_session::Package;
-use lume_span::{ExpressionId, Internable, ItemId, Location, PatternId, SourceFile, SourceMap, StatementId};
+use lume_span::{Internable, Location, NodeId, SourceFile, SourceMap};
 
 mod errors;
 
@@ -119,7 +118,7 @@ impl<'a> LowerState<'a> {
     pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
-        let mut item_idx = ItemId::new(self.package.id);
+        let mut item_idx = NodeId::empty(self.package.id);
 
         let use_std = !self.package.dependencies.no_std;
 
@@ -186,15 +185,12 @@ pub struct LowerModule<'a> {
     self_type: Option<Path>,
 
     /// Defines the ID of the current item being lowered, if any.
-    current_item: ItemId,
-
-    /// Defines the current counter for [`LocalId`] instances, so they can stay unique.
-    local_id_counter: usize,
+    current_node: NodeId,
 }
 
 impl<'a> LowerModule<'a> {
     /// Creates a new lowerer for creating HIR maps from AST.
-    pub fn new(map: &'a mut Map, item_idx: ItemId, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'a> {
+    pub fn new(map: &'a mut Map, item_idx: NodeId, file: Arc<SourceFile>, dcx: DiagCtxHandle) -> LowerModule<'a> {
         LowerModule {
             file,
             map,
@@ -204,8 +200,7 @@ impl<'a> LowerModule<'a> {
             imports: HashMap::new(),
             namespace: None,
             self_type: None,
-            current_item: item_idx,
-            local_id_counter: 0,
+            current_node: item_idx,
         }
     }
 
@@ -224,13 +219,13 @@ impl<'a> LowerModule<'a> {
     )]
     pub fn lower(
         map: &'a mut Map,
-        item_idx: &'a mut ItemId,
+        node_idx: &'a mut NodeId,
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
-        expressions: Vec<ast::TopLevelExpression>,
+        expressions: Vec<lume_ast::TopLevelExpression>,
         import_std: bool,
     ) -> Result<()> {
-        let mut lower = LowerModule::new(map, *item_idx, file, dcx);
+        let mut lower = LowerModule::new(map, *node_idx, file, dcx);
 
         if import_std {
             lower.insert_implicit_imports()?;
@@ -248,7 +243,7 @@ impl<'a> LowerModule<'a> {
 
         lower.dcx.ensure_untainted()?;
 
-        *item_idx = lower.current_item;
+        *node_idx = lower.current_node;
 
         Ok(())
     }
@@ -256,50 +251,17 @@ impl<'a> LowerModule<'a> {
     /// Adds implicit imports to the module.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn insert_implicit_imports(&mut self) -> Result<()> {
-        let import_item = ast::Import::std(DEFAULT_STD_IMPORTS);
+        let import_item = lume_ast::Import::std(DEFAULT_STD_IMPORTS);
 
         self.top_import(import_item)
     }
 
-    /// Gets the next [`ItemId`] in the sequence.
+    /// Gets the next [`NodeId`] in the sequence.
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn next_item_id(&mut self) -> ItemId {
-        self.current_item = self.current_item.next();
+    fn next_node_id(&mut self) -> NodeId {
+        self.current_node = self.current_node.next();
 
-        self.current_item
-    }
-
-    /// Generates the next [`ExpressionId`] instance in the chain.
-    ///
-    /// Local IDs are simply incremented over the last used ID, starting from 0.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn next_expr_id(&mut self) -> ExpressionId {
-        let id = self.local_id_counter;
-        self.local_id_counter += 1;
-
-        ExpressionId::from_id(self.current_item, id)
-    }
-
-    /// Generates the next [`StatementId`] instance in the chain.
-    ///
-    /// Local IDs are simply incremented over the last used ID, starting from 0.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn next_stmt_id(&mut self) -> StatementId {
-        let id = self.local_id_counter;
-        self.local_id_counter += 1;
-
-        StatementId::from_id(self.current_item, id)
-    }
-
-    /// Generates the next [`PatternId`] instance in the chain.
-    ///
-    /// Local IDs are simply incremented over the last used ID, starting from 0.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn next_pat_id(&mut self) -> PatternId {
-        let id = self.local_id_counter;
-        self.local_id_counter += 1;
-
-        PatternId::new(self.current_item, id)
+        self.current_node
     }
 
     /// Ensure that the item with the given name is undefined within the file.
@@ -324,7 +286,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the [`lume_hir::Path`] for the item with the given name.
-    fn resolve_symbol_name(&self, path: &ast::Path) -> Result<Path> {
+    fn resolve_symbol_name(&self, path: &lume_ast::Path) -> Result<Path> {
         if let Some(symbol) = self.resolve_imported_symbol(path)? {
             return Ok(symbol.clone());
         }
@@ -347,7 +309,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
-    fn resolve_imported_symbol(&self, path: &ast::Path) -> Result<Option<Path>> {
+    fn resolve_imported_symbol(&self, path: &lume_ast::Path) -> Result<Option<Path>> {
         for (import, symbol) in &self.imports {
             // Match against imported paths, which match the first segment of the imported path.
             //
@@ -394,7 +356,7 @@ impl<'a> LowerModule<'a> {
         Ok(None)
     }
 
-    fn identifier(&self, expr: ast::Identifier) -> Identifier {
+    fn identifier(&self, expr: lume_ast::Identifier) -> Identifier {
         let location = self.location(expr.location.clone());
 
         Identifier {
@@ -403,7 +365,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn expand_name(&self, name: ast::PathSegment) -> Result<Path> {
+    fn expand_name(&self, name: lume_ast::PathSegment) -> Result<Path> {
         if let Some(ns) = &self.namespace {
             Ok(Path::with_root(ns.clone(), self.path_segment(name)?))
         } else {
@@ -411,16 +373,16 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn path_root(&self, expr: Vec<ast::PathSegment>) -> Result<Vec<PathSegment>> {
+    fn path_root(&self, expr: Vec<lume_ast::PathSegment>) -> Result<Vec<PathSegment>> {
         expr.into_iter()
             .map(|seg| self.path_segment(seg))
             .collect::<Result<Vec<_>>>()
     }
 
-    fn path_segment(&self, expr: ast::PathSegment) -> Result<PathSegment> {
+    fn path_segment(&self, expr: lume_ast::PathSegment) -> Result<PathSegment> {
         match expr {
-            ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
-            ast::PathSegment::Type {
+            lume_ast::PathSegment::Namespace { name } => Ok(PathSegment::namespace(self.identifier(name))),
+            lume_ast::PathSegment::Type {
                 name,
                 type_arguments,
                 location,
@@ -438,7 +400,7 @@ impl<'a> LowerModule<'a> {
                     location,
                 })
             }
-            ast::PathSegment::Callable {
+            lume_ast::PathSegment::Callable {
                 name,
                 type_arguments,
                 location,
@@ -456,7 +418,7 @@ impl<'a> LowerModule<'a> {
                     location,
                 })
             }
-            ast::PathSegment::Variant { name, location } => {
+            lume_ast::PathSegment::Variant { name, location } => {
                 let name = self.identifier(name);
                 let location = self.location(location);
 
@@ -465,7 +427,7 @@ impl<'a> LowerModule<'a> {
         }
     }
 
-    fn location(&self, expr: ast::Location) -> Location {
+    fn location(&self, expr: lume_ast::Location) -> Location {
         lume_span::source::Location {
             file: self.file.clone(),
             index: expr.0,
@@ -474,42 +436,42 @@ impl<'a> LowerModule<'a> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
-    fn top_namespace(&mut self, expr: ast::Namespace) -> Result<()> {
+    fn top_namespace(&mut self, expr: lume_ast::Namespace) -> Result<()> {
         self.namespace = Some(self.import_path(expr.path)?);
 
         Ok(())
     }
 
-    fn top_level_expression(&mut self, expr: ast::TopLevelExpression) -> Result<()> {
+    fn top_level_expression(&mut self, expr: lume_ast::TopLevelExpression) -> Result<()> {
         let hir_ast = match expr {
-            ast::TopLevelExpression::Import(i) => {
+            lume_ast::TopLevelExpression::Import(i) => {
                 self.top_import(*i)?;
 
                 return Ok(());
             }
-            ast::TopLevelExpression::Namespace(i) => {
+            lume_ast::TopLevelExpression::Namespace(i) => {
                 self.top_namespace(*i)?;
 
                 return Ok(());
             }
-            ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
-            ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
-            ast::TopLevelExpression::Use(f) => self.def_trait_impl(*f)?,
-            ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
+            lume_ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
+            lume_ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
+            lume_ast::TopLevelExpression::Use(f) => self.def_trait_impl(*f)?,
+            lume_ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
         };
 
         let id = hir_ast.id();
 
         // Ensure that the ID doesn't overwrite an existing entry.
-        debug_assert!(!self.map.items.contains_key(&id));
+        debug_assert!(!self.map.nodes.contains_key(&id));
 
-        self.map.items.insert(id, hir_ast);
+        self.map.nodes.insert(id, hir_ast);
 
         Ok(())
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
-    fn top_import(&mut self, expr: ast::Import) -> Result<()> {
+    fn top_import(&mut self, expr: lume_ast::Import) -> Result<()> {
         for imported_name in expr.names {
             let namespace = self.import_path(expr.path.clone())?;
 

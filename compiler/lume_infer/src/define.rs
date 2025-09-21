@@ -2,9 +2,9 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use error_snippet::Result;
-use lume_hir::{Path, PathSegment, TypeId, TypeParameterId};
-use lume_span::{DefId, PackageId};
-use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType, WithTypeParameters};
+use lume_hir::{Node, Path, PathSegment};
+use lume_span::*;
+use lume_types::{Enum, Struct, Trait, TypeKind, TypeRef, UserType};
 
 use crate::TyInferCtx;
 use crate::query::Callable;
@@ -121,8 +121,8 @@ impl TyInferCtx {
     pub(crate) fn define_types(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, symbol) in &mut hir.items {
-            if let lume_hir::Item::Type(ty) = symbol {
+        for (_, symbol) in &mut hir.nodes {
+            if let lume_hir::Node::Type(ty) = symbol {
                 self.define_type(ty);
             }
         }
@@ -136,36 +136,27 @@ impl TyInferCtx {
                 let name = struct_def.name.clone();
                 let kind = TypeKind::User(UserType::Struct(Box::new(Struct::new(struct_def.as_ref()))));
 
-                let type_id = if let Some(first_root) = name.root.first()
-                    && first_root.name().as_str() == "std"
-                    && let Some(std_id) = std_type_id(&name)
-                {
-                    std_id
-                } else {
-                    self.tdb_mut().type_alloc(struct_def.id.package, name, kind)
-                };
-
-                struct_def.type_id = Some(type_id);
+                if std_type_id(&name).is_none() {
+                    self.tdb_mut().type_alloc(struct_def.id, name, kind);
+                }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
                 let name = trait_def.name.clone();
                 let kind = TypeKind::User(UserType::Trait(Box::new(Trait::new(trait_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(trait_def.id.package, name, kind);
 
-                trait_def.type_id = Some(type_id);
+                self.tdb_mut().type_alloc(trait_def.id, name, kind);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
                 let name = enum_def.name.clone();
                 let kind = TypeKind::User(UserType::Enum(Box::new(Enum::new(enum_def.as_ref()))));
-                let type_id = self.tdb_mut().type_alloc(enum_def.id.package, name, kind);
 
-                enum_def.type_id = Some(type_id);
+                self.tdb_mut().type_alloc(enum_def.id, name, kind);
             }
         }
     }
 }
 
-fn std_type_id(name: &Path) -> Option<TypeId> {
+fn std_type_id(name: &Path) -> Option<NodeId> {
     match name {
         n if n.is_name_match(&Path::void()) => Some(lume_types::TYPEREF_VOID_ID),
         n if n.is_name_match(&Path::boolean()) => Some(lume_types::TYPEREF_BOOL_ID),
@@ -188,13 +179,12 @@ impl TyInferCtx {
     pub(crate) fn define_functions(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Function(func) = item {
+        for (_, item) in &mut hir.nodes {
+            if let lume_hir::Node::Function(func) = item {
                 let name = func.name.clone();
                 let visibility = func.visibility;
-                let func_id = self.tdb_mut().func_alloc(func.id, name, visibility);
 
-                func.func_id = Some(func_id);
+                self.tdb_mut().func_alloc(func.id, name, visibility);
             }
         }
 
@@ -207,12 +197,11 @@ impl TyInferCtx {
     pub(crate) fn define_implementations(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Impl(implementation) = item {
+        for (_, item) in &mut hir.nodes {
+            if let lume_hir::Node::Impl(implementation) = item {
                 let target = implementation.target.name.clone();
-                let impl_id = self.tdb_mut().impl_alloc(target);
 
-                implementation.impl_id = Some(impl_id);
+                self.tdb_mut().impl_alloc(implementation.id, target);
             }
         }
 
@@ -225,9 +214,9 @@ impl TyInferCtx {
     pub(crate) fn define_trait_implementations(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
-            if let lume_hir::Item::TraitImpl(trait_impl) = item {
-                trait_impl.use_id = Some(self.tdb_mut().use_alloc());
+        for (_, item) in &mut hir.nodes {
+            if let lume_hir::Node::TraitImpl(trait_impl) = item {
+                self.tdb_mut().use_alloc(trait_impl.id);
             }
         }
 
@@ -240,8 +229,8 @@ impl TyInferCtx {
     pub(crate) fn define_fields(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
-            if let lume_hir::Item::Type(ty) = item {
+        for (_, item) in &mut hir.nodes {
+            if let lume_hir::Node::Type(ty) = item {
                 self.define_fields_type(ty)?;
             }
         }
@@ -253,17 +242,14 @@ impl TyInferCtx {
 
     fn define_fields_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
-            let type_id = struct_def.type_id.unwrap();
+            let type_id = struct_def.id;
 
             for (index, field) in struct_def.fields_mut().enumerate() {
                 let field_name = field.name.name.clone();
                 let visibility = field.visibility;
 
-                let field_id = self
-                    .tdb_mut()
-                    .field_alloc(index, type_id, field_name.clone(), visibility)?;
-
-                field.field_id = Some(field_id);
+                self.tdb_mut()
+                    .field_alloc(field.id, index, type_id, field_name.clone(), visibility);
             }
         }
 
@@ -276,14 +262,14 @@ impl TyInferCtx {
     pub(crate) fn define_trait_methods(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
+        for (_, item) in &mut hir.nodes {
             match item {
-                lume_hir::Item::Type(ty) => {
-                    if let lume_hir::TypeDefinition::Trait(tr) = &mut **ty {
+                lume_hir::Node::Type(ty) => {
+                    if let lume_hir::TypeDefinition::Trait(tr) = ty {
                         self.define_trait_def_methods(tr)?;
                     }
                 }
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_methods(u)?,
+                lume_hir::Node::TraitImpl(u) => self.define_trait_impl_methods(u)?,
                 _ => (),
             }
         }
@@ -294,7 +280,7 @@ impl TyInferCtx {
     }
 
     fn define_trait_def_methods(&mut self, trait_def: &mut lume_hir::TraitDefinition) -> Result<()> {
-        let type_id = trait_def.type_id.unwrap();
+        let type_id = trait_def.id;
         let type_ref = TypeRef::new(type_id, trait_def.location);
 
         for method in &mut trait_def.methods {
@@ -304,15 +290,13 @@ impl TyInferCtx {
 
             qualified_name.location = method_name.location;
 
-            let method_id = self.tdb_mut().method_alloc(
+            self.tdb_mut().method_alloc(
                 method.id,
                 type_ref.clone(),
                 qualified_name,
                 method.visibility,
                 lume_types::MethodKind::TraitDefinition,
-            )?;
-
-            method.method_id = Some(method_id);
+            );
         }
 
         Ok(())
@@ -344,36 +328,33 @@ impl TyInferCtx {
                 qualified_name,
                 method.visibility,
                 method_kind,
-            )?;
+            );
 
-            let trait_use_ty = self.tdb_mut().use_mut(trait_impl.use_id.unwrap()).unwrap();
+            let trait_use_ty = self.tdb_mut().use_mut(trait_impl.id).unwrap();
             trait_use_ty.methods.push(method_id);
-
-            method.method_id = Some(method_id);
         }
 
         Ok(())
     }
 
     fn define_trait_impl_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
-        let use_id = trait_impl.use_id.unwrap();
-        let package_id = trait_impl.id.package;
+        let id = trait_impl.id;
 
         for type_param in &mut trait_impl.type_parameters.iter_mut() {
             let type_param_id = self
                 .tdb_mut()
-                .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-            self.tdb_mut().push_type_param(use_id, type_param_id)?;
+            self.tdb_mut().push_type_param(id, type_param_id)?;
         }
 
         let trait_ref = self.mk_type_ref_generic(trait_impl.name.as_ref(), &trait_impl.type_parameters.as_refs())?;
         let target_ref = self.mk_type_ref_generic(trait_impl.target.as_ref(), &trait_impl.type_parameters.as_refs())?;
 
-        let trait_impl_ref = self.tdb_mut().use_mut(use_id).unwrap();
+        let trait_impl_ref = self.tdb_mut().use_mut(id).unwrap();
         trait_impl_ref.trait_ = trait_ref;
         trait_impl_ref.target = target_ref;
 
@@ -386,12 +367,13 @@ impl TyInferCtx {
     pub(crate) fn define_type_parameters(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
+        for (_, item) in &mut hir.nodes {
             match item {
-                lume_hir::Item::Type(t) => self.define_type_type_params(t)?,
-                lume_hir::Item::Impl(i) => self.define_impl_type_params(i)?,
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_method_type_params(u)?,
-                lume_hir::Item::Function(f) => self.define_func_type_params(f)?,
+                lume_hir::Node::Type(t) => self.define_type_type_params(t)?,
+                lume_hir::Node::Impl(i) => self.define_impl_type_params(i)?,
+                lume_hir::Node::TraitImpl(u) => self.define_trait_impl_method_type_params(u)?,
+                lume_hir::Node::Function(f) => self.define_func_type_params(f)?,
+                _ => {}
             }
         }
 
@@ -400,65 +382,64 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn define_type_type_params(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
-        let package_id = ty.id().package;
-
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
-                let type_id = struct_def.type_id.unwrap();
+                let id = struct_def.id;
 
                 for type_param in &mut struct_def.type_parameters.iter_mut() {
-                    let type_param_id = self
-                        .tdb_mut()
-                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                    let type_param_id =
+                        self.tdb_mut()
+                            .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                    type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-                    self.tdb_mut().push_type_param(type_id, type_param_id)?;
+                    self.tdb_mut().push_type_param(id, type_param_id)?;
                 }
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
-                let type_id = trait_def.type_id.unwrap();
+                let id = trait_def.id;
 
                 for type_param in &mut trait_def.type_parameters.iter_mut() {
-                    let type_param_id = self
-                        .tdb_mut()
-                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                    let type_param_id =
+                        self.tdb_mut()
+                            .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                    type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-                    self.tdb_mut().push_type_param(type_id, type_param_id)?;
+                    self.tdb_mut().push_type_param(id, type_param_id)?;
                 }
 
                 for method in &mut trait_def.methods {
-                    let method_id = method.method_id.unwrap();
+                    let id = method.id;
 
                     for type_param in &mut method.type_parameters.iter_mut() {
-                        let type_param_id = self
-                            .tdb_mut()
-                            .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                        let type_param_id =
+                            self.tdb_mut()
+                                .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                         type_param.type_param_id = Some(type_param_id);
-                        type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                        type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-                        self.tdb_mut().push_type_param(method_id, type_param_id)?;
+                        self.tdb_mut().push_type_param(id, type_param_id)?;
                     }
                 }
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
-                let type_id = enum_def.type_id.unwrap();
+                let id = enum_def.id;
 
                 for type_param in &mut enum_def.type_parameters.iter_mut() {
-                    let type_param_id = self
-                        .tdb_mut()
-                        .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                    let type_param_id =
+                        self.tdb_mut()
+                            .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                     type_param.type_param_id = Some(type_param_id);
-                    type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                    type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-                    self.tdb_mut().push_type_param(type_id, type_param_id)?;
+                    self.tdb_mut().push_type_param(id, type_param_id)?;
                 }
             }
         }
@@ -466,19 +447,19 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn define_impl_type_params(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
-        let impl_id = implementation.impl_id.unwrap();
-        let package_id = implementation.id.package;
+        let id = implementation.id;
 
         for type_param in &mut implementation.type_parameters.iter_mut() {
             let type_param_id = self
                 .tdb_mut()
-                .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-            self.tdb_mut().push_type_param(impl_id, type_param_id)?;
+            self.tdb_mut().push_type_param(id, type_param_id)?;
         }
 
         let type_ref = self.mk_type_ref_generic(
@@ -489,6 +470,7 @@ impl TyInferCtx {
         let is_type_intrinsic = type_ref.is_bool() || type_ref.is_integer() || type_ref.is_float();
 
         for method in &mut implementation.methods {
+            let id = method.id;
             let method_name = method.name.clone();
 
             let mut qualified_name = Path::with_root(
@@ -511,17 +493,15 @@ impl TyInferCtx {
                 qualified_name,
                 method.visibility,
                 method_kind,
-            )?;
-
-            method.method_id = Some(method_id);
+            );
 
             for type_param in &mut method.type_parameters.iter_mut() {
-                let type_param_id = self
-                    .tdb_mut()
-                    .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                let type_param_id =
+                    self.tdb_mut()
+                        .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                 type_param.type_param_id = Some(type_param_id);
-                type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
                 self.tdb_mut().push_type_param(method_id, type_param_id)?;
             }
@@ -530,45 +510,46 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn define_trait_impl_method_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
-        let package_id = trait_impl.id.package;
-
         for method in &mut trait_impl.methods {
-            let method_id = method.method_id.unwrap();
+            let id = method.id;
 
             for type_param in &mut method.type_parameters.iter_mut() {
-                let type_param_id = self
-                    .tdb_mut()
-                    .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                let type_param_id =
+                    self.tdb_mut()
+                        .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
                 type_param.type_param_id = Some(type_param_id);
-                type_param.type_id = Some(self.wrap_type_param(package_id, type_param_id));
+                type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-                self.tdb_mut().push_type_param(method_id, type_param_id)?;
+                self.tdb_mut().push_type_param(id, type_param_id)?;
             }
         }
 
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all)]
     fn define_func_type_params(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
-        let func_id = func.func_id.unwrap();
+        let id = func.id;
 
         for type_param in &mut func.type_parameters.iter_mut() {
             let type_param_id = self
                 .tdb_mut()
-                .type_param_alloc(type_param.name.name.clone(), type_param.location);
+                .type_param_alloc(id, type_param.name.name.clone(), type_param.location);
 
             type_param.type_param_id = Some(type_param_id);
-            type_param.type_id = Some(self.wrap_type_param(func.id.package, type_param_id));
+            type_param.type_id = Some(self.wrap_type_param(type_param_id, type_param_id));
 
-            self.tdb_mut().push_type_param(func_id, type_param_id)?;
+            self.tdb_mut().push_type_param(id, type_param_id)?;
         }
 
         Ok(())
     }
 
-    fn wrap_type_param(&mut self, pkg: PackageId, type_param_id: TypeParameterId) -> TypeId {
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn wrap_type_param(&mut self, id: NodeId, type_param_id: NodeId) -> NodeId {
         let name = self.tdb().type_parameter(type_param_id).unwrap().name.clone();
 
         let symbol_name = Path {
@@ -578,7 +559,7 @@ impl TyInferCtx {
         };
 
         self.tdb_mut()
-            .type_alloc(pkg, symbol_name, TypeKind::TypeParameter(type_param_id))
+            .type_alloc(id, symbol_name, TypeKind::TypeParameter(type_param_id))
     }
 }
 
@@ -587,12 +568,13 @@ impl TyInferCtx {
     pub(crate) fn define_type_constraints(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &mut hir.items {
+        for (_, item) in &mut hir.nodes {
             match item {
-                lume_hir::Item::Type(t) => self.define_type_type_constraints(t)?,
-                lume_hir::Item::Impl(i) => self.define_impl_type_constraints(i)?,
-                lume_hir::Item::TraitImpl(u) => self.define_trait_impl_type_constraints(u)?,
-                lume_hir::Item::Function(f) => self.define_func_type_constraints(f)?,
+                lume_hir::Node::Type(t) => self.define_type_type_constraints(t)?,
+                lume_hir::Node::Impl(i) => self.define_impl_type_constraints(i)?,
+                lume_hir::Node::TraitImpl(u) => self.define_trait_impl_type_constraints(u)?,
+                lume_hir::Node::Function(f) => self.define_func_type_constraints(f)?,
+                _ => {}
             }
         }
 
@@ -604,26 +586,26 @@ impl TyInferCtx {
     fn define_type_type_constraints(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
-                let type_id = struct_def.type_id.unwrap();
+                let type_id = struct_def.id;
                 let type_params = self.tdb().type_params_of(type_id)?.to_owned();
 
                 self.lower_type_constraints(&struct_def.type_parameters.inner, &type_params)?;
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
-                let type_id = trait_def.type_id.unwrap();
-                let type_params = type_id.type_params(self.tdb())?.to_owned();
+                let type_id = trait_def.id;
+                let type_params = self.tdb().type_params_of(type_id)?.to_owned();
 
                 self.lower_type_constraints(&trait_def.type_parameters.inner, &type_params)?;
 
                 for method in &trait_def.methods {
-                    let method_id = method.method_id.unwrap();
+                    let method_id = method.id;
                     let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
                     self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
                 }
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
-                let type_id = enum_def.type_id.unwrap();
+                let type_id = enum_def.id;
                 let type_params = self.tdb().type_params_of(type_id)?.to_owned();
 
                 self.lower_type_constraints(&enum_def.type_parameters.inner, &type_params)?;
@@ -634,13 +616,13 @@ impl TyInferCtx {
     }
 
     fn define_impl_type_constraints(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
-        let impl_id = implementation.impl_id.unwrap();
+        let impl_id = implementation.id;
         let type_params = self.tdb().type_params_of(impl_id)?.to_owned();
 
         self.lower_type_constraints(&implementation.type_parameters.inner, &type_params)?;
 
         for method in &implementation.methods {
-            let method_id = method.method_id.unwrap();
+            let method_id = method.id;
             let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
             self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
@@ -650,13 +632,13 @@ impl TyInferCtx {
     }
 
     fn define_trait_impl_type_constraints(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
-        let use_id = trait_impl.use_id.unwrap();
+        let use_id = trait_impl.id;
         let type_params = self.tdb().type_params_of(use_id)?.to_owned();
 
         self.lower_type_constraints(&trait_impl.type_parameters.inner, &type_params)?;
 
         for method in &trait_impl.methods {
-            let method_id = method.method_id.unwrap();
+            let method_id = method.id;
             let type_params = self.tdb().type_params_of(method_id)?.to_owned();
 
             self.lower_type_constraints(&method.type_parameters.inner, &type_params)?;
@@ -666,7 +648,7 @@ impl TyInferCtx {
     }
 
     fn define_func_type_constraints(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
-        let func_id = func.func_id.unwrap();
+        let func_id = func.id;
         let type_params = self.tdb().function(func_id).unwrap().type_parameters.clone();
 
         self.lower_type_constraints(&func.type_parameters.inner, &type_params)?;
@@ -674,7 +656,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn lower_type_constraints(&mut self, hir: &[lume_hir::TypeParameter], ids: &[TypeParameterId]) -> Result<()> {
+    fn lower_type_constraints(&mut self, hir: &[lume_hir::TypeParameter], ids: &[NodeId]) -> Result<()> {
         for (param_id, hir_param) in ids.iter().zip(hir.iter()) {
             for type_constraint in &hir_param.constraints {
                 let lowered_constraint = self.mk_type_ref(type_constraint)?;
@@ -696,8 +678,8 @@ impl TyInferCtx {
     pub(crate) fn define_field_types(&mut self) -> Result<()> {
         let hir = std::mem::take(&mut self.hir);
 
-        for (_, item) in &hir.items {
-            if let lume_hir::Item::Type(ty) = item {
+        for (_, item) in &hir.nodes {
+            if let lume_hir::Node::Type(ty) = item {
                 self.define_field_type_on_type(ty)?;
             }
         }
@@ -710,7 +692,7 @@ impl TyInferCtx {
     fn define_field_type_on_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             for field in struct_def.fields() {
-                let field_id = field.field_id.unwrap();
+                let field_id = field.id;
                 let type_ref = self.mk_type_ref_generic(&field.field_type, &struct_def.type_parameters.as_refs())?;
 
                 self.tdb_mut().field_mut(field_id).unwrap().field_type = type_ref;
@@ -725,12 +707,13 @@ impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     pub(crate) fn define_method_bodies(&mut self) -> Result<()> {
         // TODO: this is not a very good way of handling mutability issues.
-        for (_, item) in &self.hir.clone().items {
+        for (_, item) in &self.hir.clone().nodes {
             match item {
-                lume_hir::Item::Type(t) => self.define_method_bodies_type(t)?,
-                lume_hir::Item::Function(f) => self.define_func_body(f)?,
-                lume_hir::Item::TraitImpl(u) => self.define_method_bodies_trait_impl(u)?,
-                lume_hir::Item::Impl(i) => self.define_method_bodies_impl(i)?,
+                lume_hir::Node::Type(t) => self.define_method_bodies_type(t)?,
+                lume_hir::Node::Function(f) => self.define_func_body(f)?,
+                lume_hir::Node::TraitImpl(u) => self.define_method_bodies_trait_impl(u)?,
+                lume_hir::Node::Impl(i) => self.define_method_bodies_impl(i)?,
+                _ => {}
             }
         }
 
@@ -740,7 +723,7 @@ impl TyInferCtx {
     fn define_method_bodies_type(&mut self, ty: &lume_hir::TypeDefinition) -> Result<()> {
         if let lume_hir::TypeDefinition::Trait(trait_def) = &ty {
             for method in &trait_def.methods {
-                let method_id = method.method_id.unwrap();
+                let method_id = method.id;
 
                 for param in &method.parameters {
                     let name = param.name.name.clone();
@@ -776,7 +759,7 @@ impl TyInferCtx {
     }
 
     fn define_func_body(&mut self, func: &lume_hir::FunctionDefinition) -> Result<()> {
-        let func_id = func.func_id.unwrap();
+        let func_id = func.id;
 
         for param in &func.parameters {
             let name = param.name.name.clone();
@@ -797,7 +780,7 @@ impl TyInferCtx {
 
     fn define_method_bodies_trait_impl(&mut self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
         for method in &trait_impl.methods {
-            let method_id = method.method_id.unwrap();
+            let method_id = method.id;
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
@@ -833,7 +816,7 @@ impl TyInferCtx {
 
     fn define_method_bodies_impl(&mut self, implementation: &lume_hir::Implementation) -> Result<()> {
         for method in &implementation.methods {
-            let method_id = method.method_id.unwrap();
+            let method_id = method.id;
 
             for param in &method.parameters {
                 let name = param.name.name.clone();
@@ -873,16 +856,17 @@ impl TyInferCtx {
     pub(crate) fn define_scopes(&mut self) -> Result<()> {
         let mut tree = BTreeMap::new();
 
-        for (_, item) in &self.hir.items {
+        for (_, item) in &self.hir.nodes {
             match item {
-                lume_hir::Item::Type(ty) => match ty.as_ref() {
+                lume_hir::Node::Type(ty) => match ty {
                     lume_hir::TypeDefinition::Struct(f) => self.define_struct_scope(&mut tree, f)?,
                     lume_hir::TypeDefinition::Trait(f) => self.define_trait_scope(&mut tree, f)?,
                     lume_hir::TypeDefinition::Enum(_) => {}
                 },
-                lume_hir::Item::Impl(f) => self.define_impl_scope(&mut tree, f)?,
-                lume_hir::Item::TraitImpl(f) => self.define_use_scope(&mut tree, f)?,
-                lume_hir::Item::Function(f) => self.define_function_scope(&mut tree, f)?,
+                lume_hir::Node::Impl(f) => self.define_impl_scope(&mut tree, f)?,
+                lume_hir::Node::TraitImpl(f) => self.define_use_scope(&mut tree, f)?,
+                lume_hir::Node::Function(f) => self.define_function_scope(&mut tree, f)?,
+                _ => {}
             }
         }
 
@@ -893,10 +877,10 @@ impl TyInferCtx {
 
     fn define_struct_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         struct_def: &lume_hir::StructDefinition,
     ) -> Result<()> {
-        let parent = DefId::Item(struct_def.id);
+        let parent = struct_def.id;
 
         for field in &struct_def.fields {
             let _ = tree.insert(field.id, parent);
@@ -911,10 +895,10 @@ impl TyInferCtx {
 
     fn define_trait_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         trait_def: &lume_hir::TraitDefinition,
     ) -> Result<()> {
-        let parent = DefId::Item(trait_def.id);
+        let parent = trait_def.id;
 
         for method in &trait_def.methods {
             let _ = tree.insert(method.id, parent);
@@ -929,10 +913,10 @@ impl TyInferCtx {
 
     fn define_impl_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         implementation: &lume_hir::Implementation,
     ) -> Result<()> {
-        let parent = DefId::Item(implementation.id);
+        let parent = implementation.id;
 
         for method in &implementation.methods {
             let _ = tree.insert(method.id, parent);
@@ -947,10 +931,10 @@ impl TyInferCtx {
 
     fn define_use_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         trait_impl: &lume_hir::TraitImplementation,
     ) -> Result<()> {
-        let parent = DefId::Item(trait_impl.id);
+        let parent = trait_impl.id;
 
         for method in &trait_impl.methods {
             let _ = tree.insert(method.id, parent);
@@ -965,11 +949,11 @@ impl TyInferCtx {
 
     fn define_function_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         func: &lume_hir::FunctionDefinition,
     ) -> Result<()> {
         if let Some(block) = &func.block {
-            let parent = DefId::Item(func.id);
+            let parent = func.id;
 
             self.define_block_scope(tree, block, parent)?;
         }
@@ -979,9 +963,9 @@ impl TyInferCtx {
 
     fn define_block_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         block: &lume_hir::Block,
-        parent: DefId,
+        parent: NodeId,
     ) -> Result<()> {
         for stmt in &block.statements {
             self.define_stmt_scope(tree, *stmt, parent)?;
@@ -990,16 +974,9 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_stmt_scope(
-        &self,
-        tree: &mut BTreeMap<DefId, DefId>,
-        stmt: lume_span::StatementId,
-        parent: DefId,
-    ) -> Result<()> {
-        let stmt_id = DefId::Statement(stmt);
+    fn define_stmt_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, stmt_id: NodeId, parent: NodeId) -> Result<()> {
         let _ = tree.insert(stmt_id, parent);
-
-        let stmt = self.hir.statement(stmt).unwrap();
+        let stmt = self.hir.statement(stmt_id).unwrap();
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(s) => self.define_expr_scope(tree, s.value, stmt_id),
@@ -1029,9 +1006,9 @@ impl TyInferCtx {
 
     fn define_condition_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         cond: &lume_hir::Condition,
-        parent: DefId,
+        parent: NodeId,
     ) -> Result<()> {
         if let Some(condition) = cond.condition {
             self.define_expr_scope(tree, condition, parent)?;
@@ -1042,16 +1019,9 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_expr_scope(
-        &self,
-        tree: &mut BTreeMap<DefId, DefId>,
-        expr: lume_span::ExpressionId,
-        parent: DefId,
-    ) -> Result<()> {
-        let expr_id = DefId::Expression(expr);
+    fn define_expr_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, expr_id: NodeId, parent: NodeId) -> Result<()> {
         let _ = tree.insert(expr_id, parent);
-
-        let expr = self.hir.expression(expr).unwrap();
+        let expr = self.hir.expression(expr_id).unwrap();
 
         match &expr.kind {
             lume_hir::ExpressionKind::Assignment(s) => {
@@ -1150,11 +1120,11 @@ impl TyInferCtx {
     #[allow(clippy::only_used_in_recursion, reason = "pedantic")]
     fn define_pat_scope(
         &self,
-        tree: &mut BTreeMap<DefId, DefId>,
+        tree: &mut BTreeMap<NodeId, NodeId>,
         pat: &lume_hir::Pattern,
-        parent: DefId,
+        parent: NodeId,
     ) -> Result<()> {
-        let def_id = DefId::Pattern(pat.id);
+        let def_id = pat.id;
         let _ = tree.insert(def_id, parent);
 
         match &pat.kind {
@@ -1188,7 +1158,7 @@ impl TyInferCtx {
     pub(crate) fn infer_type_arguments(&mut self) -> Result<()> {
         let mut replacements = HashMap::new();
 
-        for expr_id in self.hir.expressions().keys().map(|key| *key) {
+        for expr_id in self.hir.expressions().map(|key| key.id) {
             let mut expr = self.hir.expect_expression(expr_id)?.to_owned();
 
             match &mut expr.kind {
@@ -1233,7 +1203,7 @@ impl TyInferCtx {
         }
 
         for (expr_id, expr) in replacements {
-            self.hir.expressions.insert(expr_id, expr);
+            self.hir.nodes.insert(expr_id, Node::Expression(expr));
         }
 
         self.tcx.dcx().ensure_untainted()?;
@@ -1281,7 +1251,7 @@ impl TyInferCtx {
     /// Attempts to infer the type of the type parameter, given the arguments and parameter types.
     pub(crate) fn infer_type_arg_param(
         &self,
-        type_param: TypeParameterId,
+        type_param: NodeId,
         params: &lume_types::Parameters,
         args: &[&lume_hir::Expression],
     ) -> Result<Option<TypeRef>> {
@@ -1324,7 +1294,7 @@ impl TyInferCtx {
     /// of `para_ty` is matched against the target parameter ID, the corresponding type argument is returned.
     fn infer_type_arg_param_nested(
         &self,
-        target_param_id: TypeParameterId,
+        target_param_id: NodeId,
         param_ty: &lume_types::TypeRef,
         arg_ty: &lume_types::TypeRef,
     ) -> Result<Option<TypeRef>> {

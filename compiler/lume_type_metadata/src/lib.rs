@@ -1,6 +1,5 @@
 use indexmap::IndexMap;
-use lume_span::{DefId, hash_id};
-use lume_types::TypeId;
+use lume_span::{NodeId, hash_id};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
@@ -39,7 +38,7 @@ pub struct TypeMetadata {
     pub alignment: usize,
 
     /// Gets the unique ID of the type, used mostly for internal referencing.
-    pub type_id: TypeId,
+    pub type_id: NodeId,
 
     /// Gets all the fields defined on the type, in the order that they're declared.
     pub fields: Vec<FieldMetadata>,
@@ -52,7 +51,7 @@ pub struct TypeMetadata {
     pub type_arguments: Vec<TypeMetadataId>,
 
     /// Gets the definition of the `Dispose` method implementation, if any.
-    pub drop_method: Option<DefId>,
+    pub drop_method: Option<NodeId>,
 }
 
 impl TypeMetadata {
@@ -98,10 +97,10 @@ pub struct MethodMetadata {
     pub full_name: String,
 
     /// Gets the unique ID of the method, used mostly for internal referencing.
-    pub func_id: DefId,
+    pub func_id: NodeId,
 
     /// Gets the unique ID of the method definition, which this method implements.
-    pub definition_id: DefId,
+    pub definition_id: NodeId,
 
     /// Gets all the parameters defined on the method, in the order that they're declared.
     pub parameters: Vec<ParameterMetadata>,

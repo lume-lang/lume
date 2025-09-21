@@ -2,8 +2,8 @@ use std::{collections::BTreeMap, fmt::Debug, ops::Deref};
 
 use error_snippet::Result;
 use lume_errors::DiagCtx;
-use lume_hir::{Path, TypeId, TypeParameter};
-use lume_span::{DefId, StatementId};
+use lume_hir::{Path, TypeParameter};
+use lume_span::*;
 use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
 
 mod define;
@@ -46,7 +46,7 @@ pub struct TyInferCtx {
     hir: lume_hir::map::Map,
 
     /// Defines a mapping any single node and their parent node.
-    ancestry: BTreeMap<DefId, DefId>,
+    ancestry: BTreeMap<NodeId, NodeId>,
 }
 
 impl TyInferCtx {
@@ -147,7 +147,7 @@ impl TyInferCtx {
     /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
     #[tracing::instrument(level = "DEBUG", skip(self))]
     #[allow(dead_code, reason = "expected used in future")]
-    pub(crate) fn hir_expect_var_stmt(&self, id: StatementId) -> &lume_hir::VariableDeclaration {
+    pub(crate) fn hir_expect_var_stmt(&self, id: NodeId) -> &lume_hir::VariableDeclaration {
         let stmt = self.hir_expect_stmt(id);
 
         match &stmt.kind {
@@ -205,7 +205,7 @@ impl TyInferCtx {
         skip_all, fields(ty = %ty.name, loc = %ty.location, def = ?def),
         err
     )]
-    pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: lume_span::DefId) -> Result<TypeRef> {
+    pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
@@ -219,14 +219,14 @@ impl TyInferCtx {
         skip_all, fields(ty = %ty.name, loc = %ty.location, expr = ?expr),
         err
     )]
-    pub fn mk_type_ref_from_expr(&self, ty: &lume_hir::Type, expr: lume_span::ExpressionId) -> Result<TypeRef> {
-        self.mk_type_ref_from(ty, DefId::Expression(expr))
+    pub fn mk_type_ref_from_expr(&self, ty: &lume_hir::Type, expr: NodeId) -> Result<TypeRef> {
+        self.mk_type_ref_from(ty, expr)
     }
 
     /// Lowers the given HIR types, with respect to the type parameters available from
     /// the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: lume_span::DefId) -> Result<Vec<TypeRef>> {
+    pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
@@ -234,7 +234,7 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]
-    fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &Path, type_params: &[T]) -> Option<TypeId> {
+    fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &Path, type_params: &[T]) -> Option<NodeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
             if &type_param.as_ref().name == name.name.name() {
@@ -321,7 +321,7 @@ impl TyInferCtx {
     /// Returns `Err` if one-or-more typed path segments include invalid references
     /// to type IDs.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub fn find_type_ref_from(&self, name: &Path, def: lume_span::DefId) -> Result<Option<TypeRef>> {
+    pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
@@ -488,7 +488,7 @@ impl TyInferCtx {
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn hir_lift_type(&self, ty: &TypeRef) -> Result<lume_hir::Type> {
-        let id = lume_span::ItemId::from_name(ty.instance_of.package, ty);
+        let id = NodeId::from_name(ty.instance_of.package, ty);
         let name = self.type_ref_name(ty)?.to_owned();
         let location = ty.location;
 

@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
-use lume_span::{DefId, Interned, Location};
+use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,7 @@ pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct ModuleMap {
     pub metadata: StaticMetadata,
-    pub functions: IndexMap<DefId, Function>,
+    pub functions: IndexMap<NodeId, Function>,
 }
 
 impl ModuleMap {
@@ -30,7 +30,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
-    pub fn function(&self, id: DefId) -> &Function {
+    pub fn function(&self, id: NodeId) -> &Function {
         self.functions.get(&id).unwrap()
     }
 
@@ -39,7 +39,7 @@ impl ModuleMap {
     /// # Panics
     ///
     /// Panics if the given ID is invalid or out of bounds.
-    pub fn function_mut(&mut self, id: DefId) -> &mut Function {
+    pub fn function_mut(&mut self, id: NodeId) -> &mut Function {
         self.functions.get_mut(&id).unwrap()
     }
 
@@ -127,7 +127,7 @@ impl std::fmt::Display for Parameter {
 /// functions and methods are represented by this struct.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Function {
-    pub id: DefId,
+    pub id: NodeId,
     pub name: String,
     pub signature: Signature,
 
@@ -144,7 +144,7 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(id: DefId, name: String, location: Location) -> Self {
+    pub fn new(id: NodeId, name: String, location: Location) -> Self {
         Function {
             id,
             name,
@@ -1008,7 +1008,7 @@ pub enum DeclarationKind {
     Intrinsic { name: Intrinsic, args: Vec<Operand> },
 
     /// Represents a call to a function.
-    Call { func_id: DefId, args: Vec<Operand> },
+    Call { func_id: NodeId, args: Vec<Operand> },
 
     /// Represents an indirect call to a function.
     IndirectCall {

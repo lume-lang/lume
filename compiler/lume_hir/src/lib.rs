@@ -1,9 +1,5 @@
-use std::fmt::Display;
-
-use serde::{Deserialize, Serialize};
-
-use lume_macros::Node;
-use lume_span::{DefId, ExpressionId, Idx, ItemId, Location, PackageId, PatternId, StatementId};
+use lume_macros::Location;
+use lume_span::*;
 
 pub mod map;
 pub mod pretty;
@@ -11,49 +7,156 @@ pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FunctionId {
-    pub package: PackageId,
-    pub index: Idx,
+#[derive(Debug, Clone, PartialEq)]
+pub enum Node {
+    Function(FunctionDefinition),
+    Type(TypeDefinition),
+    TraitImpl(TraitImplementation),
+    Impl(Implementation),
+    Field(Field),
+    Method(MethodDefinition),
+    TraitMethodDef(TraitMethodDefinition),
+    TraitMethodImpl(TraitMethodImplementation),
+    Pattern(Pattern),
+    Statement(Statement),
+    Expression(Expression),
 }
 
-#[derive(Serialize, Deserialize, Default, Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeId {
-    pub package: PackageId,
-    pub index: Idx,
-}
+impl Node {
+    pub fn id(&self) -> NodeId {
+        match self {
+            Self::Function(n) => n.id,
+            Self::Type(n) => n.id(),
+            Self::TraitImpl(n) => n.id,
+            Self::Impl(n) => n.id,
+            Self::Field(def) => def.id,
+            Self::Method(def) => def.id,
+            Self::TraitMethodDef(def) => def.id,
+            Self::TraitMethodImpl(def) => def.id,
+            Self::Pattern(def) => def.id,
+            Self::Statement(def) => def.id,
+            Self::Expression(def) => def.id,
+        }
+    }
 
-impl TypeId {
-    pub const fn new(package: PackageId, idx: usize) -> Self {
-        Self {
-            package,
-            index: Idx::from_usize(idx),
+    pub fn type_parameters(&self) -> &TypeParameters {
+        static EMPTY: TypeParameters = TypeParameters::new();
+
+        match self {
+            Self::Function(def) => &def.type_parameters,
+            Self::Type(def) => def.type_parameters(),
+            Self::TraitImpl(def) => &def.type_parameters,
+            Self::Impl(def) => &def.type_parameters,
+            Self::Method(def) => &def.type_parameters,
+            Self::TraitMethodDef(def) => &def.type_parameters,
+            Self::TraitMethodImpl(def) => &def.type_parameters,
+            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
+        }
+    }
+
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Function(n) => n.location,
+            Self::Type(n) => n.location(),
+            Self::TraitImpl(n) => n.location,
+            Self::Impl(n) => n.location,
+            Self::Field(n) => n.location,
+            Self::Method(n) => n.location,
+            Self::TraitMethodDef(n) => n.location,
+            Self::TraitMethodImpl(n) => n.location,
+            Self::Pattern(n) => n.location,
+            Self::Statement(n) => n.location,
+            Self::Expression(n) => n.location,
+        }
+    }
+
+    pub fn as_ref(&self) -> NodeRef<'_> {
+        match self {
+            Self::Function(n) => NodeRef::Function(n),
+            Self::Type(n) => NodeRef::Type(n),
+            Self::TraitImpl(n) => NodeRef::TraitImpl(n),
+            Self::Impl(n) => NodeRef::Impl(n),
+            Self::Field(n) => NodeRef::Field(n),
+            Self::Method(n) => NodeRef::Method(n),
+            Self::TraitMethodDef(n) => NodeRef::TraitMethodDef(n),
+            Self::TraitMethodImpl(n) => NodeRef::TraitMethodImpl(n),
+            Self::Pattern(n) => NodeRef::Pattern(n),
+            Self::Statement(n) => NodeRef::Statement(n),
+            Self::Expression(n) => NodeRef::Expression(n),
         }
     }
 }
 
-impl Display for TypeId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "TypeId({}, {})", self.package.as_usize(), self.index.as_usize())
+#[derive(Debug, Clone, PartialEq)]
+pub enum NodeRef<'a> {
+    Function(&'a FunctionDefinition),
+    Type(&'a TypeDefinition),
+    TraitImpl(&'a TraitImplementation),
+    Impl(&'a Implementation),
+    Field(&'a Field),
+    Method(&'a MethodDefinition),
+    TraitMethodDef(&'a TraitMethodDefinition),
+    TraitMethodImpl(&'a TraitMethodImplementation),
+    Pattern(&'a Pattern),
+    Statement(&'a Statement),
+    Expression(&'a Expression),
+}
+
+impl NodeRef<'_> {
+    pub fn id(&self) -> NodeId {
+        match self {
+            Self::Function(n) => n.id,
+            Self::Type(n) => n.id(),
+            Self::TraitImpl(n) => n.id,
+            Self::Impl(n) => n.id,
+            Self::Field(def) => def.id,
+            Self::Method(def) => def.id,
+            Self::TraitMethodDef(def) => def.id,
+            Self::TraitMethodImpl(def) => def.id,
+            Self::Pattern(def) => def.id,
+            Self::Statement(def) => def.id,
+            Self::Expression(def) => def.id,
+        }
+    }
+
+    pub fn type_parameters(&self) -> &TypeParameters {
+        static EMPTY: TypeParameters = TypeParameters::new();
+
+        match self {
+            Self::Function(def) => &def.type_parameters,
+            Self::Type(def) => def.type_parameters(),
+            Self::TraitImpl(def) => &def.type_parameters,
+            Self::Impl(def) => &def.type_parameters,
+            Self::Method(def) => &def.type_parameters,
+            Self::TraitMethodDef(def) => &def.type_parameters,
+            Self::TraitMethodImpl(def) => &def.type_parameters,
+            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
+        }
+    }
+
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Function(n) => n.location,
+            Self::Type(n) => n.location(),
+            Self::TraitImpl(n) => n.location,
+            Self::Impl(n) => n.location,
+            Self::Field(n) => n.location,
+            Self::Method(n) => n.location,
+            Self::TraitMethodDef(n) => n.location,
+            Self::TraitMethodImpl(n) => n.location,
+            Self::Pattern(n) => n.location,
+            Self::Statement(n) => n.location,
+            Self::Expression(n) => n.location,
+        }
     }
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ImplId(pub usize);
+/// Trait for HIR nodes which have some location attached.
+pub trait WithLocation {
+    fn location(&self) -> Location;
+}
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct UseId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct FieldId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct MethodId(pub usize);
-
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq)]
-pub struct TypeParameterId(pub usize);
-
-#[derive(Debug, Node, Clone, Eq)]
+#[derive(Debug, Location, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
@@ -242,7 +345,7 @@ impl std::fmt::Display for PathSegment {
     }
 }
 
-impl Node for PathSegment {
+impl WithLocation for PathSegment {
     #[inline]
     fn location(&self) -> Location {
         match self {
@@ -501,11 +604,6 @@ pub trait WithTypeParameters {
     fn type_params(&self) -> &TypeParameters;
 }
 
-/// Trait for HIR nodes which have some location attached.
-pub trait Node {
-    fn location(&self) -> Location;
-}
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Signature<'a> {
     pub name: &'a Identifier,
@@ -566,116 +664,13 @@ impl std::fmt::Display for SignatureOwned {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Hash, Location, Debug, Clone, PartialEq)]
 pub struct Block {
-    pub statements: Vec<StatementId>,
+    pub statements: Vec<NodeId>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
-pub enum Item {
-    Function(Box<FunctionDefinition>),
-    Type(Box<TypeDefinition>),
-    TraitImpl(Box<TraitImplementation>),
-    Impl(Box<Implementation>),
-}
-
-impl Item {
-    pub fn id(&self) -> ItemId {
-        match self {
-            Item::Function(symbol) => symbol.id,
-            Item::Type(symbol) => symbol.id(),
-            Item::TraitImpl(symbol) => symbol.id,
-            Item::Impl(symbol) => symbol.id,
-        }
-    }
-
-    pub fn type_parameters(&self) -> &TypeParameters {
-        match self {
-            Item::Function(symbol) => &symbol.type_parameters,
-            Item::Type(symbol) => match &**symbol {
-                TypeDefinition::Struct(s) => &s.type_parameters,
-                TypeDefinition::Trait(t) => &t.type_parameters,
-                TypeDefinition::Enum(e) => &e.type_parameters,
-            },
-            Item::Impl(symbol) => &symbol.type_parameters,
-            Item::TraitImpl(symbol) => &symbol.type_parameters,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Def<'a> {
-    Item(&'a Item),
-    Field(&'a Field),
-    Method(&'a MethodDefinition),
-    TraitMethodDef(&'a TraitMethodDefinition),
-    TraitMethodImpl(&'a TraitMethodImplementation),
-    Pattern(&'a Pattern),
-    Statement(&'a Statement),
-    Expression(&'a Expression),
-}
-
-impl Def<'_> {
-    pub fn id(&self) -> DefId {
-        match self {
-            Def::Item(def) => DefId::Item(def.id()),
-            Def::Method(def) => def.id,
-            Def::TraitMethodDef(def) => def.id,
-            Def::TraitMethodImpl(def) => def.id,
-            Def::Pattern(def) => DefId::Pattern(def.id),
-            Def::Statement(def) => DefId::Statement(def.id),
-            Def::Expression(def) => DefId::Expression(def.id),
-            Def::Field(def) => def.id,
-        }
-    }
-
-    pub fn type_parameters(&self) -> &TypeParameters {
-        static EMPTY: TypeParameters = TypeParameters::new();
-
-        match self {
-            Self::Item(item) => item.type_parameters(),
-            Self::Method(def) => &def.type_parameters,
-            Self::TraitMethodDef(def) => &def.type_parameters,
-            Self::TraitMethodImpl(def) => &def.type_parameters,
-            Self::Field(_) | Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => &EMPTY,
-        }
-    }
-
-    pub fn location(&self) -> Location {
-        match self {
-            Def::Item(def) => def.location(),
-            Def::Method(def) => def.location(),
-            Def::TraitMethodDef(def) => def.location(),
-            Def::TraitMethodImpl(def) => def.location(),
-            Def::Statement(def) => def.location(),
-            Def::Expression(def) => def.location(),
-            Def::Field(def) => def.location(),
-            Def::Pattern(def) => def.location,
-        }
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
-pub enum Symbol {
-    Function(Box<FunctionDefinition>),
-    Type(Box<TypeDefinition>),
-    Use(Box<TraitImplementation>),
-    Impl(Box<Implementation>),
-}
-
-impl Symbol {
-    pub fn id(&self) -> ItemId {
-        match self {
-            Symbol::Function(symbol) => symbol.id,
-            Symbol::Type(symbol) => symbol.id(),
-            Symbol::Use(symbol) => symbol.id,
-            Symbol::Impl(symbol) => symbol.id,
-        }
-    }
-}
-
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct ExternalSymbol {
     pub name: Path,
     pub location: Location,
@@ -704,10 +699,9 @@ impl std::fmt::Display for Visibility {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
-    pub id: ItemId,
-    pub func_id: Option<FunctionId>,
+    pub id: NodeId,
     pub visibility: Visibility,
     pub name: Path,
     pub parameters: Vec<Parameter>,
@@ -729,7 +723,7 @@ impl WithTypeParameters for FunctionDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Location, Debug, Clone, Eq)]
 pub struct Parameter {
     pub index: usize,
     pub name: Identifier,
@@ -763,7 +757,7 @@ impl PartialEq for Parameter {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Struct(Box<StructDefinition>),
@@ -771,7 +765,7 @@ pub enum TypeDefinition {
 }
 
 impl TypeDefinition {
-    pub fn id(&self) -> ItemId {
+    pub fn id(&self) -> NodeId {
         match self {
             TypeDefinition::Enum(def) => def.id,
             TypeDefinition::Struct(def) => def.id,
@@ -786,12 +780,19 @@ impl TypeDefinition {
             TypeDefinition::Trait(def) => def.name(),
         }
     }
+
+    pub fn type_parameters(&self) -> &TypeParameters {
+        match self {
+            Self::Enum(def) => &def.type_parameters,
+            Self::Struct(def) => &def.type_parameters,
+            Self::Trait(def) => &def.type_parameters,
+        }
+    }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: NodeId,
     pub name: Path,
     pub type_parameters: TypeParameters,
     pub visibility: Visibility,
@@ -805,7 +806,7 @@ impl EnumDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub idx: usize,
     pub name: Path,
@@ -813,10 +814,9 @@ pub struct EnumDefinitionCase {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: NodeId,
     pub name: Path,
     pub visibility: Visibility,
     pub builtin: bool,
@@ -845,10 +845,9 @@ impl WithTypeParameters for StructDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct Implementation {
-    pub id: ItemId,
-    pub impl_id: Option<ImplId>,
+    pub id: NodeId,
     pub target: Box<Type>,
     pub methods: Vec<MethodDefinition>,
     pub type_parameters: TypeParameters,
@@ -861,27 +860,25 @@ impl WithTypeParameters for Implementation {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub enum StructMember {
     Field(Box<Field>),
     Method(Box<MethodDefinition>),
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct Field {
-    pub id: DefId,
-    pub field_id: Option<FieldId>,
+    pub id: NodeId,
     pub visibility: Visibility,
     pub name: Identifier,
     pub field_type: Type,
-    pub default_value: Option<ExpressionId>,
+    pub default_value: Option<NodeId>,
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
-    pub id: DefId,
-    pub method_id: Option<MethodId>,
+    pub id: NodeId,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -897,10 +894,9 @@ impl WithTypeParameters for MethodDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
-    pub id: ItemId,
-    pub type_id: Option<TypeId>,
+    pub id: NodeId,
     pub name: Path,
     pub visibility: Visibility,
     pub type_parameters: TypeParameters,
@@ -920,10 +916,9 @@ impl WithTypeParameters for TraitDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
-    pub id: DefId,
-    pub method_id: Option<MethodId>,
+    pub id: NodeId,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -950,10 +945,9 @@ impl WithTypeParameters for TraitMethodDefinition {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
-    pub id: ItemId,
-    pub use_id: Option<UseId>,
+    pub id: NodeId,
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub visibility: Visibility,
@@ -978,10 +972,9 @@ impl WithTypeParameters for TraitImplementation {
     }
 }
 
-#[derive(Node, Debug, Clone, PartialEq)]
+#[derive(Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
-    pub id: DefId,
-    pub method_id: Option<MethodId>,
+    pub id: NodeId,
     pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
@@ -1008,9 +1001,9 @@ impl WithTypeParameters for TraitMethodImplementation {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Statement {
-    pub id: StatementId,
+    pub id: NodeId,
     pub kind: StatementKind,
     pub location: Location,
 }
@@ -1025,7 +1018,7 @@ impl Statement {
     }
 
     /// Creates a new [`Statement`] with a [`VariableDeclaration`] value.
-    pub fn define_variable(id: StatementId, name: Identifier, value: ExpressionId, location: Location) -> Self {
+    pub fn define_variable(id: NodeId, name: Identifier, value: NodeId, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1040,7 +1033,7 @@ impl Statement {
     }
 
     /// Creates a new [`Statement`] with a [`Expression`] value.
-    pub fn expression(id: StatementId, value: ExpressionId, location: Location) -> Self {
+    pub fn expression(id: NodeId, value: NodeId, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1049,7 +1042,7 @@ impl Statement {
     }
 
     /// Creates a new [`Statement`] with a [`Final`] value.
-    pub fn final_ref(id: StatementId, value: ExpressionId, location: Location) -> Self {
+    pub fn final_ref(id: NodeId, value: NodeId, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1067,62 +1060,62 @@ pub enum StatementKind {
     Return(Return),
     InfiniteLoop(InfiniteLoop),
     IteratorLoop(IteratorLoop),
-    Expression(ExpressionId),
+    Expression(NodeId),
 }
 
-#[derive(Node, Hash, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct VariableDeclaration {
-    pub id: StatementId,
+    pub id: NodeId,
     pub name: Identifier,
     pub declared_type: Option<Type>,
-    pub value: ExpressionId,
+    pub value: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Break {
-    pub id: StatementId,
+    pub id: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Continue {
-    pub id: StatementId,
+    pub id: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Final {
-    pub id: StatementId,
-    pub value: ExpressionId,
+    pub id: NodeId,
+    pub value: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Return {
-    pub id: StatementId,
-    pub value: Option<ExpressionId>,
+    pub id: NodeId,
+    pub value: Option<NodeId>,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct InfiniteLoop {
-    pub id: StatementId,
+    pub id: NodeId,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct IteratorLoop {
-    pub id: StatementId,
-    pub collection: ExpressionId,
+    pub id: NodeId,
+    pub collection: NodeId,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Expression {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub kind: ExpressionKind,
     pub location: Location,
 }
@@ -1139,10 +1132,10 @@ impl Expression {
     /// Creates a new [`Expression`] with the given [`LiteralKind`] value.
     pub fn lit(kind: LiteralKind) -> Self {
         Self {
-            id: ExpressionId::default(),
+            id: NodeId::default(),
             location: Location::empty(),
             kind: ExpressionKind::Literal(Literal {
-                id: ExpressionId::default(),
+                id: NodeId::default(),
                 location: Location::empty(),
                 kind,
             }),
@@ -1152,7 +1145,7 @@ impl Expression {
     /// Creates a new [`Expression`] with a [`LiteralKind::Boolean`] value.
     pub fn lit_bool(value: bool) -> Self {
         Self::lit(LiteralKind::Boolean(Box::new(BooleanLiteral {
-            id: ExpressionId::default(),
+            id: NodeId::default(),
             value,
         })))
     }
@@ -1160,7 +1153,7 @@ impl Expression {
     /// Creates a new [`Expression`] with a [`LiteralKind::String`] value.
     pub fn lit_string(value: impl Into<String>) -> Self {
         Self::lit(LiteralKind::String(Box::new(StringLiteral {
-            id: ExpressionId::default(),
+            id: NodeId::default(),
             value: value.into(),
         })))
     }
@@ -1172,20 +1165,14 @@ impl Expression {
     /// Returns `Err` if `value` is too large to fit in a signed [`i64`] value.
     pub fn lit_u64(value: u64) -> error_snippet::Result<Self> {
         Ok(Self::lit(LiteralKind::Int(Box::new(IntLiteral {
-            id: ExpressionId::default(),
+            id: NodeId::default(),
             value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
             kind: IntKind::U64,
         }))))
     }
 
     /// Creates a new [`Expression`] with a [`InstanceCall`] value.
-    pub fn call(
-        id: ExpressionId,
-        name: PathSegment,
-        callee: ExpressionId,
-        args: Vec<ExpressionId>,
-        location: Location,
-    ) -> Self {
+    pub fn call(id: NodeId, name: PathSegment, callee: NodeId, args: Vec<NodeId>, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1200,7 +1187,7 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with a [`StaticCall`] value.
-    pub fn static_call(id: ExpressionId, name: Path, args: Vec<ExpressionId>, location: Location) -> Self {
+    pub fn static_call(id: NodeId, name: Path, args: Vec<NodeId>, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1214,7 +1201,7 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with a [`Variable`] value.
-    pub fn variable(id: ExpressionId, name: Identifier, decl: VariableDeclaration, location: Location) -> Self {
+    pub fn variable(id: NodeId, name: Identifier, decl: VariableDeclaration, location: Location) -> Self {
         Self {
             id,
             location,
@@ -1237,7 +1224,7 @@ macro_rules! expr_lit_int {
         impl Expression {
             pub fn $func(value: $ty) -> Self {
                 Self::lit(LiteralKind::Int(Box::new(IntLiteral {
-                    id: ExpressionId::default(),
+                    id: NodeId::default(),
                     value: value.into(),
                     kind: IntKind::$kind,
                 })))
@@ -1331,7 +1318,7 @@ pub enum CallExpression<'a> {
 
 impl CallExpression<'_> {
     #[inline]
-    pub fn id(&self) -> ExpressionId {
+    pub fn id(&self) -> NodeId {
         match self {
             Self::Instanced(call) => call.id,
             Self::Static(call) => call.id,
@@ -1349,7 +1336,7 @@ impl CallExpression<'_> {
     }
 
     #[inline]
-    pub fn arguments(&self) -> &[ExpressionId] {
+    pub fn arguments(&self) -> &[NodeId] {
         match self {
             Self::Instanced(call) => &call.arguments,
             Self::Static(call) => &call.arguments,
@@ -1379,7 +1366,7 @@ impl CallExpression<'_> {
         matches!(self, Self::Instanced(_))
     }
 
-    pub fn find_arg_idx(&self, id: ExpressionId) -> Option<usize> {
+    pub fn find_arg_idx(&self, id: NodeId) -> Option<usize> {
         self.arguments()
             .iter()
             .enumerate()
@@ -1387,11 +1374,11 @@ impl CallExpression<'_> {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Assignment {
-    pub id: ExpressionId,
-    pub target: ExpressionId,
-    pub value: ExpressionId,
+    pub id: NodeId,
+    pub target: NodeId,
+    pub value: NodeId,
     pub location: Location,
 }
 
@@ -1402,49 +1389,49 @@ pub enum BinaryOperatorKind {
     Xor,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct BinaryOperator {
     pub kind: BinaryOperatorKind,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Binary {
-    pub id: ExpressionId,
-    pub lhs: ExpressionId,
+    pub id: NodeId,
+    pub lhs: NodeId,
     pub op: BinaryOperator,
-    pub rhs: ExpressionId,
+    pub rhs: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Cast {
-    pub id: ExpressionId,
-    pub source: ExpressionId,
+    pub id: NodeId,
+    pub source: NodeId,
     pub target: Type,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Construct {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub path: Path,
     pub fields: Vec<ConstructorField>,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct ConstructorField {
     pub name: Identifier,
-    pub value: ExpressionId,
+    pub value: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct StaticCall {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub name: Path,
-    pub arguments: Vec<ExpressionId>,
+    pub arguments: Vec<NodeId>,
     pub location: Location,
 }
 
@@ -1458,12 +1445,12 @@ impl StaticCall {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct InstanceCall {
-    pub id: ExpressionId,
-    pub callee: ExpressionId,
+    pub id: NodeId,
+    pub callee: NodeId,
     pub name: PathSegment,
-    pub arguments: Vec<ExpressionId>,
+    pub arguments: Vec<NodeId>,
     pub location: Location,
 }
 
@@ -1473,11 +1460,11 @@ impl InstanceCall {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct IntrinsicCall {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub name: PathSegment,
-    pub arguments: Vec<ExpressionId>,
+    pub arguments: Vec<NodeId>,
     pub location: Location,
 }
 
@@ -1487,7 +1474,7 @@ impl IntrinsicCall {
     /// # Panics
     ///
     /// Panics if the intrinsic call has no arguments.
-    pub fn callee(&self) -> ExpressionId {
+    pub fn callee(&self) -> NodeId {
         *self.arguments.first().unwrap()
     }
 
@@ -1496,31 +1483,31 @@ impl IntrinsicCall {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct If {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub cases: Vec<Condition>,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Condition {
-    pub condition: Option<ExpressionId>,
+    pub condition: Option<NodeId>,
     pub block: Block,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Is {
-    pub id: ExpressionId,
-    pub target: ExpressionId,
+    pub id: NodeId,
+    pub target: NodeId,
     pub pattern: Pattern,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Literal {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub kind: LiteralKind,
     pub location: Location,
 }
@@ -1535,7 +1522,7 @@ pub enum LiteralKind {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct IntLiteral {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub value: i64,
     pub kind: IntKind,
 }
@@ -1569,7 +1556,7 @@ impl From<lume_ast::IntKind> for IntKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FloatLiteral {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub value: f64,
     pub kind: FloatKind,
 }
@@ -1599,13 +1586,13 @@ impl From<lume_ast::FloatKind> for FloatKind {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct StringLiteral {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub value: String,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct BooleanLiteral {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub value: bool,
 }
 
@@ -1623,54 +1610,54 @@ pub struct LogicalOperator {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Logical {
-    pub id: ExpressionId,
-    pub lhs: ExpressionId,
+    pub id: NodeId,
+    pub lhs: NodeId,
     pub op: LogicalOperator,
-    pub rhs: ExpressionId,
+    pub rhs: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Member {
-    pub id: ExpressionId,
-    pub callee: ExpressionId,
+    pub id: NodeId,
+    pub callee: NodeId,
     pub name: String,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct PatternField {
-    pub id: ExpressionId,
-    pub pattern: PatternId,
+    pub id: NodeId,
+    pub pattern: NodeId,
     pub field: usize,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Scope {
-    pub id: ExpressionId,
-    pub body: Vec<StatementId>,
+    pub id: NodeId,
+    pub body: Vec<NodeId>,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Switch {
-    pub id: ExpressionId,
-    pub operand: ExpressionId,
+    pub id: NodeId,
+    pub operand: NodeId,
     pub cases: Vec<SwitchCase>,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct SwitchCase {
     pub pattern: Pattern,
-    pub branch: ExpressionId,
+    pub branch: NodeId,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct Variable {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub reference: VariableSource,
     pub name: Identifier,
     pub location: Location,
@@ -1683,7 +1670,7 @@ pub enum VariableSource {
     Pattern(Pattern),
 }
 
-impl Node for VariableSource {
+impl WithLocation for VariableSource {
     fn location(&self) -> Location {
         match self {
             Self::Parameter(pat) => pat.location,
@@ -1695,20 +1682,20 @@ impl Node for VariableSource {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Variant {
-    pub id: ExpressionId,
+    pub id: NodeId,
     pub name: Path,
-    pub arguments: Vec<ExpressionId>,
+    pub arguments: Vec<NodeId>,
     pub location: Location,
 }
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Pattern {
-    pub id: PatternId,
+    pub id: NodeId,
     pub kind: PatternKind,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub enum PatternKind {
     Literal(LiteralPattern),
     Identifier(IdentifierPattern),
@@ -1738,19 +1725,19 @@ impl PatternKind {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct LiteralPattern {
     pub literal: Literal,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct IdentifierPattern {
     pub name: Identifier,
     pub location: Location,
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct VariantPattern {
     pub name: Path,
     pub fields: Vec<Pattern>,
@@ -1764,16 +1751,16 @@ impl VariantPattern {
     }
 }
 
-#[derive(Hash, Node, Debug, Clone, PartialEq)]
+#[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct WildcardPattern {
     pub location: Location,
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Location, Debug, Clone, Eq)]
 pub struct TypeParameter {
     pub name: Identifier,
-    pub type_id: Option<TypeId>,
-    pub type_param_id: Option<TypeParameterId>,
+    pub type_id: Option<NodeId>,
+    pub type_param_id: Option<NodeId>,
     pub constraints: Vec<Type>,
     pub location: Location,
 }
@@ -1829,7 +1816,7 @@ impl TypeParameters {
         self.iter().map(AsRef::as_ref).collect::<Vec<_>>()
     }
 
-    pub fn as_id_refs(&self) -> Vec<TypeParameterId> {
+    pub fn as_id_refs(&self) -> Vec<NodeId> {
         self.iter()
             .map(|param| param.type_param_id.unwrap())
             .collect::<Vec<_>>()
@@ -1842,9 +1829,9 @@ impl From<Vec<TypeParameter>> for TypeParameters {
     }
 }
 
-#[derive(Node, Debug, Clone, Eq)]
+#[derive(Location, Debug, Clone, Eq)]
 pub struct Type {
-    pub id: ItemId,
+    pub id: NodeId,
     pub name: Path,
     pub location: Location,
 }
@@ -1852,7 +1839,7 @@ pub struct Type {
 impl Type {
     pub fn void() -> Type {
         Self {
-            id: ItemId::new(PackageId::empty()),
+            id: NodeId::empty(PackageId::empty()),
             name: Path::void(),
             location: Location::empty(),
         }

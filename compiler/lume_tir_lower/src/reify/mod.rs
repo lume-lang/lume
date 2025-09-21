@@ -2,7 +2,7 @@ pub mod metadata;
 mod visitor;
 
 use lume_errors::Result;
-use lume_span::{DefId, Internable};
+use lume_span::{Internable, NodeId};
 use lume_tir::{Call, ExpressionKind, Function, Parameter};
 use lume_type_metadata::*;
 use lume_typech::TyCheckCtx;
@@ -80,8 +80,8 @@ impl<'tcx> ReificationPass<'tcx> {
         }
     }
 
-    fn is_dynamic_dispatch_call(&self, id: DefId) -> bool {
-        if let lume_hir::Def::TraitMethodDef(method_def) = self.tcx.hir_expect_def(id)
+    fn is_dynamic_dispatch_call(&self, id: NodeId) -> bool {
+        if let Some(lume_hir::Node::TraitMethodDef(method_def)) = self.tcx.hir_node(id)
             && method_def.signature().is_instanced()
         {
             true
@@ -128,13 +128,13 @@ impl<'tcx> ReificationPass<'tcx> {
     fn add_metadata_argument_inherited(&self, call: &Call, idx: usize, type_arg: &TypeRef) -> lume_tir::Expression {
         let name = format!("${idx}").intern();
 
-        let parent_func_params = self.tcx.hir_avail_params(lume_span::DefId::Expression(call.id));
+        let parent_func_params = self.tcx.hir_avail_params(call.id);
         let param_idx = parent_func_params.len() + idx;
         let reference = lume_tir::VariableId(param_idx);
 
         lume_tir::Expression {
             kind: ExpressionKind::Variable(Box::new(lume_tir::VariableReference {
-                id: lume_span::ExpressionId::default(),
+                id: lume_span::NodeId::default(),
                 reference,
                 source: lume_tir::VariableSource::Parameter,
                 name,
@@ -150,7 +150,7 @@ impl<'tcx> ReificationPass<'tcx> {
 
         Ok(lume_tir::Expression {
             kind: ExpressionKind::IntrinsicCall(Box::new(lume_tir::IntrinsicCall {
-                id: lume_span::ExpressionId::default(),
+                id: lume_span::NodeId::default(),
                 kind: lume_tir::IntrinsicKind::Metadata { id },
                 arguments: Vec::new(),
                 location: type_arg.location,

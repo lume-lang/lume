@@ -4,7 +4,7 @@ use lume_span::Internable;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    pub(crate) fn statement(&mut self, stmt: lume_span::StatementId) -> Result<lume_tir::Statement> {
+    pub(crate) fn statement(&mut self, stmt: lume_span::NodeId) -> Result<lume_tir::Statement> {
         let stmt = self.lower.tcx.hir_expect_stmt(stmt);
 
         match &stmt.kind {
@@ -23,7 +23,7 @@ impl LowerFunction<'_> {
         let var = self.mark_variable(lume_tir::VariableSource::Variable);
         let value = self.expression(stmt.value)?;
 
-        self.variable_mapping.insert(lume_span::DefId::Statement(stmt.id), var);
+        self.variable_mapping.insert(stmt.id, var);
 
         Ok(lume_tir::Statement::Variable(lume_tir::VariableDeclaration {
             id: stmt.id,
@@ -35,7 +35,7 @@ impl LowerFunction<'_> {
     }
 
     fn break_statement(&mut self, stmt: &lume_hir::Break) -> lume_tir::Statement {
-        let target = self.lower.tcx.hir_loop_target_stmt(stmt.id).unwrap();
+        let target = self.lower.tcx.hir_loop_target(stmt.id).unwrap();
 
         lume_tir::Statement::Break(lume_tir::Break {
             id: stmt.id,
@@ -45,7 +45,7 @@ impl LowerFunction<'_> {
     }
 
     fn continue_statement(&mut self, stmt: &lume_hir::Continue) -> lume_tir::Statement {
-        let target = self.lower.tcx.hir_loop_target_stmt(stmt.id).unwrap();
+        let target = self.lower.tcx.hir_loop_target(stmt.id).unwrap();
 
         lume_tir::Statement::Continue(lume_tir::Continue {
             id: stmt.id,

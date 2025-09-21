@@ -1,8 +1,8 @@
 use crate::{TyInferCtx, *};
 use error_snippet::Result;
-use lume_hir::{self, CallExpression, FunctionId, Identifier, MethodId, Path, UseId};
+use lume_hir::{CallExpression, Identifier, Node, Path};
 use lume_query::cached_query;
-use lume_span::ExpressionId;
+use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
 
 mod diagnostics;
@@ -12,10 +12,10 @@ pub mod lookup;
 #[derive(Debug, Hash, Copy, Clone, PartialEq, Eq)]
 pub enum CallReference {
     /// The call refers to a function.
-    Function(FunctionId),
+    Function(NodeId),
 
     /// The call refers to a method.
-    Method(MethodId),
+    Method(NodeId),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -28,10 +28,10 @@ pub enum Callable<'a> {
 }
 
 impl Callable<'_> {
-    pub fn id(&self) -> DefId {
+    pub fn id(&self) -> NodeId {
         match self {
-            Self::Method(method) => method.hir,
-            Self::Function(function) => DefId::Item(function.hir),
+            Self::Method(method) => method.id,
+            Self::Function(function) => function.id,
         }
     }
 
@@ -88,7 +88,7 @@ impl TyInferCtx {
     /// method makes, in the case of some expressions, such as assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of(&self, def: ExpressionId) -> Result<TypeRef> {
+    pub fn type_of(&self, def: NodeId) -> Result<TypeRef> {
         self.type_of_expr(self.hir_expect_expr(def))
     }
 
@@ -106,18 +106,18 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Assignment(e) => self.type_of(e.value)?,
             lume_hir::ExpressionKind::Cast(e) => self.mk_type_ref(&e.target)?,
             lume_hir::ExpressionKind::Construct(e) => {
-                let Some(ty_opt) = self.find_type_ref_from(&e.path, DefId::Expression(e.id))? else {
+                let Some(ty_opt) = self.find_type_ref_from(&e.path, e.id)? else {
                     return Err(self.missing_type_err(&lume_hir::Type {
-                        id: lume_span::ItemId::empty(),
+                        id: lume_span::NodeId::empty(expr.id.package),
                         name: e.path.clone(),
                         location: e.path.location,
                     }));
                 };
 
-                let type_parameters = self.hir_avail_type_params_expr(e.id);
-                let type_args = self.mk_type_refs_from(e.path.type_arguments(), DefId::Expression(e.id))?;
+                let type_parameters = self.hir_avail_type_params(e.id);
+                let type_args = self.mk_type_refs_from(e.path.type_arguments(), e.id)?;
 
-                let type_parameters_id: Vec<lume_hir::TypeParameterId> =
+                let type_parameters_id: Vec<lume_span::NodeId> =
                     type_parameters.iter().map(|p| p.type_param_id.unwrap()).collect();
 
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
@@ -157,7 +157,7 @@ impl TyInferCtx {
                 field.field_type.clone()
             }
             lume_hir::ExpressionKind::Field(field) => {
-                let pattern = self.hir_expect_pattern(DefId::Pattern(field.pattern));
+                let pattern = self.hir_expect_pattern(field.pattern);
                 let lume_hir::PatternKind::Variant(variant_pat) = &pattern.kind else {
                     panic!("bug!: found field expression referencing non-variant pattern");
                 };
@@ -170,19 +170,17 @@ impl TyInferCtx {
                 None => TypeRef::void(),
             },
             lume_hir::ExpressionKind::Variable(var) => match &var.reference {
-                lume_hir::VariableSource::Parameter(param) => {
-                    self.mk_type_ref_from(&param.param_type, DefId::Expression(var.id))?
-                }
+                lume_hir::VariableSource::Parameter(param) => self.mk_type_ref_from(&param.param_type, var.id)?,
                 lume_hir::VariableSource::Variable(var) => self.type_of_vardecl(var)?,
                 lume_hir::VariableSource::Pattern(pat) => self.type_of_pattern(pat)?,
             },
             lume_hir::ExpressionKind::Variant(var) => {
                 let enum_segment = var.name.clone().parent().unwrap();
-                let enum_ty = self.find_type_ref_from(&enum_segment, DefId::Expression(expr.id))?;
+                let enum_ty = self.find_type_ref_from(&enum_segment, expr.id)?;
 
                 enum_ty.ok_or_else(|| {
                     self.missing_type_err(&lume_hir::Type {
-                        id: lume_span::ItemId::empty(),
+                        id: lume_span::NodeId::empty(expr.id.package),
                         name: enum_segment.clone(),
                         location: enum_segment.location,
                     })
@@ -239,8 +237,8 @@ impl TyInferCtx {
     /// Returns the *type* of the given [`lume_hir::Parameter`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, owner: lume_span::ItemId) -> Result<TypeRef> {
-        let elemental_type = self.mk_type_ref_from(&param.param_type, lume_span::DefId::Item(owner))?;
+    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, owner: NodeId) -> Result<TypeRef> {
+        let elemental_type = self.mk_type_ref_from(&param.param_type, owner)?;
 
         if param.vararg {
             Result::Ok(self.std_ref_array(elemental_type))
@@ -321,7 +319,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_vardecl(&self, stmt: &lume_hir::VariableDeclaration) -> Result<TypeRef> {
         if let Some(declared_type) = &stmt.declared_type {
-            self.mk_type_ref_from(declared_type, DefId::Statement(stmt.id))
+            self.mk_type_ref_from(declared_type, stmt.id)
         } else {
             self.type_of(stmt.value)
         }
@@ -382,7 +380,7 @@ impl TyInferCtx {
             lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal),
             lume_hir::PatternKind::Variant(var) => {
                 let enum_name = var.name.clone().parent().unwrap();
-                let type_args = self.mk_type_refs_from(enum_name.type_arguments(), DefId::Pattern(pat.id))?;
+                let type_args = self.mk_type_refs_from(enum_name.type_arguments(), pat.id)?;
 
                 match self.tdb().find_type(&enum_name) {
                     Some(ty) => TypeRef {
@@ -392,7 +390,7 @@ impl TyInferCtx {
                     },
                     None => {
                         return Err(self.missing_type_err(&lume_hir::Type {
-                            id: lume_span::ItemId::empty(),
+                            id: lume_span::NodeId::empty(pat.id.package),
                             name: var.name.clone(),
                             location: var.name.location,
                         }));
@@ -402,11 +400,11 @@ impl TyInferCtx {
             lume_hir::PatternKind::Identifier(_) | lume_hir::PatternKind::Wildcard(_) => {
                 let def_id = pat.id;
 
-                for parent in self.hir_parent_iter(DefId::Pattern(def_id)) {
+                for parent in self.hir_parent_iter(def_id) {
                     match parent {
                         // If the pattern is not a sub-pattern, we return the type of the operand
                         // which was passed to the parent `switch` expression.
-                        lume_hir::Def::Expression(expr) => match &expr.kind {
+                        lume_hir::Node::Expression(expr) => match &expr.kind {
                             lume_hir::ExpressionKind::Is(is) => return self.type_of(is.target),
                             lume_hir::ExpressionKind::Switch(switch) => return self.type_of(switch.operand),
                             _ => continue,
@@ -415,7 +413,7 @@ impl TyInferCtx {
                         // If the pattern is a sub-pattern, we get the variant pattern it was nested within.
                         // From the variant pattern, we can deduce the type of the subpattern, by the type of
                         // the corresponding field on the enum case definition.
-                        lume_hir::Def::Pattern(parent_pat) if parent_pat.id != def_id => {
+                        lume_hir::Node::Pattern(parent_pat) if parent_pat.id != def_id => {
                             let lume_hir::PatternKind::Variant(variant_pat) = &parent_pat.kind else {
                                 panic!("bug!: found sub-pattern inside non-variant pattern");
                             };
@@ -451,7 +449,7 @@ impl TyInferCtx {
             .into());
         };
 
-        self.mk_type_ref_from(enum_field, lume_span::DefId::Item(enum_def.id))
+        self.mk_type_ref_from(enum_field, enum_def.id)
     }
 
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
@@ -462,9 +460,9 @@ impl TyInferCtx {
 
     /// Returns the [`Trait`] definition, which matches the [`Use`] declaration with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn trait_def_of(&self, use_id: UseId) -> Result<&Trait> {
-        let Some(use_ref) = self.tdb().use_(use_id) else {
-            return Err(lume_types::errors::UseNotFound { id: use_id }.into());
+    pub fn trait_def_of(&self, id: NodeId) -> Result<&Trait> {
+        let Some(use_ref) = self.tdb().use_(id) else {
+            return Err(lume_types::errors::NodeNotFound { id }.into());
         };
 
         self.tdb().ty_expect_trait(use_ref.trait_.instance_of)
@@ -472,9 +470,9 @@ impl TyInferCtx {
 
     /// Returns the enum definition with the given type ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn enum_def_type(&self, ty: TypeId) -> Result<&lume_hir::EnumDefinition> {
-        let Some(parent_ty) = self.tdb().type_(ty) else {
-            return Err(lume_types::errors::TypeNotFound { id: ty }.into());
+    pub fn enum_def_type(&self, id: NodeId) -> Result<&lume_hir::EnumDefinition> {
+        let Some(parent_ty) = self.tdb().type_(id) else {
+            return Err(lume_types::errors::NodeNotFound { id }.into());
         };
 
         let lume_types::TypeKind::User(lume_types::UserType::Enum(enum_ty)) = &parent_ty.kind else {
@@ -514,14 +512,8 @@ impl TyInferCtx {
     /// Returns the enum case definitions on the enum type with the given ID.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn enum_cases_of(&self, ty: TypeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
+    pub fn enum_cases_of(&self, ty: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
         Result::Ok(&self.enum_def_type(ty)?.cases)
-    }
-
-    /// Returns the enum case definitions, which is being referred to by the given expression.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn enum_cases_expr(&self, id: ExpressionId) -> Result<&[lume_hir::EnumDefinitionCase]> {
-        self.enum_cases_of(self.type_of(id)?.instance_of)
     }
 
     /// Returns the enum case definitions on the enum type with the given name.
@@ -540,7 +532,7 @@ impl TyInferCtx {
 
     /// Returns the enum case definition, which is being referred to by the given expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn enum_case_expr(&self, id: ExpressionId) -> Result<&lume_hir::EnumDefinitionCase> {
+    pub fn enum_case_expr(&self, id: NodeId) -> Result<&lume_hir::EnumDefinitionCase> {
         let expr = self.hir_expect_expr(id);
 
         if let lume_hir::ExpressionKind::Variant(var) = &expr.kind {
@@ -572,7 +564,7 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn discriminant_of_variant_ty(&self, type_id: TypeId, name: &str) -> Result<usize> {
+    pub fn discriminant_of_variant_ty(&self, type_id: NodeId, name: &str) -> Result<usize> {
         for case in self.enum_cases_of(type_id)? {
             if case.name.name().as_str() == name {
                 return Ok(case.idx);
@@ -615,7 +607,7 @@ impl TyInferCtx {
             return Some(lume_hir::ConstructorField {
                 name: lume_hir::Identifier::from(prop_name),
                 value: default_value,
-                location: self.hir_span_of_def(DefId::Expression(default_value)),
+                location: self.hir_span_of_node(default_value),
             });
         }
 
@@ -633,13 +625,13 @@ impl TyInferCtx {
     /// to anything, so no value is expected.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    pub fn is_value_expected(&self, id: ExpressionId) -> Result<bool> {
-        let Some(parent_id) = self.hir_parent_of(DefId::Expression(id)) else {
+    pub fn is_value_expected(&self, id: NodeId) -> Result<bool> {
+        let Some(parent_id) = self.hir_parent_of(id) else {
             return Ok(false);
         };
 
-        match parent_id {
-            DefId::Expression(parent_id) => match &self.hir_expect_expr(parent_id).kind {
+        match self.hir_node(parent_id).unwrap() {
+            lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Assignment(e) => {
                     if e.target == id {
                         self.is_value_expected(e.id)
@@ -649,7 +641,7 @@ impl TyInferCtx {
                 }
                 _ => Ok(true),
             },
-            DefId::Statement(parent_id) => match &self.hir_expect_stmt(parent_id).kind {
+            lume_hir::Node::Statement(stmt) => match &stmt.kind {
                 lume_hir::StatementKind::Variable(_) => Ok(true),
                 lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
@@ -659,7 +651,7 @@ impl TyInferCtx {
                 lume_hir::StatementKind::IteratorLoop(_) => Ok(true),
                 lume_hir::StatementKind::Expression(_) => Ok(false),
             },
-            DefId::Field(_) => Ok(true),
+            lume_hir::Node::Field(_) => Ok(true),
             _ => panic!("bug!: expression not contained within statement, expression or field"),
         }
     }
@@ -683,7 +675,7 @@ impl TyInferCtx {
     /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to attempt
     /// to infer the type from other expressions and statements which reference the target expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn expected_type_of(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
+    pub fn expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         if let Some(expected_type) = self.try_expected_type_of(id)? {
             Ok(Some(expected_type))
         } else {
@@ -707,13 +699,12 @@ impl TyInferCtx {
     ///
     /// would be impossible to solve, since no explicit type is declared.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn try_expected_type_of(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
-        let parent_id = self
-            .hir_parent_of(DefId::Expression(id))
-            .expect("bug!: expression exists without parent");
+    pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
+        let parent_id = self.hir_parent_of(id).expect("bug!: expression exists without parent");
+        let node = self.hir.node(id).unwrap();
 
-        match parent_id {
-            DefId::Expression(parent_id) => match &self.hir_expect_expr(parent_id).kind {
+        match node {
+            lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Assignment(_) => self.try_expected_type_of(parent_id),
                 lume_hir::ExpressionKind::Binary(_) => Ok(None),
                 lume_hir::ExpressionKind::Cast(_) => Ok(None),
@@ -751,14 +742,13 @@ impl TyInferCtx {
                     let enum_case_def = self.enum_case_with_name(&variant.name)?;
                     let enum_field_type = enum_case_def.parameters.get(idx).unwrap();
 
-                    self.mk_type_ref_from(enum_field_type, DefId::Item(enum_def.id))
-                        .map(|ty| Some(ty))
+                    self.mk_type_ref_from(enum_field_type, enum_def.id).map(|ty| Some(ty))
                 }
             },
-            DefId::Statement(parent_id) => match &self.hir_expect_stmt(parent_id).kind {
+            lume_hir::Node::Statement(stmt) => match &stmt.kind {
                 lume_hir::StatementKind::Variable(decl) => {
                     if let Some(declared_type) = &decl.declared_type {
-                        let type_ref = self.mk_type_ref_from(declared_type, DefId::Statement(decl.id))?;
+                        let type_ref = self.mk_type_ref_from(declared_type, decl.id)?;
 
                         Ok(Some(type_ref))
                     } else {
@@ -768,22 +758,19 @@ impl TyInferCtx {
                 lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
                 lume_hir::StatementKind::Final(fin) => {
-                    if let Some(DefId::Expression(parent)) = self.hir_parent_of(DefId::Statement(fin.id)) {
-                        return self.try_expected_type_of(parent);
+                    if let Some(Node::Expression(parent)) = self.hir_parent_node_of(fin.id) {
+                        return self.try_expected_type_of(parent.id);
                     };
 
-                    self.hir_ctx_return_type(DefId::Statement(fin.id)).map(|ty| Some(ty))
+                    self.hir_ctx_return_type(fin.id).map(|ty| Some(ty))
                 }
-                lume_hir::StatementKind::Return(ret) => {
-                    self.hir_ctx_return_type(DefId::Statement(ret.id)).map(|ty| Some(ty))
-                }
+                lume_hir::StatementKind::Return(ret) => self.hir_ctx_return_type(ret.id).map(|ty| Some(ty)),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
                 lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
                 lume_hir::StatementKind::Expression(_) => Ok(Some(TypeRef::void())),
             },
-            DefId::Field(parent_id) => {
-                let field = self.hir_expect_field(parent_id);
-                let type_ref = self.mk_type_ref_from(&field.field_type, DefId::Field(parent_id))?;
+            lume_hir::Node::Field(field) => {
+                let type_ref = self.mk_type_ref_from(&field.field_type, field.id)?;
 
                 Ok(Some(type_ref))
             }
@@ -793,12 +780,8 @@ impl TyInferCtx {
 
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn expected_type_of_construct(
-        &self,
-        expr: ExpressionId,
-        construct: &lume_hir::Construct,
-    ) -> Result<Option<TypeRef>> {
-        let Some(constructed_type) = self.find_type_ref_from(&construct.path, DefId::Expression(construct.id))? else {
+    fn expected_type_of_construct(&self, expr: NodeId, construct: &lume_hir::Construct) -> Result<Option<TypeRef>> {
+        let Some(constructed_type) = self.find_type_ref_from(&construct.path, construct.id)? else {
             return Ok(None);
         };
 
@@ -831,7 +814,7 @@ impl TyInferCtx {
 
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn expected_type_of_call(&self, expr: ExpressionId, call: CallExpression<'_>) -> Result<TypeRef> {
+    fn expected_type_of_call(&self, expr: NodeId, call: CallExpression<'_>) -> Result<TypeRef> {
         let callable = self.probe_callable(call)?;
         let signature = self.instantiate_signature_from_args(callable, call)?;
 
@@ -862,21 +845,25 @@ impl TyInferCtx {
     /// Attempts to guess the expected type of the given expression, based on other statements
     /// and expressions which refer to the target expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn guess_type_of_ctx(&self, id: ExpressionId) -> Result<Option<TypeRef>> {
-        for expr_def_ref in self.indirect_expression_refs(id)? {
-            match expr_def_ref {
-                DefId::Statement(stmt_id) => match &self.hir_expect_stmt(stmt_id).kind {
+    pub fn guess_type_of_ctx(&self, id: NodeId) -> Result<Option<TypeRef>> {
+        for expr_node_ref in self.indirect_expression_refs(id)? {
+            let Some(expr_node) = self.hir_node(expr_node_ref) else {
+                continue;
+            };
+
+            match expr_node {
+                Node::Statement(stmt) => match &stmt.kind {
                     lume_hir::StatementKind::Variable(decl) => {
                         if let Some(declared_type) = &decl.declared_type {
-                            return Ok(Some(self.mk_type_ref_from(declared_type, DefId::Statement(decl.id))?));
+                            return Ok(Some(self.mk_type_ref_from(declared_type, decl.id)?));
                         } else {
                             continue;
                         }
                     }
                     _ => continue,
                 },
-                DefId::Expression(expr_id) => {
-                    if let Some(expected_type) = self.try_expected_type_of(expr_id)? {
+                Node::Expression(expr) => {
+                    if let Some(expected_type) = self.try_expected_type_of(expr.id)? {
                         return Ok(Some(expected_type));
                     }
                 }
@@ -888,22 +875,22 @@ impl TyInferCtx {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn indirect_expression_refs(&self, id: ExpressionId) -> Result<Vec<DefId>> {
-        let Some(parent_id) = self.hir_parent_of(DefId::Expression(id)) else {
+    pub fn indirect_expression_refs(&self, id: NodeId) -> Result<Vec<NodeId>> {
+        let Some(parent) = self.hir_parent_node_of(id) else {
             return Ok(Vec::new());
         };
 
-        let mut refs = vec![parent_id];
+        let mut refs = vec![parent.id()];
 
-        if let DefId::Statement(parent_id) = parent_id
-            && let lume_hir::StatementKind::Variable(decl) = &self.hir_expect_stmt(parent_id).kind
+        if let Node::Statement(stmt) = parent
+            && let lume_hir::StatementKind::Variable(decl) = &stmt.kind
         {
-            for (hir_id, hir_expr) in self.hir.expressions() {
-                if let lume_hir::ExpressionKind::Variable(var_ref) = &hir_expr.kind
+            for expr in self.hir.expressions() {
+                if let lume_hir::ExpressionKind::Variable(var_ref) = &expr.kind
                     && let lume_hir::VariableSource::Variable(var_source) = &var_ref.reference
                     && var_source.id == decl.id
                 {
-                    refs.push(DefId::Expression(*hir_id));
+                    refs.push(expr.id);
                 }
             }
         }
