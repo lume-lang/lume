@@ -238,7 +238,7 @@ impl TyInferCtx {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
             if &type_param.as_ref().name == name.name.name() {
-                return Some(type_param.as_ref().type_id.unwrap());
+                return Some(type_param.as_ref().id);
             }
         }
 
@@ -285,7 +285,7 @@ impl TyInferCtx {
             if name.root.is_empty() {
                 let param_type_id = ty_params
                     .iter()
-                    .find_map(|ty| if &ty.name == name.name() { ty.type_id } else { None });
+                    .find_map(|ty| if &ty.name == name.name() { Some(ty.id) } else { None });
 
                 if let Some(param_type_id) = param_type_id {
                     break 'find self.tdb().type_(param_type_id);
