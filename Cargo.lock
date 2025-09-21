@@ -1181,7 +1181,6 @@ dependencies = [
  "lume_mir",
  "lume_session",
  "postcard",
- "rust-embed",
 ]
 
 [[package]]
