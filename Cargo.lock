@@ -1141,6 +1141,7 @@ dependencies = [
  "lume_hir_lower",
  "lume_infer",
  "lume_jit",
+ "lume_metadata",
  "lume_mir",
  "lume_mir_lower",
  "lume_session",
@@ -1188,7 +1189,7 @@ name = "lume_gc"
 version = "0.1.1"
 dependencies = [
  "indexmap",
- "lume_metadata",
+ "lume_rt_metadata",
  "lume_runtime",
  "lume_trace",
  "mimalloc",
@@ -1296,6 +1297,10 @@ dependencies = [
 [[package]]
 name = "lume_metadata"
 version = "0.1.1"
+dependencies = [
+ "indexmap",
+ "serde",
+]
 
 [[package]]
 name = "lume_mir"
@@ -1360,6 +1365,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_rt_metadata"
+version = "0.1.1"
+
+[[package]]
 name = "lume_runner"
 version = "0.1.1"
 dependencies = [
@@ -1376,7 +1385,7 @@ dependencies = [
 name = "lume_runtime"
 version = "0.1.1"
 dependencies = [
- "lume_metadata",
+ "lume_rt_metadata",
 ]
 
 [[package]]

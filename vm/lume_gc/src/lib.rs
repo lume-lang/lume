@@ -6,7 +6,7 @@ use std::fmt::Display;
 use std::sync::OnceLock;
 
 use alloc::GA;
-use lume_metadata::TypeMetadata;
+use lume_rt_metadata::TypeMetadata;
 
 /// Immutable, thread-transportable pointer type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]

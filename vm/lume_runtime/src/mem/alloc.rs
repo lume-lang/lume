@@ -1,4 +1,4 @@
-use lume_metadata::TypeMetadata;
+use lume_rt_metadata::TypeMetadata;
 
 unsafe extern "C" {
     pub fn malloc(size: usize) -> *mut u8;

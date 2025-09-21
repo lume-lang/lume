@@ -1,5 +1,5 @@
 [package]
-name = "lume_metadata"
+name = "lume_rt_metadata"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
