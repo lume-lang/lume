@@ -3,9 +3,9 @@ use crate::query::{CallReference, Callable};
 
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
-use lume_hir::{self, Identifier, Node, Path};
+use lume_hir::{Identifier, Path, WithLocation};
 use lume_query::cached_query;
-use lume_span::DefId;
+use lume_span::NodeId;
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
@@ -33,7 +33,7 @@ impl TyInferCtx {
                 let method = self
                     .tdb()
                     .method(id)
-                    .ok_or_else(|| lume_types::errors::MethodNotFound { id }.into_diagnostic())?;
+                    .ok_or_else(|| lume_types::errors::NodeNotFound { id }.into_diagnostic())?;
 
                 Ok(Callable::Method(method))
             }
@@ -41,7 +41,7 @@ impl TyInferCtx {
                 let func = self
                     .tdb()
                     .function(id)
-                    .ok_or_else(|| lume_types::errors::FunctionNotFound { id }.into_diagnostic())?;
+                    .ok_or_else(|| lume_types::errors::NodeNotFound { id }.into_diagnostic())?;
 
                 Ok(Callable::Function(func))
             }
@@ -327,10 +327,9 @@ impl TyInferCtx {
                 if let Some(callee_ty_name) = call.name.clone().parent()
                     && callee_ty_name.is_type()
                 {
-                    let Some(callee_type) = self.find_type_ref_from(&callee_ty_name, DefId::Expression(call.id))?
-                    else {
+                    let Some(callee_type) = self.find_type_ref_from(&callee_ty_name, call.id)? else {
                         return Err(self.missing_type_err(&lume_hir::Type {
-                            id: lume_span::ItemId::empty(),
+                            id: lume_span::NodeId::empty(call.id.package),
                             name: callee_ty_name.clone(),
                             location: callee_ty_name.name().location,
                         }));
@@ -518,7 +517,7 @@ impl TyInferCtx {
     pub fn instantiate_signature_isolate<'a>(
         &self,
         sig: lume_types::FunctionSig<'a>,
-        type_params: &[lume_hir::TypeParameterId],
+        type_params: &[NodeId],
         type_args: &[TypeRef],
     ) -> lume_types::FunctionSigOwned {
         let mut inst = lume_types::FunctionSigOwned {
@@ -549,7 +548,7 @@ impl TyInferCtx {
     pub fn instantiate_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
-        type_params: &[lume_hir::TypeParameterId],
+        type_params: &[NodeId],
         type_args: &'a [TypeRef],
     ) -> lume_types::TypeRef {
         let mut inst_ty = self.instantiate_flat_type_from(ty, type_params, type_args).to_owned();
@@ -571,7 +570,7 @@ impl TyInferCtx {
     pub fn instantiate_flat_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
-        type_params: &[lume_hir::TypeParameterId],
+        type_params: &[NodeId],
         type_args: &'a [TypeRef],
     ) -> &'a lume_types::TypeRef {
         let Some(ty_as_param) = self.db().type_as_param(ty.instance_of) else {
@@ -593,7 +592,7 @@ impl TyInferCtx {
     /// defined on the callee of the exprssion, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
-        let type_parameters_hir = self.hir_avail_type_params_expr(expr.id());
+        let type_parameters_hir = self.hir_avail_type_params(expr.id());
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
 
         match &expr {
@@ -625,7 +624,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn instantiate_argument_type<'a>(
         &self,
-        type_param_id: lume_hir::TypeParameterId,
+        type_param_id: NodeId,
         param_type: &TypeRef,
         arg_type: &TypeRef,
     ) -> Result<Option<TypeRef>> {
@@ -659,7 +658,7 @@ impl TyInferCtx {
                 // Append all the type parameters which are available on the method,
                 // such as the type parameters on the implementation.
                 signature.type_params.extend(
-                    self.hir_avail_type_params(method.hir)
+                    self.hir_avail_type_params(method.id)
                         .into_iter()
                         .filter_map(|param| param.type_param_id),
                 );
@@ -757,7 +756,7 @@ impl TyInferCtx {
     /// If the method is not found, returns [`None`].
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn drop_method_def(&self) -> Option<DefId> {
+    pub fn drop_method_def(&self) -> Option<NodeId> {
         let drop_type_path = lume_hir::Path::from_parts(
             Some([
                 lume_hir::PathSegment::namespace("std"),
@@ -771,18 +770,18 @@ impl TyInferCtx {
 
         let method = self.lookup_impl_methods_on(&drop_type_ref, &drop_method_name).next()?;
 
-        Some(method.hir)
+        Some(method.id)
     }
 
     /// Determines whether the given method is a dropper.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    pub fn is_method_dropper(&self, method: DefId) -> bool {
+    pub fn is_method_dropper(&self, method: NodeId) -> bool {
         let Some(dropper_method_id) = self.drop_method_def() else {
             return false;
         };
 
-        if let lume_hir::Def::TraitMethodImpl(method_impl) = self.hir_expect_def(method)
+        if let Some(lume_hir::Node::TraitMethodImpl(method_impl)) = self.hir_node(method)
             && let Ok(method_def) = self.hir_trait_method_def_of_impl(method_impl)
             && method_def.id == dropper_method_id
         {

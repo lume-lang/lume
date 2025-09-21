@@ -42,7 +42,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<lume_span::StatementId> {
+    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<lume_span::NodeId> {
         statements
             .into_iter()
             .filter_map(|expr| match self.statement(expr) {
@@ -56,7 +56,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn statement(&mut self, expr: ast::Statement) -> Result<lume_span::StatementId> {
+    fn statement(&mut self, expr: ast::Statement) -> Result<lume_span::NodeId> {
         let stmt = match expr {
             ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
             ast::Statement::Break(s) => self.stmt_break(*s),
@@ -67,7 +67,7 @@ impl LowerModule<'_> {
             ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
             ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
             ast::Statement::Expression(s) => {
-                let id = self.next_stmt_id();
+                let id = self.next_node_id();
                 let expr = self.expression(*s)?;
 
                 let location = self.map.expression(expr).unwrap().location;
@@ -82,14 +82,14 @@ impl LowerModule<'_> {
 
         let id = stmt.id;
 
-        self.map.statements.insert(id, stmt);
+        self.map.nodes.insert(id, lume_hir::Node::Statement(stmt));
 
         Ok(id)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
+    fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<lume_hir::Statement> {
+        let id = self.next_node_id();
         let name = self.identifier(statement.name);
         let value = self.expression(statement.value)?;
         let location = self.location(statement.location);
@@ -121,7 +121,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_break(&mut self, statement: ast::Break) -> hir::Statement {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let location = self.location(statement.location);
 
         hir::Statement {
@@ -133,7 +133,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_continue(&mut self, statement: ast::Continue) -> hir::Statement {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let location = self.location(statement.location);
 
         hir::Statement {
@@ -145,7 +145,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_final(&mut self, statement: ast::Final) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let value = self.expression(statement.value)?;
         let location = self.map.expression(value).unwrap().location;
 
@@ -158,7 +158,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let value = self.opt_expression(statement.value)?;
         let location = self.location(statement.location);
 
@@ -171,7 +171,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> hir::Statement {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let block = self.block(expr.block);
 
@@ -184,7 +184,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let collection = self.expression(expr.collection)?;
         let block = self.block(expr.block);
@@ -203,7 +203,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
-        let id = self.next_stmt_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
 
         let block = self.block(lume_ast::Block {

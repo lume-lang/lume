@@ -37,7 +37,7 @@ fn query_function_check_empty() -> Result<()> {
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -61,7 +61,7 @@ fn query_function_check_arg_count() -> Result<()> {
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -85,7 +85,7 @@ fn query_function_check_type_arg_type_count() -> Result<()> {
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -109,7 +109,7 @@ fn query_function_check_type_arg_type_match() -> Result<()> {
     let func = funcs.first().unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::Callable {
             name: "foo".into(),
             type_arguments: vec![lume_hir::Type::void()],
@@ -238,7 +238,7 @@ fn query_check_method_empty() -> Result<()> {
         .unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -274,7 +274,7 @@ fn query_check_method_arg_count() -> Result<()> {
         .unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -310,7 +310,7 @@ fn query_check_method_type_arg_count() -> Result<()> {
         .unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: lume_span::source::Location {
@@ -346,7 +346,7 @@ fn query_check_method_type_arg_valid() -> Result<()> {
         .unwrap();
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::from_parts(
             Some([PathSegment::ty("A")]),
             PathSegment::Callable {
@@ -369,7 +369,7 @@ fn query_lookup_functions_single() -> Result<()> {
     let tcx = type_infer("fn foo() { }")?;
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),
@@ -392,7 +392,7 @@ fn query_lookup_functions_missing() -> Result<()> {
     let tcx = type_infer("fn bar() { }")?;
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),
@@ -412,7 +412,7 @@ fn query_lookup_functions_suggestion_name_mismatch() -> Result<()> {
     let tcx = type_infer("fn foo_() { }")?;
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),
@@ -432,7 +432,7 @@ fn query_lookup_functions_suggestion_arg_count() -> Result<()> {
     let tcx = type_infer("fn foo(x: Int32) { }")?;
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),
@@ -450,7 +450,7 @@ fn query_lookup_functions_suggestion_type_arg_count() -> Result<()> {
     let tcx = type_infer("fn foo<T>() { }")?;
 
     let expr = lume_hir::StaticCall {
-        id: lume_span::ExpressionId::default(),
+        id: lume_span::NodeId::default(),
         name: Path::rooted(PathSegment::callable("foo")),
         arguments: Vec::new(),
         location: Location::empty(),

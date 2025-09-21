@@ -1,4 +1,4 @@
-use lume_span::DefId;
+use lume_span::NodeId;
 
 use crate::FunctionTransformer;
 
@@ -112,7 +112,7 @@ impl FunctionTransformer<'_, '_> {
         }
     }
 
-    pub(super) fn type_of_function(&self, func_id: DefId) -> lume_mir::Type {
+    pub(super) fn type_of_function(&self, func_id: NodeId) -> lume_mir::Type {
         let func = self.function(func_id);
 
         func.signature.return_type.clone()

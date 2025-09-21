@@ -3,12 +3,12 @@ use quote::quote;
 use syn::Ident;
 
 #[derive(Debug)]
-pub enum NodeImpl {
+pub enum LocationImpl {
     Struct(Ident),
     Enum(Ident, Vec<Ident>),
 }
 
-impl NodeImpl {
+impl LocationImpl {
     pub fn from(input: syn::DeriveInput) -> syn::Result<Self> {
         let ident = input.ident;
 
@@ -24,16 +24,16 @@ impl NodeImpl {
 
     pub fn tokens(&self) -> TokenStream {
         match self {
-            NodeImpl::Struct(ident) => {
+            Self::Struct(ident) => {
                 quote! {
-                    impl Node for #ident {
+                    impl WithLocation for #ident {
                         fn location(&self) -> Location {
                             self.location
                         }
                     }
                 }
             }
-            NodeImpl::Enum(ident, variants) => {
+            Self::Enum(ident, variants) => {
                 let cases = variants
                     .iter()
                     .map(|v| {
@@ -42,7 +42,7 @@ impl NodeImpl {
                     .collect::<Vec<TokenStream>>();
 
                 quote! {
-                    impl Node for #ident {
+                    impl WithLocation for #ident {
                         fn location(&self) -> Location {
                             match self {
                                 #(#cases),*
@@ -55,12 +55,12 @@ impl NodeImpl {
     }
 
     fn from_struct(ident: Ident) -> Self {
-        NodeImpl::Struct(ident)
+        Self::Struct(ident)
     }
 
     fn from_enum(ident: Ident, data: &syn::DataEnum) -> Self {
         let variants = data.variants.iter().map(|v| v.ident.clone()).collect::<Vec<Ident>>();
 
-        NodeImpl::Enum(ident, variants)
+        Self::Enum(ident, variants)
     }
 }

@@ -16,7 +16,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn lit_int(&mut self, expr: ast::IntLiteral) -> hir::Literal {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let value = expr.value;
         let kind = expr.kind.into();
         let location = self.location(expr.location);
@@ -30,7 +30,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn lit_float(&mut self, expr: ast::FloatLiteral) -> hir::Literal {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let value = expr.value;
         let kind = expr.kind.into();
         let location = self.location(expr.location);
@@ -44,7 +44,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn lit_string(&mut self, expr: ast::StringLiteral) -> hir::Literal {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let value = expr.value.clone();
         let location = self.location(expr.location);
 
@@ -57,7 +57,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn lit_boolean(&mut self, expr: ast::BooleanLiteral) -> hir::Literal {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let value = expr.value;
         let location = self.location(expr.location);
 

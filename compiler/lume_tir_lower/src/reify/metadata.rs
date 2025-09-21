@@ -1,5 +1,5 @@
 use lume_errors::Result;
-use lume_span::DefId;
+use lume_span::NodeId;
 use lume_type_metadata::*;
 
 use crate::reify::ReificationPass;
@@ -90,7 +90,7 @@ impl ReificationPass<'_> {
 
                 for variant in self.tcx.enum_cases_of_name(&def.name)? {
                     for param in &variant.parameters {
-                        let param_type_ref = self.tcx.mk_type_ref_from(param, DefId::Item(def.id))?;
+                        let param_type_ref = self.tcx.mk_type_ref_from(param, def.id)?;
                         let param_ty = self.tcx.tdb().ty_expect(param_type_ref.instance_of)?;
 
                         size += if param_ty.kind.is_ref_type() {
@@ -173,9 +173,9 @@ impl ReificationPass<'_> {
             }
 
             let full_name = format!("{:+}", method.name);
-            let func_id = method.hir;
+            let func_id = method.id;
 
-            let definition_id = if let lume_hir::Def::TraitMethodImpl(method_impl) = self.tcx.hir_expect_def(func_id) {
+            let definition_id = if let Some(lume_hir::Node::TraitMethodImpl(method_impl)) = self.tcx.hir_node(func_id) {
                 self.tcx.hir_trait_method_def_of_impl(method_impl)?.id
             } else {
                 func_id
@@ -218,17 +218,17 @@ impl ReificationPass<'_> {
         Ok(methods)
     }
 
-    fn find_drop_method(&self, type_ref: &lume_types::TypeRef) -> Option<DefId> {
+    fn find_drop_method(&self, type_ref: &lume_types::TypeRef) -> Option<NodeId> {
         for method in self.tcx.methods_defined_on(type_ref) {
-            if self.tcx.is_method_dropper(method.hir) {
-                return Some(method.hir);
+            if self.tcx.is_method_dropper(method.id) {
+                return Some(method.id);
             }
         }
 
         None
     }
 
-    fn type_parameter_metadata(&mut self, id: lume_hir::TypeParameterId) -> Result<TypeParameterMetadata> {
+    fn type_parameter_metadata(&mut self, id: lume_span::NodeId) -> Result<TypeParameterMetadata> {
         let type_param = self.tcx.tdb().type_parameter(id).unwrap();
 
         let name = type_param.name.clone();

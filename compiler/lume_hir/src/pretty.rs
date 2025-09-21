@@ -50,13 +50,13 @@ macro_rules! pretty_list {
 
 impl Map {
     pub fn pretty_fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let items = self
-            .items
+        let nodes = self
+            .nodes
             .values()
             .map(|item| PrettyItem { value: item, map: self })
             .collect::<Vec<_>>();
 
-        f.debug_struct("Map").field("items", &items).finish()
+        f.debug_struct("Map").field("nodes", &nodes).finish()
     }
 }
 
@@ -69,13 +69,28 @@ impl PrettyPrint for Identifier {
     }
 }
 
-impl PrettyPrint for Item {
+impl PrettyPrint for NodeId {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let node = map.expect_node(*self).unwrap();
+
+        node.pretty_fmt(map, f)
+    }
+}
+
+impl PrettyPrint for Node {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Function(item) => item.pretty_fmt(map, f),
-            Self::Type(item) => item.pretty_fmt(map, f),
-            Self::TraitImpl(item) => item.pretty_fmt(map, f),
-            Self::Impl(item) => item.pretty_fmt(map, f),
+            Self::Function(node) => node.pretty_fmt(map, f),
+            Self::Type(node) => node.pretty_fmt(map, f),
+            Self::TraitImpl(node) => node.pretty_fmt(map, f),
+            Self::Impl(node) => node.pretty_fmt(map, f),
+            Self::Field(node) => node.pretty_fmt(map, f),
+            Self::Method(node) => node.pretty_fmt(map, f),
+            Self::TraitMethodDef(node) => node.pretty_fmt(map, f),
+            Self::TraitMethodImpl(node) => node.pretty_fmt(map, f),
+            Self::Pattern(node) => node.pretty_fmt(map, f),
+            Self::Statement(node) => node.pretty_fmt(map, f),
+            Self::Expression(node) => node.pretty_fmt(map, f),
         }
     }
 }
@@ -271,14 +286,6 @@ impl PrettyPrint for Block {
     }
 }
 
-impl PrettyPrint for StatementId {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let stmt = map.expect_statement(*self).unwrap();
-
-        stmt.pretty_fmt(map, f)
-    }
-}
-
 impl PrettyPrint for Statement {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.kind.pretty_fmt(map, f)
@@ -357,14 +364,6 @@ impl PrettyPrint for IteratorLoop {
             .field("block", pretty_item!(self.block, map))
             .field("location", &self.location)
             .finish()
-    }
-}
-
-impl PrettyPrint for ExpressionId {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let expr = map.expect_expression(*self).unwrap();
-
-        expr.pretty_fmt(map, f)
     }
 }
 

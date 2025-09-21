@@ -3,7 +3,7 @@ pub(crate) mod diagnostics;
 use crate::TyCheckCtx;
 use error_snippet::Result;
 pub use lume_infer::query::Callable;
-use lume_span::ExpressionId;
+use lume_span::NodeId;
 use lume_types::{Function, Method, TypeRef};
 
 impl TyCheckCtx {
@@ -81,7 +81,7 @@ impl TyCheckCtx {
     fn check_type_params<'a>(
         &self,
         expr: lume_hir::CallExpression<'a>,
-        type_params: &'a [lume_hir::TypeParameterId],
+        type_params: &'a [lume_span::NodeId],
         type_args: &'a [lume_hir::Type],
     ) -> Result<bool> {
         // Verify that the amount of type arguments match the
@@ -405,7 +405,7 @@ impl TyCheckCtx {
     /// within it's declared module. This also applies to any recursive calls this
     /// method makes, in the case of some expressions, such as assignments.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub(crate) fn matching_type_of_cond(&self, id: ExpressionId, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
+    pub(crate) fn matching_type_of_cond(&self, id: NodeId, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
         let first_case = cases.first().expect("expected at least 1 case");
         let last_case = cases.last().expect("expected at least 1 case");
 

@@ -7,144 +7,24 @@ use lume_session::GlobalCtx;
 use serde::{Deserialize, Serialize};
 
 use crate::errors::*;
-pub use lume_hir::TypeId;
-use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, PathSegment, TypeParameterId, UseId, Visibility};
-use lume_span::{DefId, ItemId, Location, PackageId};
+use lume_hir::{Path, PathSegment, Visibility};
+use lume_span::*;
 
 pub mod errors;
 
-pub trait WithTypeParameters: Clone + Copy {
-    /// Gets the type parameters of the current instance.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the instance was not found within the type context.
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>>;
-
-    /// Gets the type parameters of the current instance.
-    ///
-    /// # Errors
-    ///
-    /// Returns `Err` if the instance was not found within the type context.
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>>;
-}
-
-impl WithTypeParameters for FunctionId {
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
-        match tcx.function(self) {
-            Some(m) => Ok(&m.type_parameters),
-            None => Err(FunctionNotFound { id: self }.into()),
-        }
-    }
-
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
-        match tcx.function_mut(self) {
-            Some(m) => Ok(&mut m.type_parameters),
-            None => Err(FunctionNotFound { id: self }.into()),
-        }
-    }
-}
-
-impl WithTypeParameters for ImplId {
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
-        match tcx.implementation(self) {
-            Some(m) => Ok(&m.type_parameters),
-            None => Err(ImplNotFound { id: self }.into()),
-        }
-    }
-
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
-        match tcx.implementation_mut(self) {
-            Some(m) => Ok(&mut m.type_parameters),
-            None => Err(ImplNotFound { id: self }.into()),
-        }
-    }
-}
-
-impl WithTypeParameters for MethodId {
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
-        match tcx.method(self) {
-            Some(m) => Ok(&m.type_parameters),
-            None => Err(MethodNotFound { id: self }.into()),
-        }
-    }
-
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
-        match tcx.method_mut(self) {
-            Some(m) => Ok(&mut m.type_parameters),
-            None => Err(MethodNotFound { id: self }.into()),
-        }
-    }
-}
-
-impl WithTypeParameters for UseId {
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
-        match tcx.use_(self) {
-            Some(m) => Ok(&m.type_parameters),
-            None => Err(UseNotFound { id: self }.into()),
-        }
-    }
-
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
-        match tcx.use_mut(self) {
-            Some(m) => Ok(&mut m.type_parameters),
-            None => Err(UseNotFound { id: self }.into()),
-        }
-    }
-}
-
-impl WithTypeParameters for TypeId {
-    fn type_params(self, tcx: &TypeDatabaseContext) -> Result<&Vec<TypeParameterId>> {
-        static EMPTY: Vec<TypeParameterId> = Vec::new();
-
-        let Some(ty) = tcx.type_(self) else {
-            return Err(TypeNotFound { id: self }.into());
-        };
-
-        match &ty.kind {
-            TypeKind::User(UserType::Struct(k)) => Ok(&k.type_parameters),
-            TypeKind::User(UserType::Trait(k)) => Ok(&k.type_parameters),
-            TypeKind::User(UserType::Enum(k)) => Ok(&k.type_parameters),
-            _ => Ok(&EMPTY),
-        }
-    }
-
-    fn type_params_mut(self, tcx: &mut TypeDatabaseContext) -> Result<&mut Vec<TypeParameterId>> {
-        let Some(ty) = tcx.type_mut(self) else {
-            return Err(TypeNotFound { id: self }.into());
-        };
-
-        match &mut ty.kind {
-            TypeKind::User(UserType::Struct(k)) => Ok(&mut k.type_parameters),
-            TypeKind::User(UserType::Trait(k)) => Ok(&mut k.type_parameters),
-            TypeKind::User(UserType::Enum(k)) => Ok(&mut k.type_parameters),
-            kind => Err(TypeParametersOnNonGenericType { ty: kind.as_kind_ref() }.into()),
-        }
-    }
-}
-
-pub const TYPEREF_VOID_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00000);
-pub const TYPEREF_BOOL_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00001);
-pub const TYPEREF_INT8_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00002);
-pub const TYPEREF_INT16_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00003);
-pub const TYPEREF_INT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00004);
-pub const TYPEREF_INT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00005);
-pub const TYPEREF_UINT8_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00006);
-pub const TYPEREF_UINT16_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00007);
-pub const TYPEREF_UINT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00008);
-pub const TYPEREF_UINT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_00009);
-pub const TYPEREF_FLOAT32_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000A);
-pub const TYPEREF_FLOAT64_ID: TypeId = TypeId::new(PackageId::empty(), 0x0000_0000B);
-pub const TYPEREF_UNKNOWN_ID: TypeId = TypeId::new(PackageId::empty(), 0xFFFF_FFFF);
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Item {
-    Type(Box<Type>),
-    Function(Box<Function>),
-    Field(Box<Field>),
-    Method(Box<Method>),
-    Implementation(Box<Implementation>),
-}
+pub const TYPEREF_VOID_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00000);
+pub const TYPEREF_BOOL_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00001);
+pub const TYPEREF_INT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00002);
+pub const TYPEREF_INT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00003);
+pub const TYPEREF_INT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00004);
+pub const TYPEREF_INT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00005);
+pub const TYPEREF_UINT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00006);
+pub const TYPEREF_UINT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00007);
+pub const TYPEREF_UINT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00008);
+pub const TYPEREF_UINT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00009);
+pub const TYPEREF_FLOAT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0000A);
+pub const TYPEREF_FLOAT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0000B);
+pub const TYPEREF_UNKNOWN_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Parameter {
@@ -214,7 +94,7 @@ impl Parameters {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
-    pub type_params: &'a [TypeParameterId],
+    pub type_params: &'a [NodeId],
     pub ret_ty: &'a TypeRef,
 }
 
@@ -243,7 +123,7 @@ impl FunctionSig<'_> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSigOwned {
     pub params: Parameters,
-    pub type_params: Vec<TypeParameterId>,
+    pub type_params: Vec<NodeId>,
     pub ret_ty: TypeRef,
 }
 
@@ -267,11 +147,10 @@ impl FunctionSigOwned {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
-    pub id: FunctionId,
-    pub hir: ItemId,
+    pub id: NodeId,
     pub name: Path,
     pub visibility: Visibility,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
@@ -289,10 +168,10 @@ impl Function {
 
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub struct Field {
-    pub id: FieldId,
+    pub id: NodeId,
     pub index: usize,
     pub visibility: Visibility,
-    pub owner: TypeId,
+    pub owner: NodeId,
     pub name: String,
     pub field_type: TypeRef,
 }
@@ -307,13 +186,12 @@ pub enum MethodKind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Method {
-    pub id: MethodId,
-    pub hir: DefId,
+    pub id: NodeId,
     pub kind: MethodKind,
     pub visibility: Visibility,
     pub callee: TypeRef,
     pub name: Path,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
     pub parameters: Parameters,
     pub return_type: TypeRef,
 }
@@ -355,9 +233,9 @@ impl Method {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Struct {
-    pub id: ItemId,
+    pub id: NodeId,
     pub name: Path,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
 }
 
 impl Struct {
@@ -372,9 +250,9 @@ impl Struct {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Trait {
-    pub id: ItemId,
+    pub id: NodeId,
     pub name: Path,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
 }
 
 impl Trait {
@@ -389,9 +267,9 @@ impl Trait {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Enum {
-    pub id: ItemId,
+    pub id: NodeId,
     pub name: Path,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
 }
 
 impl Enum {
@@ -406,24 +284,24 @@ impl Enum {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumCase {
-    pub parent: ItemId,
+    pub parent: NodeId,
     pub name: Path,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
-    pub id: ImplId,
+    pub id: NodeId,
     pub target: Path,
-    pub type_parameters: Vec<TypeParameterId>,
+    pub type_parameters: Vec<NodeId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Use {
-    pub id: UseId,
+    pub id: NodeId,
     pub trait_: TypeRef,
     pub target: TypeRef,
-    pub type_parameters: Vec<TypeParameterId>,
-    pub methods: Vec<MethodId>,
+    pub type_parameters: Vec<NodeId>,
+    pub methods: Vec<NodeId>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -495,7 +373,7 @@ pub enum TypeKind {
     String,
 
     /// The type is a reference to a type parameter in the current scope.
-    TypeParameter(TypeParameterId),
+    TypeParameter(NodeId),
 }
 
 impl TypeKind {
@@ -529,7 +407,7 @@ impl TypeKind {
         }
     }
 
-    pub fn type_parameters(&self) -> &[TypeParameterId] {
+    pub fn type_parameters(&self) -> &[NodeId] {
         match self {
             TypeKind::Void
             | TypeKind::Bool
@@ -571,7 +449,7 @@ pub enum TypeTransport {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Type {
-    pub id: TypeId,
+    pub id: NodeId,
     pub kind: TypeKind,
     pub name: Path,
 }
@@ -696,7 +574,7 @@ impl Type {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TypeRef {
-    pub instance_of: TypeId,
+    pub instance_of: NodeId,
     pub type_arguments: Vec<TypeRef>,
 
     #[serde(skip)]
@@ -705,7 +583,7 @@ pub struct TypeRef {
 
 impl TypeRef {
     /// Creates a new [`TypeRef`] with the given instance.
-    pub fn new(instance: TypeId, location: Location) -> Self {
+    pub fn new(instance: NodeId, location: Location) -> Self {
         Self {
             instance_of: instance,
             type_arguments: vec![],
@@ -1033,7 +911,7 @@ impl std::fmt::Display for NamedTypeRef {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeParameter {
-    pub id: TypeParameterId,
+    pub id: NodeId,
     pub name: String,
     pub constraints: Vec<TypeRef>,
     pub location: Location,
@@ -1041,13 +919,13 @@ pub struct TypeParameter {
 
 #[derive(Debug)]
 pub struct TypeDatabaseContext {
-    pub types: IndexMap<TypeId, Type>,
-    pub fields: Vec<Field>,
-    pub methods: Vec<Method>,
-    pub functions: IndexMap<FunctionId, Function>,
-    pub type_parameters: Vec<TypeParameter>,
-    pub implementations: Vec<Implementation>,
-    pub uses: Vec<Use>,
+    pub types: IndexMap<NodeId, Type>,
+    pub fields: IndexMap<NodeId, Field>,
+    pub methods: IndexMap<NodeId, Method>,
+    pub functions: IndexMap<NodeId, Function>,
+    pub type_parameters: IndexMap<NodeId, TypeParameter>,
+    pub implementations: IndexMap<NodeId, Implementation>,
+    pub uses: IndexMap<NodeId, Use>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -1071,35 +949,35 @@ impl TypeDatabaseContext {
     /// Gets the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn type_(&self, id: TypeId) -> Option<&Type> {
+    pub fn type_(&self, id: NodeId) -> Option<&Type> {
         self.types.get(&id)
     }
 
     /// Gets the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn type_mut(&mut self, id: TypeId) -> Option<&mut Type> {
+    pub fn type_mut(&mut self, id: NodeId) -> Option<&mut Type> {
         self.types.get_mut(&id)
     }
 
     /// Gets the [`TypeTransport`] of the [`Type`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn type_transport(&self, id: TypeId) -> Option<TypeTransport> {
+    pub fn type_transport(&self, id: NodeId) -> Option<TypeTransport> {
         self.type_(id).map(|ty| ty.kind.transport())
     }
 
     /// Gets the whether the given [`Type`] is a reference type.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn is_reference_type(&self, id: TypeId) -> Option<bool> {
+    pub fn is_reference_type(&self, id: NodeId) -> Option<bool> {
         self.type_transport(id).map(|ty| ty == TypeTransport::Reference)
     }
 
     /// Gets the whether the given [`Type`] is a value type.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn is_value_type(&self, id: TypeId) -> Option<bool> {
+    pub fn is_value_type(&self, id: NodeId) -> Option<bool> {
         self.type_transport(id).map(|ty| ty == TypeTransport::Copy)
     }
 
@@ -1107,7 +985,7 @@ impl TypeDatabaseContext {
     /// type is not a type parameter, returns `None`.
     ///
     /// Returns `None` if the [`Type`] is not found.
-    pub fn type_as_param(&self, id: TypeId) -> Option<&TypeParameter> {
+    pub fn type_as_param(&self, id: NodeId) -> Option<&TypeParameter> {
         if let Some(TypeKind::TypeParameter(param_id)) = self.type_(id).map(|ty| &ty.kind) {
             self.type_parameter(*param_id)
         } else {
@@ -1120,10 +998,10 @@ impl TypeDatabaseContext {
     /// # Errors
     ///
     /// Returns `Err` if the type wasn't found.
-    pub fn ty_expect(&self, id: TypeId) -> Result<&Type> {
+    pub fn ty_expect(&self, id: NodeId) -> Result<&Type> {
         match self.type_(id) {
             Some(ty) => Ok(ty),
-            None => Err(TypeNotFound { id }.into()),
+            None => Err(NodeNotFound { id }.into()),
         }
     }
 
@@ -1133,7 +1011,7 @@ impl TypeDatabaseContext {
     ///
     /// Returns `Err` if the type wasn't found or if the found type did not
     /// have a [`TypeKindRef`] of [`TypeKindRef::Struct`].
-    pub fn ty_expect_struct(&self, id: TypeId) -> Result<&Struct> {
+    pub fn ty_expect_struct(&self, id: NodeId) -> Result<&Struct> {
         let ty = self.ty_expect(id)?;
 
         if let TypeKind::User(UserType::Struct(tr)) = &ty.kind {
@@ -1153,7 +1031,7 @@ impl TypeDatabaseContext {
     ///
     /// Returns `Err` if the type wasn't found or if the found type did not
     /// have a [`TypeKindRef`] of [`TypeKindRef::Trait`].
-    pub fn ty_expect_trait(&self, id: TypeId) -> Result<&Trait> {
+    pub fn ty_expect_trait(&self, id: NodeId) -> Result<&Trait> {
         let ty = self.ty_expect(id)?;
 
         if let TypeKind::User(UserType::Trait(tr)) = &ty.kind {
@@ -1170,79 +1048,79 @@ impl TypeDatabaseContext {
     /// Gets an iterator which iterates all [`Field`]-instances within
     /// the database context.
     pub fn fields(&self) -> impl Iterator<Item = &Field> {
-        self.fields.iter()
+        self.fields.values()
     }
 
     /// Gets an iterator which iterates all [`Field`]-instances within
     /// the database context.
     pub fn fields_mut(&mut self) -> impl Iterator<Item = &mut Field> {
-        self.fields.iter_mut()
+        self.fields.values_mut()
     }
 
     /// Gets the [`Field`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Field`] is not found.
-    pub fn field(&self, id: FieldId) -> Option<&Field> {
-        self.fields.get(id.0)
+    pub fn field(&self, id: NodeId) -> Option<&Field> {
+        self.fields.get(&id)
     }
 
     /// Gets the [`Field`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Field`] is not found.
-    pub fn field_mut(&mut self, id: FieldId) -> Option<&mut Field> {
-        self.fields.get_mut(id.0)
+    pub fn field_mut(&mut self, id: NodeId) -> Option<&mut Field> {
+        self.fields.get_mut(&id)
     }
 
     /// Gets an iterator which iterates all [`Method`]-instances within
     /// the database context.
     pub fn methods(&self) -> impl Iterator<Item = &Method> {
-        self.methods.iter()
+        self.methods.values()
     }
 
     /// Gets an iterator which iterates all [`Method`]-instances within
     /// the database context.
     pub fn methods_mut(&mut self) -> impl Iterator<Item = &mut Method> {
-        self.methods.iter_mut()
+        self.methods.values_mut()
     }
 
     /// Gets an iterator which iterates all [`Use`]-instances within
     /// the database context.
     pub fn uses(&self) -> impl Iterator<Item = &Use> {
-        self.uses.iter()
+        self.uses.values()
     }
 
     /// Gets an iterator which iterates all [`Use`]-instances within
     /// the database context.
     pub fn uses_mut(&mut self) -> impl Iterator<Item = &mut Use> {
-        self.uses.iter_mut()
+        self.uses.values_mut()
     }
 
     /// Gets the [`Use`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Use`] is not found.
-    pub fn use_(&self, id: UseId) -> Option<&Use> {
-        self.uses.get(id.0)
+    pub fn use_(&self, id: NodeId) -> Option<&Use> {
+        self.uses.get(&id)
     }
 
     /// Gets the [`Use`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Use`] is not found.
-    pub fn use_mut(&mut self, id: UseId) -> Option<&mut Use> {
-        self.uses.get_mut(id.0)
+    pub fn use_mut(&mut self, id: NodeId) -> Option<&mut Use> {
+        self.uses.get_mut(&id)
     }
 
     /// Gets the [`Method`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Method`] is not found.
-    pub fn method(&self, id: MethodId) -> Option<&Method> {
-        self.methods.get(id.0)
+    pub fn method(&self, id: NodeId) -> Option<&Method> {
+        self.methods.get(&id)
     }
 
     /// Gets the [`Method`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Method`] is not found.
-    pub fn method_mut(&mut self, id: MethodId) -> Option<&mut Method> {
-        self.methods.get_mut(id.0)
+    pub fn method_mut(&mut self, id: NodeId) -> Option<&mut Method> {
+        self.methods.get_mut(&id)
     }
 
     /// Gets an iterator which iterates all [`Function`]-instances within
@@ -1260,48 +1138,48 @@ impl TypeDatabaseContext {
     /// Gets the [`Function`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Function`] is not found.
-    pub fn function(&self, id: FunctionId) -> Option<&Function> {
+    pub fn function(&self, id: NodeId) -> Option<&Function> {
         self.functions.get(&id)
     }
 
     /// Gets the [`Function`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Function`] is not found.
-    pub fn function_mut(&mut self, id: FunctionId) -> Option<&mut Function> {
+    pub fn function_mut(&mut self, id: NodeId) -> Option<&mut Function> {
         self.functions.get_mut(&id)
     }
 
     /// Gets the [`TypeParameter`] with the given ID, if any.
     ///
     /// Returns `None` if the [`TypeParameter`] is not found.
-    pub fn type_parameter(&self, id: TypeParameterId) -> Option<&TypeParameter> {
-        self.type_parameters.get(id.0)
+    pub fn type_parameter(&self, id: NodeId) -> Option<&TypeParameter> {
+        self.type_parameters.get(&id)
     }
 
     /// Gets the [`TypeParameter`] with the given ID, if any.
     ///
     /// Returns `None` if the [`TypeParameter`] is not found.
-    pub fn type_parameter_mut(&mut self, id: TypeParameterId) -> Option<&mut TypeParameter> {
-        self.type_parameters.get_mut(id.0)
+    pub fn type_parameter_mut(&mut self, id: NodeId) -> Option<&mut TypeParameter> {
+        self.type_parameters.get_mut(&id)
     }
 
     /// Gets the [`Implementation`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Implementation`] is not found.
-    pub fn implementation(&self, id: ImplId) -> Option<&Implementation> {
-        self.implementations.get(id.0)
+    pub fn implementation(&self, id: NodeId) -> Option<&Implementation> {
+        self.implementations.get(&id)
     }
 
     /// Gets the [`Implementation`] with the given ID, if any.
     ///
     /// Returns `None` if the [`Implementation`] is not found.
-    pub fn implementation_mut(&mut self, id: ImplId) -> Option<&mut Implementation> {
-        self.implementations.get_mut(id.0)
+    pub fn implementation_mut(&mut self, id: NodeId) -> Option<&mut Implementation> {
+        self.implementations.get_mut(&id)
     }
 
     /// Gets an iterator which iterates all [`Item`]-instances where
     /// the item refers to a [`Method`], which are defined on the given [`Item`].
-    pub fn methods_on(&self, id: TypeId) -> impl Iterator<Item = &Method> {
+    pub fn methods_on(&self, id: NodeId) -> impl Iterator<Item = &Method> {
         let mut methods: Vec<Box<dyn Iterator<Item = &Method>>> =
             vec![Box::new(self.methods().filter(move |m| m.callee.instance_of == id))];
 
@@ -1338,12 +1216,12 @@ impl TypeDatabaseContext {
     }
 
     /// Attempts to find all [`Field`]s on the given parent type.
-    pub fn find_fields(&self, owner: TypeId) -> impl Iterator<Item = &Field> {
+    pub fn find_fields(&self, owner: NodeId) -> impl Iterator<Item = &Field> {
         self.fields().filter(move |prop| prop.owner == owner)
     }
 
     /// Attempts to find a [`Field`] with the given name on the given parent type, if any.
-    pub fn find_field(&self, owner: TypeId, name: &String) -> Option<&Field> {
+    pub fn find_field(&self, owner: NodeId, name: &String) -> Option<&Field> {
         self.fields().find(|prop| prop.owner == owner && prop.name == *name)
     }
 
@@ -1354,67 +1232,58 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
-    pub fn func_alloc(&mut self, hir: ItemId, name: Path, visibility: Visibility) -> FunctionId {
-        let id = FunctionId {
-            package: hir.package,
-            index: lume_span::Idx::from_usize(self.functions.len()),
-        };
-
-        let func = Function {
+    pub fn func_alloc(&mut self, id: NodeId, name: Path, visibility: Visibility) -> NodeId {
+        self.functions.insert(
             id,
-            hir,
-            name,
-            visibility,
-            type_parameters: Vec::new(),
-            parameters: Parameters::new(),
-            return_type: TypeRef::unknown(),
-        };
+            Function {
+                id,
+                name,
+                visibility,
+                type_parameters: Vec::new(),
+                parameters: Parameters::new(),
+                return_type: TypeRef::unknown(),
+            },
+        );
 
-        self.functions.insert(id, func);
         id
     }
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, package: PackageId, name: Path, kind: TypeKind) -> TypeId {
-        let id = TypeId {
-            package,
-            index: lume_span::Idx::from_usize(self.types.len()),
-        };
+    pub fn type_alloc(&mut self, id: NodeId, name: Path, kind: TypeKind) -> NodeId {
+        self.types.insert(id, Type { id, kind, name });
 
-        let ty = Type { id, kind, name };
-
-        self.types.insert(id, ty);
         id
     }
 
     /// Allocates a new [`Implementation`] with the target.
     #[inline]
-    pub fn impl_alloc(&mut self, target: Path) -> ImplId {
-        let id = ImplId(self.implementations.len());
-
-        let implementation = Implementation {
+    pub fn impl_alloc(&mut self, id: NodeId, target: Path) -> NodeId {
+        self.implementations.insert(
             id,
-            target,
-            type_parameters: Vec::new(),
-        };
+            Implementation {
+                id,
+                target,
+                type_parameters: Vec::new(),
+            },
+        );
 
-        self.implementations.push(implementation);
         id
     }
 
     /// Allocates a new [`Use`] with the target.
     #[inline]
-    pub fn use_alloc(&mut self) -> UseId {
-        let id = UseId(self.uses.len());
-
-        self.uses.push(Use {
+    pub fn use_alloc(&mut self, id: NodeId) -> NodeId {
+        self.uses.insert(
             id,
-            trait_: TypeRef::unknown(),
-            target: TypeRef::unknown(),
-            type_parameters: Vec::new(),
-            methods: Vec::new(),
-        });
+            Use {
+                id,
+                trait_: TypeRef::unknown(),
+                target: TypeRef::unknown(),
+                type_parameters: Vec::new(),
+                methods: Vec::new(),
+            },
+        );
 
         id
     }
@@ -1428,24 +1297,25 @@ impl TypeDatabaseContext {
     #[inline]
     pub fn field_alloc(
         &mut self,
+        id: NodeId,
         index: usize,
-        owner: TypeId,
+        owner: NodeId,
         name: String,
         visibility: Visibility,
-    ) -> Result<FieldId> {
-        let id = FieldId(self.fields.len());
-        let prop = Field {
+    ) -> NodeId {
+        self.fields.insert(
             id,
-            index,
-            owner,
-            name,
-            visibility,
-            field_type: TypeRef::unknown(),
-        };
+            Field {
+                id,
+                index,
+                owner,
+                name,
+                visibility,
+                field_type: TypeRef::unknown(),
+            },
+        );
 
-        self.fields.push(prop);
-
-        Ok(id)
+        id
     }
 
     /// Allocates a new [`Method`] on the given [`Item`].
@@ -1457,65 +1327,117 @@ impl TypeDatabaseContext {
     #[inline]
     pub fn method_alloc(
         &mut self,
-        hir: DefId,
+        id: NodeId,
         owner: TypeRef,
         name: Path,
         visibility: Visibility,
         kind: MethodKind,
-    ) -> Result<MethodId> {
-        let id = MethodId(self.methods.len());
-
-        let method = Method {
+    ) -> NodeId {
+        self.methods.insert(
             id,
-            hir,
-            kind,
-            callee: owner,
-            name,
-            visibility,
-            parameters: Parameters::new(),
-            type_parameters: Vec::new(),
-            return_type: TypeRef::unknown(),
-        };
+            Method {
+                id,
+                kind,
+                callee: owner,
+                name,
+                visibility,
+                parameters: Parameters::new(),
+                type_parameters: Vec::new(),
+                return_type: TypeRef::unknown(),
+            },
+        );
 
-        self.methods.push(method);
-
-        Ok(id)
+        id
     }
 
     /// Allocates a new [`TypeParameter`] with the given name and kind.
     #[inline]
-    pub fn type_param_alloc(&mut self, name: String, loc: Location) -> TypeParameterId {
-        let id = TypeParameterId(self.type_parameters.len());
-        let param = TypeParameter {
+    pub fn type_param_alloc(&mut self, id: NodeId, name: String, loc: Location) -> NodeId {
+        self.type_parameters.insert(
             id,
-            name,
-            constraints: Vec::new(),
-            location: loc,
-        };
+            TypeParameter {
+                id,
+                name,
+                constraints: Vec::new(),
+                location: loc,
+            },
+        );
 
-        self.type_parameters.push(param);
         id
     }
 
-    /// Gets the type parameters defined on the [`Type`] with the given ID.
+    /// Gets the type parameters defined on the [`lume_hir::Node`] with the given ID.
     ///
     /// # Errors
     ///
     /// Returns `Err` if no type with the given ID was found in the context,
     /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
-    pub fn type_params_of(&self, id: impl WithTypeParameters) -> Result<&Vec<TypeParameterId>> {
-        id.type_params(self)
+    pub fn type_params_of(&self, id: NodeId) -> Result<&[NodeId]> {
+        if let Some(ty) = self.type_(id) {
+            return Ok(ty.kind.type_parameters());
+        }
+
+        if let Some(method) = self.method(id) {
+            return Ok(&method.type_parameters);
+        }
+
+        if let Some(func) = self.function(id) {
+            return Ok(&func.type_parameters);
+        }
+
+        if let Some(implementation) = self.implementation(id) {
+            return Ok(&implementation.type_parameters);
+        }
+
+        if let Some(trait_impl) = self.use_(id) {
+            return Ok(&trait_impl.type_parameters);
+        }
+
+        Err(TypeParametersOnNonGenericItem { id }.into())
     }
 
-    /// Pushes a new type parameter to the [`Type`] with the given ID.
+    /// Pushes a new type parameter to the [`lume_hir::Node`] with the given ID.
     ///
     /// # Errors
     ///
     /// Returns `Err` if no type with the given ID was found in the context,
     /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
-    pub fn push_type_param(&mut self, id: impl WithTypeParameters, type_id: TypeParameterId) -> Result<()> {
-        if !id.type_params(self)?.contains(&type_id) {
-            id.type_params_mut(self)?.push(type_id);
+    pub fn push_type_param(&mut self, id: NodeId, type_id: NodeId) -> Result<()> {
+        if !self.type_params_of(id)?.contains(&type_id) {
+            if let Some(ty) = self.type_mut(id) {
+                match &mut ty.kind {
+                    TypeKind::User(UserType::Struct(ty)) => {
+                        ty.type_parameters.push(type_id);
+                    }
+                    TypeKind::User(UserType::Trait(ty)) => {
+                        ty.type_parameters.push(type_id);
+                    }
+                    TypeKind::User(UserType::Enum(ty)) => {
+                        ty.type_parameters.push(type_id);
+                    }
+                    _ => {}
+                }
+            }
+
+            if let Some(method) = self.method_mut(id) {
+                method.type_parameters.push(type_id);
+                return Ok(());
+            }
+
+            if let Some(func) = self.function_mut(id) {
+                func.type_parameters.push(type_id);
+                return Ok(());
+            }
+
+            if let Some(implementation) = self.implementation_mut(id) {
+                implementation.type_parameters.push(type_id);
+                return Ok(());
+            }
+
+            if let Some(trait_impl) = self.use_mut(id) {
+                trait_impl.type_parameters.push(type_id);
+                return Ok(());
+            }
         }
 
         Ok(())
@@ -1550,12 +1472,12 @@ impl Default for TypeDatabaseContext {
                 TYPEREF_FLOAT32_ID => Type::f32(),
                 TYPEREF_FLOAT64_ID => Type::f64(),
             },
-            fields: Vec::new(),
-            methods: Vec::new(),
+            fields: IndexMap::new(),
+            methods: IndexMap::new(),
             functions: IndexMap::new(),
-            type_parameters: Vec::new(),
-            implementations: Vec::new(),
-            uses: Vec::new(),
+            type_parameters: IndexMap::new(),
+            implementations: IndexMap::new(),
+            uses: IndexMap::new(),
         }
     }
 }

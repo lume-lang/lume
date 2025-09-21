@@ -9,7 +9,7 @@ pub mod reify;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
-use lume_span::{DefId, Internable, Location};
+use lume_span::{Internable, Location, NodeId};
 use lume_tir::{TypedIR, VariableId, VariableSource};
 use lume_typech::TyCheckCtx;
 
@@ -78,11 +78,11 @@ impl<'tcx> Lower<'tcx> {
 
             tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
 
-            let location = self.tcx.hir_span_of_def(method.hir);
-            let kind = self.determine_method_kind(method, self.tcx.hir_body_of_def(method.hir).is_some());
+            let location = self.tcx.hir_span_of_node(method.id);
+            let kind = self.determine_method_kind(method, self.tcx.hir_body_of_node(method.id).is_some());
 
             let mut func_lower = LowerFunction::new(self);
-            let func = func_lower.define(method.hir, &method.name, method.sig(), kind, location)?;
+            let func = func_lower.define(method.id, &method.name, method.sig(), kind, location)?;
 
             self.ir.functions.insert(func.id, func);
         }
@@ -90,11 +90,11 @@ impl<'tcx> Lower<'tcx> {
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "defining function {:+}", func.name);
 
-            let location = self.tcx.hir_span_of_def(lume_span::DefId::Item(func.hir));
+            let location = self.tcx.hir_span_of_node(func.id);
 
             let mut func_lower = LowerFunction::new(self);
             let func = func_lower.define(
-                DefId::Item(func.hir),
+                func.id,
                 &func.name,
                 func.sig(),
                 lume_tir::FunctionKind::Static,
@@ -115,20 +115,20 @@ impl<'tcx> Lower<'tcx> {
 
             tracing::debug!(target: "tir_lower", "lowering method {:+}", method.name);
 
-            self.lower_block(method.hir)?;
+            self.lower_block(method.id)?;
         }
 
         for func in self.tcx.tdb().functions() {
             tracing::debug!(target: "tir_lower", "lowering function {:+}", func.name);
 
-            self.lower_block(DefId::Item(func.hir))?;
+            self.lower_block(func.id)?;
         }
 
         Ok(())
     }
 
-    fn lower_block(&mut self, id: DefId) -> Result<()> {
-        let block = if let Some(body) = self.tcx.hir_body_of_def(id) {
+    fn lower_block(&mut self, id: NodeId) -> Result<()> {
+        let block = if let Some(body) = self.tcx.hir_body_of_node(id) {
             let mut func_lower = LowerFunction::new(self);
 
             Some(func_lower.lower_block(body)?)
@@ -144,7 +144,7 @@ impl<'tcx> Lower<'tcx> {
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
     pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
         // Checks whether the method is an implementation of `std::ops::Dispose::dispose()`.
-        if self.tcx.is_method_dropper(method.hir) {
+        if self.tcx.is_method_dropper(method.id) {
             return lume_tir::FunctionKind::Dropper;
         }
 
@@ -172,7 +172,7 @@ impl<'tcx> Lower<'tcx> {
     /// Determines whether the given method should be lowered into TIR
     /// or if it should stay as a declaration without body.
     pub(crate) fn should_lower_method(&self, method: &lume_types::Method) -> bool {
-        let has_body = self.tcx.hir_body_of_def(method.hir).is_some();
+        let has_body = self.tcx.hir_body_of_node(method.id).is_some();
 
         // Intrinsic methods are only defined so they can be type-checked against.
         // They do not need to exist within the binary.
@@ -188,7 +188,7 @@ impl<'tcx> Lower<'tcx> {
 
         // Certain kinds of functions should never be lowered, such as static trait methods with
         // default implementations.
-        if let Some(declaration) = self.ir.functions.get(&method.hir)
+        if let Some(declaration) = self.ir.functions.get(&method.id)
             && !declaration.kind.should_be_lowered()
         {
             return false;
@@ -209,7 +209,7 @@ struct LowerFunction<'tcx> {
     /// Defines the parent lowering context.
     lower: &'tcx Lower<'tcx>,
 
-    variable_mapping: IndexMap<lume_span::DefId, VariableId>,
+    variable_mapping: IndexMap<lume_span::NodeId, VariableId>,
     variable_source: IndexMap<VariableId, VariableSource>,
 }
 
@@ -224,7 +224,7 @@ impl<'tcx> LowerFunction<'tcx> {
 
     fn define(
         &mut self,
-        id: DefId,
+        id: NodeId,
         name: &lume_hir::Path,
         signature: lume_types::FunctionSig,
         kind: lume_tir::FunctionKind,

@@ -28,7 +28,7 @@ static ARRAY_PUSH_PATH: LazyLock<lume_hir::PathSegment> =
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::ExpressionId> {
+    pub(super) fn expressions(&mut self, expressions: Vec<lume_ast::Expression>) -> Vec<lume_span::NodeId> {
         expressions
             .into_iter()
             .filter_map(|expr| match self.expression(expr) {
@@ -42,7 +42,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn expression(&mut self, statement: lume_ast::Expression) -> Result<lume_span::ExpressionId> {
+    pub(super) fn expression(&mut self, statement: lume_ast::Expression) -> Result<lume_span::NodeId> {
         let expr = match statement {
             lume_ast::Expression::Array(e) => self.expr_array(*e)?,
             lume_ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
@@ -64,7 +64,7 @@ impl LowerModule<'_> {
         };
 
         let id = expr.id;
-        self.map.expressions.insert(id, expr);
+        self.map.nodes.insert(id, lume_hir::Node::Expression(expr));
 
         Ok(id)
     }
@@ -73,7 +73,7 @@ impl LowerModule<'_> {
     pub(super) fn opt_expression(
         &mut self,
         statement: Option<lume_ast::Expression>,
-    ) -> Result<Option<lume_span::ExpressionId>> {
+    ) -> Result<Option<lume_span::NodeId>> {
         match statement {
             Some(expr) => Ok(Some(self.expression(expr)?)),
             None => Ok(None),
@@ -85,13 +85,13 @@ impl LowerModule<'_> {
         let location = self.location(expr.location);
 
         let (var, var_value) = {
-            let val_id = self.next_expr_id();
+            let val_id = self.next_node_id();
             let val = lume_hir::Expression::static_call(val_id, ARRAY_NEW_PATH.clone(), vec![], location);
-            self.map.expressions.insert(val_id, val);
+            self.map.nodes.insert(val_id, lume_hir::Node::Expression(val));
 
-            let var_id = self.next_stmt_id();
+            let var_id = self.next_node_id();
             let var = lume_hir::Statement::define_variable(var_id, ARRAY_INTERNAL_NAME.into(), val_id, location);
-            self.map.statements.insert(var_id, var.clone());
+            self.map.nodes.insert(var_id, lume_hir::Node::Statement(var.clone()));
 
             (var, val_id)
         };
@@ -101,13 +101,13 @@ impl LowerModule<'_> {
         for value in expr.values {
             let value = self.expression(value)?;
 
-            let val_id = self.next_expr_id();
+            let val_id = self.next_node_id();
             let val = lume_hir::Expression::call(val_id, ARRAY_PUSH_PATH.clone(), var_value, vec![value], location);
-            self.map.expressions.insert(val_id, val);
+            self.map.nodes.insert(val_id, lume_hir::Node::Expression(val));
 
-            let push_id = self.next_stmt_id();
+            let push_id = self.next_node_id();
             let push = lume_hir::Statement::expression(push_id, val_id, location);
-            self.map.statements.insert(push_id, push);
+            self.map.nodes.insert(push_id, lume_hir::Node::Statement(push));
 
             body.push(push_id);
         }
@@ -116,17 +116,17 @@ impl LowerModule<'_> {
             unreachable!()
         };
 
-        let var_ref_id = self.next_expr_id();
+        let var_ref_id = self.next_node_id();
         let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
-        self.map.expressions.insert(var_ref_id, var_ref);
+        self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
 
-        let res_id = self.next_stmt_id();
+        let res_id = self.next_node_id();
         let res = lume_hir::Statement::final_ref(res_id, var_ref_id, location);
-        self.map.statements.insert(res_id, res);
+        self.map.nodes.insert(res_id, lume_hir::Node::Statement(res));
 
         body.push(res_id);
 
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
 
         Ok(lume_hir::Expression {
             id,
@@ -137,7 +137,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_assignment(&mut self, expr: lume_ast::Assignment) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let target = self.expression(expr.target)?;
         let value = self.expression(expr.value)?;
@@ -156,7 +156,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_binary(&mut self, expr: lume_ast::Binary) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let lhs = self.expression(expr.lhs)?;
         let rhs = self.expression(expr.rhs)?;
@@ -187,7 +187,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_call(&mut self, expr: lume_ast::Call) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let arguments = self.expressions(expr.arguments);
         let location = self.location(expr.location);
@@ -216,7 +216,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_cast(&mut self, expr: lume_ast::Cast) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let source = self.expression(expr.source)?;
         let target = self.type_ref(expr.target_type)?;
         let location = self.location(expr.location);
@@ -235,7 +235,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_construct(&mut self, expr: lume_ast::Construct) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let path = self.resolve_symbol_name(&expr.path)?;
         let fields = expr
             .fields
@@ -268,7 +268,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_if(&mut self, expr: lume_ast::IfCondition) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
 
         let cases = expr
@@ -305,7 +305,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_intrinsic_call(&mut self, expr: lume_ast::IntrinsicCall) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location);
 
@@ -326,7 +326,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn expr_is(&mut self, expr: lume_ast::Is) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let target = self.expression(expr.target)?;
         let pattern = self.pattern(expr.pattern)?;
         let location = self.location(expr.location);
@@ -356,7 +356,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_logical(&mut self, expr: lume_ast::Logical) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let lhs = self.expression(expr.lhs)?;
         let rhs = self.expression(expr.rhs)?;
@@ -386,7 +386,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_member(&mut self, expr: lume_ast::Member) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let callee = self.expression(expr.callee)?;
 
@@ -418,7 +418,7 @@ impl LowerModule<'_> {
             lume_ast::PathSegment::callable(RANGE_NEW_FUNC),
         );
 
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location);
         let lower = self.expression(expr.lower)?;
         let upper = self.expression(expr.upper)?;
@@ -439,7 +439,7 @@ impl LowerModule<'_> {
     fn expr_scope(&mut self, expr: lume_ast::Scope) -> Result<lume_hir::Expression> {
         self.locals.push_frame();
 
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let body = self.statements(expr.body);
         let location = self.location(expr.location);
 
@@ -454,7 +454,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_switch(&mut self, expr: lume_ast::Switch) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let operand = self.expression(expr.operand)?;
         let cases = expr
             .cases
@@ -495,7 +495,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_variable(&mut self, expr: lume_ast::Variable) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let location = self.location(expr.location().clone());
 
         let Some(var_source) = self.locals.retrieve(&expr.name.name) else {
@@ -516,7 +516,7 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_variant(&mut self, expr: lume_ast::Variant) -> Result<lume_hir::Expression> {
-        let id = self.next_expr_id();
+        let id = self.next_node_id();
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
         let arguments = self.expressions(expr.arguments);

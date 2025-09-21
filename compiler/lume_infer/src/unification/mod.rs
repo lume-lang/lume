@@ -2,23 +2,15 @@ mod diagnostics;
 
 use indexmap::IndexMap;
 use lume_errors::Result;
-use lume_hir::TypeParameterId;
-use lume_span::{DefId, ExpressionId, StatementId};
+use lume_span::*;
 use lume_types::TypeRef;
 
 use crate::{TyInferCtx, query::Callable};
 
-#[expect(dead_code)]
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-enum Entry {
-    Statement(StatementId),
-    Expression(ExpressionId),
-}
-
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct TypeParameterReference {
-    pub(crate) entry: Entry,
-    pub(crate) param: TypeParameterId,
+    pub(crate) entry: NodeId,
+    pub(crate) param: NodeId,
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -46,9 +38,9 @@ impl UnificationPass {
 impl UnificationPass {
     #[tracing::instrument(level = "DEBUG", name = "lume_infer::UnificationPass::unify", skip_all, err)]
     fn unify<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
-        for (_, item) in &tcx.hir.items {
+        for (_, item) in &tcx.hir.nodes {
             match item {
-                lume_hir::Item::Type(ty) => match ty.as_ref() {
+                lume_hir::Node::Type(ty) => match ty {
                     lume_hir::TypeDefinition::Struct(struct_def) => {
                         for field in &struct_def.fields {
                             self.verify_type_name(tcx, &field.field_type.name)?;
@@ -79,7 +71,7 @@ impl UnificationPass {
                         }
                     }
                 },
-                lume_hir::Item::Impl(impl_block) => {
+                lume_hir::Node::Impl(impl_block) => {
                     self.verify_type_name(tcx, &impl_block.target.name)?;
 
                     for method in &impl_block.methods {
@@ -94,7 +86,7 @@ impl UnificationPass {
                         }
                     }
                 }
-                lume_hir::Item::TraitImpl(trait_impl) => {
+                lume_hir::Node::TraitImpl(trait_impl) => {
                     self.verify_type_name(tcx, &trait_impl.name.name)?;
                     self.verify_type_name(tcx, &trait_impl.target.name)?;
 
@@ -110,7 +102,7 @@ impl UnificationPass {
                         }
                     }
                 }
-                lume_hir::Item::Function(func) => {
+                lume_hir::Node::Function(func) => {
                     for param in &func.parameters {
                         self.verify_type_name(tcx, &param.param_type.name)?;
                     }
@@ -121,6 +113,7 @@ impl UnificationPass {
                         self.unify_block(tcx, block)?;
                     }
                 }
+                _ => {}
             }
         }
 
@@ -139,7 +132,7 @@ impl UnificationPass {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
-    fn unify_stmt<'tcx>(&mut self, tcx: &'tcx TyInferCtx, stmt: lume_span::StatementId) -> Result<()> {
+    fn unify_stmt<'tcx>(&mut self, tcx: &'tcx TyInferCtx, stmt: NodeId) -> Result<()> {
         let stmt = tcx.hir_expect_stmt(stmt);
 
         match &stmt.kind {
@@ -177,7 +170,7 @@ impl UnificationPass {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
-    fn unify_expr<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: lume_span::ExpressionId) -> Result<()> {
+    fn unify_expr<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: NodeId) -> Result<()> {
         let expr = tcx.hir_expect_expr(expr);
 
         match &expr.kind {
@@ -265,12 +258,7 @@ impl UnificationPass {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
-    fn unify_pattern<'tcx>(
-        &mut self,
-        tcx: &'tcx TyInferCtx,
-        expr: ExpressionId,
-        pattern: &lume_hir::Pattern,
-    ) -> Result<()> {
+    fn unify_pattern<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: NodeId, pattern: &lume_hir::Pattern) -> Result<()> {
         match &pattern.kind {
             lume_hir::PatternKind::Literal(_) => {}
             lume_hir::PatternKind::Identifier(_) => {}
@@ -328,7 +316,7 @@ impl UnificationPass {
     fn enqueue_path_unification<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
-        expr: ExpressionId,
+        expr: NodeId,
         path: &lume_hir::Path,
     ) -> Result<()> {
         let expected_type_args = path.all_type_arguments().len();
@@ -338,7 +326,7 @@ impl UnificationPass {
                 let Some(matching_type) = tcx.tdb().find_type(path) else {
                     return Err(crate::errors::MissingType {
                         name: path.to_owned(),
-                        source: tcx.hir_span_of_def(DefId::Expression(expr)),
+                        source: tcx.hir_span_of_node(expr),
                     }
                     .into());
                 };
@@ -364,7 +352,7 @@ impl UnificationPass {
                     Callable::Function(func)
                 } else {
                     return Err(diagnostics::CallableNotFound {
-                        source: tcx.hir_span_of_def(DefId::Expression(expr)),
+                        source: tcx.hir_span_of_node(expr),
                         name: path.to_owned(),
                     }
                     .into());
@@ -432,11 +420,11 @@ impl UnificationPass {
         &mut self,
         tcx: &'tcx TyInferCtx,
         idx: usize,
-        expr: ExpressionId,
-        type_param: TypeParameterId,
+        expr: NodeId,
+        type_param: NodeId,
     ) -> Result<()> {
         let Some(expected_type_of_expr) = tcx.expected_type_of(expr)? else {
-            let span = tcx.hir_span_of_def(DefId::Expression(expr));
+            let span = tcx.hir_span_of_node(expr);
             let type_param_name = tcx.tdb().type_parameter(type_param).unwrap().name.to_owned();
 
             tcx.dcx().emit(
@@ -451,7 +439,7 @@ impl UnificationPass {
         };
 
         let Some(expected_type_of_param) = expected_type_of_expr.type_arguments.get(idx) else {
-            let span = tcx.hir_span_of_def(DefId::Expression(expr));
+            let span = tcx.hir_span_of_node(expr);
             let type_param = tcx.tdb().type_parameter(type_param).unwrap();
 
             tcx.dcx().emit(
@@ -466,7 +454,7 @@ impl UnificationPass {
         };
 
         let work_key = TypeParameterReference {
-            entry: Entry::Expression(expr),
+            entry: expr,
             param: type_param,
         };
 
@@ -486,10 +474,10 @@ impl UnificationPass {
         tcx: &'tcx TyInferCtx,
         idx: usize,
         variant: &lume_hir::Variant,
-        type_param: TypeParameterId,
+        type_param: NodeId,
     ) -> Result<bool> {
         let work_key = TypeParameterReference {
-            entry: Entry::Expression(variant.id),
+            entry: variant.id,
             param: type_param,
         };
 
@@ -523,7 +511,7 @@ impl UnificationPass {
         idx: usize,
         expected_type: &TypeRef,
         found_type: &TypeRef,
-        type_param: TypeParameterId,
+        type_param: NodeId,
     ) -> Result<bool> {
         if let Some(arg_type_param) = tcx.as_type_parameter(expected_type)?
             && arg_type_param.id == type_param
@@ -567,11 +555,10 @@ impl UnificationPass {
             let TypeArgumentSubstitute { idx, ty } = type_arg;
 
             let hir_ty = tcx.hir_lift_type(ty)?;
+            let node = tcx.hir.node_mut(*entry).unwrap();
 
-            match *entry {
-                Entry::Expression(expr) => {
-                    let expr = tcx.hir.expression_mut(expr).unwrap();
-
+            match node {
+                lume_hir::Node::Expression(expr) => {
                     let segment = match &mut expr.kind {
                         lume_hir::ExpressionKind::Cast(cast) => &mut cast.target.name.name,
                         lume_hir::ExpressionKind::Construct(construct) => &mut construct.path.name,
@@ -585,7 +572,7 @@ impl UnificationPass {
 
                     segment.place_type_arguments(existing_type_args);
                 }
-                Entry::Statement(_) => todo!(),
+                _ => todo!(),
             }
         }
 
@@ -598,7 +585,7 @@ impl UnificationPass {
 impl UnificationPass {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn verify_fulfilled_paths<'tcx>(&self, tcx: &'tcx TyInferCtx) -> Result<()> {
-        for stmt in tcx.hir.statements.values() {
+        for stmt in tcx.hir.statements() {
             if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
                 && let Some(declared_type) = &decl.declared_type
             {
@@ -606,7 +593,7 @@ impl UnificationPass {
             }
         }
 
-        for expr in tcx.hir.expressions.values() {
+        for expr in tcx.hir.expressions() {
             match &expr.kind {
                 lume_hir::ExpressionKind::Cast(expr) => {
                     self.verify_type_name(tcx, &expr.target.name)?;

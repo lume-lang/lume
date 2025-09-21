@@ -7,7 +7,7 @@ pub(crate) mod ty;
 use std::collections::HashMap;
 
 use lume_mir::{Function, ModuleMap, RegisterId};
-use lume_span::{DefId, Location};
+use lume_span::{Location, NodeId};
 use lume_type_metadata::{TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
 
@@ -66,7 +66,7 @@ pub(crate) struct FunctionTransformer<'mir, 'tcx> {
 
 impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines the MIR function which is being created.
-    pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: DefId, func: &lume_tir::Function) -> Function {
+    pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: NodeId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
             func: Function::new(id, func.name_as_str(), func.location),
@@ -79,7 +79,11 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     }
 
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(transformer: &'mir mut ModuleTransformer<'tcx>, id: DefId, func: &lume_tir::Function) -> Function {
+    pub fn transform(
+        transformer: &'mir mut ModuleTransformer<'tcx>,
+        id: NodeId,
+        func: &lume_tir::Function,
+    ) -> Function {
         let mut transformer = Self {
             transformer,
             func: Function::new(id, func.name_as_str(), func.location),
@@ -162,7 +166,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         self.transformer.tcx
     }
 
-    pub(crate) fn function(&self, func_id: DefId) -> &Function {
+    pub(crate) fn function(&self, func_id: NodeId) -> &Function {
         self.transformer.mir.function(func_id)
     }
 
@@ -197,7 +201,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines a new call instruction in the current function block.
     fn call(
         &mut self,
-        func_id: DefId,
+        func_id: NodeId,
         args: Vec<lume_mir::Operand>,
         ret_ty: lume_mir::Type,
         location: Location,

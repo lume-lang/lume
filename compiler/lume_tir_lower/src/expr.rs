@@ -1,5 +1,5 @@
 use error_snippet::Result;
-use lume_span::{DefId, ExpressionId, Internable};
+use lume_span::{Internable, NodeId};
 use lume_tir::VariableId;
 use lume_types::TypeRef;
 
@@ -7,7 +7,7 @@ use crate::LowerFunction;
 
 impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, err)]
-    pub(crate) fn expression(&mut self, expr: lume_span::ExpressionId) -> Result<lume_tir::Expression> {
+    pub(crate) fn expression(&mut self, expr: lume_span::NodeId) -> Result<lume_tir::Expression> {
         let expr = self.lower.tcx.hir_expect_expr(expr);
 
         let kind = match &expr.kind {
@@ -86,11 +86,7 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn construct_expression(&mut self, expr: &lume_hir::Construct) -> Result<lume_tir::ExpressionKind> {
-        let constructed_type = self
-            .lower
-            .tcx
-            .find_type_ref_from(&expr.path, DefId::Expression(expr.id))?
-            .unwrap();
+        let constructed_type = self.lower.tcx.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
         let mut constructed = expr.fields.clone();
         let fields = self.lower.tcx.tdb().find_fields(constructed_type.instance_of);
@@ -134,11 +130,7 @@ impl LowerFunction<'_> {
             expr.name()
         );
 
-        let function = match callable {
-            lume_typech::query::Callable::Function(call) => DefId::Item(call.hir),
-            lume_typech::query::Callable::Method(call) => call.hir,
-        };
-
+        let function = callable.id();
         let mut arguments = Vec::with_capacity(expr.arguments().len());
 
         if let lume_hir::CallExpression::Instanced(instance_call) = &expr {
@@ -414,9 +406,7 @@ impl LowerFunction<'_> {
         let mut entries = Vec::with_capacity(expr.cases.len());
 
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
-
-        self.variable_mapping
-            .insert(lume_span::DefId::Expression(expr.operand), operand_var);
+        self.variable_mapping.insert(expr.operand, operand_var);
 
         for case in &expr.cases {
             let branch = self.expression(case.branch)?;
@@ -463,9 +453,7 @@ impl LowerFunction<'_> {
         let switch_ret_type = self.lower.tcx.type_of(expr.id)?;
 
         let operand_var = self.mark_variable(lume_tir::VariableSource::Variable);
-
-        self.variable_mapping
-            .insert(lume_span::DefId::Expression(expr.operand), operand_var);
+        self.variable_mapping.insert(expr.operand, operand_var);
 
         for case in &expr.cases {
             let return_type = self.lower.tcx.type_of(case.branch)?;
@@ -495,7 +483,7 @@ impl LowerFunction<'_> {
             let conditional = lume_tir::Conditional {
                 condition: Some(lume_tir::Expression {
                     kind: lume_tir::ExpressionKind::Is(Box::new(lume_tir::Is {
-                        id: ExpressionId::empty(case.branch.def),
+                        id: NodeId::empty(case.branch.package),
                         target: operand.clone(),
                         pattern,
                         location: case.location,
@@ -513,7 +501,7 @@ impl LowerFunction<'_> {
         }
 
         Ok(lume_tir::ExpressionKind::If(lume_tir::If {
-            id: ExpressionId::empty(expr.id.def),
+            id: NodeId::empty(expr.id.package),
             cases,
             return_type: Some(switch_ret_type),
             location: expr.location,
@@ -524,12 +512,8 @@ impl LowerFunction<'_> {
     fn variable_expression(&self, expr: &lume_hir::Variable) -> lume_tir::ExpressionKind {
         let reference = match &expr.reference {
             lume_hir::VariableSource::Parameter(param) => VariableId(param.index),
-            lume_hir::VariableSource::Variable(var) => {
-                *self.variable_mapping.get(&lume_span::DefId::Statement(var.id)).unwrap()
-            }
-            lume_hir::VariableSource::Pattern(pat) => {
-                *self.variable_mapping.get(&lume_span::DefId::Pattern(pat.id)).unwrap()
-            }
+            lume_hir::VariableSource::Variable(var) => *self.variable_mapping.get(&var.id).unwrap(),
+            lume_hir::VariableSource::Pattern(pat) => *self.variable_mapping.get(&pat.id).unwrap(),
         };
 
         let source = match expr.reference {
@@ -550,15 +534,10 @@ impl LowerFunction<'_> {
 
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn variant_expression(&mut self, expr: &lume_hir::Variant) -> Result<lume_tir::ExpressionKind> {
-        let name = self.path_hir(&expr.name, DefId::Expression(expr.id))?;
+        let name = self.path_hir(&expr.name, expr.id)?;
         let enum_type = expr.name.clone().parent().unwrap();
 
-        let ty = self
-            .lower
-            .tcx
-            .find_type_ref_from(&enum_type, DefId::Expression(expr.id))?
-            .unwrap();
-
+        let ty = self.lower.tcx.find_type_ref_from(&enum_type, expr.id)?.unwrap();
         let index = self.lower.tcx.enum_case_with_name(&expr.name)?.idx;
 
         let arguments = expr

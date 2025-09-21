@@ -3,7 +3,7 @@ use lume_tir::TypeParameter;
 use crate::LowerFunction;
 
 impl LowerFunction<'_> {
-    pub(crate) fn type_parameters(&mut self, type_params: &[lume_hir::TypeParameterId]) -> lume_tir::TypeParameters {
+    pub(crate) fn type_parameters(&mut self, type_params: &[lume_span::NodeId]) -> lume_tir::TypeParameters {
         let type_params = type_params
             .iter()
             .map(|id| {

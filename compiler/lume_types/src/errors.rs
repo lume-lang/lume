@@ -1,43 +1,13 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::{FieldId, FunctionId, ImplId, MethodId, Path, TypeId, UseId};
-use lume_span::Location;
+use lume_hir::{Node, Path};
+use lume_span::{Location, NodeId};
 
-use crate::{Item, TypeKindRef};
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find function {id:?} in context")]
-pub struct FunctionNotFound {
-    pub id: FunctionId,
-}
+use crate::TypeKindRef;
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find field {id:?} in context")]
-pub struct FieldNotFound {
-    pub id: FieldId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find method {id:?} in context")]
-pub struct MethodNotFound {
-    pub id: MethodId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find implementation {id:?} in context")]
-pub struct ImplNotFound {
-    pub id: ImplId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find trait implementation {id:?} in context")]
-pub struct UseNotFound {
-    pub id: UseId,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "could not find item {id:?} in context")]
-pub struct TypeNotFound {
-    pub id: TypeId,
+#[diagnostic(message = "could not find node {id:?} in context")]
+pub struct NodeNotFound {
+    pub id: NodeId,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -58,13 +28,13 @@ pub struct PathWithoutParent {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "attempted to get return type of non-invokable type: {item:?}")]
 pub struct ReturnTypeOnNoninvokableItem {
-    pub item: Item,
+    pub item: Node,
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "attempted to get type parameters on non-generic item: {item:?}")]
+#[diagnostic(message = "attempted to get type parameters on non-generic item: {id:?}")]
 pub struct TypeParametersOnNonGenericItem {
-    pub item: Item,
+    pub id: NodeId,
 }
 
 #[derive(Diagnostic, Debug)]
