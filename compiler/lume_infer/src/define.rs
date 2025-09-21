@@ -550,7 +550,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn define_type_constraints(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -569,6 +569,7 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn define_type_type_constraints(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
@@ -601,6 +602,7 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn define_impl_type_constraints(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.id;
         let type_params = self.tdb().type_params_of(impl_id)?.to_owned();
@@ -617,6 +619,7 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn define_trait_impl_type_constraints(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.id;
         let type_params = self.tdb().type_params_of(use_id)?.to_owned();
@@ -633,6 +636,7 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn define_func_type_constraints(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.id;
         let type_params = self.tdb().function(func_id).unwrap().type_parameters.clone();
@@ -642,6 +646,7 @@ impl TyInferCtx {
         Ok(())
     }
 
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn lower_type_constraints(&mut self, hir: &[lume_hir::TypeParameter], ids: &[NodeId]) -> Result<()> {
         for (param_id, hir_param) in ids.iter().zip(hir.iter()) {
             for type_constraint in &hir_param.constraints {

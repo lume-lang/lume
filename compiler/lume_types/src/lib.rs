@@ -1251,7 +1251,20 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
     pub fn type_alloc(&mut self, id: NodeId, name: Path, kind: TypeKind) -> NodeId {
-        self.types.insert(id, Type { id, kind, name });
+        let existing = self.types.insert(
+            id,
+            Type {
+                id,
+                kind,
+                name: name.clone(),
+            },
+        );
+
+        assert!(
+            existing.is_none(),
+            "overwrote type {id} ({:+} => {name:+})",
+            existing.unwrap().name
+        );
 
         id
     }
@@ -1259,7 +1272,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Implementation`] with the target.
     #[inline]
     pub fn impl_alloc(&mut self, id: NodeId, target: Path) -> NodeId {
-        self.implementations.insert(
+        let existing = self.implementations.insert(
             id,
             Implementation {
                 id,
@@ -1267,6 +1280,8 @@ impl TypeDatabaseContext {
                 type_parameters: Vec::new(),
             },
         );
+
+        assert!(existing.is_none());
 
         id
     }
@@ -1353,7 +1368,7 @@ impl TypeDatabaseContext {
     /// Allocates a new [`TypeParameter`] with the given name and kind.
     #[inline]
     pub fn type_param_alloc(&mut self, id: NodeId, name: String, loc: Location) -> NodeId {
-        self.type_parameters.insert(
+        let existing = self.type_parameters.insert(
             id,
             TypeParameter {
                 id,
@@ -1362,6 +1377,8 @@ impl TypeDatabaseContext {
                 location: loc,
             },
         );
+
+        assert!(existing.is_none());
 
         id
     }
@@ -1372,6 +1389,7 @@ impl TypeDatabaseContext {
     ///
     /// Returns `Err` if no type with the given ID was found in the context,
     /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
+    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn type_params_of(&self, id: NodeId) -> Result<&[NodeId]> {
         if let Some(ty) = self.type_(id) {
             return Ok(ty.kind.type_parameters());
