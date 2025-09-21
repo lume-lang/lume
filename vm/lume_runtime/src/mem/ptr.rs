@@ -1,4 +1,4 @@
-use lume_metadata::TypeMetadata;
+use lume_rt_metadata::TypeMetadata;
 
 unsafe extern "C" {
     pub fn memcpy(dest: *mut u8, src: *const u8, n: usize) -> *mut u8;

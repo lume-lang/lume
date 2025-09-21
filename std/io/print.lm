@@ -1,5 +1,9 @@
 namespace std::io
 
+import std (String, Boolean)
+import std (Int8, Int16, Int32, Int64, UInt8, UInt16, UInt32, UInt64)
+import std (Float, Double)
+
 pub trait ToString {
     pub fn to_string(self) -> String;
 }
