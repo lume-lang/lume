@@ -85,6 +85,19 @@ impl Node {
             Self::Expression(n) => NodeRef::Expression(n),
         }
     }
+
+    pub fn is_item(&self) -> bool {
+        match self {
+            Self::Function(_) | Self::Type(_) | Self::TraitImpl(_) | Self::Impl(_) => true,
+            Self::Field(_)
+            | Self::Method(_)
+            | Self::TraitMethodDef(_)
+            | Self::TraitMethodImpl(_)
+            | Self::Pattern(_)
+            | Self::Statement(_)
+            | Self::Expression(_) => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

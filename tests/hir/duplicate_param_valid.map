@@ -21,9 +21,9 @@ Map {
                         location: duplicate_param_valid.lm:7:8,
                     },
                     param_type: Type {
-                        id: ItemId {
+                        id: NodeId {
                             package: PackageId(
-                                0,
+                                1881,
                             ),
                             index: Idx(
                                 6143724420395906933,
@@ -59,9 +59,9 @@ Map {
                         location: duplicate_param_valid.lm:17:18,
                     },
                     param_type: Type {
-                        id: ItemId {
+                        id: NodeId {
                             package: PackageId(
-                                0,
+                                1881,
                             ),
                             index: Idx(
                                 6143724420395906933,

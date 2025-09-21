@@ -23,9 +23,9 @@ Map {
                         location: struct_pub_field.lm:21:22,
                     },
                     field_type: Type {
-                        id: ItemId {
+                        id: NodeId {
                             package: PackageId(
-                                0,
+                                1881,
                             ),
                             index: Idx(
                                 6143724420395906933,

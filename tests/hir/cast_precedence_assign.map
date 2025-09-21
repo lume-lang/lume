@@ -45,9 +45,9 @@ Map {
                                 location: cast_precedence_assign.lm:20:21,
                             },
                             target: Type {
-                                id: ItemId {
+                                id: NodeId {
                                     package: PackageId(
-                                        0,
+                                        1881,
                                     ),
                                     index: Idx(
                                         13902787388289951280,

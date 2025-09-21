@@ -23,9 +23,9 @@ Map {
                         location: doc_comments_field.lm:51:54,
                     },
                     field_type: Type {
-                        id: ItemId {
+                        id: NodeId {
                             package: PackageId(
-                                0,
+                                1881,
                             ),
                             index: Idx(
                                 6143724420395906933,

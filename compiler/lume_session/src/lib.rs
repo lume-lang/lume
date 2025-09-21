@@ -356,7 +356,7 @@ impl Package {
 impl Default for Package {
     fn default() -> Self {
         Self {
-            id: PackageId::empty(),
+            id: PackageId::from_usize(1881),
             path: PathBuf::new(),
             name: String::new(),
             lume_version: VersionReq::default(),

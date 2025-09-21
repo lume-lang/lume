@@ -20,7 +20,7 @@ pub fn stub_package() -> Package {
 /// The package is passed to the given callback, which can be used to add source
 /// files, set dependencies, etc.
 pub fn stub_package_with<F: FnOnce(&mut Package)>(f: F) -> Package {
-    let mut pkg = Package::default();
+    let mut pkg = stub_package();
     f(&mut pkg);
 
     pkg
