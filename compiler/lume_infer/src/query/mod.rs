@@ -514,6 +514,12 @@ impl TyInferCtx {
         Result::Ok(&self.enum_def_type(ty)?.cases)
     }
 
+    /// Returns the enum case definitions, which is being referred to by the given expression.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn enum_cases_expr(&self, id: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
+        self.enum_cases_of(self.type_of(id)?.instance_of)
+    }
+
     /// Returns the enum case definitions on the enum type with the given name.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_cases_of_name(&self, name: &Path) -> Result<&[lume_hir::EnumDefinitionCase]> {

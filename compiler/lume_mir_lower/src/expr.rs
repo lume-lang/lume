@@ -843,7 +843,7 @@ impl FunctionTransformer<'_, '_> {
 
         let mut union_cases = Vec::new();
 
-        for variant in self.tcx().enum_cases_of(expr.id).unwrap() {
+        for variant in self.tcx().enum_cases_expr(expr.id).unwrap() {
             let mut items = Vec::new();
 
             let params = &variant.parameters;
