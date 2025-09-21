@@ -699,9 +699,8 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         let parent_id = self.hir_parent_of(id).expect("bug!: expression exists without parent");
-        let node = self.hir.node(id).unwrap();
 
-        match node {
+        match self.hir_expect_node(parent_id) {
             lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Assignment(_) => self.try_expected_type_of(parent_id),
                 lume_hir::ExpressionKind::Binary(_) => Ok(None),

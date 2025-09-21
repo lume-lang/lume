@@ -39,8 +39,11 @@ impl TyInferCtx {
 
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    pub fn hir_expect_node(&self, id: NodeId) -> Result<&Node> {
-        self.hir.expect_node(id)
+    pub fn hir_expect_node(&self, id: NodeId) -> &Node {
+        match self.hir_node(id) {
+            Some(item) => item,
+            None => panic!("expected HIR node with ID of {id:?}"),
+        }
     }
 
     /// Returns the [`lume_hir::NodeRef`] with the given ID, if any.
@@ -125,7 +128,7 @@ impl TyInferCtx {
     #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_pattern(&self, id: NodeId) -> &lume_hir::Pattern {
-        match self.hir_expect_node(id).unwrap() {
+        match self.hir_expect_node(id) {
             lume_hir::Node::Pattern(pat) => pat,
             _ => panic!("expected HIR pattern with ID of {id:?}"),
         }
@@ -177,7 +180,7 @@ impl TyInferCtx {
     #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_expect_type(&self, id: NodeId) -> &lume_hir::TypeDefinition {
-        let lume_hir::Node::Type(ty) = self.hir_expect_node(id).unwrap() else {
+        let lume_hir::Node::Type(ty) = self.hir_expect_node(id) else {
             panic!("expected HIR type with ID of {id:?}")
         };
 
@@ -360,7 +363,7 @@ impl TyInferCtx {
             return self.mk_type_ref_generic(return_type, &type_params);
         }
 
-        let location = self.hir_expect_node(def)?.location();
+        let location = self.hir_expect_node(def).location();
 
         Err(diagnostics::NoReturningAncestor { source: location }.into())
     }
@@ -431,6 +434,6 @@ impl TyInferCtx {
     /// Returns the span of the HIR definition with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_span_of_node(&self, def: NodeId) -> Location {
-        self.hir_expect_node(def).unwrap().location()
+        self.hir_expect_node(def).location()
     }
 }
