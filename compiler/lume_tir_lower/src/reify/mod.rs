@@ -146,6 +146,7 @@ impl<'tcx> ReificationPass<'tcx> {
 
     fn add_metadata_argument_concrete(&mut self, type_arg: &TypeRef) -> Result<lume_tir::Expression> {
         let id = self.build_type_metadata_of(type_arg)?;
+        let ty = self.tcx.std_ref_pointer(self.tcx.std_type());
 
         Ok(lume_tir::Expression {
             kind: ExpressionKind::IntrinsicCall(Box::new(lume_tir::IntrinsicCall {
@@ -154,7 +155,7 @@ impl<'tcx> ReificationPass<'tcx> {
                 arguments: Vec::new(),
                 location: type_arg.location,
             })),
-            ty: TypeRef::pointer(self.tcx.std_type()),
+            ty,
         })
     }
 }

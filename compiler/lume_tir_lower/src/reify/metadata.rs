@@ -124,7 +124,7 @@ impl ReificationPass<'_> {
             }
             lume_types::TypeKind::User(lume_types::UserType::Struct(_)) => {
                 // Arrays are aligned to their elemental type alignment
-                if type_ref.instance_of == lume_types::TYPEREF_ARRAY_ID {
+                if self.tcx.is_std_array(type_ref) {
                     let Some(elemental_type) = type_ref.type_arguments.first() else {
                         return Ok(PTR_SIZE);
                     };

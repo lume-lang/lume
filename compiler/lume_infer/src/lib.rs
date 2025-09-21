@@ -508,6 +508,63 @@ impl TyInferCtx {
 
         self.find_type_ref(&name).unwrap().unwrap()
     }
+
+    /// Creates a new [`TypeRef`] which refers to the type of the given name.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is not found within the database.
+    pub fn std_type_ref(&self, name: &str) -> TypeRef {
+        let name = lume_hir::Path::from_parts(
+            Some([lume_hir::PathSegment::namespace("std")]),
+            lume_hir::PathSegment::ty(name),
+        );
+
+        self.find_type_ref(&name).unwrap().unwrap()
+    }
+
+    /// Creates a new [`TypeRef`] which refers to the `std::String`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is not found within the database.
+    pub fn std_ref_string(&self) -> TypeRef {
+        self.std_type_ref("String")
+    }
+
+    /// Creates a new [`TypeRef`] which refers to the `std::Array`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is not found within the database.
+    pub fn std_ref_array(&self, elemental: TypeRef) -> TypeRef {
+        let mut ty = self.std_type_ref("Array");
+        ty.type_arguments.push(elemental);
+
+        ty
+    }
+
+    /// Creates a new [`TypeRef`] which refers to the `std::Pointer`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the type is not found within the database.
+    pub fn std_ref_pointer(&self, elemental: TypeRef) -> TypeRef {
+        let mut ty = self.std_type_ref("Pointer");
+        ty.type_arguments.push(elemental);
+
+        ty
+    }
+
+    /// Determines whether the given type is of type `std::Array`.
+    pub fn is_std_array(&self, ty: &TypeRef) -> bool {
+        ty.instance_of == self.std_type_ref("Array").instance_of
+    }
+
+    /// Determines whether the given type is of type `std::Pointer`.
+    pub fn is_std_pointer(&self, ty: &TypeRef) -> bool {
+        ty.instance_of == self.std_type_ref("Pointer").instance_of
+    }
 }
 
 impl Deref for TyInferCtx {

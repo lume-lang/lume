@@ -1374,14 +1374,9 @@ impl std::fmt::Display for BlockBranchSite {
     }
 }
 
-pub type TypeId = lume_types::TypeId;
-
-pub type TypeRef = lume_types::TypeRef;
-
 /// Defines a type within the MIR.
 #[derive(Serialize, Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Type {
-    pub id: TypeRef,
     pub kind: TypeKind,
     pub is_generic: bool,
 }
@@ -1389,7 +1384,6 @@ pub struct Type {
 impl Type {
     pub fn void() -> Self {
         Self {
-            id: TypeRef::void(),
             kind: TypeKind::Void,
             is_generic: false,
         }
@@ -1397,7 +1391,6 @@ impl Type {
 
     pub fn boolean() -> Self {
         Self {
-            id: TypeRef::bool(),
             kind: TypeKind::Boolean,
             is_generic: false,
         }
@@ -1405,7 +1398,6 @@ impl Type {
 
     pub fn string() -> Self {
         Self {
-            id: TypeRef::string(),
             kind: TypeKind::String,
             is_generic: false,
         }
@@ -1413,7 +1405,6 @@ impl Type {
 
     pub fn pointer(elemental: Type) -> Self {
         Self {
-            id: TypeRef::pointer(elemental.id.clone()),
             kind: TypeKind::Pointer {
                 elemental: Box::new(elemental),
             },
@@ -1423,7 +1414,6 @@ impl Type {
 
     pub fn type_param() -> Self {
         Self {
-            id: TypeRef::pointer(TypeRef::void()),
             kind: TypeKind::Pointer {
                 elemental: Box::new(Type::void()),
             },
@@ -1447,7 +1437,6 @@ impl Type {
 
     pub fn i8() -> Self {
         Self {
-            id: TypeRef::i8(),
             kind: TypeKind::Integer { bits: 8, signed: true },
             is_generic: false,
         }
@@ -1455,7 +1444,6 @@ impl Type {
 
     pub fn u8() -> Self {
         Self {
-            id: TypeRef::u8(),
             kind: TypeKind::Integer { bits: 8, signed: false },
             is_generic: false,
         }
@@ -1463,7 +1451,6 @@ impl Type {
 
     pub fn i16() -> Self {
         Self {
-            id: TypeRef::i16(),
             kind: TypeKind::Integer { bits: 16, signed: true },
             is_generic: false,
         }
@@ -1471,7 +1458,6 @@ impl Type {
 
     pub fn u16() -> Self {
         Self {
-            id: TypeRef::u16(),
             kind: TypeKind::Integer {
                 bits: 16,
                 signed: false,
@@ -1482,7 +1468,6 @@ impl Type {
 
     pub fn i32() -> Self {
         Self {
-            id: TypeRef::i32(),
             kind: TypeKind::Integer { bits: 32, signed: true },
             is_generic: false,
         }
@@ -1490,7 +1475,6 @@ impl Type {
 
     pub fn u32() -> Self {
         Self {
-            id: TypeRef::u32(),
             kind: TypeKind::Integer {
                 bits: 32,
                 signed: false,
@@ -1501,7 +1485,6 @@ impl Type {
 
     pub fn i64() -> Self {
         Self {
-            id: TypeRef::i64(),
             kind: TypeKind::Integer { bits: 64, signed: true },
             is_generic: false,
         }
@@ -1509,7 +1492,6 @@ impl Type {
 
     pub fn u64() -> Self {
         Self {
-            id: TypeRef::u64(),
             kind: TypeKind::Integer {
                 bits: 64,
                 signed: false,
@@ -1528,7 +1510,6 @@ impl Type {
 
     pub fn f32() -> Self {
         Self {
-            id: TypeRef::f32(),
             kind: TypeKind::Float { bits: 32 },
             is_generic: false,
         }
@@ -1536,31 +1517,27 @@ impl Type {
 
     pub fn f64() -> Self {
         Self {
-            id: TypeRef::f64(),
             kind: TypeKind::Float { bits: 64 },
             is_generic: false,
         }
     }
 
-    pub fn structure(id: TypeRef, name: String, fields: Vec<Type>) -> Self {
+    pub fn structure(name: String, fields: Vec<Type>) -> Self {
         Self {
-            id,
             kind: TypeKind::Struct { name, fields },
             is_generic: false,
         }
     }
 
-    pub fn union(id: TypeRef, cases: Vec<Type>) -> Self {
+    pub fn union(cases: Vec<Type>) -> Self {
         Self {
-            id,
             kind: TypeKind::Union { cases },
             is_generic: false,
         }
     }
 
-    pub fn tuple(id: TypeRef, items: Vec<Type>) -> Self {
+    pub fn tuple(items: Vec<Type>) -> Self {
         Self {
-            id,
             kind: TypeKind::Tuple { items },
             is_generic: false,
         }
