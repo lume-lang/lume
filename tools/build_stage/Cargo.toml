@@ -25,8 +25,5 @@ lume_tir_lower = { path = "../../compiler/lume_tir_lower" }
 lume_typech = { path = "../../compiler/lume_typech" }
 lume_types = { path = "../../compiler/lume_types" }
 
-[features]
-fuzzing = ["lume_jit/fuzzing"]
-
 [lints]
 workspace = true
