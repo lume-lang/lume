@@ -115,11 +115,9 @@ impl TyInferCtx {
                 };
 
                 let type_parameters = self.hir_avail_type_params(e.id);
+                let type_parameters_id: Vec<NodeId> = type_parameters.iter().map(|p| p.id).collect();
+
                 let type_args = self.mk_type_refs_from(e.path.type_arguments(), e.id)?;
-
-                let type_parameters_id: Vec<lume_span::NodeId> =
-                    type_parameters.iter().map(|p| p.type_param_id.unwrap()).collect();
-
                 let instantiated = self.instantiate_type_from(&ty_opt, &type_parameters_id, &type_args);
 
                 instantiated.clone()

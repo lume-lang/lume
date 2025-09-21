@@ -236,7 +236,7 @@ impl<'tcx> LowerFunction<'tcx> {
             .tcx
             .hir_avail_type_params(id)
             .iter()
-            .map(|param| param.type_param_id.unwrap())
+            .map(|param| param.id)
             .collect::<Vec<_>>();
 
         let parameters = self.parameters(signature.params);

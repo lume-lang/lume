@@ -9,11 +9,13 @@ use lume_hir::{self as hir};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(crate) fn type_parameters(&self, params: Vec<ast::TypeParameter>) -> Result<hir::TypeParameters> {
+    pub(crate) fn type_parameters(&mut self, params: Vec<ast::TypeParameter>) -> Result<hir::TypeParameters> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
         let mut type_params = Vec::with_capacity(params.len());
 
         for param in params {
+            let id = self.next_node_id();
+
             let location = self.location(param.name.location.clone());
             let name = self.identifier(param.name);
 
@@ -35,8 +37,8 @@ impl LowerModule<'_> {
             }
 
             type_params.push(hir::TypeParameter {
+                id,
                 type_id: None,
-                type_param_id: None,
                 name,
                 constraints,
                 location,
