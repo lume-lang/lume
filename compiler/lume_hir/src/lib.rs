@@ -1130,12 +1130,12 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with the given [`LiteralKind`] value.
-    pub fn lit(kind: LiteralKind) -> Self {
+    pub fn lit(id: NodeId, kind: LiteralKind) -> Self {
         Self {
-            id: NodeId::default(),
+            id,
             location: Location::empty(),
             kind: ExpressionKind::Literal(Literal {
-                id: NodeId::default(),
+                id,
                 location: Location::empty(),
                 kind,
             }),
@@ -1143,19 +1143,25 @@ impl Expression {
     }
 
     /// Creates a new [`Expression`] with a [`LiteralKind::Boolean`] value.
-    pub fn lit_bool(value: bool) -> Self {
-        Self::lit(LiteralKind::Boolean(Box::new(BooleanLiteral {
-            id: NodeId::default(),
-            value,
-        })))
+    pub fn lit_bool(id: NodeId, value: bool) -> Self {
+        Self::lit(
+            id,
+            LiteralKind::Boolean(Box::new(BooleanLiteral {
+                id: NodeId::default(),
+                value,
+            })),
+        )
     }
 
     /// Creates a new [`Expression`] with a [`LiteralKind::String`] value.
-    pub fn lit_string(value: impl Into<String>) -> Self {
-        Self::lit(LiteralKind::String(Box::new(StringLiteral {
-            id: NodeId::default(),
-            value: value.into(),
-        })))
+    pub fn lit_string(id: NodeId, value: impl Into<String>) -> Self {
+        Self::lit(
+            id,
+            LiteralKind::String(Box::new(StringLiteral {
+                id: NodeId::default(),
+                value: value.into(),
+            })),
+        )
     }
 
     /// Creates a new [`Expression`] with a [`LiteralKind::U64`] value.
@@ -1163,12 +1169,15 @@ impl Expression {
     /// # Errors
     ///
     /// Returns `Err` if `value` is too large to fit in a signed [`i64`] value.
-    pub fn lit_u64(value: u64) -> error_snippet::Result<Self> {
-        Ok(Self::lit(LiteralKind::Int(Box::new(IntLiteral {
-            id: NodeId::default(),
-            value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
-            kind: IntKind::U64,
-        }))))
+    pub fn lit_u64(id: NodeId, value: u64) -> error_snippet::Result<Self> {
+        Ok(Self::lit(
+            id,
+            LiteralKind::Int(Box::new(IntLiteral {
+                id,
+                value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
+                kind: IntKind::U64,
+            })),
+        ))
     }
 
     /// Creates a new [`Expression`] with a [`InstanceCall`] value.
@@ -1222,12 +1231,15 @@ macro_rules! expr_lit_int {
         $ty:ty
     ) => {
         impl Expression {
-            pub fn $func(value: $ty) -> Self {
-                Self::lit(LiteralKind::Int(Box::new(IntLiteral {
-                    id: NodeId::default(),
-                    value: value.into(),
-                    kind: IntKind::$kind,
-                })))
+            pub fn $func(id: NodeId, value: $ty) -> Self {
+                Self::lit(
+                    id,
+                    LiteralKind::Int(Box::new(IntLiteral {
+                        id,
+                        value: value.into(),
+                        kind: IntKind::$kind,
+                    })),
+                )
             }
         }
     };
