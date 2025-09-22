@@ -81,7 +81,7 @@ pub struct ManifestPackage {
     pub no_std: bool,
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 pub struct ManifestDependency {
     /// Defines where the dependency can be found.
     #[serde(flatten)]
@@ -91,7 +91,7 @@ pub struct ManifestDependency {
     /// by the referencing package.
     #[serde(rename = "version")]
     #[serde(default)]
-    pub required_version: Option<VersionReq>,
+    pub required_version: VersionReq,
 }
 
 impl Display for ManifestDependency {
@@ -100,7 +100,7 @@ impl Display for ManifestDependency {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Hash, Debug, Clone, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ManifestDependencySource {
     /// Defines a local dependency which exists on the file system.

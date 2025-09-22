@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use lume_errors::Result;
 use lume_span::PackageId;
-use semver::{Version, VersionReq};
+use semver::Version;
 
 use crate::Package;
 
@@ -69,72 +69,4 @@ impl<'a> Iterator for DependencyIter<'a> {
 
         Some(pkg)
     }
-}
-
-#[derive(Default, Clone)]
-pub struct DependencyTree {
-    /// Defines the root package of the tree.
-    ///
-    /// The root package is guaranteed to not be a dependant of a
-    /// single other package within the dependency tree.
-    pub root: Option<PackageId>,
-
-    /// Defines a list of all packages within the tree.
-    ///
-    /// This map is only meant to be used for lookup. It is not used
-    /// in the solving algorithm.
-    pub packages: HashMap<PackageId, Package>,
-
-    /// Defines all the nodes within the tree.
-    ///
-    /// Each node is a package, with a set of dependencies. Each dependency
-    /// has some version constraint, limiting what packages can be used.
-    pub nodes: HashMap<PackageId, DependencyTreeNode>,
-}
-
-impl DependencyTree {
-    /// Add a new node into the tree.
-    ///
-    /// Each node is an entry of a [`Package`] and it's corresponding dependencies,
-    /// before their versions have been resolved.
-    pub fn add_node(&mut self, mut pkg: Package, dependencies: Vec<(PackageId, VersionReq)>) {
-        let package_id = pkg.id;
-
-        if self.root.is_none() {
-            self.root = Some(package_id);
-        }
-
-        // Ensure the set also exists on the package itself.
-        pkg.dependencies.graph = dependencies.clone();
-
-        let node = DependencyTreeNode {
-            package_id,
-            version: pkg.version.clone(),
-            dependencies,
-        };
-
-        self.nodes.insert(package_id, node);
-        self.packages.insert(package_id, pkg);
-    }
-
-    /// Attempts to resolve all versions within the tree.
-    pub fn solve(self) -> Result<DependencyMap> {
-        let root = self.root.unwrap();
-
-        let packages = self.packages;
-        let resolved = self.nodes.into_iter().map(|(id, node)| (id, node.version)).collect();
-
-        Ok(DependencyMap {
-            root,
-            packages,
-            resolved,
-        })
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DependencyTreeNode {
-    pub package_id: PackageId,
-    pub version: Version,
-    pub dependencies: Vec<(PackageId, VersionReq)>,
 }
