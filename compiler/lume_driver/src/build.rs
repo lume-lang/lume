@@ -1,0 +1,120 @@
+use crate::*;
+
+impl Driver {
+    /// Locates the [`Package`] from the given path and builds it into an executable.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - the given path has no `Arcfile` within it,
+    /// - an error occured while compiling the package,
+    /// - an error occured while writing the output executable
+    /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
+        let driver = Self::from_root(root, dcx.clone())?;
+
+        driver.build(opts)
+    }
+
+    /// Builds the given compiler state into an executable.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - an error occured while compiling the package,
+    /// - an error occured while writing the output executable
+    /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
+    pub fn build(mut self, options: Options) -> Result<CompiledExecutable> {
+        let session = Session {
+            dep_graph: std::mem::take(&mut self.package.dependencies.graph),
+            workspace_root: self.package.path.clone(),
+            options,
+        };
+
+        let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
+        let mut dependencies = gcx.session.dep_graph.all();
+
+        // Build all the dependencies of the package in reverse, so all the
+        // dependencies without any sub-dependencies can be built first.
+        dependencies.reverse();
+
+        let mut merged_map = lume_mir::ModuleMap::default();
+
+        for dependency in dependencies {
+            let compiled = Compiler::build_package(dependency, gcx.clone())?;
+            let metadata = compiled_pkg_metadata(&compiled);
+
+            write_metadata_object(&gcx, &metadata)?;
+
+            compiled.mir.merge_into(&mut merged_map)
+        }
+
+        let output_file_path = gcx.binary_output_path(&self.package.name);
+        lume_fuse::fuse_binary_file(&gcx, merged_map, &output_file_path)?;
+
+        Ok(CompiledExecutable {
+            binary: output_file_path,
+        })
+    }
+}
+
+/// Writes the serialized representation of `metadata` to disk within the metadata
+/// directory defined by `gcx` (via [`GlobalCtx::obj_metadata_path()`]).
+fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Result<()> {
+    // Ensure the parent directory exists first.
+    let metadata_directory = gcx.obj_metadata_path();
+    std::fs::create_dir_all(&metadata_directory).map_diagnostic()?;
+
+    let metadata_filename = lume_metadata::metadata_filename_of(&metadata.header);
+    let metadata_path = metadata_directory.join(metadata_filename);
+
+    let serialized = postcard::to_allocvec(metadata).map_diagnostic()?;
+    std::fs::write(metadata_path, serialized).map_diagnostic()?;
+
+    Ok(())
+}
+
+pub struct CompiledPackage<'a> {
+    /// Defines the specific [`Package`] instance which was compiled.
+    package: &'a Package,
+
+    /// Defines the type-checking context which was used under
+    /// compilation of the package.
+    tcx: TyCheckCtx,
+
+    /// Defines the compiled MIR of the package.
+    mir: lume_mir::ModuleMap,
+}
+
+fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
+    PackageMetadata::create(pkg.package, pkg.tcx.hir())
+}
+
+impl<'a> Compiler<'a> {
+    /// Builds the [`Package`] with the given ID from the [`Project`] into an MIR map.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - an error occured while compiling the project,
+    /// - or some unexpected error occured which hasn't been handled gracefully.
+    #[tracing::instrument(skip_all, fields(package = %package.name), err)]
+    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<CompiledPackage<'a>> {
+        let mut compiler = Self {
+            package,
+            gcx,
+            source_map: SourceMap::default(),
+        };
+
+        let sources = compiler.parse()?;
+        tracing::debug!(target: "driver", "finished parsing");
+
+        let (tcx, typed_ir) = compiler.type_check(sources)?;
+
+        let mir = compiler.codegen(&tcx, typed_ir)?;
+
+        Ok(CompiledPackage { package, tcx, mir })
+    }
+}
