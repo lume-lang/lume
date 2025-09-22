@@ -2,11 +2,8 @@ pub mod dep_graph;
 mod errors;
 pub mod stdlib;
 
-use std::{
-    fmt::Display,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
@@ -17,56 +14,6 @@ use semver::{Version, VersionReq};
 
 pub use crate::dep_graph::DependencyGraph;
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
-pub enum Backend {
-    Llvm,
-    #[default]
-    Cranelift,
-}
-
-impl Display for Backend {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Llvm => write!(f, "llvm"),
-            Self::Cranelift => write!(f, "cranelift"),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
-pub enum LinkerPreference {
-    Clang,
-    Gcc,
-}
-
-impl Display for LinkerPreference {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Clang => write!(f, "clang"),
-            Self::Gcc => write!(f, "gcc"),
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
-pub enum DebugInfo {
-    #[default]
-    None,
-    Full,
-}
-
-impl Display for DebugInfo {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::None => write!(f, "none"),
-            Self::Full => write!(f, "full"),
-        }
-    }
-}
-
 #[derive(Default)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
@@ -76,20 +23,8 @@ pub struct Options {
     /// Defines whether the generated MIR should be printed to `stdio`.
     pub print_mir: MirPrinting,
 
-    /// Defines whether the generated codegen IR should be printed to `stdio`.
-    pub print_codegen_ir: bool,
-
-    /// Defines how debugging information should be preserved in the binary.
-    pub debug_info: DebugInfo,
-
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
-
-    /// Defines which codegen backend to use.
-    pub backend: Backend,
-
-    /// Defines which linker to use.
-    pub linker: Option<LinkerPreference>,
 
     /// Defines the absolute path to the runner executable.
     pub runner_path: Option<PathBuf>,
