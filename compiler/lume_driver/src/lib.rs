@@ -7,7 +7,7 @@ use arc::locate_package;
 use lume_errors::{DiagCtxHandle, MapDiagnostic, Result};
 use lume_infer::TyInferCtx;
 use lume_metadata::PackageMetadata;
-use lume_session::{GlobalCtx, Options, Package, Session};
+use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
 use lume_span::{PackageId, SourceMap};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
@@ -25,6 +25,8 @@ pub struct Driver {
     /// Defines the structure of the Arcfile within the package.
     pub package: Package,
 
+    dependencies: DependencyMap,
+
     /// Defines the diagnostics context for reporting errors during compilation.
     dcx: DiagCtxHandle,
 }
@@ -39,16 +41,15 @@ impl Driver {
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
     pub fn from_root(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Self> {
-        let mut package = dcx.with(|handle| locate_package(root, handle))?;
+        let mut dependencies = locate_package(root)?;
 
-        package.add_package_sources_recursive()?;
+        dependencies.add_package_sources_recursive()?;
 
-        Ok(Driver::from_package(package, dcx))
-    }
-
-    /// Creates a new compilation driver from the given [`Package`].
-    pub fn from_package(package: Package, dcx: DiagCtxHandle) -> Self {
-        Driver { package, dcx }
+        Ok(Driver {
+            package: dependencies.root_package().clone(),
+            dependencies,
+            dcx,
+        })
     }
 }
 

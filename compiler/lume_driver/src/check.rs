@@ -28,15 +28,15 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
-    pub fn check(mut self, options: Options) -> Result<CheckedPackageGraph> {
+    pub fn check(self, options: Options) -> Result<CheckedPackageGraph> {
         let session = Session {
-            dep_graph: std::mem::take(&mut self.package.dependencies.graph),
+            dep_graph: self.dependencies.clone(),
             workspace_root: self.package.path.clone(),
             options,
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
-        let mut dependencies = gcx.session.dep_graph.all();
+        let mut dependencies = gcx.session.dep_graph.iter().collect::<Vec<_>>();
 
         // Build all the dependencies of the package in reverse, so all the
         // dependencies without any sub-dependencies can be built first.
