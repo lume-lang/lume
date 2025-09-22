@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -78,19 +79,67 @@ pub struct ManifestPackage {
 
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ManifestDependency {
-    /// If the dependency is located on the same filesystem
-    /// as the referencing package, defines the path to the dependency
-    /// root.
-    ///
-    /// If the dependency is remote, whether it's a networked location or
-    /// from an internet registry, defines the path to the local copy
-    /// of the dependency source.
-    pub source: String,
+    /// Defines where the dependency can be found.
+    #[serde(flatten)]
+    pub source: ManifestDependencySource,
 
     /// Defines the required version of the dependency, which is required
     /// by the referencing package.
     #[serde(rename = "version")]
-    pub required_version: VersionReq,
+    #[serde(default)]
+    pub required_version: Option<VersionReq>,
+}
+
+impl Display for ManifestDependency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.source.fmt(f)
+    }
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ManifestDependencySource {
+    /// Defines a local dependency which exists on the file system.
+    ///
+    /// Local dependencies cannot define a version requirement, since
+    /// only a single version can exist in a folder at any given time.
+    Local {
+        /// Defines the path to the dependency root on the file system.
+        path: String,
+    },
+
+    /// Defines a local or remote Git repository.
+    ///
+    /// Git repository dependencies can be reference using branch name,
+    /// revision or tag.
+    Git {
+        /// Defines the URL of the Git repository.
+        ///
+        /// The URL can be both local and remote.
+        #[serde(rename = "git")]
+        repository: String,
+
+        /// Optional. Defines the branch name to fetch the dependency from.
+        branch: Option<String>,
+
+        /// Optional. Defines the tag to fetch the dependency from.
+        tag: Option<String>,
+
+        /// Optional. Defines the revision to fetch the dependency from.
+        rev: Option<String>,
+
+        /// Optional. Defines a sub-path to use within the repository.
+        dir: Option<String>,
+    },
+}
+
+impl Display for ManifestDependencySource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Local { .. } => f.write_str("local"),
+            Self::Git { .. } => f.write_str("git"),
+        }
+    }
 }
 
 pub(crate) struct PackageParser {
