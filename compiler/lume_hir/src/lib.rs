@@ -106,7 +106,7 @@ impl Node {
         }
     }
 
-    pub fn is_visible_outside_crate(&self) -> bool {
+    pub fn is_visible_outside_pkg(&self) -> bool {
         match self {
             Self::Function(n) => n.visibility == Visibility::Public,
             Self::TraitImpl(n) => n.visibility == Visibility::Public,

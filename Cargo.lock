@@ -1150,6 +1150,7 @@ dependencies = [
  "lume_tir_lower",
  "lume_typech",
  "lume_types",
+ "postcard",
  "tracing",
 ]
 
@@ -1299,6 +1300,8 @@ name = "lume_metadata"
 version = "0.1.1"
 dependencies = [
  "indexmap",
+ "lume_hir",
+ "lume_session",
  "serde",
 ]
 

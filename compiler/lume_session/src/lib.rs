@@ -150,16 +150,32 @@ impl GlobalCtx {
         }
     }
 
+    /// Defines the absolute path of the directory to
+    /// place compilation artifacts within.
+    ///
+    /// The directory is guranteed to exist within the workspace root.
     pub fn obj_path(&self) -> PathBuf {
         self.session.workspace_root.join("obj")
     }
 
+    /// Defines the absolute path of the directory to
+    /// place final binary executables within.
+    ///
+    /// The directory is guranteed to exist within the workspace root.
     pub fn bin_path(&self) -> PathBuf {
         self.obj_path().join("bin")
     }
 
     pub fn obj_bc_path(&self) -> PathBuf {
         self.obj_path().join("bc")
+    }
+
+    /// Defines the absolute path of the directory to place final
+    /// intermediary metadata object files within.
+    ///
+    /// The directory is guranteed to exist within the workspace root.
+    pub fn obj_metadata_path(&self) -> PathBuf {
+        self.obj_path().join("meta")
     }
 
     pub fn binary_output_path(&self, bin_name: &str) -> PathBuf {

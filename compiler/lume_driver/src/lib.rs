@@ -1,9 +1,9 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use arc::locate_package;
-use error_snippet::Result;
-use lume_errors::DiagCtxHandle;
+use lume_errors::{DiagCtxHandle, MapDiagnostic, Result};
 use lume_infer::TyInferCtx;
+use lume_metadata::PackageMetadata;
 use lume_session::{GlobalCtx, Options, Package, Session};
 use lume_span::{PackageId, SourceMap};
 use lume_tir::TypedIR;
@@ -106,7 +106,12 @@ impl Driver {
         let mut merged_map = lume_mir::ModuleMap::default();
 
         for dependency in dependencies {
-            Compiler::build_package(dependency, gcx.clone())?.merge_into(&mut merged_map);
+            let compiled = Compiler::build_package(dependency, gcx.clone())?;
+            let metadata = compiled_pkg_metadata(&compiled);
+
+            write_metadata_object(&gcx, &metadata)?;
+
+            compiled.mir.merge_into(&mut merged_map)
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
@@ -151,6 +156,38 @@ impl Driver {
     }
 }
 
+/// Writes the serialized representation of `metadata` to disk within the metadata
+/// directory defined by `gcx` (via [`GlobalCtx::obj_metadata_path()`]).
+fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Result<()> {
+    // Ensure the parent directory exists first.
+    let metadata_directory = gcx.obj_metadata_path();
+    std::fs::create_dir_all(&metadata_directory).map_diagnostic()?;
+
+    let metadata_filename = lume_metadata::metadata_filename_of(&metadata.header);
+    let metadata_path = metadata_directory.join(metadata_filename);
+
+    let serialized = postcard::to_allocvec(metadata).map_diagnostic()?;
+    std::fs::write(metadata_path, serialized).map_diagnostic()?;
+
+    Ok(())
+}
+
+pub struct CompiledPackage<'a> {
+    /// Defines the specific [`Package`] instance which was compiled.
+    package: &'a Package,
+
+    /// Defines the type-checking context which was used under
+    /// compilation of the package.
+    tcx: TyCheckCtx,
+
+    /// Defines the compiled MIR of the package.
+    mir: lume_mir::ModuleMap,
+}
+
+fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
+    PackageMetadata::create(pkg.package, pkg.tcx.hir())
+}
+
 pub struct Compiler<'a> {
     /// Defines the specific [`Package`] instance to compile.
     package: &'a Package,
@@ -171,7 +208,7 @@ impl<'a> Compiler<'a> {
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<lume_mir::ModuleMap> {
+    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<CompiledPackage<'a>> {
         let mut compiler = Self {
             package,
             gcx,
@@ -183,7 +220,9 @@ impl<'a> Compiler<'a> {
 
         let (tcx, typed_ir) = compiler.type_check(sources)?;
 
-        compiler.codegen(&tcx, typed_ir)
+        let mir = compiler.codegen(&tcx, typed_ir)?;
+
+        Ok(CompiledPackage { package, tcx, mir })
     }
 
     /// Checks the given [`Package`] for errors, such as parsing-, semantic- or configuration errors.
