@@ -44,9 +44,14 @@ impl ModuleMap {
     }
 
     /// Merges the current [`ModuleMap`] into the other given map.
-    pub fn merge_into(mut self, dest: &mut ModuleMap) {
+    pub fn merge_into(self, dest: &mut ModuleMap) {
         self.metadata.merge_into(&mut dest.metadata);
-        dest.functions.append(&mut self.functions);
+
+        for (id, func) in self.functions {
+            if !dest.functions.contains_key(&id) {
+                dest.functions.insert(id, func);
+            }
+        }
     }
 }
 
