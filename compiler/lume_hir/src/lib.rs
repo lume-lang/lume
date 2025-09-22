@@ -1,5 +1,6 @@
 use lume_macros::Location;
 use lume_span::*;
+use serde::{Deserialize, Serialize};
 
 pub mod map;
 pub mod pretty;
@@ -7,7 +8,7 @@ pub mod symbols;
 
 pub const SELF_TYPE_NAME: &str = "self";
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Node {
     Function(FunctionDefinition),
     Type(TypeDefinition),
@@ -17,8 +18,14 @@ pub enum Node {
     Method(MethodDefinition),
     TraitMethodDef(TraitMethodDefinition),
     TraitMethodImpl(TraitMethodImplementation),
+
+    #[serde(skip)]
     Pattern(Pattern),
+
+    #[serde(skip)]
     Statement(Statement),
+
+    #[serde(skip)]
     Expression(Expression),
 }
 
@@ -98,6 +105,19 @@ impl Node {
             | Self::Expression(_) => false,
         }
     }
+
+    pub fn is_visible_outside_crate(&self) -> bool {
+        match self {
+            Self::Function(n) => n.visibility == Visibility::Public,
+            Self::TraitImpl(n) => n.visibility == Visibility::Public,
+            Self::Field(n) => n.visibility == Visibility::Public,
+            Self::Method(n) => n.visibility == Visibility::Public,
+            Self::TraitMethodDef(n) => n.visibility == Visibility::Public,
+            Self::TraitMethodImpl(n) => n.visibility == Visibility::Public,
+            Self::Type(_) | Self::Impl(_) => true,
+            Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => false,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -169,7 +189,7 @@ pub trait WithLocation {
     fn location(&self) -> Location;
 }
 
-#[derive(Debug, Location, Clone, Eq)]
+#[derive(Serialize, Deserialize, Debug, Location, Clone, Eq)]
 pub struct Identifier {
     pub name: String,
     pub location: Location,
@@ -209,7 +229,7 @@ impl PartialEq for Identifier {
     }
 }
 
-#[derive(Debug, Clone, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq)]
 pub enum PathSegment {
     /// Denotes a segment which refers to a namespace.
     ///
@@ -381,7 +401,7 @@ impl std::hash::Hash for PathSegment {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Path {
     pub root: Vec<PathSegment>,
     pub name: PathSegment,
@@ -695,7 +715,7 @@ impl ExternalSymbol {
     }
 }
 
-#[derive(Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Visibility {
     // Order matters here, since `Ord` and `PartialOrd` determines
     // the order of enums by the order of their variants!
@@ -712,7 +732,7 @@ impl std::fmt::Display for Visibility {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
     pub id: NodeId,
     pub visibility: Visibility,
@@ -720,6 +740,8 @@ pub struct FunctionDefinition {
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
+
+    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -736,7 +758,7 @@ impl WithTypeParameters for FunctionDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, Eq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct Parameter {
     pub index: usize,
     pub name: Identifier,
@@ -770,7 +792,7 @@ impl PartialEq for Parameter {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub enum TypeDefinition {
     Enum(Box<EnumDefinition>),
     Struct(Box<StructDefinition>),
@@ -803,7 +825,7 @@ impl TypeDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
     pub id: NodeId,
     pub name: Path,
@@ -819,7 +841,7 @@ impl EnumDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct EnumDefinitionCase {
     pub idx: usize,
     pub name: Path,
@@ -827,7 +849,7 @@ pub struct EnumDefinitionCase {
     pub location: Location,
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct StructDefinition {
     pub id: NodeId,
     pub name: Path,
@@ -858,7 +880,7 @@ impl WithTypeParameters for StructDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Implementation {
     pub id: NodeId,
     pub target: Box<Type>,
@@ -879,7 +901,7 @@ pub enum StructMember {
     Method(Box<MethodDefinition>),
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct Field {
     pub id: NodeId,
     pub visibility: Visibility,
@@ -889,7 +911,7 @@ pub struct Field {
     pub location: Location,
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
     pub id: NodeId,
     pub visibility: Visibility,
@@ -897,6 +919,8 @@ pub struct MethodDefinition {
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
+
+    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -907,7 +931,7 @@ impl WithTypeParameters for MethodDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
     pub id: NodeId,
     pub name: Path,
@@ -929,7 +953,7 @@ impl WithTypeParameters for TraitDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub id: NodeId,
     pub visibility: Visibility,
@@ -937,6 +961,8 @@ pub struct TraitMethodDefinition {
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
+
+    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -958,7 +984,7 @@ impl WithTypeParameters for TraitMethodDefinition {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitImplementation {
     pub id: NodeId,
     pub name: Box<Type>,
@@ -985,7 +1011,7 @@ impl WithTypeParameters for TraitImplementation {
     }
 }
 
-#[derive(Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: NodeId,
     pub visibility: Visibility,
@@ -993,6 +1019,8 @@ pub struct TraitMethodImplementation {
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
     pub return_type: Type,
+
+    #[serde(skip)]
     pub block: Option<Block>,
     pub location: Location,
 }
@@ -1781,7 +1809,7 @@ pub struct WildcardPattern {
     pub location: Location,
 }
 
-#[derive(Location, Debug, Clone, Eq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct TypeParameter {
     pub id: NodeId,
     pub name: Identifier,
@@ -1808,7 +1836,7 @@ impl AsRef<TypeParameter> for TypeParameter {
     }
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq)]
 pub struct TypeParameters {
     pub inner: Vec<TypeParameter>,
 }
@@ -1849,7 +1877,7 @@ impl From<Vec<TypeParameter>> for TypeParameters {
     }
 }
 
-#[derive(Location, Debug, Clone, Eq)]
+#[derive(Serialize, Deserialize, Location, Debug, Clone, Eq)]
 pub struct Type {
     pub id: NodeId,
     pub name: Path,

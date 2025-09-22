@@ -12,7 +12,7 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 fxhash = "^0.2"
 indexmap = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive", "rc"] }
 
 [lints]
 workspace = true
