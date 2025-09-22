@@ -3,10 +3,8 @@ pub mod git;
 
 use std::path::PathBuf;
 
-use error_snippet::Result;
-use semver::VersionReq;
-
-use crate::deps::DependencyPath;
+use crate::parser::ManifestDependency;
+use lume_errors::Result;
 
 pub use file::*;
 pub use git::*;
@@ -102,5 +100,5 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but inaccessible or invalid,
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
-    fn fetch(&self, path: DependencyPath, version: &VersionReq) -> Result<PathBuf>;
+    fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf>;
 }

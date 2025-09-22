@@ -11,34 +11,8 @@ use semver::VersionReq;
 use crate::fetch::DependencyFetcher;
 use crate::fetch::FileDependencyFetcher;
 use crate::fetch::GitDependencyFetcher;
+use crate::parser::{ManifestDependency, ManifestDependencySource};
 use crate::{Package, PackageParser};
-
-pub(crate) const FILE_SCHEME: &str = "file";
-pub(crate) const GIT_SCHEME: &str = "git";
-
-#[derive(Clone, Debug)]
-pub enum DependencyPath {
-    /// Defines that the path is represented using an URL,
-    /// which can be fetched depending on the scheme.
-    Url(url::Url),
-
-    /// Defines that the path is some local path and
-    /// can be either relative or absolute.
-    Path(PathBuf),
-}
-
-impl DependencyPath {
-    /// Gets the protocol or scheme of the given [`DependencyPath`]:
-    ///
-    /// - for [`DependencyPath::Url`], returns the scheme of the URL,
-    /// - for [`DependencyPath::Path`], returns `"file"`.
-    pub fn protocol(&self) -> &str {
-        match self {
-            Self::Url(url) => url.scheme(),
-            Self::Path(_) => FILE_SCHEME,
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dependency {
@@ -123,13 +97,15 @@ impl<'pkg> DependencyResolver<'pkg> {
         let _ = dependency_map.insert(package.id, Vec::new());
 
         for (_, dependency) in &dependencies {
-            let dep_local_path = self.fetch_dependency(&dependency.source, &dependency.required_version)?;
+            let dep_local_path = self.fetch_dependency(dependency)?;
             let dep_package = self.recurse_package_dependencies(&dep_local_path, manifest_map, dependency_map)?;
+
+            let version_req = dependency.required_version.clone().unwrap_or_else(|| VersionReq::STAR);
 
             dependency_map
                 .get_mut(&package.id)
                 .unwrap()
-                .push((dep_package.id, dependency.required_version.clone()));
+                .push((dep_package.id, version_req));
         }
 
         Ok(package)
@@ -142,42 +118,16 @@ impl<'pkg> DependencyResolver<'pkg> {
     ///
     /// Returns `Err` if the path is invalid for the implementation or the dependency
     /// was found, but inaccessible or invalid.
-    fn fetch_dependency(&'pkg self, source: &str, version: &VersionReq) -> Result<PathBuf> {
-        let dependency_path = self.parse_dependency_path(source);
-
-        let DependencyPath::Url(url) = dependency_path.clone() else {
-            return FileDependencyFetcher.fetch(dependency_path, version);
+    fn fetch_dependency(&'pkg self, dependency: &ManifestDependency) -> Result<PathBuf> {
+        let path = match dependency.source {
+            ManifestDependencySource::Local { .. } => FileDependencyFetcher.fetch(dependency)?,
+            ManifestDependencySource::Git { .. } => GitDependencyFetcher.fetch(dependency)?,
         };
 
-        if let Some(host) = url.host_str()
-            && ["http", "https"].contains(&url.scheme())
-            && ["github.com", "gitlab.com"].contains(&host)
-        {
-            return GitDependencyFetcher.fetch(dependency_path, version);
-        }
-
-        match url.scheme() {
-            FILE_SCHEME => FileDependencyFetcher.fetch(dependency_path, version),
-            GIT_SCHEME => GitDependencyFetcher.fetch(dependency_path, version),
-            scheme => Err(error_snippet::SimpleDiagnostic::new(format!(
-                "protocol or scheme is not supported: {scheme}"
-            ))
-            .into()),
-        }
-    }
-
-    /// Attempts to parse the given path to a [`DependencyPath`].
-    fn parse_dependency_path(&'pkg self, path_str: &str) -> DependencyPath {
-        if let Ok(url) = url::Url::parse(path_str) {
-            return DependencyPath::Url(url);
-        }
-
-        let mut path = PathBuf::from(path_str);
-
         if path.is_relative() {
-            path = self.root.join(&path);
+            Ok(self.root.join(&path))
+        } else {
+            Ok(path)
         }
-
-        DependencyPath::Path(path)
     }
 }
