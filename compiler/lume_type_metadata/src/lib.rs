@@ -9,8 +9,12 @@ pub struct StaticMetadata {
 
 impl StaticMetadata {
     /// Merges the current [`StaticMetadata`] into the other given map.
-    pub fn merge_into(mut self, dest: &mut StaticMetadata) {
-        dest.metadata.append(&mut self.metadata);
+    pub fn merge_into(self, dest: &mut StaticMetadata) {
+        for (id, func) in self.metadata {
+            if !dest.metadata.contains_key(&id) {
+                dest.metadata.insert(id, func);
+            }
+        }
     }
 }
 
