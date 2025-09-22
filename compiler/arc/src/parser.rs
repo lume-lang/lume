@@ -30,12 +30,16 @@ pub struct Manifest {
     pub dependencies: HashMap<String, ManifestDependency>,
 }
 
+impl Manifest {
+    pub fn package_id(&self) -> PackageId {
+        PackageId::from_name(&self.package.name)
+    }
+}
+
 impl From<Manifest> for Package {
     fn from(manifest: Manifest) -> Self {
-        let id = PackageId::from_name(&manifest.package.name);
-
         Self {
-            id,
+            id: manifest.package_id(),
             path: manifest.path,
             name: manifest.package.name,
             lume_version: manifest.package.lume_version.map(|v| v.into_inner()),

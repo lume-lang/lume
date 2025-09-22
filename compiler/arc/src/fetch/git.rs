@@ -49,16 +49,27 @@ impl DependencyFetcher for GitDependencyFetcher {
             }
         };
 
-        let local_directory = LOCAL_CACHE_DIR.join(repository_name);
-
-        if !local_directory.exists()
-            && let Err(err) = std::fs::create_dir_all(&local_directory)
+        if !LOCAL_CACHE_DIR.exists()
+            && let Err(err) = std::fs::create_dir_all(LOCAL_CACHE_DIR.as_path())
         {
             return Err(SimpleDiagnostic::new(
                 "failed to clone repository: could not create local directory for clone",
             )
             .add_cause(err.into_diagnostic())
             .into());
+        }
+
+        let local_directory = LOCAL_CACHE_DIR.join(repository_name);
+
+        // Git will fail to clone the repository if it already exists.
+        if local_directory.exists() {
+            if let Err(err) = std::fs::remove_dir_all(&local_directory) {
+                return Err(SimpleDiagnostic::new(
+                    "failed to clone repository: destination folder already exists and cannot be deleted",
+                )
+                .add_cause(err.into_diagnostic())
+                .into());
+            }
         }
 
         let mut cmd = Command::new("git");

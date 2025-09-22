@@ -1,4 +1,4 @@
-pub mod dep_graph;
+pub mod deps;
 mod errors;
 pub mod stdlib;
 
@@ -12,7 +12,7 @@ use lume_query::{CacheContext, CacheStore};
 use lume_span::{PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
-pub use crate::dep_graph::DependencyGraph;
+pub use deps::*;
 
 #[derive(Default)]
 pub struct Options {
@@ -56,7 +56,7 @@ pub enum OptimizationLevel {
 pub struct Session {
     pub options: Options,
     pub workspace_root: PathBuf,
-    pub dep_graph: DependencyGraph,
+    pub dep_graph: DependencyMap,
 }
 
 unsafe impl Send for Session {}
@@ -247,21 +247,6 @@ impl Package {
         Ok(())
     }
 
-    /// Adds all expected source files to the current [`Package`], as well as all
-    /// nested dependencies.
-    ///
-    /// # Errors
-    ///
-    /// This method will return `Err` if the current path to the `Arcfile` exists
-    /// outside of any directory.
-    pub fn add_package_sources_recursive(&mut self) -> Result<()> {
-        for dependency in self.dependencies.graph.all_mut() {
-            dependency.add_package_sources()?;
-        }
-
-        Ok(())
-    }
-
     /// Attempts to find all the Lume source files within the project.
     ///
     /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
@@ -329,5 +314,5 @@ pub struct Dependencies {
 
     /// Defines the graph of all dependencies from the current [`Package`] instance
     /// and descending down to all sub-dependencies, as well.
-    pub graph: DependencyGraph,
+    pub graph: Vec<(PackageId, VersionReq)>,
 }

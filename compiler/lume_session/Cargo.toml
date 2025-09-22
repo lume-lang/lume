@@ -19,6 +19,7 @@ error_snippet_derive = { workspace = true }
 glob = "^0"
 indexmap = { workspace = true }
 petgraph = { version = "=0.8.2" }
+pubgrub = { version = "=0.3.0" }
 rust-embed = { version = "=8.7.0", features = [
     "interpolate-folder-path",
     "include-exclude",

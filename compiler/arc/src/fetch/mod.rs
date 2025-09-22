@@ -3,7 +3,7 @@ pub mod git;
 
 use std::path::PathBuf;
 
-use crate::parser::ManifestDependency;
+use crate::parser::{ManifestDependency, ManifestDependencySource};
 use lume_errors::Result;
 
 pub use file::*;
@@ -101,4 +101,13 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
     fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf>;
+}
+
+impl ManifestDependency {
+    pub fn fetch(&self) -> Result<PathBuf> {
+        match &self.source {
+            ManifestDependencySource::Local { .. } => FileDependencyFetcher.fetch(self),
+            ManifestDependencySource::Git { .. } => GitDependencyFetcher.fetch(self),
+        }
+    }
 }
