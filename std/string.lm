@@ -13,5 +13,5 @@ namespace std
 /// # Create a string with some content
 /// "Hello world!"
 /// ```
-struct String
+pub struct String
 { }

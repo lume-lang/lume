@@ -1,7 +1,7 @@
 namespace std
 
 /// Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
-struct builtin Float { }
+pub struct builtin Float { }
 
 impl Float {
     pub fn external ==(self, other: Float) -> Boolean
@@ -19,7 +19,7 @@ impl Float {
 }
 
 /// Represents an 64-bit double-precision floating-point number, which is precise to ~16 decimal places.
-struct builtin Double { }
+pub struct builtin Double { }
 
 impl Double {
     pub fn external ==(self, other: Double) -> Boolean

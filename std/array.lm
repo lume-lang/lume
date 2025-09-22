@@ -25,7 +25,7 @@ import std::ops (Dispose)
 /// ```
 /// let a: [Int32] = [10, 20, 30];
 /// ```
-struct Array<T>
+pub struct Array<T>
 {
     /// Defines the amount of items currently stored within the array.
     length: UInt64;
