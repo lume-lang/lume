@@ -436,4 +436,9 @@ impl TyInferCtx {
     pub fn hir_span_of_node(&self, def: NodeId) -> Location {
         self.hir_expect_node(def).location()
     }
+
+    /// Determines whether the given node is part of the current package.
+    pub fn hir_is_local_node(&self, node: NodeId) -> bool {
+        self.hir.is_local_node(node)
+    }
 }

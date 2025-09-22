@@ -170,6 +170,11 @@ impl Map {
     pub fn get_imported(&self, name: &Path) -> Option<&Path> {
         self.imports.iter().find(|i| i.is_name_match(name))
     }
+
+    /// Determines whether the given node is part of the current package.
+    pub fn is_local_node(&self, node: NodeId) -> bool {
+        node.package == self.package
+    }
 }
 
 impl Debug for Map {

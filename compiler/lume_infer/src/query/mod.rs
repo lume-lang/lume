@@ -250,7 +250,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_scope(&self, scope: &lume_hir::Scope) -> Result<TypeRef> {
         if let Some(stmt) = scope.body.last() {
-            let stmt = self.hir.expect_statement(*stmt)?;
+            let stmt = self.hir_expect_stmt(*stmt);
 
             if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
                 return self.type_of(fin.value);
@@ -303,7 +303,7 @@ impl TyInferCtx {
             return Ok(TypeRef::void());
         };
 
-        let stmt = self.hir.expect_statement(*last_statement)?;
+        let stmt = self.hir_expect_stmt(*last_statement);
 
         if let lume_hir::StatementKind::Final(fin) = &stmt.kind {
             self.type_of(fin.value)
@@ -350,7 +350,7 @@ impl TyInferCtx {
             return Ok(TypeRef::void());
         };
 
-        let stmt = self.hir.expect_statement(*last_statement)?;
+        let stmt = self.hir_expect_stmt(*last_statement);
         self.type_of_stmt(stmt)
     }
 

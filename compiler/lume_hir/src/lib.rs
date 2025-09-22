@@ -699,6 +699,7 @@ impl std::fmt::Display for SignatureOwned {
 
 #[derive(Hash, Location, Debug, Clone, PartialEq)]
 pub struct Block {
+    pub id: NodeId,
     pub statements: Vec<NodeId>,
     pub location: Location,
 }
