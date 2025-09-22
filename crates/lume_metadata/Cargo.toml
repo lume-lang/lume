@@ -1,0 +1,18 @@
+[package]
+name = "lume_metadata"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+lume_hir = { path = "../../compiler/lume_hir" }
+lume_session = { path = "../../compiler/lume_session" }
+
+indexmap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+
+[lints]
+workspace = true

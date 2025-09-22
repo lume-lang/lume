@@ -3,10 +3,11 @@ use std::fmt::Debug;
 use error_snippet::SimpleDiagnostic;
 use indexmap::{IndexMap, IndexSet};
 use lume_errors::Result;
+use serde::{Deserialize, Serialize};
 
 use crate::*;
 
-#[derive(Default, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Default, Clone, PartialEq)]
 pub struct Map {
     /// Defines which package this map belongs to.
     pub package: PackageId,
@@ -15,6 +16,7 @@ pub struct Map {
     pub nodes: IndexMap<NodeId, Node>,
 
     /// Defines all the imported paths within the HIR map.
+    #[serde(skip)]
     pub imports: IndexSet<Path>,
 }
 

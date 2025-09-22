@@ -27,6 +27,7 @@ lume_types = { path = "../lume_types" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+postcard = { version = "=1.1.3", features = ["alloc"] }
 tracing = { workspace = true }
 
 [lints]

@@ -383,3 +383,13 @@ impl error_snippet::Diagnostic for TaintedError {
         String::from(ERROR_GUARANTEED_CODE)
     }
 }
+
+pub trait MapDiagnostic<T> {
+    fn map_diagnostic(self) -> Result<T>;
+}
+
+impl<T, E: std::error::Error + Send + Sync> MapDiagnostic<T> for std::result::Result<T, E> {
+    fn map_diagnostic(self) -> Result<T> {
+        self.map_err(IntoDiagnostic::into_diagnostic)
+    }
+}
