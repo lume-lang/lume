@@ -1,3 +1,5 @@
+use lume_errors::SimpleDiagnostic;
+
 use crate::*;
 
 impl Driver {
@@ -70,13 +72,25 @@ impl Driver {
 fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Result<()> {
     // Ensure the parent directory exists first.
     let metadata_directory = gcx.obj_metadata_path();
-    std::fs::create_dir_all(&metadata_directory).map_diagnostic()?;
+
+    std::fs::create_dir_all(&metadata_directory).map_err(|err| {
+        Box::new(
+            SimpleDiagnostic::new(format!(
+                "failed to create metadata directory ({})",
+                metadata_directory.display()
+            ))
+            .add_cause(err),
+        ) as lume_errors::Error
+    })?;
 
     let metadata_filename = lume_metadata::metadata_filename_of(&metadata.header);
     let metadata_path = metadata_directory.join(metadata_filename);
 
     let serialized = postcard::to_allocvec(metadata).map_diagnostic()?;
-    std::fs::write(metadata_path, serialized).map_diagnostic()?;
+
+    std::fs::write(metadata_path, serialized).map_err(|err| {
+        Box::new(SimpleDiagnostic::new("failed to write metadata").add_cause(err)) as lume_errors::Error
+    })?;
 
     Ok(())
 }

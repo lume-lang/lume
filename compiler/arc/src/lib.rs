@@ -2,11 +2,10 @@ pub mod deps;
 pub mod errors;
 pub mod fetch;
 pub(crate) mod parser;
-pub(crate) mod serializer;
 
 use crate::deps::DependencyResolver;
 pub use crate::fetch::{clean_local_cache_dir, local_cache_dir};
-use crate::serializer::PackageParser;
+use parser::PackageParser;
 
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;

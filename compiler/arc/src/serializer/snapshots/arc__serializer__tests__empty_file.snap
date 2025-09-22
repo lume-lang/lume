@@ -1,7 +1,0 @@
----
-source: compiler/arc/src/serializer/tests.rs
-description: ""
----
-ArcfileNoPackages {
-    path: "<test>",
-}
