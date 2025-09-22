@@ -356,7 +356,7 @@ impl TyCheckCtx {
         let last_statement = block.statements.last();
 
         if let Some(stmt) = last_statement {
-            let stmt = self.hir().expect_statement(*stmt)?;
+            let stmt = self.hir_expect_stmt(*stmt);
 
             self.matching_type_of_stmt(stmt)
         } else {

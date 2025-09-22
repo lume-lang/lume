@@ -109,7 +109,7 @@ impl<'tcx> Lower<'tcx> {
 
     fn lower_callables(&mut self) -> Result<()> {
         for method in self.tcx.tdb().methods() {
-            if !self.should_lower_method(method) {
+            if !self.tcx.hir_is_local_node(method.id) || !self.should_lower_method(method) {
                 continue;
             }
 
@@ -119,6 +119,10 @@ impl<'tcx> Lower<'tcx> {
         }
 
         for func in self.tcx.tdb().functions() {
+            if !self.tcx.hir_is_local_node(func.id) {
+                continue;
+            }
+
             tracing::debug!(target: "tir_lower", "lowering function {:+}", func.name);
 
             self.lower_block(func.id)?;

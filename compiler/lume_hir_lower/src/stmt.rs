@@ -10,12 +10,17 @@ impl LowerModule<'_> {
     pub(super) fn block(&mut self, expr: ast::Block) -> hir::Block {
         self.locals.push_frame();
 
+        let id = self.next_node_id();
         let statements = self.statements(expr.statements);
         let location = self.location(expr.location);
 
         self.locals.pop_frame();
 
-        hir::Block { statements, location }
+        hir::Block {
+            id,
+            statements,
+            location,
+        }
     }
 
     /// Lowers the given AST block into a HIR block, within an isolated scope.
@@ -33,12 +38,17 @@ impl LowerModule<'_> {
             );
         }
 
+        let id = self.next_node_id();
         let statements = self.statements(expr.statements);
         let location = self.location(expr.location);
 
         self.locals.pop_boundary();
 
-        hir::Block { statements, location }
+        hir::Block {
+            id,
+            statements,
+            location,
+        }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]

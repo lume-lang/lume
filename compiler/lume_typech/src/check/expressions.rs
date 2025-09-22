@@ -12,7 +12,11 @@ impl TyCheckCtx {
     /// their expected type, depending on the surrounding context.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(crate) fn typech_expressions(&mut self) -> Result<()> {
-        for (_, item) in &self.hir().nodes {
+        for (id, item) in &self.hir().nodes {
+            if !self.hir_is_local_node(*id) {
+                continue;
+            }
+
             if let Err(err) = self.typech_expr_item(item) {
                 self.dcx().emit(err);
             }
@@ -105,7 +109,7 @@ impl TyCheckCtx {
 
     /// Type checks the given HIR statement.
     fn statement(&self, stmt: NodeId) -> Result<()> {
-        let stmt = self.hir().expect_statement(stmt)?;
+        let stmt = self.hir_expect_stmt(stmt);
 
         match &stmt.kind {
             lume_hir::StatementKind::Variable(var) => {

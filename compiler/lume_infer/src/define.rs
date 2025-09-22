@@ -961,6 +961,10 @@ impl TyInferCtx {
         block: &lume_hir::Block,
         parent: NodeId,
     ) -> Result<()> {
+        if !self.hir_is_local_node(block.id) {
+            return Ok(());
+        }
+
         for stmt in &block.statements {
             self.define_stmt_scope(tree, *stmt, parent)?;
         }

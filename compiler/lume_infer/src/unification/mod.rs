@@ -38,7 +38,11 @@ impl UnificationPass {
 impl UnificationPass {
     #[tracing::instrument(level = "DEBUG", name = "lume_infer::UnificationPass::unify", skip_all, err)]
     fn unify<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
-        for (_, item) in &tcx.hir.nodes {
+        for (id, item) in &tcx.hir.nodes {
+            if !tcx.hir_is_local_node(*id) {
+                continue;
+            }
+
             match item {
                 lume_hir::Node::Type(ty) => match ty {
                     lume_hir::TypeDefinition::Struct(struct_def) => {
