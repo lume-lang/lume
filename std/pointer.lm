@@ -6,7 +6,7 @@ import std::mem (ptr_read, ptr_write)
 ///
 /// Pointers cannot be created manually - they can only be created by the compiler itself, as a result
 /// of creating a built-in type or some other memory allocation.
-struct builtin Pointer<T>
+pub struct builtin Pointer<T>
 { }
 
 impl<T> Pointer<T> {
