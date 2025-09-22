@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 /// Uniquely identifies some definition or value, independently of
@@ -98,6 +100,12 @@ impl PackageId {
 impl<T: std::hash::Hash + ?Sized> From<&T> for PackageId {
     fn from(value: &T) -> Self {
         PackageId(crate::hash_id(value))
+    }
+}
+
+impl Display for PackageId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "P{}", self.as_usize())
     }
 }
 
