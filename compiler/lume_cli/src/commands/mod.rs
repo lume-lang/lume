@@ -6,7 +6,7 @@ use clap::ValueHint;
 
 use crate::error::*;
 use error_snippet::{IntoDiagnostic, Result};
-use lume_session::{Backend, DebugInfo, LinkerPreference, MirPrinting, OptimizationLevel};
+use lume_session::{MirPrinting, OptimizationLevel};
 use std::env::current_dir;
 use std::path::PathBuf;
 
@@ -68,22 +68,6 @@ pub struct BuildOptions {
     )]
     pub print_mir: MirPrinting,
 
-    #[arg(long, help = "Print the generated codegen IR")]
-    pub print_codegen_ir: bool,
-
-    #[arg(
-        long,
-        short = 'g',
-        help = "Debug info emission in executable",
-        default_value_t = DebugInfo::default(),
-        default_missing_value = "full",
-        value_parser = clap::value_parser!(DebugInfo),
-        value_name = "LEVEL",
-        num_args(0..=1),
-        require_equals = true
-    )]
-    pub debug_info: DebugInfo,
-
     #[arg(
         short = 'O',
         long = "optimize",
@@ -93,19 +77,8 @@ pub struct BuildOptions {
     )]
     pub optimize: String,
 
-    #[arg(long, default_value = None, help = "Linker to use when linking objects")]
-    pub linker: Option<LinkerPreference>,
-
     #[arg(long, help = "Path to the runner executable to fuse with", value_name = "LIB", value_hint = ValueHint::FilePath)]
     pub runner_path: Option<PathBuf>,
-
-    #[arg(
-        long = "codegen-backend",
-        help = "Code generation backend",
-        default_value_t = Backend::default(),
-        value_parser = clap::value_parser!(Backend)
-    )]
-    pub backend: Backend,
 }
 
 impl BuildOptions {
@@ -113,8 +86,6 @@ impl BuildOptions {
         lume_session::Options {
             print_type_context: self.print_type_ctx,
             print_mir: self.print_mir,
-            print_codegen_ir: self.print_codegen_ir,
-            debug_info: self.debug_info,
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,
@@ -124,8 +95,6 @@ impl BuildOptions {
                 "z" => OptimizationLevel::Oz,
                 _ => unreachable!(),
             },
-            backend: self.backend,
-            linker: self.linker,
             runner_path: self.runner_path.clone(),
         }
     }
