@@ -33,7 +33,7 @@ impl PackageHeader {
 #[derive(Serialize, Deserialize)]
 pub struct PackageMetadata {
     pub header: PackageHeader,
-    pub hir_map: Map,
+    pub hir: Map,
 }
 
 impl PackageMetadata {
@@ -44,7 +44,7 @@ impl PackageMetadata {
 
         Self {
             header,
-            hir_map: public_hir,
+            hir: public_hir,
         }
     }
 }

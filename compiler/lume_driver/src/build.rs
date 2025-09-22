@@ -41,10 +41,15 @@ impl Driver {
         dependencies.reverse();
 
         let mut merged_map = lume_mir::ModuleMap::default();
+        let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
-            let compiled = Compiler::build_package(dependency, gcx.clone())?;
+            let compiled = Compiler::build_package(dependency, gcx.clone(), &dependency_hir)?;
             let metadata = compiled_pkg_metadata(&compiled);
+
+            for (node_id, node) in &metadata.hir.nodes {
+                dependency_hir.nodes.insert(*node_id, node.clone());
+            }
 
             write_metadata_object(&gcx, &metadata)?;
 
@@ -101,18 +106,25 @@ impl<'a> Compiler<'a> {
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn build_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<CompiledPackage<'a>> {
+    pub fn build_package(
+        package: &'a Package,
+        gcx: Arc<GlobalCtx>,
+        dep_hir: &lume_hir::map::Map,
+    ) -> Result<CompiledPackage<'a>> {
         let mut compiler = Self {
             package,
             gcx,
             source_map: SourceMap::default(),
         };
 
-        let sources = compiler.parse()?;
+        let mut sources = compiler.parse()?;
         tracing::debug!(target: "driver", "finished parsing");
 
-        let (tcx, typed_ir) = compiler.type_check(sources)?;
+        for (node_id, node) in &dep_hir.nodes {
+            sources.nodes.insert(*node_id, node.clone());
+        }
 
+        let (tcx, typed_ir) = compiler.type_check(sources)?;
         let mir = compiler.codegen(&tcx, typed_ir)?;
 
         Ok(CompiledPackage { package, tcx, mir })

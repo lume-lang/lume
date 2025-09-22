@@ -114,7 +114,8 @@ impl Node {
             Self::Method(n) => n.visibility == Visibility::Public,
             Self::TraitMethodDef(n) => n.visibility == Visibility::Public,
             Self::TraitMethodImpl(n) => n.visibility == Visibility::Public,
-            Self::Type(_) | Self::Impl(_) => true,
+            Self::Type(n) => n.is_visible_outside_pkg(),
+            Self::Impl(_) => true,
             Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => false,
         }
     }
@@ -697,23 +698,11 @@ impl std::fmt::Display for SignatureOwned {
     }
 }
 
-#[derive(Hash, Location, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, Hash, Location, Debug, Clone, PartialEq)]
 pub struct Block {
     pub id: NodeId,
     pub statements: Vec<NodeId>,
     pub location: Location,
-}
-
-#[derive(Location, Debug, Clone, PartialEq)]
-pub struct ExternalSymbol {
-    pub name: Path,
-    pub location: Location,
-}
-
-impl ExternalSymbol {
-    pub fn ident(&self) -> &PathSegment {
-        &self.name.name
-    }
 }
 
 #[derive(Serialize, Deserialize, Hash, Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -822,6 +811,14 @@ impl TypeDefinition {
             Self::Enum(def) => &def.type_parameters,
             Self::Struct(def) => &def.type_parameters,
             Self::Trait(def) => &def.type_parameters,
+        }
+    }
+
+    pub fn is_visible_outside_pkg(&self) -> bool {
+        match self {
+            Self::Enum(def) => def.visibility == Visibility::Public,
+            Self::Struct(def) => def.visibility == Visibility::Public,
+            Self::Trait(def) => def.visibility == Visibility::Public,
         }
     }
 }
