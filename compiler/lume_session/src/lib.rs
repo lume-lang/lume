@@ -203,11 +203,11 @@ pub struct Package {
     /// Defines the name of the package.
     pub name: String,
 
-    /// Defines the minimum required version of Lume.
-    pub lume_version: VersionReq,
-
     /// Defines the current version of the package.
     pub version: Version,
+
+    /// Defines the minimum required version of Lume.
+    pub lume_version: Option<VersionReq>,
 
     /// Defines an optional description of the package.
     pub description: Option<String>,
@@ -375,7 +375,7 @@ impl Default for Package {
             id: PackageId::from_usize(1881),
             path: PathBuf::new(),
             name: String::new(),
-            lume_version: VersionReq::default(),
+            lume_version: None,
             version: Version::new(0, 0, 0),
             description: None,
             license: None,

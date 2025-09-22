@@ -108,7 +108,7 @@ impl<'pkg> DependencyResolver<'pkg> {
         manifest_map: &mut ManifestMap,
         dependency_map: &mut DependencyMap,
     ) -> Result<Package> {
-        let manifest = self.dcx.with(|handle| PackageParser::locate(root, handle))?;
+        let manifest = PackageParser::locate(root)?;
         let dependencies = manifest.dependencies.clone();
 
         let package: Package = manifest.into();
@@ -122,7 +122,7 @@ impl<'pkg> DependencyResolver<'pkg> {
         let _ = manifest_map.insert(package.id, package.clone());
         let _ = dependency_map.insert(package.id, Vec::new());
 
-        for dependency in &dependencies.dependencies {
+        for (_, dependency) in &dependencies {
             let dep_local_path = self.fetch_dependency(&dependency.source, &dependency.required_version)?;
             let dep_package = self.recurse_package_dependencies(&dep_local_path, manifest_map, dependency_map)?;
 

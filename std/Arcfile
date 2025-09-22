@@ -1,9 +1,10 @@
-Package "std" {
-    version = "0.1.1"
-    lume_version = "^0"
-    description = "Standard library package for the Lume reference compiler"
-    license = "MIT"
-    repository = "https://github.com/lume-lang/lume"
+[package]
+name = "std"
+version = "0.1.1"
+lume_version = "^0"
 
-    no_std = true
-}
+license = "MIT"
+description = "Standard library package for the Lume reference compiler"
+repository = "https://github.com/lume-lang/lume"
+
+no_std = true
