@@ -11,10 +11,11 @@ use std::sync::Arc;
 use error_snippet::Result;
 use error_snippet_derive::Diagnostic;
 use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
 
 use crate::{PackageId, hash_id};
 
-#[derive(Hash, Debug, Eq, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Hash, Debug, Eq, PartialEq, Clone)]
 pub enum FileName {
     /// A file name which is defined by some internal process,
     /// such as in testing or defined on the command line.
@@ -54,7 +55,7 @@ impl std::fmt::Display for FileName {
 /// Uniquely identifies a source file.
 ///
 /// Each source file has a parent [`PackageId`], which defines which package it belongs to.
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceFileId(pub PackageId, pub usize);
 
 impl SourceFileId {
@@ -72,7 +73,7 @@ impl SourceFileId {
 }
 
 /// A single source file within a package.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct SourceFile {
     /// Defines the unique identifier of the source file.
     pub id: SourceFileId,
@@ -132,7 +133,7 @@ impl error_snippet::Source for SourceFile {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct Location {
     /// Defines the original source code.
     pub file: Arc<SourceFile>,
