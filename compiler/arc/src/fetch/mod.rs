@@ -1,13 +1,15 @@
 pub mod file;
 pub mod git;
 
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use crate::parser::{ManifestDependency, ManifestDependencySource};
 use lume_errors::Result;
 
 pub use file::*;
 pub use git::*;
+use lume_span::PackageId;
+use semver::{Version, VersionReq};
 
 /// Defines the name of the environment variable, which defines where
 /// Arc should place local clones and/or caches of remote dependencies.
@@ -89,7 +91,17 @@ pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Default)]
+pub struct PackageMetadata {
+    pub package_id: PackageId,
+    pub dependencies: HashMap<Version, HashMap<ManifestDependencySource, VersionReq>>,
+}
+
 pub trait DependencyFetcher {
+    fn metadata(&self, _dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
+        todo!();
+    }
+
     /// Fetches the package defined at the given path and returns
     /// the path to a local copy of the dependency root.
     ///
@@ -101,6 +113,15 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
     fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf>;
+}
+
+impl ManifestDependencySource {
+    pub fn metadata(&self) -> Result<PackageMetadata> {
+        match self {
+            ManifestDependencySource::Local { .. } => FileDependencyFetcher.metadata(self),
+            ManifestDependencySource::Git { .. } => GitDependencyFetcher.metadata(self),
+        }
+    }
 }
 
 impl ManifestDependency {

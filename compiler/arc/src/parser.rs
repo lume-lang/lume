@@ -140,8 +140,8 @@ pub enum ManifestDependencySource {
 impl Display for ManifestDependencySource {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Local { .. } => f.write_str("local"),
-            Self::Git { .. } => f.write_str("git"),
+            Self::Local { path } => write!(f, "{path}"),
+            Self::Git { repository, .. } => write!(f, "{repository}"),
         }
     }
 }
