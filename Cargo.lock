@@ -1125,6 +1125,7 @@ dependencies = [
  "lume_errors",
  "lume_session",
  "tracing",
+ "tracing-log",
  "tracing-subscriber",
  "tracing-tracy",
 ]
