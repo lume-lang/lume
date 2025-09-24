@@ -8,7 +8,7 @@ use semver::VersionReq;
 use url::Url;
 
 use crate::fetch::{DependencyFetcher, LOCAL_CACHE_DIR, PackageMetadata};
-use crate::parser::{ManifestDependency, ManifestDependencySource, PackageParser};
+use crate::parser::{ManifestDependencySource, PackageParser};
 
 /// Determines if Git is installed on the system.
 fn is_git_installed() -> bool {
@@ -49,8 +49,8 @@ impl DependencyFetcher for GitDependencyFetcher {
         })
     }
 
-    fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf> {
-        clone_repository(&dependency.source)
+    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf> {
+        clone_repository(source)
     }
 }
 

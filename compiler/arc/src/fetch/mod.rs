@@ -3,7 +3,7 @@ pub mod git;
 
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::parser::{ManifestDependency, ManifestDependencySource};
+use crate::parser::ManifestDependencySource;
 use lume_errors::Result;
 
 pub use file::*;
@@ -109,7 +109,7 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but inaccessible or invalid,
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
-    fn metadata(&self, dependency: &ManifestDependencySource) -> Result<PackageMetadata>;
+    fn metadata(&self, source: &ManifestDependencySource) -> Result<PackageMetadata>;
 
     /// Fetches the package defined at the given path and returns
     /// the path to a local copy of the dependency root.
@@ -121,7 +121,7 @@ pub trait DependencyFetcher {
     /// - the dependency was found, but inaccessible or invalid,
     /// - the dependency was found, but had no matching versions,
     /// - or some other implementation-dependent error.
-    fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf>;
+    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf>;
 }
 
 impl ManifestDependencySource {
@@ -131,11 +131,9 @@ impl ManifestDependencySource {
             ManifestDependencySource::Git { .. } => GitDependencyFetcher.metadata(self),
         }
     }
-}
 
-impl ManifestDependency {
     pub fn fetch(&self) -> Result<PathBuf> {
-        match &self.source {
+        match &self {
             ManifestDependencySource::Local { .. } => FileDependencyFetcher.fetch(self),
             ManifestDependencySource::Git { .. } => GitDependencyFetcher.fetch(self),
         }
