@@ -84,13 +84,29 @@ pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Resul
         resolved: HashMap::new(),
     };
 
-    for (dependency, version) in solution {
+    for (dependency, version) in &solution {
         let local_path = dependency.source.fetch()?;
         let manifest = PackageParser::locate(&local_path)?;
         let package = manifest.into();
 
         map.packages.insert(dependency.id, package);
-        map.resolved.insert(dependency.id, version);
+        map.resolved.insert(dependency.id, version.clone());
+    }
+
+    for (package, version) in solution {
+        let metadata = solver.metadata.borrow().get(&package.source).unwrap().clone();
+        let dependencies = metadata.dependencies.get(&version).unwrap();
+
+        for (dependency, constraint) in dependencies {
+            let id = solver.get_or_fetch(dependency)?.package_id;
+
+            map.packages
+                .get_mut(&package.id)
+                .unwrap()
+                .dependencies
+                .graph
+                .push((id, constraint.to_owned()));
+        }
     }
 
     Ok(map)
