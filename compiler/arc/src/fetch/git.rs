@@ -44,6 +44,7 @@ impl DependencyFetcher for GitDependencyFetcher {
 
         Ok(PackageMetadata {
             package_id,
+            name: manifest.package.name,
             dependencies,
         })
     }

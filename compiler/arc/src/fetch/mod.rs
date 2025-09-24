@@ -94,6 +94,7 @@ pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
 #[derive(Debug, Default)]
 pub struct PackageMetadata {
     pub package_id: PackageId,
+    pub name: String,
     pub dependencies: HashMap<Version, HashMap<ManifestDependencySource, VersionReq>>,
 }
 
@@ -124,7 +125,7 @@ pub trait DependencyFetcher {
 }
 
 impl ManifestDependencySource {
-    pub fn metadata(&self) -> Result<PackageMetadata> {
+    pub fn get_metadata(&self) -> Result<PackageMetadata> {
         match self {
             ManifestDependencySource::Local { .. } => FileDependencyFetcher.metadata(self),
             ManifestDependencySource::Git { .. } => GitDependencyFetcher.metadata(self),
