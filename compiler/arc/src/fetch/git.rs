@@ -95,8 +95,18 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
 
     let local_directory = LOCAL_CACHE_DIR.join(repository_name);
 
+    let requested_path = if let Some(sub_directory) = dir {
+        local_directory.join(sub_directory)
+    } else {
+        local_directory.clone()
+    };
+
     // Git will fail to clone the repository if it already exists.
     if local_directory.exists() {
+        if local_directory.join(".git").exists() {
+            return Ok(requested_path);
+        }
+
         if let Err(err) = std::fs::remove_dir_all(&local_directory) {
             return Err(SimpleDiagnostic::new(
                 "failed to clone repository: destination folder already exists and cannot be deleted",
@@ -138,16 +148,14 @@ fn clone_repository(dependency: &ManifestDependencySource) -> Result<PathBuf> {
     }
 
     if let Some(sub_directory) = dir {
-        let absolute_path = local_directory.join(sub_directory);
-
-        if !absolute_path.exists() {
+        if !requested_path.exists() {
             return Err(SimpleDiagnostic::new(format!(
                 "failed to clone repository: no sub-directory named {sub_directory} exists in repository"
             ))
             .into());
         }
 
-        return Ok(absolute_path);
+        return Ok(requested_path);
     }
 
     Ok(local_directory)
