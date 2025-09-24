@@ -98,9 +98,17 @@ pub struct PackageMetadata {
 }
 
 pub trait DependencyFetcher {
-    fn metadata(&self, _dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
-        todo!();
-    }
+    /// Gets the metadata of the given dependency, optionally without
+    /// fetching it from the source.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` if:
+    /// - the path is invalid for the implementation,
+    /// - the dependency was found, but inaccessible or invalid,
+    /// - the dependency was found, but had no matching versions,
+    /// - or some other implementation-dependent error.
+    fn metadata(&self, dependency: &ManifestDependencySource) -> Result<PackageMetadata>;
 
     /// Fetches the package defined at the given path and returns
     /// the path to a local copy of the dependency root.
