@@ -51,4 +51,6 @@ fn register_console_tracer() {
     let tracer = tracing_subscriber::registry().with(filter_layer).with(fmt_layer);
 
     tracing::subscriber::set_global_default(tracer).unwrap();
+
+    tracing_log::LogTracer::init().unwrap();
 }
