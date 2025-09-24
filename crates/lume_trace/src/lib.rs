@@ -4,6 +4,12 @@ pub extern crate tracing;
 
 pub use tracing::Level;
 
+#[cfg(feature = "init")]
+pub mod init;
+
+#[cfg(feature = "init")]
+pub use init::*;
+
 /// Even when trace logging is disabled, the tracing macros has a significant performance
 /// cost so we disable it by default.
 #[macro_export]

@@ -8,14 +8,14 @@ rust-version.workspace = true
 lume_gc = { path = "../lume_gc" }
 lume_jit = { path = "../lume_jit" }
 lume_mir = { path = "../../compiler/lume_mir" }
+lume_trace = { path = "../../crates/lume_trace", features = ["init"], optional = true }
 
-env_logger = { version = "=0.11.8", optional = true }
 memmap2 = { version = "=0.9.8" }
 postcard = { version = "=1.1.3", features = ["alloc"] }
 serde = { workspace = true, features = ["derive"] }
 
 [features]
-tracing = ["dep:env_logger", "lume_jit/tracing"]
+tracing = ["dep:lume_trace", "lume_gc/tracing", "lume_jit/tracing"]
 
 [lints]
 workspace = true

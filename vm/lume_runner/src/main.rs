@@ -6,7 +6,7 @@ const BYTECODE_LENGTH_SIZE: usize = std::mem::size_of::<u64>();
 
 fn main() {
     #[cfg(feature = "tracing")]
-    env_logger::init();
+    lume_trace::init();
 
     let current_exe = std::env::current_exe().unwrap();
     let current_file = File::open(current_exe).unwrap();

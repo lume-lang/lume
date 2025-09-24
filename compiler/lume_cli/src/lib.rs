@@ -1,8 +1,6 @@
 pub(crate) mod commands;
 pub(crate) mod error;
 
-mod tracing;
-
 use std::env;
 
 use clap::Parser;
@@ -15,20 +13,10 @@ use lume_errors::DiagCtx;
     about = "Lume's toolchain and package manager",
     long_about = None
 )]
-#[command(
-    subcommand_required(true),
-    arg_required_else_help(true),
-    allow_missing_positional(true)
-)]
+#[command(subcommand_required(true), arg_required_else_help(true))]
 pub(crate) struct LumeCli {
     #[clap(subcommand)]
     pub subcommand: LumeSubcommands,
-
-    #[arg(long = "trace", help = "Enables tracing of the compiler", global = true)]
-    pub trace: bool,
-
-    #[arg(value_enum, long = "tracer", help = "Defines which tracer to use", global = true)]
-    pub tracer: Option<tracing::Tracer>,
 }
 
 #[derive(Debug, clap::Parser)]
@@ -41,11 +29,7 @@ pub enum LumeSubcommands {
 pub fn lume_cli_entry() {
     let matches = LumeCli::parse();
 
-    if matches.trace {
-        tracing::register_global_tracer(tracing::Tracer::default());
-    } else if let Some(val) = matches.tracer {
-        tracing::register_global_tracer(val);
-    }
+    lume_trace::init();
 
     let dcx = DiagCtx::new();
 

@@ -4,15 +4,41 @@ use tracing_subscriber::EnvFilter;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::layer::SubscriberExt;
 
+pub const LUMEC_LOG_ENV: &str = "LUMEC_LOG";
+pub const LUMEC_TRACER_ENV: &str = "LUMEC_TRACER";
+
 #[derive(ValueEnum, Debug, Default, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Tracer {
+pub enum Tracer {
     #[default]
     Console,
     #[cfg(feature = "tracing-tracy")]
     Tracy,
 }
 
-pub(crate) fn register_global_tracer(kind: Tracer) {
+pub fn init() {
+    let is_log_set = if let Ok(log) = std::env::var(LUMEC_LOG_ENV)
+        && !log.is_empty()
+    {
+        true
+    } else {
+        false
+    };
+
+    if let Ok(trace_env) = std::env::var(LUMEC_TRACER_ENV) {
+        match trace_env.to_lowercase().as_str() {
+            "console" | "stdout" if is_log_set => register_global_tracer(Tracer::Console),
+
+            #[cfg(feature = "tracing-tracy")]
+            "tracy" => register_global_tracer(Tracer::Tracy),
+
+            _ => {}
+        }
+    } else if is_log_set {
+        register_global_tracer(Tracer::Console)
+    }
+}
+
+pub fn register_global_tracer(kind: Tracer) {
     match kind {
         Tracer::Console => register_console_tracer(),
         #[cfg(feature = "tracing-tracy")]
@@ -40,7 +66,7 @@ fn register_console_tracer() {
         .event_format(format)
         .with_span_events(FmtSpan::ACTIVE);
 
-    let filter_layer = EnvFilter::try_from_env("LUMEC_LOG")
+    let filter_layer = EnvFilter::try_from_env(LUMEC_LOG_ENV)
         .or_else(|_| {
             EnvFilter::builder()
                 .with_default_directive(LevelFilter::ERROR.into())

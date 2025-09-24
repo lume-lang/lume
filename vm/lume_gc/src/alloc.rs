@@ -302,8 +302,7 @@ impl GenerationalAllocator {
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
         for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
             let live_obj = unsafe { stack_ptr.read() }.cast_mut();
-            let metadata_ptr =
-                unsafe { (live_obj.cast_const() as *const *const lume_rt_metadata::TypeMetadata).read() };
+            let metadata_ptr = unsafe { (live_obj.cast_const() as *const *const TypeMetadata).read() };
             let obj_size = unsafe { metadata_ptr.read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.

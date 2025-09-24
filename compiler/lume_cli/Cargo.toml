@@ -13,17 +13,15 @@ arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver" }
 lume_errors = { path = "../lume_errors" }
 lume_session = { path = "../lume_session", features = ["cli"] }
+lume_trace = { path = "../../crates/lume_trace", features = ["init"] }
 
 clap = { workspace = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
-tracing-log = { version = "=0.2.0" }
-tracing-subscriber = { version = "=0.3.19", features = ["env-filter"] }
-tracing-tracy = { version = "=0.11.2", optional = true }
 
 [features]
-tracing-tracy = ["dep:tracing-tracy"]
+tracing-tracy = ["lume_trace/tracing-tracy"]
 
 [lints]
 workspace = true
