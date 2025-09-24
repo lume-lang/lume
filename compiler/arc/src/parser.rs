@@ -78,6 +78,7 @@ pub struct ManifestPackage {
 
     /// Defines whether the parent [`Package`] should compile without linking
     /// the standard library. Defaults to [`false`].
+    #[serde(default)]
     pub no_std: bool,
 }
 
@@ -230,7 +231,7 @@ impl PackageParser {
 
     /// Parses the [`Manifest`] instance from the input source code.
     fn parse(&mut self) -> Result<Manifest> {
-        let manifest = match toml::from_str::<Manifest>(&self.source.content) {
+        let mut manifest = match toml::from_str::<Manifest>(&self.source.content) {
             Ok(mut manifest) => {
                 manifest.path = self.path.parent().unwrap().to_path_buf();
                 manifest
@@ -244,6 +245,21 @@ impl PackageParser {
                     .into());
             }
         };
+
+        for (_, dependency) in &mut manifest.dependencies {
+            match &mut dependency.source {
+                ManifestDependencySource::Local { path } => {
+                    let pathbuf = PathBuf::from(path.clone());
+
+                    if pathbuf.is_relative() {
+                        let absolute_path = manifest.path.join(&pathbuf).canonicalize().unwrap();
+
+                        *path = absolute_path.display().to_string();
+                    }
+                }
+                ManifestDependencySource::Git { .. } => {}
+            }
+        }
 
         self.verify_lume_version(&manifest)?;
 

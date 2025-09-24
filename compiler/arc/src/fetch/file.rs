@@ -5,7 +5,7 @@ use error_snippet::{Result, SimpleDiagnostic};
 use semver::VersionReq;
 
 use crate::fetch::{DependencyFetcher, PackageMetadata};
-use crate::parser::{ManifestDependency, ManifestDependencySource, PackageParser};
+use crate::parser::{ManifestDependencySource, PackageParser};
 
 /// Defines a [`DependencyFetcher`] which handles dependencies
 /// defined on the current filesystem.
@@ -39,13 +39,13 @@ impl DependencyFetcher for FileDependencyFetcher {
         })
     }
 
-    fn fetch(&self, dependency: &ManifestDependency) -> Result<PathBuf> {
-        match &dependency.source {
+    fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf> {
+        match source {
             ManifestDependencySource::Local { path } => Ok(PathBuf::from(path)),
 
             _ => {
                 return Err(SimpleDiagnostic::new(format!(
-                    "unsupported path scheme: only local paths are supported, found {dependency}"
+                    "unsupported path scheme: only local paths are supported, found {source}"
                 ))
                 .into());
             }

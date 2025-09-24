@@ -4,14 +4,13 @@ use std::fmt::{Debug, Display};
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use lume_errors::{DiagCtxHandle, Result};
+use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
 use lume_session::DependencyMap;
 use lume_span::PackageId;
 
-use pubgrub::Reporter as _;
 use pubgrub::VersionSet as _;
 use pubgrub::{Dependencies, PackageResolutionStatistics};
-use semver::{Version, VersionReq};
+use semver::Version;
 
 use crate::PackageParser;
 use crate::fetch::PackageMetadata;
@@ -19,6 +18,9 @@ use crate::parser::ManifestDependencySource;
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Dependency {
+    /// Defines the name of the dependency in the manifest.
+    pub id: PackageId,
+
     /// Defines the name of the dependency in the manifest.
     pub name: String,
 
@@ -35,7 +37,10 @@ impl Display for Dependency {
 /// Builds a dependency from the root package, found at `root`.
 pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Result<DependencyMap> {
     let manifest = PackageParser::locate(&root)?;
+    let root_id = manifest.package_id();
+
     let package = Dependency {
+        id: root_id,
         name: manifest.package.name,
         source: ManifestDependencySource::Local {
             path: root.as_os_str().to_string_lossy().into(),
@@ -50,7 +55,17 @@ pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Resul
         Err(pubgrub::PubGrubError::NoSolution(mut derivation_tree)) => {
             derivation_tree.collapse_no_versions();
 
-            panic!("{}", pubgrub::DefaultStringReporter::report(&derivation_tree));
+            let packages = solver
+                .metadata
+                .into_inner()
+                .into_iter()
+                .map(|(_, pkg)| (pkg.package_id, Arc::into_inner(pkg).unwrap()))
+                .collect::<HashMap<PackageId, PackageMetadata>>();
+
+            let report = report(packages, &derivation_tree);
+            dcx.emit_and_push(SimpleDiagnostic::new(report).into());
+
+            return Err(dcx.ensure_untainted().unwrap_err());
         }
         Err(
             pubgrub::PubGrubError::ErrorRetrievingDependencies { .. }
@@ -63,16 +78,22 @@ pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Resul
         }
     };
 
-    println!("{:#?}", solution);
+    let mut map = DependencyMap {
+        root: root_id,
+        packages: HashMap::new(),
+        resolved: HashMap::new(),
+    };
 
-    panic!();
-}
+    for (dependency, version) in solution {
+        let local_path = dependency.source.fetch()?;
+        let manifest = PackageParser::locate(&local_path)?;
+        let package = manifest.into();
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DependencyTreeNode {
-    pub package_id: PackageId,
-    pub version: Version,
-    pub dependencies: Vec<(PackageId, VersionReq)>,
+        map.packages.insert(dependency.id, package);
+        map.resolved.insert(dependency.id, version);
+    }
+
+    Ok(map)
 }
 
 struct DependencyResolver {
@@ -152,7 +173,10 @@ impl pubgrub::DependencyProvider for DependencyResolver {
             Ok(metadata) => metadata,
             Err(err) => {
                 self.dcx.emit_and_push(err);
-                return Err(DependencyError::FetchFailed);
+
+                return Err(DependencyError::PackageFetchFailed {
+                    source: package.source.clone(),
+                });
             }
         };
 
@@ -175,7 +199,10 @@ impl pubgrub::DependencyProvider for DependencyResolver {
             Ok(metadata) => metadata,
             Err(err) => {
                 self.dcx.emit_and_push(err);
-                return Ok(Dependencies::Unavailable(DependencyError::FetchFailed));
+
+                return Ok(Dependencies::Unavailable(DependencyError::PackageFetchFailed {
+                    source: package.source.clone(),
+                }));
             }
         };
 
@@ -190,31 +217,32 @@ impl pubgrub::DependencyProvider for DependencyResolver {
                 Ok(metadata) => metadata,
                 Err(err) => {
                     self.dcx.emit_and_push(err);
-                    return Ok(Dependencies::Unavailable(DependencyError::FetchFailed));
+
+                    return Ok(Dependencies::Unavailable(DependencyError::PackageFetchFailed {
+                        source: dep.clone(),
+                    }));
                 }
+            };
+
+            let dependency = Dependency {
+                id: metadata.package_id,
+                name: metadata.name.clone(),
+                source: dep.to_owned(),
             };
 
             let versions = match self.get_versions_of(dep) {
                 Ok(versions) => versions,
                 Err(err) => {
                     self.dcx.emit_and_push(err);
-                    return Ok(Dependencies::Unavailable(DependencyError::FetchFailed));
+                    return Ok(Dependencies::Unavailable(DependencyError::VersionsFetchFailed {
+                        package: dependency.id,
+                    }));
                 }
             };
 
-            let depedency = Dependency {
-                name: metadata.name.clone(),
-                source: dep.to_owned(),
-            };
+            let compatible = versions.into_iter().filter(|v| constraint.matches(v));
 
-            let compatible = versions
-                .into_iter()
-                .filter(|v| constraint.matches(v))
-                .collect::<BTreeSet<_>>();
-
-            let version_set = VersionSet::from_set(compatible);
-
-            dependencies.insert(depedency, version_set);
+            dependencies.insert(dependency, VersionSet::from_iter(compatible));
         }
 
         Ok(Dependencies::Available(dependencies))
@@ -223,16 +251,19 @@ impl pubgrub::DependencyProvider for DependencyResolver {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum DependencyError {
-    FetchFailed,
+    /// Failed to fetch a package from the corresponding provider.
+    PackageFetchFailed { source: ManifestDependencySource },
+
+    /// Failed to fetch package versions from the corresponding provider.
+    VersionsFetchFailed { package: PackageId },
+
+    /// Could not find a dependency with the requested version.
     VersionNotFound,
 }
 
 impl Display for DependencyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::FetchFailed => write!(f, "failed to fetch dependency"),
-            Self::VersionNotFound => write!(f, "version could not be found"),
-        }
+        Debug::fmt(self, f)
     }
 }
 
@@ -249,6 +280,13 @@ impl VersionSet {
     pub fn from_set(versions: BTreeSet<Version>) -> Self {
         Self {
             versions,
+            inverted: false,
+        }
+    }
+
+    pub fn from_iter<I: Iterator<Item = Version>>(versions: I) -> Self {
+        Self {
+            versions: versions.collect(),
             inverted: false,
         }
     }
@@ -335,5 +373,149 @@ impl pubgrub::VersionSet for VersionSet {
         } else {
             self.versions.contains(v)
         }
+    }
+}
+
+fn report(
+    packages: HashMap<PackageId, PackageMetadata>,
+    derivation_tree: &pubgrub::DerivationTree<Dependency, VersionSet, DependencyError>,
+) -> String {
+    let formatter = Reporter {
+        packages,
+        fallback: pubgrub::DefaultStringReportFormatter,
+    };
+
+    match derivation_tree {
+        pubgrub::DerivationTree::External(external) => pubgrub::ReportFormatter::format_external(&formatter, external),
+        pubgrub::DerivationTree::Derived(_) => todo!(),
+    }
+}
+
+#[derive(Default)]
+struct Reporter {
+    packages: HashMap<PackageId, PackageMetadata>,
+    fallback: pubgrub::DefaultStringReportFormatter,
+}
+
+impl pubgrub::ReportFormatter<Dependency, VersionSet, DependencyError> for Reporter {
+    type Output = String;
+
+    // Format an [External] incompatibility.
+    fn format_external(&self, external: &pubgrub::External<Dependency, VersionSet, DependencyError>) -> Self::Output {
+        match external {
+            pubgrub::External::FromDependencyOf(pkg_a, set_a, pkg_b, set_b) => {
+                let metadata_a = self.packages.get(&pkg_a.id).expect("expected metadata of package");
+                let (version_a, constraint_b) = metadata_a
+                    .dependencies
+                    .iter()
+                    .find_map(|(version, deps)| {
+                        if let Some(constraint) = deps.get(&pkg_b.source)
+                            && set_a.contains(version)
+                        {
+                            Some((version, constraint))
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap();
+
+                if !set_b.versions.iter().any(|v| constraint_b.matches(v)) {
+                    return format!(
+                        "{pkg_a} {version_a} depends on {pkg_b} {constraint_b}, but no version matches constraint"
+                    );
+                }
+
+                // Fallback to default behaviour
+                external.to_string()
+            }
+            pubgrub::External::NoVersions(pkg, set) => format!("could not find versions {set} of {pkg}"),
+            pubgrub::External::NotRoot(_, _) => unreachable!(),
+            pubgrub::External::Custom(pkg, set, m) => match m {
+                DependencyError::PackageFetchFailed { source } => {
+                    format!("could not fetch dependency {source}, required by {pkg} {set}")
+                }
+                DependencyError::VersionsFetchFailed { package } => {
+                    let package = self.packages.get(package).unwrap();
+
+                    format!(
+                        "could not retrieve versions for {}, required by {pkg} {set}",
+                        package.name
+                    )
+                }
+                DependencyError::VersionNotFound => format!("could not find any matching version of {pkg}"),
+            },
+        }
+    }
+
+    /// Format terms of an incompatibility.
+    fn format_terms(&self, terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>) -> Self::Output {
+        pubgrub::ReportFormatter::<Dependency, VersionSet, DependencyError>::format_terms(&self.fallback, terms)
+    }
+
+    /// Simplest case, we just combine two external incompatibilities.
+    fn explain_both_external(
+        &self,
+        external1: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        external2: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback.explain_both_external(external1, external2, current_terms)
+    }
+
+    /// Both causes have already been explained so we use their refs.
+    fn explain_both_ref(
+        &self,
+        ref_id1: usize,
+        derived1: &pubgrub::Derived<Dependency, VersionSet, DependencyError>,
+        ref_id2: usize,
+        derived2: &pubgrub::Derived<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback
+            .explain_both_ref(ref_id1, derived1, ref_id2, derived2, current_terms)
+    }
+
+    /// One cause is derived (already explained so one-line),
+    /// the other is a one-line external cause,
+    /// and finally we conclude with the current incompatibility.
+    fn explain_ref_and_external(
+        &self,
+        ref_id: usize,
+        derived: &pubgrub::Derived<Dependency, VersionSet, DependencyError>,
+        external: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback
+            .explain_ref_and_external(ref_id, derived, external, current_terms)
+    }
+
+    /// Add an external cause to the chain of explanations.
+    fn and_explain_external(
+        &self,
+        external: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback.and_explain_external(external, current_terms)
+    }
+
+    /// Add an already explained incompat to the chain of explanations.
+    fn and_explain_ref(
+        &self,
+        ref_id: usize,
+        derived: &pubgrub::Derived<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback.and_explain_ref(ref_id, derived, current_terms)
+    }
+
+    /// Add an already explained incompat to the chain of explanations.
+    fn and_explain_prior_and_external(
+        &self,
+        prior_external: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        external: &pubgrub::External<Dependency, VersionSet, DependencyError>,
+        current_terms: &pubgrub::Map<Dependency, pubgrub::Term<VersionSet>>,
+    ) -> Self::Output {
+        self.fallback
+            .and_explain_prior_and_external(prior_external, external, current_terms)
     }
 }
