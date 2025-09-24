@@ -4,7 +4,7 @@ use lume_errors::{DiagCtx, Result};
 use lume_hir::map::Map;
 use lume_infer::TyInferCtx;
 use lume_mir::ModuleMap;
-use lume_session::{DependencyGraph, GlobalCtx, Options, Package, Session};
+use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
 use lume_span::SourceMap;
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
@@ -39,7 +39,7 @@ impl ManifoldDriver {
     /// Creates a new manifold driver from the given package.
     pub fn new(package: Package, dcx: DiagCtx) -> Self {
         let session = Session {
-            dep_graph: DependencyGraph::default(),
+            dep_graph: DependencyMap::default(),
             workspace_root: package.path.clone(),
             options: Options::default(),
         };
