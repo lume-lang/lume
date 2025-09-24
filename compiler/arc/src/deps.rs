@@ -17,24 +17,53 @@ use crate::PackageParser;
 use crate::fetch::PackageMetadata;
 use crate::parser::ManifestDependencySource;
 
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub struct Dependency {
+    /// Defines the name of the dependency in the manifest.
+    pub name: String,
+
+    /// Defines where the dependency can be found.
+    pub source: ManifestDependencySource,
+}
+
+impl Display for Dependency {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self.name, f)
+    }
+}
+
 /// Builds a dependency from the root package, found at `root`.
 pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Result<DependencyMap> {
     let manifest = PackageParser::locate(&root)?;
-    let package = ManifestDependencySource::Local {
-        path: root.as_os_str().to_string_lossy().into(),
+    let package = Dependency {
+        name: manifest.package.name,
+        source: ManifestDependencySource::Local {
+            path: root.as_os_str().to_string_lossy().into(),
+        },
     };
 
     let version = manifest.package.version.into_inner();
     let solver = DependencyResolver::new(dcx.clone());
 
-    match pubgrub::resolve(&solver, package, version) {
-        Ok(solution) => println!("{:#?}", solution),
+    let solution = match pubgrub::resolve(&solver, package, version) {
+        Ok(solution) => solution,
         Err(pubgrub::PubGrubError::NoSolution(mut derivation_tree)) => {
             derivation_tree.collapse_no_versions();
-            eprintln!("{}", pubgrub::DefaultStringReporter::report(&derivation_tree));
+
+            panic!("{}", pubgrub::DefaultStringReporter::report(&derivation_tree));
         }
-        Err(err) => panic!("{:?}", err),
+        Err(
+            pubgrub::PubGrubError::ErrorRetrievingDependencies { .. }
+            | pubgrub::PubGrubError::ErrorChoosingVersion { .. }
+            | pubgrub::PubGrubError::ErrorInShouldCancel(_),
+        ) => {
+            // These error types will always have some error raised to the
+            // diagnostics context, so just return the tainted-error here.
+            return Err(dcx.ensure_untainted().unwrap_err());
+        }
     };
+
+    println!("{:#?}", solution);
 
     panic!();
 }
@@ -61,16 +90,16 @@ impl DependencyResolver {
 
     /// Gets the metadata of the given package source from the cache
     /// or fetches it from the appropriate fetcher.
-    fn get_or_fetch(&self, package: &ManifestDependencySource) -> Result<Arc<PackageMetadata>> {
-        if let Some(existing) = self.metadata.borrow().get(package) {
+    fn get_or_fetch(&self, source: &ManifestDependencySource) -> Result<Arc<PackageMetadata>> {
+        if let Some(existing) = self.metadata.borrow().get(source) {
             return Ok(existing.clone());
         }
 
-        let metadata = Arc::new(package.metadata()?);
+        let metadata = Arc::new(source.get_metadata()?);
         let inserted = self
             .metadata
             .borrow_mut()
-            .entry(package.to_owned())
+            .entry(source.to_owned())
             .or_insert(metadata)
             .clone();
 
@@ -86,7 +115,7 @@ impl DependencyResolver {
 }
 
 impl pubgrub::DependencyProvider for DependencyResolver {
-    type P = ManifestDependencySource;
+    type P = Dependency;
     type V = Version;
     type VS = VersionSet;
     type Priority = (u32, std::cmp::Reverse<Version>);
@@ -95,11 +124,11 @@ impl pubgrub::DependencyProvider for DependencyResolver {
 
     fn prioritize(
         &self,
-        source: &Self::P,
+        package: &Self::P,
         range: &Self::VS,
         package_conflicts_counts: &PackageResolutionStatistics,
     ) -> Self::Priority {
-        let metadata = match self.get_or_fetch(source) {
+        let metadata = match self.get_or_fetch(&package.source) {
             Ok(metadata) => metadata,
             Err(err) => {
                 self.dcx.emit_and_push(err);
@@ -118,8 +147,8 @@ impl pubgrub::DependencyProvider for DependencyResolver {
         (u32::MAX, std::cmp::Reverse(Version::new(0, 0, 0)))
     }
 
-    fn choose_version(&self, source: &Self::P, range: &Self::VS) -> std::result::Result<Option<Self::V>, Self::Err> {
-        let metadata = match self.get_or_fetch(source) {
+    fn choose_version(&self, package: &Self::P, range: &Self::VS) -> std::result::Result<Option<Self::V>, Self::Err> {
+        let metadata = match self.get_or_fetch(&package.source) {
             Ok(metadata) => metadata,
             Err(err) => {
                 self.dcx.emit_and_push(err);
@@ -139,10 +168,10 @@ impl pubgrub::DependencyProvider for DependencyResolver {
 
     fn get_dependencies(
         &self,
-        source: &Self::P,
+        package: &Self::P,
         version: &Self::V,
     ) -> std::result::Result<Dependencies<Self::P, Self::VS, Self::M>, Self::Err> {
-        let metadata = match self.get_or_fetch(source) {
+        let metadata = match self.get_or_fetch(&package.source) {
             Ok(metadata) => metadata,
             Err(err) => {
                 self.dcx.emit_and_push(err);
@@ -157,12 +186,25 @@ impl pubgrub::DependencyProvider for DependencyResolver {
         let mut dependencies = pubgrub::Map::default();
 
         for (dep, constraint) in deps_for_version {
+            let metadata = match self.get_or_fetch(dep) {
+                Ok(metadata) => metadata,
+                Err(err) => {
+                    self.dcx.emit_and_push(err);
+                    return Ok(Dependencies::Unavailable(DependencyError::FetchFailed));
+                }
+            };
+
             let versions = match self.get_versions_of(dep) {
                 Ok(versions) => versions,
                 Err(err) => {
                     self.dcx.emit_and_push(err);
                     return Ok(Dependencies::Unavailable(DependencyError::FetchFailed));
                 }
+            };
+
+            let depedency = Dependency {
+                name: metadata.name.clone(),
+                source: dep.to_owned(),
             };
 
             let compatible = versions
@@ -172,7 +214,7 @@ impl pubgrub::DependencyProvider for DependencyResolver {
 
             let version_set = VersionSet::from_set(compatible);
 
-            dependencies.insert(dep.to_owned(), version_set);
+            dependencies.insert(depedency, version_set);
         }
 
         Ok(Dependencies::Available(dependencies))

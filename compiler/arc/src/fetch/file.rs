@@ -34,6 +34,7 @@ impl DependencyFetcher for FileDependencyFetcher {
 
         Ok(PackageMetadata {
             package_id,
+            name: manifest.package.name,
             dependencies,
         })
     }
