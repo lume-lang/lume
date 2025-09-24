@@ -41,7 +41,7 @@ impl Driver {
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
     pub fn from_root(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Self> {
-        let mut dependencies = locate_package(root)?;
+        let mut dependencies = dcx.with(|handle| locate_package(root, handle))?;
 
         dependencies.add_package_sources_recursive()?;
 

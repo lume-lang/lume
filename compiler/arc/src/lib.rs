@@ -3,6 +3,7 @@ pub mod errors;
 pub mod fetch;
 pub(crate) mod parser;
 
+use lume_errors::DiagCtxHandle;
 use lume_session::DependencyMap;
 use parser::PackageParser;
 
@@ -18,6 +19,6 @@ use std::path::PathBuf;
 /// This method may fail if:
 /// - the given path has no `Arcfile` stored within it
 /// - or the located `Arcfile` doesn't refer to a file.
-pub fn locate_package(root: &PathBuf) -> Result<DependencyMap> {
-    deps::build_dependency_tree(root)
+pub fn locate_package(root: &PathBuf, dcx: DiagCtxHandle) -> Result<DependencyMap> {
+    deps::build_dependency_tree(root, dcx)
 }
