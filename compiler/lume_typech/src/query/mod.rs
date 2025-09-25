@@ -416,7 +416,8 @@ impl TyCheckCtx {
         let expected_type = if has_else_case {
             self.type_of_condition_scope(first_case)?
         } else {
-            self.expected_type_of(id)?.unwrap_or_else(|| TypeRef::void())
+            self.expected_type_of(id)?
+                .unwrap_or_else(|| TypeRef::void().with_location(first_case.location))
         };
 
         // Ensure that all branches return the same type.

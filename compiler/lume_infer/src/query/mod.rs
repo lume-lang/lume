@@ -760,13 +760,11 @@ impl TyInferCtx {
                 }
                 lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
-                lume_hir::StatementKind::Final(fin) => {
-                    if let Some(Node::Expression(parent)) = self.hir_parent_node_of(fin.id) {
-                        return self.try_expected_type_of(parent.id);
-                    };
-
-                    self.hir_ctx_return_type(fin.id).map(|ty| Some(ty))
-                }
+                lume_hir::StatementKind::Final(fin) => match self.hir_parent_node_of(fin.id) {
+                    Some(Node::Expression(parent)) => self.try_expected_type_of(parent.id),
+                    Some(Node::Statement(_)) => Ok(Some(TypeRef::void().with_location(fin.location))),
+                    _ => self.hir_ctx_return_type(fin.id).map(|ty| Some(ty)),
+                },
                 lume_hir::StatementKind::Return(ret) => self.hir_ctx_return_type(ret.id).map(|ty| Some(ty)),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
                 lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
