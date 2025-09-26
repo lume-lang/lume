@@ -12,9 +12,6 @@ impl FunctionTransformer<'_, '_> {
         RemoveOrphanBlocks.execute(&mut self.func);
         DefineBlockParameters::default().execute(&mut self.func);
         PassBlockArguments::execute(&mut self.func);
-        if self.func.name == "main" {
-            println!("{}", self.func);
-        }
         ConvertAssignmentExpressions::default().execute(&mut self.func);
         RenameSsaVariables::default().execute(&mut self.func);
         MarkObjectReferences::default().execute(&mut self.func);
