@@ -6,6 +6,7 @@ use std::sync::Arc;
 use crate::errors::*;
 
 use error_snippet::{Label, WithSource};
+use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_session::{Dependencies, Package};
 use lume_span::{PackageId, SourceFile};
@@ -47,7 +48,7 @@ impl From<Manifest> for Package {
             description: manifest.package.description,
             license: manifest.package.license,
             repository: manifest.package.repository,
-            files: Vec::new(),
+            files: IndexMap::new(),
             dependencies: Dependencies {
                 no_std: manifest.package.no_std,
                 ..Dependencies::default()

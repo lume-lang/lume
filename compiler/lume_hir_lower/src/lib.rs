@@ -122,7 +122,7 @@ impl<'a> LowerState<'a> {
 
         let use_std = !self.package.dependencies.no_std;
 
-        for source_file in self.package.files.clone() {
+        for (_, source_file) in self.package.files.clone() {
             // Register source file in the state.
             self.source_map.insert(source_file.clone());
 

@@ -7,9 +7,10 @@ use std::sync::Arc;
 
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
+use indexmap::IndexMap;
 use lume_errors::DiagCtx;
 use lume_query::{CacheContext, CacheStore};
-use lume_span::{PackageId, SourceFile};
+use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
 pub use deps::*;
@@ -154,7 +155,7 @@ pub struct Package {
     pub repository: Option<String>,
 
     /// Defines the source files defined within the [`Project`].
-    pub files: Vec<Arc<SourceFile>>,
+    pub files: IndexMap<FileName, Arc<SourceFile>>,
 
     /// Defines the dependencies for the package.
     pub dependencies: Dependencies,
@@ -187,12 +188,13 @@ impl Package {
 
     /// Pushes the given source file to the [`Project`]s files.
     pub fn add_source(&mut self, file: Arc<SourceFile>) {
-        self.files.push(file);
+        self.files.insert(file.name.clone(), file);
     }
 
     /// Appends all the given source files to the [`Project`]s files.
     pub fn append_sources(&mut self, files: impl IntoIterator<Item = Arc<SourceFile>>) {
-        self.files.extend(files);
+        self.files
+            .extend(files.into_iter().map(|file| (file.name.clone(), file)));
     }
 
     /// Adds all the files within the standard library to the [`Package`]s files.
@@ -300,7 +302,7 @@ impl Default for Package {
             description: None,
             license: None,
             repository: None,
-            files: Vec::new(),
+            files: IndexMap::new(),
             dependencies: Dependencies::default(),
         }
     }
