@@ -4,7 +4,7 @@ use arc::locate_package;
 use lume_errors::{DiagCtxHandle, Result};
 use lume_infer::TyInferCtx;
 use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
-use lume_span::{PackageId, SourceMap};
+use lume_span::{PackageId, SourceFile, SourceMap};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
@@ -52,6 +52,26 @@ impl Driver {
             dependencies,
             dcx,
         })
+    }
+
+    /// Overrides the source files of the root package, if the [`Options::source_overrides`] is
+    /// set. If it is set, it is taken and consumed to replace source files in the root package.
+    fn override_root_sources(&mut self, options: &mut Options) {
+        if let Some(source_overrides) = options.source_overrides.take() {
+            for (file_name, content) in source_overrides {
+                let root_package = self.dependencies.root_package();
+                if !root_package.files.contains_key(&file_name) {
+                    continue;
+                }
+
+                let source_file = SourceFile::new(root_package.id, file_name.to_string(), content);
+
+                self.dependencies
+                    .root_package_mut()
+                    .files
+                    .insert(file_name, Arc::new(source_file));
+            }
+        }
     }
 }
 

@@ -29,6 +29,12 @@ pub struct Options {
 
     /// Defines the absolute path to the runner executable.
     pub runner_path: Option<PathBuf>,
+
+    /// Defines an optional list of overrides for source files.
+    ///
+    /// Currently, only the source files of the root package are attempted
+    /// to be overriden. If the file doesn't exist within the package, it is skipped.
+    pub source_overrides: Option<IndexMap<FileName, String>>,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -188,13 +194,16 @@ impl Package {
 
     /// Pushes the given source file to the [`Project`]s files.
     pub fn add_source(&mut self, file: Arc<SourceFile>) {
-        self.files.insert(file.name.clone(), file);
+        if !self.files.contains_key(&file.name) {
+            self.files.insert(file.name.clone(), file);
+        }
     }
 
     /// Appends all the given source files to the [`Project`]s files.
     pub fn append_sources(&mut self, files: impl IntoIterator<Item = Arc<SourceFile>>) {
-        self.files
-            .extend(files.into_iter().map(|file| (file.name.clone(), file)));
+        for file in files {
+            self.add_source(file);
+        }
     }
 
     /// Adds all the files within the standard library to the [`Package`]s files.

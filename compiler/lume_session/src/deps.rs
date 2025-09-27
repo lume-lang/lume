@@ -31,6 +31,13 @@ impl DependencyMap {
         self.packages.get(&id).unwrap()
     }
 
+    /// Gets the root package as a [`Package`] reference.
+    pub fn root_package_mut(&mut self) -> &mut Package {
+        let id = self.root;
+
+        self.packages.get_mut(&id).unwrap()
+    }
+
     /// Adds all expected source files to all the [`Package`]s inside
     /// the dependency tree.
     pub fn add_package_sources_recursive(&mut self) -> Result<()> {

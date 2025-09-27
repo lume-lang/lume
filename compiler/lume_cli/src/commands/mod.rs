@@ -96,6 +96,7 @@ impl BuildOptions {
                 _ => unreachable!(),
             },
             runner_path: self.runner_path.clone(),
+            source_overrides: None,
         }
     }
 }

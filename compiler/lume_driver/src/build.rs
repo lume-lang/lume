@@ -29,7 +29,9 @@ impl Driver {
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
-    pub fn build(self, options: Options) -> Result<CompiledExecutable> {
+    pub fn build(mut self, mut options: Options) -> Result<CompiledExecutable> {
+        self.override_root_sources(&mut options);
+
         let session = Session {
             dep_graph: self.dependencies.clone(),
             workspace_root: self.package.path.clone(),

@@ -28,7 +28,9 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
-    pub fn check(self, options: Options) -> Result<CheckedPackageGraph> {
+    pub fn check(mut self, mut options: Options) -> Result<CheckedPackageGraph> {
+        self.override_root_sources(&mut options);
+
         let session = Session {
             dep_graph: self.dependencies.clone(),
             workspace_root: self.package.path.clone(),
