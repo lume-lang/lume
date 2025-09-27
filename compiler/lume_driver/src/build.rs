@@ -1,4 +1,5 @@
-use lume_errors::SimpleDiagnostic;
+use lume_errors::{MapDiagnostic, SimpleDiagnostic};
+use lume_metadata::PackageMetadata;
 
 use crate::*;
 

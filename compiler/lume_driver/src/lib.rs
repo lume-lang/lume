@@ -1,19 +1,21 @@
-pub mod build;
-pub mod check;
-
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use arc::locate_package;
-use lume_errors::{DiagCtxHandle, MapDiagnostic, Result};
+use lume_errors::{DiagCtxHandle, Result};
 use lume_infer::TyInferCtx;
-use lume_metadata::PackageMetadata;
 use lume_session::{DependencyMap, GlobalCtx, Options, Package, Session};
 use lume_span::{PackageId, SourceMap};
 use lume_tir::TypedIR;
 use lume_typech::TyCheckCtx;
 use lume_types::TyCtx;
 
+#[cfg(feature = "codegen")]
+pub mod build;
+
+#[cfg(feature = "codegen")]
 pub use build::*;
+
+pub mod check;
 pub use check::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -96,6 +98,7 @@ impl<'a> Compiler<'a> {
     }
 
     /// Generates MIR for all the modules within the given state object.
+    #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
         let mir =
