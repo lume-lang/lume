@@ -6,6 +6,8 @@ pub mod map;
 pub mod pretty;
 pub mod symbols;
 
+pub use map::Map;
+
 pub const SELF_TYPE_NAME: &str = "self";
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]

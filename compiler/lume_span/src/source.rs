@@ -117,6 +117,26 @@ impl SourceFile {
             package: PackageId::empty(),
         }
     }
+
+    /// Attempts to get the character index of the given coordinates.
+    pub fn index_of_coords(&self, line: usize, char: usize) -> usize {
+        #[cfg(windows)]
+        const NEWLINE_LEN: usize = "\r\n".len();
+        #[cfg(not(windows))]
+        const NEWLINE_LEN: usize = "\n".len();
+
+        let mut index = 0;
+
+        for (num, line_str) in self.content.lines().enumerate() {
+            if num == line {
+                return index + char;
+            }
+
+            index += line_str.len() + NEWLINE_LEN;
+        }
+
+        index
+    }
 }
 
 impl error_snippet::Source for SourceFile {
@@ -278,6 +298,15 @@ impl SourceMap {
             Some(v) => Ok(v),
             None => Err(InvalidSourceFile { id: idx }.into()),
         }
+    }
+
+    /// Gets a source file from the mapping with the given name, if any.
+    #[inline]
+    #[must_use]
+    pub fn get_name(&self, name: &FileName) -> Option<Arc<SourceFile>> {
+        self.files
+            .iter()
+            .find_map(|(_, file)| if &file.name == name { Some(file.clone()) } else { None })
     }
 
     /// Inserts a new source file into the mapping.

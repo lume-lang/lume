@@ -44,7 +44,10 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut graph = CheckedPackageGraph::default();
+        let mut graph = CheckedPackageGraph {
+            root: gcx.session.dep_graph.root,
+            packages: HashMap::new(),
+        };
 
         for dependency in dependencies {
             let checked = Compiler::check_package(dependency, gcx.clone())?;
@@ -58,8 +61,17 @@ impl Driver {
 
 #[derive(Default)]
 pub struct CheckedPackageGraph {
-    /// Defines map of all checked packages, keyed by their ID.
+    /// Defines the ID of the root [`Package`] within the graph.
+    pub root: PackageId,
+
+    /// Defines a map of all checked packages, keyed by their ID.
     pub packages: HashMap<PackageId, CheckedPackage>,
+}
+
+impl CheckedPackageGraph {
+    pub fn root_package(&self) -> &CheckedPackage {
+        self.packages.get(&self.root).unwrap()
+    }
 }
 
 pub struct CheckedPackage {
@@ -68,6 +80,9 @@ pub struct CheckedPackage {
 
     /// Defines the checked type context.
     pub tcx: TyCheckCtx,
+
+    /// Defines all the sources within the package.
+    pub sources: SourceMap,
 }
 
 impl<'a> Compiler<'a> {
@@ -94,6 +109,7 @@ impl<'a> Compiler<'a> {
         Ok(CheckedPackage {
             package: package.id,
             tcx,
+            sources: compiler.source_map,
         })
     }
 }
