@@ -1263,6 +1263,7 @@ dependencies = [
  "indexmap",
  "lume_hir",
  "lume_mir",
+ "lume_session",
  "lume_span",
  "lume_tir",
  "lume_type_metadata",

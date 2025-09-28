@@ -121,15 +121,6 @@ impl<'a> Compiler<'a> {
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
-        let mir =
-            tracing::info_span!("mir lowering").in_scope(|| lume_mir_lower::ModuleTransformer::transform(tcx, tir));
-
-        match self.gcx.session.options.print_mir {
-            lume_session::MirPrinting::None => {}
-            lume_session::MirPrinting::Pretty => println!("{mir}"),
-            lume_session::MirPrinting::Debug => println!("{mir:#?}"),
-        }
-
-        Ok(mir)
+        tracing::info_span!("mir lowering").in_scope(|| Ok(lume_mir_lower::ModuleTransformer::transform(tcx, tir)))
     }
 }
