@@ -1,5 +1,5 @@
 [package]
-name = "lume_mir_lower"
+name = "lume_mir_queries"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,15 +8,13 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
-lume_hir = { path = "../lume_hir" }
 lume_mir = { path = "../lume_mir" }
-lume_mir_queries = { path = "../lume_mir_queries" }
+lume_query = { path = "../lume_query" }
+lume_query_macros = { path = "../lume_query_macros" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
-lume_tir = { path = "../lume_tir" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
-lume_type_metadata = { path = "../lume_type_metadata" }
 
 indexmap = { workspace = true }
 
