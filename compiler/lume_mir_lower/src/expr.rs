@@ -667,7 +667,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::IntrinsicKind::BooleanAnd => lume_mir::Intrinsic::BooleanAnd,
             lume_tir::IntrinsicKind::BooleanOr => lume_mir::Intrinsic::BooleanOr,
             lume_tir::IntrinsicKind::Metadata { id } => {
-                let metadata_store = &self.transformer.mir.metadata.metadata;
+                let metadata_store = &self.transformer.mcx.mir().metadata.metadata;
                 let metadata_entry = metadata_store.get(id).unwrap();
 
                 lume_mir::Intrinsic::Metadata {

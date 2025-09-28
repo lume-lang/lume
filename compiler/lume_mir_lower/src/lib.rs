@@ -7,6 +7,7 @@ pub(crate) mod ty;
 use std::collections::HashMap;
 
 use lume_mir::{Function, ModuleMap, RegisterId};
+use lume_mir_queries::MirQueryCtx;
 use lume_span::{Location, NodeId};
 use lume_type_metadata::{TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
@@ -15,18 +16,15 @@ use crate::dynamic::DynamicShimBuilder;
 
 /// Defines a transformer which will lower a typed HIR map into an MIR map.
 pub struct ModuleTransformer<'tcx> {
-    tcx: &'tcx TyCheckCtx,
-
     /// Defines the MIR map which is being created.
-    mir: ModuleMap,
+    mcx: MirQueryCtx<'tcx>,
 }
 
 impl<'tcx> ModuleTransformer<'tcx> {
     /// Transforms the supplied context into a MIR map.
     pub fn transform(tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR) -> ModuleMap {
         let mut transformer = Self {
-            tcx,
-            mir: ModuleMap::new(tir.metadata),
+            mcx: MirQueryCtx::new(tcx, ModuleMap::new(tir.metadata)),
         };
 
         for func in tir.functions.values() {
@@ -37,21 +35,21 @@ impl<'tcx> ModuleTransformer<'tcx> {
             transformer.transform_callable(func);
         }
 
-        transformer.mir
+        transformer.mcx.take_mir()
     }
 
     fn define_callable(&mut self, func: &lume_tir::Function) {
         let id = func.id;
         let func = FunctionTransformer::define(self, id, func);
 
-        self.mir.functions.insert(id, func);
+        self.mcx.mir_mut().functions.insert(id, func);
     }
 
     fn transform_callable(&mut self, func: &lume_tir::Function) {
         let id = func.id;
         let func = FunctionTransformer::transform(self, id, func);
 
-        self.mir.functions.insert(id, func);
+        self.mcx.mir_mut().functions.insert(id, func);
     }
 }
 
@@ -163,11 +161,11 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     }
 
     pub(crate) fn tcx(&self) -> &TyCheckCtx {
-        self.transformer.tcx
+        self.transformer.mcx.tcx()
     }
 
     pub(crate) fn function(&self, func_id: NodeId) -> &Function {
-        self.transformer.mir.function(func_id)
+        self.transformer.mcx.mir().function(func_id)
     }
 
     /// Defines a new declaration in the current function block.
@@ -206,7 +204,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         ret_ty: lume_mir::Type,
         location: Location,
     ) -> lume_mir::Operand {
-        let func_sig = self.transformer.mir.function(func_id).signature.clone();
+        let func_sig = self.transformer.mcx.mir().function(func_id).signature.clone();
         let args = self.normalize_call_argumets(&func_sig.parameters, &args);
 
         #[cfg(debug_assertions)]
@@ -302,7 +300,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     fn metadata_entry_of(&self, type_ref: &lume_types::TypeRef) -> &TypeMetadata {
         let metadata_id = TypeMetadataId::from(type_ref);
 
-        self.transformer.mir.metadata.metadata.get(&metadata_id).unwrap()
+        self.transformer.mcx.mir().metadata.metadata.get(&metadata_id).unwrap()
     }
 
     /// Gets the metadata MIR type of the given type.
