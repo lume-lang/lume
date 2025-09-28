@@ -22,7 +22,7 @@ pub struct Options {
     pub print_type_context: bool,
 
     /// Defines whether the generated MIR should be printed to `stdio`.
-    pub print_mir: MirPrinting,
+    pub dump_mir: Option<Vec<String>>,
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
@@ -35,15 +35,6 @@ pub struct Options {
     /// Currently, only the source files of the root package are attempted
     /// to be overriden. If the file doesn't exist within the package, it is skipped.
     pub source_overrides: Option<IndexMap<FileName, String>>,
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "cli", derive(clap::ValueEnum))]
-pub enum MirPrinting {
-    #[default]
-    None,
-    Pretty,
-    Debug,
 }
 
 /// Defines how much the generated LLVM IR should be optimized.

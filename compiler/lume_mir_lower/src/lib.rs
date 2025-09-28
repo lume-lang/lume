@@ -104,7 +104,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             lume_tir::FunctionKind::Dynamic => {
                 DynamicShimBuilder::new(&mut transformer, id).build();
 
-                pass::RenameSsaVariables::default().execute(&mut transformer.func);
+                transformer.run_pass::<pass::rename_ssa::RenameSsaVariables>();
             }
             lume_tir::FunctionKind::Unreachable => {
                 let _entry_block = transformer.func.new_active_block();

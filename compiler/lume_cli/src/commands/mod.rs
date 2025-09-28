@@ -6,7 +6,7 @@ use clap::ValueHint;
 
 use crate::error::*;
 use error_snippet::{IntoDiagnostic, Result};
-use lume_session::{MirPrinting, OptimizationLevel};
+use lume_session::OptimizationLevel;
 use std::env::current_dir;
 use std::path::PathBuf;
 
@@ -60,13 +60,15 @@ pub struct BuildOptions {
 
     #[arg(
         long,
-        default_value = "none",
-        default_missing_value = "pretty",
-        help = "Print the generated MIR",
-        num_args(0..=1),
-        require_equals = true
+        help = "Prints the generated MIR",
+        long_help = "Prints the generated MIR for all functions.
+Optionally, can supply the name of a pass, where the MIR will be printed before executing.",
+        value_name = "PASS",
+        value_delimiter = ',',
+        required = false,
+        num_args = 0..=1
     )]
-    pub print_mir: MirPrinting,
+    pub dump_mir: Option<Vec<String>>,
 
     #[arg(
         short = 'O',
@@ -85,7 +87,7 @@ impl BuildOptions {
     pub fn options(&self) -> lume_session::Options {
         lume_session::Options {
             print_type_context: self.print_type_ctx,
-            print_mir: self.print_mir,
+            dump_mir: self.dump_mir.clone(),
             optimize: match self.optimize.as_str() {
                 "0" => OptimizationLevel::O0,
                 "1" => OptimizationLevel::O1,
