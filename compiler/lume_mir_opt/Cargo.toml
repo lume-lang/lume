@@ -1,5 +1,5 @@
 [package]
-name = "lume_mir_queries"
+name = "lume_mir_opt"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,8 +9,7 @@ doctest = false
 
 [dependencies]
 lume_mir = { path = "../lume_mir" }
-lume_query = { path = "../lume_query" }
-lume_query_macros = { path = "../lume_query_macros" }
+lume_mir_queries = { path = "../lume_mir_queries" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 lume_typech = { path = "../lume_typech" }

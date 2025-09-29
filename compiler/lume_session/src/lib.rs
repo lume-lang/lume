@@ -37,16 +37,67 @@ pub struct Options {
     pub source_overrides: Option<IndexMap<FileName, String>>,
 }
 
-/// Defines how much the generated LLVM IR should be optimized.
+/// Defines how much the generated IR should be optimized.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptimizationLevel {
-    #[default]
     O0,
     O1,
+    #[default]
     O2,
     O3,
     Os,
     Oz,
+}
+
+impl OptimizationLevel {
+    /// Gets the runtime "speed level" of the given optimization level.
+    ///
+    /// Each optimization level has a speed level, which helps determine how
+    /// important the **runtime speed** of the compiled binary is.
+    ///
+    /// Currently, the levels are:
+    ///
+    /// | Optimization level | Speed level |
+    /// |--------------------|-------------|
+    /// | `O0`               | 0           |
+    /// | `O1`               | 1           |
+    /// | `O2`               | 2           |
+    /// | `O3`               | 3           |
+    /// | `Os`               | 2           |
+    /// | `Oz`               | 2           |
+    #[inline]
+    pub fn speed_level(self) -> u8 {
+        match self {
+            Self::O0 => 0,
+            Self::O1 => 1,
+            Self::O2 | Self::Os | Self::Oz => 2,
+            Self::O3 => 3,
+        }
+    }
+
+    /// Gets the binary "size level" of the given optimization level.
+    ///
+    /// Each optimization level has a size level, which helps determine how
+    /// important the **binary size** of the compiled binary is.
+    ///
+    /// Currently, the levels are:
+    ///
+    /// | Optimization level | Size level |
+    /// |--------------------|------------|
+    /// | `O0`               | 0          |
+    /// | `O1`               | 1          |
+    /// | `O2`               | 1          |
+    /// | `O3`               | 1          |
+    /// | `Os`               | 2          |
+    /// | `Oz`               | 1          |
+    #[inline]
+    pub fn size_level(self) -> u8 {
+        match self {
+            Self::O0 => 0,
+            Self::O1 | Self::O2 | Self::O3 | Self::Oz => 1,
+            Self::Os => 2,
+        }
+    }
 }
 
 /// Represents a compilation session, invoked by the driver.

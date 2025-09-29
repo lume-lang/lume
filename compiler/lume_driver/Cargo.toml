@@ -16,6 +16,7 @@ lume_infer = { path = "../lume_infer" }
 lume_metadata = { path = "../../crates/lume_metadata" }
 lume_mir = { path = "../lume_mir" }
 lume_mir_lower = { path = "../lume_mir_lower" }
+lume_mir_opt = { path = "../lume_mir_opt" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../lume_span" }
 lume_tir = { path = "../lume_tir" }
