@@ -1,3 +1,5 @@
+pub mod analysis;
+
 use std::ops::Deref;
 
 use lume_mir::ModuleMap;

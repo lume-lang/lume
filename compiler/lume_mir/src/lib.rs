@@ -613,7 +613,11 @@ impl BasicBlock {
     /// Stores a value in an existing slot.
     pub fn store_slot(&mut self, target: SlotId, value: Operand, loc: Location) {
         self.instructions.push(Instruction {
-            kind: InstructionKind::StoreSlot { target, value },
+            kind: InstructionKind::StoreSlot {
+                target,
+                value,
+                offset: 0,
+            },
             location: loc,
         });
     }
@@ -932,7 +936,11 @@ pub enum InstructionKind {
     Store { target: RegisterId, value: Operand },
 
     /// Stores the value into the target slot.
-    StoreSlot { target: SlotId, value: Operand },
+    StoreSlot {
+        target: SlotId,
+        value: Operand,
+        offset: usize,
+    },
 
     /// Stores the value into the field of an target register.
     StoreField {
@@ -985,7 +993,7 @@ impl std::fmt::Display for Instruction {
             InstructionKind::CreateSlot { slot, ty } => write!(f, "{slot} = slot ({} bytes)", ty.bytesize()),
             InstructionKind::Allocate { register, ty, .. } => write!(f, "{register} = alloc {ty}"),
             InstructionKind::Store { target, value } => write!(f, "*{target} = {value}"),
-            InstructionKind::StoreSlot { target, value } => write!(f, "*{target} = {value}"),
+            InstructionKind::StoreSlot { target, value, offset } => write!(f, "*{target}[+x{offset:X}] = {value}"),
             InstructionKind::StoreField { target, offset, value } => write!(f, "*{target}[+x{offset:X}] = {value}"),
             InstructionKind::ObjectRegister { register } => write!(f, "mark object({register})"),
         }
@@ -1161,7 +1169,7 @@ pub enum OperandKind {
     },
 
     /// Represents an address to an existing stack slot.
-    SlotAddress { id: SlotId },
+    SlotAddress { id: SlotId, offset: usize },
 
     /// Represents a reference to an existing register.
     Reference { id: RegisterId },
@@ -1200,6 +1208,20 @@ impl Operand {
             | OperandKind::SlotAddress { .. } => Vec::new(),
         }
     }
+
+    /// Determines whether the operand stores the given register within it.
+    pub fn stores_register(&self, register: RegisterId) -> bool {
+        match &self.kind {
+            OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::Bitcast { .. }
+            | OperandKind::SlotAddress { .. } => false,
+            OperandKind::Reference { id } | OperandKind::Load { id } => *id == register,
+            OperandKind::LoadField { target, field_type, .. } => *target == register && field_type.is_reference_type(),
+        }
+    }
 }
 
 impl std::fmt::Display for Operand {
@@ -1213,8 +1235,8 @@ impl std::fmt::Display for Operand {
             OperandKind::Bitcast { source, target } => write!(f, "{source} as {target}"),
             OperandKind::Reference { id } => write!(f, "{id}"),
             OperandKind::Load { id } => write!(f, "*{id}"),
-            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+0x{offset:X}]"),
-            OperandKind::SlotAddress { id } => write!(f, "{id}"),
+            OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
+            OperandKind::SlotAddress { id, offset } => write!(f, "{id}[+x{offset:X}]"),
             OperandKind::String { value } => write!(f, "\"{value}\""),
         }
     }
