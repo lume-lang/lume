@@ -800,7 +800,10 @@ impl FunctionTransformer<'_, '_> {
         self.func.set_current_block(merge_block);
 
         let slot_addr = self.declare_value(lume_mir::Operand {
-            kind: lume_mir::OperandKind::SlotAddress { id: value_slot },
+            kind: lume_mir::OperandKind::SlotAddress {
+                id: value_slot,
+                offset: 0,
+            },
             location,
         });
 

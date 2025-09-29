@@ -288,7 +288,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                 .store_slot(slot, arg.clone(), arg.location);
 
             *arg = lume_mir::Operand {
-                kind: lume_mir::OperandKind::SlotAddress { id: slot },
+                kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },
                 location: arg.location,
             };
         }

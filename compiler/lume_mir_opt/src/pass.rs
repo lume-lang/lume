@@ -1,7 +1,9 @@
 mod heap_to_stack;
 
 use lume_mir::*;
+use lume_mir_queries::MirQueryCtx;
 use lume_session::OptimizationLevel;
+use lume_span::NodeId;
 
 /// Defines a MIR optimization pass which can be executed over a function or block.
 pub(crate) trait OptimizerPass {
@@ -12,22 +14,25 @@ pub(crate) trait OptimizerPass {
     fn enabled(level: OptimizationLevel) -> bool;
 
     /// Executes the pass on the given function.
-    fn execute(&mut self, func: &mut Function);
+    fn execute(&mut self, mcx: &mut MirQueryCtx, func_id: NodeId);
 }
 
 /// Executes the given optimizer pass on the given function, if the pass is
 /// enabled under the optimization level.
 #[inline]
-pub(crate) fn run_pass<P: OptimizerPass>(level: OptimizationLevel, func: &mut Function) {
+pub(crate) fn run_pass<P: OptimizerPass>(mcx: &mut MirQueryCtx, level: OptimizationLevel, func_id: NodeId) {
     if P::enabled(level) {
         let mut pass = P::new();
-        pass.execute(func);
+        pass.execute(mcx, func_id);
     }
 }
 
 /// Attempts to run all optimization passes which have been enabled by `level` on
 /// the given function.
 #[inline]
-pub(crate) fn run_all_passes(level: OptimizationLevel, func: &mut Function) {
-    run_pass::<heap_to_stack::HeapToStack>(level, func);
+pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
+    let session = &mcx.gcx().session;
+    let level = session.options.optimize;
+
+    run_pass::<heap_to_stack::HeapToStack>(mcx, level, func_id);
 }
