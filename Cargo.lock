@@ -1081,6 +1081,7 @@ dependencies = [
  "lume_metadata",
  "lume_mir",
  "lume_mir_lower",
+ "lume_mir_opt",
  "lume_session",
  "lume_span",
  "lume_tir",
@@ -1273,6 +1274,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_mir_opt"
+version = "0.1.1"
+dependencies = [
+ "indexmap",
+ "lume_mir",
+ "lume_mir_queries",
+ "lume_session",
+ "lume_span",
+ "lume_typech",
+ "lume_types",
+ "tracing",
+]
+
+[[package]]
 name = "lume_mir_queries"
 version = "0.1.1"
 dependencies = [
@@ -1284,6 +1299,7 @@ dependencies = [
  "lume_span",
  "lume_typech",
  "lume_types",
+ "tracing",
 ]
 
 [[package]]
