@@ -285,7 +285,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             let slot = self.func.alloc_slot(arg_ty, arg.location);
             self.func
                 .current_block_mut()
-                .store_slot(slot, arg.clone(), arg.location);
+                .store_slot(slot, 0, arg.clone(), arg.location);
 
             *arg = lume_mir::Operand {
                 kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },

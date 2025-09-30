@@ -125,6 +125,7 @@ impl MarkObjectReferences {
             | OperandKind::Integer { .. }
             | OperandKind::Float { .. }
             | OperandKind::String { .. }
+            | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => {}
         }
     }

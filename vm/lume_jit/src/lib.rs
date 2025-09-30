@@ -508,15 +508,8 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
-    pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize) -> Value {
-        let field_ty = self.retrieve_field_type(register, field);
-
-        self.load_field_as(register, field, offset, field_ty)
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-    pub(crate) fn load_field_as(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
+    pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
         let ptr = self.use_var(register);
 
         lume_trace::debug!(%ptr, %ty, %register, field);
@@ -777,8 +770,9 @@ impl<'ctx> LowerFunction<'ctx> {
     pub(crate) fn branch(&mut self, call: &BlockBranchSite) {
         let cl_block = *self.blocks.get(&call.block).unwrap();
         let args = call
-            .arg_operands()
-            .map(|arg| BlockArg::Value(self.cg_operand(&arg)))
+            .arguments
+            .iter()
+            .map(|arg| BlockArg::Value(self.cg_operand(arg)))
             .collect::<Vec<_>>();
 
         self.builder.ins().jump(cl_block, args.iter().as_ref());
@@ -794,13 +788,15 @@ impl<'ctx> LowerFunction<'ctx> {
         let cl_else_block = *self.blocks.get(&else_block.block).unwrap();
 
         let then_args = then_block
-            .arg_operands()
-            .map(|arg| BlockArg::Value(self.cg_operand(&arg)))
+            .arguments
+            .iter()
+            .map(|arg| BlockArg::Value(self.cg_operand(arg)))
             .collect::<Vec<_>>();
 
         let else_args = else_block
-            .arg_operands()
-            .map(|arg| BlockArg::Value(self.cg_operand(&arg)))
+            .arguments
+            .iter()
+            .map(|arg| BlockArg::Value(self.cg_operand(arg)))
             .collect::<Vec<_>>();
 
         self.builder.ins().brif(

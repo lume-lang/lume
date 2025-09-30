@@ -140,7 +140,7 @@ impl ConvertAssignmentExpressions {
             }
             TerminatorKind::Branch(site) => {
                 for arg in &mut site.arguments {
-                    self.get_moved_register(arg);
+                    self.update_regs_op(arg);
                 }
             }
             TerminatorKind::ConditionalBranch {
@@ -151,11 +151,11 @@ impl ConvertAssignmentExpressions {
                 self.get_moved_register(condition);
 
                 for arg in &mut then_block.arguments {
-                    self.get_moved_register(arg);
+                    self.update_regs_op(arg);
                 }
 
                 for arg in &mut else_block.arguments {
-                    self.get_moved_register(arg);
+                    self.update_regs_op(arg);
                 }
             }
             TerminatorKind::Switch {
@@ -167,12 +167,12 @@ impl ConvertAssignmentExpressions {
 
                 for arm in arms {
                     for arg in &mut arm.1.arguments {
-                        self.get_moved_register(arg);
+                        self.update_regs_op(arg);
                     }
                 }
 
                 for arg in &mut fallback.arguments {
-                    self.get_moved_register(arg);
+                    self.update_regs_op(arg);
                 }
             }
             TerminatorKind::Unreachable => {}
@@ -215,6 +215,7 @@ impl ConvertAssignmentExpressions {
             | OperandKind::Integer { .. }
             | OperandKind::Float { .. }
             | OperandKind::String { .. }
+            | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => {}
         }
     }

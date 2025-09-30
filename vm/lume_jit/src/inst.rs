@@ -84,11 +84,14 @@ impl LowerFunction<'_> {
 
                 self.builder.ins().store(MemFlags::new(), value, target, 0);
             }
-            lume_mir::InstructionKind::StoreSlot { target, value } => {
+            lume_mir::InstructionKind::StoreSlot { target, value, offset } => {
                 let slot = self.retrieve_slot(*target);
                 let value = self.cg_operand(value);
 
-                self.builder.ins().stack_store(value, slot, 0);
+                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+                let offset = *offset as i32;
+
+                self.builder.ins().stack_store(value, slot, offset);
             }
             lume_mir::InstructionKind::StoreField { target, offset, value } => {
                 let target = self.use_var(*target);

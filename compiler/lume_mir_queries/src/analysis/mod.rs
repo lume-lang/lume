@@ -166,7 +166,7 @@ impl MirQueryCtx<'_> {
         reg: RegisterId,
         call_stack: &mut IndexSet<NodeId>,
     ) -> ControlFlow<EscapeReason, ()> {
-        for (idx, arg) in call_site.arg_operands().enumerate() {
+        for (idx, arg) in call_site.arguments.iter().enumerate() {
             if arg.stores_register(reg) {
                 let block = func.block(call_site.block);
                 let param = block.parameters[idx];

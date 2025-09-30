@@ -54,6 +54,7 @@ impl FunctionTransformer<'_, '_> {
                 lume_mir::Type::pointer(elemental)
             }
             lume_mir::OperandKind::LoadField { field_type, .. } => field_type.clone(),
+            lume_mir::OperandKind::LoadSlot { loaded_type, .. } => loaded_type.clone(),
             lume_mir::OperandKind::SlotAddress { id, .. } => {
                 let slot_ty = self.func.slots.get(id).unwrap();
 

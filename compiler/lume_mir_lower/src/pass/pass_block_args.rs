@@ -92,8 +92,8 @@ impl PassBlockArguments {
                 *param
             };
 
-            if !call_site.arguments.contains(&arg) {
-                call_site.arguments.push(arg);
+            if !call_site.arguments.iter().any(|a| a.is_reference_of(arg)) {
+                call_site.arguments.push(Operand::reference_of(arg));
             }
         }
     }
