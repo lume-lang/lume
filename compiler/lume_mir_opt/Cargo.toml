@@ -11,7 +11,7 @@ doctest = false
 lume_mir = { path = "../lume_mir" }
 lume_mir_queries = { path = "../lume_mir_queries" }
 lume_session = { path = "../lume_session" }
-lume_span = { path = "../lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
 

@@ -2,11 +2,15 @@
 
 pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
 
+pub extern crate error_snippet_derive;
+
 pub use error_snippet::Diagnostic;
 pub use error_snippet::Error;
+pub use error_snippet::GraphicalRenderer;
 pub use error_snippet::IntoDiagnostic;
 pub use error_snippet::Result;
 pub use error_snippet::SimpleDiagnostic;
+pub use error_snippet_derive::Diagnostic;
 
 use error_snippet::Renderer;
 use error_snippet::Severity;

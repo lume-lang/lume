@@ -8,9 +8,9 @@ rust-version.workspace = true
 doctest = false
 
 [dependencies]
-lume_errors = { path = "../lume_errors" }
+lume_errors = { path = "../../crates/lume_errors" }
 lume_session = { path = "../lume_session" }
-lume_span = { path = "../lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }

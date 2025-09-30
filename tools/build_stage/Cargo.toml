@@ -10,7 +10,7 @@ doctest = false
 
 [dependencies]
 arc = { path = "../../compiler/arc" }
-lume_errors = { path = "../../compiler/lume_errors" }
+lume_errors = { path = "../../crates/lume_errors" }
 lume_fuse = { path = "../../compiler/lume_fuse" }
 lume_hir = { path = "../../compiler/lume_hir" }
 lume_hir_lower = { path = "../../compiler/lume_hir_lower" }
@@ -19,7 +19,7 @@ lume_jit = { path = "../../vm/lume_jit" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_mir_lower = { path = "../../compiler/lume_mir_lower" }
 lume_session = { path = "../../compiler/lume_session" }
-lume_span = { path = "../../compiler/lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 lume_tir = { path = "../../compiler/lume_tir" }
 lume_tir_lower = { path = "../../compiler/lume_tir_lower" }
 lume_typech = { path = "../../compiler/lume_typech" }

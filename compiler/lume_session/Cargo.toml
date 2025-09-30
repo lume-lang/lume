@@ -9,9 +9,9 @@ test = false
 doctest = false
 
 [dependencies]
-lume_errors = { path = "../lume_errors" }
-lume_query = { path = "../lume_query" }
-lume_span = { path = "../lume_span" }
+lume_errors = { path = "../../crates/lume_errors" }
+lume_query = { path = "../../crates/lume_query" }
+lume_span = { path = "../../crates/lume_span" }
 
 clap = { workspace = true, optional = true }
 error_snippet = { workspace = true }

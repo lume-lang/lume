@@ -10,18 +10,18 @@ doctest = false
 [dependencies]
 arc = { path = "../arc" }
 lume_ast = { path = "../lume_ast" }
-lume_errors = { path = "../lume_errors" }
+lume_errors = { path = "../../crates/lume_errors" }
 lume_hir = { path = "../lume_hir" }
 lume_parser = { path = "../lume_parser" }
 lume_session = { path = "../lume_session" }
-lume_span = { path = "../lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
-lume_errors_test = { path = "../lume_errors_test" }
+lume_errors_test = { path = "../../crates/lume_errors_test" }
 lume_parser = { path = "../lume_parser" }
 insta = { version = "1.42.2", features = ["yaml"] }
 
