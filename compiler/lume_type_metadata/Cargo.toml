@@ -9,7 +9,7 @@ doctest = false
 
 [dependencies]
 lume_hir = { path = "../lume_hir" }
-lume_span = { path = "../lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { workspace = true, features = ["serde"] }

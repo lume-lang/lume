@@ -12,7 +12,7 @@ doctest = false
 indexmap = { workspace = true }
 
 lume_session = { path = "../lume_session" }
-lume_span = { path = "../lume_span" }
+lume_span = { path = "../../crates/lume_span" }
 lume_type_metadata = { path = "../lume_type_metadata" }
 lume_types = { path = "../lume_types" }
 

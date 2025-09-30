@@ -5,8 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-lume_errors = { path = "../../compiler/lume_errors" }
-lume_span = { path = "../../compiler/lume_span" }
+lume_errors = { path = "../../crates/lume_errors" }
+lume_span = { path = "../../crates/lume_span" }
 
 build_stage = { path = "../build_stage" }
 error_snippet = { workspace = true }

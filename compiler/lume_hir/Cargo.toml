@@ -9,9 +9,9 @@ doctest = false
 
 [dependencies]
 lume_ast = { path = "../lume_ast" }
-lume_errors = { path = "../lume_errors" }
-lume_macros = { path = "../lume_macros" }
-lume_span = { path = "../lume_span" }
+lume_errors = { path = "../../crates/lume_errors" }
+lume_macros = { path = "../../crates/lume_macros" }
+lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
