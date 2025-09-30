@@ -2,12 +2,13 @@ use super::*;
 
 type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 
-/// Some backend implementations, specifically Cranelift, does not allow using the same register
-/// across block boundaries. Because of the *conservative* nature of Cranelift optimization, we must
-/// do this preprocessing ourselves.
+/// Some backend implementations, specifically Cranelift, does not allow using
+/// the same register across block boundaries. Because of the *conservative*
+/// nature of Cranelift optimization, we must do this preprocessing ourselves.
 ///
-/// It will attempt to rename registers in an MIR function, so that each block start it's register
-/// index at 0, then increments it when a new register is declared. This also include block parameters.
+/// It will attempt to rename registers in an MIR function, so that each block
+/// start it's register index at 0, then increments it when a new register is
+/// declared. This also include block parameters.
 ///
 /// As an example, take the given MIR:
 /// ```mir
@@ -25,12 +26,13 @@ type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 ///     return #5
 /// ```
 ///
-/// This is not valid in Cranelift, since most registers are used across multiple blocks. Look at `#0`
-/// specifically; it is referenced in all of the blocks in the function!
+/// This is not valid in Cranelift, since most registers are used across
+/// multiple blocks. Look at `#0` specifically; it is referenced in all of the
+/// blocks in the function!
 ///
-/// To circumvent this ~pedantry~ *requirement*, this pass renames all the registers to be local to
-/// the block in which they're declared. Using the given MIR from before, we transform it into:
-/// ```mir
+/// To circumvent this ~pedantry~ *requirement*, this pass renames all the
+/// registers to be local to the block in which they're declared. Using the
+/// given MIR from before, we transform it into: ```mir
 /// B0:
 ///     #0 = 4_i32
 ///     #1 = 1_i32
@@ -44,16 +46,17 @@ type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 ///     #2: i32 = *(#0, #1)
 ///     return #2
 /// ```
-///
+/// 
 /// <div class="warning">
 ///
 /// **Here be dragons!**
 ///
-/// On a more serious note, this is quite possibly the most error-prone part of the MIR lowering process.
-/// The reason for this is mostly because of the awkward implementation of "phi" nodes between
-/// blocks in some instances.
+/// On a more serious note, this is quite possibly the most error-prone part of
+/// the MIR lowering process. The reason for this is mostly because of the
+/// awkward implementation of "phi" nodes between blocks in some instances.
 ///
-/// This pass should receive a refactor at some point, but is currently not planned.
+/// This pass should receive a refactor at some point, but is currently not
+/// planned.
 ///
 /// </div>
 #[derive(Default, Debug)]

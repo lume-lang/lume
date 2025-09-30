@@ -1,4 +1,6 @@
-use std::{fmt::Debug, ops::Range, sync::Arc};
+use std::fmt::Debug;
+use std::ops::Range;
+use std::sync::Arc;
 
 use error_snippet::Error;
 use error_snippet_derive::Diagnostic;

@@ -37,10 +37,11 @@ impl Parser {
         }
     }
 
-    /// Attempts to recover from a parsing error, whilst attempting to parse a statement.
+    /// Attempts to recover from a parsing error, whilst attempting to parse a
+    /// statement.
     ///
-    /// The recovery for statements is the move the cursor to the next semicolon. So, given the
-    /// following Lume statement:
+    /// The recovery for statements is the move the cursor to the next
+    /// semicolon. So, given the following Lume statement:
     ///
     /// ```lm
     /// let a: = 1;

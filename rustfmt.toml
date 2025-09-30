@@ -1,1 +1,6 @@
 max_width = 120
+imports_granularity = "Module"
+group_imports = "StdExternalCrate"
+overflow_delimited_expr = true
+reorder_impl_items = true
+wrap_comments = true

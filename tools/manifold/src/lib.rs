@@ -77,15 +77,15 @@ pub(crate) enum ManifoldTestType {
 
     /// # HIR Tests
     ///
-    /// HIR tests are stored in the `hir/` subdirectory and verify the lowered HIR
-    /// maps of different Lume programs and packages.
+    /// HIR tests are stored in the `hir/` subdirectory and verify the lowered
+    /// HIR maps of different Lume programs and packages.
     Hir,
 
     /// # Binary Tests
     ///
-    /// Binary tests are stored in the `bin/` subdirectory and verify that an entire
-    /// executable can be created from a given source file. Optionally, the output
-    /// of the executed code will also be verified.
+    /// Binary tests are stored in the `bin/` subdirectory and verify that an
+    /// entire executable can be created from a given source file.
+    /// Optionally, the output of the executed code will also be verified.
     Binary,
 }
 
@@ -180,12 +180,13 @@ fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Resu
     })
 }
 
-/// Attempts to determine the test type from the path the file is declared within.
+/// Attempts to determine the test type from the path the file is declared
+/// within.
 ///
 /// # Test subdirectories
 /// - **UI tests** are stored in the `ui/` subdirectory and are used to verify
-///   that the reporting facilities and diagnostics are identical between changes
-///   in the Lume compiler.
+///   that the reporting facilities and diagnostics are identical between
+///   changes in the Lume compiler.
 fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> {
     let relative_path = path.strip_prefix(root).unwrap();
     let relative_path_str = relative_path.display().to_string();

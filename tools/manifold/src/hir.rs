@@ -1,14 +1,13 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use build_stage::ManifoldDriver;
 use error_snippet::IntoDiagnostic;
 use lume_errors::{DiagCtx, Result};
 use lume_span::{PackageId, SourceFile};
 
-use crate::{TestResult, diff::normalize_output};
+use crate::TestResult;
+use crate::diff::normalize_output;
 
 pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     let mut map_path = path.clone();

@@ -11,7 +11,6 @@ use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
-
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_gc::{CompiledFunctionMetadata, FunctionPtr, FunctionStackMap};
@@ -177,13 +176,10 @@ impl CraneliftBackend {
                 stack_locations.push((*offset as usize, *length as usize, refs));
             }
 
-            function_metadata.insert(
-                func.id,
-                FunctionMetadata {
-                    total_size: code_len,
-                    stack_locations,
-                },
-            );
+            function_metadata.insert(func.id, FunctionMetadata {
+                total_size: code_len,
+                stack_locations,
+            });
 
             self.module().clear_context(&mut ctx);
         }
@@ -308,7 +304,8 @@ impl CraneliftBackend {
             tracing::error!(name: "verify", "error caused by function:\n{}", ctx.func);
 
             // Displaying verifier errors directly gives a really useless error, so to
-            // actually know the issue, we're using the debug output of the error in the error.
+            // actually know the issue, we're using the debug output of the error in the
+            // error.
             let diagnostic = SimpleDiagnostic::new(format!("function verification failed ({})", func.name))
                 .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
 

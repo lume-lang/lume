@@ -4,17 +4,11 @@ pub const ERROR_GUARANTEED_CODE: &str = "FINAL_ERROR";
 
 pub extern crate error_snippet_derive;
 
-pub use error_snippet::Diagnostic;
-pub use error_snippet::Error;
-pub use error_snippet::GraphicalRenderer;
-pub use error_snippet::IntoDiagnostic;
-pub use error_snippet::Result;
-pub use error_snippet::SimpleDiagnostic;
-pub use error_snippet_derive::Diagnostic;
-
-use error_snippet::Renderer;
-use error_snippet::Severity;
 use std::sync::{Arc, Mutex, MutexGuard};
+
+pub use error_snippet::{Diagnostic, Error, GraphicalRenderer, IntoDiagnostic, Result, SimpleDiagnostic};
+use error_snippet::{Renderer, Severity};
+pub use error_snippet_derive::Diagnostic;
 
 /// A context to deal with diagnostics, which is meant to
 /// be used throughout the entire lifespan of the compiler / driver
@@ -29,7 +23,8 @@ pub struct DiagCtxInner {
 }
 
 impl DiagCtxInner {
-    /// Renders all the stored diagnostics to the standard error output (`stderr`).
+    /// Renders all the stored diagnostics to the standard error output
+    /// (`stderr`).
     fn render_stderr(&self, renderer: &mut impl Renderer) {
         if let Some(buffer) = self.render_buffer(renderer) {
             eprint!("{buffer}");
@@ -69,7 +64,8 @@ impl DiagCtxInner {
         self.emitted.iter()
     }
 
-    /// Invokes the given closure with an iterator over all reported diagnostics.
+    /// Invokes the given closure with an iterator over all reported
+    /// diagnostics.
     fn with_iter<F, R>(&self, f: F) -> R
     where
         F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
@@ -77,7 +73,8 @@ impl DiagCtxInner {
         f(self.emitted.iter())
     }
 
-    /// Determines whether the diagnostic context has been tainted with one-or-more errors.
+    /// Determines whether the diagnostic context has been tainted with
+    /// one-or-more errors.
     fn is_tainted(&self) -> bool {
         self.emitted.iter().any(|diag| diag.severity() == Severity::Error)
     }
@@ -107,7 +104,8 @@ impl DiagCtx {
     ///
     /// # Panics
     ///
-    /// Panics if the inner diagnostics context has been locked by another thread.
+    /// Panics if the inner diagnostics context has been locked by another
+    /// thread.
     fn inner(&self) -> MutexGuard<'_, DiagCtxInner> {
         self.inner.lock().unwrap()
     }
@@ -132,11 +130,13 @@ impl DiagCtx {
         }
     }
 
-    /// Invokes the given closure with an iterator over all reported diagnostics.
+    /// Invokes the given closure with an iterator over all reported
+    /// diagnostics.
     ///
     /// # Panics
     ///
-    /// Panics if the inner diagnostics context has been locked by another thread.
+    /// Panics if the inner diagnostics context has been locked by another
+    /// thread.
     pub fn with_iter<F, R>(&self, f: F) -> R
     where
         F: for<'a> FnOnce(std::slice::Iter<'a, Error>) -> R,
@@ -146,7 +146,8 @@ impl DiagCtx {
         guard.with_iter(f)
     }
 
-    /// Determines whether the diagnostic context has been tainted with one-or-more errors.
+    /// Determines whether the diagnostic context has been tainted with
+    /// one-or-more errors.
     pub fn is_tainted(&self) -> bool {
         self.inner().is_tainted()
     }
@@ -164,7 +165,8 @@ impl DiagCtx {
         }
     }
 
-    /// Renders all the stored diagnostics to the standard error output (`stderr`).
+    /// Renders all the stored diagnostics to the standard error output
+    /// (`stderr`).
     pub fn render_stderr(&self, renderer: &mut impl Renderer) {
         self.inner().render_stderr(renderer);
     }
@@ -180,8 +182,9 @@ impl DiagCtx {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     pub fn with_none(&self, f: impl FnOnce(DiagCtxHandle)) {
         let handle = self.handle();
         f(handle.clone());
@@ -190,13 +193,14 @@ impl DiagCtx {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the closure itself
-    /// returned `Err`.
+    /// Returns `Err` if an error occured while executing the closure or if the
+    /// closure itself returned `Err`.
     pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
         let handle = self.handle();
         let res = f(handle.clone());
@@ -209,13 +213,14 @@ impl DiagCtx {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the closure itself
-    /// returned `Err`.
+    /// Returns `Err` if an error occured while executing the closure or if the
+    /// closure itself returned `Err`.
     pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
         let handle = self.handle();
         let res = f(handle.clone());
@@ -228,8 +233,9 @@ impl DiagCtx {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     pub fn with_opt<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Option<TReturn> {
         let handle = self.handle();
 
@@ -252,7 +258,8 @@ unsafe impl Sync for DiagCtx {}
 /// stages.
 ///
 /// The handle acts as a mutable reference to it's parent [`DiagCtx`] instance,
-/// but will drain all errors to the output, once it's been dropped or manually drained.
+/// but will drain all errors to the output, once it's been dropped or manually
+/// drained.
 #[derive(Clone)]
 pub struct DiagCtxHandle {
     /// Contains the parent [`DiagCtxInner`] handler.
@@ -263,7 +270,8 @@ pub struct DiagCtxHandle {
 }
 
 impl DiagCtxHandle {
-    /// Creates a new [`DiagCtxHandle`], functioning  similar to a shim. Mostly used for testing.
+    /// Creates a new [`DiagCtxHandle`], functioning  similar to a shim. Mostly
+    /// used for testing.
     pub fn shim() -> Self {
         DiagCtx::new().handle()
     }
@@ -305,12 +313,14 @@ impl DiagCtxHandle {
         self.push();
     }
 
-    /// Drains the currently reported errors in the context to the output buffer.
+    /// Drains the currently reported errors in the context to the output
+    /// buffer.
     ///
     /// # Errors
     ///
-    /// If any reported diagnostics have a severity at or above [`error_snippet::Severity::Error`],
-    /// they will be counted towards a [`error_snippet::DrainError::CompoundError`], which will be
+    /// If any reported diagnostics have a severity at or above
+    /// [`error_snippet::Severity::Error`], they will be counted towards a
+    /// [`error_snippet::DrainError::CompoundError`], which will be
     /// raised when draining has finished.
     ///
     /// # Panics
@@ -333,13 +343,14 @@ impl DiagCtxHandle {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the closure itself
-    /// returned `Err`.
+    /// Returns `Err` if an error occured while executing the closure or if the
+    /// closure itself returned `Err`.
     pub fn with_res<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> TReturn) -> Result<TReturn> {
         let res = f(self.clone());
         self.push();
@@ -348,13 +359,14 @@ impl DiagCtxHandle {
     }
 
     /// Creates a new handle, which is only valid within the given closure,
-    /// which is executed immediately. Upon finishing the closure, the handle is dropped
-    /// and all diagnostics reporting within it are immediately pushed to the inner handler.
+    /// which is executed immediately. Upon finishing the closure, the handle is
+    /// dropped and all diagnostics reporting within it are immediately
+    /// pushed to the inner handler.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if an error occured while executing the closure or if the closure itself
-    /// returned `Err`.
+    /// Returns `Err` if an error occured while executing the closure or if the
+    /// closure itself returned `Err`.
     pub fn with<TReturn>(&self, f: impl FnOnce(DiagCtxHandle) -> Result<TReturn>) -> Result<TReturn> {
         let res = f(self.clone());
         self.push();

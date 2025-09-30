@@ -14,8 +14,9 @@ impl TyCheckCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
-    /// etc, or when expected items cannot be found within the context.
+    /// Returns `Err` when either a language error occured, such as missing
+    /// variables, missing methods, etc, or when expected items cannot be
+    /// found within the context.
     #[tracing::instrument(
         level = "INFO",
         name = "lume_typech::TyCheckCtx::typecheck",
@@ -40,8 +41,8 @@ impl TyCheckCtx {
     /// if expected items cannot be found within the context.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn ensure_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
-        // If the two given types are exactly the same, both underlying instance and type arguments,
-        // we can be sure they're compatible.
+        // If the two given types are exactly the same, both underlying instance and
+        // type arguments, we can be sure they're compatible.
         if from == to {
             return Ok(());
         }
@@ -84,7 +85,8 @@ impl TyCheckCtx {
             .into());
         }
 
-        // If `to` refers to a type parameter, check if `from` satisfies the constraints.
+        // If `to` refers to a type parameter, check if `from` satisfies the
+        // constraints.
         if let Some(to_arg) = self.as_type_parameter(to)? {
             tracing::debug!(target: "type_compat", ?from, ?to_arg, "checking type parameter constraints");
 
@@ -165,16 +167,16 @@ impl TyCheckCtx {
     /// Checks whether the given signatures are compatible. This method
     /// expects the signatures to already be instantiated.
     ///
-    /// **Note:** since [`FunctionSig`] don't contain the names of the functions they
-    /// represent, the equality of the names are not tested.
+    /// **Note:** since [`FunctionSig`] don't contain the names of the functions
+    /// they represent, the equality of the names are not tested.
     ///
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn check_signature_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
-        // If the two given signatures are exactly the same, both underlying instance and type arguments,
-        // we can be sure they're compatible.
+        // If the two given signatures are exactly the same, both underlying instance
+        // and type arguments, we can be sure they're compatible.
         if from == to {
             return Ok(true);
         }

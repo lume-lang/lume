@@ -1,7 +1,8 @@
 use super::*;
 
-/// Attempts to mark managed objects as GC references, by adding [`InstructionKind::ObjectRegister`]
-/// instructions to the MIR, wherever fitting. These instructions are used when the garbage collector
+/// Attempts to mark managed objects as GC references, by adding
+/// [`InstructionKind::ObjectRegister`] instructions to the MIR, wherever
+/// fitting. These instructions are used when the garbage collector
 /// looks for live objects in any given location.
 #[derive(Default, Debug)]
 pub(crate) struct MarkObjectReferences {
@@ -9,8 +10,8 @@ pub(crate) struct MarkObjectReferences {
     /// should be placed.
     offset: usize,
 
-    /// Defines all the currently marked objects, to prevent multiple instructions from being
-    /// inserted, all referencing the same register.
+    /// Defines all the currently marked objects, to prevent multiple
+    /// instructions from being inserted, all referencing the same register.
     marked: HashSet<RegisterId>,
 
     /// List of all instructions which require an object register instruction.

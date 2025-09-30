@@ -1,7 +1,8 @@
 use super::*;
 
-/// Using the result of the previous pass, [`DefineBlockParameters`], traverses through
-/// each block and passes the appropriate registers to each call to any successor blocks.
+/// Using the result of the previous pass, [`DefineBlockParameters`], traverses
+/// through each block and passes the appropriate registers to each call to any
+/// successor blocks.
 ///
 /// For example, given MIR like the following:
 /// ```mir
@@ -17,10 +18,10 @@ use super::*;
 ///     return #3
 /// ```
 ///
-/// Each successor block, except for `B2`, is meant to pass one-or-more registers to their
-/// successor blocks. This pass will look through each block and update their terminator to pass
-/// the required registers. After the pass, the same MIR will look like this:
-/// ```mir
+/// Each successor block, except for `B2`, is meant to pass one-or-more
+/// registers to their successor blocks. This pass will look through each block
+/// and update their terminator to pass the required registers. After the pass,
+/// the same MIR will look like this: ```mir
 /// B0:
 ///     #0 = 4_i32
 ///     goto B1(#0)          <-- notice the added block arguments
@@ -48,8 +49,9 @@ impl Pass for PassBlockArguments {
     /// Executes the pass on the given function.
     fn execute(&mut self, func: &mut Function) {
         // TODO:
-        // I hate this, but we're not quite at the "we should optimize the compiler more"
-        // phase, yet. But, this is certainly not a good solution to a lifetime issue.
+        // I hate this, but we're not quite at the "we should optimize the compiler
+        // more" phase, yet. But, this is certainly not a good solution to a
+        // lifetime issue.
         let func_immut = func.clone();
 
         for block in func.blocks.values_mut() {

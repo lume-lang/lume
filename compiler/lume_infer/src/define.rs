@@ -1253,7 +1253,8 @@ impl TyInferCtx {
         Ok(TypeArgumentInference::Replace { replacement: type_args })
     }
 
-    /// Attempts to infer the type of the type parameter, given the arguments and parameter types.
+    /// Attempts to infer the type of the type parameter, given the arguments
+    /// and parameter types.
     pub(crate) fn infer_type_arg_param(
         &self,
         type_param: NodeId,
@@ -1274,14 +1275,15 @@ impl TyInferCtx {
     /// Attempts to infer a type argument from within a nested parameter type.
     ///
     /// The method takes three parameters:
-    /// - `target_param_id`: The ID of the type parameter which we wish to infer the type from.
+    /// - `target_param_id`: The ID of the type parameter which we wish to infer
+    ///   the type from.
     /// - `param_ty`: The type of some parameter.
     /// - `arg_ty`: The type of the argument which corresponds to the parameter.
     ///
-    /// If the parameter is already a type parameter which corresponds to the target ID,
-    /// the type of the parameter is returned. If not, the method will iterate over type
-    /// arguments within the parameter- and argument-types. For example, given the given Lume sample:
-    /// ```lm
+    /// If the parameter is already a type parameter which corresponds to the
+    /// target ID, the type of the parameter is returned. If not, the method
+    /// will iterate over type arguments within the parameter- and
+    /// argument-types. For example, given the given Lume sample: ```lm
     /// struct Test<T> {}
     ///
     /// fn foo<T>(val: Test<T>) { }
@@ -1292,11 +1294,13 @@ impl TyInferCtx {
     ///     foo(t);
     /// }
     /// ```
-    ///
-    /// From the given sample, we'd want to resolve `T` to be `Int32`, since they are both
-    /// contained within the type `Test`. As such, the method iterates over the type parameters
-    /// within the `param_ty` and their corresponding `arg_ty` type argument. When the type parameter
-    /// of `para_ty` is matched against the target parameter ID, the corresponding type argument is returned.
+    /// 
+    /// From the given sample, we'd want to resolve `T` to be `Int32`, since
+    /// they are both contained within the type `Test`. As such, the method
+    /// iterates over the type parameters within the `param_ty` and their
+    /// corresponding `arg_ty` type argument. When the type parameter
+    /// of `para_ty` is matched against the target parameter ID, the
+    /// corresponding type argument is returned.
     fn infer_type_arg_param_nested(
         &self,
         target_param_id: NodeId,

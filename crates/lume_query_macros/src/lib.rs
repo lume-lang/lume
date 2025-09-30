@@ -7,8 +7,8 @@ use proc_macro::TokenStream;
 /// keyed from the method arguments.
 ///
 /// # Attributes
-/// - `key`: (optional, string expr) specify the value(s) which should be
-///   used to compute the hash key for the method.
+/// - `key`: (optional, string expr) specify the value(s) which should be used
+///   to compute the hash key for the method.
 ///
 ///   NOTE: the resulting expression **must** implement [`std::hash::Hash`].
 ///

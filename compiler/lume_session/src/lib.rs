@@ -5,6 +5,7 @@ pub mod stdlib;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+pub use deps::*;
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
 use indexmap::IndexMap;
@@ -12,8 +13,6 @@ use lume_errors::DiagCtx;
 use lume_query::{CacheContext, CacheStore};
 use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
-
-pub use deps::*;
 
 #[derive(Default)]
 pub struct Options {
@@ -33,7 +32,8 @@ pub struct Options {
     /// Defines an optional list of overrides for source files.
     ///
     /// Currently, only the source files of the root package are attempted
-    /// to be overriden. If the file doesn't exist within the package, it is skipped.
+    /// to be overriden. If the file doesn't exist within the package, it is
+    /// skipped.
     pub source_overrides: Option<IndexMap<FileName, String>>,
 }
 
@@ -112,12 +112,13 @@ unsafe impl Send for Session {}
 unsafe impl Sync for Session {}
 
 /// Global context for all compiler operations and is used to pass around data
-/// to segmented stages of the compiler processs, such as parsing, analysis, checking,
-/// etc.
+/// to segmented stages of the compiler processs, such as parsing, analysis,
+/// checking, etc.
 ///
-/// [`GlobalCtx`] also functions as a lookup table for options and session-variables,
-/// which have been defined in some previous stage, such as the options passed to the
-/// compiler, callbacks to invoke during execution, etc.
+/// [`GlobalCtx`] also functions as a lookup table for options and
+/// session-variables, which have been defined in some previous stage, such as
+/// the options passed to the compiler, callbacks to invoke during execution,
+/// etc.
 #[derive(Default)]
 pub struct GlobalCtx {
     pub session: Session,
@@ -248,12 +249,13 @@ impl Package {
         }
     }
 
-    /// Adds all the files within the standard library to the [`Package`]s files.
+    /// Adds all the files within the standard library to the [`Package`]s
+    /// files.
     ///
     /// # Errors
     ///
-    /// This method will return `Err` if the current path to the `Arcfile` exists
-    /// outside of any directory.
+    /// This method will return `Err` if the current path to the `Arcfile`
+    /// exists outside of any directory.
     pub fn add_std_sources(&mut self) {
         self.append_sources(stdlib::Assets::as_sources(self.id));
     }
@@ -261,13 +263,14 @@ impl Package {
     /// Adds all the discovered source files from the project root to
     /// the projects files.
     ///
-    /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
-    /// excluded from within the Arcfile, they will be ignored.
+    /// By default, it will only find source files with the `.lm` file
+    /// extension. If any files are explicitly excluded from within the
+    /// Arcfile, they will be ignored.
     ///
     /// # Errors
     ///
-    /// This method will return `Err` if the current path to the `Arcfile` exists
-    /// outside of any directory.
+    /// This method will return `Err` if the current path to the `Arcfile`
+    /// exists outside of any directory.
     pub fn add_project_sources(&mut self) -> Result<()> {
         for source_file in self.locate_source_files()? {
             // We get the relative path of the file within the project,
@@ -284,12 +287,13 @@ impl Package {
     }
 
     /// Adds all the discovered source files from the project root to
-    /// the projects files, as well as source files for the standard library (if enabled.)
+    /// the projects files, as well as source files for the standard library (if
+    /// enabled.)
     ///
     /// # Errors
     ///
-    /// This method will return `Err` if the current path to the `Arcfile` exists
-    /// outside of any directory.
+    /// This method will return `Err` if the current path to the `Arcfile`
+    /// exists outside of any directory.
     pub fn add_package_sources(&mut self) -> Result<()> {
         if !self.dependencies.no_std {
             self.add_std_sources();
@@ -302,13 +306,14 @@ impl Package {
 
     /// Attempts to find all the Lume source files within the project.
     ///
-    /// By default, it will only find source files with the `.lm` file extension. If any files are explicitly
-    /// excluded from within the Arcfile, they will be ignored.
+    /// By default, it will only find source files with the `.lm` file
+    /// extension. If any files are explicitly excluded from within the
+    /// Arcfile, they will be ignored.
     ///
     /// # Errors
     ///
-    /// This method will return `Err` if the current path to the `Arcfile` exists
-    /// outside of any directory.
+    /// This method will return `Err` if the current path to the `Arcfile`
+    /// exists outside of any directory.
     pub fn locate_source_files(&self) -> Result<Vec<PathBuf>> {
         let root_directory = self.root();
         let glob_pattern = format!("{}/**/*.lm", root_directory.display());
@@ -365,7 +370,7 @@ pub struct Dependencies {
     /// the standard library. Defaults to [`false`].
     pub no_std: bool,
 
-    /// Defines the graph of all dependencies from the current [`Package`] instance
-    /// and descending down to all sub-dependencies, as well.
+    /// Defines the graph of all dependencies from the current [`Package`]
+    /// instance and descending down to all sub-dependencies, as well.
     pub graph: Vec<(PackageId, VersionReq)>,
 }

@@ -7,9 +7,7 @@ use std::sync::Arc;
 use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
 use lume_session::DependencyMap;
 use lume_span::PackageId;
-
-use pubgrub::VersionSet as _;
-use pubgrub::{Dependencies, PackageResolutionStatistics};
+use pubgrub::{Dependencies, PackageResolutionStatistics, VersionSet as _};
 use semver::Version;
 
 use crate::PackageParser;
@@ -152,12 +150,12 @@ impl DependencyResolver {
 }
 
 impl pubgrub::DependencyProvider for DependencyResolver {
+    type Err = DependencyError;
+    type M = DependencyError;
     type P = Dependency;
+    type Priority = (u32, std::cmp::Reverse<Version>);
     type V = Version;
     type VS = VersionSet;
-    type Priority = (u32, std::cmp::Reverse<Version>);
-    type M = DependencyError;
-    type Err = DependencyError;
 
     fn prioritize(
         &self,
@@ -349,7 +347,8 @@ impl pubgrub::VersionSet for VersionSet {
 
     fn intersection(&self, other: &Self) -> Self {
         if self.inverted && other.inverted {
-            // Intersection of two inverted sets is the complement of the union of the versions.
+            // Intersection of two inverted sets is the complement of the union of the
+            // versions.
             let union: BTreeSet<_> = self.versions.union(&other.versions).cloned().collect();
 
             VersionSet {

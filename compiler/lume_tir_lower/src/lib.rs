@@ -11,9 +11,8 @@ use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_span::{Internable, Location, NodeId};
 use lume_tir::{TypedIR, VariableId, VariableSource};
-use lume_typech::TyCheckCtx;
-
 pub use lume_type_metadata::StaticMetadata;
+use lume_typech::TyCheckCtx;
 
 pub struct Lower<'tcx> {
     /// Defines the type context which will be lowering into `TypedIR`.
@@ -31,13 +30,13 @@ impl<'tcx> Lower<'tcx> {
         }
     }
 
-    /// Lowers the defined type context into a `TypedIR` map, which can then be further
-    /// lowering into MIR.
+    /// Lowers the defined type context into a `TypedIR` map, which can then be
+    /// further lowering into MIR.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if a definition within the context is invalid or if the type context
-    /// returned an error.
+    /// Returns `Err` if a definition within the context is invalid or if the
+    /// type context returned an error.
     pub fn lower(mut self) -> Result<TypedIR> {
         self.define_callables()?;
         self.lower_callables()?;
@@ -58,13 +57,13 @@ impl<'tcx> Lower<'tcx> {
         Ok(self.ir)
     }
 
-    /// Lowers the given type context into a `TypedIR` map, which can then be further
-    /// lowering into MIR.
+    /// Lowers the given type context into a `TypedIR` map, which can then be
+    /// further lowering into MIR.
     ///
     /// # Errors
     ///
-    /// Returns `Err` if a definition within the context is invalid or if the type context
-    /// returned an error.
+    /// Returns `Err` if a definition within the context is invalid or if the
+    /// type context returned an error.
     pub fn build(tcx: &TyCheckCtx) -> Result<TypedIR> {
         let lower = Lower::new(tcx);
         lower.lower()
@@ -147,7 +146,8 @@ impl<'tcx> Lower<'tcx> {
 
     /// Determines the [`lume_tir::FunctionKind`] of the given method.
     pub(crate) fn determine_method_kind(&self, method: &lume_types::Method, has_body: bool) -> lume_tir::FunctionKind {
-        // Checks whether the method is an implementation of `std::ops::Dispose::dispose()`.
+        // Checks whether the method is an implementation of
+        // `std::ops::Dispose::dispose()`.
         if self.tcx.is_method_dropper(method.id) {
             return lume_tir::FunctionKind::Dropper;
         }
@@ -158,14 +158,14 @@ impl<'tcx> Lower<'tcx> {
             return lume_tir::FunctionKind::Dynamic;
         }
 
-        // Trait method definitions without any default implementation have no reason to be in the
-        // binary, since they have no body to codegen from.
+        // Trait method definitions without any default implementation have no reason to
+        // be in the binary, since they have no body to codegen from.
         if is_dynamic_dispatch(method, has_body) {
             return lume_tir::FunctionKind::Dynamic;
         }
 
-        // Static trait method definitions cannot be called, if they do not have a default
-        // body to be invoked.
+        // Static trait method definitions cannot be called, if they do not have a
+        // default body to be invoked.
         if method.is_static() && method.is_trait_definition() && !has_body {
             return lume_tir::FunctionKind::Unreachable;
         }
@@ -184,14 +184,14 @@ impl<'tcx> Lower<'tcx> {
             return false;
         }
 
-        // Trait method definitions without any default implementation have no reason to be in the
-        // binary, since they have no body to codegen from.
+        // Trait method definitions without any default implementation have no reason to
+        // be in the binary, since they have no body to codegen from.
         if is_dynamic_dispatch(method, has_body) {
             return false;
         }
 
-        // Certain kinds of functions should never be lowered, such as static trait methods with
-        // default implementations.
+        // Certain kinds of functions should never be lowered, such as static trait
+        // methods with default implementations.
         if let Some(declaration) = self.ir.functions.get(&method.id)
             && !declaration.kind.should_be_lowered()
         {
@@ -202,7 +202,8 @@ impl<'tcx> Lower<'tcx> {
     }
 }
 
-/// Determines whether the given method is meant to be invoked dynamically via dynamic dispatch.
+/// Determines whether the given method is meant to be invoked dynamically via
+/// dynamic dispatch.
 #[inline]
 #[must_use]
 pub(crate) fn is_dynamic_dispatch(method: &lume_types::Method, has_body: bool) -> bool {
@@ -274,7 +275,8 @@ impl<'tcx> LowerFunction<'tcx> {
         })
     }
 
-    /// Allocates a new variable in the function with the given source and returns it's ID.
+    /// Allocates a new variable in the function with the given source and
+    /// returns it's ID.
     fn mark_variable(&mut self, source: VariableSource) -> VariableId {
         let id = VariableId(self.variable_source.len());
         self.variable_source.insert(id, source);

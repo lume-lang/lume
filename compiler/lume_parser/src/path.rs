@@ -1,7 +1,8 @@
-use crate::Parser;
 use error_snippet::Result;
 use lume_ast::*;
 use lume_lexer::{IDENTIFIER_SEPARATOR, TokenKind};
+
+use crate::Parser;
 
 const LOWERCASE_PATH_TYPES: &[&str] = &["void", "self"];
 
@@ -37,8 +38,9 @@ impl Parser {
         // If the name starts with a lower case, it can refer to either
         // a namespace or a function call.
         //
-        // We also make sure the name is not referring to a scalar type, such as `void`, since
-        // it would parse that as a namespace segment, while it's meant to be a type segment.
+        // We also make sure the name is not referring to a scalar type, such as `void`,
+        // since it would parse that as a namespace segment, while it's meant to
+        // be a type segment.
         if name.is_lower() && !LOWERCASE_PATH_TYPES.contains(&name.as_str()) {
             // If we spot a `<` token, we know it's the start of a type argument list,
             // which can only be defined on function calls.

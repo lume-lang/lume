@@ -137,7 +137,8 @@ impl Map {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if one-or-more IDs have no associated `Expression` within the map.
+    /// Returns `Err` if one-or-more IDs have no associated `Expression` within
+    /// the map.
     pub fn expect_expressions(&self, id: &[NodeId]) -> Result<Vec<&Expression>> {
         id.iter()
             .map(|id| self.expect_expression(*id))

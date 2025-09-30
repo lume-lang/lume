@@ -1,9 +1,10 @@
-use crate::{TyInferCtx, *};
 use error_snippet::Result;
 use lume_hir::{CallExpression, Identifier, Node, Path};
 use lume_query::cached_query;
 use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
+
+use crate::{TyInferCtx, *};
 
 mod diagnostics;
 pub mod hir;
@@ -84,8 +85,9 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of(&self, def: NodeId) -> Result<TypeRef> {
@@ -97,8 +99,9 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_expr(&self, expr: &lume_hir::Expression) -> Result<TypeRef> {
@@ -265,8 +268,9 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
@@ -334,15 +338,16 @@ impl TyInferCtx {
         }
     }
 
-    /// Returns the *type* of the given [`lume_hir::Block`]. The type of the block
-    /// is determined by the inferred type of the last expression in the block, or [`TypeRef::void()`]
-    /// if no return statement is present.
+    /// Returns the *type* of the given [`lume_hir::Block`]. The type of the
+    /// block is determined by the inferred type of the last expression in
+    /// the block, or [`TypeRef::void()`] if no return statement is present.
     ///
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_block(&self, block: &lume_hir::Block) -> Result<TypeRef> {
@@ -369,8 +374,9 @@ impl TyInferCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_pattern(&self, pat: &lume_hir::Pattern) -> Result<TypeRef> {
@@ -431,7 +437,8 @@ impl TyInferCtx {
         Result::Ok(ty.with_location(pat.location))
     }
 
-    /// Returns the *type* of the field within the enum definition with the given name.
+    /// Returns the *type* of the field within the enum definition with the
+    /// given name.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_variant_field(&self, variant_name: &Path, field: usize) -> Result<TypeRef> {
@@ -456,7 +463,8 @@ impl TyInferCtx {
         Ok(&self.tdb().ty_expect(type_ref.instance_of)?.name)
     }
 
-    /// Returns the [`Trait`] definition, which matches the [`Use`] declaration with the given ID.
+    /// Returns the [`Trait`] definition, which matches the [`Use`] declaration
+    /// with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn trait_def_of(&self, id: NodeId) -> Result<&Trait> {
         let Some(use_ref) = self.tdb().use_(id) else {
@@ -514,7 +522,8 @@ impl TyInferCtx {
         Result::Ok(&self.enum_def_type(ty)?.cases)
     }
 
-    /// Returns the enum case definitions, which is being referred to by the given expression.
+    /// Returns the enum case definitions, which is being referred to by the
+    /// given expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_cases_expr(&self, id: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
         self.enum_cases_of(self.type_of(id)?.instance_of)
@@ -534,7 +543,8 @@ impl TyInferCtx {
         self.enum_cases_of(parent_ty.id)
     }
 
-    /// Returns the enum case definition, which is being referred to by the given expression.
+    /// Returns the enum case definition, which is being referred to by the
+    /// given expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_case_expr(&self, id: NodeId) -> Result<&lume_hir::EnumDefinitionCase> {
         let expr = self.hir_expect_expr(id);
@@ -578,7 +588,8 @@ impl TyInferCtx {
         panic!("bug!: could not find variant in {type_id:?} with name {name:?}")
     }
 
-    /// Returns the field of the constructor expression, matching the given field.
+    /// Returns the field of the constructor expression, matching the given
+    /// field.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn constructer_field_of(
@@ -593,7 +604,8 @@ impl TyInferCtx {
         self.constructer_default_field_of(expr, prop_name)
     }
 
-    /// Returns the field of the constructor expression, matching the given field.
+    /// Returns the field of the constructor expression, matching the given
+    /// field.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn constructer_default_field_of(
@@ -625,8 +637,9 @@ impl TyInferCtx {
     /// if a { b } else { c }
     /// ```
     ///
-    /// Even though the `if` statement returns a value of `Boolean`, the resulting value is never assigned
-    /// to anything, so no value is expected.
+    /// Even though the `if` statement returns a value of `Boolean`, the
+    /// resulting value is never assigned to anything, so no value is
+    /// expected.
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_value_expected(&self, id: NodeId) -> Result<bool> {
@@ -660,24 +673,25 @@ impl TyInferCtx {
         }
     }
 
-    /// Attempts to get the expected type of the [`Expression`] with the given ID, in the
-    /// context in which it is defined. For example, given an expression like this:
-    /// ```lm
+    /// Attempts to get the expected type of the [`Expression`] with the given
+    /// ID, in the context in which it is defined. For example, given an
+    /// expression like this: ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```
-    ///
-    /// We can infer the expected type of the expression `std::Array::new()` since it
-    /// is explicitly declared on the variable declaration. In another instances it might
-    /// not be as explicit, which may cause the method to return [`None`]. For example, an
-    /// expression like:
+    /// 
+    /// We can infer the expected type of the expression `std::Array::new()`
+    /// since it is explicitly declared on the variable declaration. In
+    /// another instances it might not be as explicit, which may cause the
+    /// method to return [`None`]. For example, an expression like:
     /// ```lm
     /// let _ = std::Array::new();
     /// ```
-    ///
+    /// 
     /// would be impossible to solve, since no explicit type is declared.
     ///
-    /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to attempt
-    /// to infer the type from other expressions and statements which reference the target expression.
+    /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to
+    /// attempt to infer the type from other expressions and statements
+    /// which reference the target expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         if let Some(expected_type) = self.try_expected_type_of(id)? {
@@ -687,20 +701,20 @@ impl TyInferCtx {
         }
     }
 
-    /// Attempts to get the expected type of the [`Expression`] with the given ID, in the
-    /// context in which it is defined. For example, given an expression like this:
-    /// ```lm
+    /// Attempts to get the expected type of the [`Expression`] with the given
+    /// ID, in the context in which it is defined. For example, given an
+    /// expression like this: ```lm
     /// let _: std::Array<Int32> = std::Array::new();
     /// ```
-    ///
-    /// We can infer the expected type of the expression `std::Array::new()` since it
-    /// is explicitly declared on the variable declaration. In another instances it might
-    /// not be as explicit, which may cause the method to return [`None`]. For example, an
-    /// expression like:
+    /// 
+    /// We can infer the expected type of the expression `std::Array::new()`
+    /// since it is explicitly declared on the variable declaration. In
+    /// another instances it might not be as explicit, which may cause the
+    /// method to return [`None`]. For example, an expression like:
     /// ```lm
     /// let _ = std::Array::new();
     /// ```
-    ///
+    /// 
     /// would be impossible to solve, since no explicit type is declared.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
@@ -843,8 +857,9 @@ impl TyInferCtx {
         Result::Ok(parameter.ty.clone())
     }
 
-    /// Attempts to guess the expected type of the given expression, based on other statements
-    /// and expressions which refer to the target expression.
+    /// Attempts to guess the expected type of the given expression, based on
+    /// other statements and expressions which refer to the target
+    /// expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn guess_type_of_ctx(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for expr_node_ref in self.indirect_expression_refs(id)? {

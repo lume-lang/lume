@@ -2,7 +2,8 @@ use error_snippet::Result;
 use lume_ast::*;
 use lume_lexer::{IDENTIFIER_SEPARATOR, Token, TokenKind, UNARY_PRECEDENCE};
 
-use crate::{Parser, err, errors::*};
+use crate::errors::*;
+use crate::{Parser, err};
 
 impl Parser {
     /// Parses an expression on the current cursor position.
@@ -21,7 +22,8 @@ impl Parser {
         }
     }
 
-    /// Parses an expression on the current cursor position, with a minimum precedence.
+    /// Parses an expression on the current cursor position, with a minimum
+    /// precedence.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
         let mut left = self.parse_prefix_expression()?;
@@ -40,8 +42,9 @@ impl Parser {
 
     /// Parses a prefix expression at the current cursor position.
     ///
-    /// Prefix expressions are expressions which appear at the start of an expression,
-    /// such as literals of prefix operators. In Pratt Parsing, this is also called "Nud" or "Null Denotation".
+    /// Prefix expressions are expressions which appear at the start of an
+    /// expression, such as literals of prefix operators. In Pratt Parsing,
+    /// this is also called "Nud" or "Null Denotation".
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token().kind;
@@ -64,8 +67,8 @@ impl Parser {
         }
     }
 
-    /// Parses an expression at the current cursor position, which is followed by some other
-    /// expression.
+    /// Parses an expression at the current cursor position, which is followed
+    /// by some other expression.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_following_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
@@ -75,14 +78,16 @@ impl Parser {
             return self.parse_range_expression(left);
         }
 
-        // If the next token is a '.', it's a chained expression and we should parse it as a member access expression.
+        // If the next token is a '.', it's a chained expression and we should parse it
+        // as a member access expression.
         //
         // In essence, this statement is handling cases where:
         //
         //   let c = new Foo().bar()
         //
-        // would be parsed as an operator expression, such as `c = Call(New('Foo'), '.', [Call('bar')])`, where
-        // it really should be something like `c = Member(New('Foo'), 'bar')`.
+        // would be parsed as an operator expression, such as `c = Call(New('Foo'), '.',
+        // [Call('bar')])`, where it really should be something like `c =
+        // Member(New('Foo'), 'bar')`.
         if self.peek(TokenKind::Dot) {
             tracing::trace!("expression is member");
 
@@ -121,9 +126,10 @@ impl Parser {
 
     /// Parses a infix expression at the current cursor position.
     ///
-    /// Infix expressions are expressions which appear in the middle of an expression,
-    /// such as infix of postfix operators. In Pratt Parsing, this is also called "Led" or "Left Denotation".
-    /// such as increment or decrement operators.
+    /// Infix expressions are expressions which appear in the middle of an
+    /// expression, such as infix of postfix operators. In Pratt Parsing,
+    /// this is also called "Led" or "Left Denotation". such as increment or
+    /// decrement operators.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_infix_expression(&mut self, lhs: Expression, operator: Token) -> Result<Expression> {
         let rhs = self.parse_expression_with_precedence(operator.precedence())?;
@@ -141,8 +147,8 @@ impl Parser {
 
     /// Parses a postfix expression at the current cursor position.
     ///
-    /// Postfix expressions are expressions which appear at the end of an expression,
-    /// such as increment or decrement operators.
+    /// Postfix expressions are expressions which appear at the end of an
+    /// expression, such as increment or decrement operators.
     #[tracing::instrument(level = "TRACE", skip(self, left))]
     fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Expression {
         let operator_loc = operator.index.clone();
@@ -257,7 +263,8 @@ impl Parser {
         })))
     }
 
-    /// Parses an expression on the current cursor position, which is nested within parentheses.
+    /// Parses an expression on the current cursor position, which is nested
+    /// within parentheses.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_nested_expression(&mut self) -> Result<Expression> {
         self.consume(TokenKind::LeftParen)?;
@@ -363,7 +370,8 @@ impl Parser {
         Ok(Expression::Variable(Box::new(Variable { name: identifier })))
     }
 
-    /// Parses an expression on the current cursor position, which is preceded by some identifier.
+    /// Parses an expression on the current cursor position, which is preceded
+    /// by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_named_expression(&mut self) -> Result<Expression> {
         let mut identifier = self.parse_identifier()?;
@@ -482,7 +490,8 @@ impl Parser {
         Ok(Expression::If(Box::new(conditional)))
     }
 
-    /// Parses a case within a conditional expression at the current cursor position.
+    /// Parses a case within a conditional expression at the current cursor
+    /// position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let condition = self.parse_expression()?;
@@ -502,7 +511,8 @@ impl Parser {
         Ok(())
     }
 
-    /// Parses zero-or-more `else-if` cases within a conditional expression at the current cursor position.
+    /// Parses zero-or-more `else-if` cases within a conditional expression at
+    /// the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
@@ -519,7 +529,8 @@ impl Parser {
         Ok(())
     }
 
-    /// Parses zero-or-one `else` cases within a conditional expression at the current cursor position.
+    /// Parses zero-or-one `else` cases within a conditional expression at the
+    /// current cursor position.
     ///
     /// # Errors
     ///
@@ -545,7 +556,8 @@ impl Parser {
         Ok(())
     }
 
-    /// Parses a member expression on the current cursor position, which is preceded by some identifier.
+    /// Parses a member expression on the current cursor position, which is
+    /// preceded by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // Consume the dot token
@@ -585,7 +597,8 @@ impl Parser {
         Ok(expression)
     }
 
-    /// Parses a cast expression on the current cursor position, which is preceded by some identifier.
+    /// Parses a cast expression on the current cursor position, which is
+    /// preceded by some identifier.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_cast(&mut self, source: Expression) -> Result<Expression> {
         // Consume the `as` token
@@ -849,8 +862,9 @@ impl Parser {
 
         let right = self.parse_expression_with_precedence(UNARY_PRECEDENCE)?;
 
-        // As a quality of life feature, we can apply the unary operator directly to the expression,
-        // if it can be done at parsing time. If not, we create an ordinary unary expression.
+        // As a quality of life feature, we can apply the unary operator directly to the
+        // expression, if it can be done at parsing time. If not, we create an
+        // ordinary unary expression.
         if let Expression::Literal(literal) = right {
             let inner = match *literal {
                 // If the operator is a unary minus and the right-hand side is a number literal, we can negate
@@ -884,7 +898,8 @@ impl Parser {
         Ok(right)
     }
 
-    /// Parses some expression, if an equal sign is consumed. Otherwise, returns `None`.
+    /// Parses some expression, if an equal sign is consumed. Otherwise, returns
+    /// `None`.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_opt_assignment(&mut self) -> Result<Option<Expression>> {
         if self.check(TokenKind::Assign) {

@@ -1,4 +1,6 @@
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::collections::HashMap;
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use arc::locate_package;
 use lume_errors::{DiagCtxHandle, Result};
@@ -36,8 +38,9 @@ pub struct Driver {
 impl Driver {
     /// Creates a new compilation driver from the given package root.
     ///
-    /// This function will look for Arcfiles within the given root folder, and build the package accordingly.
-    /// If no Arcfile is found, an error will be returned. Any other compilation errors will also be returned.
+    /// This function will look for Arcfiles within the given root folder, and
+    /// build the package accordingly. If no Arcfile is found, an error will
+    /// be returned. Any other compilation errors will also be returned.
     ///
     /// # Errors
     ///
@@ -54,8 +57,9 @@ impl Driver {
         })
     }
 
-    /// Overrides the source files of the root package, if the [`Options::source_overrides`] is
-    /// set. If it is set, it is taken and consumed to replace source files in the root package.
+    /// Overrides the source files of the root package, if the
+    /// [`Options::source_overrides`] is set. If it is set, it is taken and
+    /// consumed to replace source files in the root package.
     fn override_root_sources(&mut self, options: &mut Options) {
         if let Some(source_overrides) = options.source_overrides.take() {
             for (file_name, content) in source_overrides {

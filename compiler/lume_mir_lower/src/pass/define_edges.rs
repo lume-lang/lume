@@ -5,7 +5,8 @@ use super::*;
 ///
 /// After edge detection has finished, the function can effectively be
 /// remapped into a directed graph of blocks, where each node corresponds
-/// to a block and each directed edge corresponds to a call between blocks A and B.
+/// to a block and each directed edge corresponds to a call between blocks A and
+/// B.
 #[derive(Debug, Default)]
 pub(crate) struct DefineBlockEdges;
 

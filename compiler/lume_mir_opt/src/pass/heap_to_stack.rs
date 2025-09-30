@@ -1,5 +1,6 @@
 //! Optimizer pass to convert heap-allocations into stack-allocations when
-//! the compiler can be absolutely sure the allocation doesn't escape the method.
+//! the compiler can be absolutely sure the allocation doesn't escape the
+//! method.
 //!
 //! Since stack allocations are much cheaper than heap allocations, this can be
 //! an immense speed boost.

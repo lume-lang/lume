@@ -3,8 +3,6 @@ use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::errors::*;
-
 use error_snippet::{Label, WithSource};
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
@@ -14,6 +12,8 @@ use semver::{Version, VersionReq};
 use serde::Deserialize;
 use toml::Spanned;
 use url::Url;
+
+use crate::errors::*;
 
 pub const DEFAULT_ARCFILE: &str = "Arcfile";
 
@@ -160,7 +160,8 @@ pub(crate) struct PackageParser {
 }
 
 impl PackageParser {
-    /// Creates a new [`PackageParser`] instance using the given `Arcfile` source file path.
+    /// Creates a new [`PackageParser`] instance using the given `Arcfile`
+    /// source file path.
     ///
     /// # Errors
     ///
@@ -184,7 +185,8 @@ impl PackageParser {
         Ok(Self::from_source(path, Arc::new(source)))
     }
 
-    /// Creates a new [`PackageParser`] instance using the given `Arcfile` source file.
+    /// Creates a new [`PackageParser`] instance using the given `Arcfile`
+    /// source file.
     ///
     /// # Errors
     ///
@@ -198,7 +200,8 @@ impl PackageParser {
         }
     }
 
-    /// Creates a new [`PackageParser`] instance by locating the `Arcfile` in the given root directory.
+    /// Creates a new [`PackageParser`] instance by locating the `Arcfile` in
+    /// the given root directory.
     ///
     /// # Errors
     ///

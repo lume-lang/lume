@@ -4,7 +4,8 @@ use lume_metadata::PackageMetadata;
 use crate::*;
 
 impl Driver {
-    /// Locates the [`Package`] from the given path and builds it into an executable.
+    /// Locates the [`Package`] from the given path and builds it into an
+    /// executable.
     ///
     /// # Errors
     ///
@@ -70,8 +71,9 @@ impl Driver {
     }
 }
 
-/// Writes the serialized representation of `metadata` to disk within the metadata
-/// directory defined by `gcx` (via [`GlobalCtx::obj_metadata_path()`]).
+/// Writes the serialized representation of `metadata` to disk within the
+/// metadata directory defined by `gcx` (via
+/// [`GlobalCtx::obj_metadata_path()`]).
 fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Result<()> {
     // Ensure the parent directory exists first.
     let metadata_directory = gcx.obj_metadata_path();
@@ -115,7 +117,8 @@ fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
 }
 
 impl<'a> Compiler<'a> {
-    /// Builds the [`Package`] with the given ID from the [`Project`] into an MIR map.
+    /// Builds the [`Package`] with the given ID from the [`Project`] into an
+    /// MIR map.
     ///
     /// # Errors
     ///

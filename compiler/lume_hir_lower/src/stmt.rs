@@ -1,13 +1,11 @@
-use crate::LowerModule;
 use error_snippet::Result;
 
-use lume_ast::{self as ast};
-use lume_hir::{self as hir};
+use crate::LowerModule;
 
 impl LowerModule<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn block(&mut self, expr: ast::Block) -> hir::Block {
+    pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {
         self.locals.push_frame();
 
         let id = self.next_node_id();
@@ -16,7 +14,7 @@ impl LowerModule<'_> {
 
         self.locals.pop_frame();
 
-        hir::Block {
+        lume_hir::Block {
             id,
             statements,
             location,
@@ -25,10 +23,11 @@ impl LowerModule<'_> {
 
     /// Lowers the given AST block into a HIR block, within an isolated scope.
     ///
-    /// This functions much like [`block`], but pushes a boundary into the symbol table,
-    /// separating local variables within the block from the parent scope.
+    /// This functions much like [`block`], but pushes a boundary into the
+    /// symbol table, separating local variables within the block from the
+    /// parent scope.
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn isolated_block(&mut self, expr: ast::Block, params: &[lume_hir::Parameter]) -> hir::Block {
+    pub(super) fn isolated_block(&mut self, expr: lume_ast::Block, params: &[lume_hir::Parameter]) -> lume_hir::Block {
         self.locals.push_boundary();
 
         for param in params {
@@ -44,7 +43,7 @@ impl LowerModule<'_> {
 
         self.locals.pop_boundary();
 
-        hir::Block {
+        lume_hir::Block {
             id,
             statements,
             location,
@@ -52,7 +51,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    pub(super) fn statements(&mut self, statements: Vec<ast::Statement>) -> Vec<lume_span::NodeId> {
+    pub(super) fn statements(&mut self, statements: Vec<lume_ast::Statement>) -> Vec<lume_span::NodeId> {
         statements
             .into_iter()
             .filter_map(|expr| match self.statement(expr) {
@@ -66,26 +65,26 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn statement(&mut self, expr: ast::Statement) -> Result<lume_span::NodeId> {
+    fn statement(&mut self, expr: lume_ast::Statement) -> Result<lume_span::NodeId> {
         let stmt = match expr {
-            ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
-            ast::Statement::Break(s) => self.stmt_break(*s),
-            ast::Statement::Continue(s) => self.stmt_continue(*s),
-            ast::Statement::Final(s) => self.stmt_final(*s)?,
-            ast::Statement::Return(s) => self.stmt_return(*s)?,
-            ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
-            ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
-            ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
-            ast::Statement::Expression(s) => {
+            lume_ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
+            lume_ast::Statement::Break(s) => self.stmt_break(*s),
+            lume_ast::Statement::Continue(s) => self.stmt_continue(*s),
+            lume_ast::Statement::Final(s) => self.stmt_final(*s)?,
+            lume_ast::Statement::Return(s) => self.stmt_return(*s)?,
+            lume_ast::Statement::InfiniteLoop(e) => self.stmt_infinite_loop(*e),
+            lume_ast::Statement::IteratorLoop(e) => self.stmt_iterator_loop(*e)?,
+            lume_ast::Statement::PredicateLoop(e) => self.stmt_predicate_loop(*e)?,
+            lume_ast::Statement::Expression(s) => {
                 let id = self.next_node_id();
                 let expr = self.expression(*s)?;
 
                 let location = self.map.expression(expr).unwrap().location;
 
-                hir::Statement {
+                lume_hir::Statement {
                     id,
                     location,
-                    kind: hir::StatementKind::Expression(expr),
+                    kind: lume_hir::StatementKind::Expression(expr),
                 }
             }
         };
@@ -98,7 +97,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_variable(&mut self, statement: ast::VariableDeclaration) -> Result<lume_hir::Statement> {
+    fn stmt_variable(&mut self, statement: lume_ast::VariableDeclaration) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let name = self.identifier(statement.name);
         let value = self.expression(statement.value)?;
@@ -109,7 +108,7 @@ impl LowerModule<'_> {
             None => None,
         };
 
-        let decl = hir::VariableDeclaration {
+        let decl = lume_hir::VariableDeclaration {
             id,
             name: name.clone(),
             declared_type,
@@ -120,89 +119,89 @@ impl LowerModule<'_> {
         self.locals
             .define(name.to_string(), lume_hir::VariableSource::Variable(decl.clone()));
 
-        let statement = hir::Statement {
+        let statement = lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Variable(decl),
+            kind: lume_hir::StatementKind::Variable(decl),
         };
 
         Ok(statement)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_break(&mut self, statement: ast::Break) -> hir::Statement {
+    fn stmt_break(&mut self, statement: lume_ast::Break) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
 
-        hir::Statement {
+        lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Break(hir::Break { id, location }),
+            kind: lume_hir::StatementKind::Break(lume_hir::Break { id, location }),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_continue(&mut self, statement: ast::Continue) -> hir::Statement {
+    fn stmt_continue(&mut self, statement: lume_ast::Continue) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
 
-        hir::Statement {
+        lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Continue(hir::Continue { id, location }),
+            kind: lume_hir::StatementKind::Continue(lume_hir::Continue { id, location }),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_final(&mut self, statement: ast::Final) -> Result<hir::Statement> {
+    fn stmt_final(&mut self, statement: lume_ast::Final) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.expression(statement.value)?;
         let location = self.map.expression(value).unwrap().location;
 
-        Ok(hir::Statement {
+        Ok(lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Final(hir::Final { id, value, location }),
+            kind: lume_hir::StatementKind::Final(lume_hir::Final { id, value, location }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_return(&mut self, statement: ast::Return) -> Result<hir::Statement> {
+    fn stmt_return(&mut self, statement: lume_ast::Return) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.opt_expression(statement.value)?;
         let location = self.location(statement.location);
 
-        Ok(hir::Statement {
+        Ok(lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::Return(hir::Return { id, value, location }),
+            kind: lume_hir::StatementKind::Return(lume_hir::Return { id, value, location }),
         })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all)]
-    fn stmt_infinite_loop(&mut self, expr: ast::InfiniteLoop) -> hir::Statement {
+    fn stmt_infinite_loop(&mut self, expr: lume_ast::InfiniteLoop) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(expr.location);
         let block = self.block(expr.block);
 
-        hir::Statement {
+        lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::InfiniteLoop(hir::InfiniteLoop { id, block, location }),
+            kind: lume_hir::StatementKind::InfiniteLoop(lume_hir::InfiniteLoop { id, block, location }),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_iterator_loop(&mut self, expr: ast::IteratorLoop) -> Result<hir::Statement> {
+    fn stmt_iterator_loop(&mut self, expr: lume_ast::IteratorLoop) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
         let collection = self.expression(expr.collection)?;
         let block = self.block(expr.block);
 
-        Ok(hir::Statement {
+        Ok(lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::IteratorLoop(hir::IteratorLoop {
+            kind: lume_hir::StatementKind::IteratorLoop(lume_hir::IteratorLoop {
                 id,
                 collection,
                 block,
@@ -212,7 +211,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn stmt_predicate_loop(&mut self, expr: ast::PredicateLoop) -> Result<hir::Statement> {
+    fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
 
@@ -242,10 +241,10 @@ impl LowerModule<'_> {
             location: lume_ast::Location(0..0),
         });
 
-        Ok(hir::Statement {
+        Ok(lume_hir::Statement {
             id,
             location,
-            kind: hir::StatementKind::InfiniteLoop(hir::InfiniteLoop { id, block, location }),
+            kind: lume_hir::StatementKind::InfiniteLoop(lume_hir::InfiniteLoop { id, block, location }),
         })
     }
 }

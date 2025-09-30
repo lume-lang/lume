@@ -2,7 +2,8 @@ use darling::FromMeta;
 use darling::ast::NestedMeta;
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
-use syn::{ItemFn, ReturnType, parse_macro_input, punctuated::Punctuated};
+use syn::punctuated::Punctuated;
+use syn::{ItemFn, ReturnType, parse_macro_input};
 
 #[derive(Debug, FromMeta)]
 #[allow(dead_code)]

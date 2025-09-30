@@ -10,8 +10,8 @@ pub mod init;
 #[cfg(feature = "init")]
 pub use init::*;
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! event {
     ($($tt:tt)*) => {
@@ -21,8 +21,8 @@ macro_rules! event {
     };
 }
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! trace {
     ($($tt:tt)*) => {
@@ -32,8 +32,8 @@ macro_rules! trace {
     };
 }
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! debug {
     ($($tt:tt)*) => {
@@ -43,8 +43,8 @@ macro_rules! debug {
     };
 }
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! info {
     ($($tt:tt)*) => {
@@ -54,8 +54,8 @@ macro_rules! info {
     };
 }
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! warn {
     ($($tt:tt)*) => {
@@ -65,8 +65,8 @@ macro_rules! warn {
     };
 }
 
-/// Even when trace logging is disabled, the tracing macros has a significant performance
-/// cost so we disable it by default.
+/// Even when trace logging is disabled, the tracing macros has a significant
+/// performance cost so we disable it by default.
 #[macro_export]
 macro_rules! error {
     ($($tt:tt)*) => {

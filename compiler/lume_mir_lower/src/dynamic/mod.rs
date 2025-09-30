@@ -76,9 +76,10 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
         let len_reg = self.load(methods_ptr_reg, lume_mir::Type::u64());
 
-        let ptr_reg = self.builder.func.declare(
-            self.method_metadata_type(),
-            lume_mir::Declaration {
+        let ptr_reg = self
+            .builder
+            .func
+            .declare(self.method_metadata_type(), lume_mir::Declaration {
                 kind: lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
@@ -100,20 +101,19 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                     ],
                 },
                 location: Location::empty(),
-            },
-        );
+            });
 
-        let idx_reg = self.builder.func.declare_value(
-            lume_mir::Type::u64(),
-            lume_mir::Operand {
+        let idx_reg = self
+            .builder
+            .func
+            .declare_value(lume_mir::Type::u64(), lume_mir::Operand {
                 kind: lume_mir::OperandKind::Integer {
                     bits: 64,
                     signed: false,
                     value: 0,
                 },
                 location: Location::empty(),
-            },
-        );
+            });
 
         let branch_params = &[&[idx_reg, len_reg, ptr_reg][..], &self.param_registers[..]].concat();
 
@@ -159,13 +159,13 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             location: Location::empty(),
         });
 
-        let loop_cmp_expr = self.builder.func.declare_value(
-            lume_mir::Type::boolean(),
-            lume_mir::Operand {
+        let loop_cmp_expr = self
+            .builder
+            .func
+            .declare_value(lume_mir::Type::boolean(), lume_mir::Operand {
                 kind: lume_mir::OperandKind::Reference { id: loop_cmp },
                 location: Location::empty(),
-            },
-        );
+            });
 
         let branch_params = &[&[idx_reg, len_reg, ptr_reg][..], &self.param_registers[..]].concat();
 
@@ -213,9 +213,10 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             location: Location::empty(),
         });
 
-        let method_ptr_reg = self.builder.func.declare(
-            self.method_metadata_type(),
-            lume_mir::Declaration {
+        let method_ptr_reg = self
+            .builder
+            .func
+            .declare(self.method_metadata_type(), lume_mir::Declaration {
                 kind: lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
@@ -233,8 +234,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                     ],
                 },
                 location: Location::empty(),
-            },
-        );
+            });
 
         let method_id_reg = self.load_field(method_ptr_reg, lume_mir::Type::pointer(lume_mir::Type::u64()), 0, 0);
 
@@ -262,13 +262,13 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             location: Location::empty(),
         });
 
-        let id_cmp_expr = self.builder.func.declare_value(
-            lume_mir::Type::boolean(),
-            lume_mir::Operand {
+        let id_cmp_expr = self
+            .builder
+            .func
+            .declare_value(lume_mir::Type::boolean(), lume_mir::Operand {
                 kind: lume_mir::OperandKind::Reference { id: id_cmp },
                 location: Location::empty(),
-            },
-        );
+            });
 
         let loop_found_params = &[&[method_ptr_reg][..], &self.param_registers[..]].concat();
         let loop_continue_params = &[&[idx_reg, len_reg, ptr_reg][..], &self.param_registers[..]].concat();
@@ -369,54 +369,42 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
     /// Loads the address from a register into a new register and returns it.
     pub fn load(&mut self, source: RegisterId, ty: lume_mir::Type) -> RegisterId {
-        self.builder.func.declare_value(
-            ty,
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Load { id: source },
-                location: Location::empty(),
-            },
-        )
+        self.builder.func.declare_value(ty, lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id: source },
+            location: Location::empty(),
+        })
     }
 
     /// Loads the address from a register into a new register and returns it.
     pub fn load_raw(&mut self, source: RegisterId, ty: lume_mir::Type) -> RegisterId {
-        self.builder.func.declare_value_raw(
-            ty,
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::Load { id: source },
-                location: Location::empty(),
-            },
-        )
+        self.builder.func.declare_value_raw(ty, lume_mir::Operand {
+            kind: lume_mir::OperandKind::Load { id: source },
+            location: Location::empty(),
+        })
     }
 
     /// Loads a field into a new register and returns it.
     pub fn load_field(&mut self, target: RegisterId, ty: lume_mir::Type, index: usize, offset: usize) -> RegisterId {
-        self.builder.func.declare_value(
-            ty.clone(),
-            lume_mir::Operand {
-                kind: lume_mir::OperandKind::LoadField {
-                    target,
-                    index,
-                    offset,
-                    field_type: ty,
-                },
-                location: Location::empty(),
+        self.builder.func.declare_value(ty.clone(), lume_mir::Operand {
+            kind: lume_mir::OperandKind::LoadField {
+                target,
+                index,
+                offset,
+                field_type: ty,
             },
-        )
+            location: Location::empty(),
+        })
     }
 
     fn method_metadata_type(&self) -> lume_mir::Type {
-        lume_mir::Type::pointer(lume_mir::Type::structure(
-            String::from("std::Method"),
-            vec![
-                lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
-                lume_mir::Type::u64(),                           // size,
-                lume_mir::Type::u64(),                           // alignment,
-                lume_mir::Type::u64(),                           // type_id,
-                lume_mir::Type::pointer(lume_mir::Type::void()), // fields,
-                lume_mir::Type::pointer(lume_mir::Type::void()), // methods,
-                lume_mir::Type::pointer(lume_mir::Type::void()), // type_arguments,
-            ],
-        ))
+        lume_mir::Type::pointer(lume_mir::Type::structure(String::from("std::Method"), vec![
+            lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
+            lume_mir::Type::u64(),                           // size,
+            lume_mir::Type::u64(),                           // alignment,
+            lume_mir::Type::u64(),                           // type_id,
+            lume_mir::Type::pointer(lume_mir::Type::void()), // fields,
+            lume_mir::Type::pointer(lume_mir::Type::void()), // methods,
+            lume_mir::Type::pointer(lume_mir::Type::void()), // type_arguments,
+        ]))
     }
 }

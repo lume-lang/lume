@@ -175,7 +175,8 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         self.func.declare(ty, decl)
     }
 
-    /// Defines a new register with a value of `null` and return an reference to it.
+    /// Defines a new register with a value of `null` and return an reference to
+    /// it.
     fn null_operand(&mut self) -> lume_mir::Operand {
         let reg = self.declare_value(lume_mir::Operand {
             kind: lume_mir::OperandKind::Boolean { value: false },
@@ -216,13 +217,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             }
         }
 
-        let call_inst = self.func.declare(
-            ret_ty,
-            lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Call { func_id, args },
-                location,
-            },
-        );
+        let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Call { func_id, args },
+            location,
+        });
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: call_inst },
@@ -241,13 +239,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     ) -> lume_mir::Operand {
         let args = self.normalize_call_argumets(&signature.parameters, &args);
 
-        let call_inst = self.func.declare(
-            ret_ty,
-            lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::IndirectCall { ptr, signature, args },
-                location,
-            },
-        );
+        let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::IndirectCall { ptr, signature, args },
+            location,
+        });
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: call_inst },
@@ -267,8 +262,8 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         //
         // When passing a non-reference argument into a generic parameter, we then
         // need to pass an address to the argument, so the callee can load it. When
-        // lowering these arguments, we create a slot in the stack to store the argument,
-        // then we pass the address of the stack slot to the function.
+        // lowering these arguments, we create a slot in the stack to store the
+        // argument, then we pass the address of the stack slot to the function.
         for (arg, param) in args.iter_mut().zip(params.iter()) {
             // If the parameter isn't generic, we let it be.
             if !param.ty.is_generic && !param.ty.kind.is_reference_type() {
@@ -320,17 +315,14 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let metadata_entry = self.metadata_entry_of(type_ref);
         let metadata_type = self.metadata_type_of(type_ref);
 
-        self.func.declare(
-            metadata_type,
-            lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Intrinsic {
-                    name: lume_mir::Intrinsic::Metadata {
-                        metadata: metadata_entry.to_owned(),
-                    },
-                    args: Vec::new(),
+        self.func.declare(metadata_type, lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic {
+                name: lume_mir::Intrinsic::Metadata {
+                    metadata: metadata_entry.to_owned(),
                 },
-                location,
+                args: Vec::new(),
             },
-        )
+            location,
+        })
     }
 }

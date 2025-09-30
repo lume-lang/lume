@@ -1,4 +1,5 @@
-use std::{io::Write, os::raw::c_char};
+use std::io::Write;
+use std::os::raw::c_char;
 
 use crate::array::Array;
 use crate::string::{LumeString, cstr_from_string};
@@ -24,14 +25,14 @@ pub extern "C" fn format(fmt: *const c_char, args: *const Array<*const c_char>) 
 
 /// Flushes any buffered content in `stdout` to the processes output.
 ///
-/// This is mostly used when using `std::io::print` without a newline, which might
-/// not be flushed before the program exists.
+/// This is mostly used when using `std::io::print` without a newline, which
+/// might not be flushed before the program exists.
 fn flush_stdout() {
     let _ = std::io::stdout().flush();
 }
 
-/// Formats the given FFI strings into a formatted [`String`], which can be printed
-/// or sent back to the Lume application.
+/// Formats the given FFI strings into a formatted [`String`], which can be
+/// printed or sent back to the Lume application.
 fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) -> String {
     let fmt_str = crate::string::cstr_to_string(fmt);
 
@@ -47,8 +48,8 @@ fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) ->
     internal_format_str(fmt_str, &args_str)
 }
 
-/// Formats the given Rust strings into a formatted [`String`], which can be printed
-/// or sent back to the Lume application.
+/// Formats the given Rust strings into a formatted [`String`], which can be
+/// printed or sent back to the Lume application.
 fn internal_format_str(fmt: String, args: &[String]) -> String {
     let mut idx = 0;
     let mut formatted = String::with_capacity(fmt.len());

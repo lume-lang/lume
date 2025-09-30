@@ -1,9 +1,9 @@
 use std::process::Command;
 
-use crate::commands::project_or_cwd;
-
 use lume_driver::Driver;
 use lume_errors::DiagCtxHandle;
+
+use crate::commands::project_or_cwd;
 
 #[derive(Debug, clap::Parser)]
 #[command(name = "run", about = "Build and run a Lume package", long_about = None)]

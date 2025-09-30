@@ -3,14 +3,14 @@ pub mod errors;
 pub mod fetch;
 pub(crate) mod parser;
 
+use std::path::PathBuf;
+
+use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
 use lume_session::DependencyMap;
 use parser::PackageParser;
 
 pub use crate::fetch::{clean_local_cache_dir, local_cache_dir};
-
-use error_snippet::Result;
-use std::path::PathBuf;
 
 /// Locates the [`Package`] in the given root directory.
 ///

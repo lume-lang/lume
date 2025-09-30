@@ -56,11 +56,11 @@ impl CraneliftBackend {
 }
 
 impl CraneliftBackend {
-    /// Recursively finds all the types on the given metadata type. Children types
-    /// can be defined within a parameter, field, type argument, etc.
+    /// Recursively finds all the types on the given metadata type. Children
+    /// types can be defined within a parameter, field, type argument, etc.
     ///
-    /// The `found` parameter defines which types have already been found, preventing infinite
-    /// looping from recursive types.
+    /// The `found` parameter defines which types have already been found,
+    /// preventing infinite looping from recursive types.
     #[tracing::instrument(level = "TRACE", skip_all, fields(id = ?metadata.id, name = metadata.full_name))]
     fn find_all_types_on(&self, metadata: &TypeMetadata, found: &mut IndexMap<TypeMetadataId, TypeMetadata>) {
         if found.contains_key(&metadata.id) {
@@ -133,7 +133,8 @@ impl CraneliftBackend {
         metadata_name
     }
 
-    /// Finds an existing data declaration for a metadata value with the given name.
+    /// Finds an existing data declaration for a metadata value with the given
+    /// name.
     #[inline]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn find_decl_by_name(&self, name: &str) -> DataId {
@@ -144,7 +145,8 @@ impl CraneliftBackend {
         data_id
     }
 
-    /// Finds an existing data declaration for the type metadata with the given ID.
+    /// Finds an existing data declaration for the type metadata with the given
+    /// ID.
     #[inline]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn find_type_decl(&self, id: TypeMetadataId) -> DataId {
@@ -154,7 +156,8 @@ impl CraneliftBackend {
         self.find_decl_by_name(&metadata_name)
     }
 
-    /// Declares type metadata for the types in the given iterator, but without defining it.
+    /// Declares type metadata for the types in the given iterator, but without
+    /// defining it.
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_type_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
@@ -173,7 +176,8 @@ impl CraneliftBackend {
         }
     }
 
-    /// Declares the field metadata for all the types in the given iterator, but without defining it.
+    /// Declares the field metadata for all the types in the given iterator, but
+    /// without defining it.
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_field_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
@@ -195,7 +199,8 @@ impl CraneliftBackend {
         }
     }
 
-    /// Declares the field metadata for all the types in the given iterator, but without defining it.
+    /// Declares the field metadata for all the types in the given iterator, but
+    /// without defining it.
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_method_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
@@ -221,7 +226,8 @@ impl CraneliftBackend {
         }
     }
 
-    /// Declares the parameter metadata for all the types in the given iterator, but without defining it.
+    /// Declares the parameter metadata for all the types in the given iterator,
+    /// but without defining it.
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
@@ -245,7 +251,8 @@ impl CraneliftBackend {
         }
     }
 
-    /// Declares the type parameter metadata for all the types in the given iterator, but without defining it.
+    /// Declares the type parameter metadata for all the types in the given
+    /// iterator, but without defining it.
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
@@ -590,7 +597,8 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
-    /// Appends a slice of items, where each item is built from the given closure.
+    /// Appends a slice of items, where each item is built from the given
+    /// closure.
     pub fn append_slice_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(&mut self, slice: &[T], f: F) -> &mut Self {
         self.append(slice.len());
 
@@ -601,7 +609,8 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
-    /// Appends a slice of items, where each item is built from the given closure.
+    /// Appends a slice of items, where each item is built from the given
+    /// closure.
     pub fn append_slice_ptr_of<T, F: Fn(&mut MemoryBlockBuilder<'back>, &T)>(
         &mut self,
         decl_name: String,
@@ -641,7 +650,8 @@ impl<'back> MemoryBlockBuilder<'back> {
         self
     }
 
-    /// Appends a pointer (relocation) of the given string data to the data block.
+    /// Appends a pointer (relocation) of the given string data to the data
+    /// block.
     pub fn append_str_address(&mut self, mut value: String) -> &mut Self {
         if !value.ends_with('\0') {
             value.push('\0');
@@ -652,7 +662,8 @@ impl<'back> MemoryBlockBuilder<'back> {
         self.append_data_address(name_data_id)
     }
 
-    /// Takes the builder instance and returns the underlying [`DataDescription`]
+    /// Takes the builder instance and returns the underlying
+    /// [`DataDescription`]
     pub fn finish(self) -> DataDescription {
         let mut ctx = DataDescription::new();
         ctx.set_align(8);

@@ -1,10 +1,11 @@
 use std::ops::Range;
 use std::sync::Arc;
 
-use crate::errors::*;
 use error_snippet::Result;
 use lume_ast::Identifier;
 use lume_span::SourceFile;
+
+use crate::errors::*;
 
 mod errors;
 
@@ -49,8 +50,9 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
 /// They cannot be defined within [`OPERATOR_PRECEDENCE`], as unary operators
 /// share the same operators as other operators, but have different meanings.
 ///
-/// For example, `-` can mean both "minus some amount", but when it's within it's own
-/// expression before a number expression, it'd mean "the negative of the following expression".
+/// For example, `-` can mean both "minus some amount", but when it's within
+/// it's own expression before a number expression, it'd mean "the negative of
+/// the following expression".
 pub const UNARY_PRECEDENCE: u8 = 3;
 
 /// Defines all the operators which are notated as postfix, as opposed to infix.
@@ -344,7 +346,8 @@ pub struct Token {
     /// Defines the value of the token.
     pub value: Option<String>,
 
-    /// Defines the "kind" of the token. This is only used for integer- and floating-point literals.
+    /// Defines the "kind" of the token. This is only used for integer- and
+    /// floating-point literals.
     pub ty: Option<String>,
 }
 
@@ -391,7 +394,8 @@ impl Token {
 
     /// Gets the precedence of the token kind.
     ///
-    /// Returns the precedence of the token kind, or 0 if the token kind is not an operator.
+    /// Returns the precedence of the token kind, or 0 if the token kind is not
+    /// an operator.
     #[inline]
     pub fn precedence(&self) -> u8 {
         OPERATOR_PRECEDENCE
@@ -521,7 +525,8 @@ impl Lexer {
         self.current_char().unwrap_or('\0')
     }
 
-    /// Tries to get the character which is at the current cursor position, offset by `offset`.
+    /// Tries to get the character which is at the current cursor position,
+    /// offset by `offset`.
     ///
     /// Returns `None` if the cursor is at the end of the source.
     #[inline]
@@ -543,7 +548,8 @@ impl Lexer {
         self.source.content.get(start..end)?.chars().next()
     }
 
-    /// Tries to get the character which is at the current cursor position, offset by `offset`.
+    /// Tries to get the character which is at the current cursor position,
+    /// offset by `offset`.
     ///
     /// Returns `\0` if the cursor is at the end of the source.
     #[inline]
@@ -552,7 +558,8 @@ impl Lexer {
         self.at_offset(offset).unwrap_or('\0')
     }
 
-    /// Tries to get the slice of the content stream, given the index and length.
+    /// Tries to get the slice of the content stream, given the index and
+    /// length.
     ///
     /// Returns an empty string if the cursor is at the end of the source.
     #[inline]
@@ -583,7 +590,8 @@ impl Lexer {
         self.position += 1;
     }
 
-    /// Gets the character at the current cursor position and advances the cursor position to the next position.
+    /// Gets the character at the current cursor position and advances the
+    /// cursor position to the next position.
     #[inline]
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn consume(&mut self) -> char {
@@ -656,12 +664,13 @@ impl Lexer {
         }
     }
 
-    /// Gets the token at the current cursor position. The cursor is advanced to the start of the next token.
+    /// Gets the token at the current cursor position. The cursor is advanced to
+    /// the start of the next token.
     ///
     /// # Errors
     ///
-    /// This method will return `Err` if the expected token was formatted incorrectly,
-    /// or if the lexer unexpectedly encountered end-of-file.
+    /// This method will return `Err` if the expected token was formatted
+    /// incorrectly, or if the lexer unexpectedly encountered end-of-file.
     #[tracing::instrument(
         level = "INFO",
         name = "lume_lexer::lexer::next_token",
@@ -742,7 +751,8 @@ impl Lexer {
 
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     fn eat_comment_prefix(&mut self) -> Option<TokenKind> {
-        // Skip over all the whitespace characters, before attempting to eat the comment prefix.
+        // Skip over all the whitespace characters, before attempting to eat the comment
+        // prefix.
         self.eat_while(char::is_whitespace);
 
         // Eat the comment prefix characters.
@@ -931,7 +941,8 @@ impl Lexer {
 
         let mut token_kind = TokenKind::Integer(radix);
 
-        // Attempt to parse any following groups, such as decimal point or float exponent.
+        // Attempt to parse any following groups, such as decimal point or float
+        // exponent.
         match self.current_char_or_eof() {
             '.' if self.at_offset_or_eof(1).is_ascii_digit() => {
                 self.next();
@@ -978,13 +989,15 @@ impl Lexer {
 
     /// Parses a radix prefix from the input stream.
     ///
-    /// Radix prefixes are used to specify the base of a number literal, such as:
+    /// Radix prefixes are used to specify the base of a number literal, such
+    /// as:
     ///   - Binary: `0b1010`
     ///   - Octal: `0o755`
     ///   - Hexadecimal: `0x1A`
     ///
-    /// This method consumes characters from the token stream until it encounters a non-digit character.
-    /// If no radix prefix is found, the method reads all base-10 digits.
+    /// This method consumes characters from the token stream until it
+    /// encounters a non-digit character. If no radix prefix is found, the
+    /// method reads all base-10 digits.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_radix_prefix(&mut self) -> u32 {
         // Default to base-10.

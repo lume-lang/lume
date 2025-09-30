@@ -1,9 +1,9 @@
 use super::*;
 
 /// This pass converts any found direct assignment expressions, turns them into
-/// a new declaration and uses that declaration for any following register references.
-/// This is done because SSA, by design, does not support altering existing register values
-/// directly.
+/// a new declaration and uses that declaration for any following register
+/// references. This is done because SSA, by design, does not support altering
+/// existing register values directly.
 ///
 /// For example, MIR like the following:
 /// ```mir
@@ -13,8 +13,8 @@ use super::*;
 ///     return #0
 /// ```
 ///
-/// is invalid SSA, since `#0` has now been reassigned. This pass attempts to convert the
-/// assignment instruction into the following MIR:
+/// is invalid SSA, since `#0` has now been reassigned. This pass attempts to
+/// convert the assignment instruction into the following MIR:
 /// ```mir
 ///     let #0 = 4_i32
 ///     call foo(#0)
@@ -105,8 +105,9 @@ impl ConvertAssignmentExpressions {
                 self.move_register(target);
 
                 // After the registers of the assignment instruction have been converted
-                // to SSA registers, we transform the instruction itself to declare a new register
-                // instead of attempting to assign a non-existent register.
+                // to SSA registers, we transform the instruction itself to declare a new
+                // register instead of attempting to assign a non-existent
+                // register.
                 inst.kind = InstructionKind::Let {
                     register: *target,
                     decl: Declaration {

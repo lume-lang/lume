@@ -86,7 +86,8 @@ pub struct CheckedPackage {
 }
 
 impl<'a> Compiler<'a> {
-    /// Checks the given [`Package`] for errors, such as parsing-, semantic- or configuration errors.
+    /// Checks the given [`Package`] for errors, such as parsing-, semantic- or
+    /// configuration errors.
     ///
     /// # Errors
     ///

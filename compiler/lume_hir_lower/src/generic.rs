@@ -4,12 +4,9 @@ use error_snippet::Result;
 
 use crate::LowerModule;
 
-use lume_ast::{self as ast};
-use lume_hir::{self as hir};
-
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(crate) fn type_parameters(&mut self, params: Vec<ast::TypeParameter>) -> Result<hir::TypeParameters> {
+    pub(crate) fn type_parameters(&mut self, params: Vec<lume_ast::TypeParameter>) -> Result<lume_hir::TypeParameters> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
         let mut type_params = Vec::with_capacity(params.len());
 
@@ -36,7 +33,7 @@ impl LowerModule<'_> {
                 constraints.push(self.type_ref(*constraint)?);
             }
 
-            type_params.push(hir::TypeParameter {
+            type_params.push(lume_hir::TypeParameter {
                 id,
                 name,
                 constraints,
@@ -44,6 +41,6 @@ impl LowerModule<'_> {
             });
         }
 
-        Ok(hir::TypeParameters { inner: type_params })
+        Ok(lume_hir::TypeParameters { inner: type_params })
     }
 }

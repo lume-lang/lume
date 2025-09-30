@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use crate::errors::*;
 use error_snippet::{Error, Result};
 use lume_ast::*;
 use lume_errors::DiagCtxHandle;
-use lume_lexer::IDENTIFIER_SEPARATOR;
-use lume_lexer::{Lexer, Token, TokenKind};
+use lume_lexer::{IDENTIFIER_SEPARATOR, Lexer, Token, TokenKind};
 use lume_span::{SourceFile, SourceFileId, SourceMap};
+
+use crate::errors::*;
 
 mod errors;
 pub mod expr;
@@ -30,10 +30,12 @@ pub struct Parser {
     /// Defines the lexer which tokenizes the module source code.
     lexer: Lexer,
 
-    /// Defines the index of the current token being processed, given in a zero-based index.
+    /// Defines the index of the current token being processed, given in a
+    /// zero-based index.
     index: usize,
 
-    /// Defines the current position within the module source code, given in a zero-based index.
+    /// Defines the current position within the module source code, given in a
+    /// zero-based index.
     position: usize,
 
     /// Defines all the tokens from the parsed source.
@@ -271,26 +273,32 @@ impl Parser {
         self.token_at(self.tokens.len() - 1)
     }
 
-    /// Peeks the token from the lexer at some offset and returns it if it matches the expected kind.
+    /// Peeks the token from the lexer at some offset and returns it if it
+    /// matches the expected kind.
     ///
-    /// Returns a boolean indicating whether the token matches the expected kind.
+    /// Returns a boolean indicating whether the token matches the expected
+    /// kind.
     fn peek_offset(&self, kind: TokenKind, offset: isize) -> bool {
         let token = self.token_at(self.index.saturating_add_signed(offset));
 
         token.kind == kind
     }
 
-    /// Peeks the next token from the lexer and returns it if it matches the expected kind.
+    /// Peeks the next token from the lexer and returns it if it matches the
+    /// expected kind.
     ///
-    /// Returns a boolean indicating whether the token matches the expected kind.
+    /// Returns a boolean indicating whether the token matches the expected
+    /// kind.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn peek_next(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 1)
     }
 
-    /// Peeks the next token from the lexer and returns it if it matches the expected kind.
+    /// Peeks the next token from the lexer and returns it if it matches the
+    /// expected kind.
     ///
-    /// Returns a boolean indicating whether the token matches the expected kind.
+    /// Returns a boolean indicating whether the token matches the expected
+    /// kind.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn peek(&self, kind: TokenKind) -> bool {
         self.peek_offset(kind, 0)
@@ -325,7 +333,8 @@ impl Parser {
         }
     }
 
-    /// Consumes the next token from the lexer and returns it if it matches the expected kind.
+    /// Consumes the next token from the lexer and returns it if it matches the
+    /// expected kind.
     ///
     /// If the token does not match the expected kind, an error is returned.
     #[tracing::instrument(level = "TRACE", skip(self))]
@@ -339,8 +348,9 @@ impl Parser {
         }
     }
 
-    /// Consumes the next token from the lexer and returns it if it matches the expected kind. Additionally,
-    /// it advances the cursor position by a single token.
+    /// Consumes the next token from the lexer and returns it if it matches the
+    /// expected kind. Additionally, it advances the cursor position by a
+    /// single token.
     ///
     /// If the token does not match the expected kind, an error is returned.
     #[tracing::instrument(level = "TRACE", skip(self))]
@@ -355,7 +365,8 @@ impl Parser {
         }
     }
 
-    /// Consumes the next token from the lexer and returns it, not matter what token it is.
+    /// Consumes the next token from the lexer and returns it, not matter what
+    /// token it is.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn consume_any(&mut self) -> Token {
         let token = self.token();
@@ -365,8 +376,9 @@ impl Parser {
         token
     }
 
-    /// Consumes the next token from the lexer and returns it if it matches the expected kind. Additionally,
-    /// it advances the cursor position by a single token.
+    /// Consumes the next token from the lexer and returns it if it matches the
+    /// expected kind. Additionally, it advances the cursor position by a
+    /// single token.
     ///
     /// If the token does not match the expected kind, `None` is returned.
     #[tracing::instrument(level = "TRACE", skip(self))]
@@ -387,8 +399,8 @@ impl Parser {
     }
 
     /// Invokes the given closure `f`, while preserving the start- and end-index
-    /// of the consumed span. The span is returned as a `Location`, along with the
-    /// result of the closure.
+    /// of the consumed span. The span is returned as a `Location`, along with
+    /// the result of the closure.
     fn consume_with_loc<T>(&mut self, mut f: impl FnMut(&mut Parser) -> Result<T>) -> Result<(T, Location)> {
         // Get the start-index of the current token, whatever it is.
         let start = self.token().start();
@@ -403,8 +415,8 @@ impl Parser {
     /// Parses a sequence of statements, where the closure `f`
     /// is invoked, until the given "close" token is found.
     ///
-    /// This is useful for any sequence of expressions or statements, such as blocks.
-    /// Upon returning, the `close` token will have been consumed.
+    /// This is useful for any sequence of expressions or statements, such as
+    /// blocks. Upon returning, the `close` token will have been consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_seq_to_end<T>(
         &mut self,
@@ -440,10 +452,12 @@ impl Parser {
     }
 
     /// Parses a sequence of delimited statements, where the closure `f`
-    /// is invoked between each delimiter, until the given "close" token is found.
+    /// is invoked between each delimiter, until the given "close" token is
+    /// found.
     ///
-    /// This is useful for any sequence of expressions or statements, such as arrays,
-    /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    /// This is useful for any sequence of expressions or statements, such as
+    /// arrays, parameters, etc. Upon returning, the `close` token will have
+    /// been consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_delim_seq_to_end<T>(
         &mut self,
@@ -477,11 +491,13 @@ impl Parser {
         Ok(v)
     }
 
-    /// Parses an enclosed sequence of delimited statements, where the closure `f`
-    /// is invoked between each delimiter, until the given "close" token is found.
+    /// Parses an enclosed sequence of delimited statements, where the closure
+    /// `f` is invoked between each delimiter, until the given "close" token
+    /// is found.
     ///
-    /// This is useful for any sequence of expressions or statements, such as arrays,
-    /// parameters, etc. Upon returning, the `close` token will have been consumed.
+    /// This is useful for any sequence of expressions or statements, such as
+    /// arrays, parameters, etc. Upon returning, the `close` token will have
+    /// been consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_enclosed_delim_seq<T>(
         &mut self,
@@ -494,11 +510,13 @@ impl Parser {
         self.consume_delim_seq_to_end(close, delim, f)
     }
 
-    /// Parses an enclosed sequence of comma-delimited statements, where the closure `f`
-    /// is invoked between each delimiter, until the given "close" token is found.
+    /// Parses an enclosed sequence of comma-delimited statements, where the
+    /// closure `f` is invoked between each delimiter, until the given
+    /// "close" token is found.
     ///
-    /// This is useful for any sequence of expressions or statements, such as arrays,
-    /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    /// This is useful for any sequence of expressions or statements, such as
+    /// arrays, parameters, etc. Upon returning, both the `open` and `close`
+    /// tokens will have been consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_comma_seq<T>(
         &mut self,
@@ -509,28 +527,32 @@ impl Parser {
         self.consume_enclosed_delim_seq(open, close, TokenKind::Comma, f)
     }
 
-    /// Parses a parenthesis-enclosed sequence of comma-delimited statements, where the closure `f`
-    /// is invoked between each delimiter, until the given "close" token is found.
+    /// Parses a parenthesis-enclosed sequence of comma-delimited statements,
+    /// where the closure `f` is invoked between each delimiter, until the
+    /// given "close" token is found.
     ///
-    /// This is useful for any sequence of expressions or statements, such as arrays,
-    /// parameters, etc. Upon returning, both the `open` and `close` tokens will have been consumed.
+    /// This is useful for any sequence of expressions or statements, such as
+    /// arrays, parameters, etc. Upon returning, both the `open` and `close`
+    /// tokens will have been consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
         self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, f)
     }
 
-    /// Parses a curly-braced enclosed sequence of statements, where the closure `f`
-    /// is invoked, until the given "close" token is found.
+    /// Parses a curly-braced enclosed sequence of statements, where the closure
+    /// `f` is invoked, until the given "close" token is found.
     ///
     /// This is useful for any sequence of statements within a block.
-    /// Upon returning, both the `open` and `close` tokens will have been consumed.
+    /// Upon returning, both the `open` and `close` tokens will have been
+    /// consumed.
     #[tracing::instrument(level = "TRACE", skip(self, f), err)]
     fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser) -> Result<T>) -> Result<Vec<T>> {
         self.consume(TokenKind::LeftCurly)?;
         self.consume_seq_to_end(TokenKind::RightCurly, f)
     }
 
-    /// Checks whether the current token is of the given type. If so, the token is consumed.
+    /// Checks whether the current token is of the given type. If so, the token
+    /// is consumed.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn check(&mut self, kind: TokenKind) -> bool {
         self.consume_if(kind).is_some()
@@ -542,7 +564,8 @@ impl Parser {
         self.check(TokenKind::External)
     }
 
-    /// Reads the current documentation comment into the parser's state, if any is present.
+    /// Reads the current documentation comment into the parser's state, if any
+    /// is present.
     fn read_doc_comment(&mut self) {
         if let Some(doc_comment) = self.consume_if(TokenKind::DocComment) {
             tracing::trace!("found doc comment ({:?})", doc_comment.index);
@@ -600,7 +623,8 @@ impl Parser {
         })
     }
 
-    /// Parses the next token as an identifier, optionally with an suffixed question mark.
+    /// Parses the next token as an identifier, optionally with an suffixed
+    /// question mark.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_callable_name(&mut self) -> Result<Identifier> {
         let mut identifier = self.parse_identifier()?;
@@ -613,7 +637,8 @@ impl Parser {
         Ok(identifier)
     }
 
-    /// Parses the next token as an identifier. If the parsing fails, return `Err(err)`.
+    /// Parses the next token as an identifier. If the parsing fails, return
+    /// `Err(err)`.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
         match self.parse_identifier() {
@@ -622,7 +647,8 @@ impl Parser {
         }
     }
 
-    /// Parses the next token as an identifier, optionally with an suffixed question mark.
+    /// Parses the next token as an identifier, optionally with an suffixed
+    /// question mark.
     ///
     /// If the parsing fails, return `Err(err)`.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
@@ -635,9 +661,10 @@ impl Parser {
 
     /// Parses the next token(s) as a namespace path.
     ///
-    /// Identifier paths are much like regular identifiers, but can be joined together
-    /// with periods, to form longer chains of them. They can be as short as a single
-    /// link, such as `std`, but they can also be longer, such as `std::fmt::error`.
+    /// Identifier paths are much like regular identifiers, but can be joined
+    /// together with periods, to form longer chains of them. They can be as
+    /// short as a single link, such as `std`, but they can also be longer,
+    /// such as `std::fmt::error`.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_import_path(&mut self) -> Result<ImportPath> {
         let segments = self.consume_delim(IDENTIFIER_SEPARATOR, Parser::parse_identifier)?;
@@ -684,7 +711,8 @@ impl Parser {
 
     /// Returns an empty block for external functions.
     ///
-    /// Also functions as an extra layer to report errors, if a function body is declared.
+    /// Also functions as an extra layer to report errors, if a function body is
+    /// declared.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_external_block(&mut self) -> Result<Block> {
         if self.peek(TokenKind::LeftCurly) {
@@ -700,7 +728,8 @@ impl Parser {
         Ok(Block::from_location(self.token().index))
     }
 
-    /// Returns an empty block for external functions and an actual block for non-external functions.
+    /// Returns an empty block for external functions and an actual block for
+    /// non-external functions.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn parse_opt_external_block(&mut self, external: bool) -> Result<Block> {
         if external {

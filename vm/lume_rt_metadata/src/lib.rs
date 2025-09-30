@@ -3,10 +3,8 @@
 //! None of these structs are meant to be exported - they exist purely to
 //! better read type information from passed metadata arguments.
 
-use std::{
-    marker::PhantomData,
-    os::raw::{c_char, c_void},
-};
+use std::marker::PhantomData;
+use std::os::raw::{c_char, c_void};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -30,10 +28,12 @@ pub struct TypeMetadata {
     /// Gets the canonical alignment of the type, in bytes.
     pub alignment: usize,
 
-    /// Gets all the fields defined on the type, in the order that they're declared.
+    /// Gets all the fields defined on the type, in the order that they're
+    /// declared.
     pub fields: List<FieldMetadata>,
 
-    /// Gets all the methods defined on the type, in the order that they're declared.
+    /// Gets all the methods defined on the type, in the order that they're
+    /// declared.
     pub methods: List<MethodMetadata>,
 
     /// Gets all the type arguments defined on the type, in the order
@@ -60,10 +60,12 @@ pub struct MethodMetadata {
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: FunctionId,
 
-    /// Gets the fully-qualified name of the method, including namespace and type name.
+    /// Gets the fully-qualified name of the method, including namespace and
+    /// type name.
     pub full_name: *const c_char,
 
-    /// Gets all the parameters defined on the method, in the order that they're declared.
+    /// Gets all the parameters defined on the method, in the order that they're
+    /// declared.
     pub parameters: List<ParameterMetadata>,
 
     /// Gets all the type parameters defined on the method, in the order

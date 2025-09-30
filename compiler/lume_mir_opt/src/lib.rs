@@ -49,9 +49,9 @@ impl<'tcx> Optimizer<'tcx> {
 /// Determines whether the given function is eligible for optimization.
 ///
 /// Most functions are automatically eligible, but some are excluded because
-/// they are too time-consuming or has limited-to-no performance gain. Currently,
-/// only external functions are non-eligible for optimization, since they have no
-/// body to optimize.
+/// they are too time-consuming or has limited-to-no performance gain.
+/// Currently, only external functions are non-eligible for optimization, since
+/// they have no body to optimize.
 #[inline]
 fn is_func_eligible(func: &lume_mir::Function) -> bool {
     if func.signature.external {

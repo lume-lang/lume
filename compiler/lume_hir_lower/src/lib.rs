@@ -4,7 +4,9 @@ use std::sync::Arc;
 
 use error_snippet::Result;
 use lume_errors::DiagCtxHandle;
-use lume_hir::{Identifier, Path, PathSegment, map::Map, symbols::*};
+use lume_hir::map::Map;
+use lume_hir::symbols::*;
+use lume_hir::{Identifier, Path, PathSegment};
 use lume_parser::Parser;
 use lume_session::Package;
 use lume_span::{Internable, Location, NodeId, SourceFile, SourceMap};
@@ -94,7 +96,8 @@ impl<'a> LowerState<'a> {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid
+    /// locations.
     #[tracing::instrument(name = "lume_hir_lower::lower_state::lower", level = "DEBUG", skip_all, err)]
     pub fn lower(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
         let mut lower = LowerState::new(package, source_map, dcx);
@@ -106,7 +109,8 @@ impl<'a> LowerState<'a> {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid
+    /// locations.
     #[tracing::instrument(
         parent = None,
         name = "lume_hir_lower::lower_state::lower_into",
@@ -178,7 +182,8 @@ pub struct LowerModule<'a> {
     /// Mapping between all imported items and their corresponding item IDs.
     imports: HashMap<String, Path>,
 
-    /// Defines the currently containing namespace expressions exist within, if any.
+    /// Defines the currently containing namespace expressions exist within, if
+    /// any.
     namespace: Option<Path>,
 
     /// Defines the currently containing class expressions exist within, if any.
@@ -208,7 +213,8 @@ impl<'a> LowerModule<'a> {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any AST nodes are invalid or exist in invalid locations.
+    /// Returns `Err` if any AST nodes are invalid or exist in invalid
+    /// locations.
     #[tracing::instrument(
         parent = None,
         name = "lume_hir_lower::lower_module::lower",
@@ -311,9 +317,11 @@ impl<'a> LowerModule<'a> {
     /// Attemps to resolve a [`lume_hir::Path`] for an imported symbol.
     fn resolve_imported_symbol(&self, path: &lume_ast::Path) -> Result<Option<Path>> {
         for (import, symbol) in &self.imports {
-            // Match against imported paths, which match the first segment of the imported path.
+            // Match against imported paths, which match the first segment of the imported
+            // path.
             //
-            // This handles situations where a subpath was imported, which is then referenced later, such as:
+            // This handles situations where a subpath was imported, which is then
+            // referenced later, such as:
             //
             // ```lume
             //     import std (io);

@@ -19,8 +19,8 @@ pub unsafe extern "C" fn lumert_alloc(size: usize, _: *const TypeMetadata) -> *m
 /// least the given length in bytes.
 ///
 /// The returned memory block may be larger than the requested size. The content
-/// is guaranteed to be identical to the original memory block, up until the original
-/// memory block size.
+/// is guaranteed to be identical to the original memory block, up until the
+/// original memory block size.
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_realloc(ptr: *mut u8, new_size: usize, _: *const TypeMetadata) -> *mut u8 {
     unsafe { realloc(ptr, new_size) }

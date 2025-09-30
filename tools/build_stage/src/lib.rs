@@ -1,4 +1,5 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use lume_errors::{DiagCtx, Result};
 use lume_hir::map::Map;
@@ -30,7 +31,8 @@ pub struct ManifoldDriver {
     /// Defines the package to compile.
     package: Package,
 
-    /// Defines the global compilation context which is used across all compiler stages.
+    /// Defines the global compilation context which is used across all compiler
+    /// stages.
     gcx: Arc<GlobalCtx>,
 }
 
@@ -58,7 +60,8 @@ impl ManifoldDriver {
         })
     }
 
-    /// Infers the types of all expressions and statements within the source [`Package`].
+    /// Infers the types of all expressions and statements within the source
+    /// [`Package`].
     pub fn type_inference(&self) -> Result<TyInferCtx> {
         let hir = self.build_hir()?;
         let tcx = TyCtx::new(self.gcx.clone());
@@ -69,7 +72,8 @@ impl ManifoldDriver {
         Ok(infer_ctx)
     }
 
-    /// Type checks the types of all expressions and statements within the source [`Package`].
+    /// Type checks the types of all expressions and statements within the
+    /// source [`Package`].
     pub fn type_check(&self) -> Result<TyCheckCtx> {
         let infer_ctx = self.type_inference()?;
 
@@ -95,7 +99,8 @@ impl ManifoldDriver {
         Ok(mir)
     }
 
-    /// JIT compiles the MIR map from the current [`ManifoldDriver`] instance in-memory.
+    /// JIT compiles the MIR map from the current [`ManifoldDriver`] instance
+    /// in-memory.
     pub fn jit(&self) -> Result<()> {
         let (tcx, tir) = self.build_tir()?;
         let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);

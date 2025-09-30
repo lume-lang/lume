@@ -1,6 +1,6 @@
+use std::fmt;
 use std::io::Write;
-use std::path::PathBuf;
-use std::{fmt, path::Path};
+use std::path::{Path, PathBuf};
 
 use error_snippet::IntoDiagnostic;
 use lume_errors::Result;

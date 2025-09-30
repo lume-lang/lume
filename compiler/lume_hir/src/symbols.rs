@@ -1,6 +1,9 @@
-use std::{borrow::Borrow, collections::HashMap, hash::Hash};
+use std::borrow::Borrow;
+use std::collections::HashMap;
+use std::hash::Hash;
 
-/// Defines a single frame within the symbol table. Each frame can contain multiple entries.
+/// Defines a single frame within the symbol table. Each frame can contain
+/// multiple entries.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SymbolTableFrame<TKey: Hash + Eq, TEntry> {
     /// Defines all the symbols defined within the frame.
@@ -15,16 +18,18 @@ impl<TKey: Hash + Eq, TEntry> SymbolTableFrame<TKey, TEntry> {
     }
 }
 
-/// Defines a single frame within the symbol table. Each frame can be either be symbols or a boundary.
+/// Defines a single frame within the symbol table. Each frame can be either be
+/// symbols or a boundary.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum SymbolTableEntry<TKey: Hash + Eq, TEntry> {
     /// Frames indicate a scope with zero-or-more symbols defined within it.
-    /// The symbol table can jump frames to access symbols defined in parent scopes.
+    /// The symbol table can jump frames to access symbols defined in parent
+    /// scopes.
     Frame(SymbolTableFrame<TKey, TEntry>),
 
-    /// Boundaries are only meant to be implemented when all symbols in the local scope
-    /// should be hidden. This is most often the case when calling a function or method,
-    /// where the local scope is hidden.
+    /// Boundaries are only meant to be implemented when all symbols in the
+    /// local scope should be hidden. This is most often the case when
+    /// calling a function or method, where the local scope is hidden.
     ///
     /// The symbol table cannot jump boundaries to access parent scopes.
     Boundary,
@@ -40,21 +45,24 @@ impl<TKey: Hash + Eq, TEntry> SymbolTableEntry<TKey, TEntry> {
     }
 }
 
-/// The symbol table keeps track of all symbols which are available within any given scope.
-///
-/// This table binds variable references to their declarations, so code such as this:
+/// The symbol table keeps track of all symbols which are available within any
+/// given scope. This table binds variable references to their declarations, so
+/// code such as this:
 ///
 /// ```lm
 /// let a = 1;
 /// let b = a;
 /// ```
 ///
-/// The expression `let a = 1` declares a new variable `a` and assigns it the value `1`. When the
-/// expression `let b = a` is visited, it needs to know which variable is being referenced, when seeing `a`.
+/// The expression `let a = 1` declares a new variable `a` and assigns it the
+/// value `1`. When the expression `let b = a` is visited, it needs to know
+/// which variable is being referenced, when seeing `a`.
 ///
-/// Since this table needs to contain a lookup table of variables, it also needs to know which scope each
-/// variable is declared in. Because of this, this table also inherently handles invalid variable references,
-/// such as referencing a variable that has not been declared or variables which are out of scope. For example:
+/// Since this table needs to contain a lookup table of variables, it also needs
+/// to know which scope each variable is declared in. Because of this, this
+/// table also inherently handles invalid variable references,
+/// such as referencing a variable that has not been declared or variables which
+/// are out of scope. For example:
 ///
 /// ```lm
 /// let a = b;
@@ -72,11 +80,12 @@ impl<TKey: Hash + Eq, TEntry> SymbolTableEntry<TKey, TEntry> {
 /// let a = b;
 /// ```
 ///
-/// Would fail because `b` is out of scope when `a` is declared, even though `b` was defined within `test`,
-/// which was called before `a` was declared.
+/// Would fail because `b` is out of scope when `a` is declared, even though `b`
+/// was defined within `test`, which was called before `a` was declared.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct SymbolTable<TKey: Hash + Eq, TEntry> {
-    /// Defines all the entries within the table, ordered by the declaration order.
+    /// Defines all the entries within the table, ordered by the declaration
+    /// order.
     symbols: Vec<SymbolTableEntry<TKey, TEntry>>,
 }
 
@@ -91,7 +100,8 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         table
     }
 
-    /// Creates a new symbol table, without any content, without any global scope.
+    /// Creates a new symbol table, without any content, without any global
+    /// scope.
     #[allow(dead_code)]
     pub fn new_without_global() -> Self {
         let mut table = Self::new();
@@ -123,7 +133,8 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
 
     /// Appends a new named symbol to the current symbol scope.
     ///
-    /// This is usually called when a new variable is introduced within an existing block scope.
+    /// This is usually called when a new variable is introduced within an
+    /// existing block scope.
     #[expect(clippy::missing_panics_doc, reason = "infallible")]
     pub fn define(&mut self, name: TKey, decl: TEntry) {
         if let SymbolTableEntry::Frame(frame) = self.symbols.last_mut().unwrap() {
@@ -131,12 +142,15 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         }
     }
 
-    /// Retrieves a named symbol from the current symbol scope. If not found, it will search the global scope.
+    /// Retrieves a named symbol from the current symbol scope. If not found, it
+    /// will search the global scope.
     ///
-    /// This is usually called when a variable is referenced within an existing block scope.
-    /// To retrieve the symbol, the table will iterate, in reverse order, up until a symbol with the same
-    /// name is found, inside of the current scope. If the iterator reaches a boundary, it will stop searching
-    /// for local symbols and continue searching in the global scope.
+    /// This is usually called when a variable is referenced within an existing
+    /// block scope. To retrieve the symbol, the table will iterate, in
+    /// reverse order, up until a symbol with the same name is found, inside
+    /// of the current scope. If the iterator reaches a boundary, it will stop
+    /// searching for local symbols and continue searching in the global
+    /// scope.
     pub fn retrieve<K>(&self, name: &K) -> Option<&TEntry>
     where
         TKey: Borrow<K>,
@@ -153,7 +167,8 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         None
     }
 
-    /// Push a new boundary onto the symbol table, scoping it to only newly added symbols.
+    /// Push a new boundary onto the symbol table, scoping it to only newly
+    /// added symbols.
     pub fn push_boundary(&mut self) {
         self.symbols.push(SymbolTableEntry::boundary());
 
@@ -161,7 +176,8 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
         self.push_frame();
     }
 
-    /// Pops a boundary off the symbol table, removing all symbols added since the last boundary.
+    /// Pops a boundary off the symbol table, removing all symbols added since
+    /// the last boundary.
     pub fn pop_boundary(&mut self) {
         // Pops the symbol frame off the stack.
         self.pop_frame();
@@ -209,7 +225,8 @@ impl<TKey: Hash + Eq, TEntry> SymbolTable<TKey, TEntry> {
 impl SymbolTable<String, crate::VariableDeclaration> {
     /// Appends a new named symbol to the current symbol scope.
     ///
-    /// This is usually called when a new variable is introduced within an existing block scope.
+    /// This is usually called when a new variable is introduced within an
+    /// existing block scope.
     pub fn define_var(&mut self, decl: crate::VariableDeclaration) {
         self.define(decl.name.to_string(), decl);
     }

@@ -1,11 +1,11 @@
 pub(crate) mod alloc;
 pub(crate) mod arch;
 
+use alloc::GA;
 use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::OnceLock;
 
-use alloc::GA;
 use lume_rt_metadata::TypeMetadata;
 
 /// Immutable, thread-transportable pointer type.
@@ -81,9 +81,9 @@ impl CompiledFunctionMetadata {
         None
     }
 
-    /// Gets the [`Ordering`] of the given address, in reference to the interval of
-    /// the current metadata entry. This method is used for iterating over a list of
-    /// metadata entries using a binary search.
+    /// Gets the [`Ordering`] of the given address, in reference to the interval
+    /// of the current metadata entry. This method is used for iterating
+    /// over a list of metadata entries using a binary search.
     ///
     /// The truth table for the method is as such[^note]:
     ///
@@ -128,8 +128,8 @@ pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
 ///
 /// # Panics
 ///
-/// This function will panic if the stack maps have not yet been declared. To declare
-/// them, use [`declare_stack_maps`].
+/// This function will panic if the stack maps have not yet been declared. To
+/// declare them, use [`declare_stack_maps`].
 fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunctionMetadata> {
     let stack_maps = FUNC_STACK_MAPS.get().expect("expected function stack map to be set");
 
@@ -192,11 +192,12 @@ impl FrameStackMap {
 
     /// Gets all the stack location offsets of the current frame stack map.
     ///
-    /// The returned slice will be a list of offsets relative to the stack pointer
-    /// of the frame, which will contain a pointer to a GC reference.
+    /// The returned slice will be a list of offsets relative to the stack
+    /// pointer of the frame, which will contain a pointer to a GC
+    /// reference.
     ///
-    /// For more information, see [`stack_locations`] which will get the absolute
-    /// addresses of the GC references.
+    /// For more information, see [`stack_locations`] which will get the
+    /// absolute addresses of the GC references.
     #[inline]
     pub(crate) fn stack_offsets(&self) -> &[usize] {
         let offset = self.offset();
@@ -214,13 +215,15 @@ impl FrameStackMap {
             .unwrap_or_else(|| &[])
     }
 
-    /// Attempts to find all GC references found inside of the stack map for the current
-    /// program counter. The returned iterator will iterate over a list of pointers,
-    /// which point to an item inside the current stack frame.
+    /// Attempts to find all GC references found inside of the stack map for the
+    /// current program counter. The returned iterator will iterate over a
+    /// list of pointers, which point to an item inside the current stack
+    /// frame.
     ///
-    /// To get the address of the underlying allocation, simply read the pointer. This
-    /// is to facilitate the GC moving the underlying allocation to a different address,
-    /// whereafter it can write the new address to the pointer in the stack frame.
+    /// To get the address of the underlying allocation, simply read the
+    /// pointer. This is to facilitate the GC moving the underlying
+    /// allocation to a different address, whereafter it can write the new
+    /// address to the pointer in the stack frame.
     #[inline]
     pub(crate) fn stack_locations(&self) -> impl Iterator<Item = *const *const u8> {
         self.stack_offsets()
@@ -228,12 +231,13 @@ impl FrameStackMap {
             .map(|offset| unsafe { self.stack_pointer().byte_add(*offset) } as *const *const u8)
     }
 
-    /// Attempts to find all GC references found inside of the stack map for the current
-    /// program counter.
+    /// Attempts to find all GC references found inside of the stack map for the
+    /// current program counter.
     ///
-    /// The returned iterator will iterate over a list of tuples. The first element in the
-    /// tuple is an entry in the current stack frame containing the GC reference and the
-    /// second element is a pointer to the GC reference itself.
+    /// The returned iterator will iterate over a list of tuples. The first
+    /// element in the tuple is an entry in the current stack frame
+    /// containing the GC reference and the second element is a pointer to
+    /// the GC reference itself.
     #[inline]
     pub(crate) fn stack_value_locations(&self) -> impl Iterator<Item = (*const *const u8, *const u8)> {
         self.stack_locations().map(|ptr| {
@@ -243,12 +247,14 @@ impl FrameStackMap {
         })
     }
 
-    /// Attempts to find all GC references found inside of the stack map for the current
-    /// program counter, as well as any parent stack maps from predecessor frames.
+    /// Attempts to find all GC references found inside of the stack map for the
+    /// current program counter, as well as any parent stack maps from
+    /// predecessor frames.
     ///
-    /// The returned iterator will iterate over a list of tuples. The first element in the
-    /// tuple is an entry in the current stack frame containing the GC reference and the
-    /// second element is a pointer to the GC reference itself.
+    /// The returned iterator will iterate over a list of tuples. The first
+    /// element in the tuple is an entry in the current stack frame
+    /// containing the GC reference and the second element is a pointer to
+    /// the GC reference itself.
     #[inline]
     pub(crate) fn iter_stack_value_locations(&self) -> impl Iterator<Item = (*const *const u8, *const u8)> {
         self.create_frame_hierarchy().into_iter().flat_map(|frame| {
@@ -269,12 +275,15 @@ impl Display for FrameStackMap {
     }
 }
 
-/// Attempts to find a frame stack map which corresponds to the current frame pointer.
+/// Attempts to find a frame stack map which corresponds to the current frame
+/// pointer.
 ///
-/// If no frame stack map can be found for the current frame pointer, the function
-/// iterates through all parent frames, until a frame stack map is found.
+/// If no frame stack map can be found for the current frame pointer, the
+/// function iterates through all parent frames, until a frame stack map is
+/// found.
 ///
-/// If no frame stack maps are found in any parent frames, the functions returns [`None`].
+/// If no frame stack maps are found in any parent frames, the functions returns
+/// [`None`].
 fn find_current_stack_map() -> Option<FrameStackMap> {
     let mut fp = arch::read_frame_pointer();
 
@@ -298,26 +307,28 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
     None
 }
 
-/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so it can be
-/// used as a function pointer in Cranelift.
+/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so
+/// it can be used as a function pointer in Cranelift.
 ///
 /// This function *might* trigger a collection, depending on the current state
 /// of the allocator. To force a collection, use [`trigger_collection_force`].
 ///
-/// To see whether a collection is required, use [`alloc::GenerationalAllocator::is_collection_required`].
+/// To see whether a collection is required, use
+/// [`alloc::GenerationalAllocator::is_collection_required`].
 pub fn trigger_collection() {
     if GA.try_read().is_ok_and(|alloc| alloc.is_collection_required()) {
         trigger_collection_force();
     }
 }
 
-/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so it can be
-/// used as a function pointer in Cranelift.
+/// Static version of [`alloc::GenerationalAllocator::promote_allocations`], so
+/// it can be used as a function pointer in Cranelift.
 ///
-/// This function *will* trigger a collection. To only trigger a collection if necessary,
-/// use [`trigger_collection`].
+/// This function *will* trigger a collection. To only trigger a collection if
+/// necessary, use [`trigger_collection`].
 ///
-/// To see whether a collection is required, use [`alloc::GenerationalAllocator::is_collection_required`].
+/// To see whether a collection is required, use
+/// [`alloc::GenerationalAllocator::is_collection_required`].
 #[inline]
 pub fn trigger_collection_force() {
     let Some(frame) = find_current_stack_map() else {
@@ -339,11 +350,11 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
     GA.try_write().unwrap().alloc(size, metadata, &frame)
 }
 
-/// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it can be
-/// used as a function pointer in Cranelift.
+/// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it
+/// can be used as a function pointer in Cranelift.
 ///
-/// This function will drop all allocations which have been made with the global allocator,
-/// [`GA`].
+/// This function will drop all allocations which have been made with the global
+/// allocator, [`GA`].
 #[inline]
 pub fn drop_allocations() {
     lume_trace::trace!("dropping all allocations");

@@ -18,10 +18,10 @@ use super::*;
 ///     return #3
 /// ```
 ///
-/// Each successor block, except for `B0`, requires a register from a previous blocks. This
-/// pass will look for all registers required for each block and declare them as parameters
-/// of the block, if they cannot be found in the block itself. After the pass, the same
-/// MIR will look like this:
+/// Each successor block, except for `B0`, requires a register from a previous
+/// blocks. This pass will look for all registers required for each block and
+/// declare them as parameters of the block, if they cannot be found in the
+/// block itself. After the pass, the same MIR will look like this:
 /// ```mir
 /// B0:
 ///     #0 = 4_i32
@@ -114,8 +114,8 @@ impl DefineBlockParameters {
             regs.extend(terminator.register_refs());
         }
 
-        // ...and scoop away all registers which were referenced within the block, but were
-        // also defined within the block.
+        // ...and scoop away all registers which were referenced within the block, but
+        // were also defined within the block.
         for inst in block.instructions() {
             if let Some(def) = inst.register_def() {
                 regs.shift_remove(&def);

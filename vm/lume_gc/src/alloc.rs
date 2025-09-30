@@ -1,11 +1,11 @@
 extern crate alloc;
 
 use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
+use std::sync::{LazyLock, RwLock};
+
 use indexmap::IndexMap;
 use lume_rt_metadata::TypeMetadata;
 use mimalloc::MiMalloc;
-
-use std::sync::{LazyLock, RwLock};
 
 use crate::FrameStackMap;
 
@@ -48,7 +48,8 @@ impl BumpAllocator {
         }
     }
 
-    /// Allocates a new memory block with the given size and returns the pointer.
+    /// Allocates a new memory block with the given size and returns the
+    /// pointer.
     pub(crate) fn alloc(&mut self, size: usize) -> Option<*mut u8> {
         if self.current_size() + size >= self.total_size() {
             return None;
@@ -138,13 +139,14 @@ impl YoungGeneration {
         self.allocator.clear();
     }
 
-    /// Attempts to find all GC references found inside of the given stack map. The
-    /// returned iterator will iterate over a list of pointers, which point to an item
-    /// inside the current stack frame.
+    /// Attempts to find all GC references found inside of the given stack map.
+    /// The returned iterator will iterate over a list of pointers, which
+    /// point to an item inside the current stack frame.
     ///
-    /// To get the address of the underlying allocation, simply read the pointer. This
-    /// is to facilitate the GC moving the underlying allocation to a different address,
-    /// whereafter it can write the new address to the pointer in the stack frame.
+    /// To get the address of the underlying allocation, simply read the
+    /// pointer. This is to facilitate the GC moving the underlying
+    /// allocation to a different address, whereafter it can write the new
+    /// address to the pointer in the stack frame.
     pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
         frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
             if obj_ptr >= self.allocator.base && obj_ptr <= self.allocator.current {
@@ -188,7 +190,8 @@ impl OldGeneration {
         ptr
     }
 
-    /// Clears the generation deallocating all allocations made by the allocator.
+    /// Clears the generation deallocating all allocations made by the
+    /// allocator.
     pub(crate) fn clear(&mut self) {
         if lume_trace::enabled!(lume_trace::Level::TRACE) {
             for (alloc, (size, _)) in &self.allocations {
@@ -228,9 +231,9 @@ impl GenerationalAllocator {
     }
 
     /// Creates a new [`GenerationalAllocator`], where the initial size of the
-    /// 1st generation is a *n*th root of the total amount of memory installed on
-    /// the host system. In practice, the total amount of memory, in bytes, will
-    /// be bit-shifted right *n* times.
+    /// 1st generation is a *n*th root of the total amount of memory installed
+    /// on the host system. In practice, the total amount of memory, in
+    /// bytes, will be bit-shifted right *n* times.
     ///
     /// For example, passing `6` on a system with 16GB of total system memory,
     /// the 1st generation would allocate 256MB of memory, since

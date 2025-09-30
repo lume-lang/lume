@@ -1,14 +1,16 @@
-use std::{fmt::Write, ops::Deref, sync::Arc};
+use std::fmt::Write;
+use std::ops::Deref;
+use std::sync::Arc;
 
 use error_snippet::Result;
 use indexmap::IndexMap;
 use lume_errors::DiagCtx;
+use lume_hir::{Path, PathSegment, Visibility};
 use lume_session::GlobalCtx;
+use lume_span::*;
 use serde::{Deserialize, Serialize};
 
 use crate::errors::*;
-use lume_hir::{Path, PathSegment, Visibility};
-use lume_span::*;
 
 pub mod errors;
 
@@ -87,10 +89,11 @@ impl Parameters {
     }
 }
 
-/// Defines the signature of a function or method, with parameters and return type.
+/// Defines the signature of a function or method, with parameters and return
+/// type.
 ///
-/// While the type infers that it's only applicable for functions, this structure
-/// is also used for methods.
+/// While the type infers that it's only applicable for functions, this
+/// structure is also used for methods.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct FunctionSig<'a> {
     pub params: &'a Parameters,
@@ -116,10 +119,11 @@ impl FunctionSig<'_> {
     }
 }
 
-/// Defines the signature of a function or method, with parameters and return type.
+/// Defines the signature of a function or method, with parameters and return
+/// type.
 ///
-/// While the type infers that it's only applicable for functions, this structure
-/// is also used for methods.
+/// While the type infers that it's only applicable for functions, this
+/// structure is also used for methods.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSigOwned {
     pub params: Parameters,
@@ -440,7 +444,8 @@ impl TypeKind {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TypeTransport {
-    /// The type is fully copied when passed as an argument or returned from a function.
+    /// The type is fully copied when passed as an argument or returned from a
+    /// function.
     Copy,
 
     /// The type uses the same memory location and is passed by reference.
@@ -1178,7 +1183,8 @@ impl TypeDatabaseContext {
     }
 
     /// Gets an iterator which iterates all [`Item`]-instances where
-    /// the item refers to a [`Method`], which are defined on the given [`Item`].
+    /// the item refers to a [`Method`], which are defined on the given
+    /// [`Item`].
     pub fn methods_on(&self, id: NodeId) -> impl Iterator<Item = &Method> {
         let mut methods: Vec<Box<dyn Iterator<Item = &Method>>> =
             vec![Box::new(self.methods().filter(move |m| m.callee.instance_of == id))];
@@ -1193,7 +1199,8 @@ impl TypeDatabaseContext {
     }
 
     /// Gets an iterator which iterates all [`Use`]-instances where
-    /// the item refers to a [`Use`], which are implementation on the given [`Item`].
+    /// the item refers to a [`Use`], which are implementation on the given
+    /// [`Item`].
     pub fn uses_on(&self, on: &TypeRef) -> impl Iterator<Item = &Use> {
         self.uses().filter(move |u| &u.target == on)
     }
@@ -1220,7 +1227,8 @@ impl TypeDatabaseContext {
         self.fields().filter(move |prop| prop.owner == owner)
     }
 
-    /// Attempts to find a [`Field`] with the given name on the given parent type, if any.
+    /// Attempts to find a [`Field`] with the given name on the given parent
+    /// type, if any.
     pub fn find_field(&self, owner: NodeId, name: &String) -> Option<&Field> {
         self.fields().find(|prop| prop.owner == owner && prop.name == *name)
     }
@@ -1233,17 +1241,14 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Function`] with the given name and kind.
     #[inline]
     pub fn func_alloc(&mut self, id: NodeId, name: Path, visibility: Visibility) -> NodeId {
-        self.functions.insert(
+        self.functions.insert(id, Function {
             id,
-            Function {
-                id,
-                name,
-                visibility,
-                type_parameters: Vec::new(),
-                parameters: Parameters::new(),
-                return_type: TypeRef::unknown(),
-            },
-        );
+            name,
+            visibility,
+            type_parameters: Vec::new(),
+            parameters: Parameters::new(),
+            return_type: TypeRef::unknown(),
+        });
 
         id
     }
@@ -1251,14 +1256,11 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
     pub fn type_alloc(&mut self, id: NodeId, name: Path, kind: TypeKind) -> NodeId {
-        let existing = self.types.insert(
+        let existing = self.types.insert(id, Type {
             id,
-            Type {
-                id,
-                kind,
-                name: name.clone(),
-            },
-        );
+            kind,
+            name: name.clone(),
+        });
 
         assert!(
             existing.is_none(),
@@ -1272,14 +1274,11 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Implementation`] with the target.
     #[inline]
     pub fn impl_alloc(&mut self, id: NodeId, target: Path) -> NodeId {
-        let existing = self.implementations.insert(
+        let existing = self.implementations.insert(id, Implementation {
             id,
-            Implementation {
-                id,
-                target,
-                type_parameters: Vec::new(),
-            },
-        );
+            target,
+            type_parameters: Vec::new(),
+        });
 
         assert!(existing.is_none());
 
@@ -1289,16 +1288,13 @@ impl TypeDatabaseContext {
     /// Allocates a new [`Use`] with the target.
     #[inline]
     pub fn use_alloc(&mut self, id: NodeId) -> NodeId {
-        self.uses.insert(
+        self.uses.insert(id, Use {
             id,
-            Use {
-                id,
-                trait_: TypeRef::unknown(),
-                target: TypeRef::unknown(),
-                type_parameters: Vec::new(),
-                methods: Vec::new(),
-            },
-        );
+            trait_: TypeRef::unknown(),
+            target: TypeRef::unknown(),
+            type_parameters: Vec::new(),
+            methods: Vec::new(),
+        });
 
         id
     }
@@ -1307,8 +1303,8 @@ impl TypeDatabaseContext {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
-    /// is not a type.
+    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found,
+    /// or is not a type.
     #[inline]
     pub fn field_alloc(
         &mut self,
@@ -1318,17 +1314,14 @@ impl TypeDatabaseContext {
         name: String,
         visibility: Visibility,
     ) -> NodeId {
-        self.fields.insert(
+        self.fields.insert(id, Field {
             id,
-            Field {
-                id,
-                index,
-                owner,
-                name,
-                visibility,
-                field_type: TypeRef::unknown(),
-            },
-        );
+            index,
+            owner,
+            name,
+            visibility,
+            field_type: TypeRef::unknown(),
+        });
 
         id
     }
@@ -1337,8 +1330,8 @@ impl TypeDatabaseContext {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found, or
-    /// is not a type.
+    /// Returns `Err` if `owner` refers to an [`Item`] which could not be found,
+    /// or is not a type.
     #[inline]
     pub fn method_alloc(
         &mut self,
@@ -1348,19 +1341,16 @@ impl TypeDatabaseContext {
         visibility: Visibility,
         kind: MethodKind,
     ) -> NodeId {
-        self.methods.insert(
+        self.methods.insert(id, Method {
             id,
-            Method {
-                id,
-                kind,
-                callee: owner,
-                name,
-                visibility,
-                parameters: Parameters::new(),
-                type_parameters: Vec::new(),
-                return_type: TypeRef::unknown(),
-            },
-        );
+            kind,
+            callee: owner,
+            name,
+            visibility,
+            parameters: Parameters::new(),
+            type_parameters: Vec::new(),
+            return_type: TypeRef::unknown(),
+        });
 
         id
     }
@@ -1368,27 +1358,26 @@ impl TypeDatabaseContext {
     /// Allocates a new [`TypeParameter`] with the given name and kind.
     #[inline]
     pub fn type_param_alloc(&mut self, id: NodeId, name: String, loc: Location) -> NodeId {
-        let existing = self.type_parameters.insert(
+        let existing = self.type_parameters.insert(id, TypeParameter {
             id,
-            TypeParameter {
-                id,
-                name,
-                constraints: Vec::new(),
-                location: loc,
-            },
-        );
+            name,
+            constraints: Vec::new(),
+            location: loc,
+        });
 
         assert!(existing.is_none());
 
         id
     }
 
-    /// Gets the type parameters defined on the [`lume_hir::Node`] with the given ID.
+    /// Gets the type parameters defined on the [`lume_hir::Node`] with the
+    /// given ID.
     ///
     /// # Errors
     ///
     /// Returns `Err` if no type with the given ID was found in the context,
-    /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
+    /// or if the found type is non-generic (such as [`TypeKind::Void`] or
+    /// [`TypeKind::TypeParameter`]).
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn type_params_of(&self, id: NodeId) -> Result<&[NodeId]> {
         if let Some(ty) = self.type_(id) {
@@ -1419,7 +1408,8 @@ impl TypeDatabaseContext {
     /// # Errors
     ///
     /// Returns `Err` if no type with the given ID was found in the context,
-    /// or if the found type is non-generic (such as [`TypeKind::Void`] or [`TypeKind::TypeParameter`]).
+    /// or if the found type is non-generic (such as [`TypeKind::Void`] or
+    /// [`TypeKind::TypeParameter`]).
     pub fn push_type_param(&mut self, id: NodeId, type_id: NodeId) -> Result<()> {
         if !self.type_params_of(id)?.contains(&type_id) {
             if let Some(ty) = self.type_mut(id) {
@@ -1461,7 +1451,8 @@ impl TypeDatabaseContext {
         Ok(())
     }
 
-    /// Checks whether the given namespace exists for any item within the database.
+    /// Checks whether the given namespace exists for any item within the
+    /// database.
     pub fn namespace_exists(&self, root: &[PathSegment]) -> bool {
         for ty in self.types.values() {
             if ty.name.root.starts_with(root) {
@@ -1500,9 +1491,10 @@ impl Default for TypeDatabaseContext {
     }
 }
 
-/// Central data structure for performing analysis and checking on types within a compilation
-/// job. This structure contains references to all types defined within a source package,
-/// as well as all resulting types from expressions, statements, etc.
+/// Central data structure for performing analysis and checking on types within
+/// a compilation job. This structure contains references to all types defined
+/// within a source package, as well as all resulting types from expressions,
+/// statements, etc.
 pub struct TyCtx {
     /// Defines the global context
     gcx: Arc<GlobalCtx>,

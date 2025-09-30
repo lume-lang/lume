@@ -1,6 +1,3 @@
-use crate::TyInferCtx;
-use crate::query::{CallReference, Callable};
-
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_hir::{Identifier, Path, WithLocation};
@@ -9,8 +6,11 @@ use lume_span::NodeId;
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
+use crate::TyInferCtx;
+use crate::query::{CallReference, Callable};
 
-/// Defines the maximum Levenshtein distance allowed for method name suggestions.
+/// Defines the maximum Levenshtein distance allowed for method name
+/// suggestions.
 pub const MAX_LEVENSHTEIN_DISTANCE: usize = 3;
 
 /// Represents the option of whether a lookup should include
@@ -48,12 +48,13 @@ impl TyInferCtx {
         }
     }
 
-    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which are
-    /// implemented via an `impl` tag on the type.
+    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which
+    /// are implemented via an `impl` tag on the type.
     ///
-    /// Methods returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// Methods returned by this method are not checked for validity within the
+    /// current context, such as visibility, arguments or type arguments. To
+    /// check whether any given [`Method`] is valid for a given context, see
+    /// [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_impl_methods_on(
         &self,
@@ -64,12 +65,13 @@ impl TyInferCtx {
             .filter(move |method| method.name.name() == name)
     }
 
-    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which are
-    /// implemented through trait implementations.
+    /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`, which
+    /// are implemented through trait implementations.
     ///
-    /// Methods returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// Methods returned by this method are not checked for validity within the
+    /// current context, such as visibility, arguments or type arguments. To
+    /// check whether any given [`Method`] is valid for a given context, see
+    /// [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_trait_methods_on(
         &self,
@@ -106,7 +108,8 @@ impl TyInferCtx {
                     .collect::<Vec<_>>();
 
                 // We need to prioritize the methods defined in the trait implementation,
-                // as any method defined on a trait definition should only function as a fallback.
+                // as any method defined on a trait definition should only function as a
+                // fallback.
                 //
                 // The `MethodKind` enum is implemented via derive-macro and will place any
                 // trait implementation methods before trait definition methods.
@@ -119,9 +122,10 @@ impl TyInferCtx {
 
     /// Looks up all [`Method`]s on the given [`TypeRef`] of name `name`.
     ///
-    /// Methods returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// Methods returned by this method are not checked for validity within the
+    /// current context, such as visibility, arguments or type arguments. To
+    /// check whether any given [`Method`] is valid for a given context, see
+    /// [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_methods_on(
         &self,
@@ -143,9 +147,10 @@ impl TyInferCtx {
 
     /// Looks up the first [`Method`] on the given [`TypeRef`] of name `name`.
     ///
-    /// The method returned by this method is not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// The method returned by this method is not checked for validity within
+    /// the current context, such as visibility, arguments or type
+    /// arguments. To check whether any given [`Method`] is valid for a
+    /// given context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_method_on(&self, ty: &'_ lume_types::TypeRef, name: &'_ Identifier) -> Option<&Method> {
         // First check whether any method is defined directly on the type
@@ -162,12 +167,13 @@ impl TyInferCtx {
         }
     }
 
-    /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't an
-    /// exact match to `name`, but not too disimilar.
+    /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't
+    /// an exact match to `name`, but not too disimilar.
     ///
-    /// Methods returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is otherwise valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// Methods returned by this method are not checked for validity within the
+    /// current context, such as visibility, arguments or type arguments. To
+    /// check whether any given [`Method`] is otherwise valid for a given
+    /// context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
@@ -181,8 +187,8 @@ impl TyInferCtx {
             .collect()
     }
 
-    /// Folds all the functions which could be suggested from the given call expression
-    /// into a single, emittable error message.
+    /// Folds all the functions which could be suggested from the given call
+    /// expression into a single, emittable error message.
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn fold_function_suggestions<'a>(&self, expr: &lume_hir::StaticCall) -> Result<diagnostics::MissingFunction> {
         let suggestion: Option<Result<error_snippet::Error>> =
@@ -210,8 +216,8 @@ impl TyInferCtx {
         })
     }
 
-    /// Folds all the methods which could be suggested from the given call expression
-    /// into a single, emittable error message.
+    /// Folds all the methods which could be suggested from the given call
+    /// expression into a single, emittable error message.
     #[tracing::instrument(level = "TRACE", skip_all)]
     fn fold_method_suggestions<'a>(&self, expr: lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
         let name = match expr {
@@ -255,12 +261,13 @@ impl TyInferCtx {
         })
     }
 
-    /// Looks up all [`Function`]s, where the name isn't an exact match to `name`,
-    /// but not too disimilar.
+    /// Looks up all [`Function`]s, where the name isn't an exact match to
+    /// `name`, but not too disimilar.
     ///
-    /// Functions returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    /// Functions returned by this method are not checked for validity within
+    /// the current context, such as visibility, arguments or type
+    /// arguments. To check whether any given [`Function`] is valid for a
+    /// given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
     pub fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb()
@@ -284,9 +291,10 @@ impl TyInferCtx {
 
     /// Looks up all registered [`Functions`]s of name `name`.
     ///
-    /// Functions returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Function`] is valid for a given context, see [`ThirBuildCtx::check_function()`].
+    /// Functions returned by this method are not checked for validity within
+    /// the current context, such as visibility, arguments or type
+    /// arguments. To check whether any given [`Function`] is valid for a
+    /// given context, see [`ThirBuildCtx::check_function()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn probe_functions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb().functions().filter(|func| &func.name == name).collect()
@@ -294,8 +302,9 @@ impl TyInferCtx {
 
     /// Looks up all registered [`Method`]s and [`Functions`]s of name `name`.
     ///
-    /// Functions returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments.
+    /// Functions returned by this method are not checked for validity within
+    /// the current context, such as visibility, arguments or type
+    /// arguments.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
@@ -359,29 +368,33 @@ impl TyInferCtx {
         }
     }
 
-    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
-    /// signature of the given instance call expression.
+    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which
+    /// matches the signature of the given instance call expression.
     ///
-    /// Methods returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. The look up methods
-    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    /// Methods returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// The look up methods which only match the callee type and method
+    /// name, see [`TyInferCtx::lookup_methods_on()`].
     ///
-    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For a static callable
-    /// lookup, see [`TyInferCtx::lookup_callable_static()`].
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
+    /// For a static callable lookup, see
+    /// [`TyInferCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Instanced(call))
     }
 
-    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
-    /// signature of the given intrinsic call expression.
+    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which
+    /// matches the signature of the given intrinsic call expression.
     ///
-    /// Methods returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. The look up methods
-    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    /// Methods returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// The look up methods which only match the callee type and method
+    /// name, see [`TyInferCtx::lookup_methods_on()`].
     ///
-    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For a static callable
-    /// lookup, see [`TyInferCtx::lookup_callable_static()`].
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
+    /// For a static callable lookup, see
+    /// [`TyInferCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_intrinsic(&self, call: &lume_hir::IntrinsicCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Intrinsic(call))
@@ -390,19 +403,22 @@ impl TyInferCtx {
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
     /// signature of the given static call expression.
     ///
-    /// Callables returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. To look up methods
-    /// which only match the callee type and method name, see [`TyInferCtx::lookup_methods_on()`].
+    /// Callables returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// To look up methods which only match the callee type and method name,
+    /// see [`TyInferCtx::lookup_methods_on()`].
     ///
-    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`]. For an instance callable
-    /// lookup, see [`TyInferCtx::lookup_callable_instance()`].
+    /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
+    /// For an instance callable lookup, see
+    /// [`TyInferCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Static(call))
     }
 
-    /// Instantiates a call expression against the given function signature, resolving
-    /// any type arguments within and returning the instantiated signature.
+    /// Instantiates a call expression against the given function signature,
+    /// resolving any type arguments within and returning the instantiated
+    /// signature.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn instantiate_call_expression<'a>(
         &self,
@@ -500,8 +516,8 @@ impl TyInferCtx {
         Ok(inst)
     }
 
-    /// Instantiates a function signature against the given type arguments, resolving
-    /// the parameters and return type within the signature.
+    /// Instantiates a function signature against the given type arguments,
+    /// resolving the parameters and return type within the signature.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn instantiate_function<'a>(
         &self,
@@ -511,8 +527,8 @@ impl TyInferCtx {
         self.instantiate_signature_isolate(sig, sig.type_params, type_args)
     }
 
-    /// Instantiates a function signature against the given type arguments, resolving
-    /// the parameters and return type within the signature.
+    /// Instantiates a function signature against the given type arguments,
+    /// resolving the parameters and return type within the signature.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn instantiate_signature_isolate<'a>(
         &self,
@@ -565,7 +581,8 @@ impl TyInferCtx {
         inst_ty
     }
 
-    /// Instantiates a a single flat type reference against the given type arguments.
+    /// Instantiates a a single flat type reference against the given type
+    /// arguments.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn instantiate_flat_type_from<'a>(
         &self,
@@ -588,8 +605,8 @@ impl TyInferCtx {
 
     /// Gets all the type arguments defined within the given call expression.
     ///
-    /// Type arguments are fetched from the expression itself, as well as type arguments
-    /// defined on the callee of the exprssion, if any.
+    /// Type arguments are fetched from the expression itself, as well as type
+    /// arguments defined on the callee of the exprssion, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(expr.id());
@@ -619,8 +636,8 @@ impl TyInferCtx {
         }
     }
 
-    /// Attempts the infer the instantiated type of `type_param_id` from the given
-    /// set of parameter type and matching argument type.
+    /// Attempts the infer the instantiated type of `type_param_id` from the
+    /// given set of parameter type and matching argument type.
     #[tracing::instrument(level = "TRACE", skip(self))]
     fn instantiate_argument_type<'a>(
         &self,
@@ -647,8 +664,9 @@ impl TyInferCtx {
 
     /// Gets the expanded signature of the given [`Callable`].
     ///
-    /// The expanded signature of a [`Callable`] will include all the type parameters
-    /// defined on parent definitions, such as on implementation blocks.
+    /// The expanded signature of a [`Callable`] will include all the type
+    /// parameters defined on parent definitions, such as on implementation
+    /// blocks.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
         match callable {
@@ -669,8 +687,9 @@ impl TyInferCtx {
 
     /// Gets the expanded signature of the [`Callable`] with the given ID.
     ///
-    /// The expanded signature of a [`Callable`] will include all the type parameters
-    /// defined on parent definitions, such as on implementation blocks.
+    /// The expanded signature of a [`Callable`] will include all the type
+    /// parameters defined on parent definitions, such as on implementation
+    /// blocks.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub fn signature_of_call_ref(&self, id: CallReference) -> Result<FunctionSigOwned> {
         let callable = self.callable_of(id)?;
@@ -678,10 +697,12 @@ impl TyInferCtx {
         self.signature_of(callable)
     }
 
-    /// Gets the instantiated signature of the given [`Callable`], w.r.t the given expression.
+    /// Gets the instantiated signature of the given [`Callable`], w.r.t the
+    /// given expression.
     ///
-    /// The instantiated signature is a version of a signature where all resolvable type
-    /// arguments within the expression have been resolved. For example, given an expression:
+    /// The instantiated signature is a version of a signature where all
+    /// resolvable type arguments within the expression have been resolved.
+    /// For example, given an expression:
     ///
     /// ```lm
     /// fn foo<T>(val: T) -> T {
@@ -691,8 +712,8 @@ impl TyInferCtx {
     /// let a = foo<Boolean>(false);
     /// ```
     ///
-    /// The resulting variable `a` will have the type of `Boolean`, since it was resolved from the
-    /// type arguments on the callable expression.
+    /// The resulting variable `a` will have the type of `Boolean`, since it was
+    /// resolved from the type arguments on the callable expression.
     #[tracing::instrument(level = "TRACE", skip_all, fields(callable = %callable.name()), err, ret)]
     pub fn signature_of_instantiated(
         &self,
@@ -706,15 +727,17 @@ impl TyInferCtx {
 
     /// Returns all the methods defined directly within the given type.
     ///
-    /// Methods returned by this method are not checked for validity within the current
-    /// context, such as visibility, arguments or type arguments. To check whether any given
-    /// [`Method`] is valid for a given context, see [`ThirBuildCtx::check_method()`].
+    /// Methods returned by this method are not checked for validity within the
+    /// current context, such as visibility, arguments or type arguments. To
+    /// check whether any given [`Method`] is valid for a given context, see
+    /// [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> impl Iterator<Item = &'_ Method> {
         self.tdb().methods_on(self_ty.instance_of)
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
+    /// Determines whether the given [`TypeRef`] is a kind of
+    /// [`TypeKindRef::TypeParameter`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
@@ -723,7 +746,8 @@ impl TyInferCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::TypeParameter`].
+    /// Determines whether the given [`TypeRef`] is a kind of
+    /// [`TypeKindRef::TypeParameter`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
@@ -748,8 +772,8 @@ impl TyInferCtx {
         Ok(false)
     }
 
-    /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from the
-    /// standard library, if found.
+    /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from
+    /// the standard library, if found.
     ///
     /// If the method is not found, returns [`None`].
     #[cached_query]

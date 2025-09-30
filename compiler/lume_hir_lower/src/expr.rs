@@ -1,15 +1,10 @@
 use std::sync::LazyLock;
 
 use error_snippet::Result;
-
-use crate::LowerModule;
-use crate::err;
-use crate::errors::*;
-use crate::{
-    ARRAY_NEW_FUNC, ARRAY_PUSH_FUNC, ARRAY_STD_TYPE, RANGE_INCLUSIVE_STD_TYPE, RANGE_NEW_FUNC, RANGE_STD_TYPE,
-};
-
 use lume_ast::Node;
+
+use crate::errors::*;
+use crate::*;
 
 static ARRAY_INTERNAL_NAME: &str = "!array";
 

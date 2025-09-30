@@ -18,7 +18,8 @@ impl ReificationPass<'_> {
             return Ok(id);
         }
 
-        // Insert a temporary type metadata structure, so we can prevent recursive lookups
+        // Insert a temporary type metadata structure, so we can prevent recursive
+        // lookups
         self.static_metadata.metadata.insert(id, TypeMetadata::default());
 
         let full_name = format!("{:+}", self.tcx.tdb().ty_expect(type_ref.instance_of)?.name);
@@ -39,20 +40,17 @@ impl ReificationPass<'_> {
             .map(|arg| self.build_type_metadata_of(arg))
             .collect::<Result<Vec<_>>>()?;
 
-        self.static_metadata.metadata.insert(
+        self.static_metadata.metadata.insert(id, TypeMetadata {
             id,
-            TypeMetadata {
-                id,
-                full_name,
-                size,
-                alignment,
-                type_id,
-                fields,
-                methods,
-                type_arguments,
-                drop_method,
-            },
-        );
+            full_name,
+            size,
+            alignment,
+            type_id,
+            fields,
+            methods,
+            type_arguments,
+            drop_method,
+        });
 
         Ok(id)
     }

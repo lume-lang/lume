@@ -1,7 +1,9 @@
-//! Source files and spans within them, which are used heavily within the Lume compiler.
+//! Source files and spans within them, which are used heavily within the Lume
+//! compiler.
 //!
-//! This module is used by most other packages within the Lume compiler, since spans
-//! are required to print useful diagnostics to the user - at least if source code is needed.
+//! This module is used by most other packages within the Lume compiler, since
+//! spans are required to print useful diagnostics to the user - at least if
+//! source code is needed.
 
 use std::any::Any;
 use std::borrow::Borrow;
@@ -145,13 +147,13 @@ impl Interner {
         })
     }
 
-    /// Interns the given instance so it can be referenced multiple times without
-    /// duplicating the memory data.
+    /// Interns the given instance so it can be referenced multiple times
+    /// without duplicating the memory data.
     ///
     /// # Panics
     ///
-    /// Panics if the internal lock is poisoned or multiple threads are trying to
-    /// access the lock simultaneously.
+    /// Panics if the internal lock is poisoned or multiple threads are trying
+    /// to access the lock simultaneously.
     #[inline]
     pub fn interned<B, T>(val: &T) -> Interned<B>
     where
@@ -161,13 +163,13 @@ impl Interner {
         CURRENT_INTERNER.with(|interner| interner.intern(val))
     }
 
-    /// Interns the given instance so it can be referenced multiple times without
-    /// duplicating the memory data.
+    /// Interns the given instance so it can be referenced multiple times
+    /// without duplicating the memory data.
     ///
     /// # Panics
     ///
-    /// Panics if the internal lock is poisoned or multiple threads are trying to
-    /// access the lock simultaneously.
+    /// Panics if the internal lock is poisoned or multiple threads are trying
+    /// to access the lock simultaneously.
     #[inline]
     pub fn intern<B, T>(&self, val: &T) -> Interned<B>
     where
@@ -202,7 +204,8 @@ impl Interner {
     ///
     /// # Panics
     ///
-    /// Panics if the internal lock is poisoned or if the given index is invalid.
+    /// Panics if the internal lock is poisoned or if the given index is
+    /// invalid.
     pub fn get<T>(&self, interned: Interned<T>) -> &'static T {
         let container = self.container.read().unwrap();
         let Some(value) = container.get(&interned.0) else {
@@ -243,9 +246,8 @@ thread_local! {
 #[cfg(test)]
 #[allow(clippy::borrow_as_ptr, clippy::ref_as_ptr, reason = "used for reference checking")]
 mod tests {
-    use crate::source::Location;
-
     use super::*;
+    use crate::source::Location;
 
     #[test]
     fn test_intern() {

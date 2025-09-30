@@ -44,10 +44,12 @@ pub struct TypeMetadata {
     /// Gets the unique ID of the type, used mostly for internal referencing.
     pub type_id: NodeId,
 
-    /// Gets all the fields defined on the type, in the order that they're declared.
+    /// Gets all the fields defined on the type, in the order that they're
+    /// declared.
     pub fields: Vec<FieldMetadata>,
 
-    /// Gets all the methods defined on the type, in the order that they're declared.
+    /// Gets all the methods defined on the type, in the order that they're
+    /// declared.
     pub methods: Vec<MethodMetadata>,
 
     /// Gets all the type arguments defined on the type, in the order
@@ -97,16 +99,19 @@ pub struct FieldMetadata {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MethodMetadata {
-    /// Gets the fully-qualified name of the method, including namespace and type name.
+    /// Gets the fully-qualified name of the method, including namespace and
+    /// type name.
     pub full_name: String,
 
     /// Gets the unique ID of the method, used mostly for internal referencing.
     pub func_id: NodeId,
 
-    /// Gets the unique ID of the method definition, which this method implements.
+    /// Gets the unique ID of the method definition, which this method
+    /// implements.
     pub definition_id: NodeId,
 
-    /// Gets all the parameters defined on the method, in the order that they're declared.
+    /// Gets all the parameters defined on the method, in the order that they're
+    /// declared.
     pub parameters: Vec<ParameterMetadata>,
 
     /// Gets all the type parameters defined on the method, in the order

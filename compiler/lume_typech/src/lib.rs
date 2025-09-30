@@ -9,10 +9,12 @@ pub mod query;
 #[cfg(test)]
 mod tests;
 
-/// Central data structure for checking compatibility between types within the source package.
+/// Central data structure for checking compatibility between types within the
+/// source package.
 ///
-/// Notibly, [`TyCheckCtx`] is not responsible for inference. While it may perform some inference
-/// during the type-checking stage, the inference is deferred to the inner [`TyInferCtx`] instance.
+/// Notibly, [`TyCheckCtx`] is not responsible for inference. While it may
+/// perform some inference during the type-checking stage, the inference is
+/// deferred to the inner [`TyInferCtx`] instance.
 pub struct TyCheckCtx {
     infer: TyInferCtx,
 }
@@ -23,7 +25,8 @@ impl TyCheckCtx {
         TyCheckCtx { infer }
     }
 
-    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
+    /// Retrieves the High-Level Intermediate Representation (HIR) map from the
+    /// build context.
     pub fn hir(&self) -> &lume_hir::map::Map {
         self.infer.hir()
     }

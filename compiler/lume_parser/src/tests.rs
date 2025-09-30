@@ -1,5 +1,6 @@
-use super::*;
 use error_snippet::Error;
+
+use super::*;
 
 #[track_caller]
 fn parse(input: &str) -> Vec<TopLevelExpression> {
@@ -122,9 +123,8 @@ fn test_newline_module() {
 
 #[test]
 fn test_imports() {
-    assert_eq!(
-        Parser::parse_str("import std (Int)").unwrap(),
-        vec![TopLevelExpression::Import(Box::new(Import {
+    assert_eq!(Parser::parse_str("import std (Int)").unwrap(), vec![
+        TopLevelExpression::Import(Box::new(Import {
             path: ImportPath {
                 path: vec![Identifier {
                     name: "std".into(),
@@ -137,12 +137,11 @@ fn test_imports() {
                 location: Location(12..15)
             }],
             location: Location(0..16)
-        }))]
-    );
+        }))
+    ]);
 
-    assert_eq!(
-        Parser::parse_str("import std::io (File)").unwrap(),
-        vec![TopLevelExpression::Import(Box::new(Import {
+    assert_eq!(Parser::parse_str("import std::io (File)").unwrap(), vec![
+        TopLevelExpression::Import(Box::new(Import {
             path: ImportPath {
                 path: vec![
                     Identifier {
@@ -161,12 +160,11 @@ fn test_imports() {
                 location: Location(16..20)
             }],
             location: Location(0..21)
-        }))]
-    );
+        }))
+    ]);
 
-    assert_eq!(
-        Parser::parse_str("import std::io (File, Buffer)").unwrap(),
-        vec![TopLevelExpression::Import(Box::new(Import {
+    assert_eq!(Parser::parse_str("import std::io (File, Buffer)").unwrap(), vec![
+        TopLevelExpression::Import(Box::new(Import {
             path: ImportPath {
                 path: vec![
                     Identifier {
@@ -191,12 +189,11 @@ fn test_imports() {
                 }
             ],
             location: Location(0..29)
-        }))]
-    );
+        }))
+    ]);
 
-    assert_eq!(
-        Parser::parse_str("import std::io ()").unwrap(),
-        vec![TopLevelExpression::Import(Box::new(Import {
+    assert_eq!(Parser::parse_str("import std::io ()").unwrap(), vec![
+        TopLevelExpression::Import(Box::new(Import {
             path: ImportPath {
                 path: vec![
                     Identifier {
@@ -212,8 +209,8 @@ fn test_imports() {
             },
             names: vec![],
             location: Location(0..17)
-        }))]
-    );
+        }))
+    ]);
 
     assert_err_eq!("import std::io", "invalid import path");
     assert_err_eq!("import std::io::", "expected identifier");

@@ -19,7 +19,8 @@ pub enum PathSegment {
     /// ```
     Namespace { name: String },
 
-    /// Denotes a segment which refers to a type, optionally with type arguments.
+    /// Denotes a segment which refers to a type, optionally with type
+    /// arguments.
     ///
     /// ```lm
     /// std::io::File
@@ -27,7 +28,8 @@ pub enum PathSegment {
     /// ```
     Type { name: String, type_arguments: Vec<TypeRef> },
 
-    /// Denotes a segment which refers to a callable, such as a function or method.
+    /// Denotes a segment which refers to a callable, such as a function or
+    /// method.
     ///
     /// ```lm
     /// std::io::File::open()
@@ -38,7 +40,8 @@ pub enum PathSegment {
     /// ```
     Callable { name: String, type_arguments: Vec<TypeRef> },
 
-    /// Denotes a segment which refers to an enum variant, with or without parameters.
+    /// Denotes a segment which refers to an enum variant, with or without
+    /// parameters.
     ///
     /// ```lm
     /// Option::None

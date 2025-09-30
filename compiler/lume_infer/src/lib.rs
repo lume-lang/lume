@@ -1,4 +1,6 @@
-use std::{collections::BTreeMap, fmt::Debug, ops::Deref};
+use std::collections::BTreeMap;
+use std::fmt::Debug;
+use std::ops::Deref;
 
 use error_snippet::Result;
 use lume_errors::DiagCtx;
@@ -36,8 +38,8 @@ const NEWCOMER_TYPE_NAMES: &[(&str, &str)] = &[
     ("boolean", "Boolean"),
 ];
 
-/// Data structure for defining the inferred types of expressions, statements, etc., such
-/// that it can be used and/or consumed from the [`TyCheckCtx`].
+/// Data structure for defining the inferred types of expressions, statements,
+/// etc., such that it can be used and/or consumed from the [`TyCheckCtx`].
 pub struct TyInferCtx {
     /// Defines the type context from the build context.
     tcx: TyCtx,
@@ -59,12 +61,14 @@ impl TyInferCtx {
         }
     }
 
-    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
+    /// Retrieves the High-Level Intermediate Representation (HIR) map from the
+    /// build context.
     pub fn hir(&self) -> &lume_hir::map::Map {
         &self.hir
     }
 
-    /// Retrieves the High-Level Intermediate Representation (HIR) map from the build context.
+    /// Retrieves the High-Level Intermediate Representation (HIR) map from the
+    /// build context.
     pub fn hir_mut(&mut self) -> &mut lume_hir::map::Map {
         &mut self.hir
     }
@@ -84,16 +88,18 @@ impl TyInferCtx {
         self.tcx.dcx()
     }
 
-    /// Defines all the different types, type parameters and type constraints within
-    /// the HIR maps into the type database.
+    /// Defines all the different types, type parameters and type constraints
+    /// within the HIR maps into the type database.
     ///
-    /// The defined types are stored within the `TyInferCtx` struct, which can be
-    /// accessed through the `self.tcx` field, the `self.tcx()` method or the `self.tdb_mut()` method.
+    /// The defined types are stored within the `TyInferCtx` struct, which can
+    /// be accessed through the `self.tcx` field, the `self.tcx()` method or
+    /// the `self.tdb_mut()` method.
     ///
     /// # Errors
     ///
-    /// Returns `Err` when either a language error occured, such as missing variables, missing methods,
-    /// etc, or when expected items cannot be found within the context.
+    /// Returns `Err` when either a language error occured, such as missing
+    /// variables, missing methods, etc, or when expected items cannot be
+    /// found within the context.
     #[tracing::instrument(
         level = "INFO",
         name = "lume_infer::TyInferCtx::infer",
@@ -122,13 +128,13 @@ impl TyInferCtx {
 
             pass.invoke(self)?;
 
-            // We need to invalidate the global cache for method calls, since the unification
-            // pass has altered some items in the HIR, making those entries in the cache
-            // incorrect and/or invalid.
+            // We need to invalidate the global cache for method calls, since the
+            // unification pass has altered some items in the HIR, making those
+            // entries in the cache incorrect and/or invalid.
             //
-            // Very few method calls would've been cached at this point in the compile process,
-            // so we can safetly clear the entire thing, without having to worry too much about
-            // the potential performance loss.
+            // Very few method calls would've been cached at this point in the compile
+            // process, so we can safetly clear the entire thing, without having
+            // to worry too much about the potential performance loss.
             tracing::debug_span!("unification cache invalidation").in_scope(|| {
                 let ctx: &lume_session::GlobalCtx = &*self;
                 let store = lume_query::CacheContext::store(ctx);
@@ -144,7 +150,8 @@ impl TyInferCtx {
         Ok(())
     }
 
-    /// Gets the HIR statement with the given ID and assert that it's a variable declaration statement.
+    /// Gets the HIR statement with the given ID and assert that it's a variable
+    /// declaration statement.
     #[tracing::instrument(level = "DEBUG", skip(self))]
     #[allow(dead_code, reason = "expected used in future")]
     pub(crate) fn hir_expect_var_stmt(&self, id: NodeId) -> &lume_hir::VariableDeclaration {
@@ -198,8 +205,8 @@ impl TyInferCtx {
         ty.iter().map(|t| self.mk_type_ref_generic(t, type_params)).collect()
     }
 
-    /// Lowers the given HIR type, with respect to the type parameters available from
-    /// the given definition.
+    /// Lowers the given HIR type, with respect to the type parameters available
+    /// from the given definition.
     #[tracing::instrument(
         level = "DEBUG",
         skip_all, fields(ty = %ty.name, loc = %ty.location, def = ?def),
@@ -212,8 +219,8 @@ impl TyInferCtx {
         self.mk_type_ref_generic(ty, &type_parameters)
     }
 
-    /// Lowers the given HIR type, with respect to the type parameters available from
-    /// the given expression.
+    /// Lowers the given HIR type, with respect to the type parameters available
+    /// from the given expression.
     #[tracing::instrument(
         level = "DEBUG",
         skip_all, fields(ty = %ty.name, loc = %ty.location, expr = ?expr),
@@ -223,8 +230,8 @@ impl TyInferCtx {
         self.mk_type_ref_from(ty, expr)
     }
 
-    /// Lowers the given HIR types, with respect to the type parameters available from
-    /// the given definition.
+    /// Lowers the given HIR types, with respect to the type parameters
+    /// available from the given definition.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
@@ -250,8 +257,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if one-or-more typed path segments include invalid references
-    /// to type IDs.
+    /// Returns `Err` if one-or-more typed path segments include invalid
+    /// references to type IDs.
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
     pub fn find_type_ref(&self, name: &Path) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
@@ -277,8 +284,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if one-or-more typed path segments include invalid references
-    /// to type IDs.
+    /// Returns `Err` if one-or-more typed path segments include invalid
+    /// references to type IDs.
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
     pub fn find_type_ref_generic(&self, name: &Path, ty_params: &[&TypeParameter]) -> Result<Option<TypeRef>> {
         let found_ty = 'find: {
@@ -318,8 +325,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if one-or-more typed path segments include invalid references
-    /// to type IDs.
+    /// Returns `Err` if one-or-more typed path segments include invalid
+    /// references to type IDs.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
@@ -393,8 +400,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any types referenced by the given [`TypeRef`], or any child
-    /// instances, are missing from the type context.
+    /// Returns `Err` if any types referenced by the given [`TypeRef`], or any
+    /// child instances, are missing from the type context.
     pub fn new_named_type(&self, type_ref: &TypeRef, expand: bool) -> Result<NamedTypeRef> {
         let path = self.type_ref_name(type_ref)?;
         let name = if expand { format!("{path:+}") } else { format!("{path}") };
@@ -412,8 +419,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any types referenced by the given [`FunctionSig`], or any child
-    /// instances are missing from the type context.
+    /// Returns `Err` if any types referenced by the given [`FunctionSig`], or
+    /// any child instances are missing from the type context.
     pub fn sig_to_string(&self, name: &lume_hir::Identifier, sig: FunctionSig<'_>, expand: bool) -> Result<String> {
         let name = if expand { format!("{name:+}") } else { format!("{name}") };
 
@@ -465,8 +472,8 @@ impl TyInferCtx {
     ///
     /// # Errors
     ///
-    /// Returns `Err` if any types referenced by the given [`TypeParameter`], or any child
-    /// instances are missing from the type context.
+    /// Returns `Err` if any types referenced by the given [`TypeParameter`], or
+    /// any child instances are missing from the type context.
     pub fn type_param_to_string(&self, type_param: &lume_types::TypeParameter, expand: bool) -> Result<String> {
         let constraints = if type_param.constraints.is_empty() {
             String::new()

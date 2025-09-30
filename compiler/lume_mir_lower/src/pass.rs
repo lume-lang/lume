@@ -14,11 +14,12 @@ pub(crate) mod ssa_assign;
 
 use crate::FunctionTransformer;
 
-/// Defines a MIR pass which can be executed over a function, during MIR lowering.
+/// Defines a MIR pass which can be executed over a function, during MIR
+/// lowering.
 ///
-/// Passes can perform a variety of actions - some required, some optional. Examples include
-/// **escape analysis**, **removing unused blocks/registers**, **marking objects for the GC**,
-/// or just normal optimization passes.
+/// Passes can perform a variety of actions - some required, some optional.
+/// Examples include **escape analysis**, **removing unused blocks/registers**,
+/// **marking objects for the GC**, or just normal optimization passes.
 pub(crate) trait Pass {
     /// Returns the unique name of the pass.
     fn name() -> &'static str;

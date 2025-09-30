@@ -4,7 +4,8 @@ use lume_types::{TypeKind, TypeRef, Use, UserType};
 use crate::TyCheckCtx;
 
 impl TyCheckCtx {
-    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Struct`].
+    /// Determines whether the given [`TypeRef`] is a kind of
+    /// [`TypeKindRef::Struct`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_struct(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
@@ -13,7 +14,8 @@ impl TyCheckCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`] is a kind of [`TypeKindRef::Trait`].
+    /// Determines whether the given [`TypeRef`] is a kind of
+    /// [`TypeKindRef::Trait`].
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_trait(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
@@ -22,7 +24,8 @@ impl TyCheckCtx {
         }
     }
 
-    /// Determines whether the given [`TypeRef`], `ty`, implements the given trait, `trait_id`.
+    /// Determines whether the given [`TypeRef`], `ty`, implements the given
+    /// trait, `trait_id`.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn trait_impl_by(&self, trait_id: &TypeRef, ty: &TypeRef) -> Result<bool> {
         #[cfg(debug_assertions)]
@@ -57,7 +60,8 @@ impl TyCheckCtx {
         Ok(false)
     }
 
-    /// Determines whether the given trait [`TypeRef`] has been blanket implemented anywhere.
+    /// Determines whether the given trait [`TypeRef`] has been blanket
+    /// implemented anywhere.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn is_trait_blanket_impl(&self, trait_type: &TypeRef) -> Result<bool> {
         for trait_impl in self.tdb().uses_of(trait_type) {
@@ -69,8 +73,8 @@ impl TyCheckCtx {
         Ok(false)
     }
 
-    /// Returns an iterator of all trait implementations of the given trait [`TypeRef`],
-    /// which are blanket implementations.
+    /// Returns an iterator of all trait implementations of the given trait
+    /// [`TypeRef`], which are blanket implementations.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn trait_blanket_impls(&self, trait_type: &TypeRef) -> impl Iterator<Item = &Use> {
         self.tdb()

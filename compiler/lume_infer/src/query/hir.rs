@@ -3,9 +3,8 @@ use lume_hir::{Node, NodeRef};
 use lume_query::cached_query;
 use lume_span::*;
 
-use crate::TyInferCtx;
-
 use super::diagnostics;
+use crate::TyInferCtx;
 
 /// An iterator over the elements of a linked [`NodeId`]s.
 ///
@@ -264,7 +263,8 @@ impl TyInferCtx {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_node(id))
     }
 
-    /// Attempts to find the closest switch expression from the given definition.
+    /// Attempts to find the closest switch expression from the given
+    /// definition.
     #[track_caller]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_switch_expression(&self, source: NodeId) -> Option<&lume_hir::Switch> {
@@ -298,7 +298,8 @@ impl TyInferCtx {
         None
     }
 
-    /// Returns the parameters available for the [`lume_hir::Def`] with the given ID.
+    /// Returns the parameters available for the [`lume_hir::Def`] with the
+    /// given ID.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_avail_params(&self, def: NodeId) -> Vec<lume_hir::Parameter> {
@@ -319,7 +320,8 @@ impl TyInferCtx {
         acc
     }
 
-    /// Returns all the type parameters available for the [`lume_hir::Def`] with the given ID.
+    /// Returns all the type parameters available for the [`lume_hir::Def`] with
+    /// the given ID.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_avail_type_params(&self, def: NodeId) -> Vec<lume_hir::TypeParameter> {
         let mut acc = Vec::new();
@@ -343,9 +345,9 @@ impl TyInferCtx {
         }
     }
 
-    /// Returns the expected return type within the context where the given [`NodeId`] is
-    /// defined. Walks the ancestor tree until a function or method is found and returns it's
-    /// return type.
+    /// Returns the expected return type within the context where the given
+    /// [`NodeId`] is defined. Walks the ancestor tree until a function or
+    /// method is found and returns it's return type.
     ///
     /// # Errors
     ///

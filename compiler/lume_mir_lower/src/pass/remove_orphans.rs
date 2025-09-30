@@ -1,9 +1,10 @@
 use super::*;
 
-/// Removes all blocks, except the entry block, which have no predecessors, since
-/// they only serve to clobber future passes and codegen.
+/// Removes all blocks, except the entry block, which have no predecessors,
+/// since they only serve to clobber future passes and codegen.
 ///
-/// The pass also removes any orphan blocks as predecessor of any successor blocks.
+/// The pass also removes any orphan blocks as predecessor of any successor
+/// blocks.
 #[derive(Default, Debug)]
 pub(crate) struct RemoveOrphanBlocks;
 

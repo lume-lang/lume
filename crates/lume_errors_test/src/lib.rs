@@ -1,5 +1,4 @@
-pub use error_snippet;
-pub use owo_colors;
+pub use {error_snippet, owo_colors};
 
 /// Asserts that the given [`DiagCtx`] renders the same output as
 /// has been saved and snapshot in a previous iteration.

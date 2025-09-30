@@ -205,7 +205,8 @@ impl Function {
         id
     }
 
-    /// Allocates a new basic block, sets it as the active block, and returns its ID.
+    /// Allocates a new basic block, sets it as the active block, and returns
+    /// its ID.
     pub fn new_active_block(&mut self) -> BasicBlockId {
         let block = self.new_block();
 
@@ -266,13 +267,10 @@ impl Function {
 
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
-        self.declare(
-            ty,
-            Declaration {
-                location: value.location,
-                kind: DeclarationKind::Operand(value),
-            },
-        )
+        self.declare(ty, Declaration {
+            location: value.location,
+            kind: DeclarationKind::Operand(value),
+        })
     }
 
     /// Declares a new local with the given declaration in the current block.
@@ -287,13 +285,10 @@ impl Function {
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
-        self.declare_raw(
-            ty,
-            Declaration {
-                location: value.location,
-                kind: DeclarationKind::Operand(value),
-            },
-        )
+        self.declare_raw(ty, Declaration {
+            location: value.location,
+            kind: DeclarationKind::Operand(value),
+        })
     }
 
     /// Creates a new stack-allocated slot within the function.
@@ -449,8 +444,9 @@ pub struct BasicBlock {
 
     /// Defines the terminator of the block.
     ///
-    /// Even though the terminator is optional, it is required for the block to be valid.
-    /// If a block does not have a terminator, it will default to returning void.
+    /// Even though the terminator is optional, it is required for the block to
+    /// be valid. If a block does not have a terminator, it will default to
+    /// returning void.
     terminator: Option<Terminator>,
 
     /// Gets all the predecessor blocks, which branch to this block.
@@ -513,7 +509,8 @@ impl BasicBlock {
         }
     }
 
-    /// Sets the terminator of the block, whether one has been set already or not.
+    /// Sets the terminator of the block, whether one has been set already or
+    /// not.
     pub fn set_terminator_full(&mut self, term: Terminator) {
         self.terminator = Some(term);
     }
@@ -555,7 +552,8 @@ impl BasicBlock {
         self.phi_registers.iter().map(|(k, v)| (*k, *v))
     }
 
-    /// Gets whether the given register is a destination register for a phi instruction.
+    /// Gets whether the given register is a destination register for a phi
+    /// instruction.
     pub fn is_register_phi_dest(&self, reg: RegisterId) -> bool {
         self.phi_registers.contains_key(&reg)
     }
@@ -565,7 +563,8 @@ impl BasicBlock {
         self.phi_registers.insert(dst, src);
     }
 
-    /// Attempts to resolve the source of a phi node from the given destination node.
+    /// Attempts to resolve the source of a phi node from the given destination
+    /// node.
     pub fn resolve_phi_source(&self, dst: RegisterId) -> Option<RegisterId> {
         self.phi_registers().find(|(phi, _)| *phi == dst).map(|(_, src)| src)
     }
@@ -784,11 +783,13 @@ impl std::fmt::Display for RegisterId {
     }
 }
 
-/// Defines a register within a block, which can hold a value of a specific type.
+/// Defines a register within a block, which can hold a value of a specific
+/// type.
 ///
 /// Registers cannot be altered after they are created, as they follow
-/// the SSA (Single Static Assignment) principle. If register needs to be updated,
-/// it should define an allocation which can be used to store the new value.
+/// the SSA (Single Static Assignment) principle. If register needs to be
+/// updated, it should define an allocation which can be used to store the new
+/// value.
 #[derive(Serialize, Deserialize, Default, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Register {
     pub id: RegisterId,
@@ -896,8 +897,8 @@ impl std::fmt::Display for SlotId {
 
 /// Represents a standalone instruction within a basic block.
 ///
-/// Instructions themselves cannot be referenced by other instructions - only registers
-/// they declare can be referenced.
+/// Instructions themselves cannot be referenced by other instructions - only
+/// registers they declare can be referenced.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub kind: InstructionKind,
@@ -1127,7 +1128,8 @@ impl std::fmt::Display for Intrinsic {
 /// Represents an operand to a call expression.
 ///
 /// Not all values can be used as operands, which means they
-/// must be declared as a stack- or heap-allocated register.#[derive(Debug, Clone, PartialEq)]
+/// must be declared as a stack- or heap-allocated register.#[derive(Debug,
+/// Clone, PartialEq)]
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Operand {
     pub kind: OperandKind,

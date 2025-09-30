@@ -2,19 +2,20 @@ pub(crate) mod arc;
 pub(crate) mod build;
 pub(crate) mod run;
 
-use clap::ValueHint;
-
-use crate::error::*;
-use error_snippet::{IntoDiagnostic, Result};
-use lume_session::OptimizationLevel;
 use std::env::current_dir;
 use std::path::PathBuf;
 
 pub(crate) use arc::ArcCommand;
 pub(crate) use build::BuildCommand;
+use clap::ValueHint;
+use error_snippet::{IntoDiagnostic, Result};
+use lume_session::OptimizationLevel;
 pub(crate) use run::RunCommand;
 
-/// Gets the absolute path of the given project directory, or current working directory if not specified.
+use crate::error::*;
+
+/// Gets the absolute path of the given project directory, or current working
+/// directory if not specified.
 pub fn project_or_cwd(path: Option<&PathBuf>) -> Result<String> {
     let cwd: PathBuf = match current_dir() {
         Ok(cwd) => cwd,

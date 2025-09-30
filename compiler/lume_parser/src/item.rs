@@ -2,7 +2,8 @@ use error_snippet::Result;
 use lume_ast::*;
 use lume_lexer::TokenKind;
 
-use crate::{Parser, err, errors::*};
+use crate::errors::*;
+use crate::{Parser, err};
 
 impl Parser {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]

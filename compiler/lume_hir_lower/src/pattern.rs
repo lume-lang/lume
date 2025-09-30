@@ -1,6 +1,6 @@
-use crate::LowerModule;
-
 use error_snippet::Result;
+
+use crate::LowerModule;
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]

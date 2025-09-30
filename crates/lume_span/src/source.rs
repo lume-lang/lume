@@ -1,7 +1,9 @@
-//! Source files and spans within them, which are used heavily within the Lume compiler.
+//! Source files and spans within them, which are used heavily within the Lume
+//! compiler.
 //!
-//! This module is used by most other packages within the Lume compiler, since spans
-//! are required to print useful diagnostics to the user - at least if source code is needed.
+//! This module is used by most other packages within the Lume compiler, since
+//! spans are required to print useful diagnostics to the user - at least if
+//! source code is needed.
 
 use std::hash::Hash;
 use std::ops::Range;
@@ -54,7 +56,8 @@ impl std::fmt::Display for FileName {
 
 /// Uniquely identifies a source file.
 ///
-/// Each source file has a parent [`PackageId`], which defines which package it belongs to.
+/// Each source file has a parent [`PackageId`], which defines which package it
+/// belongs to.
 #[derive(Serialize, Deserialize, Hash, Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SourceFileId(pub PackageId, pub usize);
 
@@ -66,7 +69,8 @@ impl SourceFileId {
         Self(PackageId::empty(), 0)
     }
 
-    /// Creates a new [`SourceFileId`] with the given parent package ID and name.
+    /// Creates a new [`SourceFileId`] with the given parent package ID and
+    /// name.
     pub fn new(package: PackageId, name: impl Into<String>) -> Self {
         Self(package, hash_id(&name.into()))
     }
@@ -264,7 +268,8 @@ pub struct InvalidSourceFile {
     pub id: SourceFileId,
 }
 
-/// Defines a source map, which maps source file IDs to their corresponding source files.
+/// Defines a source map, which maps source file IDs to their corresponding
+/// source files.
 #[derive(Default, Debug)]
 pub struct SourceMap {
     /// Defines all the source files within the mapping.

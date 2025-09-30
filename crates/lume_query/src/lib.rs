@@ -1,12 +1,10 @@
-pub use once_cell::sync::Lazy;
-use std::{
-    any::Any,
-    collections::HashMap,
-    sync::{RwLock, RwLockReadGuard, RwLockWriteGuard},
-};
+use std::any::Any;
+use std::collections::HashMap;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 #[cfg(feature = "proc_macros")]
 pub use lume_query_macros::cached_query;
+pub use once_cell::sync::Lazy;
 #[cfg(feature = "proc_macros")]
 pub use tracing;
 
@@ -29,7 +27,8 @@ impl CacheStore {
         }
     }
 
-    /// Retrieves a shared read access to the [`CacheStore`]'s inner map instance.
+    /// Retrieves a shared read access to the [`CacheStore`]'s inner map
+    /// instance.
     ///
     /// # Panics
     ///
@@ -39,7 +38,8 @@ impl CacheStore {
         self.inner.read().unwrap()
     }
 
-    /// Retrieves an exclusive-write access to the [`CacheStore`]'s inner map instance.
+    /// Retrieves an exclusive-write access to the [`CacheStore`]'s inner map
+    /// instance.
     ///
     /// # Panics
     ///
@@ -74,9 +74,9 @@ impl CacheStore {
 
     /// Looks up the given cache key within the [`CacheStore`] instance. If
     /// a value is found within the store, it is cloned and returned. If the key
-    /// is not found within the store, `f` is invoked and the result is cloned and
-    /// inserted into the store. After the value is stored, the original, un-cloned value
-    /// is returned.
+    /// is not found within the store, `f` is invoked and the result is cloned
+    /// and inserted into the store. After the value is stored, the
+    /// original, un-cloned value is returned.
     pub fn get_or_insert<T: Clone + Send + Sync + 'static>(&self, key: u64, f: impl FnOnce() -> T) -> T {
         if let Some(existing) = self.get(key) {
             return existing;

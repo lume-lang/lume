@@ -347,14 +347,11 @@ fn query_check_method_type_arg_valid() -> Result<()> {
 
     let expr = lume_hir::StaticCall {
         id: lume_span::NodeId::default(),
-        name: Path::from_parts(
-            Some([PathSegment::ty("A")]),
-            PathSegment::Callable {
-                name: "foo".into(),
-                type_arguments: vec![lume_hir::Type::void()],
-                location: Location::empty(),
-            },
-        ),
+        name: Path::from_parts(Some([PathSegment::ty("A")]), PathSegment::Callable {
+            name: "foo".into(),
+            type_arguments: vec![lume_hir::Type::void()],
+            location: Location::empty(),
+        }),
         arguments: Vec::new(),
         location: Location::empty(),
     };

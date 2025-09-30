@@ -1,44 +1,41 @@
 use error_snippet::Result;
 use lume_ast::Node;
+use lume_hir::SELF_TYPE_NAME;
 
-use crate::ARRAY_STD_TYPE;
-use crate::LowerModule;
 use crate::errors::*;
-
-use lume_ast::{self as ast};
-use lume_hir::{self as hir, SELF_TYPE_NAME};
+use crate::{ARRAY_STD_TYPE, LowerModule};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn type_ref(&self, expr: ast::Type) -> Result<hir::Type> {
+    pub(super) fn type_ref(&self, expr: lume_ast::Type) -> Result<lume_hir::Type> {
         match expr {
-            ast::Type::Named(t) => self.type_named(*t),
-            ast::Type::Array(t) => self.type_array(*t),
-            ast::Type::SelfType(t) => self.type_self(*t),
+            lume_ast::Type::Named(t) => self.type_named(*t),
+            lume_ast::Type::Array(t) => self.type_array(*t),
+            lume_ast::Type::SelfType(t) => self.type_self(*t),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn opt_type_ref(&self, expr: Option<ast::Type>) -> Result<hir::Type> {
+    pub(super) fn opt_type_ref(&self, expr: Option<lume_ast::Type>) -> Result<lume_hir::Type> {
         match expr {
             Some(e) => Ok(self.type_ref(e)?),
-            None => Ok(hir::Type::void()),
+            None => Ok(lume_hir::Type::void()),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_named(&self, expr: ast::NamedType) -> Result<hir::Type> {
+    fn type_named(&self, expr: lume_ast::NamedType) -> Result<lume_hir::Type> {
         let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location().clone());
 
         let id = lume_span::NodeId::from_name(self.current_node.package, &name);
 
-        Ok(hir::Type { id, name, location })
+        Ok(lume_hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_array(&self, expr: ast::ArrayType) -> Result<hir::Type> {
-        self.type_std(ast::PathSegment::Type {
+    fn type_array(&self, expr: lume_ast::ArrayType) -> Result<lume_hir::Type> {
+        self.type_std(lume_ast::PathSegment::Type {
             name: ARRAY_STD_TYPE.into(),
             type_arguments: vec![*expr.element_type],
             location: expr.location,
@@ -46,7 +43,7 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_self(&self, expr: ast::SelfType) -> Result<hir::Type> {
+    fn type_self(&self, expr: lume_ast::SelfType) -> Result<lume_hir::Type> {
         let location = self.location(expr.location);
         let name = match &self.self_type {
             Some(ty) => ty.clone(),
@@ -62,18 +59,18 @@ impl LowerModule<'_> {
 
         let id = lume_span::NodeId::from_name(self.current_node.package, &name);
 
-        Ok(hir::Type { id, name, location })
+        Ok(lume_hir::Type { id, name, location })
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn type_std(&self, name: ast::PathSegment) -> Result<hir::Type> {
+    fn type_std(&self, name: lume_ast::PathSegment) -> Result<lume_hir::Type> {
         let id = lume_span::NodeId::from_name(lume_span::PackageId::empty(), &name);
         let location = self.location(name.location().clone());
 
         let name = self.path_segment(name)?;
-        let path = hir::Path::from_parts(Some(vec![hir::PathSegment::namespace("std")]), name);
+        let path = lume_hir::Path::from_parts(Some(vec![lume_hir::PathSegment::namespace("std")]), name);
 
-        Ok(hir::Type {
+        Ok(lume_hir::Type {
             id,
             name: path,
             location,

@@ -1,15 +1,16 @@
 pub mod file;
 pub mod git;
 
-use std::{collections::HashMap, path::PathBuf};
-
-use crate::parser::ManifestDependencySource;
-use lume_errors::Result;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 pub use file::*;
 pub use git::*;
+use lume_errors::Result;
 use lume_span::PackageId;
 use semver::{Version, VersionReq};
+
+use crate::parser::ManifestDependencySource;
 
 /// Defines the name of the environment variable, which defines where
 /// Arc should place local clones and/or caches of remote dependencies.
@@ -46,9 +47,11 @@ pub fn local_cache_dir() -> PathBuf {
     LOCAL_CACHE_DIR.to_path_buf()
 }
 
-/// Clears the local cache directory for all caches and clones of remote dependency packages.
+/// Clears the local cache directory for all caches and clones of remote
+/// dependency packages.
 ///
-/// To see which directory is the current local cache directory, see [`local_cache_dir`].
+/// To see which directory is the current local cache directory, see
+/// [`local_cache_dir`].
 #[tracing::instrument(level = "DEBUG", err)]
 pub fn clean_local_cache_dir(dry_run: bool) -> Result<()> {
     let lcd = local_cache_dir();

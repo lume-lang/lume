@@ -1,11 +1,13 @@
-use crate::{LowerModule, err, errors::*};
-
 use error_snippet::Result;
+
+use crate::errors::*;
+use crate::{LowerModule, err};
 
 impl LowerModule<'_> {
     /// Lowers an import path to an HIR path.
     ///
-    /// For example, the import path `std::io (File)` would become `std::io::File`.
+    /// For example, the import path `std::io (File)` would become
+    /// `std::io::File`.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub(super) fn import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
         let location = self.location(path.location);

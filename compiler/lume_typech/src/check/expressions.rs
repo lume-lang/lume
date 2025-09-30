@@ -147,8 +147,8 @@ impl TyCheckCtx {
     /// let _: Int32 = false;
     /// ```
     ///
-    /// this method would raise an error, since the value expands to be of type `Boolean`,
-    /// which is incompatible with `Int32`.
+    /// this method would raise an error, since the value expands to be of type
+    /// `Boolean`, which is incompatible with `Int32`.
     fn variable_declaration(&self, stmt: &lume_hir::VariableDeclaration) -> Result<()> {
         let value_type = self.type_of(stmt.value)?;
         let resolved_type = self.type_of_vardecl(stmt)?;
@@ -169,8 +169,9 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the type returned from a function and/or method is compatible with
-    /// the expected type of the context. For instance, given the following statement:
+    /// Asserts that the type returned from a function and/or method is
+    /// compatible with the expected type of the context. For instance,
+    /// given the following statement:
     ///
     /// ```lm
     /// fn foo() -> Int32 {
@@ -178,8 +179,8 @@ impl TyCheckCtx {
     /// }
     /// ```
     ///
-    /// this method would raise an error, since the value expands to be of type `Boolean`,
-    /// which is incompatible with `Int32`.
+    /// this method would raise an error, since the value expands to be of type
+    /// `Boolean`, which is incompatible with `Int32`.
     fn return_statement(&self, stmt: &lume_hir::Return) -> Result<()> {
         let expected = self.hir_ctx_return_type(stmt.id)?;
 
@@ -326,8 +327,8 @@ impl TyCheckCtx {
         }
     }
 
-    /// Asserts that an assignment expression assigns a value which is valid for the
-    /// target expression. For instance, given the following statement:
+    /// Asserts that an assignment expression assigns a value which is valid for
+    /// the target expression. For instance, given the following statement:
     ///
     /// ```lm
     /// let a: Boolean = false;
@@ -335,8 +336,8 @@ impl TyCheckCtx {
     /// a = 16;
     /// ```
     ///
-    /// this method would raise an error, since `a` is a type of `Boolean` which cannot
-    /// be assigned a value other than `Boolean`.
+    /// this method would raise an error, since `a` is a type of `Boolean` which
+    /// cannot be assigned a value other than `Boolean`.
     fn assignment_expression(&self, expr: &lume_hir::Assignment) -> Result<()> {
         let target = self.type_of(expr.target)?;
         let value = self.type_of(expr.value)?;
@@ -363,15 +364,16 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the binary expression is performed on values, which actually
-    /// support binary expressions. For instance, given the following statement:
+    /// Asserts that the binary expression is performed on values, which
+    /// actually support binary expressions. For instance, given the
+    /// following statement:
     ///
     /// ```lm
     /// let _ = "Hello, world!" ^ 16;
     /// ```
     ///
-    /// this method would raise an error, since [`String`] is not an integer type,
-    /// making binary expressions invalid.
+    /// this method would raise an error, since [`String`] is not an integer
+    /// type, making binary expressions invalid.
     fn binary_expression(&self, expr: &lume_hir::Binary) -> Result<()> {
         let lhs = self.type_of(expr.lhs)?;
         let rhs = self.type_of(expr.rhs)?;
@@ -393,14 +395,15 @@ impl TyCheckCtx {
     }
 
     /// Asserts that the type left-hand side of a casting expression is
-    /// valid to be cast to the right-hand-side. For instance, given the following statement:
+    /// valid to be cast to the right-hand-side. For instance, given the
+    /// following statement:
     ///
     /// ```lm
     /// let _ = "Hello, world!" as Boolean;
     /// ```
     ///
-    /// this method would raise an error, since there exists no implementation of [`Cast<Boolean>`]
-    /// on the [`String`] type.
+    /// this method would raise an error, since there exists no implementation
+    /// of [`Cast<Boolean>`] on the [`String`] type.
     fn cast_expression(&self, expr: &lume_hir::Cast) -> Result<()> {
         let source_type = self.type_of(expr.source)?;
         let dest_type = self.mk_type_ref(&expr.target)?;
@@ -428,9 +431,10 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the resolved function/method which is invoked by the expression
-    /// is valid for the given context it is in. This includes whether the method exists,
-    /// takes the correct amount of parameters, as well as their parameter types.
+    /// Asserts that the resolved function/method which is invoked by the
+    /// expression is valid for the given context it is in. This includes
+    /// whether the method exists, takes the correct amount of parameters,
+    /// as well as their parameter types.
     fn call_expression(&self, expr: lume_hir::CallExpression) -> Result<()> {
         let callable = self.lookup_callable(expr)?;
 
@@ -450,9 +454,10 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the given construction expression fulfills the requirements by
-    /// the declared type which is being constructed, such as all fields being initialized,
-    /// types being compatible, etc. For instance, given the following statement:
+    /// Asserts that the given construction expression fulfills the requirements
+    /// by the declared type which is being constructed, such as all fields
+    /// being initialized, types being compatible, etc. For instance, given
+    /// the following statement:
     ///
     /// ```lm
     /// struct Foo {
@@ -464,8 +469,8 @@ impl TyCheckCtx {
     /// };
     /// ```
     ///
-    /// this method would raise an error, since the field `bar` expands to be of type `String`,
-    /// which is incompatible with `Int32`.
+    /// this method would raise an error, since the field `bar` expands to be of
+    /// type `String`, which is incompatible with `Int32`.
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
         let constructed_type = self.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
@@ -509,8 +514,8 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the logical expression is performed on boolean values, since
-    /// only boolean values can be tested in logical expressions.
+    /// Asserts that the logical expression is performed on boolean values,
+    /// since only boolean values can be tested in logical expressions.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn is_expression(&self, expr: &lume_hir::Is) -> Result<()> {
         let target_ty = self.type_of(expr.target)?;
@@ -523,8 +528,8 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the logical expression is performed on boolean values, since
-    /// only boolean values can be tested in logical expressions.
+    /// Asserts that the logical expression is performed on boolean values,
+    /// since only boolean values can be tested in logical expressions.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn logical_expression(&self, expr: &lume_hir::Logical) -> Result<()> {
         let lhs = self.type_of(expr.lhs)?;
@@ -555,8 +560,9 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the patterns in the switch expression are valid for the operand,
-    /// as well as checking that all branch expressions are compatible.
+    /// Asserts that the patterns in the switch expression are valid for the
+    /// operand, as well as checking that all branch expressions are
+    /// compatible.
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     fn switch_expression(&self, expr: &lume_hir::Switch) -> Result<()> {
         let Some(first_case) = expr.cases.first() else {

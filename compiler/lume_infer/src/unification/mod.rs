@@ -5,7 +5,8 @@ use lume_errors::Result;
 use lume_span::*;
 use lume_types::TypeRef;
 
-use crate::{TyInferCtx, query::Callable};
+use crate::TyInferCtx;
+use crate::query::Callable;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct TypeParameterReference {
@@ -285,7 +286,8 @@ impl UnificationPass {
 
         // Strip back the path until we have the actual type of the path.
         //
-        // This is mostly for when a method path is passed, which would throw off the method.
+        // This is mostly for when a method path is passed, which would throw off the
+        // method.
         while !type_path.is_type() {
             if let Some(parent) = type_path.parent() {
                 type_path = parent;

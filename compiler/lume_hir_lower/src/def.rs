@@ -1,13 +1,10 @@
 use std::collections::HashSet;
 
 use error_snippet::Result;
-use lume_hir::Node;
+use lume_hir::{Node, SELF_TYPE_NAME};
 
-use crate::DefinedItem;
-use crate::LowerModule;
 use crate::errors::*;
-
-use lume_hir::SELF_TYPE_NAME;
+use crate::{DefinedItem, LowerModule};
 
 impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -283,7 +280,8 @@ impl LowerModule<'_> {
             //
             // While it doesn't change must in the view of the compiler,
             // using `self` as the first parameter is a best practice, since it's
-            // so much easier to see whether a method is an instance method or a static method.
+            // so much easier to see whether a method is an instance method or a static
+            // method.
             if index > 0 && param.param_type.is_self() {
                 return Err(SelfNotFirstParameter {
                     source: self.file.clone(),

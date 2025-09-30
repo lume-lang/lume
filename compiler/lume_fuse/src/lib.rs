@@ -71,7 +71,8 @@ fn determine_runner_path(opts: &Options) -> Result<PathBuf> {
 
     // If `CARGO` is set, we know we are being run as part of a `cargo run` command
     // which only happens inside of the source tree. Otherwise, we're likely
-    // outside the tree and we need to look for the runner in the system directories.
+    // outside the tree and we need to look for the runner in the system
+    // directories.
     let is_dev_build = std::env::var_os("CARGO").is_some();
 
     if is_dev_build {
@@ -81,7 +82,8 @@ fn determine_runner_path(opts: &Options) -> Result<PathBuf> {
     }
 }
 
-/// Determines the full path of the runner binary within the source tree of the Lume compiler
+/// Determines the full path of the runner binary within the source tree of the
+/// Lume compiler
 fn determine_dev_runner_path() -> Result<PathBuf> {
     let profile_name = profile_name();
 
@@ -111,7 +113,8 @@ static RUNNER_BINARY: &[u8] = include_bytes!("../../../target/debug/lume_runner"
 #[cfg(not(debug_assertions))]
 static RUNNER_BINARY: &[u8] = include_bytes!("../../../target/release/lume_runner");
 
-/// Determines the full path of the runtime library in the system library directory.
+/// Determines the full path of the runtime library in the system library
+/// directory.
 fn determine_release_runner_path() -> Result<PathBuf> {
     let data_dir = determine_data_dir()?;
     let system_runtime_dir = data_dir.join(env!("CARGO_PKG_VERSION"));

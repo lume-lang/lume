@@ -1,10 +1,11 @@
 pub(crate) mod diagnostics;
 
-use crate::TyCheckCtx;
 use error_snippet::Result;
 pub use lume_infer::query::Callable;
 use lume_span::NodeId;
 use lume_types::{Function, Method, TypeRef};
+
+use crate::TyCheckCtx;
 
 impl TyCheckCtx {
     /// Checks whether the given [`Method`] is valid, in terms of provided
@@ -27,8 +28,8 @@ impl TyCheckCtx {
         self.check_signature(Callable::Function(function), lume_hir::CallExpression::Static(expr))
     }
 
-    /// Checks whether the given invocation signature matches the signature of the
-    /// corresponding callable.
+    /// Checks whether the given invocation signature matches the signature of
+    /// the corresponding callable.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_signature<'a>(&self, callable: Callable<'a>, expr: lume_hir::CallExpression<'a>) -> Result<bool> {
         let narrow_signature = callable.signature();
@@ -75,8 +76,8 @@ impl TyCheckCtx {
         self.check_params(expr, &signature.params, &arguments)
     }
 
-    /// Checks whether the given type arguments matches the signature of the given
-    /// type parameters.
+    /// Checks whether the given type arguments matches the signature of the
+    /// given type parameters.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     fn check_type_params<'a>(
         &self,
@@ -241,12 +242,13 @@ impl TyCheckCtx {
         Ok(success)
     }
 
-    /// Looks up all [`Method`]s and [`Function`]s and attempts to find one, which matches the
-    /// signature of the given call expression.
+    /// Looks up all [`Method`]s and [`Function`]s and attempts to find one,
+    /// which matches the signature of the given call expression.
     ///
-    /// Callables returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. To look up methods
-    /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    /// Callables returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// To look up methods which only match the callee type and method name,
+    /// see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %expr.name(), args = ?expr.arguments()), err)]
     pub fn lookup_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
@@ -274,9 +276,10 @@ impl TyCheckCtx {
     /// Looks up all [`Method`]s and attempts to find one, which matches the
     /// signature of the given call expression.
     ///
-    /// Methods returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. To look up methods
-    /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    /// Methods returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// To look up methods which only match the callee type and method name,
+    /// see [`ThirBuildCtx::lookup_methods_on()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_methods(&self, expr: lume_hir::CallExpression) -> Result<&'_ Method> {
         let Callable::Method(probed_method) = self.probe_callable(expr)? else {
@@ -291,9 +294,10 @@ impl TyCheckCtx {
     /// Looks up all [`Function`]s and attempts to find one, which matches the
     /// signature of the given call expression.
     ///
-    /// Functions returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. To look up functions
-    /// which only match function name, see [`ThirBuildCtx::probe_functions()`].
+    /// Functions returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// To look up functions which only match function name, see
+    /// [`ThirBuildCtx::probe_functions()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_functions(&self, expr: &lume_hir::StaticCall) -> Result<&'_ Function> {
         let Callable::Function(probed_func) = self.probe_callable(lume_hir::CallExpression::Static(expr))? else {
@@ -305,15 +309,17 @@ impl TyCheckCtx {
         Ok(probed_func)
     }
 
-    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which matches the
-    /// signature of the given instance call expression.
+    /// Looks up all [`Method`]s and attempts to find a single [`Method`], which
+    /// matches the signature of the given instance call expression.
     ///
-    /// Methods returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. The look up methods
-    /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    /// Methods returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// The look up methods which only match the callee type and method
+    /// name, see [`ThirBuildCtx::lookup_methods_on()`].
     ///
-    /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For a static callable
-    /// lookup, see [`ThirBuildCtx::lookup_callable_static()`].
+    /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`].
+    /// For a static callable lookup, see
+    /// [`ThirBuildCtx::lookup_callable_static()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Instanced(call))
@@ -322,12 +328,14 @@ impl TyCheckCtx {
     /// Looks up all [`Callable`]s and attempts to find one, which matches the
     /// signature of the given static call expression.
     ///
-    /// Callables returned by this method are checked for validity within the current
-    /// context, including visibility, arguments and type arguments. To look up methods
-    /// which only match the callee type and method name, see [`ThirBuildCtx::lookup_methods_on()`].
+    /// Callables returned by this method are checked for validity within the
+    /// current context, including visibility, arguments and type arguments.
+    /// To look up methods which only match the callee type and method name,
+    /// see [`ThirBuildCtx::lookup_methods_on()`].
     ///
-    /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`]. For an instance callable
-    /// lookup, see [`ThirBuildCtx::lookup_callable_instance()`].
+    /// For a generic callable lookup, see [`ThirBuildCtx::lookup_callable()`].
+    /// For an instance callable lookup, see
+    /// [`ThirBuildCtx::lookup_callable_instance()`].
     #[tracing::instrument(level = "TRACE", skip_all, err)]
     pub fn lookup_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.lookup_callable(lume_hir::CallExpression::Static(call))
@@ -337,8 +345,8 @@ impl TyCheckCtx {
     ///
     /// # Errors
     ///
-    /// If not all branches return a value, or if different branches return different types,
-    /// the method returns `Err`.
+    /// If not all branches return a value, or if different branches return
+    /// different types, the method returns `Err`.
     #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub(crate) fn ensure_block_ty_match(&self, block: &lume_hir::Block, expected: &TypeRef) -> Result<()> {
         self.ensure_type_compatibility(&self.type_of_block_ret(block)?, expected)
@@ -349,8 +357,8 @@ impl TyCheckCtx {
     ///
     /// # Errors
     ///
-    /// If not all branches return a value, or if different branches return different types,
-    /// the method returns `Err`.
+    /// If not all branches return a value, or if different branches return
+    /// different types, the method returns `Err`.
     #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
     pub(crate) fn type_of_block_ret(&self, block: &lume_hir::Block) -> Result<TypeRef> {
         let last_statement = block.statements.last();
@@ -374,8 +382,9 @@ impl TyCheckCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn matching_type_of_stmt(&self, stmt: &lume_hir::Statement) -> Result<TypeRef> {
         match &stmt.kind {
@@ -402,8 +411,9 @@ impl TyCheckCtx {
     /// # Panics
     ///
     /// This method will panic if no definition with the given ID exists
-    /// within it's declared module. This also applies to any recursive calls this
-    /// method makes, in the case of some expressions, such as assignments.
+    /// within it's declared module. This also applies to any recursive calls
+    /// this method makes, in the case of some expressions, such as
+    /// assignments.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(crate) fn matching_type_of_cond(&self, id: NodeId, cases: &[lume_hir::Condition]) -> Result<TypeRef> {
         let first_case = cases.first().expect("expected at least 1 case");

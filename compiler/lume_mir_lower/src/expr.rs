@@ -26,13 +26,10 @@ impl FunctionTransformer<'_, '_> {
             let return_ty = self.lower_type(&expr.ty);
 
             let target_reg = self.load_operand(&op);
-            let loaded_reg = self.func.declare_value_raw(
-                return_ty,
-                lume_mir::Operand {
-                    kind: lume_mir::OperandKind::Load { id: target_reg },
-                    location: expr.location(),
-                },
-            );
+            let loaded_reg = self.func.declare_value_raw(return_ty, lume_mir::Operand {
+                kind: lume_mir::OperandKind::Load { id: target_reg },
+                location: expr.location(),
+            });
 
             return lume_mir::Operand {
                 kind: lume_mir::OperandKind::Reference { id: loaded_reg },
@@ -242,43 +239,34 @@ impl FunctionTransformer<'_, '_> {
                 let intrinsic = match &lit.kind {
                     lume_tir::LiteralKind::Boolean(bool) => lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::BooleanEq,
-                        args: vec![
-                            operand,
-                            lume_mir::Operand {
-                                kind: lume_mir::OperandKind::Boolean { value: *bool },
-                                location: lit.location,
-                            },
-                        ],
+                        args: vec![operand, lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Boolean { value: *bool },
+                            location: lit.location,
+                        }],
                     },
                     lume_tir::LiteralKind::Int(int) => lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::IntEq {
                             bits: int.bits(),
                             signed: int.signed(),
                         },
-                        args: vec![
-                            operand,
-                            lume_mir::Operand {
-                                kind: lume_mir::OperandKind::Integer {
-                                    bits: int.bits(),
-                                    signed: int.signed(),
-                                    value: int.value(),
-                                },
-                                location: lit.location,
+                        args: vec![operand, lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Integer {
+                                bits: int.bits(),
+                                signed: int.signed(),
+                                value: int.value(),
                             },
-                        ],
+                            location: lit.location,
+                        }],
                     },
                     lume_tir::LiteralKind::Float(float) => lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::FloatEq { bits: float.bits() },
-                        args: vec![
-                            operand,
-                            lume_mir::Operand {
-                                kind: lume_mir::OperandKind::Float {
-                                    bits: float.bits(),
-                                    value: float.value(),
-                                },
-                                location: lit.location,
+                        args: vec![operand, lume_mir::Operand {
+                            kind: lume_mir::OperandKind::Float {
+                                bits: float.bits(),
+                                value: float.value(),
                             },
-                        ],
+                            location: lit.location,
+                        }],
                     },
                     lume_tir::LiteralKind::String(_) => unimplemented!(),
                 };
@@ -310,21 +298,18 @@ impl FunctionTransformer<'_, '_> {
                     .discriminant_of_variant_ty(variant.ty.instance_of, variant.name.name.name())
                     .unwrap();
 
-                let operand_disc = self.func.declare_raw(
-                    lume_mir::Type::u8(),
-                    lume_mir::Declaration {
-                        kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
-                            kind: lume_mir::OperandKind::LoadField {
-                                target: loaded_op,
-                                offset: lume_mir::POINTER_SIZE,
-                                index: 0,
-                                field_type: lume_mir::Type::u8(),
-                            },
-                            location: pattern.location,
-                        }),
+                let operand_disc = self.func.declare_raw(lume_mir::Type::u8(), lume_mir::Declaration {
+                    kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
+                        kind: lume_mir::OperandKind::LoadField {
+                            target: loaded_op,
+                            offset: lume_mir::POINTER_SIZE,
+                            index: 0,
+                            field_type: lume_mir::Type::u8(),
+                        },
                         location: pattern.location,
-                    },
-                );
+                    }),
+                    location: pattern.location,
+                });
 
                 let cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntEq { bits: 8, signed: false },

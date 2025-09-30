@@ -50,8 +50,9 @@ impl<T: std::hash::Hash + ?Sized> From<&T> for Idx {
 
 /// Uniquely identifies a package.
 ///
-/// Packages are identified by a unique ID, which is used to locate the package's source files.
-/// The ID is generated from the name of the package using a hash function.
+/// Packages are identified by a unique ID, which is used to locate the
+/// package's source files. The ID is generated from the name of the package
+/// using a hash function.
 #[derive(Serialize, Deserialize, Hash, Debug, Default, Clone, Copy, PartialOrd, Ord, PartialEq, Eq)]
 pub struct PackageId(usize);
 

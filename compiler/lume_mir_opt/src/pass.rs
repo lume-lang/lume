@@ -5,7 +5,8 @@ use lume_mir_queries::MirQueryCtx;
 use lume_session::OptimizationLevel;
 use lume_span::NodeId;
 
-/// Defines a MIR optimization pass which can be executed over a function or block.
+/// Defines a MIR optimization pass which can be executed over a function or
+/// block.
 pub(crate) trait OptimizerPass {
     /// Creates a new instance of the pass without default settings.
     fn new() -> Self;
@@ -27,8 +28,8 @@ pub(crate) fn run_pass<P: OptimizerPass>(mcx: &mut MirQueryCtx, level: Optimizat
     }
 }
 
-/// Attempts to run all optimization passes which have been enabled by `level` on
-/// the given function.
+/// Attempts to run all optimization passes which have been enabled by `level`
+/// on the given function.
 #[inline]
 pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
     let session = &mcx.gcx().session;

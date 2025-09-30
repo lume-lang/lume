@@ -1,4 +1,5 @@
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use lume_span::{FileName, PackageId, SourceFile, SourceFileId};
 use rust_embed::Embed;
