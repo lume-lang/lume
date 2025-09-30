@@ -59,12 +59,9 @@ impl TyInferCtx {
             lume_hir::Node::TraitImpl(item) => Some(lume_hir::NodeRef::TraitMethodImpl(
                 item.methods.get(id.index.as_usize())?,
             )),
-            lume_hir::Node::Type(item) => match item {
-                lume_hir::TypeDefinition::Trait(item) => Some(lume_hir::NodeRef::TraitMethodDef(
-                    item.methods.get(id.index.as_usize())?,
-                )),
-                _ => None,
-            },
+            lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(item)) => Some(lume_hir::NodeRef::TraitMethodDef(
+                item.methods.get(id.index.as_usize())?,
+            )),
             _ => None,
         })
     }
@@ -148,10 +145,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_field(&self, id: NodeId) -> Option<&lume_hir::Field> {
         self.hir_parent_node_of(id).and_then(|item| match item {
-            lume_hir::Node::Type(ty) => match ty {
-                lume_hir::TypeDefinition::Struct(s) => s.fields.get(id.index.as_usize()),
-                _ => None,
-            },
+            lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(s)) => s.fields.get(id.index.as_usize()),
             _ => None,
         })
     }

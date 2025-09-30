@@ -69,7 +69,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
         let methods_ptr_reg = self.load_field(
             type_metadata_reg,
-            self.method_metadata_type(),
+            method_metadata_type(),
             TYPE_METADATA_METHODS_INDEX,
             TYPE_METADATA_METHODS_OFFSET,
         );
@@ -79,7 +79,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         let ptr_reg = self
             .builder
             .func
-            .declare(self.method_metadata_type(), lume_mir::Declaration {
+            .declare(method_metadata_type(), lume_mir::Declaration {
                 kind: lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
@@ -216,7 +216,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         let method_ptr_reg = self
             .builder
             .func
-            .declare(self.method_metadata_type(), lume_mir::Declaration {
+            .declare(method_metadata_type(), lume_mir::Declaration {
                 kind: lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
@@ -301,7 +301,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         const METHOD_METADATA_FUNC_INDEX: usize = 5;
         const METHOD_METADATA_FUNC_OFFSET: usize = 40;
 
-        let method = self.load_raw(method_ptr, self.method_metadata_type());
+        let method = self.load_raw(method_ptr, method_metadata_type());
         let func_ptr = self.load_field(
             method,
             lume_mir::Type::pointer(lume_mir::Type::void()),
@@ -321,7 +321,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         let ret_ty = self.builder.type_of_function(self.func_id);
         let ret = self
             .builder
-            .call_indirect(func_ptr, self.signature.to_owned(), args, ret_ty, Location::empty());
+            .call_indirect(func_ptr, self.signature.clone(), args, ret_ty, Location::empty());
 
         self.builder
             .func
@@ -395,16 +395,16 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             location: Location::empty(),
         })
     }
+}
 
-    fn method_metadata_type(&self) -> lume_mir::Type {
-        lume_mir::Type::pointer(lume_mir::Type::structure(String::from("std::Method"), vec![
-            lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
-            lume_mir::Type::u64(),                           // size,
-            lume_mir::Type::u64(),                           // alignment,
-            lume_mir::Type::u64(),                           // type_id,
-            lume_mir::Type::pointer(lume_mir::Type::void()), // fields,
-            lume_mir::Type::pointer(lume_mir::Type::void()), // methods,
-            lume_mir::Type::pointer(lume_mir::Type::void()), // type_arguments,
-        ]))
-    }
+fn method_metadata_type() -> lume_mir::Type {
+    lume_mir::Type::pointer(lume_mir::Type::structure(String::from("std::Method"), vec![
+        lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
+        lume_mir::Type::u64(),                           // size,
+        lume_mir::Type::u64(),                           // alignment,
+        lume_mir::Type::u64(),                           // type_id,
+        lume_mir::Type::pointer(lume_mir::Type::void()), // fields,
+        lume_mir::Type::pointer(lume_mir::Type::void()), // methods,
+        lume_mir::Type::pointer(lume_mir::Type::void()), // type_arguments,
+    ]))
 }

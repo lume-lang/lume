@@ -26,8 +26,6 @@ pub struct GitDependencyFetcher;
 impl DependencyFetcher for GitDependencyFetcher {
     fn metadata(&self, dependency: &ManifestDependencySource) -> Result<PackageMetadata> {
         let path = clone_repository(dependency)?;
-
-        let path = PathBuf::from(path);
         let manifest = PackageParser::locate(&path)?;
 
         let package_id = manifest.package_id();

@@ -257,7 +257,7 @@ impl UnificationPass {
             lume_hir::ExpressionKind::Literal(_)
             | lume_hir::ExpressionKind::Variable(_)
             | lume_hir::ExpressionKind::Field(_) => (),
-        };
+        }
 
         Ok(())
     }
@@ -265,8 +265,9 @@ impl UnificationPass {
     #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
     fn unify_pattern<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: NodeId, pattern: &lume_hir::Pattern) -> Result<()> {
         match &pattern.kind {
-            lume_hir::PatternKind::Literal(_) => {}
-            lume_hir::PatternKind::Identifier(_) => {}
+            lume_hir::PatternKind::Literal(_)
+            | lume_hir::PatternKind::Identifier(_)
+            | lume_hir::PatternKind::Wildcard(_) => {}
             lume_hir::PatternKind::Variant(variant) => {
                 self.enqueue_path_unification(tcx, expr, &variant.name)?;
 
@@ -274,7 +275,6 @@ impl UnificationPass {
                     self.unify_pattern(tcx, expr, field)?;
                 }
             }
-            lume_hir::PatternKind::Wildcard(_) => {}
         }
 
         Ok(())
@@ -429,7 +429,7 @@ impl UnificationPass {
     ) -> Result<()> {
         let Some(expected_type_of_expr) = tcx.expected_type_of(expr)? else {
             let span = tcx.hir_span_of_node(expr);
-            let type_param_name = tcx.tdb().type_parameter(type_param).unwrap().name.to_owned();
+            let type_param_name = tcx.tdb().type_parameter(type_param).unwrap().name.clone();
 
             tcx.dcx().emit(
                 crate::errors::TypeArgumentInferenceFailed {

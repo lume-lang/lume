@@ -16,7 +16,7 @@ impl Pass for DefineBlockEdges {
     }
 
     fn new() -> Self {
-        Self::default()
+        Self
     }
 
     fn execute(&mut self, func: &mut Function) {

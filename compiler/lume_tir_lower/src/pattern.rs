@@ -37,6 +37,7 @@ impl LowerFunction<'_> {
                     .map(|field| self.pattern(field))
                     .collect::<Result<Vec<_>>>()?;
 
+                #[allow(clippy::cast_possible_truncation)]
                 Ok(lume_tir::Pattern {
                     id: pattern.id,
                     kind: lume_tir::PatternKind::Variant(lume_tir::VariantPattern {

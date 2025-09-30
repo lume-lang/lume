@@ -46,6 +46,6 @@ impl Deref for MirQueryCtx<'_> {
     type Target = TyCtx;
 
     fn deref(&self) -> &Self::Target {
-        &self.tcx
+        self.tcx
     }
 }

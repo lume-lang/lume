@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::collections::{BTreeSet, HashMap};
 use std::fmt::{Debug, Display};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 
 use lume_errors::{DiagCtxHandle, Result, SimpleDiagnostic};
@@ -33,8 +33,8 @@ impl Display for Dependency {
 }
 
 /// Builds a dependency from the root package, found at `root`.
-pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Result<DependencyMap> {
-    let manifest = PackageParser::locate(&root)?;
+pub(crate) fn build_dependency_tree(root: &Path, dcx: DiagCtxHandle) -> Result<DependencyMap> {
+    let manifest = PackageParser::locate(root)?;
     let root_id = manifest.package_id();
 
     let package = Dependency {
@@ -56,8 +56,8 @@ pub(crate) fn build_dependency_tree(root: &PathBuf, dcx: DiagCtxHandle) -> Resul
             let packages = solver
                 .metadata
                 .into_inner()
-                .into_iter()
-                .map(|(_, pkg)| (pkg.package_id, Arc::into_inner(pkg).unwrap()))
+                .into_values()
+                .map(|pkg| (pkg.package_id, Arc::into_inner(pkg).unwrap()))
                 .collect::<HashMap<PackageId, PackageMetadata>>();
 
             let report = report(packages, &derivation_tree);

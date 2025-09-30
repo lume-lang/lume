@@ -368,13 +368,13 @@ impl TyInferCtx {
                         name: subpath.name.to_string(),
                     }
                     .into();
-                } else {
-                    return errors::InvalidNamespaceRoot {
-                        source,
-                        name: format!("{:+}", subpath.name.to_string()),
-                    }
-                    .into();
                 }
+
+                return errors::InvalidNamespaceRoot {
+                    source,
+                    name: format!("{:+}", subpath.name.to_string()),
+                }
+                .into();
             }
 
             type_path.pop();

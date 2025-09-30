@@ -10,7 +10,7 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn check_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<()> {
+    pub fn check_package(root: &Path, opts: Options, dcx: DiagCtxHandle) -> Result<()> {
         let driver = Self::from_root(root, dcx.clone())?;
 
         if let Err(err) = driver.check(opts) {

@@ -411,7 +411,7 @@ impl TyInferCtx {
                         lume_hir::Node::Expression(expr) => match &expr.kind {
                             lume_hir::ExpressionKind::Is(is) => return self.type_of(is.target),
                             lume_hir::ExpressionKind::Switch(switch) => return self.type_of(switch.operand),
-                            _ => continue,
+                            _ => {}
                         },
 
                         // If the pattern is a sub-pattern, we get the variant pattern it was nested within.
@@ -659,13 +659,13 @@ impl TyInferCtx {
                 _ => Ok(true),
             },
             lume_hir::Node::Statement(stmt) => match &stmt.kind {
-                lume_hir::StatementKind::Variable(_) => Ok(true),
+                lume_hir::StatementKind::Variable(_)
+                | lume_hir::StatementKind::Final(_)
+                | lume_hir::StatementKind::Return(_)
+                | lume_hir::StatementKind::IteratorLoop(_) => Ok(true),
                 lume_hir::StatementKind::Break(_) => unreachable!("break statements cannot have sub expressions"),
                 lume_hir::StatementKind::Continue(_) => unreachable!("continue statements cannot have sub expressions"),
-                lume_hir::StatementKind::Final(_) => Ok(true),
-                lume_hir::StatementKind::Return(_) => Ok(true),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
-                lume_hir::StatementKind::IteratorLoop(_) => Ok(true),
                 lume_hir::StatementKind::Expression(_) => Ok(false),
             },
             lume_hir::Node::Field(_) => Ok(true),
@@ -722,25 +722,26 @@ impl TyInferCtx {
 
         match self.hir_expect_node(parent_id) {
             lume_hir::Node::Expression(expr) => match &expr.kind {
-                lume_hir::ExpressionKind::Assignment(_) => self.try_expected_type_of(parent_id),
-                lume_hir::ExpressionKind::Binary(_) => Ok(None),
-                lume_hir::ExpressionKind::Cast(_) => Ok(None),
+                lume_hir::ExpressionKind::Assignment(_) | lume_hir::ExpressionKind::Scope(_) => {
+                    self.try_expected_type_of(parent_id)
+                }
+                lume_hir::ExpressionKind::Binary(_)
+                | lume_hir::ExpressionKind::Cast(_)
+                | lume_hir::ExpressionKind::Logical(_)
+                | lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
                 lume_hir::ExpressionKind::InstanceCall(call) => self
                     .expected_type_of_call(id, CallExpression::Instanced(call))
-                    .map(|ty| Some(ty)),
+                    .map(Some),
                 lume_hir::ExpressionKind::IntrinsicCall(call) => self
                     .expected_type_of_call(id, CallExpression::Intrinsic(call))
-                    .map(|ty| Some(ty)),
-                lume_hir::ExpressionKind::StaticCall(call) => self
-                    .expected_type_of_call(id, CallExpression::Static(call))
-                    .map(|ty| Some(ty)),
+                    .map(Some),
+                lume_hir::ExpressionKind::StaticCall(call) => {
+                    self.expected_type_of_call(id, CallExpression::Static(call)).map(Some)
+                }
                 lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
-                lume_hir::ExpressionKind::Logical(_) => Ok(None),
-                lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Field(_) => todo!("expected_type_of field expression"),
-                lume_hir::ExpressionKind::Scope(_) => self.try_expected_type_of(parent_id),
                 lume_hir::ExpressionKind::Switch(_) => todo!("expected_type_of switch expression"),
                 lume_hir::ExpressionKind::Variable(_) => {
                     unreachable!("variable references cannot have sub expressions")
@@ -759,7 +760,7 @@ impl TyInferCtx {
                     let enum_case_def = self.enum_case_with_name(&variant.name)?;
                     let enum_field_type = enum_case_def.parameters.get(idx).unwrap();
 
-                    self.mk_type_ref_from(enum_field_type, enum_def.id).map(|ty| Some(ty))
+                    self.mk_type_ref_from(enum_field_type, enum_def.id).map(Some)
                 }
             },
             lume_hir::Node::Statement(stmt) => match &stmt.kind {
@@ -777,9 +778,9 @@ impl TyInferCtx {
                 lume_hir::StatementKind::Final(fin) => match self.hir_parent_node_of(fin.id) {
                     Some(Node::Expression(parent)) => self.try_expected_type_of(parent.id),
                     Some(Node::Statement(_)) => Ok(Some(TypeRef::void().with_location(fin.location))),
-                    _ => self.hir_ctx_return_type(fin.id).map(|ty| Some(ty)),
+                    _ => self.hir_ctx_return_type(fin.id).map(Some),
                 },
-                lume_hir::StatementKind::Return(ret) => self.hir_ctx_return_type(ret.id).map(|ty| Some(ty)),
+                lume_hir::StatementKind::Return(ret) => self.hir_ctx_return_type(ret.id).map(Some),
                 lume_hir::StatementKind::InfiniteLoop(_) => unreachable!("infinite loops cannot have sub expressions"),
                 lume_hir::StatementKind::IteratorLoop(_) => todo!("expected_type_of IteratorLoop statement"),
                 lume_hir::StatementKind::Expression(_) => Ok(Some(TypeRef::void())),
@@ -868,22 +869,19 @@ impl TyInferCtx {
             };
 
             match expr_node {
-                Node::Statement(stmt) => match &stmt.kind {
-                    lume_hir::StatementKind::Variable(decl) => {
-                        if let Some(declared_type) = &decl.declared_type {
-                            return Ok(Some(self.mk_type_ref_from(declared_type, decl.id)?));
-                        } else {
-                            continue;
-                        }
+                Node::Statement(stmt) => {
+                    if let lume_hir::StatementKind::Variable(decl) = &stmt.kind
+                        && let Some(declared_type) = &decl.declared_type
+                    {
+                        return Ok(Some(self.mk_type_ref_from(declared_type, decl.id)?));
                     }
-                    _ => continue,
-                },
+                }
                 Node::Expression(expr) => {
                     if let Some(expected_type) = self.try_expected_type_of(expr.id)? {
                         return Ok(Some(expected_type));
                     }
                 }
-                _ => continue,
+                _ => {}
             }
         }
 

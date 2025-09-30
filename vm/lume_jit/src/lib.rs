@@ -4,7 +4,8 @@ pub(crate) mod ty;
 pub(crate) mod value;
 
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::rc::Rc;
+use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
 use cranelift::codegen::verify_function;
@@ -13,7 +14,7 @@ use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
 use indexmap::IndexMap;
 use lume_errors::{Result, SimpleDiagnostic};
-use lume_gc::{CompiledFunctionMetadata, FunctionPtr, FunctionStackMap};
+use lume_gc::{CompiledFunctionMetadata, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_span::NodeId;
 
@@ -92,12 +93,12 @@ pub fn generate_main<'ctx>(mir: ModuleMap) -> Result<EntrypointAddress> {
 
     let main_ptr = module.get_finalized_function(main_func);
 
-    Ok(unsafe { std::mem::transmute(main_ptr) })
+    Ok(unsafe { std::mem::transmute::<*const u8, EntrypointAddress>(main_ptr) })
 }
 
 pub(crate) struct CraneliftBackend {
     context: ModuleMap,
-    module: Option<Arc<RwLock<JITModule>>>,
+    module: Option<Rc<RwLock<JITModule>>>,
 
     declared_funcs: IndexMap<NodeId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
@@ -133,7 +134,7 @@ impl CraneliftBackend {
 
         Ok(Self {
             context,
-            module: Some(Arc::new(RwLock::new(module))),
+            module: Some(Rc::new(RwLock::new(module))),
             declared_funcs: IndexMap::new(),
             intrinsics,
             flags,
@@ -184,7 +185,7 @@ impl CraneliftBackend {
             self.module().clear_context(&mut ctx);
         }
 
-        let mut module = Arc::into_inner(self.module.take().unwrap())
+        let mut module = Rc::into_inner(self.module.take().unwrap())
             .unwrap()
             .into_inner()
             .unwrap();
@@ -203,8 +204,8 @@ impl CraneliftBackend {
                 continue;
             };
 
-            let start = FunctionPtr::new(module.get_finalized_function(func.id));
-            let end = FunctionPtr::new(unsafe { start.ptr().byte_add(metadata.total_size) });
+            let start = module.get_finalized_function(func.id);
+            let end = unsafe { start.byte_add(metadata.total_size) };
 
             func_stack_maps.push(CompiledFunctionMetadata {
                 start,
@@ -519,7 +520,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
         if let lume_mir::TypeKind::Union { .. } = &reg_ty.kind {
             return types::I8;
-        };
+        }
 
         let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
             panic!("bug!: attempting to load non-pointer register");
@@ -527,7 +528,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
         if let lume_mir::TypeKind::Union { .. } = &elemental.kind {
             return types::I8;
-        };
+        }
 
         self.backend.cl_type_of(elemental)
     }
@@ -542,7 +543,7 @@ impl<'ctx> LowerFunction<'ctx> {
                 .expect("bug!: attempted to load union field out of bounds");
 
             return self.backend.cl_type_of(case);
-        };
+        }
 
         let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
             panic!("bug!: attempting to load non-pointer register");
@@ -550,7 +551,7 @@ impl<'ctx> LowerFunction<'ctx> {
 
         if let lume_mir::TypeKind::Union { .. } = &elemental.kind {
             return self.backend.cl_ptr_type();
-        };
+        }
 
         let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
             panic!("bug!: attempting to load field from non-struct register");
@@ -812,7 +813,8 @@ impl<'ctx> LowerFunction<'ctx> {
         for (index, block) in arms {
             let arm_block = *self.blocks.get(&block.block).unwrap();
 
-            switch.set_entry(*index as u128, arm_block);
+            #[allow(clippy::cast_sign_loss)]
+            switch.set_entry(u128::from(*index as u64), arm_block);
         }
 
         switch.emit(&mut self.builder, operand, fallback);

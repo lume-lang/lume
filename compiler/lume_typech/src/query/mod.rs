@@ -446,14 +446,14 @@ impl TyCheckCtx {
                         reason_loc: expected_type.location,
                     }
                     .into());
-                } else {
-                    return Err(crate::check::errors::MismatchedTypesBranchesCondition {
-                        found,
-                        expected,
-                        found_loc: found_type.location,
-                    }
-                    .into());
                 }
+
+                return Err(crate::check::errors::MismatchedTypesBranchesCondition {
+                    found,
+                    expected,
+                    found_loc: found_type.location,
+                }
+                .into());
             }
         }
 

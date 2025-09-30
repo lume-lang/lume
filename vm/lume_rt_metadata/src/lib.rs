@@ -117,9 +117,14 @@ pub struct List<T> {
 impl<T> List<T> {
     /// Gets the length of the list.
     #[inline]
-    #[must_use]
     pub fn len(&self) -> usize {
-        unsafe { (self.base as *const usize).read() }
+        unsafe { self.base.cast::<usize>().read() }
+    }
+
+    /// Determines if the list is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Gets a slice of all items in the list, as a slice of pointer.
@@ -127,7 +132,7 @@ impl<T> List<T> {
     #[must_use]
     pub fn items(&self) -> &[*const T] {
         let len = self.len();
-        let ptr = unsafe { self.base.byte_add(std::mem::size_of::<usize>()) as *const *const T };
+        let ptr = unsafe { self.base.byte_add(std::mem::size_of::<usize>()).cast::<*const T>() };
 
         unsafe { std::slice::from_raw_parts(ptr, len) }
     }

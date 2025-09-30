@@ -38,8 +38,7 @@ impl FileName {
 
         match self {
             FileName::Internal => &EMPTY_BUF,
-            FileName::Real(buf) => buf,
-            FileName::StandardLibrary(buf) => buf,
+            FileName::Real(buf) | FileName::StandardLibrary(buf) => buf,
         }
     }
 }
@@ -147,8 +146,7 @@ impl error_snippet::Source for SourceFile {
     fn name(&self) -> Option<&str> {
         match &self.name {
             FileName::Internal => None,
-            FileName::Real(name) => name.as_os_str().to_str(),
-            FileName::StandardLibrary(name) => name.as_os_str().to_str(),
+            FileName::Real(name) | FileName::StandardLibrary(name) => name.as_os_str().to_str(),
         }
     }
 

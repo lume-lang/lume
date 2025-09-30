@@ -48,7 +48,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
 
     if let Some(expected_return_code) = determine_expected_result_code(&test_case)
         && let Some(return_code) = output.status.code()
-        && expected_return_code as i32 != return_code
+        && i32::from(expected_return_code) != return_code
     {
         let write_failure_report = Box::new(move || {
             let mut f = Vec::new();
@@ -98,9 +98,7 @@ fn compile(path: &Path, content: String) -> Result<PathBuf> {
 fn determine_expected_result_code(test_case: &TestCase) -> Option<u8> {
     static RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^//#\s*test-return\s*=\s*(\d+)").unwrap());
 
-    let Some(captures) = RE.captures(&test_case.file_content) else {
-        return None;
-    };
+    let captures = RE.captures(&test_case.file_content)?;
 
     captures[1].parse::<u8>().ok()
 }

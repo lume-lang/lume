@@ -43,7 +43,7 @@ impl From<Manifest> for Package {
             id: manifest.package_id(),
             path: manifest.path,
             name: manifest.package.name,
-            lume_version: manifest.package.lume_version.map(|v| v.into_inner()),
+            lume_version: manifest.package.lume_version.map(Spanned::into_inner),
             version: manifest.package.version.into_inner(),
             description: manifest.package.description,
             license: manifest.package.license,
@@ -250,7 +250,7 @@ impl PackageParser {
             }
         };
 
-        for (_, dependency) in &mut manifest.dependencies {
+        for dependency in manifest.dependencies.values_mut() {
             match &mut dependency.source {
                 ManifestDependencySource::Local { path } => {
                     let pathbuf = PathBuf::from(path.clone());

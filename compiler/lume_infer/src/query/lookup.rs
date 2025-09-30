@@ -163,7 +163,7 @@ impl TyInferCtx {
             None => self
                 .lookup_methods_on(ty, name, BlanketLookup::Include)
                 .first()
-                .map(|m| *m),
+                .copied(),
         }
     }
 
@@ -506,12 +506,11 @@ impl TyInferCtx {
         for (idx, param) in signature.params.inner().iter().enumerate() {
             let param_ty = self.instantiate_type_from(&param.ty, signature.type_params, &type_args);
 
-            inst.params.params[idx].ty = param_ty.to_owned();
+            param_ty.clone_into(&mut inst.params.params[idx].ty);
         }
 
-        inst.ret_ty = self
-            .instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
-            .to_owned();
+        self.instantiate_type_from(signature.ret_ty, signature.type_params, &type_args)
+            .clone_into(&mut inst.ret_ty);
 
         Ok(inst)
     }
@@ -573,7 +572,7 @@ impl TyInferCtx {
         inst_ty.type_arguments.reserve_exact(ty.type_arguments.len());
 
         for type_arg in &ty.type_arguments {
-            let inst_type_arg = self.instantiate_type_from(type_arg, type_params, type_args).to_owned();
+            let inst_type_arg = self.instantiate_type_from(type_arg, type_params, type_args);
 
             inst_ty.type_arguments.push(inst_type_arg);
         }

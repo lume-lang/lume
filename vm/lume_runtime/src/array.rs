@@ -25,6 +25,15 @@ impl<T> Array<T> {
     }
 }
 
+impl<T> IntoIterator for &Array<T> {
+    type IntoIter = ArrayIterator<T>;
+    type Item = *const T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
 pub struct ArrayIterator<T> {
     idx: u64,
     length: u64,
@@ -38,7 +47,9 @@ impl<T> Iterator for ArrayIterator<T> {
         if self.idx >= self.length {
             None
         } else {
+            #[allow(clippy::cast_possible_truncation)]
             let item: *const T = unsafe { self.items.add(self.idx as usize) };
+
             self.idx += 1;
 
             Some(item)

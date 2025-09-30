@@ -37,15 +37,17 @@ fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) ->
     let fmt_str = crate::string::cstr_to_string(fmt);
 
     let args = unsafe { args.read() };
-    let mut args_str = Vec::with_capacity(args.length as usize);
 
-    for arg in args.iter() {
+    #[allow(clippy::cast_possible_truncation)]
+    let mut args_strings = Vec::with_capacity(args.length as usize);
+
+    for arg in &args {
         let arg_str = crate::string::cstr_to_string(arg.cast());
 
-        args_str.push(arg_str);
+        args_strings.push(arg_str);
     }
 
-    internal_format_str(fmt_str, &args_str)
+    internal_format_str(fmt_str, &args_strings)
 }
 
 /// Formats the given Rust strings into a formatted [`String`], which can be

@@ -37,7 +37,7 @@ impl BumpAllocator {
         let layout = Layout::from_size_align(total_size, PAGE_SIZE).unwrap();
         let base = unsafe { alloc(layout) };
 
-        if base == std::ptr::null_mut() {
+        if base.is_null() {
             std::alloc::handle_alloc_error(layout);
         }
 
@@ -119,7 +119,9 @@ impl YoungGeneration {
                 let drop_ptr = unsafe { metadata.read() }.drop_ptr;
 
                 if !drop_ptr.is_null() {
-                    self.drop_list.push((ptr, unsafe { std::mem::transmute(drop_ptr) }));
+                    self.drop_list.push((ptr, unsafe {
+                        std::mem::transmute::<*const std::ffi::c_void, DropPointer>(drop_ptr)
+                    }));
                 }
             }
 
@@ -175,14 +177,14 @@ impl OldGeneration {
         let layout = Layout::from_size_align(size, POINTER_ALIGNMENT).unwrap();
         let ptr = unsafe { self.allocator.alloc(layout) };
 
-        if ptr == std::ptr::null_mut() {
+        if ptr.is_null() {
             std::alloc::handle_alloc_error(layout);
         }
 
-        let drop_ptr = if !metadata.is_null() {
-            unsafe { metadata.read() }.drop_ptr as *const u8
-        } else {
+        let drop_ptr = if metadata.is_null() {
             std::ptr::null()
+        } else {
+            unsafe { metadata.read() }.drop_ptr.cast::<u8>()
         };
 
         self.allocations.insert(ptr, (size, drop_ptr));
@@ -243,7 +245,7 @@ impl GenerationalAllocator {
         assert!(root <= 24, "dividend must be between 0 and 24");
 
         let total_memory = get_total_memory();
-        let g1_size = total_memory.unbounded_shr(root as u32);
+        let g1_size = total_memory.unbounded_shr(u32::from(root));
 
         lume_trace::trace!("[G1] initial memory block of {g1_size}B ({} MB)", g1_size / 1024 / 1024);
 
@@ -287,7 +289,9 @@ impl GenerationalAllocator {
     pub(crate) fn is_collection_required(&self) -> bool {
         let mem_in_use = self.young.allocator.current_size();
         let mem_available = self.young.allocator.total_size();
-        let ratio = (mem_in_use as f32) / (mem_available as f32);
+
+        #[allow(clippy::cast_precision_loss)]
+        let ratio = (mem_in_use as f64) / (mem_available as f64);
 
         if ratio >= 0.95 {
             lume_trace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
@@ -305,7 +309,7 @@ impl GenerationalAllocator {
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
         for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
             let live_obj = unsafe { stack_ptr.read() }.cast_mut();
-            let metadata_ptr = unsafe { (live_obj.cast_const() as *const *const TypeMetadata).read() };
+            let metadata_ptr = unsafe { live_obj.cast_const().cast::<*const TypeMetadata>().read_unaligned() };
             let obj_size = unsafe { metadata_ptr.read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.
@@ -333,6 +337,7 @@ impl GenerationalAllocator {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
 fn get_total_memory() -> usize {
     let mut sys = sysinfo::System::new();
     sys.refresh_memory_specifics(sysinfo::MemoryRefreshKind::nothing().with_ram());

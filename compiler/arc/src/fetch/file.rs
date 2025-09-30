@@ -40,15 +40,14 @@ impl DependencyFetcher for FileDependencyFetcher {
     }
 
     fn fetch(&self, source: &ManifestDependencySource) -> Result<PathBuf> {
+        #[allow(clippy::match_wildcard_for_single_variants)]
         match source {
             ManifestDependencySource::Local { path } => Ok(PathBuf::from(path)),
 
-            _ => {
-                return Err(SimpleDiagnostic::new(format!(
-                    "unsupported path scheme: only local paths are supported, found {source}"
-                ))
-                .into());
-            }
+            _ => Err(SimpleDiagnostic::new(format!(
+                "unsupported path scheme: only local paths are supported, found {source}"
+            ))
+            .into()),
         }
     }
 }

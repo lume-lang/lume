@@ -39,6 +39,8 @@ wildcard_imports = "allow"
 range_plus_one = "allow"
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
+return_self_not_must_use = "allow"
+needless_pass_by_value = "allow"
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)'] }

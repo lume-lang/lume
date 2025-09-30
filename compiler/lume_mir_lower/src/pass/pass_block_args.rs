@@ -21,7 +21,8 @@ use super::*;
 /// Each successor block, except for `B2`, is meant to pass one-or-more
 /// registers to their successor blocks. This pass will look through each block
 /// and update their terminator to pass the required registers. After the pass,
-/// the same MIR will look like this: ```mir
+/// the same MIR will look like this:
+/// ```mir
 /// B0:
 ///     #0 = 4_i32
 ///     goto B1(#0)          <-- notice the added block arguments
@@ -43,7 +44,7 @@ impl Pass for PassBlockArguments {
 
     /// Creates a new instance of the pass without default settings.
     fn new() -> Self {
-        Self::default()
+        Self
     }
 
     /// Executes the pass on the given function.

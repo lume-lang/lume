@@ -139,20 +139,18 @@ impl TyInferCtx {
                 struct_def.id = if let Some(std_id) = std_type_id(&name) {
                     std_id
                 } else {
-                    self.tdb_mut().type_alloc(struct_def.id, name, kind)
+                    self.tdb_mut().type_alloc(struct_def.id, &name, kind)
                 };
             }
             lume_hir::TypeDefinition::Trait(trait_def) => {
-                let name = trait_def.name.clone();
                 let kind = TypeKind::User(UserType::Trait(Box::new(Trait::new(trait_def.as_ref()))));
 
-                self.tdb_mut().type_alloc(trait_def.id, name, kind);
+                self.tdb_mut().type_alloc(trait_def.id, &trait_def.name, kind);
             }
             lume_hir::TypeDefinition::Enum(enum_def) => {
-                let name = enum_def.name.clone();
                 let kind = TypeKind::User(UserType::Enum(Box::new(Enum::new(enum_def.as_ref()))));
 
-                self.tdb_mut().type_alloc(enum_def.id, name, kind);
+                self.tdb_mut().type_alloc(enum_def.id, &enum_def.name, kind);
             }
         }
     }
@@ -233,7 +231,7 @@ impl TyInferCtx {
 
         for (_, item) in &mut hir.nodes {
             if let lume_hir::Node::Type(ty) = item {
-                self.define_fields_type(ty)?;
+                self.define_fields_type(ty);
             }
         }
 
@@ -242,7 +240,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_fields_type(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
+    fn define_fields_type(&mut self, ty: &mut lume_hir::TypeDefinition) {
         if let lume_hir::TypeDefinition::Struct(struct_def) = ty {
             let type_id = struct_def.id;
 
@@ -254,8 +252,6 @@ impl TyInferCtx {
                     .field_alloc(field.id, index, type_id, field_name.clone(), visibility);
             }
         }
-
-        Ok(())
     }
 }
 
@@ -266,10 +262,8 @@ impl TyInferCtx {
 
         for (_, item) in &mut hir.nodes {
             match item {
-                lume_hir::Node::Type(ty) => {
-                    if let lume_hir::TypeDefinition::Trait(tr) = ty {
-                        self.define_trait_def_methods(tr)?;
-                    }
+                lume_hir::Node::Type(lume_hir::TypeDefinition::Trait(tr)) => {
+                    self.define_trait_def_methods(tr);
                 }
                 lume_hir::Node::TraitImpl(u) => self.define_trait_impl_methods(u)?,
                 _ => (),
@@ -281,7 +275,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    fn define_trait_def_methods(&mut self, trait_def: &mut lume_hir::TraitDefinition) -> Result<()> {
+    fn define_trait_def_methods(&mut self, trait_def: &mut lume_hir::TraitDefinition) {
         let type_id = trait_def.id;
         let type_ref = TypeRef::new(type_id, trait_def.location);
 
@@ -300,8 +294,6 @@ impl TyInferCtx {
                 lume_types::MethodKind::TraitDefinition,
             );
         }
-
-        Ok(())
     }
 
     fn define_trait_impl_methods(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
@@ -540,7 +532,7 @@ impl TyInferCtx {
         let symbol_name = Path::rooted(PathSegment::ty(name));
 
         self.tdb_mut()
-            .type_alloc(type_param, symbol_name, TypeKind::TypeParameter(type_param))
+            .type_alloc(type_param, &symbol_name, TypeKind::TypeParameter(type_param))
     }
 }
 
@@ -1199,10 +1191,10 @@ impl TyInferCtx {
                         TypeArgumentInference::Replace { replacement } => {
                             call.name.place_type_arguments(replacement);
                         }
-                    };
+                    }
                 }
                 _ => continue,
-            };
+            }
 
             replacements.insert(expr_id, expr);
         }
@@ -1283,7 +1275,8 @@ impl TyInferCtx {
     /// If the parameter is already a type parameter which corresponds to the
     /// target ID, the type of the parameter is returned. If not, the method
     /// will iterate over type arguments within the parameter- and
-    /// argument-types. For example, given the given Lume sample: ```lm
+    /// argument-types. For example, given the given Lume sample:
+    /// ```lm
     /// struct Test<T> {}
     ///
     /// fn foo<T>(val: Test<T>) { }
@@ -1294,7 +1287,7 @@ impl TyInferCtx {
     ///     foo(t);
     /// }
     /// ```
-    /// 
+    ///
     /// From the given sample, we'd want to resolve `T` to be `Int32`, since
     /// they are both contained within the type `Test`. As such, the method
     /// iterates over the type parameters within the `param_ty` and their

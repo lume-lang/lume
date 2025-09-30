@@ -32,7 +32,8 @@ type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 ///
 /// To circumvent this ~pedantry~ *requirement*, this pass renames all the
 /// registers to be local to the block in which they're declared. Using the
-/// given MIR from before, we transform it into: ```mir
+/// given MIR from before, we transform it into:
+/// ```mir
 /// B0:
 ///     #0 = 4_i32
 ///     #1 = 1_i32
@@ -46,7 +47,7 @@ type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
 ///     #2: i32 = *(#0, #1)
 ///     return #2
 /// ```
-/// 
+///
 /// <div class="warning">
 ///
 /// **Here be dragons!**

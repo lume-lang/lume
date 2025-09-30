@@ -60,11 +60,7 @@ impl Parser {
         }
         // If the name starts with an upper case, it refers to a type.
         else {
-            let is_after_type_segment = if let Some(PathSegment::Type { .. }) = prev_segment {
-                true
-            } else {
-                false
-            };
+            let is_after_type_segment = matches!(prev_segment, Some(PathSegment::Type { .. }));
 
             // If we spot a `(` token, we know it's the start of an argument list,
             // which can only be defined on variant expressions.

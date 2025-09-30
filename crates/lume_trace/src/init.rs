@@ -34,7 +34,7 @@ pub fn init() {
             _ => {}
         }
     } else if is_log_set {
-        register_global_tracer(Tracer::Console)
+        register_global_tracer(Tracer::Console);
     }
 }
 

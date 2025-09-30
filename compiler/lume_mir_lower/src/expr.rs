@@ -757,7 +757,7 @@ impl FunctionTransformer<'_, '_> {
 
             let arm_pattern = match pattern {
                 lume_tir::SwitchConstantPattern::Literal(lit) => match lit {
-                    lume_tir::SwitchConstantLiteral::Boolean(lit) => *lit as i64,
+                    lume_tir::SwitchConstantLiteral::Boolean(lit) => i64::from(*lit),
                     lume_tir::SwitchConstantLiteral::Float(lit) => lit.to_bits().cast_signed(),
                     lume_tir::SwitchConstantLiteral::Integer(lit) => *lit,
                 },

@@ -15,7 +15,7 @@ impl Pass for RemoveOrphanBlocks {
 
     /// Creates a new instance of the pass without default settings.
     fn new() -> Self {
-        Self::default()
+        Self
     }
 
     /// Executes the pass on the given function.

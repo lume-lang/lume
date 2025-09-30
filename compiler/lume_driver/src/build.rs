@@ -15,7 +15,7 @@ impl Driver {
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[allow(clippy::needless_pass_by_value)]
-    pub fn build_package(root: &PathBuf, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
+    pub fn build_package(root: &Path, opts: Options, dcx: DiagCtxHandle) -> Result<CompiledExecutable> {
         let driver = Self::from_root(root, dcx.clone())?;
 
         driver.build(opts)
@@ -59,7 +59,7 @@ impl Driver {
 
             write_metadata_object(&gcx, &metadata)?;
 
-            compiled.mir.merge_into(&mut merged_map)
+            compiled.mir.merge_into(&mut merged_map);
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);

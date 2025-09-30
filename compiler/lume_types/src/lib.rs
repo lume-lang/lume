@@ -1255,7 +1255,7 @@ impl TypeDatabaseContext {
 
     /// Allocates a new [`Type`] with the given name and kind.
     #[inline]
-    pub fn type_alloc(&mut self, id: NodeId, name: Path, kind: TypeKind) -> NodeId {
+    pub fn type_alloc(&mut self, id: NodeId, name: &Path, kind: TypeKind) -> NodeId {
         let existing = self.types.insert(id, Type {
             id,
             kind,

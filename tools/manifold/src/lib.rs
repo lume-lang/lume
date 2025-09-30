@@ -110,10 +110,8 @@ fn run_test_suite(root: &PathBuf) -> Result<()> {
 
                     let panic_msg = if let Some(msg) = panic_info.downcast_ref::<&str>() {
                         Some(msg as &dyn Display)
-                    } else if let Some(msg) = panic_info.downcast_ref::<String>() {
-                        Some(msg as &dyn Display)
                     } else {
-                        None
+                        panic_info.downcast_ref::<String>().map(|msg| msg as &dyn Display)
                     };
 
                     writeln!(&mut f, "Panic occured during test")?;

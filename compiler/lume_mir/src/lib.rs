@@ -1128,8 +1128,7 @@ impl std::fmt::Display for Intrinsic {
 /// Represents an operand to a call expression.
 ///
 /// Not all values can be used as operands, which means they
-/// must be declared as a stack- or heap-allocated register.#[derive(Debug,
-/// Clone, PartialEq)]
+/// must be declared as a stack- or heap-allocated register.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Operand {
     pub kind: OperandKind,

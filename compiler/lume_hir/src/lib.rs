@@ -662,7 +662,7 @@ impl Signature<'_> {
     }
 
     pub fn is_instanced(&self) -> bool {
-        self.parameters.first().map_or(false, |param| param.is_self())
+        self.parameters.first().is_some_and(Parameter::is_self)
     }
 }
 

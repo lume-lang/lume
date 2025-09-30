@@ -8,30 +8,6 @@ use std::sync::OnceLock;
 
 use lume_rt_metadata::TypeMetadata;
 
-/// Immutable, thread-transportable pointer type.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct FunctionPtr(*const u8);
-
-impl FunctionPtr {
-    #[inline]
-    pub fn new(ptr: *const u8) -> Self {
-        FunctionPtr(ptr)
-    }
-
-    #[inline]
-    pub fn ptr(self) -> *const u8 {
-        self.0
-    }
-
-    #[inline]
-    pub fn as_usize(self) -> usize {
-        self.0.addr()
-    }
-}
-
-unsafe impl Send for FunctionPtr {}
-unsafe impl Sync for FunctionPtr {}
-
 /// Stack-map for a given function.
 ///
 /// The vector defines a list of tuples containing the offset
@@ -47,10 +23,10 @@ pub type FunctionStackMap = Vec<(usize, usize, Vec<usize>)>;
 #[derive(Debug)]
 pub struct CompiledFunctionMetadata {
     /// Defines the address of the first instruction in the function.
-    pub start: FunctionPtr,
+    pub start: *const u8,
 
     /// Defines the address of the last instruction in the function.
-    pub end: FunctionPtr,
+    pub end: *const u8,
 
     /// Defines a list of all stack maps found within the function,
     /// keyed by offset from [`CompiledFunctionMetadata::start`].
@@ -60,9 +36,9 @@ pub struct CompiledFunctionMetadata {
 impl CompiledFunctionMetadata {
     /// Gets the length of the function machine code, in bytes.
     #[inline]
-    #[must_use]
+    #[expect(clippy::len_without_is_empty, reason = "useless addition")]
     pub fn len(&self) -> usize {
-        self.end.as_usize() - self.start.as_usize()
+        self.end.addr() - self.start.addr()
     }
 
     /// Gets the offset of the given address inside the function
@@ -72,8 +48,8 @@ impl CompiledFunctionMetadata {
     #[inline]
     #[must_use]
     pub fn offset_of(&self, addr: *const u8) -> Option<usize> {
-        if addr >= self.start.0 && addr < self.end.0 {
-            let offset = addr.addr() - self.start.0.addr();
+        if addr >= self.start && addr < self.end {
+            let offset = addr.addr() - self.start.addr();
 
             return Some(offset);
         }
@@ -97,15 +73,18 @@ impl CompiledFunctionMetadata {
     /// [`CompiledFunctionMetadata`], respectively.
     #[inline]
     pub fn ordering_of(&self, addr: *const u8) -> Ordering {
-        if self.start.0 > addr {
+        if self.start > addr {
             Ordering::Greater
-        } else if addr > self.end.0 {
+        } else if addr > self.end {
             Ordering::Less
         } else {
             Ordering::Equal
         }
     }
 }
+
+unsafe impl Send for CompiledFunctionMetadata {}
+unsafe impl Sync for CompiledFunctionMetadata {}
 
 static FUNC_STACK_MAPS: OnceLock<Vec<CompiledFunctionMetadata>> = OnceLock::new();
 
@@ -115,7 +94,7 @@ static FUNC_STACK_MAPS: OnceLock<Vec<CompiledFunctionMetadata>> = OnceLock::new(
 ///
 /// This function **will** panic if the stack maps are declared more than once.
 pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
-    stack_maps.sort_by_key(|func| func.start.as_usize());
+    stack_maps.sort_by_key(|func| func.start.addr());
 
     FUNC_STACK_MAPS
         .set(stack_maps)
@@ -181,7 +160,7 @@ impl FrameStackMap {
     /// instruction in the associated function.
     #[inline]
     pub(crate) fn offset(&self) -> usize {
-        self.program_counter.addr() - self.map.start.as_usize()
+        self.program_counter.addr() - self.map.start.addr()
     }
 
     /// Gets the stack pointer which is associated with the frame.
@@ -212,7 +191,7 @@ impl FrameStackMap {
                     None
                 }
             })
-            .unwrap_or_else(|| &[])
+            .unwrap_or(&[])
     }
 
     /// Attempts to find all GC references found inside of the stack map for the
@@ -225,10 +204,11 @@ impl FrameStackMap {
     /// allocation to a different address, whereafter it can write the new
     /// address to the pointer in the stack frame.
     #[inline]
+    #[allow(clippy::cast_ptr_alignment, reason = "stack pointer and offsets are always aligned")]
     pub(crate) fn stack_locations(&self) -> impl Iterator<Item = *const *const u8> {
         self.stack_offsets()
             .iter()
-            .map(|offset| unsafe { self.stack_pointer().byte_add(*offset) } as *const *const u8)
+            .map(|offset| unsafe { self.stack_pointer().byte_add(*offset).cast::<*const u8>() })
     }
 
     /// Attempts to find all GC references found inside of the stack map for the

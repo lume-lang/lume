@@ -565,7 +565,7 @@ impl<'back> MemoryBlockBuilder<'back> {
 
     /// Appends a null pointer onto the data block.
     pub fn append_null_ptr(&mut self) -> &mut Self {
-        self.append_bytes(&vec![0x00; NATIVE_PTR_SIZE])
+        self.append_bytes(&[0x00; NATIVE_PTR_SIZE])
     }
 
     /// Append a raw byte onto the data block.

@@ -13,6 +13,8 @@ fn main() {
 
     let mapped_file = unsafe { Mmap::map(&current_file).unwrap() };
     let bytecode_size_slice = mapped_file.last_chunk::<BYTECODE_LENGTH_SIZE>().unwrap();
+
+    #[allow(clippy::cast_possible_truncation)]
     let bytecode_size = u64::from_ne_bytes(bytecode_size_slice.to_owned()) as usize;
 
     assert!(

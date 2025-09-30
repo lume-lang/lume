@@ -630,14 +630,14 @@ impl IntLiteral {
 
     pub fn value(self) -> i64 {
         match self {
-            Self::I8(value) => value,
-            Self::U8(value) => value,
-            Self::I16(value) => value,
-            Self::U16(value) => value,
-            Self::I32(value) => value,
-            Self::U32(value) => value,
-            Self::I64(value) => value,
-            Self::U64(value) => value,
+            Self::I8(value)
+            | Self::U8(value)
+            | Self::I16(value)
+            | Self::U16(value)
+            | Self::I32(value)
+            | Self::U32(value)
+            | Self::I64(value)
+            | Self::U64(value) => value,
         }
     }
 }
@@ -658,8 +658,7 @@ impl FloatLiteral {
 
     pub fn value(self) -> f64 {
         match self {
-            Self::F32(value) => value,
-            Self::F64(value) => value,
+            Self::F32(value) | Self::F64(value) => value,
         }
     }
 }

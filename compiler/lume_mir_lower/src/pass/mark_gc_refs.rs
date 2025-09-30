@@ -69,12 +69,7 @@ impl MarkObjectReferences {
                     InstructionKind::Let { register, decl, .. } => {
                         match &decl.kind {
                             DeclarationKind::Operand(op) => self.find_object_references_operand(func, block.id, op),
-                            DeclarationKind::Call { args, .. } => {
-                                for arg in args {
-                                    self.find_object_references_operand(func, block.id, arg);
-                                }
-                            }
-                            DeclarationKind::IndirectCall { args, .. } => {
+                            DeclarationKind::Call { args, .. } | DeclarationKind::IndirectCall { args, .. } => {
                                 for arg in args {
                                     self.find_object_references_operand(func, block.id, arg);
                                 }

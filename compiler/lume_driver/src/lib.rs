@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use arc::locate_package;
@@ -45,7 +45,7 @@ impl Driver {
     /// # Errors
     ///
     /// Returns `Err` if the given path has no `Arcfile` within it.
-    pub fn from_root(root: &PathBuf, dcx: DiagCtxHandle) -> Result<Self> {
+    pub fn from_root(root: &Path, dcx: DiagCtxHandle) -> Result<Self> {
         let mut dependencies = dcx.with(|handle| locate_package(root, handle))?;
 
         dependencies.add_package_sources_recursive()?;
@@ -90,7 +90,7 @@ pub struct Compiler<'a> {
     source_map: SourceMap,
 }
 
-impl<'a> Compiler<'a> {
+impl Compiler<'_> {
     /// Parses all the source files within the current [`Package`] into HIR.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {

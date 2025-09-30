@@ -6,6 +6,7 @@ mod x86_64 {
     /// Reads the frame pointer register into a [`usize`] value
     /// and returns it.
     #[inline(always)]
+    #[expect(clippy::inline_always)]
     pub(crate) fn read_frame_pointer() -> usize {
         let fp: usize;
 
@@ -38,6 +39,7 @@ mod aarch64 {
     /// Reads the frame pointer register into a [`usize`] value
     /// and returns it.
     #[inline(always)]
+    #[expect(clippy::inline_always)]
     pub(crate) fn read_frame_pointer() -> usize {
         let mut fp: usize;
         unsafe {
