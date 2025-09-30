@@ -611,13 +611,9 @@ impl BasicBlock {
     }
 
     /// Stores a value in an existing slot.
-    pub fn store_slot(&mut self, target: SlotId, value: Operand, loc: Location) {
+    pub fn store_slot(&mut self, target: SlotId, offset: usize, value: Operand, loc: Location) {
         self.instructions.push(Instruction {
-            kind: InstructionKind::StoreSlot {
-                target,
-                value,
-                offset: 0,
-            },
+            kind: InstructionKind::StoreSlot { target, value, offset },
             location: loc,
         });
     }
@@ -643,7 +639,7 @@ impl BasicBlock {
         self.set_terminator(Terminator {
             kind: TerminatorKind::Branch(BlockBranchSite {
                 block,
-                arguments: args.to_vec(),
+                arguments: args.iter().map(|reg| Operand::reference_of(*reg)).collect(),
             }),
             location,
         });
@@ -672,9 +668,9 @@ impl BasicBlock {
         &mut self,
         cond: RegisterId,
         then_block: BasicBlockId,
-        then_block_args: Vec<RegisterId>,
+        then_block_args: &[RegisterId],
         else_block: BasicBlockId,
-        else_block_args: Vec<RegisterId>,
+        else_block_args: &[RegisterId],
         location: Location,
     ) {
         self.set_terminator(Terminator {
@@ -682,11 +678,11 @@ impl BasicBlock {
                 condition: cond,
                 then_block: BlockBranchSite {
                     block: then_block,
-                    arguments: then_block_args,
+                    arguments: then_block_args.iter().map(|reg| Operand::reference_of(*reg)).collect(),
                 },
                 else_block: BlockBranchSite {
                     block: else_block,
-                    arguments: else_block_args,
+                    arguments: else_block_args.iter().map(|reg| Operand::reference_of(*reg)).collect(),
                 },
             },
             location,
@@ -1140,6 +1136,25 @@ pub struct Operand {
     pub location: Location,
 }
 
+impl Operand {
+    pub fn reference_of(register: RegisterId) -> Self {
+        Self {
+            kind: OperandKind::Reference { id: register },
+            location: Location::empty(),
+        }
+    }
+
+    pub fn is_reference_of(&self, register: RegisterId) -> bool {
+        if let OperandKind::Reference { id } = &self.kind
+            && *id == register
+        {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum OperandKind {
     /// Represents a literal boolean value.
@@ -1168,6 +1183,13 @@ pub enum OperandKind {
         field_type: Type,
     },
 
+    /// Represents a loaded value from an existing slot.
+    LoadSlot {
+        target: SlotId,
+        offset: usize,
+        loaded_type: Type,
+    },
+
     /// Represents an address to an existing stack slot.
     SlotAddress { id: SlotId, offset: usize },
 
@@ -1184,7 +1206,10 @@ impl Operand {
             OperandKind::Integer { bits, .. } | OperandKind::Float { bits, .. } => *bits,
             OperandKind::Reference { .. } | OperandKind::String { .. } => std::mem::size_of::<*const u32>() as u8 * 8,
             OperandKind::Bitcast { .. } => panic!("cannot get bitsize of bitcast operand"),
-            OperandKind::Load { .. } | OperandKind::LoadField { .. } | OperandKind::SlotAddress { .. } => {
+            OperandKind::Load { .. }
+            | OperandKind::LoadField { .. }
+            | OperandKind::LoadSlot { .. }
+            | OperandKind::SlotAddress { .. } => {
                 panic!("cannot get bitsize of load operand")
             }
         }
@@ -1205,7 +1230,23 @@ impl Operand {
             | OperandKind::Integer { .. }
             | OperandKind::Float { .. }
             | OperandKind::String { .. }
+            | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => Vec::new(),
+        }
+    }
+
+    /// Determines whether the operand references the given register within it.
+    pub fn references_register(&self, register: RegisterId) -> bool {
+        match &self.kind {
+            OperandKind::Boolean { .. }
+            | OperandKind::Integer { .. }
+            | OperandKind::Float { .. }
+            | OperandKind::String { .. }
+            | OperandKind::Bitcast { .. }
+            | OperandKind::LoadSlot { .. }
+            | OperandKind::SlotAddress { .. } => false,
+            OperandKind::Reference { id } | OperandKind::Load { id } => *id == register,
+            OperandKind::LoadField { target, .. } => *target == register,
         }
     }
 
@@ -1217,6 +1258,7 @@ impl Operand {
             | OperandKind::Float { .. }
             | OperandKind::String { .. }
             | OperandKind::Bitcast { .. }
+            | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => false,
             OperandKind::Reference { id } | OperandKind::Load { id } => *id == register,
             OperandKind::LoadField { target, field_type, .. } => *target == register && field_type.is_reference_type(),
@@ -1236,6 +1278,7 @@ impl std::fmt::Display for Operand {
             OperandKind::Reference { id } => write!(f, "{id}"),
             OperandKind::Load { id } => write!(f, "*{id}"),
             OperandKind::LoadField { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
+            OperandKind::LoadSlot { target, offset, .. } => write!(f, "*{target}[+x{offset:X}]"),
             OperandKind::SlotAddress { id, offset } => write!(f, "{id}[+x{offset:X}]"),
             OperandKind::String { value } => write!(f, "\"{value}\""),
         }
@@ -1297,8 +1340,14 @@ impl Terminator {
                 else_block,
             } => {
                 let mut refs = vec![*condition];
-                refs.extend(&then_block.arguments);
-                refs.extend(&else_block.arguments);
+
+                for arg in &then_block.arguments {
+                    refs.extend(arg.register_refs());
+                }
+
+                for arg in &else_block.arguments {
+                    refs.extend(arg.register_refs());
+                }
 
                 refs
             }
@@ -1308,15 +1357,26 @@ impl Terminator {
                 fallback,
             } => {
                 let mut refs = vec![*operand];
-                for arm in arms {
-                    refs.extend(&arm.1.arguments);
+                for (_, arm) in arms {
+                    for arg in &arm.arguments {
+                        refs.extend(arg.register_refs());
+                    }
                 }
 
-                refs.extend(&fallback.arguments);
+                for arg in &fallback.arguments {
+                    refs.extend(arg.register_refs());
+                }
 
                 refs
             }
-            TerminatorKind::Branch(site) => site.arguments.clone(),
+            TerminatorKind::Branch(site) => {
+                let mut refs = Vec::new();
+                for arg in &site.arguments {
+                    refs.extend(arg.register_refs());
+                }
+
+                refs
+            }
             TerminatorKind::Unreachable => Vec::new(),
         }
     }
@@ -1362,7 +1422,7 @@ impl std::fmt::Display for Terminator {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct BlockBranchSite {
     pub block: BasicBlockId,
-    pub arguments: Vec<RegisterId>,
+    pub arguments: Vec<Operand>,
 }
 
 impl BlockBranchSite {
@@ -1371,13 +1431,6 @@ impl BlockBranchSite {
             block,
             arguments: Vec::new(),
         }
-    }
-
-    pub fn arg_operands(&self) -> impl Iterator<Item = Operand> {
-        self.arguments.iter().map(|arg| Operand {
-            kind: OperandKind::Reference { id: *arg },
-            location: Location::empty(),
-        })
     }
 }
 

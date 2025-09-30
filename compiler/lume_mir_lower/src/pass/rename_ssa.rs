@@ -187,7 +187,7 @@ impl RenameSsaVariables {
             }
             TerminatorKind::Branch(site) => {
                 for arg in &mut site.arguments {
-                    *arg = *mapping.get(&(*arg, block)).unwrap();
+                    Self::update_regs_op(arg, block, mapping);
                 }
             }
             TerminatorKind::ConditionalBranch {
@@ -198,11 +198,11 @@ impl RenameSsaVariables {
                 *condition = *mapping.get(&(*condition, block)).unwrap();
 
                 for arg in &mut then_block.arguments {
-                    *arg = *mapping.get(&(*arg, block)).unwrap();
+                    Self::update_regs_op(arg, block, mapping);
                 }
 
                 for arg in &mut else_block.arguments {
-                    *arg = *mapping.get(&(*arg, block)).unwrap();
+                    Self::update_regs_op(arg, block, mapping);
                 }
             }
             TerminatorKind::Switch {
@@ -214,12 +214,12 @@ impl RenameSsaVariables {
 
                 for arm in arms {
                     for arg in &mut arm.1.arguments {
-                        *arg = *mapping.get(&(*arg, block)).unwrap();
+                        Self::update_regs_op(arg, block, mapping);
                     }
                 }
 
                 for arg in &mut fallback.arguments {
-                    *arg = *mapping.get(&(*arg, block)).unwrap();
+                    Self::update_regs_op(arg, block, mapping);
                 }
             }
             TerminatorKind::Unreachable => {}
@@ -262,6 +262,7 @@ impl RenameSsaVariables {
             | OperandKind::Integer { .. }
             | OperandKind::Float { .. }
             | OperandKind::String { .. }
+            | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => {}
         }
     }

@@ -71,6 +71,13 @@ impl FunctionTransformer<'_, '_> {
 
                 target_expr
             }
+            lume_mir::OperandKind::LoadSlot { target, offset, .. } => {
+                self.func
+                    .current_block_mut()
+                    .store_slot(*target, *offset, value, expr.location);
+
+                target_expr
+            }
             lume_mir::OperandKind::Bitcast { .. } => panic!("bug!: attempted to assign bitcast"),
             lume_mir::OperandKind::SlotAddress { .. } => panic!("bug!: attempted to assign slot-address"),
             lume_mir::OperandKind::Boolean { .. }
@@ -773,7 +780,7 @@ impl FunctionTransformer<'_, '_> {
             };
 
             let value = self.expression(branch);
-            self.func.current_block_mut().store_slot(value_slot, value, location);
+            self.func.current_block_mut().store_slot(value_slot, 0, value, location);
             self.func.current_block_mut().branch(merge_block, location);
 
             arms.push((arm_pattern, lume_mir::BlockBranchSite::new(block)));
@@ -782,7 +789,7 @@ impl FunctionTransformer<'_, '_> {
         let fallback_block = self.func.new_active_block();
 
         let value = self.expression(&expr.fallback);
-        self.func.current_block_mut().store_slot(value_slot, value, location);
+        self.func.current_block_mut().store_slot(value_slot, 0, value, location);
         self.func.current_block_mut().branch(merge_block, location);
 
         let fallback = lume_mir::BlockBranchSite::new(fallback_block);

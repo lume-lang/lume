@@ -174,9 +174,9 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         self.builder.func.current_block_mut().conditional_branch_with(
             loop_cmp_expr,
             loop_body,
-            branch_params.to_owned(),
+            branch_params,
             loop_exit,
-            vec![],
+            &[],
             Location::empty(),
         );
     }
@@ -288,9 +288,9 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         self.builder.func.current_block_mut().conditional_branch_with(
             id_cmp_expr,
             loop_found,
-            loop_found_params.to_owned(),
+            loop_found_params,
             loop_continue,
-            loop_continue_params.to_owned(),
+            loop_continue_params,
             Location::empty(),
         );
 

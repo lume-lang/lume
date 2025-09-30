@@ -132,11 +132,27 @@ impl LowerFunction<'_> {
                 index,
                 offset,
                 field_type,
-            } => self.load_field_as(*target, *index, *offset, self.backend.cl_type_of(field_type)),
-            lume_mir::OperandKind::SlotAddress { id } => {
+            } => self.load_field(*target, *index, *offset, self.backend.cl_type_of(field_type)),
+            lume_mir::OperandKind::LoadSlot {
+                target,
+                offset,
+                loaded_type,
+            } => {
+                let ty = self.backend.cl_type_of(loaded_type);
+                let stack = self.retrieve_slot(*target);
+
+                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+                let offset = *offset as i32;
+
+                self.builder.ins().stack_load(ty, stack, offset)
+            }
+            lume_mir::OperandKind::SlotAddress { id, offset } => {
                 let slot = self.retrieve_slot(*id);
 
-                self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, 0)
+                #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+                let offset = *offset as i32;
+
+                self.builder.ins().stack_addr(self.backend.cl_ptr_type(), slot, offset)
             }
             lume_mir::OperandKind::Reference { id } => self.use_var(*id),
         }
