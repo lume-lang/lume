@@ -4,5 +4,5 @@ source: compiler/lume_typech/src/tests/query.rs
 × error[LM4116]: argument count mismatch
    ╭───────────
  1 │ A::foo();
-   │ ^^^^^^^^^ expected 1 arguments, but got 0
+   ∶ ^^^^^^^^^ expected 1 arguments, but got 0
    ╰──

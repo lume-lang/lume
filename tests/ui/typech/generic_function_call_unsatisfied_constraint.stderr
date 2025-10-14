@@ -2,10 +2,10 @@
    ╭─[generic_function_call_unsatisfied_constraint.lm:6:9]
  5 │ fn bar() {
  6 │     foo<Boolean>();
-   │         ^^^^^^^ type Boolean does not implement A...
+   ∶         ^^^^^^^ type Boolean does not implement A...
  7 │ }
    ∶
  2 │
  3 │ fn foo<T: A>() { }
-   │           ^ ...which is required by the type parameter T
+   ∶           ^ ...which is required by the type parameter T
    ╰──

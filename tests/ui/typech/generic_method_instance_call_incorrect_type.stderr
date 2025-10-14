@@ -2,12 +2,12 @@
     ╭─[generic_method_instance_call_incorrect_type.lm:10:20]
  9  │
  10 │     a.bar<Boolean>(0);
-    │                    ^ expected type Boolean, but found type Int32...
+    ∶                    ^ expected type Boolean, but found type Int32...
  11 │ }
     ∶
  9  │
  10 │     a.bar<Boolean>(0);
-    │           ^^^^^^^ ...because of type defined here
+    ∶           ^^^^^^^ ...because of type defined here
  11 │ }
     ╰──
    help: expected type Boolean

@@ -2,12 +2,12 @@
     ╭─[generic_type_method_static_call_returned_type_incomp.lm:10:32]
  9  │ fn bar() {
  10 │     let _: Int32 = A<Boolean>::bar(false);
-    │                                ^^^ expected type Int32, but found type Boolean...
+    ∶                                ^^^ expected type Int32, but found type Boolean...
  11 │ }
     ∶
  9  │ fn bar() {
  10 │     let _: Int32 = A<Boolean>::bar(false);
-    │            ^^^^^ ...because of type defined here
+    ∶            ^^^^^ ...because of type defined here
  11 │ }
     ╰──
    help: expected type Int32

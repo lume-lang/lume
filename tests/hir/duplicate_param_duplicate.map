@@ -1,8 +1,8 @@
 × error[LM3030]: duplicate parameter
    ╭─[duplicate_param_duplicate.lm:1:18]
  1 │ fn foo(x: Int32, x: Int32) { }
-   │                  ^^^^^^^^ parameter x is already defined
+   ∶                  ^^^^^^^^ parameter x is already defined
    ∶
  1 │ fn foo(x: Int32, x: Int32) { }
-   │        ^ original parameter found here
+   ∶        ^ original parameter found here
    ╰──

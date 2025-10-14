@@ -2,12 +2,12 @@
    ╭─[return_value_call_expr.lm:6:12]
  5 │ fn bar() -> Int32 {
  6 │     return foo();
-   │            ^^^^^^ expected type Int32, but found type Boolean...
+   ∶            ^^^^^^ expected type Int32, but found type Boolean...
  7 │ }
    ∶
  4 │
  5 │ fn bar() -> Int32 {
-   │             ^^^^^ ...because of type defined here
+   ∶             ^^^^^ ...because of type defined here
  6 │     return foo();
    ╰──
    help: expected type Int32

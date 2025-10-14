@@ -1,6 +1,6 @@
 × error[LM3015]: self cannot be used in functions
    ╭─[using_self_in_function_invalid.lm:1:8]
  1 │ fn foo(self) -> void { }
-   │        ^^^^ self cannot be used in functions; they must only be used in traits and classes
+   ∶        ^^^^ self cannot be used in functions; they must only be used in traits and classes
    ╰──
    help: since functions have no instance, remove the self parameter

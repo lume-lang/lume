@@ -2,12 +2,12 @@
    ╭─[construct_struct_type_incomp.lm:6:22]
  5 │ fn foo() {
  6 │     let a = A { foo: 0 };
-   │                      ^ expected type Boolean, but found type Int32...
+   ∶                      ^ expected type Boolean, but found type Int32...
  7 │ }
    ∶
  1 │ struct A {
  2 │     foo: Boolean;
-   │          ^^^^^^^ ...because of type defined here
+   ∶          ^^^^^^^ ...because of type defined here
  3 │ }
    ╰──
    help: expected type Boolean

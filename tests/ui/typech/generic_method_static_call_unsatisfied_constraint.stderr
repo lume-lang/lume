@@ -2,11 +2,11 @@
     ╭─[generic_method_static_call_unsatisfied_constraint.lm:12:14]
  11 │ fn bar() {
  12 │     Foo::bar<Boolean>(false);
-    │              ^^^^^^^ type Boolean does not implement A...
+    ∶              ^^^^^^^ type Boolean does not implement A...
  13 │ }
     ∶
  5  │ impl Foo {
  6  │     pub fn bar<T: A>(val: T) -> T {
-    │                   ^ ...which is required by the type parameter T
+    ∶                   ^ ...which is required by the type parameter T
  7  │         return val;
     ╰──

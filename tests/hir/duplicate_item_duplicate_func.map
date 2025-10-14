@@ -2,8 +2,8 @@
    ╭─[duplicate_item_duplicate_func.lm:3:4]
  2 │
  3 │ fn foo() { }
-   │    ^^^ item foo is already defined within this file
+   ∶    ^^^ item foo is already defined within this file
    ∶
  1 │ fn foo() { }
-   │    ^^^ original definition found here
+   ∶    ^^^ original definition found here
    ╰──

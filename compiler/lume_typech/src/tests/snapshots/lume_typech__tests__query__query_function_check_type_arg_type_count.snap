@@ -4,5 +4,5 @@ source: compiler/lume_typech/src/tests/query.rs
 × error[LM4119]: type argument mismatch
    ╭───────────
  1 │ foo();
-   │ ^^^^^^ expected 1 type arguments, but got 0
+   ∶ ^^^^^^ expected 1 type arguments, but got 0
    ╰──

@@ -2,6 +2,6 @@
    ╭─[literal_assignment_str.lm:2:5]
  1 │ fn foo() {
  2 │     "foo" = false;
-   │     ^^^^^^^^^^^^^ literal values are constant and cannot be assigned
+   ∶     ^^^^^^^^^^^^^ literal values are constant and cannot be assigned
  3 │ }
    ╰──

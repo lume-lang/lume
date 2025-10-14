@@ -2,11 +2,11 @@
    ╭─[enum_variant_params_incomp.lm:4:20]
  3 │ fn foo() {
  4 │     let a = Foo::B(false, 0);
-   │                    ^^^^^ expected type Int32, but found type Boolean...
+   ∶                    ^^^^^ expected type Int32, but found type Boolean...
  5 │ }
    ∶
  1 │ enum Foo { A, B(Int32, Boolean) }
-   │                 ^^^^^ ...because of type defined here
+   ∶                 ^^^^^ ...because of type defined here
    ╰──
    help: expected type Int32
             found type Boolean
@@ -14,11 +14,11 @@
    ╭─[enum_variant_params_incomp.lm:4:27]
  3 │ fn foo() {
  4 │     let a = Foo::B(false, 0);
-   │                           ^ expected type Boolean, but found type Int32...
+   ∶                           ^ expected type Boolean, but found type Int32...
  5 │ }
    ∶
  1 │ enum Foo { A, B(Int32, Boolean) }
-   │                        ^^^^^^^ ...because of type defined here
+   ∶                        ^^^^^^^ ...because of type defined here
    ╰──
    help: expected type Boolean
             found type Int32

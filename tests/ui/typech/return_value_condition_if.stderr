@@ -2,11 +2,11 @@
    ╭─[return_value_condition_if.lm:3:16]
  2 │     if false {
  3 │         return true;
-   │                ^^^^ expected type Int32, but found type Boolean...
+   ∶                ^^^^ expected type Int32, but found type Boolean...
  4 │     }
    ∶
  1 │ fn foo() -> Int32 {
-   │             ^^^^^ ...because of type defined here
+   ∶             ^^^^^ ...because of type defined here
  2 │     if false {
    ╰──
    help: expected type Int32

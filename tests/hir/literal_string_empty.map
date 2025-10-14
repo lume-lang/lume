@@ -2,7 +2,7 @@
    ╭─[literal_string_empty.lm:2:2]
  1 │ fn foo() {
  2 │ 	\"\";
-   │  ^ unexpected character \
+   ∶  ^ unexpected character \
  3 │ }
    ╰──
    help: check your syntax

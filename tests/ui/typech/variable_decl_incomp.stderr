@@ -2,12 +2,12 @@
    ╭─[variable_decl_incomp.lm:2:20]
  1 │ fn foo() {
  2 │     let _: Int32 = false;
-   │                    ^^^^^ expected type Int32, but found type Boolean...
+   ∶                    ^^^^^ expected type Int32, but found type Boolean...
  3 │ }
    ∶
  1 │ fn foo() {
  2 │     let _: Int32 = false;
-   │            ^^^^^ ...because of type defined here
+   ∶            ^^^^^ ...because of type defined here
  3 │ }
    ╰──
    help: expected type Int32

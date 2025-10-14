@@ -2,6 +2,6 @@
    ╭─[trait_signature_mismatch_visibility.lm:6:5]
  5 │ use Foo in Int32 {
  6 │     fn foo() { }
-   │     ^^^^^^^^^^^^ expected method to be pub, found priv
+   ∶     ^^^^^^^^^^^^ expected method to be pub, found priv
  7 │ }
    ╰──

@@ -2,6 +2,6 @@
    ╭─[construct_struct_type_extra_field.lm:6:29]
  5 │ fn foo() {
  6 │     let a = A { foo: false, bar: 0 };
-   │                             ^^^ type A has no field bar
+   ∶                             ^^^ type A has no field bar
  7 │ }
    ╰──
