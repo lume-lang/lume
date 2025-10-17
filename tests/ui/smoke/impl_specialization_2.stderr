@@ -1,0 +1,13 @@
+× error[LM4001]: mismatched types
+    ╭─[impl_specialization_2.lm:10:20]
+ 9  │ fn main() {
+ 10 │     let root = Foo<Boolean> { };
+    ∶                    ^^^^^^^ expected type Int32, but found type Boolean...
+    ∶
+ 4  │
+ 5  │ impl Foo<Int32> {
+    ∶          ^^^^^ ...because of type defined here
+ 6  │     pub fn foo(self) { }
+    ╰──
+   help: expected type Int32
+            found type Boolean
