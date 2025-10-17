@@ -213,7 +213,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             if func_sig.vararg {
                 debug_assert!(func_sig.parameters.len() - 1 <= args.len());
             } else {
-                debug_assert!(func_sig.parameters.len() == args.len());
+                debug_assert_eq!(func_sig.parameters.len(), args.len());
             }
         }
 

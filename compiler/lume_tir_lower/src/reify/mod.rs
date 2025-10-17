@@ -95,9 +95,17 @@ impl<'tcx> ReificationPass<'tcx> {
     }
 
     fn add_metadata_arguments_on_call(&mut self, call: &mut Call) -> Result<()> {
+        let type_param_len = self.tcx.hir_avail_type_params(call.function).len();
+        let type_arg_len = call.type_arguments.len();
+
         let mut metadata_args = Vec::with_capacity(call.type_arguments.len());
 
-        for (idx, type_arg) in call.type_arguments.iter().enumerate() {
+        for (idx, type_arg) in call
+            .type_arguments
+            .iter()
+            .skip(type_arg_len.saturating_sub(type_param_len))
+            .enumerate()
+        {
             let argument = if self.tcx.is_type_parameter(type_arg)? {
                 self.add_metadata_argument_inherited(call, idx, type_arg)
             } else {
