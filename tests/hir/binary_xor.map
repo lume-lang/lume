@@ -38,14 +38,14 @@ Map {
                         lhs: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: binary_xor.lm:12:13,
                         },
                         rhs: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: binary_xor.lm:16:17,
                         },

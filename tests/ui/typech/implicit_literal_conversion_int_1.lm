@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn foo() -> UInt64 {
+    0
+}

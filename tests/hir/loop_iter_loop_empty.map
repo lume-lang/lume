@@ -116,7 +116,7 @@ Map {
                                         Literal {
                                             kind: IntLiteral {
                                                 value: 1,
-                                                kind: I32,
+                                                kind: None,
                                             },
                                             location: loop_iter_loop_empty.lm:28:29,
                                         },
@@ -167,7 +167,7 @@ Map {
                                         Literal {
                                             kind: IntLiteral {
                                                 value: 2,
-                                                kind: I32,
+                                                kind: None,
                                             },
                                             location: loop_iter_loop_empty.lm:31:32,
                                         },
@@ -218,7 +218,7 @@ Map {
                                         Literal {
                                             kind: IntLiteral {
                                                 value: 3,
-                                                kind: I32,
+                                                kind: None,
                                             },
                                             location: loop_iter_loop_empty.lm:34:35,
                                         },

@@ -39,7 +39,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: range_expr_nested_inclusive.lm:23:24,
                         },
@@ -51,7 +51,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 1,
-                                kind: I32,
+                                kind: None,
                             },
                             location: range_expr_nested_inclusive.lm:38:39,
                         },
@@ -110,7 +110,7 @@ Map {
                                                 value: Literal {
                                                     kind: IntLiteral {
                                                         value: 0,
-                                                        kind: I32,
+                                                        kind: None,
                                                     },
                                                     location: range_expr_nested_inclusive.lm:23:24,
                                                 },
@@ -129,7 +129,7 @@ Map {
                                                 value: Literal {
                                                     kind: IntLiteral {
                                                         value: 1,
-                                                        kind: I32,
+                                                        kind: None,
                                                     },
                                                     location: range_expr_nested_inclusive.lm:38:39,
                                                 },
@@ -171,7 +171,7 @@ Map {
                                                         value: Literal {
                                                             kind: IntLiteral {
                                                                 value: 0,
-                                                                kind: I32,
+                                                                kind: None,
                                                             },
                                                             location: range_expr_nested_inclusive.lm:23:24,
                                                         },
@@ -190,7 +190,7 @@ Map {
                                                         value: Literal {
                                                             kind: IntLiteral {
                                                                 value: 1,
-                                                                kind: I32,
+                                                                kind: None,
                                                             },
                                                             location: range_expr_nested_inclusive.lm:38:39,
                                                         },
@@ -204,7 +204,7 @@ Map {
                                         Literal {
                                             kind: IntLiteral {
                                                 value: 1,
-                                                kind: I32,
+                                                kind: None,
                                             },
                                             location: range_expr_nested_inclusive.lm:73:74,
                                         },

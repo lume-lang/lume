@@ -37,7 +37,7 @@ Map {
                         target: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: is_literal.lm:12:13,
                         },
@@ -46,7 +46,7 @@ Map {
                                 literal: Literal {
                                     kind: IntLiteral {
                                         value: 0,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: is_literal.lm:17:18,
                                 },

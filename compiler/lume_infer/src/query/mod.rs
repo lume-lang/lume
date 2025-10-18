@@ -135,7 +135,7 @@ impl TyInferCtx {
             }
             lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
             lume_hir::ExpressionKind::Is(_) => TypeRef::bool(),
-            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e),
+            lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e)?,
             lume_hir::ExpressionKind::Logical(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
@@ -193,28 +193,71 @@ impl TyInferCtx {
     }
 
     /// Attempts to get the type of a literal expression.
-    #[cached_query]
-    fn type_of_lit(&self, lit: &lume_hir::Literal) -> TypeRef {
+    fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
         let ty = match &lit.kind {
-            lume_hir::LiteralKind::Int(k) => match &k.kind {
-                lume_hir::IntKind::I8 => TypeRef::i8(),
-                lume_hir::IntKind::U8 => TypeRef::u8(),
-                lume_hir::IntKind::I16 => TypeRef::i16(),
-                lume_hir::IntKind::U16 => TypeRef::u16(),
-                lume_hir::IntKind::I32 => TypeRef::i32(),
-                lume_hir::IntKind::U32 => TypeRef::u32(),
-                lume_hir::IntKind::I64 => TypeRef::i64(),
-                lume_hir::IntKind::U64 => TypeRef::u64(),
-            },
-            lume_hir::LiteralKind::Float(k) => match &k.kind {
-                lume_hir::FloatKind::F32 => TypeRef::f32(),
-                lume_hir::FloatKind::F64 => TypeRef::f64(),
-            },
+            lume_hir::LiteralKind::Int(k) => {
+                let kind = if let Some(k) = k.kind { k } else { self.kind_of_int(k)? };
+
+                match kind {
+                    lume_hir::IntKind::I8 => TypeRef::i8(),
+                    lume_hir::IntKind::U8 => TypeRef::u8(),
+                    lume_hir::IntKind::I16 => TypeRef::i16(),
+                    lume_hir::IntKind::U16 => TypeRef::u16(),
+                    lume_hir::IntKind::I32 => TypeRef::i32(),
+                    lume_hir::IntKind::U32 => TypeRef::u32(),
+                    lume_hir::IntKind::I64 => TypeRef::i64(),
+                    lume_hir::IntKind::U64 => TypeRef::u64(),
+                }
+            }
+            lume_hir::LiteralKind::Float(k) => {
+                let kind = if let Some(k) = k.kind {
+                    k
+                } else {
+                    self.kind_of_float(k)?
+                };
+
+                match kind {
+                    lume_hir::FloatKind::F32 => TypeRef::f32(),
+                    lume_hir::FloatKind::F64 => TypeRef::f64(),
+                }
+            }
             lume_hir::LiteralKind::String(_) => self.std_ref_string(),
             lume_hir::LiteralKind::Boolean(_) => TypeRef::bool(),
         };
 
-        ty.with_location(lit.location)
+        Ok(ty.with_location(lit.location))
+    }
+
+    /// Attempts to get the kind of an integer literal expression.
+    pub fn kind_of_int(&self, lit: &lume_hir::IntLiteral) -> Result<lume_hir::IntKind> {
+        let Some(guessed_type) = self.expected_type_of(lit.id)? else {
+            return Ok(lume_hir::IntKind::I32);
+        };
+
+        match guessed_type {
+            t if t.is_i8() => Ok(lume_hir::IntKind::I8),
+            t if t.is_i16() => Ok(lume_hir::IntKind::I16),
+            t if t.is_i32() => Ok(lume_hir::IntKind::I32),
+            t if t.is_i64() => Ok(lume_hir::IntKind::I64),
+            t if t.is_u8() => Ok(lume_hir::IntKind::U8),
+            t if t.is_u16() => Ok(lume_hir::IntKind::U16),
+            t if t.is_u32() => Ok(lume_hir::IntKind::U32),
+            t if t.is_u64() => Ok(lume_hir::IntKind::U64),
+            _ => Ok(lume_hir::IntKind::I32),
+        }
+    }
+
+    /// Attempts to get the kind of an floating-point literal expression.
+    pub fn kind_of_float(&self, lit: &lume_hir::FloatLiteral) -> Result<lume_hir::FloatKind> {
+        let Some(guessed_type) = self.expected_type_of(lit.id)? else {
+            return Ok(lume_hir::FloatKind::F64);
+        };
+
+        match guessed_type {
+            t if t.is_f32() => Ok(lume_hir::FloatKind::F32),
+            t if t.is_f64() => Ok(lume_hir::FloatKind::F64),
+            _ => Ok(lume_hir::FloatKind::F64),
+        }
     }
 
     /// Returns the *type* of the given [`lume_hir::Parameter`], before the
@@ -381,7 +424,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn type_of_pattern(&self, pat: &lume_hir::Pattern) -> Result<TypeRef> {
         let ty = match &pat.kind {
-            lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal),
+            lume_hir::PatternKind::Literal(lit) => self.type_of_lit(&lit.literal)?,
             lume_hir::PatternKind::Variant(var) => {
                 let enum_name = var.name.clone().parent().unwrap();
                 let type_args = self.mk_type_refs_from(enum_name.type_arguments(), pat.id)?;
@@ -718,7 +761,9 @@ impl TyInferCtx {
     /// would be impossible to solve, since no explicit type is declared.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
-        let parent_id = self.hir_parent_of(id).expect("bug!: expression exists without parent");
+        let Some(parent_id) = self.hir_parent_of(id) else {
+            return Ok(None);
+        };
 
         match self.hir_expect_node(parent_id) {
             lume_hir::Node::Expression(expr) => match &expr.kind {
@@ -742,7 +787,13 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
                 lume_hir::ExpressionKind::Field(_) => todo!("expected_type_of field expression"),
-                lume_hir::ExpressionKind::Switch(_) => todo!("expected_type_of switch expression"),
+                lume_hir::ExpressionKind::Switch(switch) => {
+                    if switch.operand == id {
+                        return Ok(None);
+                    }
+
+                    return self.expected_type_of(switch.id);
+                }
                 lume_hir::ExpressionKind::Variable(_) => {
                     unreachable!("variable references cannot have sub expressions")
                 }

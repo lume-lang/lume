@@ -39,7 +39,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: conditional_inequality_empty.lm:20:21,
                         },
@@ -70,7 +70,7 @@ Map {
                                                     value: Literal {
                                                         kind: IntLiteral {
                                                             value: 0,
-                                                            kind: I32,
+                                                            kind: None,
                                                         },
                                                         location: conditional_inequality_empty.lm:20:21,
                                                     },
@@ -81,7 +81,7 @@ Map {
                                             Literal {
                                                 kind: IntLiteral {
                                                     value: 1,
-                                                    kind: I32,
+                                                    kind: None,
                                                 },
                                                 location: conditional_inequality_empty.lm:31:32,
                                             },

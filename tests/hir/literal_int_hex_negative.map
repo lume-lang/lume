@@ -36,7 +36,7 @@ Map {
                     Literal {
                         kind: IntLiteral {
                             value: -85,
-                            kind: I32,
+                            kind: None,
                         },
                         location: literal_int_hex_negative.lm:13:17,
                     },

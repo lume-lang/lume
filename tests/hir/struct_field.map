@@ -55,7 +55,7 @@ Map {
                     default_value: Literal {
                         kind: IntLiteral {
                             value: 0,
-                            kind: I32,
+                            kind: None,
                         },
                         location: struct_field.lm:28:29,
                     },

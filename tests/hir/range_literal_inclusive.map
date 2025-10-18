@@ -68,14 +68,14 @@ Map {
                                 Literal {
                                     kind: IntLiteral {
                                         value: 0,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: range_literal_inclusive.lm:21:22,
                                 },
                                 Literal {
                                     kind: IntLiteral {
                                         value: 1,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: range_literal_inclusive.lm:25:26,
                                 },

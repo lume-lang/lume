@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn foo() -> Float {
+    0.0
+}

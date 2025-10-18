@@ -15,7 +15,7 @@ impl LowerModule<'_> {
     fn lit_int(&mut self, expr: lume_ast::IntLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value;
-        let kind = expr.kind.into();
+        let kind = expr.kind.map(std::convert::Into::into);
         let location = self.location(expr.location);
 
         lume_hir::Literal {
@@ -29,7 +29,7 @@ impl LowerModule<'_> {
     fn lit_float(&mut self, expr: lume_ast::FloatLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value;
-        let kind = expr.kind.into();
+        let kind = expr.kind.map(std::convert::Into::into);
         let location = self.location(expr.location);
 
         lume_hir::Literal {

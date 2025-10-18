@@ -795,18 +795,18 @@ impl Parser {
 
                 let kind = if let Some(ty) = token.ty {
                     match ty.as_str() {
-                        "i8" => IntKind::I8,
-                        "u8" => IntKind::U8,
-                        "i16" => IntKind::I16,
-                        "u16" => IntKind::U16,
-                        "i32" => IntKind::I32,
-                        "u32" => IntKind::U32,
-                        "i64" => IntKind::I64,
-                        "u64" => IntKind::U64,
+                        "i8" => Some(IntKind::I8),
+                        "u8" => Some(IntKind::U8),
+                        "i16" => Some(IntKind::I16),
+                        "u16" => Some(IntKind::U16),
+                        "i32" => Some(IntKind::I32),
+                        "u32" => Some(IntKind::U32),
+                        "i64" => Some(IntKind::I64),
+                        "u64" => Some(IntKind::U64),
                         t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
                     }
                 } else {
-                    IntKind::I32
+                    None
                 };
 
                 Literal::Int(Box::new(IntLiteral {
@@ -823,12 +823,12 @@ impl Parser {
 
                 let kind = if let Some(ty) = token.ty {
                     match ty.as_str() {
-                        "f32" => FloatKind::F32,
-                        "f64" => FloatKind::F64,
+                        "f32" => Some(FloatKind::F32),
+                        "f64" => Some(FloatKind::F64),
                         t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
                     }
                 } else {
-                    FloatKind::F64
+                    None
                 };
 
                 Literal::Float(Box::new(FloatLiteral {

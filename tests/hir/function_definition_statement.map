@@ -39,7 +39,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: function_definition_statement.lm:28:29,
                         },

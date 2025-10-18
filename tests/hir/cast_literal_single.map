@@ -37,7 +37,7 @@ Map {
                         source: Literal {
                             kind: IntLiteral {
                                 value: 0,
-                                kind: I32,
+                                kind: None,
                             },
                             location: cast_literal_single.lm:12:13,
                         },

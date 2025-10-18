@@ -1054,7 +1054,7 @@ impl Node for Literal {
 pub struct IntLiteral {
     pub value: i64,
     pub location: Location,
-    pub kind: IntKind,
+    pub kind: Option<IntKind>,
 }
 
 node_location!(IntLiteral);
@@ -1075,7 +1075,7 @@ pub enum IntKind {
 pub struct FloatLiteral {
     pub value: f64,
     pub location: Location,
-    pub kind: FloatKind,
+    pub kind: Option<FloatKind>,
 }
 
 node_location!(FloatLiteral);

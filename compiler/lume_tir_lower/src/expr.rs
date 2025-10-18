@@ -301,20 +301,36 @@ impl LowerFunction<'_> {
     pub(super) fn literal(&self, expr: &lume_hir::Literal) -> lume_tir::Literal {
         #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let kind = match &expr.kind {
-            lume_hir::LiteralKind::Int(int) => match int.kind {
-                lume_hir::IntKind::I8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I8(int.value)),
-                lume_hir::IntKind::U8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U8(int.value)),
-                lume_hir::IntKind::I16 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I16(int.value)),
-                lume_hir::IntKind::U16 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U16(int.value)),
-                lume_hir::IntKind::I32 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I32(int.value)),
-                lume_hir::IntKind::U32 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U32(int.value)),
-                lume_hir::IntKind::I64 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I64(int.value)),
-                lume_hir::IntKind::U64 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U64(int.value)),
-            },
-            lume_hir::LiteralKind::Float(float) => match float.kind {
-                lume_hir::FloatKind::F32 => lume_tir::LiteralKind::Float(lume_tir::FloatLiteral::F32(float.value)),
-                lume_hir::FloatKind::F64 => lume_tir::LiteralKind::Float(lume_tir::FloatLiteral::F64(float.value)),
-            },
+            lume_hir::LiteralKind::Int(int) => {
+                let kind = if let Some(k) = int.kind {
+                    k
+                } else {
+                    self.lower.tcx.kind_of_int(int).unwrap()
+                };
+
+                match kind {
+                    lume_hir::IntKind::I8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I8(int.value)),
+                    lume_hir::IntKind::U8 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U8(int.value)),
+                    lume_hir::IntKind::I16 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I16(int.value)),
+                    lume_hir::IntKind::U16 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U16(int.value)),
+                    lume_hir::IntKind::I32 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I32(int.value)),
+                    lume_hir::IntKind::U32 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U32(int.value)),
+                    lume_hir::IntKind::I64 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::I64(int.value)),
+                    lume_hir::IntKind::U64 => lume_tir::LiteralKind::Int(lume_tir::IntLiteral::U64(int.value)),
+                }
+            }
+            lume_hir::LiteralKind::Float(float) => {
+                let kind = if let Some(k) = float.kind {
+                    k
+                } else {
+                    self.lower.tcx.kind_of_float(float).unwrap()
+                };
+
+                match kind {
+                    lume_hir::FloatKind::F32 => lume_tir::LiteralKind::Float(lume_tir::FloatLiteral::F32(float.value)),
+                    lume_hir::FloatKind::F64 => lume_tir::LiteralKind::Float(lume_tir::FloatLiteral::F64(float.value)),
+                }
+            }
             lume_hir::LiteralKind::Boolean(bool) => lume_tir::LiteralKind::Boolean(bool.value),
             lume_hir::LiteralKind::String(string) => lume_tir::LiteralKind::String(string.value.intern()),
         };

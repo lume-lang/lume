@@ -39,7 +39,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 1,
-                                kind: I32,
+                                kind: None,
                             },
                             location: return_call.lm:23:24,
                         },
@@ -51,7 +51,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 1,
-                                kind: I32,
+                                kind: None,
                             },
                             location: return_call.lm:38:39,
                         },
@@ -63,7 +63,7 @@ Map {
                         value: Literal {
                             kind: IntLiteral {
                                 value: 1,
-                                kind: I32,
+                                kind: None,
                             },
                             location: return_call.lm:53:54,
                         },
@@ -90,7 +90,7 @@ Map {
                                     value: Literal {
                                         kind: IntLiteral {
                                             value: 1,
-                                            kind: I32,
+                                            kind: None,
                                         },
                                         location: return_call.lm:23:24,
                                     },
@@ -110,7 +110,7 @@ Map {
                                         value: Literal {
                                             kind: IntLiteral {
                                                 value: 1,
-                                                kind: I32,
+                                                kind: None,
                                             },
                                             location: return_call.lm:53:54,
                                         },
