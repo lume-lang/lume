@@ -52,7 +52,7 @@ Map {
                                 value: Literal {
                                     kind: IntLiteral {
                                         value: 0,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: construction_trailing_comma.lm:23:24,
                                 },

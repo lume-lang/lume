@@ -40,7 +40,7 @@ Map {
                             source: Literal {
                                 kind: IntLiteral {
                                     value: 0,
-                                    kind: I32,
+                                    kind: None,
                                 },
                                 location: cast_precedence_assign.lm:20:21,
                             },

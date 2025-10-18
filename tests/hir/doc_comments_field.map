@@ -55,7 +55,7 @@ Map {
                     default_value: Literal {
                         kind: IntLiteral {
                             value: 0,
-                            kind: I32,
+                            kind: None,
                         },
                         location: doc_comments_field.lm:64:65,
                     },

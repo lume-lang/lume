@@ -51,7 +51,7 @@ Map {
                                                 value: Literal {
                                                     kind: IntLiteral {
                                                         value: 0,
-                                                        kind: I32,
+                                                        kind: None,
                                                     },
                                                     location: conditional_else_if_statements.lm:30:31,
                                                 },
@@ -77,7 +77,7 @@ Map {
                                                 value: Literal {
                                                     kind: IntLiteral {
                                                         value: 0,
-                                                        kind: I32,
+                                                        kind: None,
                                                     },
                                                     location: conditional_else_if_statements.lm:59:60,
                                                 },

@@ -48,7 +48,7 @@ Map {
                             callee: Literal {
                                 kind: IntLiteral {
                                     value: 1,
-                                    kind: I32,
+                                    kind: None,
                                 },
                                 location: call_method_param_2.lm:20:21,
                             },
@@ -56,14 +56,14 @@ Map {
                                 Literal {
                                     kind: IntLiteral {
                                         value: 0,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: call_method_param_2.lm:27:28,
                                 },
                                 Literal {
                                     kind: IntLiteral {
                                         value: 1,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: call_method_param_2.lm:30:31,
                                 },

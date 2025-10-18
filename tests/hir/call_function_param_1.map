@@ -53,7 +53,7 @@ Map {
                                 Literal {
                                     kind: IntLiteral {
                                         value: 0,
-                                        kind: I32,
+                                        kind: None,
                                     },
                                     location: call_function_param_1.lm:25:26,
                                 },

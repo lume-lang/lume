@@ -1219,7 +1219,7 @@ impl Expression {
             LiteralKind::Int(Box::new(IntLiteral {
                 id,
                 value: i64::try_from(value).map_err(error_snippet::IntoDiagnostic::into_diagnostic)?,
-                kind: IntKind::U64,
+                kind: Some(IntKind::U64),
             })),
         ))
     }
@@ -1281,7 +1281,7 @@ macro_rules! expr_lit_int {
                     LiteralKind::Int(Box::new(IntLiteral {
                         id,
                         value: value.into(),
-                        kind: IntKind::$kind,
+                        kind: Some(IntKind::$kind),
                     })),
                 )
             }
@@ -1580,7 +1580,7 @@ pub enum LiteralKind {
 pub struct IntLiteral {
     pub id: NodeId,
     pub value: i64,
-    pub kind: IntKind,
+    pub kind: Option<IntKind>,
 }
 
 #[derive(Hash, Debug, Copy, Clone, PartialEq)]
@@ -1614,7 +1614,7 @@ impl From<lume_ast::IntKind> for IntKind {
 pub struct FloatLiteral {
     pub id: NodeId,
     pub value: f64,
-    pub kind: FloatKind,
+    pub kind: Option<FloatKind>,
 }
 
 impl std::hash::Hash for FloatLiteral {
