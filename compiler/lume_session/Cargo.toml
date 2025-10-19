@@ -10,7 +10,6 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
-lume_query = { path = "../../crates/lume_query" }
 lume_span = { path = "../../crates/lume_span" }
 
 clap = { workspace = true, optional = true }
@@ -18,6 +17,7 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 glob = "^0"
 indexmap = { workspace = true }
+lume_architect = { workspace = true }
 rust-embed = { version = "=8.7.0", features = [
     "interpolate-folder-path",
     "include-exclude",

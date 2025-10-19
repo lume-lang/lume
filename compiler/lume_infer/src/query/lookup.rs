@@ -1,7 +1,7 @@
 use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
+use lume_architect::cached_query;
 use lume_hir::{Identifier, Path, WithLocation};
-use lume_query::cached_query;
 use lume_span::NodeId;
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 

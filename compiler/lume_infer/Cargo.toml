@@ -10,7 +10,6 @@ doctest = false
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
 lume_hir = { path = "../lume_hir" }
-lume_query = { path = "../../crates/lume_query" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_types = { path = "../lume_types" }

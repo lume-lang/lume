@@ -1,10 +1,9 @@
 pub mod analysis;
 
-use std::ops::Deref;
-
+use lume_architect::DatabaseContext;
 use lume_mir::ModuleMap;
+use lume_session::GlobalCtx;
 use lume_typech::TyCheckCtx;
-use lume_types::TyCtx;
 
 /// Data structure for querying information from an MIR map,
 /// which has either been fully lowered or is currently being lowered.
@@ -26,6 +25,11 @@ impl<'tcx> MirQueryCtx<'tcx> {
         self.tcx
     }
 
+    /// Gets the inner [`GlobalCtx`] reference.
+    pub fn gcx(&self) -> &GlobalCtx {
+        self.tcx().gcx()
+    }
+
     /// Gets the inner [`ModuleMap`] reference.
     pub fn mir(&self) -> &ModuleMap {
         &self.mir
@@ -42,10 +46,8 @@ impl<'tcx> MirQueryCtx<'tcx> {
     }
 }
 
-impl Deref for MirQueryCtx<'_> {
-    type Target = TyCtx;
-
-    fn deref(&self) -> &Self::Target {
-        self.tcx
+impl DatabaseContext for MirQueryCtx<'_> {
+    fn db(&self) -> &lume_architect::Database {
+        self.gcx().db()
     }
 }

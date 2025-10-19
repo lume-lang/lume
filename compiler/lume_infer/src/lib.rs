@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::ops::Deref;
 
 use error_snippet::Result;
+use lume_architect::DatabaseContext;
 use lume_errors::DiagCtx;
 use lume_hir::{Path, TypeParameter};
 use lume_span::*;
@@ -137,9 +138,9 @@ impl TyInferCtx {
             // to worry too much about the potential performance loss.
             tracing::debug_span!("unification cache invalidation").in_scope(|| {
                 let ctx: &lume_session::GlobalCtx = &*self;
-                let store = lume_query::CacheContext::store(ctx);
+                let db = DatabaseContext::db(ctx);
 
-                store.clear();
+                db.clear_all();
             });
 
             Result::Ok(())
@@ -579,5 +580,11 @@ impl Deref for TyInferCtx {
 
     fn deref(&self) -> &Self::Target {
         &self.tcx
+    }
+}
+
+impl DatabaseContext for TyInferCtx {
+    fn db(&self) -> &lume_architect::Database {
+        DatabaseContext::db(self.gcx())
     }
 }
