@@ -1,0 +1,13 @@
+× error[LM4001]: mismatched types
+   ╭─[implicit_literal_conversion_int_3.lm:2:5]
+ 1 │ fn foo() -> Int32 {
+ 2 │     0_u64
+   ∶     ^^^^^ expected type Int32, but found type UInt64...
+ 3 │ }
+   ∶
+ 1 │ fn foo() -> Int32 {
+   ∶             ^^^^^ ...because of type defined here
+ 2 │     0_u64
+   ╰──
+   help: expected type Int32
+            found type UInt64
