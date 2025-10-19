@@ -15,7 +15,7 @@ expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
                                     location: Location(
                                         0..1,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -45,7 +45,7 @@ expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
                                         location: Location(
                                             5..6,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),
@@ -70,7 +70,7 @@ expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
                                     location: Location(
                                         10..11,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -100,7 +100,7 @@ expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
                                         location: Location(
                                             15..16,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

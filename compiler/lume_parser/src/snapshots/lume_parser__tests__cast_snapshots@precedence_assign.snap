@@ -21,7 +21,7 @@ expression: "parse_expr(\"let _ = 0 as u64;\")"
                                 location: Location(
                                     8..9,
                                 ),
-                                kind: I32,
+                                kind: None,
                             },
                         ),
                     ),

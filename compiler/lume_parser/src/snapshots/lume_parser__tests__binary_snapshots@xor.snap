@@ -13,7 +13,7 @@ expression: "parse_expr(\"0 ^ 0;\")"
                             location: Location(
                                 0..1,
                             ),
-                            kind: I32,
+                            kind: None,
                         },
                     ),
                 ),
@@ -30,7 +30,7 @@ expression: "parse_expr(\"0 ^ 0;\")"
                             location: Location(
                                 4..5,
                             ),
-                            kind: I32,
+                            kind: None,
                         },
                     ),
                 ),

@@ -23,7 +23,7 @@ expression: "parse_expr(\"loop { let a = 0; }\")"
                                         location: Location(
                                             15..16,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

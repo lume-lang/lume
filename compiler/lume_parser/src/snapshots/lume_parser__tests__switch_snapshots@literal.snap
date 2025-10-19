@@ -25,7 +25,7 @@ expression: "parse_expr(\"switch a { 1 => 4, 2 => 6 }\")"
                                     location: Location(
                                         11..12,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -36,7 +36,7 @@ expression: "parse_expr(\"switch a { 1 => 4, 2 => 6 }\")"
                                     location: Location(
                                         16..17,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -52,7 +52,7 @@ expression: "parse_expr(\"switch a { 1 => 4, 2 => 6 }\")"
                                     location: Location(
                                         19..20,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -63,7 +63,7 @@ expression: "parse_expr(\"switch a { 1 => 4, 2 => 6 }\")"
                                     location: Location(
                                         24..25,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

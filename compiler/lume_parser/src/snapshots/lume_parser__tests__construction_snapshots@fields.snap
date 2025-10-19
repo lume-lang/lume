@@ -39,7 +39,7 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                                     location: Location(
                                         11..12,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -61,7 +61,7 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                                     location: Location(
                                         19..20,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

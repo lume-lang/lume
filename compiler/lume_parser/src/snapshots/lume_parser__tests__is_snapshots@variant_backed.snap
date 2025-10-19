@@ -13,7 +13,7 @@ expression: "parse_expr(\"0 is Foo::A(a, b);\")"
                             location: Location(
                                 0..1,
                             ),
-                            kind: I32,
+                            kind: None,
                         },
                     ),
                 ),

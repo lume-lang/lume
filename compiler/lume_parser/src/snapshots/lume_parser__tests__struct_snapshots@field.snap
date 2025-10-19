@@ -65,7 +65,7 @@ expression: "parse(\"\n        struct Foo {\n            x: Int32 = 0;\n        
                                         location: Location(
                                             45..46,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

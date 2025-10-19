@@ -15,7 +15,7 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                                     location: Location(
                                         0..1,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -68,7 +68,7 @@ expression: "parse_expr(\"0 as u64 == 0;\")"
                                 location: Location(
                                     12..13,
                                 ),
-                                kind: I32,
+                                kind: None,
                             },
                         ),
                     ),

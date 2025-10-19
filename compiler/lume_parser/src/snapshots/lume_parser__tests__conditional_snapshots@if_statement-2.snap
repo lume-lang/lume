@@ -38,7 +38,7 @@ expression: "parse_expr(\"if true { let a = 0; }\")"
                                                     location: Location(
                                                         18..19,
                                                     ),
-                                                    kind: I32,
+                                                    kind: None,
                                                 },
                                             ),
                                         ),

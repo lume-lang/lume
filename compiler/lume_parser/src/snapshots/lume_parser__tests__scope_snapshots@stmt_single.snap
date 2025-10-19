@@ -23,7 +23,7 @@ expression: "parse_expr(\"let _ = { 1; };\")"
                                         location: Location(
                                             10..11,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

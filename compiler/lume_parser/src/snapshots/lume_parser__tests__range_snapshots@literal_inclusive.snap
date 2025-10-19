@@ -21,7 +21,7 @@ expression: "parse_expr(\"let _ = (0..=1);\")"
                                 location: Location(
                                     9..10,
                                 ),
-                                kind: I32,
+                                kind: None,
                             },
                         ),
                     ),
@@ -32,7 +32,7 @@ expression: "parse_expr(\"let _ = (0..=1);\")"
                                 location: Location(
                                     13..14,
                                 ),
-                                kind: I32,
+                                kind: None,
                             },
                         ),
                     ),

@@ -65,7 +65,7 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
                                         location: Location(
                                             80..81,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),
