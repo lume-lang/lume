@@ -63,7 +63,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                     location: Location(
                                         26..27,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -117,7 +117,7 @@ expression: "parse_expr(\"switch a { Address::V4 => 4, Address::V6 => 6 }\")"
                                     location: Location(
                                         44..45,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

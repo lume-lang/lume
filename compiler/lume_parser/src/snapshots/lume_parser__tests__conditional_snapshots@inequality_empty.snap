@@ -47,7 +47,7 @@ expression: "parse_expr(\"if a != 1 { }\")"
                                                     location: Location(
                                                         8..9,
                                                     ),
-                                                    kind: I32,
+                                                    kind: None,
                                                 },
                                             ),
                                         ),

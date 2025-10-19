@@ -88,7 +88,7 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                                                     location: Location(
                                                         79..80,
                                                     ),
-                                                    kind: I32,
+                                                    kind: None,
                                                 },
                                             ),
                                         ),

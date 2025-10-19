@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse_expr(\"-0x55\")"
+expression: "parse_expr(\"-0x55;\")"
 ---
 [
     Expression(
@@ -11,7 +11,7 @@ expression: "parse_expr(\"-0x55\")"
                     location: Location(
                         1..5,
                     ),
-                    kind: I32,
+                    kind: None,
                 },
             ),
         ),

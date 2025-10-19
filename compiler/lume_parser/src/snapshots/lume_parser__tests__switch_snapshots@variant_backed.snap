@@ -125,7 +125,7 @@ expression: "parse_expr(\"switch a { Optional::Some(a) => a, Optional::None => 0
                                     location: Location(
                                         53..54,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

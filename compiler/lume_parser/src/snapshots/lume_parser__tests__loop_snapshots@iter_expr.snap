@@ -21,7 +21,7 @@ expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
                                     location: Location(
                                         16..17,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -32,7 +32,7 @@ expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
                                     location: Location(
                                         19..20,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),
@@ -43,7 +43,7 @@ expression: "parse_expr(\"for pattern in [1, 2, 3] { }\")"
                                     location: Location(
                                         22..23,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

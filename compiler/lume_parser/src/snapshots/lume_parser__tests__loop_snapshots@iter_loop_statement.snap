@@ -39,7 +39,7 @@ expression: "parse_expr(\"for pattern in collection { let a = 0; }\")"
                                         location: Location(
                                             36..37,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

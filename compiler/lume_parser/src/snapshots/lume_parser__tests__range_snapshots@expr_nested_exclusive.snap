@@ -136,7 +136,7 @@ expression: "parse_expr(\"let _ = ((a + b)..(a + b + 1));\")"
                                             location: Location(
                                                 27..28,
                                             ),
-                                            kind: I32,
+                                            kind: None,
                                         },
                                     ),
                                 ),

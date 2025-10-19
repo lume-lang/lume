@@ -39,7 +39,7 @@ expression: "parse_expr(\"Foo { bar: 0 };\")"
                                     location: Location(
                                         11..12,
                                     ),
-                                    kind: I32,
+                                    kind: None,
                                 },
                             ),
                         ),

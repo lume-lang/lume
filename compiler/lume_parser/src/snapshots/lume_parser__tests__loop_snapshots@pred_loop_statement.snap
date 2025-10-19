@@ -33,7 +33,7 @@ expression: "parse_expr(\"while true { let a = 0; }\")"
                                         location: Location(
                                             21..22,
                                         ),
-                                        kind: I32,
+                                        kind: None,
                                     },
                                 ),
                             ),

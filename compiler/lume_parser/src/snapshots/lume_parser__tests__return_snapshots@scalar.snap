@@ -13,7 +13,7 @@ expression: "parse_expr(\"return 1;\")"
                             location: Location(
                                 7..8,
                             ),
-                            kind: I32,
+                            kind: None,
                         },
                     ),
                 ),
