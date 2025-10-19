@@ -769,7 +769,11 @@ impl TyInferCtx {
             return Ok(None);
         };
 
-        match self.hir_expect_node(parent_id) {
+        let Some(parent) = self.hir_node(parent_id) else {
+            return Ok(None);
+        };
+
+        match parent {
             lume_hir::Node::Expression(expr) => match &expr.kind {
                 lume_hir::ExpressionKind::Assignment(_) | lume_hir::ExpressionKind::Scope(_) => {
                     self.try_expected_type_of(parent_id)
