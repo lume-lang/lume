@@ -779,14 +779,14 @@ impl TyInferCtx {
                 | lume_hir::ExpressionKind::Logical(_)
                 | lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
-                lume_hir::ExpressionKind::InstanceCall(call) => self
-                    .expected_type_of_call(id, CallExpression::Instanced(call))
-                    .map(Some),
-                lume_hir::ExpressionKind::IntrinsicCall(call) => self
-                    .expected_type_of_call(id, CallExpression::Intrinsic(call))
-                    .map(Some),
+                lume_hir::ExpressionKind::InstanceCall(call) => {
+                    self.expected_type_of_call(id, CallExpression::Instanced(call))
+                }
+                lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                    self.expected_type_of_call(id, CallExpression::Intrinsic(call))
+                }
                 lume_hir::ExpressionKind::StaticCall(call) => {
-                    self.expected_type_of_call(id, CallExpression::Static(call)).map(Some)
+                    self.expected_type_of_call(id, CallExpression::Static(call))
                 }
                 lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
@@ -885,8 +885,34 @@ impl TyInferCtx {
 
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn expected_type_of_call(&self, expr: NodeId, call: CallExpression<'_>) -> Result<TypeRef> {
+    fn expected_type_of_call(&self, expr: NodeId, call: CallExpression<'_>) -> Result<Option<TypeRef>> {
         let callable = self.probe_callable(call)?;
+        let is_instance_call = if let CallExpression::Instanced(_) = call
+            && let Callable::Method(method) = callable
+            && method.is_instanced()
+        {
+            true
+        } else {
+            false
+        };
+
+        // If we're attempting to determine the type of a literal without any explicit
+        // numeric kind, make sure it's not as a generic argument. If it is, we can
+        // end up creating an infinite loop when attempting to instantiate the
+        // signature.
+        if self.should_infer_literal_kind(expr)
+            && let Some(mut argument_idx) = call.find_arg_idx(expr)
+        {
+            if is_instance_call {
+                argument_idx += 1;
+            }
+
+            let parameter = &callable.signature().params.inner()[argument_idx];
+            if self.is_type_generic(&parameter.ty)? {
+                return Ok(None);
+            }
+        }
+
         let signature = self.instantiate_signature_from_args(callable, call)?;
 
         // If the ID refers to the callee of an instance method, return the type
@@ -896,21 +922,17 @@ impl TyInferCtx {
         {
             let callee_type = &signature.params.params.first().unwrap().ty;
 
-            return Ok(callee_type.clone());
+            return Ok(Some(callee_type.clone()));
         }
 
         let mut argument_idx = call.find_arg_idx(expr).expect("could not find expression in arg list");
-
-        if let CallExpression::Instanced(_) = call
-            && let Callable::Method(method) = callable
-            && method.is_instanced()
-        {
+        if is_instance_call {
             argument_idx += 1;
         }
 
         let parameter = &signature.params.inner()[argument_idx];
 
-        Result::Ok(parameter.ty.clone())
+        Ok(Some(parameter.ty.clone()))
     }
 
     /// Attempts to guess the expected type of the given expression, based on
@@ -991,5 +1013,28 @@ impl TyInferCtx {
         }
 
         true
+    }
+
+    /// Attempts to determine whether the kind of the given literal expression
+    /// should be inferred.
+    ///
+    /// Literal kinds are explicit suffixes appended after a numeric literal,
+    /// such as `1_u32` or `1.0_f64`.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    fn should_infer_literal_kind(&self, id: NodeId) -> bool {
+        let Some(expr) = self.hir_expr(id) else {
+            return false;
+        };
+
+        let lume_hir::ExpressionKind::Literal(lit) = &expr.kind else {
+            return false;
+        };
+
+        match &lit.kind {
+            lume_hir::LiteralKind::Int(lit) => lit.kind.is_none(),
+            lume_hir::LiteralKind::Float(lit) => lit.kind.is_none(),
+            _ => false,
+        }
     }
 }
