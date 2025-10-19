@@ -9,14 +9,13 @@ doctest = false
 
 [dependencies]
 lume_mir = { path = "../lume_mir" }
-lume_query = { path = "../../crates/lume_query" }
-lume_query_macros = { path = "../../crates/lume_query_macros" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { workspace = true }
+lume_architect = { workspace = true }
 tracing = { workspace = true }
 
 [lints]

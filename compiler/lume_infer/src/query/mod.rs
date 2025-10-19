@@ -1,6 +1,6 @@
 use error_snippet::Result;
+use lume_architect::cached_query;
 use lume_hir::{CallExpression, Identifier, Node, Path};
-use lume_query::cached_query;
 use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
 
@@ -193,6 +193,7 @@ impl TyInferCtx {
     }
 
     /// Attempts to get the type of a literal expression.
+    #[cached_query(result)]
     fn type_of_lit(&self, lit: &lume_hir::Literal) -> Result<TypeRef> {
         let ty = match &lit.kind {
             lume_hir::LiteralKind::Int(k) => {
@@ -229,6 +230,7 @@ impl TyInferCtx {
     }
 
     /// Attempts to get the kind of an integer literal expression.
+    #[cached_query(result)]
     pub fn kind_of_int(&self, lit: &lume_hir::IntLiteral) -> Result<lume_hir::IntKind> {
         let Some(guessed_type) = self.expected_type_of(lit.id)? else {
             return Ok(lume_hir::IntKind::I32);
@@ -248,6 +250,7 @@ impl TyInferCtx {
     }
 
     /// Attempts to get the kind of an floating-point literal expression.
+    #[cached_query(result)]
     pub fn kind_of_float(&self, lit: &lume_hir::FloatLiteral) -> Result<lume_hir::FloatKind> {
         let Some(guessed_type) = self.expected_type_of(lit.id)? else {
             return Ok(lume_hir::FloatKind::F64);
@@ -536,7 +539,6 @@ impl TyInferCtx {
     }
 
     /// Returns the enum definition with the given name.
-    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_def_of_name(&self, name: &Path) -> Result<&lume_hir::EnumDefinition> {
         let Some(parent_ty) = self.tdb().find_type(name) else {
@@ -555,14 +557,13 @@ impl TyInferCtx {
             .into());
         };
 
-        Result::Ok(self.hir_expect_enum(enum_ty.id))
+        Ok(self.hir_expect_enum(enum_ty.id))
     }
 
     /// Returns the enum case definitions on the enum type with the given ID.
-    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_cases_of(&self, ty: NodeId) -> Result<&[lume_hir::EnumDefinitionCase]> {
-        Result::Ok(&self.enum_def_type(ty)?.cases)
+        Ok(&self.enum_def_type(ty)?.cases)
     }
 
     /// Returns the enum case definitions, which is being referred to by the
@@ -620,6 +621,7 @@ impl TyInferCtx {
         .into())
     }
 
+    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn discriminant_of_variant_ty(&self, type_id: NodeId, name: &str) -> Result<usize> {
         for case in self.enum_cases_of(type_id)? {
@@ -735,6 +737,7 @@ impl TyInferCtx {
     /// If a type could not be determined, [`guess_type_of_ctx`] is invoked to
     /// attempt to infer the type from other expressions and statements
     /// which reference the target expression.
+    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         if let Some(expected_type) = self.try_expected_type_of(id)? {
@@ -759,6 +762,7 @@ impl TyInferCtx {
     /// ```
     /// 
     /// would be impossible to solve, since no explicit type is declared.
+    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn try_expected_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         let Some(parent_id) = self.hir_parent_of(id) else {
@@ -912,6 +916,7 @@ impl TyInferCtx {
     /// Attempts to guess the expected type of the given expression, based on
     /// other statements and expressions which refer to the target
     /// expression.
+    #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn guess_type_of_ctx(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for expr_node_ref in self.indirect_expression_refs(id)? {

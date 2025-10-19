@@ -9,8 +9,8 @@ pub use deps::*;
 use error_snippet::{IntoDiagnostic, Result};
 use glob::glob;
 use indexmap::IndexMap;
+use lume_architect::{Database, DatabaseContext};
 use lume_errors::DiagCtx;
-use lume_query::{CacheContext, CacheStore};
 use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
 
@@ -123,7 +123,7 @@ unsafe impl Sync for Session {}
 pub struct GlobalCtx {
     pub session: Session,
     pub dcx: DiagCtx,
-    store: CacheStore,
+    store: Database,
 }
 
 impl GlobalCtx {
@@ -131,7 +131,7 @@ impl GlobalCtx {
         Self {
             session,
             dcx,
-            store: CacheStore::new(),
+            store: Database::new(),
         }
     }
 
@@ -168,8 +168,8 @@ impl GlobalCtx {
     }
 }
 
-impl CacheContext for GlobalCtx {
-    fn store(&self) -> &CacheStore {
+impl DatabaseContext for GlobalCtx {
+    fn db(&self) -> &Database {
         &self.store
     }
 }

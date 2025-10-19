@@ -1,8 +1,8 @@
 use std::ops::ControlFlow;
 
 use indexmap::IndexSet;
+use lume_architect::cached_query;
 use lume_mir::*;
-use lume_query::cached_query;
 use lume_span::NodeId;
 
 use crate::MirQueryCtx;
@@ -50,7 +50,7 @@ impl MirQueryCtx<'_> {
     /// escapes the function or not, it is returned as [`Some`]. If
     /// the method cannot determine whether the register escapes, it
     /// returns [`None`].
-    #[cached_query(key = "(func.id, block_id, reg)")]
+    #[cached_query(key = (func.id, block_id, reg))]
     #[tracing::instrument(level = "TRACE", skip(self, func), fields(name = %func.name), ret)]
     pub fn does_register_escape(
         &self,

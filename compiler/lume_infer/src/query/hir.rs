@@ -1,6 +1,6 @@
 use error_snippet::Result;
+use lume_architect::cached_query;
 use lume_hir::{Node, NodeRef};
-use lume_query::cached_query;
 use lume_span::*;
 
 use super::diagnostics;
