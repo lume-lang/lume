@@ -45,9 +45,6 @@ impl Config {
 }
 
 pub(crate) enum TestResult {
-    /// The test was skipped, since it was no included in the test name filter.
-    Skipped,
-
     /// The test succeeded.
     Success,
 
@@ -59,9 +56,9 @@ pub(crate) enum TestResult {
 impl PartialEq for TestResult {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (TestResult::Skipped, TestResult::Skipped)
-            | (TestResult::Success, TestResult::Success)
-            | (TestResult::Failure { .. }, TestResult::Failure { .. }) => true,
+            (TestResult::Success, TestResult::Success) | (TestResult::Failure { .. }, TestResult::Failure { .. }) => {
+                true
+            }
             (_, _) => false,
         }
     }
@@ -132,65 +129,28 @@ pub(crate) enum ManifoldTestType {
     Binary,
 }
 
+#[derive(Clone, PartialEq, Eq)]
+pub(crate) struct ManifoldCollectedTest {
+    pub absolute_path: PathBuf,
+    pub relative_path: PathBuf,
+    pub test_type: ManifoldTestType,
+}
+
 fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
-    let glob_pattern_str = format!("{}/**/*.lm", root.display());
-    let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
-
-    let files: Vec<PathBuf> = glob_pattern
-        .collect::<std::result::Result<Vec<_>, _>>()
-        .map_cause("could not collect test files")?;
-
     panic::install_panic_hook();
 
-    let run_test_file = |test_file_path: PathBuf| {
-        let relative_path = test_file_path
-            .strip_prefix(root)
-            .expect("expected test path to contain root folder");
-
-        if !config.should_run_test(relative_path) {
-            return Ok(TestResult::Skipped);
-        }
-
-        let test_type = determine_test_type(root, &test_file_path)?;
-
-        panic::set_capture_buf(Arc::default());
-
-        if let Ok(result) = std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
-            return result;
-        }
-
-        let panic_buf = if let Some(buffer) = panic::take_capture_buf() {
-            let buffer = buffer.lock().unwrap_or_else(|e| e.into_inner());
-
-            Some(buffer.clone())
-        } else {
-            None
-        };
-
-        let mut f = Vec::new();
-
-        writeln!(&mut f, "Panic occured during test")?;
-        writeln!(
-            &mut f,
-            "Source file:    {}",
-            test_file_path.display().cyan().underline()
-        )?;
-
-        if let Some(panic_msg) = panic_buf {
-            writeln!(&mut f, "\n{panic_msg}")?;
-        }
-
-        let report = String::from_utf8_lossy(&f).to_string();
-
-        Ok(TestResult::Failure {
-            write_failure_report: Box::new(|| report),
-        })
-    };
+    let collected_tests = collect_tests(root, &config)?;
 
     let results: Vec<TestResult> = if config.sequential {
-        files.into_iter().map(run_test_file).collect::<Result<Vec<_>>>()?
+        collected_tests
+            .into_iter()
+            .map(run_test_file)
+            .collect::<Result<Vec<_>>>()?
     } else {
-        files.into_par_iter().map(run_test_file).collect::<Result<Vec<_>>>()?
+        collected_tests
+            .into_par_iter()
+            .map(run_test_file)
+            .collect::<Result<Vec<_>>>()?
     };
 
     let success_count = results.iter().fold(0_usize, |cnt, item| {
@@ -231,6 +191,74 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
     println!("tests passed: {success_count}, tests failed: {failure_count}");
 
     Ok(0)
+}
+
+fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollectedTest>> {
+    let glob_pattern_str = format!("{}/**/*.lm", root.display());
+    let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
+
+    let files: Vec<PathBuf> = glob_pattern
+        .collect::<std::result::Result<Vec<_>, _>>()
+        .map_cause("could not collect test files")?;
+
+    files
+        .into_iter()
+        .map(|file| {
+            let absolute_path = file.as_path();
+            let relative_path = absolute_path
+                .strip_prefix(root)
+                .expect("expected test path to contain root folder");
+
+            let test_type = determine_test_type(root, &file)?;
+
+            Ok(ManifoldCollectedTest {
+                absolute_path: absolute_path.to_path_buf(),
+                relative_path: relative_path.to_path_buf(),
+                test_type,
+            })
+        })
+        .filter(|test| match test {
+            Ok(test) => config.should_run_test(&test.relative_path),
+            Err(_) => false,
+        })
+        .collect::<Result<Vec<_>>>()
+}
+
+fn run_test_file(test_case: ManifoldCollectedTest) -> Result<TestResult> {
+    panic::set_capture_buf(Arc::default());
+
+    if let Ok(result) =
+        std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.absolute_path.clone()))
+    {
+        return result;
+    }
+
+    let panic_buf = if let Some(buffer) = panic::take_capture_buf() {
+        let buffer = buffer.lock().unwrap_or_else(|e| e.into_inner());
+
+        Some(buffer.clone())
+    } else {
+        None
+    };
+
+    let mut f = Vec::new();
+
+    writeln!(&mut f, "Panic occured during test")?;
+    writeln!(
+        &mut f,
+        "Source file:    {}",
+        test_case.absolute_path.display().cyan().underline()
+    )?;
+
+    if let Some(panic_msg) = panic_buf {
+        writeln!(&mut f, "\n{panic_msg}")?;
+    }
+
+    let report = String::from_utf8_lossy(&f).to_string();
+
+    Ok(TestResult::Failure {
+        write_failure_report: Box::new(|| report),
+    })
 }
 
 fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Result<TestResult> {
