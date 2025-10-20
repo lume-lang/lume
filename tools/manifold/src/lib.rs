@@ -7,22 +7,57 @@ use std::fmt::Display;
 use std::io::Write;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
 
-use error_snippet::{IntoDiagnostic, Result, SimpleDiagnostic};
+use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
+use lume_errors::MapDiagnostic;
 use owo_colors::OwoColorize;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
+#[derive(Default, Debug, Clone, clap::Parser)]
+#[clap(
+    name = "manifold",
+    version = env!("CARGO_PKG_VERSION"),
+    about = "Lume's testing framework and regression checker",
+    long_about = None
+)]
+pub struct Config {
+    #[arg(help = "If specified, only run tests containing this string in their names")]
+    pub test_names: Vec<String>,
+
+    #[arg(long = "root", help = "Directory containing the test suite")]
+    pub test_root: Option<PathBuf>,
+}
+
+impl Config {
+    /// Determines whether the test with the given path should be run.
+    pub fn should_run_test(&self, path: &Path) -> bool {
+        // If no filters were defined, all tests should be run.
+        if self.test_names.is_empty() {
+            return true;
+        }
+
+        self.test_names.iter().any(|name| path.to_string_lossy().contains(name))
+    }
+}
+
 pub(crate) enum TestResult {
+    /// The test was skipped, since it was no included in the test name filter.
+    Skipped,
+
+    /// The test succeeded.
     Success,
+
+    /// The test failed - failure reason can be rendered using
+    /// `write_failure_report`.
     Failure { write_failure_report: TestFailureCallback },
 }
 
 impl PartialEq for TestResult {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (TestResult::Success, TestResult::Success) | (TestResult::Failure { .. }, TestResult::Failure { .. }) => {
-                true
-            }
+            (TestResult::Skipped, TestResult::Skipped)
+            | (TestResult::Success, TestResult::Success)
+            | (TestResult::Failure { .. }, TestResult::Failure { .. }) => true,
             (_, _) => false,
         }
     }
@@ -33,10 +68,14 @@ impl Eq for TestResult {}
 pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
 
 /// Main entrypoint for the Manifold CLI.
-pub fn manifold_entry() -> Result<()> {
-    let test_root = find_test_root()?;
+pub fn manifold_entry(config: Config) -> Result<()> {
+    let test_root = if let Some(root) = config.test_root.clone() {
+        root
+    } else {
+        find_test_root()?
+    };
 
-    run_test_suite(&test_root)
+    run_test_suite(config, &test_root)
 }
 
 /// Attempts to find the root of the compiler project.
@@ -89,18 +128,26 @@ pub(crate) enum ManifoldTestType {
     Binary,
 }
 
-fn run_test_suite(root: &PathBuf) -> Result<()> {
+fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
     let glob_pattern_str = format!("{}/**/*.lm", root.display());
     let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
 
     let files: Vec<PathBuf> = glob_pattern
         .collect::<std::result::Result<Vec<_>, _>>()
-        .map_err(IntoDiagnostic::into_diagnostic)?;
+        .map_cause("could not collect test files")?;
 
     let results = files
         .into_par_iter()
         .filter(|test_file_path| test_file_path.is_file())
         .map(|test_file_path| {
+            let relative_path = test_file_path
+                .strip_prefix(root)
+                .expect("expected test path to contain root folder");
+
+            if !config.should_run_test(relative_path) {
+                return Ok(TestResult::Skipped);
+            }
+
             let test_type = determine_test_type(root, &test_file_path)?;
 
             let result = match std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
@@ -145,7 +192,13 @@ fn run_test_suite(root: &PathBuf) -> Result<()> {
         }
     });
 
-    let failure_count = results.len() - success_count;
+    let failure_count = results.iter().fold(0_usize, |cnt, item| {
+        if matches!(item, TestResult::Failure { .. }) {
+            cnt + 1
+        } else {
+            cnt
+        }
+    });
 
     if failure_count > 0 {
         for result in results {
@@ -201,8 +254,10 @@ fn determine_test_type(root: &PathBuf, path: &Path) -> Result<ManifoldTestType> 
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
     fn manifold_tests() {
-        super::manifold_entry().unwrap();
+        manifold_entry(Config::default()).unwrap();
     }
 }

@@ -401,11 +401,33 @@ impl error_snippet::Diagnostic for TaintedError {
 }
 
 pub trait MapDiagnostic<T> {
+    /// If the instance is a [`std::result::Result::Err`], maps it into
+    /// an instance of [`Diagnostic`] (via
+    /// [`IntoDiagnostic::into_diagnostic`]).
     fn map_diagnostic(self) -> Result<T>;
+
+    /// If the instance is a [`std::result::Result::Err`], declares it as a
+    /// cause of a new [`Diagnostic`] with the given message.
+    ///
+    /// This method is effectively an alias of:
+    /// ```rs
+    /// self.map_err(|err| SimpleDiagnostic::new(message)
+    ///     .add_cause(err.into_diagnostic())
+    /// )
+    /// ```
+    fn map_cause(self, message: impl Into<String>) -> Result<T>;
 }
 
 impl<T, E: std::error::Error + Send + Sync> MapDiagnostic<T> for std::result::Result<T, E> {
     fn map_diagnostic(self) -> Result<T> {
         self.map_err(IntoDiagnostic::into_diagnostic)
+    }
+
+    fn map_cause(self, message: impl Into<String>) -> Result<T> {
+        self.map_err(|err| {
+            let diag = SimpleDiagnostic::new(message).add_cause(err.into_diagnostic());
+
+            Box::new(diag) as Error
+        })
     }
 }

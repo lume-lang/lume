@@ -1490,6 +1490,7 @@ name = "manifold"
 version = "0.1.1"
 dependencies = [
  "build_stage",
+ "clap",
  "error_snippet",
  "glob",
  "lume_errors",
