@@ -1,11 +1,12 @@
 mod binary;
 mod diff;
 mod hir;
+mod panic;
 mod ui;
 
-use std::fmt::Display;
 use std::io::Write;
 use std::path::{MAIN_SEPARATOR_STR, Path, PathBuf};
+use std::sync::Arc;
 
 use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
@@ -139,6 +140,8 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
         .collect::<std::result::Result<Vec<_>, _>>()
         .map_cause("could not collect test files")?;
 
+    panic::install_panic_hook();
+
     let run_test_file = |test_file_path: PathBuf| {
         let relative_path = test_file_path
             .strip_prefix(root)
@@ -150,37 +153,38 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
 
         let test_type = determine_test_type(root, &test_file_path)?;
 
-        let result = match std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
-            Ok(result) => result?,
-            Err(panic_info) => {
-                let mut f = Vec::new();
+        panic::set_capture_buf(Arc::default());
 
-                let panic_msg = if let Some(msg) = panic_info.downcast_ref::<&str>() {
-                    Some(msg as &dyn Display)
-                } else {
-                    panic_info.downcast_ref::<String>().map(|msg| msg as &dyn Display)
-                };
+        if let Ok(result) = std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
+            return result;
+        }
 
-                writeln!(&mut f, "Panic occured during test")?;
-                writeln!(
-                    &mut f,
-                    "Source file:    {}",
-                    test_file_path.display().cyan().underline()
-                )?;
+        let panic_buf = if let Some(buffer) = panic::take_capture_buf() {
+            let buffer = buffer.lock().unwrap_or_else(|e| e.into_inner());
 
-                if let Some(panic_msg) = panic_msg {
-                    writeln!(&mut f, "\n{panic_msg}")?;
-                }
-
-                let report = String::from_utf8_lossy(&f).to_string();
-
-                TestResult::Failure {
-                    write_failure_report: Box::new(|| report),
-                }
-            }
+            Some(buffer.clone())
+        } else {
+            None
         };
 
-        Ok(result)
+        let mut f = Vec::new();
+
+        writeln!(&mut f, "Panic occured during test")?;
+        writeln!(
+            &mut f,
+            "Source file:    {}",
+            test_file_path.display().cyan().underline()
+        )?;
+
+        if let Some(panic_msg) = panic_buf {
+            writeln!(&mut f, "\n{panic_msg}")?;
+        }
+
+        let report = String::from_utf8_lossy(&f).to_string();
+
+        Ok(TestResult::Failure {
+            write_failure_report: Box::new(|| report),
+        })
     };
 
     let results: Vec<TestResult> = if config.sequential {
