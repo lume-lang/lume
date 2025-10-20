@@ -5,14 +5,17 @@ fn main() {
     let config = manifold::Config::parse();
     let dcx = DiagCtx::new();
 
-    if let Err(err) = manifold::manifold_entry(config) {
-        dcx.emit(err);
+    match manifold::manifold_entry(config) {
+        Ok(code) => std::process::exit(code),
+        Err(err) => {
+            dcx.emit(err);
+
+            let mut renderer = error_snippet::GraphicalRenderer::new();
+            renderer.use_colors = true;
+            renderer.highlight_source = true;
+
+            dcx.render_stderr(&mut renderer);
+            dcx.clear();
+        }
     }
-
-    let mut renderer = error_snippet::GraphicalRenderer::new();
-    renderer.use_colors = true;
-    renderer.highlight_source = true;
-
-    dcx.render_stderr(&mut renderer);
-    dcx.clear();
 }

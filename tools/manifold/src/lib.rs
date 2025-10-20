@@ -72,7 +72,7 @@ impl Eq for TestResult {}
 pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
 
 /// Main entrypoint for the Manifold CLI.
-pub fn manifold_entry(config: Config) -> Result<()> {
+pub fn manifold_entry(config: Config) -> Result<i32> {
     let test_root = if let Some(root) = config.test_root.clone() {
         root
     } else {
@@ -132,7 +132,7 @@ pub(crate) enum ManifoldTestType {
     Binary,
 }
 
-fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
+fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
     let glob_pattern_str = format!("{}/**/*.lm", root.display());
     let glob_pattern = glob(&glob_pattern_str).expect("should have valid glob pattern");
 
@@ -223,13 +223,14 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
         }
 
         eprintln!("test result: {}", "FAILURE".red());
-    } else {
-        println!("test result: {}", "SUCCESS".green());
+
+        return Ok(1);
     }
 
-    eprintln!("tests passed: {success_count}, tests failed: {failure_count}");
+    println!("test result: {}", "SUCCESS".green());
+    println!("tests passed: {success_count}, tests failed: {failure_count}");
 
-    Ok(())
+    Ok(0)
 }
 
 fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Result<TestResult> {
@@ -266,7 +267,11 @@ mod test {
     use super::*;
 
     #[test]
-    fn manifold_tests() {
-        manifold_entry(Config::default()).unwrap();
+    fn manifold_tests() -> std::result::Result<(), ()> {
+        if manifold_entry(Config::default()).unwrap() == 0 {
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
