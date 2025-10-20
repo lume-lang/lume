@@ -26,6 +26,9 @@ pub struct Config {
 
     #[arg(long = "root", help = "Directory containing the test suite")]
     pub test_root: Option<PathBuf>,
+
+    #[arg(long, help = "Run all tests sequentially instead of in parallel")]
+    pub sequential: bool,
 }
 
 impl Config {
@@ -136,53 +139,55 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<()> {
         .collect::<std::result::Result<Vec<_>, _>>()
         .map_cause("could not collect test files")?;
 
-    let results = files
-        .into_par_iter()
-        .filter(|test_file_path| test_file_path.is_file())
-        .map(|test_file_path| {
-            let relative_path = test_file_path
-                .strip_prefix(root)
-                .expect("expected test path to contain root folder");
+    let run_test_file = |test_file_path: PathBuf| {
+        let relative_path = test_file_path
+            .strip_prefix(root)
+            .expect("expected test path to contain root folder");
 
-            if !config.should_run_test(relative_path) {
-                return Ok(TestResult::Skipped);
-            }
+        if !config.should_run_test(relative_path) {
+            return Ok(TestResult::Skipped);
+        }
 
-            let test_type = determine_test_type(root, &test_file_path)?;
+        let test_type = determine_test_type(root, &test_file_path)?;
 
-            let result = match std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
-                Ok(result) => result?,
-                Err(panic_info) => {
-                    let mut f = Vec::new();
+        let result = match std::panic::catch_unwind(|| run_single_test(test_type, test_file_path.clone())) {
+            Ok(result) => result?,
+            Err(panic_info) => {
+                let mut f = Vec::new();
 
-                    let panic_msg = if let Some(msg) = panic_info.downcast_ref::<&str>() {
-                        Some(msg as &dyn Display)
-                    } else {
-                        panic_info.downcast_ref::<String>().map(|msg| msg as &dyn Display)
-                    };
+                let panic_msg = if let Some(msg) = panic_info.downcast_ref::<&str>() {
+                    Some(msg as &dyn Display)
+                } else {
+                    panic_info.downcast_ref::<String>().map(|msg| msg as &dyn Display)
+                };
 
-                    writeln!(&mut f, "Panic occured during test")?;
-                    writeln!(
-                        &mut f,
-                        "Source file:    {}",
-                        test_file_path.display().cyan().underline()
-                    )?;
+                writeln!(&mut f, "Panic occured during test")?;
+                writeln!(
+                    &mut f,
+                    "Source file:    {}",
+                    test_file_path.display().cyan().underline()
+                )?;
 
-                    if let Some(panic_msg) = panic_msg {
-                        writeln!(&mut f, "\n{panic_msg}")?;
-                    }
-
-                    let report = String::from_utf8_lossy(&f).to_string();
-
-                    TestResult::Failure {
-                        write_failure_report: Box::new(|| report),
-                    }
+                if let Some(panic_msg) = panic_msg {
+                    writeln!(&mut f, "\n{panic_msg}")?;
                 }
-            };
 
-            Ok(result)
-        })
-        .collect::<Result<Vec<_>>>()?;
+                let report = String::from_utf8_lossy(&f).to_string();
+
+                TestResult::Failure {
+                    write_failure_report: Box::new(|| report),
+                }
+            }
+        };
+
+        Ok(result)
+    };
+
+    let results: Vec<TestResult> = if config.sequential {
+        files.into_iter().map(run_test_file).collect::<Result<Vec<_>>>()?
+    } else {
+        files.into_par_iter().map(run_test_file).collect::<Result<Vec<_>>>()?
+    };
 
     let success_count = results.iter().fold(0_usize, |cnt, item| {
         if matches!(item, TestResult::Success) {
