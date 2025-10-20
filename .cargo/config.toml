@@ -1,5 +1,5 @@
 [alias]
-test-manifold = "run --package manifold"
+test-manifold = "run --package manifold --"
 
 # The garbage collector requires frame pointers to exist
 # in the compiled binary - otherwise, the stack walking won't

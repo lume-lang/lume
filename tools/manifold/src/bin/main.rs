@@ -1,9 +1,11 @@
+use clap::Parser;
 use lume_errors::DiagCtx;
 
 fn main() {
+    let config = manifold::Config::parse();
     let dcx = DiagCtx::new();
 
-    if let Err(err) = manifold::manifold_entry() {
+    if let Err(err) = manifold::manifold_entry(config) {
         dcx.emit(err);
     }
 

@@ -9,6 +9,7 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_span = { path = "../../crates/lume_span" }
 
 build_stage = { path = "../build_stage" }
+clap = { workspace = true }
 error_snippet = { workspace = true }
 glob = "^0"
 owo-colors = { workspace = true }
