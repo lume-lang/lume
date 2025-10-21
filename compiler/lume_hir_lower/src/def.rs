@@ -439,6 +439,7 @@ impl LowerModule<'_> {
 fn lower_visibility(expr: &lume_ast::Visibility) -> lume_hir::Visibility {
     match expr {
         lume_ast::Visibility::Public { .. } => lume_hir::Visibility::Public,
+        lume_ast::Visibility::Internal { .. } => lume_hir::Visibility::Internal,
         lume_ast::Visibility::Private { .. } => lume_hir::Visibility::Private,
     }
 }

@@ -29,13 +29,11 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                61..64,
-                            ),
-                        },
-                    ),
+                    visibility: Public {
+                        location: Location(
+                            61..64,
+                        ),
+                    },
                     external: false,
                     name: Identifier {
                         name: "bar",

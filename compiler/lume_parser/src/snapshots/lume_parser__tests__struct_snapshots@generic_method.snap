@@ -29,13 +29,11 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private(
-                        Private {
-                            location: Location(
-                                32..32,
-                            ),
-                        },
-                    ),
+                    visibility: Private {
+                        location: Location(
+                            32..32,
+                        ),
+                    },
                     external: false,
                     name: Identifier {
                         name: "bar",

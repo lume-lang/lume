@@ -607,6 +607,7 @@ fn test_enum_snapshots() {
 fn test_visibility_snapshots() {
     assert_snap_eq!("fn foo {}", "default");
     assert_snap_eq!("priv fn foo {}", "priv");
+    assert_snap_eq!("pub(internal) fn foo {}", "internal");
     assert_snap_eq!("pub fn foo {}", "pub");
 }
 

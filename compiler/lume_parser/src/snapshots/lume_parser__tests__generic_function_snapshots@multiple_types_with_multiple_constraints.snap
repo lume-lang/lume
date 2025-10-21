@@ -5,13 +5,11 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+            visibility: Private {
+                location: Location(
+                    0..0,
+                ),
+            },
             external: false,
             name: Identifier {
                 name: "test",

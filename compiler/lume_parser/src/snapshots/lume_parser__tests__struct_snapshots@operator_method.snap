@@ -29,13 +29,11 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                32..35,
-                            ),
-                        },
-                    ),
+                    visibility: Public {
+                        location: Location(
+                            32..35,
+                        ),
+                    },
                     external: false,
                     name: Identifier {
                         name: "==",

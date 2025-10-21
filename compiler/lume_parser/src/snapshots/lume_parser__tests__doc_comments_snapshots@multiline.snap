@@ -5,13 +5,11 @@ expression: "parse(\"/// This is a doc comment\n        ///\n        /// Another
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        90..90,
-                    ),
-                },
-            ),
+            visibility: Private {
+                location: Location(
+                    90..90,
+                ),
+            },
             external: false,
             name: Identifier {
                 name: "foo",

@@ -5,13 +5,11 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+            visibility: Private {
+                location: Location(
+                    0..0,
+                ),
+            },
             external: false,
             name: Identifier {
                 name: "main",
