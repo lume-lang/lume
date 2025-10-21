@@ -2,6 +2,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet::Result;
+use logos::Logos;
 use lume_ast::Identifier;
 use lume_span::SourceFile;
 
@@ -63,6 +64,746 @@ pub const BINARY_OPERATORS: &[TokenKind] = &[TokenKind::BinaryAnd, TokenKind::Bi
 
 /// Defines all the operators which are used in boolean contexts.
 pub const BOOLEAN_OPERATORS: &[TokenKind] = &[TokenKind::And, TokenKind::Or];
+
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub enum LexerError {
+    /// Invalid or unexpected character
+    UnexpectedCharacter(char),
+
+    /// String literal without any ending quote
+    MissingEndingQuote,
+
+    #[default]
+    Other,
+}
+
+impl LexerError {
+    /// Creates a new [`LexerError`] when the lexer found invalid tokens.
+    fn from_lexer<'src>(lex: &mut logos::Lexer<'src, TokenType<'src>>) -> <TokenType<'src> as Logos<'src>>::Error {
+        let c = lex.slice().chars().next().unwrap();
+
+        LexerError::UnexpectedCharacter(c)
+    }
+}
+
+#[derive(Logos, Debug, Clone, Copy, PartialEq, Eq)]
+#[logos(skip(r"\s+"))]
+#[logos(error(LexerError, callback = LexerError::from_lexer))]
+#[logos(subpattern int_binary = r"0[bB][0-1][_0-1]*")]
+#[logos(subpattern int_octal = r"0[oO][0-8][_0-8]*")]
+#[logos(subpattern int_dec = r"(0[dD])?[0-9][_0-9]*")]
+#[logos(subpattern int_hex = r"0[xX][0-9a-fA-F][_0-9a-fA-F]*")]
+#[logos(subpattern integer = r"(?&int_binary)|(?&int_octal)|(?&int_dec)|(?&int_hex)")]
+#[logos(subpattern float_dec = r"\.[_0-9]+")]
+#[logos(subpattern float_exp = r"[eE][-+]?[_0-9]+")]
+#[logos(subpattern float = r"[0-9][_0-9]*(((?&float_dec)(?&float_exp)?)|(?&float_exp))?")]
+pub enum TokenType<'source> {
+    #[token("as")]
+    As,
+
+    #[token("+")]
+    Add,
+
+    #[token("+=")]
+    AddAssign,
+
+    #[token("&&")]
+    And,
+
+    #[token("->")]
+    Arrow,
+
+    #[token("=>")]
+    ArrowBig,
+
+    #[token("=")]
+    Assign,
+
+    #[regex("///", lex_comment)]
+    DocComment(&'source str),
+
+    #[token("&")]
+    BinaryAnd,
+
+    #[token("|")]
+    BinaryOr,
+
+    #[token("^")]
+    BinaryXor,
+
+    #[token("break")]
+    Break,
+
+    #[token(":")]
+    Colon,
+
+    #[token(",")]
+    Comma,
+
+    #[regex("//", lex_comment)]
+    Comment(&'source str),
+
+    #[token("continue")]
+    Continue,
+
+    #[token("--")]
+    Decrement,
+
+    #[token("/")]
+    Div,
+
+    #[token("/=")]
+    DivAssign,
+
+    #[token(".")]
+    Dot,
+
+    #[token("..")]
+    DotDot,
+
+    #[token("...")]
+    DotDotDot,
+
+    #[token("else")]
+    Else,
+
+    #[token("enum")]
+    Enum,
+
+    #[token("==")]
+    Equal,
+
+    #[token("!")]
+    Exclamation,
+
+    #[token("external")]
+    External,
+
+    #[token("false")]
+    False,
+
+    #[token("fn")]
+    Fn,
+
+    #[regex("(?&float)", |_| Option::<FloatKind>::None, priority = 1)]
+    #[regex("(?&float)f32", |_| Some(FloatKind::F32), priority = 4)]
+    #[regex("(?&float)f64", |_| Some(FloatKind::F64), priority = 4)]
+    Float(Option<FloatKind>),
+
+    #[token("for")]
+    For,
+
+    #[token(">")]
+    Greater,
+
+    #[token(">=")]
+    GreaterEqual,
+
+    #[regex("[_a-zA-Z][_a-zA-Z0-9]*", |lex| lex.slice(), priority = 0)]
+    Identifier(&'source str),
+
+    #[token("if")]
+    If,
+
+    #[token("impl")]
+    Impl,
+
+    #[token("import")]
+    Import,
+
+    #[token("in")]
+    In,
+
+    #[token("is")]
+    Is,
+
+    #[token("++")]
+    Increment,
+
+    #[regex("(?&integer)", |lex| lex_integer(lex, None), priority = 2)]
+    #[regex("(?&integer)i8", |lex| lex_integer(lex, Some(IntegerKind::I8)))]
+    #[regex("(?&integer)i16", |lex| lex_integer(lex, Some(IntegerKind::I16)))]
+    #[regex("(?&integer)i32", |lex| lex_integer(lex, Some(IntegerKind::I32)))]
+    #[regex("(?&integer)i64", |lex| lex_integer(lex, Some(IntegerKind::I64)))]
+    #[regex("(?&integer)u8", |lex| lex_integer(lex, Some(IntegerKind::U8)))]
+    #[regex("(?&integer)u16", |lex| lex_integer(lex, Some(IntegerKind::U16)))]
+    #[regex("(?&integer)u32", |lex| lex_integer(lex, Some(IntegerKind::U32)))]
+    #[regex("(?&integer)u64", |lex| lex_integer(lex, Some(IntegerKind::U64)))]
+    Integer((Radix, Option<IntegerKind>)),
+
+    #[token("[")]
+    LeftBracket,
+
+    #[token("{")]
+    LeftCurly,
+
+    #[token("(")]
+    LeftParen,
+
+    #[token("<")]
+    Less,
+
+    #[token("<=")]
+    LessEqual,
+
+    #[token("let")]
+    Let,
+
+    #[token("loop")]
+    Loop,
+
+    #[token("*")]
+    Mul,
+
+    #[token("*=")]
+    MulAssign,
+
+    #[token("namespace")]
+    Namespace,
+
+    #[token("!=")]
+    NotEqual,
+
+    #[token("::")]
+    PathSeparator,
+
+    #[token("priv")]
+    Priv,
+
+    #[token("pub")]
+    Pub,
+
+    #[token("?")]
+    Question,
+
+    #[token("||")]
+    Or,
+
+    #[token("return")]
+    Return,
+
+    #[token("]")]
+    RightBracket,
+
+    #[token("}")]
+    RightCurly,
+
+    #[token(")")]
+    RightParen,
+
+    #[token(";")]
+    Semicolon,
+
+    #[token("self")]
+    SelfRef,
+
+    #[token("\"", lex_string)]
+    String(&'source str),
+
+    #[token("struct")]
+    Struct,
+
+    #[token("-")]
+    Sub,
+
+    #[token("-=")]
+    SubAssign,
+
+    #[token("switch")]
+    Switch,
+
+    #[token("trait")]
+    Trait,
+
+    #[token("true")]
+    True,
+
+    #[token("use")]
+    Use,
+
+    #[token("while")]
+    While,
+}
+
+impl TokenType<'_> {
+    #[inline]
+    pub fn is_keyword(&self) -> bool {
+        matches!(
+            self,
+            TokenType::As
+                | TokenType::Break
+                | TokenType::Continue
+                | TokenType::Else
+                | TokenType::External
+                | TokenType::False
+                | TokenType::Fn
+                | TokenType::For
+                | TokenType::If
+                | TokenType::Impl
+                | TokenType::Import
+                | TokenType::In
+                | TokenType::Is
+                | TokenType::Loop
+                | TokenType::Namespace
+                | TokenType::Priv
+                | TokenType::Pub
+                | TokenType::Return
+                | TokenType::SelfRef
+                | TokenType::Struct
+                | TokenType::Switch
+                | TokenType::Trait
+                | TokenType::True
+                | TokenType::Use
+                | TokenType::While
+        )
+    }
+
+    #[inline]
+    pub fn is_literal(&self) -> bool {
+        matches!(
+            self,
+            TokenType::Integer(_) | TokenType::Float(_) | TokenType::String(_) | TokenType::False | TokenType::True
+        )
+    }
+
+    #[inline]
+    pub fn is_unary(&self) -> bool {
+        matches!(self, TokenType::Exclamation | TokenType::Sub)
+    }
+
+    #[inline]
+    pub fn is_operator(&self) -> bool {
+        matches!(
+            self,
+            TokenType::Add
+                | TokenType::AddAssign
+                | TokenType::And
+                | TokenType::Assign
+                | TokenType::BinaryAnd
+                | TokenType::BinaryOr
+                | TokenType::BinaryXor
+                | TokenType::Decrement
+                | TokenType::Div
+                | TokenType::DivAssign
+                | TokenType::Equal
+                | TokenType::Greater
+                | TokenType::GreaterEqual
+                | TokenType::Increment
+                | TokenType::Less
+                | TokenType::LessEqual
+                | TokenType::Mul
+                | TokenType::MulAssign
+                | TokenType::NotEqual
+                | TokenType::Or
+                | TokenType::Sub
+                | TokenType::SubAssign
+        )
+    }
+
+    // /// Gets the precedence of the token kind.
+    // ///
+    // /// Returns the precedence of the token kind, or 0 if the token kind is not
+    // /// an operator.
+    // #[inline]
+    // pub fn precedence(&self) -> u8 {
+    //     OPERATOR_PRECEDENCE
+    //         .iter()
+    //         .find(|(k, _)| k == self)
+    //         .map_or(0, |(_, p)| *p)
+    // }
+
+    // /// Determines whether the token is a postfix operator.
+    // #[inline]
+    // pub fn is_postfix(&self) -> bool {
+    //     POSTFIX_OPERATORS.iter().any(|k| k == self)
+    // }
+
+    // /// Determines whether the token is a binary operator.
+    // #[inline]
+    // pub fn is_binary(&self) -> bool {
+    //     BINARY_OPERATORS.iter().any(|k| k == self)
+    // }
+
+    // /// Determines whether the token is a boolean operator.
+    // #[inline]
+    // pub fn is_boolean(&self) -> bool {
+    //     BOOLEAN_OPERATORS.iter().any(|k| k == self)
+    // }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerKind {
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Radix {
+    Binary,
+    Octal,
+    Hexadecimal,
+    Decimal,
+}
+
+fn lex_integer<'src>(
+    lex: &mut logos::Lexer<'src, TokenType<'src>>,
+    kind: Option<IntegerKind>,
+) -> std::result::Result<(Radix, Option<IntegerKind>), <TokenType<'src> as Logos<'src>>::Error> {
+    let radix = match lex.slice().get(0..2) {
+        Some("0b" | "0B") => Radix::Binary,
+        Some("0o" | "0O") => Radix::Octal,
+        Some("0x" | "0X") => Radix::Hexadecimal,
+        _ => Radix::Decimal,
+    };
+
+    Ok((radix, kind))
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatKind {
+    F32,
+    F64,
+}
+
+fn lex_comment<'src>(
+    lex: &mut logos::Lexer<'src, TokenType<'src>>,
+) -> std::result::Result<&'src str, <TokenType<'src> as Logos<'src>>::Error> {
+    let remainder = lex.remainder();
+    let line_length = remainder.find('\n').unwrap_or(remainder.len());
+
+    lex.bump(line_length);
+
+    Ok(lex.slice())
+}
+
+fn lex_string<'src>(
+    lex: &mut logos::Lexer<'src, TokenType<'src>>,
+) -> std::result::Result<&'src str, <TokenType<'src> as Logos<'src>>::Error> {
+    let mut c = lex.remainder().chars();
+
+    loop {
+        match c.next() {
+            None => return Err(LexerError::MissingEndingQuote),
+            Some('"') => {
+                lex.bump(1);
+                break;
+            }
+            Some(_) => lex.bump(1),
+        }
+    }
+
+    // Trim the quotes away from the slice
+    let len = lex.slice().len();
+    let trim = &lex.slice()[1..len - 1];
+
+    Ok(trim)
+}
+
+#[cfg(test)]
+mod lexer_tests {
+    use super::*;
+
+    #[track_caller]
+    pub fn assert_lex<'src>(
+        source: &'src str,
+        tokens: &[(
+            std::result::Result<TokenType, <TokenType<'src> as Logos<'src>>::Error>,
+            &'src str,
+            Range<usize>,
+        )],
+    ) {
+        let mut lex = TokenType::lexer(source);
+
+        for tuple in tokens {
+            assert_eq!(&(lex.next().expect("unexpected end"), lex.slice(), lex.span()), tuple);
+        }
+
+        assert_eq!(lex.next(), None);
+    }
+
+    #[test]
+    fn test_keywords() {
+        assert_lex("as", &[(Ok(TokenType::As), "as", 0..2)]);
+        assert_lex("break", &[(Ok(TokenType::Break), "break", 0..5)]);
+        assert_lex("continue", &[(Ok(TokenType::Continue), "continue", 0..8)]);
+        assert_lex("external", &[(Ok(TokenType::External), "external", 0..8)]);
+        assert_lex("for", &[(Ok(TokenType::For), "for", 0..3)]);
+        assert_lex("fn", &[(Ok(TokenType::Fn), "fn", 0..2)]);
+        assert_lex("if", &[(Ok(TokenType::If), "if", 0..2)]);
+        assert_lex("import", &[(Ok(TokenType::Import), "import", 0..6)]);
+        assert_lex("impl", &[(Ok(TokenType::Impl), "impl", 0..4)]);
+        assert_lex("in", &[(Ok(TokenType::In), "in", 0..2)]);
+        assert_lex("is", &[(Ok(TokenType::Is), "is", 0..2)]);
+        assert_lex("loop", &[(Ok(TokenType::Loop), "loop", 0..4)]);
+        assert_lex("namespace", &[(Ok(TokenType::Namespace), "namespace", 0..9)]);
+        assert_lex("self", &[(Ok(TokenType::SelfRef), "self", 0..4)]);
+        assert_lex("struct", &[(Ok(TokenType::Struct), "struct", 0..6)]);
+        assert_lex("switch", &[(Ok(TokenType::Switch), "switch", 0..6)]);
+        assert_lex("return", &[(Ok(TokenType::Return), "return", 0..6)]);
+        assert_lex("true", &[(Ok(TokenType::True), "true", 0..4)]);
+        assert_lex("false", &[(Ok(TokenType::False), "false", 0..5)]);
+        assert_lex("priv", &[(Ok(TokenType::Priv), "priv", 0..4)]);
+        assert_lex("pub", &[(Ok(TokenType::Pub), "pub", 0..3)]);
+        assert_lex("use", &[(Ok(TokenType::Use), "use", 0..3)]);
+        assert_lex("while", &[(Ok(TokenType::While), "while", 0..5)]);
+    }
+
+    #[test]
+    fn test_symbols_map() {
+        assert_lex("...", &[(Ok(TokenType::DotDotDot), "...", 0..3)]);
+
+        assert_lex("+=", &[(Ok(TokenType::AddAssign), "+=", 0..2)]);
+        assert_lex("&&", &[(Ok(TokenType::And), "&&", 0..2)]);
+        assert_lex("->", &[(Ok(TokenType::Arrow), "->", 0..2)]);
+        assert_lex("=>", &[(Ok(TokenType::ArrowBig), "=>", 0..2)]);
+        assert_lex("==", &[(Ok(TokenType::Equal), "==", 0..2)]);
+        assert_lex("--", &[(Ok(TokenType::Decrement), "--", 0..2)]);
+        assert_lex("..", &[(Ok(TokenType::DotDot), "..", 0..2)]);
+        assert_lex("/=", &[(Ok(TokenType::DivAssign), "/=", 0..2)]);
+        assert_lex(">=", &[(Ok(TokenType::GreaterEqual), ">=", 0..2)]);
+        assert_lex("++", &[(Ok(TokenType::Increment), "++", 0..2)]);
+        assert_lex("<=", &[(Ok(TokenType::LessEqual), "<=", 0..2)]);
+        assert_lex("*=", &[(Ok(TokenType::MulAssign), "*=", 0..2)]);
+        assert_lex("!=", &[(Ok(TokenType::NotEqual), "!=", 0..2)]);
+        assert_lex("||", &[(Ok(TokenType::Or), "||", 0..2)]);
+        assert_lex("::", &[(Ok(TokenType::PathSeparator), "::", 0..2)]);
+        assert_lex("-=", &[(Ok(TokenType::SubAssign), "-=", 0..2)]);
+
+        assert_lex("&", &[(Ok(TokenType::BinaryAnd), "&", 0..1)]);
+        assert_lex("|", &[(Ok(TokenType::BinaryOr), "|", 0..1)]);
+        assert_lex("^", &[(Ok(TokenType::BinaryXor), "^", 0..1)]);
+        assert_lex("=", &[(Ok(TokenType::Assign), "=", 0..1)]);
+        assert_lex(":", &[(Ok(TokenType::Colon), ":", 0..1)]);
+        assert_lex(",", &[(Ok(TokenType::Comma), ",", 0..1)]);
+        assert_lex("/", &[(Ok(TokenType::Div), "/", 0..1)]);
+        assert_lex(".", &[(Ok(TokenType::Dot), ".", 0..1)]);
+        assert_lex("!", &[(Ok(TokenType::Exclamation), "!", 0..1)]);
+        assert_lex(">", &[(Ok(TokenType::Greater), ">", 0..1)]);
+        assert_lex("[", &[(Ok(TokenType::LeftBracket), "[", 0..1)]);
+        assert_lex("{", &[(Ok(TokenType::LeftCurly), "{", 0..1)]);
+        assert_lex("(", &[(Ok(TokenType::LeftParen), "(", 0..1)]);
+        assert_lex("<", &[(Ok(TokenType::Less), "<", 0..1)]);
+        assert_lex("*", &[(Ok(TokenType::Mul), "*", 0..1)]);
+        assert_lex("]", &[(Ok(TokenType::RightBracket), "]", 0..1)]);
+        assert_lex("}", &[(Ok(TokenType::RightCurly), "}", 0..1)]);
+        assert_lex(")", &[(Ok(TokenType::RightParen), ")", 0..1)]);
+        assert_lex(";", &[(Ok(TokenType::Semicolon), ";", 0..1)]);
+        assert_lex("-", &[(Ok(TokenType::Sub), "-", 0..1)]);
+    }
+
+    #[test]
+    fn test_parenthesis() {
+        assert_lex("()", &[
+            (Ok(TokenType::LeftParen), "(", 0..1),
+            (Ok(TokenType::RightParen), ")", 1..2),
+        ]);
+    }
+
+    #[test]
+    fn test_brackets() {
+        assert_lex("[]", &[
+            (Ok(TokenType::LeftBracket), "[", 0..1),
+            (Ok(TokenType::RightBracket), "]", 1..2),
+        ]);
+    }
+
+    #[test]
+    fn test_curly_braces() {
+        assert_lex("{}", &[
+            (Ok(TokenType::LeftCurly), "{", 0..1),
+            (Ok(TokenType::RightCurly), "}", 1..2),
+        ]);
+    }
+
+    #[test]
+    fn test_comment() {
+        assert_lex("//", &[(Ok(TokenType::Comment("//")), "//", 0..2)]);
+        assert_lex("///", &[(Ok(TokenType::DocComment("///")), "///", 0..3)]);
+
+        assert_lex("// testing", &[(
+            Ok(TokenType::Comment("// testing")),
+            "// testing",
+            0..10,
+        )]);
+
+        assert_lex("/// testing", &[(
+            Ok(TokenType::DocComment("/// testing")),
+            "/// testing",
+            0..11,
+        )]);
+
+        assert_lex(
+            "// comment 1
+            // comment 2",
+            &[
+                (Ok(TokenType::Comment("// comment 1")), "// comment 1", 0..12),
+                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 25..37),
+            ],
+        );
+
+        assert_lex(
+            "// comment 1
+            //
+            // comment 2",
+            &[
+                (Ok(TokenType::Comment("// comment 1")), "// comment 1", 0..12),
+                (Ok(TokenType::Comment("//")), "//", 25..27),
+                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 40..52),
+            ],
+        );
+
+        assert_lex(
+            "/// comment 1
+            /// comment 2",
+            &[
+                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenType::DocComment("/// comment 2")), "/// comment 2", 26..39),
+            ],
+        );
+
+        assert_lex(
+            "/// comment 1
+            ///
+            /// comment 2",
+            &[
+                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenType::DocComment("///")), "///", 26..29),
+                (Ok(TokenType::DocComment("/// comment 2")), "/// comment 2", 42..55),
+            ],
+        );
+
+        assert_lex(
+            "/// comment 1
+            // comment 2",
+            &[
+                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 26..38),
+            ],
+        );
+
+        assert_lex("// comment 1  ", &[(
+            Ok(TokenType::Comment("// comment 1  ")),
+            "// comment 1  ",
+            0..14,
+        )]);
+
+        assert_lex("/// comment 1  ", &[(
+            Ok(TokenType::DocComment("/// comment 1  ")),
+            "/// comment 1  ",
+            0..15,
+        )]);
+    }
+
+    #[test]
+    fn test_identifier() {
+        assert_lex("foo", &[(Ok(TokenType::Identifier("foo")), "foo", 0..3)]);
+        assert_lex("FOO", &[(Ok(TokenType::Identifier("FOO")), "FOO", 0..3)]);
+        assert_lex("_LUME", &[(Ok(TokenType::Identifier("_LUME")), "_LUME", 0..5)]);
+        assert_lex("__LUME__", &[(Ok(TokenType::Identifier("__LUME__")), "__LUME__", 0..8)]);
+        assert_lex("_", &[(Ok(TokenType::Identifier("_")), "_", 0..1)]);
+        assert_lex("_1", &[(Ok(TokenType::Identifier("_1")), "_1", 0..2)]);
+        assert_lex("_test1", &[(Ok(TokenType::Identifier("_test1")), "_test1", 0..6)]);
+    }
+
+    #[test]
+    fn test_number() {
+        assert_lex("0 0000", &[
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "0", 0..1),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "0000", 2..6),
+        ]);
+
+        assert_lex("0b01 0B01 0d01 0D01 0x01 0X01 0o01 0O01", &[
+            (Ok(TokenType::Integer((Radix::Binary, None))), "0b01", 0..4),
+            (Ok(TokenType::Integer((Radix::Binary, None))), "0B01", 5..9),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "0d01", 10..14),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "0D01", 15..19),
+            (Ok(TokenType::Integer((Radix::Hexadecimal, None))), "0x01", 20..24),
+            (Ok(TokenType::Integer((Radix::Hexadecimal, None))), "0X01", 25..29),
+            (Ok(TokenType::Integer((Radix::Octal, None))), "0o01", 30..34),
+            (Ok(TokenType::Integer((Radix::Octal, None))), "0O01", 35..39),
+        ]);
+
+        assert_lex("10.0 10.123", &[
+            (Ok(TokenType::Float(None)), "10.0", 0..4),
+            (Ok(TokenType::Float(None)), "10.123", 5..11),
+        ]);
+
+        assert_lex("0_0 00_00 1_000_000", &[
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "0_0", 0..3),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "00_00", 4..9),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "1_000_000", 10..19),
+        ]);
+
+        assert_lex("-1", &[
+            (Ok(TokenType::Sub), "-", 0..1),
+            (Ok(TokenType::Integer((Radix::Decimal, None))), "1", 1..2),
+        ]);
+
+        assert_lex("10e5 10E5 1.0e5 1.0E5", &[
+            (Ok(TokenType::Float(None)), "10e5", 0..4),
+            (Ok(TokenType::Float(None)), "10E5", 5..9),
+            (Ok(TokenType::Float(None)), "1.0e5", 10..15),
+            (Ok(TokenType::Float(None)), "1.0E5", 16..21),
+        ]);
+
+        assert_lex("1_u32 1_f32 1.1_f64 0x0_u64 1_000_u32 0xDEAD_BEEF_u32", &[
+            (
+                Ok(TokenType::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
+                "1_u32",
+                0..5,
+            ),
+            (Ok(TokenType::Float(Some(FloatKind::F32))), "1_f32", 6..11),
+            (Ok(TokenType::Float(Some(FloatKind::F64))), "1.1_f64", 12..19),
+            (
+                Ok(TokenType::Integer((Radix::Hexadecimal, Some(IntegerKind::U64)))),
+                "0x0_u64",
+                20..27,
+            ),
+            (
+                Ok(TokenType::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
+                "1_000_u32",
+                28..37,
+            ),
+            (
+                Ok(TokenType::Integer((Radix::Hexadecimal, Some(IntegerKind::U32)))),
+                "0xDEAD_BEEF_u32",
+                38..53,
+            ),
+        ]);
+    }
+
+    #[test]
+    fn test_string() {
+        assert_lex("\"\"", &[(Ok(TokenType::String("")), "\"\"", 0..2)]);
+        assert_lex("\"    \"", &[(Ok(TokenType::String("    ")), "\"    \"", 0..6)]);
+
+        assert_lex("\"hello world\"", &[(
+            Ok(TokenType::String("hello world")),
+            "\"hello world\"",
+            0..13,
+        )]);
+
+        assert_lex("\"hello\nworld\"", &[(
+            Ok(TokenType::String("hello\nworld")),
+            "\"hello\nworld\"",
+            0..13,
+        )]);
+
+        assert_lex("\"", &[(Err(LexerError::MissingEndingQuote), "\"", 0..1)]);
+
+        assert_lex("\"hello world", &[(
+            Err(LexerError::MissingEndingQuote),
+            "\"hello world",
+            0..12,
+        )]);
+    }
+}
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
