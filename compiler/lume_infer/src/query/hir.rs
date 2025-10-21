@@ -30,6 +30,11 @@ impl Iterator for ParentHirIterator<'_> {
 }
 
 impl TyInferCtx {
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn hir_nodes(&self) -> impl Iterator<Item = &Node> {
+        self.hir.nodes.values()
+    }
+
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn hir_node(&self, id: NodeId) -> Option<&Node> {

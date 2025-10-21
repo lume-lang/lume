@@ -107,20 +107,6 @@ impl Node {
             | Self::Expression(_) => false,
         }
     }
-
-    pub fn is_visible_outside_pkg(&self) -> bool {
-        match self {
-            Self::Function(n) => n.visibility == Visibility::Public,
-            Self::TraitImpl(n) => n.visibility == Visibility::Public,
-            Self::Field(n) => n.visibility == Visibility::Public,
-            Self::Method(n) => n.visibility == Visibility::Public,
-            Self::TraitMethodDef(n) => n.visibility == Visibility::Public,
-            Self::TraitMethodImpl(n) => n.visibility == Visibility::Public,
-            Self::Type(n) => n.is_visible_outside_pkg(),
-            Self::Impl(_) => true,
-            Self::Pattern(_) | Self::Statement(_) | Self::Expression(_) => false,
-        }
-    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

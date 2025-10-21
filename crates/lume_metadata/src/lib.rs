@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use lume_hir::map::Map;
 use lume_session::Package;
+use lume_typech::TyCheckCtx;
 use serde::{Deserialize, Serialize};
 
 /// Defines the file extension to use for metadata library files.
@@ -38,8 +39,8 @@ pub struct PackageMetadata {
 
 impl PackageMetadata {
     /// Creates a new [`PackageMetadata`] from the given [`Package`].
-    pub fn create(pkg: &Package, hir: &Map) -> Self {
-        let public_hir = partition_public_nodes(hir);
+    pub fn create(pkg: &Package, tcx: &TyCheckCtx) -> Self {
+        let public_hir = partition_public_nodes(tcx);
         let header = PackageHeader::create_from(pkg);
 
         Self {
@@ -54,13 +55,13 @@ impl PackageMetadata {
 /// Any item or node which is not visible outside of the package is
 /// not included. As a result of this function, a new HIR map is created
 /// with all public items cloned into it.
-fn partition_public_nodes(hir: &Map) -> Map {
-    let mut pub_hir = Map::empty(hir.package);
-    pub_hir.nodes = hir
-        .nodes
-        .iter()
-        .filter(|(_, node)| node.is_visible_outside_pkg())
-        .map(|(id, node)| (*id, node.to_owned()))
+fn partition_public_nodes(tcx: &TyCheckCtx) -> Map {
+    let mut pub_hir = Map::empty(tcx.hir().package);
+
+    pub_hir.nodes = tcx
+        .hir_nodes()
+        .filter(|node| tcx.is_visible_outside_package(node.id()))
+        .map(|node| (node.id(), node.to_owned()))
         .collect();
 
     pub_hir

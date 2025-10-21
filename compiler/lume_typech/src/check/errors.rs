@@ -1,5 +1,4 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::Visibility;
 use lume_span::Location;
 use lume_types::NamedTypeRef;
 
@@ -87,16 +86,6 @@ pub struct TraitImplTypeParameterCountMismatch {
 
     pub expected: usize,
     pub found: usize,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "implemented method does not match definition visibility", code = "LM4168")]
-pub struct TraitMethodVisibilityMismatch {
-    #[label(source, "expected method to be {expected}, found {found}")]
-    pub source: Location,
-
-    pub expected: Visibility,
-    pub found: Visibility,
 }
 
 #[derive(Diagnostic, Debug)]
