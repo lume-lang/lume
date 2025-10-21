@@ -13,6 +13,7 @@ lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+logos = { version = "=0.15.1" }
 tracing = { workspace = true }
 
 [lints]
