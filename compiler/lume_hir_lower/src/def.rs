@@ -64,14 +64,18 @@ impl LowerModule<'_> {
             None
         };
 
-        Ok(lume_hir::Field {
+        let field = lume_hir::Field {
             id,
             name,
             visibility,
             field_type,
             default_value,
             location,
-        })
+        };
+
+        self.map.nodes.insert(id, Node::Field(field.clone()));
+
+        Ok(field)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
