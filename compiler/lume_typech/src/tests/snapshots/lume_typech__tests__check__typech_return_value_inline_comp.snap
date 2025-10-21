@@ -1,5 +1,0 @@
----
-source: compiler/lume_typech/src/tests/check.rs
-description: "fn foo() -> Int32 {\n        return 0_i32;\n    }"
----
-

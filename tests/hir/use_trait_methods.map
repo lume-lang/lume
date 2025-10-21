@@ -1,7 +1,6 @@
 Map {
     items: [
-        TraitDefinition {
-            visibility: Private,
+        TraitImplementation {
             name: Type {
                 id: NodeId {
                     package: PackageId(
@@ -57,10 +56,9 @@ Map {
             },
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public,
                     name: Identifier {
                         name: "to_string",
-                        location: use_trait_methods.lm:31:40,
+                        location: use_trait_methods.lm:27:36,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -77,26 +75,25 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "String",
-                                    location: use_trait_methods.lm:46:52,
+                                    location: use_trait_methods.lm:42:48,
                                 },
                                 type_arguments: [],
-                                location: use_trait_methods.lm:46:52,
+                                location: use_trait_methods.lm:42:48,
                             },
-                            location: use_trait_methods.lm:46:52,
+                            location: use_trait_methods.lm:42:48,
                         },
-                        location: use_trait_methods.lm:46:52,
+                        location: use_trait_methods.lm:42:48,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_methods.lm:53:55,
+                        location: use_trait_methods.lm:49:51,
                     },
-                    location: use_trait_methods.lm:24:55,
+                    location: use_trait_methods.lm:24:51,
                 },
                 TraitMethodImplementation {
-                    visibility: Public,
                     name: Identifier {
                         name: "to_int",
-                        location: use_trait_methods.lm:68:74,
+                        location: use_trait_methods.lm:60:66,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -113,24 +110,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int32",
-                                    location: use_trait_methods.lm:80:85,
+                                    location: use_trait_methods.lm:72:77,
                                 },
                                 type_arguments: [],
-                                location: use_trait_methods.lm:80:85,
+                                location: use_trait_methods.lm:72:77,
                             },
-                            location: use_trait_methods.lm:80:85,
+                            location: use_trait_methods.lm:72:77,
                         },
-                        location: use_trait_methods.lm:80:85,
+                        location: use_trait_methods.lm:72:77,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_methods.lm:86:88,
+                        location: use_trait_methods.lm:78:80,
                     },
-                    location: use_trait_methods.lm:61:88,
+                    location: use_trait_methods.lm:57:80,
                 },
             ],
             type_parameters: [],
-            location: use_trait_methods.lm:0:90,
+            location: use_trait_methods.lm:0:82,
         },
     ],
 }

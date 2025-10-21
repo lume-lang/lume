@@ -22,13 +22,6 @@ expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
                 type_parameters: [],
                 methods: [
                     TraitMethodDefinition {
-                        visibility: Private(
-                            Private {
-                                location: Location(
-                                    12..12,
-                                ),
-                            },
-                        ),
                         name: Identifier {
                             name: "add",
                             location: Location(

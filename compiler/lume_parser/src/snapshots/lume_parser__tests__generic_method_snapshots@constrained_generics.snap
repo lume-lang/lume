@@ -5,13 +5,6 @@ expression: "parse(\"impl Test { fn test<T1: Numeric, T2: Numeric>() -> void {} 
 [
     Impl(
         Implementation {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
             name: Named(
                 NamedType {
                     name: Path {

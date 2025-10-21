@@ -1,7 +1,7 @@
 trait Foo {
-    pub fn foo<T>();
+    fn foo<T>();
 }
 
 use Foo in Int32 {
-    pub fn foo() { }
+    fn foo() { }
 }

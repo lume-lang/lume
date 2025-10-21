@@ -1,9 +1,9 @@
 trait Default<T> {
-    pub fn default() -> T;
+    fn default() -> T;
 }
 
 use Default<Int64> in Int32 {
-    pub fn default() -> Int32 {
+    fn default() -> Int32 {
         return 0_i32;
     }
 }

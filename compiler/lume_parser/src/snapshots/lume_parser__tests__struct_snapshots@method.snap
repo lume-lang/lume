@@ -5,13 +5,6 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
 [
     Impl(
         Implementation {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
             name: Named(
                 NamedType {
                     name: Path {
@@ -111,7 +104,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
             ],
             type_parameters: [],
             location: Location(
-                0..101,
+                9..101,
             ),
         },
     ),

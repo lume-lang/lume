@@ -1,7 +1,6 @@
 Map {
     items: [
-        TraitDefinition {
-            visibility: Private,
+        TraitImplementation {
             name: Type {
                 id: NodeId {
                     package: PackageId(
@@ -57,7 +56,6 @@ Map {
             },
             methods: [
                 TraitMethodImplementation {
-                    visibility: Private,
                     name: Identifier {
                         name: "add",
                         location: use_trait_method_no_ret.lm:26:29,

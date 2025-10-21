@@ -16,16 +16,15 @@ Map {
             },
             methods: [
                 TraitMethodDefinition {
-                    visibility: Public,
                     name: Identifier {
                         name: "add",
-                        location: trait_method.lm:19:22,
+                        location: trait_method.lm:15:18,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: trait_method.lm:23:28,
+                                location: trait_method.lm:19:24,
                             },
                             param_type: Type {
                                 id: NodeId {
@@ -41,15 +40,15 @@ Map {
                                     name: Namespace {
                                         name: Identifier {
                                             name: "int",
-                                            location: trait_method.lm:30:33,
+                                            location: trait_method.lm:26:29,
                                         },
                                     },
-                                    location: trait_method.lm:30:33,
+                                    location: trait_method.lm:26:29,
                                 },
-                                location: trait_method.lm:30:33,
+                                location: trait_method.lm:26:29,
                             },
                             vararg: false,
-                            location: trait_method.lm:23:33,
+                            location: trait_method.lm:19:29,
                         },
                     ],
                     type_parameters: [],
@@ -59,19 +58,19 @@ Map {
                             name: Namespace {
                                 name: Identifier {
                                     name: "int",
-                                    location: trait_method.lm:38:41,
+                                    location: trait_method.lm:34:37,
                                 },
                             },
-                            location: trait_method.lm:38:41,
+                            location: trait_method.lm:34:37,
                         },
-                        location: trait_method.lm:38:41,
+                        location: trait_method.lm:34:37,
                     },
                     block: None,
-                    location: trait_method.lm:16:42,
+                    location: trait_method.lm:12:38,
                 },
             ],
             type_parameters: [],
-            location: trait_method.lm:0:44,
+            location: trait_method.lm:0:40,
         },
     ],
 }
