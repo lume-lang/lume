@@ -959,7 +959,6 @@ impl WithTypeParameters for TraitDefinition {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
     pub id: NodeId,
-    pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
@@ -992,7 +991,6 @@ pub struct TraitImplementation {
     pub id: NodeId,
     pub name: Box<Type>,
     pub target: Box<Type>,
-    pub visibility: Visibility,
     pub methods: Vec<TraitMethodImplementation>,
     pub type_parameters: TypeParameters,
     pub location: Location,
@@ -1017,7 +1015,6 @@ impl WithTypeParameters for TraitImplementation {
 #[derive(Serialize, Deserialize, Location, Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
     pub id: NodeId,
-    pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: TypeParameters,
