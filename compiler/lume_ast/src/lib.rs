@@ -518,7 +518,7 @@ pub enum TopLevelExpression {
     FunctionDefinition(Box<FunctionDefinition>),
     TypeDefinition(Box<TypeDefinition>),
     Impl(Box<Implementation>),
-    Use(Box<ImplTrait>),
+    TraitImpl(Box<TraitImplementation>),
 }
 
 impl Node for TopLevelExpression {
@@ -530,7 +530,7 @@ impl Node for TopLevelExpression {
             Self::FunctionDefinition(e) => &e.location,
             Self::TypeDefinition(e) => e.location(),
             Self::Impl(e) => &e.location,
-            Self::Use(e) => &e.location,
+            Self::TraitImpl(e) => &e.location,
         }
     }
 }
@@ -686,7 +686,6 @@ node_location!(TraitDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodDefinition {
-    pub visibility: Visibility,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
@@ -734,7 +733,6 @@ impl std::fmt::Display for EnumDefinitionCase {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Implementation {
-    pub visibility: Visibility,
     pub name: Box<Type>,
     pub methods: Vec<MethodDefinition>,
     pub type_parameters: Vec<TypeParameter>,
@@ -744,8 +742,7 @@ pub struct Implementation {
 node_location!(Implementation);
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ImplTrait {
-    pub visibility: Visibility,
+pub struct TraitImplementation {
     pub name: Box<Type>,
     pub target: Box<Type>,
     pub methods: Vec<TraitMethodImplementation>,
@@ -753,11 +750,10 @@ pub struct ImplTrait {
     pub location: Location,
 }
 
-node_location!(ImplTrait);
+node_location!(TraitImplementation);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitMethodImplementation {
-    pub visibility: Visibility,
     pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
