@@ -1,0 +1,34 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"import std (Int)\")"
+---
+[
+    Import(
+        Import {
+            path: ImportPath {
+                path: [
+                    Identifier {
+                        name: "std",
+                        location: Location(
+                            7..10,
+                        ),
+                    },
+                ],
+                location: Location(
+                    7..10,
+                ),
+            },
+            names: [
+                Identifier {
+                    name: "Int",
+                    location: Location(
+                        12..15,
+                    ),
+                },
+            ],
+            location: Location(
+                0..16,
+            ),
+        },
+    ),
+]

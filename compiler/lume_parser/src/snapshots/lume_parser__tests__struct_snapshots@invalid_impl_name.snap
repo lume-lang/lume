@@ -17,5 +17,5 @@ UnexpectedType {
         ),
     },
     range: 5..6,
-    actual: integer,
+    actual: Integer,
 }

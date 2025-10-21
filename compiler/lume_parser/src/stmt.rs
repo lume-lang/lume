@@ -1,16 +1,16 @@
 use error_snippet::Result;
 use lume_ast::*;
-use lume_lexer::TokenKind;
+use lume_lexer::{TokenKind, TokenType};
 
 use crate::Parser;
 
-impl Parser {
+impl Parser<'_> {
     /// Parses zero-or-more abstract statements at the current cursor position.
     ///
     /// # Errors
     ///
     /// Returns `Err` if the parser hits an unexpected token.
-    #[allow(dead_code)]
+    #[allow(dead_code, reason = "used in tests and fuzzing")]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn parse_statements(&mut self) -> Result<Vec<Statement>> {
         let mut statements = Vec::new();
@@ -48,8 +48,12 @@ impl Parser {
     ///        ^ error occurs here...
     ///            ^ ...so we move the cursor to here
     /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns whether the parser sufficiently recovered from the error.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub(super) fn recover_statement(&mut self) {
+    pub(super) fn recover_statement(&mut self) -> bool {
         let mut brace_depth = 0;
         let mut bracket_depth = 0;
 
@@ -75,8 +79,11 @@ impl Parser {
                     self.skip();
 
                     if brace_depth == 0 && bracket_depth == 0 {
-                        break;
+                        return true;
                     }
+                }
+                TokenKind::Eof => {
+                    return false;
                 }
                 _ => self.skip(),
             }
@@ -92,7 +99,7 @@ impl Parser {
         let name = self.parse_identifier()?;
         let variable_type = self.parse_opt_type()?;
 
-        self.consume(TokenKind::Assign)?;
+        self.consume(TokenType::Assign)?;
 
         let value = self.parse_expression()?;
         let end = self.expect_semi()?.end();
@@ -110,7 +117,7 @@ impl Parser {
     /// Parses an infinite loop statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_infinite_loop(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::Loop)?.start();
+        let start = self.consume(TokenType::Loop)?.start();
         let block = self.parse_block()?;
 
         let location = start..block.location.end();
@@ -124,11 +131,11 @@ impl Parser {
     /// Parses an iterator loop statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_iterator_loop(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::For)?.start();
+        let start = self.consume(TokenType::For)?.start();
 
         let pattern = self.parse_identifier()?;
 
-        self.consume(TokenKind::In)?;
+        self.consume(TokenType::In)?;
 
         let collection = self.parse_expression()?;
         let block = self.parse_block()?;
@@ -146,7 +153,7 @@ impl Parser {
     /// Parses a predicate loop statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_predicate_loop(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::While)?.start();
+        let start = self.consume(TokenType::While)?.start();
 
         let condition = self.parse_expression()?;
         let block = self.parse_block()?;
@@ -165,12 +172,12 @@ impl Parser {
     fn parse_expression_stmt(&mut self) -> Result<Statement> {
         let expression = self.parse_expression()?;
 
-        if self.peek(TokenKind::RightCurly) {
+        if self.peek(TokenType::RightCurly) {
             return Ok(Statement::Final(Box::new(Final { value: expression })));
         }
 
         if !matches!(expression, Expression::Switch(_) | Expression::If(_)) {
-            self.consume(TokenKind::Semicolon)?;
+            self.consume(TokenType::Semicolon)?;
         }
 
         Ok(Statement::Expression(Box::new(expression)))
@@ -179,7 +186,7 @@ impl Parser {
     /// Parses a `break` statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_break(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::Break)?.start();
+        let start = self.consume(TokenType::Break)?.start();
         let end = self.expect_semi()?.end();
 
         Ok(Statement::Break(Box::new(Break {
@@ -190,7 +197,7 @@ impl Parser {
     /// Parses a `continue` statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_continue(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::Continue)?.start();
+        let start = self.consume(TokenType::Continue)?.start();
         let end = self.expect_semi()?.end();
 
         Ok(Statement::Continue(Box::new(Continue {
@@ -201,7 +208,7 @@ impl Parser {
     /// Parses a return statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_return(&mut self) -> Result<Statement> {
-        let start = self.consume(TokenKind::Return)?.start();
+        let start = self.consume(TokenType::Return)?.start();
 
         let value = self.parse_opt_expression()?;
         let end = self.expect_semi()?.end();

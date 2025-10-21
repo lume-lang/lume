@@ -7,6 +7,7 @@ use lume_errors::DiagCtxHandle;
 use lume_hir::map::Map;
 use lume_hir::symbols::*;
 use lume_hir::{Identifier, Path, PathSegment};
+use lume_lexer::Lexer;
 use lume_parser::Parser;
 use lume_session::Package;
 use lume_span::{Internable, Location, NodeId, SourceFile, SourceMap};
@@ -131,9 +132,13 @@ impl<'a> LowerState<'a> {
             self.source_map.insert(source_file.clone());
 
             // Parse the contents of the source file.
-            let expressions = self
-                .dcx
-                .with(|handle| Parser::parse_src(self.source_map, source_file.id, handle))?;
+            let expressions = self.dcx.with(|handle| {
+                let mut lexer = Lexer::new(source_file.clone());
+                let tokens = lexer.lex()?;
+
+                let mut parser = Parser::new(source_file.clone(), tokens, handle)?;
+                parser.parse()
+            })?;
 
             // Lowers the parsed module expressions down to HIR.
             self.dcx.with(|handle| {

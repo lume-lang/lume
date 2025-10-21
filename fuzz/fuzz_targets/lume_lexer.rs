@@ -11,14 +11,6 @@ fuzz_target!(|data: &[u8]| {
         let source = lume_span::SourceFile::internal(s);
         let mut lexer = Lexer::new(Arc::new(source));
 
-        loop {
-            let Ok(token) = lexer.next_token() else {
-                break;
-            };
-
-            if let TokenKind::Eof = token.kind {
-                break;
-            }
-        }
+        let _ = lexer.lex();
     }
 });

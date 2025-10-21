@@ -1,11 +1,11 @@
 use error_snippet::Result;
 use lume_ast::*;
-use lume_lexer::TokenKind;
+use lume_lexer::{TokenKind, TokenType};
 
+use crate::Parser;
 use crate::errors::*;
-use crate::{Parser, err};
 
-impl Parser {
+impl Parser<'_> {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     pub(super) fn parse_top_level_expression(&mut self) -> Result<TopLevelExpression> {
         match self.token().kind {
@@ -18,7 +18,12 @@ impl Parser {
             TokenKind::Trait => self.parse_trait(),
             TokenKind::Enum => self.parse_enum(),
             TokenKind::Use => self.parse_use(),
-            k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
+            k => Err(InvalidTopLevelStatement {
+                source: self.source.clone(),
+                range: self.token().index,
+                actual: k.as_type(),
+            }
+            .into()),
         }
     }
 
@@ -33,22 +38,30 @@ impl Parser {
             TokenKind::Trait => self.parse_trait_visibility(visibility),
             TokenKind::Enum => self.parse_enum_visibility(visibility),
             TokenKind::Use => self.parse_use_visibility(visibility),
-            k => Err(err!(self, InvalidTopLevelStatement, actual, k)),
+            k => Err(InvalidTopLevelStatement {
+                source: self.source.clone(),
+                range: self.token().index,
+                actual: k.as_type(),
+            }
+            .into()),
         }
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_import(&mut self) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Import)?.start();
+        let start = self.consume(TokenType::Import)?.start();
         let path = self.parse_import_path()?;
-
-        if self.eof() {
-            return Err(err!(self, InvalidImportPath, found, TokenKind::Eof));
-        }
 
         let names = match self.token().kind {
             TokenKind::LeftParen => self.consume_paren_seq(Parser::parse_identifier)?,
-            kind => return Err(err!(self, InvalidImportPath, found, kind)),
+            kind => {
+                return Err(InvalidImportPath {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                    found: kind.as_type(),
+                }
+                .into());
+            }
         };
 
         let end = self.token_at(self.index - 1).end();
@@ -65,7 +78,7 @@ impl Parser {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_namespace(&mut self) -> Result<TopLevelExpression> {
         let (path, location) = self.consume_with_loc(|p| {
-            p.consume(TokenKind::Namespace)?;
+            p.consume(TokenType::Namespace)?;
 
             p.parse_import_path()
         })?;
@@ -115,7 +128,14 @@ impl Parser {
         self.expect_fn()?;
 
         let external = self.check_external();
-        let name = self.parse_callable_name_or_err(err!(self, ExpectedFunctionName))?;
+        let name = self.parse_callable_name_or_err(
+            ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into(),
+        )?;
+
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
@@ -141,7 +161,7 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_params(&mut self) -> Result<Vec<Parameter>> {
         // If no opening parenthesis, no parameters are defined.
-        if !self.peek(TokenKind::LeftParen) {
+        if !self.peek(TokenType::LeftParen) {
             return Ok(Vec::new());
         }
 
@@ -150,7 +170,7 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_param(&mut self) -> Result<Parameter> {
-        if let Some(token) = self.consume_if(TokenKind::SelfRef) {
+        if let Some(token) = self.consume_if(TokenType::SelfRef) {
             let location = token.index;
 
             return Ok(Parameter {
@@ -166,10 +186,10 @@ impl Parser {
             });
         }
 
-        let vararg = self.check(TokenKind::DotDotDot);
+        let vararg = self.check(TokenType::DotDotDot);
         let name = self.parse_identifier()?;
 
-        self.consume(TokenKind::Colon)?;
+        self.consume(TokenType::Colon)?;
 
         let param_type = self.parse_type()?;
 
@@ -187,7 +207,7 @@ impl Parser {
     /// Parses the return type of the current function definition.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_fn_return_type(&mut self) -> Result<Option<Box<Type>>> {
-        if self.consume_if(TokenKind::Arrow).is_none() {
+        if self.consume_if(TokenType::Arrow).is_none() {
             return Ok(None);
         }
 
@@ -203,11 +223,18 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_struct_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Struct)?.start();
+        let start = self.consume(TokenType::Struct)?.start();
 
-        let builtin = self.consume_if(TokenKind::Builtin).is_some();
+        let builtin = self.check(TokenType::Builtin);
 
-        let name = self.parse_ident_or_err(err!(self, ExpectedStructName))?;
+        let name = self.parse_ident_or_err(
+            ExpectedStructName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into(),
+        )?;
+
         let type_parameters = self.parse_type_parameters()?;
         let fields = self.consume_curly_seq(Parser::parse_struct_field)?;
 
@@ -232,10 +259,10 @@ impl Parser {
     fn parse_visibility(&mut self) -> Result<Visibility> {
         match self.token().kind {
             TokenKind::Pub => Ok(Visibility::Public(Box::new(Public {
-                location: self.consume(TokenKind::Pub)?.index.into(),
+                location: self.consume(TokenType::Pub)?.index.into(),
             }))),
             TokenKind::Priv => Ok(Visibility::Private(Box::new(Private {
-                location: self.consume(TokenKind::Priv)?.index.into(),
+                location: self.consume(TokenType::Priv)?.index.into(),
             }))),
             _ => Ok(Visibility::Private(Box::new(Private {
                 location: (self.position..self.position).into(),
@@ -245,18 +272,26 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_struct_field(&mut self) -> Result<Field> {
-        self.read_doc_comment();
+        self.read_doc_comment()?;
 
         let visibility = self.parse_visibility()?;
 
         let Ok(name) = self.parse_identifier() else {
-            return Err(err!(self, ExpectedStructField));
+            return Err(ExpectedStructField {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
         };
 
         // Report a special error if we found an identifier, such as
         // a method declaration, which isn't allowed within a `struct` block.
-        if self.consume_if(TokenKind::Colon).is_none() && self.peek(TokenKind::Identifier) {
-            return Err(err!(self, MethodInStruct));
+        if self.consume_if(TokenType::Colon).is_none() && self.peek(TokenType::Identifier) {
+            return Err(MethodInStruct {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
         }
 
         let field_type = self.parse_type()?;
@@ -277,15 +312,19 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_method(&mut self) -> Result<MethodDefinition> {
-        self.read_doc_comment();
+        self.read_doc_comment()?;
 
         let visibility = self.parse_visibility()?;
         let start = visibility.location().start();
 
         // Report a special error if we found an identifier, such as
         // a field declaration, which isn't allowed within an `impl` block.
-        if self.consume_if(TokenKind::Fn).is_none() && self.peek(TokenKind::Identifier) {
-            return Err(err!(self, FieldInImpl));
+        if !self.check(TokenType::Fn) && self.peek(TokenType::Identifier) {
+            return Err(FieldInImpl {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
         }
 
         let external = self.check_external();
@@ -315,12 +354,30 @@ impl Parser {
     fn parse_method_name(&mut self) -> Result<Identifier> {
         match self.token() {
             // Allow actual identifiers.
-            t if t.kind == TokenKind::Identifier => self.parse_callable_name_or_err(err!(self, ExpectedFunctionName)),
+            t if t.kind.as_type() == TokenType::Identifier => self.parse_callable_name_or_err(
+                ExpectedFunctionName {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                }
+                .into(),
+            ),
 
             // As well as operator tokens, so we can do operator overloading.
-            t if t.kind.is_operator() => Ok(self.consume_any().into()),
+            t if t.kind.is_operator() => {
+                let index = self.consume_any().index;
+                let slice = &self.source.content[index.clone()];
 
-            _ => Err(err!(self, ExpectedFunctionName)),
+                Ok(Identifier {
+                    name: slice.to_string(),
+                    location: index.into(),
+                })
+            }
+
+            t => Err(ExpectedFunctionName {
+                source: self.source.clone(),
+                range: t.index,
+            }
+            .into()),
         }
     }
 
@@ -333,9 +390,16 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_trait_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Trait)?.start();
+        let start = self.consume(TokenType::Trait)?.start();
 
-        let name = self.parse_ident_or_err(err!(self, ExpectedTraitName))?;
+        let name = self.parse_ident_or_err(
+            ExpectedTraitName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into(),
+        )?;
+
         let type_parameters = self.parse_type_parameters()?;
         let methods = self.consume_curly_seq(Parser::parse_trait_method)?;
 
@@ -357,19 +421,23 @@ impl Parser {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_trait_method(&mut self) -> Result<TraitMethodDefinition> {
-        self.read_doc_comment();
+        self.read_doc_comment()?;
 
         let visibility = self.parse_visibility()?;
         let start = self.expect_fn()?.start();
 
         let Ok(name) = self.parse_callable_name() else {
-            return Err(err!(self, ExpectedFunctionName));
+            return Err(ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
         };
 
         let type_parameters = self.parse_type_parameters()?;
         let parameters = self.parse_fn_params()?;
         let return_type = self.parse_fn_return_type()?;
-        let block = if self.check(TokenKind::Semicolon) {
+        let block = if self.check(TokenType::Semicolon) {
             None
         } else {
             Some(self.parse_block()?)
@@ -406,11 +474,11 @@ impl Parser {
     /// ```
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_enum_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Enum)?.start();
+        let start = self.consume(TokenType::Enum)?.start();
 
         let name = self.parse_identifier()?;
         let type_parameters = self.parse_type_parameters()?;
-        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_enum_case)?;
+        let cases = self.consume_comma_seq(TokenType::LeftCurly, TokenType::RightCurly, Parser::parse_enum_case)?;
 
         let end = self.previous_token().end();
 
@@ -429,12 +497,12 @@ impl Parser {
     /// Parses a single enum type case, such as `V4` or `V4(String)`.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_enum_case(&mut self) -> Result<EnumDefinitionCase> {
-        self.read_doc_comment();
+        self.read_doc_comment()?;
 
         let name = self.parse_identifier()?;
 
-        let parameters = if self.peek(TokenKind::LeftParen) {
-            self.consume_comma_seq(TokenKind::LeftParen, TokenKind::RightParen, |p| {
+        let parameters = if self.peek(TokenType::LeftParen) {
+            self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, |p| {
                 Ok(Box::new(p.parse_type()?))
             })?
         } else {
@@ -461,12 +529,12 @@ impl Parser {
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_use_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenKind::Use)?.start();
+        let start = self.consume(TokenType::Use)?.start();
         let type_parameters = self.parse_type_parameters()?;
 
         let name = self.parse_type()?;
 
-        self.consume(TokenKind::In)?;
+        self.consume(TokenType::In)?;
         let target = self.parse_type()?;
 
         let methods = self.consume_curly_seq(Parser::parse_use_impl)?;
@@ -493,7 +561,11 @@ impl Parser {
         let external = self.check_external();
 
         let Ok(name) = self.parse_callable_name() else {
-            return Err(err!(self, ExpectedFunctionName));
+            return Err(ExpectedFunctionName {
+                source: self.source.clone(),
+                range: self.token().index,
+            }
+            .into());
         };
 
         let type_parameters = self.parse_type_parameters()?;

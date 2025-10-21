@@ -1,20 +1,15 @@
-use std::ops::Range;
+use std::fmt::Display;
+use std::marker::PhantomData;
+use std::ops::{Deref, Range};
 use std::sync::Arc;
 
 use error_snippet::Result;
 use logos::Logos;
-use lume_ast::Identifier;
 use lume_span::SourceFile;
 
 use crate::errors::*;
 
 mod errors;
-
-pub const IDENTIFIER_SEPARATOR: TokenKind = TokenKind::PathSeparator;
-
-const SYMBOLS: &[char] = &[
-    '+', '-', '*', '/', '=', '!', '?', '<', '>', '&', '|', '^', '{', '}', '(', ')', '[', ']', ',', '.', ':', ';',
-];
 
 pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Assign, 1),
@@ -43,7 +38,7 @@ pub const OPERATOR_PRECEDENCE: &[(TokenKind, u8)] = &[
     (TokenKind::Decrement, 9),
     (TokenKind::Dot, 10),
     (TokenKind::DotDot, 10),
-    (IDENTIFIER_SEPARATOR, 11),
+    (TokenKind::PathSeparator, 11),
 ];
 
 /// Defines the precedence for unary operators, such as `-` or `!`.
@@ -79,7 +74,7 @@ pub enum LexerError {
 
 impl LexerError {
     /// Creates a new [`LexerError`] when the lexer found invalid tokens.
-    fn from_lexer<'src>(lex: &mut logos::Lexer<'src, TokenType<'src>>) -> <TokenType<'src> as Logos<'src>>::Error {
+    fn from_lexer<'src>(lex: &mut logos::Lexer<'src, TokenKind<'src>>) -> <TokenKind<'src> as Logos<'src>>::Error {
         let c = lex.slice().chars().next().unwrap();
 
         LexerError::UnexpectedCharacter(c)
@@ -97,7 +92,7 @@ impl LexerError {
 #[logos(subpattern float_dec = r"\.[_0-9]+")]
 #[logos(subpattern float_exp = r"[eE][-+]?[_0-9]+")]
 #[logos(subpattern float = r"[0-9][_0-9]*(((?&float_dec)(?&float_exp)?)|(?&float_exp))?")]
-pub enum TokenType<'source> {
+pub enum TokenKind<'source> {
     #[token("as")]
     As,
 
@@ -134,6 +129,9 @@ pub enum TokenType<'source> {
     #[token("break")]
     Break,
 
+    #[token("builtin")]
+    Builtin,
+
     #[token(":")]
     Colon,
 
@@ -169,6 +167,8 @@ pub enum TokenType<'source> {
 
     #[token("enum")]
     Enum,
+
+    Eof,
 
     #[token("==")]
     Equal,
@@ -325,36 +325,116 @@ pub enum TokenType<'source> {
     While,
 }
 
-impl TokenType<'_> {
+impl TokenKind<'_> {
+    pub fn as_type(&self) -> TokenType {
+        match self {
+            TokenKind::As => TokenType::As,
+            TokenKind::Add => TokenType::Add,
+            TokenKind::AddAssign => TokenType::AddAssign,
+            TokenKind::And => TokenType::And,
+            TokenKind::Arrow => TokenType::Arrow,
+            TokenKind::ArrowBig => TokenType::ArrowBig,
+            TokenKind::Assign => TokenType::Assign,
+            TokenKind::DocComment(_) => TokenType::DocComment,
+            TokenKind::BinaryAnd => TokenType::BinaryAnd,
+            TokenKind::BinaryOr => TokenType::BinaryOr,
+            TokenKind::BinaryXor => TokenType::BinaryXor,
+            TokenKind::Break => TokenType::Break,
+            TokenKind::Builtin => TokenType::Builtin,
+            TokenKind::Colon => TokenType::Colon,
+            TokenKind::Comma => TokenType::Comma,
+            TokenKind::Comment(_) => TokenType::Comment,
+            TokenKind::Continue => TokenType::Continue,
+            TokenKind::Decrement => TokenType::Decrement,
+            TokenKind::Div => TokenType::Div,
+            TokenKind::DivAssign => TokenType::DivAssign,
+            TokenKind::Dot => TokenType::Dot,
+            TokenKind::DotDot => TokenType::DotDot,
+            TokenKind::DotDotDot => TokenType::DotDotDot,
+            TokenKind::Else => TokenType::Else,
+            TokenKind::Enum => TokenType::Enum,
+            TokenKind::Eof => TokenType::Eof,
+            TokenKind::Equal => TokenType::Equal,
+            TokenKind::Exclamation => TokenType::Exclamation,
+            TokenKind::External => TokenType::External,
+            TokenKind::False => TokenType::False,
+            TokenKind::Fn => TokenType::Fn,
+            TokenKind::Float(_) => TokenType::Float,
+            TokenKind::For => TokenType::For,
+            TokenKind::Greater => TokenType::Greater,
+            TokenKind::GreaterEqual => TokenType::GreaterEqual,
+            TokenKind::Identifier(_) => TokenType::Identifier,
+            TokenKind::If => TokenType::If,
+            TokenKind::Impl => TokenType::Impl,
+            TokenKind::Import => TokenType::Import,
+            TokenKind::In => TokenType::In,
+            TokenKind::Is => TokenType::Is,
+            TokenKind::Increment => TokenType::Increment,
+            TokenKind::Integer(_) => TokenType::Integer,
+            TokenKind::LeftBracket => TokenType::LeftBracket,
+            TokenKind::LeftCurly => TokenType::LeftCurly,
+            TokenKind::LeftParen => TokenType::LeftParen,
+            TokenKind::Less => TokenType::Less,
+            TokenKind::LessEqual => TokenType::LessEqual,
+            TokenKind::Let => TokenType::Let,
+            TokenKind::Loop => TokenType::Loop,
+            TokenKind::Mul => TokenType::Mul,
+            TokenKind::MulAssign => TokenType::MulAssign,
+            TokenKind::Namespace => TokenType::Namespace,
+            TokenKind::NotEqual => TokenType::NotEqual,
+            TokenKind::PathSeparator => TokenType::PathSeparator,
+            TokenKind::Priv => TokenType::Priv,
+            TokenKind::Pub => TokenType::Pub,
+            TokenKind::Question => TokenType::Question,
+            TokenKind::Or => TokenType::Or,
+            TokenKind::Return => TokenType::Return,
+            TokenKind::RightBracket => TokenType::RightBracket,
+            TokenKind::RightCurly => TokenType::RightCurly,
+            TokenKind::RightParen => TokenType::RightParen,
+            TokenKind::Semicolon => TokenType::Semicolon,
+            TokenKind::SelfRef => TokenType::SelfRef,
+            TokenKind::String(_) => TokenType::String,
+            TokenKind::Struct => TokenType::Struct,
+            TokenKind::Sub => TokenType::Sub,
+            TokenKind::SubAssign => TokenType::SubAssign,
+            TokenKind::Switch => TokenType::Switch,
+            TokenKind::Trait => TokenType::Trait,
+            TokenKind::True => TokenType::True,
+            TokenKind::Use => TokenType::Use,
+            TokenKind::While => TokenType::While,
+        }
+    }
+
     #[inline]
     pub fn is_keyword(&self) -> bool {
         matches!(
             self,
-            TokenType::As
-                | TokenType::Break
-                | TokenType::Continue
-                | TokenType::Else
-                | TokenType::External
-                | TokenType::False
-                | TokenType::Fn
-                | TokenType::For
-                | TokenType::If
-                | TokenType::Impl
-                | TokenType::Import
-                | TokenType::In
-                | TokenType::Is
-                | TokenType::Loop
-                | TokenType::Namespace
-                | TokenType::Priv
-                | TokenType::Pub
-                | TokenType::Return
-                | TokenType::SelfRef
-                | TokenType::Struct
-                | TokenType::Switch
-                | TokenType::Trait
-                | TokenType::True
-                | TokenType::Use
-                | TokenType::While
+            TokenKind::As
+                | TokenKind::Break
+                | TokenKind::Builtin
+                | TokenKind::Continue
+                | TokenKind::Else
+                | TokenKind::External
+                | TokenKind::False
+                | TokenKind::Fn
+                | TokenKind::For
+                | TokenKind::If
+                | TokenKind::Impl
+                | TokenKind::Import
+                | TokenKind::In
+                | TokenKind::Is
+                | TokenKind::Loop
+                | TokenKind::Namespace
+                | TokenKind::Priv
+                | TokenKind::Pub
+                | TokenKind::Return
+                | TokenKind::SelfRef
+                | TokenKind::Struct
+                | TokenKind::Switch
+                | TokenKind::Trait
+                | TokenKind::True
+                | TokenKind::Use
+                | TokenKind::While
         )
     }
 
@@ -362,451 +442,77 @@ impl TokenType<'_> {
     pub fn is_literal(&self) -> bool {
         matches!(
             self,
-            TokenType::Integer(_) | TokenType::Float(_) | TokenType::String(_) | TokenType::False | TokenType::True
+            TokenKind::Integer(_) | TokenKind::Float(_) | TokenKind::String(_) | TokenKind::False | TokenKind::True
         )
     }
 
     #[inline]
     pub fn is_unary(&self) -> bool {
-        matches!(self, TokenType::Exclamation | TokenType::Sub)
+        matches!(self, TokenKind::Exclamation | TokenKind::Sub)
     }
 
     #[inline]
     pub fn is_operator(&self) -> bool {
         matches!(
             self,
-            TokenType::Add
-                | TokenType::AddAssign
-                | TokenType::And
-                | TokenType::Assign
-                | TokenType::BinaryAnd
-                | TokenType::BinaryOr
-                | TokenType::BinaryXor
-                | TokenType::Decrement
-                | TokenType::Div
-                | TokenType::DivAssign
-                | TokenType::Equal
-                | TokenType::Greater
-                | TokenType::GreaterEqual
-                | TokenType::Increment
-                | TokenType::Less
-                | TokenType::LessEqual
-                | TokenType::Mul
-                | TokenType::MulAssign
-                | TokenType::NotEqual
-                | TokenType::Or
-                | TokenType::Sub
-                | TokenType::SubAssign
+            TokenKind::Add
+                | TokenKind::AddAssign
+                | TokenKind::And
+                | TokenKind::Assign
+                | TokenKind::BinaryAnd
+                | TokenKind::BinaryOr
+                | TokenKind::BinaryXor
+                | TokenKind::Decrement
+                | TokenKind::Div
+                | TokenKind::DivAssign
+                | TokenKind::Equal
+                | TokenKind::Greater
+                | TokenKind::GreaterEqual
+                | TokenKind::Increment
+                | TokenKind::Less
+                | TokenKind::LessEqual
+                | TokenKind::Mul
+                | TokenKind::MulAssign
+                | TokenKind::NotEqual
+                | TokenKind::Or
+                | TokenKind::Sub
+                | TokenKind::SubAssign
         )
     }
 
-    // /// Gets the precedence of the token kind.
-    // ///
-    // /// Returns the precedence of the token kind, or 0 if the token kind is not
-    // /// an operator.
-    // #[inline]
-    // pub fn precedence(&self) -> u8 {
-    //     OPERATOR_PRECEDENCE
-    //         .iter()
-    //         .find(|(k, _)| k == self)
-    //         .map_or(0, |(_, p)| *p)
-    // }
+    /// Gets the precedence of the token kind.
+    ///
+    /// Returns the precedence of the token kind, or 0 if the token kind is not
+    /// an operator.
+    #[inline]
+    pub fn precedence(&self) -> u8 {
+        OPERATOR_PRECEDENCE
+            .iter()
+            .find(|(k, _)| k == self)
+            .map_or(0, |(_, p)| *p)
+    }
 
-    // /// Determines whether the token is a postfix operator.
-    // #[inline]
-    // pub fn is_postfix(&self) -> bool {
-    //     POSTFIX_OPERATORS.iter().any(|k| k == self)
-    // }
+    /// Determines whether the token is a postfix operator.
+    #[inline]
+    pub fn is_postfix(&self) -> bool {
+        POSTFIX_OPERATORS.iter().any(|k| k == self)
+    }
 
-    // /// Determines whether the token is a binary operator.
-    // #[inline]
-    // pub fn is_binary(&self) -> bool {
-    //     BINARY_OPERATORS.iter().any(|k| k == self)
-    // }
+    /// Determines whether the token is a binary operator.
+    #[inline]
+    pub fn is_binary(&self) -> bool {
+        BINARY_OPERATORS.iter().any(|k| k == self)
+    }
 
-    // /// Determines whether the token is a boolean operator.
-    // #[inline]
-    // pub fn is_boolean(&self) -> bool {
-    //     BOOLEAN_OPERATORS.iter().any(|k| k == self)
-    // }
+    /// Determines whether the token is a boolean operator.
+    #[inline]
+    pub fn is_boolean(&self) -> bool {
+        BOOLEAN_OPERATORS.iter().any(|k| k == self)
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IntegerKind {
-    I8,
-    I16,
-    I32,
-    I64,
-    U8,
-    U16,
-    U32,
-    U64,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Radix {
-    Binary,
-    Octal,
-    Hexadecimal,
-    Decimal,
-}
-
-fn lex_integer<'src>(
-    lex: &mut logos::Lexer<'src, TokenType<'src>>,
-    kind: Option<IntegerKind>,
-) -> std::result::Result<(Radix, Option<IntegerKind>), <TokenType<'src> as Logos<'src>>::Error> {
-    let radix = match lex.slice().get(0..2) {
-        Some("0b" | "0B") => Radix::Binary,
-        Some("0o" | "0O") => Radix::Octal,
-        Some("0x" | "0X") => Radix::Hexadecimal,
-        _ => Radix::Decimal,
-    };
-
-    Ok((radix, kind))
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FloatKind {
-    F32,
-    F64,
-}
-
-fn lex_comment<'src>(
-    lex: &mut logos::Lexer<'src, TokenType<'src>>,
-) -> std::result::Result<&'src str, <TokenType<'src> as Logos<'src>>::Error> {
-    let remainder = lex.remainder();
-    let line_length = remainder.find('\n').unwrap_or(remainder.len());
-
-    lex.bump(line_length);
-
-    Ok(lex.slice())
-}
-
-fn lex_string<'src>(
-    lex: &mut logos::Lexer<'src, TokenType<'src>>,
-) -> std::result::Result<&'src str, <TokenType<'src> as Logos<'src>>::Error> {
-    let mut c = lex.remainder().chars();
-
-    loop {
-        match c.next() {
-            None => return Err(LexerError::MissingEndingQuote),
-            Some('"') => {
-                lex.bump(1);
-                break;
-            }
-            Some(_) => lex.bump(1),
-        }
-    }
-
-    // Trim the quotes away from the slice
-    let len = lex.slice().len();
-    let trim = &lex.slice()[1..len - 1];
-
-    Ok(trim)
-}
-
-#[cfg(test)]
-mod lexer_tests {
-    use super::*;
-
-    #[track_caller]
-    pub fn assert_lex<'src>(
-        source: &'src str,
-        tokens: &[(
-            std::result::Result<TokenType, <TokenType<'src> as Logos<'src>>::Error>,
-            &'src str,
-            Range<usize>,
-        )],
-    ) {
-        let mut lex = TokenType::lexer(source);
-
-        for tuple in tokens {
-            assert_eq!(&(lex.next().expect("unexpected end"), lex.slice(), lex.span()), tuple);
-        }
-
-        assert_eq!(lex.next(), None);
-    }
-
-    #[test]
-    fn test_keywords() {
-        assert_lex("as", &[(Ok(TokenType::As), "as", 0..2)]);
-        assert_lex("break", &[(Ok(TokenType::Break), "break", 0..5)]);
-        assert_lex("continue", &[(Ok(TokenType::Continue), "continue", 0..8)]);
-        assert_lex("external", &[(Ok(TokenType::External), "external", 0..8)]);
-        assert_lex("for", &[(Ok(TokenType::For), "for", 0..3)]);
-        assert_lex("fn", &[(Ok(TokenType::Fn), "fn", 0..2)]);
-        assert_lex("if", &[(Ok(TokenType::If), "if", 0..2)]);
-        assert_lex("import", &[(Ok(TokenType::Import), "import", 0..6)]);
-        assert_lex("impl", &[(Ok(TokenType::Impl), "impl", 0..4)]);
-        assert_lex("in", &[(Ok(TokenType::In), "in", 0..2)]);
-        assert_lex("is", &[(Ok(TokenType::Is), "is", 0..2)]);
-        assert_lex("loop", &[(Ok(TokenType::Loop), "loop", 0..4)]);
-        assert_lex("namespace", &[(Ok(TokenType::Namespace), "namespace", 0..9)]);
-        assert_lex("self", &[(Ok(TokenType::SelfRef), "self", 0..4)]);
-        assert_lex("struct", &[(Ok(TokenType::Struct), "struct", 0..6)]);
-        assert_lex("switch", &[(Ok(TokenType::Switch), "switch", 0..6)]);
-        assert_lex("return", &[(Ok(TokenType::Return), "return", 0..6)]);
-        assert_lex("true", &[(Ok(TokenType::True), "true", 0..4)]);
-        assert_lex("false", &[(Ok(TokenType::False), "false", 0..5)]);
-        assert_lex("priv", &[(Ok(TokenType::Priv), "priv", 0..4)]);
-        assert_lex("pub", &[(Ok(TokenType::Pub), "pub", 0..3)]);
-        assert_lex("use", &[(Ok(TokenType::Use), "use", 0..3)]);
-        assert_lex("while", &[(Ok(TokenType::While), "while", 0..5)]);
-    }
-
-    #[test]
-    fn test_symbols_map() {
-        assert_lex("...", &[(Ok(TokenType::DotDotDot), "...", 0..3)]);
-
-        assert_lex("+=", &[(Ok(TokenType::AddAssign), "+=", 0..2)]);
-        assert_lex("&&", &[(Ok(TokenType::And), "&&", 0..2)]);
-        assert_lex("->", &[(Ok(TokenType::Arrow), "->", 0..2)]);
-        assert_lex("=>", &[(Ok(TokenType::ArrowBig), "=>", 0..2)]);
-        assert_lex("==", &[(Ok(TokenType::Equal), "==", 0..2)]);
-        assert_lex("--", &[(Ok(TokenType::Decrement), "--", 0..2)]);
-        assert_lex("..", &[(Ok(TokenType::DotDot), "..", 0..2)]);
-        assert_lex("/=", &[(Ok(TokenType::DivAssign), "/=", 0..2)]);
-        assert_lex(">=", &[(Ok(TokenType::GreaterEqual), ">=", 0..2)]);
-        assert_lex("++", &[(Ok(TokenType::Increment), "++", 0..2)]);
-        assert_lex("<=", &[(Ok(TokenType::LessEqual), "<=", 0..2)]);
-        assert_lex("*=", &[(Ok(TokenType::MulAssign), "*=", 0..2)]);
-        assert_lex("!=", &[(Ok(TokenType::NotEqual), "!=", 0..2)]);
-        assert_lex("||", &[(Ok(TokenType::Or), "||", 0..2)]);
-        assert_lex("::", &[(Ok(TokenType::PathSeparator), "::", 0..2)]);
-        assert_lex("-=", &[(Ok(TokenType::SubAssign), "-=", 0..2)]);
-
-        assert_lex("&", &[(Ok(TokenType::BinaryAnd), "&", 0..1)]);
-        assert_lex("|", &[(Ok(TokenType::BinaryOr), "|", 0..1)]);
-        assert_lex("^", &[(Ok(TokenType::BinaryXor), "^", 0..1)]);
-        assert_lex("=", &[(Ok(TokenType::Assign), "=", 0..1)]);
-        assert_lex(":", &[(Ok(TokenType::Colon), ":", 0..1)]);
-        assert_lex(",", &[(Ok(TokenType::Comma), ",", 0..1)]);
-        assert_lex("/", &[(Ok(TokenType::Div), "/", 0..1)]);
-        assert_lex(".", &[(Ok(TokenType::Dot), ".", 0..1)]);
-        assert_lex("!", &[(Ok(TokenType::Exclamation), "!", 0..1)]);
-        assert_lex(">", &[(Ok(TokenType::Greater), ">", 0..1)]);
-        assert_lex("[", &[(Ok(TokenType::LeftBracket), "[", 0..1)]);
-        assert_lex("{", &[(Ok(TokenType::LeftCurly), "{", 0..1)]);
-        assert_lex("(", &[(Ok(TokenType::LeftParen), "(", 0..1)]);
-        assert_lex("<", &[(Ok(TokenType::Less), "<", 0..1)]);
-        assert_lex("*", &[(Ok(TokenType::Mul), "*", 0..1)]);
-        assert_lex("]", &[(Ok(TokenType::RightBracket), "]", 0..1)]);
-        assert_lex("}", &[(Ok(TokenType::RightCurly), "}", 0..1)]);
-        assert_lex(")", &[(Ok(TokenType::RightParen), ")", 0..1)]);
-        assert_lex(";", &[(Ok(TokenType::Semicolon), ";", 0..1)]);
-        assert_lex("-", &[(Ok(TokenType::Sub), "-", 0..1)]);
-    }
-
-    #[test]
-    fn test_parenthesis() {
-        assert_lex("()", &[
-            (Ok(TokenType::LeftParen), "(", 0..1),
-            (Ok(TokenType::RightParen), ")", 1..2),
-        ]);
-    }
-
-    #[test]
-    fn test_brackets() {
-        assert_lex("[]", &[
-            (Ok(TokenType::LeftBracket), "[", 0..1),
-            (Ok(TokenType::RightBracket), "]", 1..2),
-        ]);
-    }
-
-    #[test]
-    fn test_curly_braces() {
-        assert_lex("{}", &[
-            (Ok(TokenType::LeftCurly), "{", 0..1),
-            (Ok(TokenType::RightCurly), "}", 1..2),
-        ]);
-    }
-
-    #[test]
-    fn test_comment() {
-        assert_lex("//", &[(Ok(TokenType::Comment("//")), "//", 0..2)]);
-        assert_lex("///", &[(Ok(TokenType::DocComment("///")), "///", 0..3)]);
-
-        assert_lex("// testing", &[(
-            Ok(TokenType::Comment("// testing")),
-            "// testing",
-            0..10,
-        )]);
-
-        assert_lex("/// testing", &[(
-            Ok(TokenType::DocComment("/// testing")),
-            "/// testing",
-            0..11,
-        )]);
-
-        assert_lex(
-            "// comment 1
-            // comment 2",
-            &[
-                (Ok(TokenType::Comment("// comment 1")), "// comment 1", 0..12),
-                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 25..37),
-            ],
-        );
-
-        assert_lex(
-            "// comment 1
-            //
-            // comment 2",
-            &[
-                (Ok(TokenType::Comment("// comment 1")), "// comment 1", 0..12),
-                (Ok(TokenType::Comment("//")), "//", 25..27),
-                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 40..52),
-            ],
-        );
-
-        assert_lex(
-            "/// comment 1
-            /// comment 2",
-            &[
-                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
-                (Ok(TokenType::DocComment("/// comment 2")), "/// comment 2", 26..39),
-            ],
-        );
-
-        assert_lex(
-            "/// comment 1
-            ///
-            /// comment 2",
-            &[
-                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
-                (Ok(TokenType::DocComment("///")), "///", 26..29),
-                (Ok(TokenType::DocComment("/// comment 2")), "/// comment 2", 42..55),
-            ],
-        );
-
-        assert_lex(
-            "/// comment 1
-            // comment 2",
-            &[
-                (Ok(TokenType::DocComment("/// comment 1")), "/// comment 1", 0..13),
-                (Ok(TokenType::Comment("// comment 2")), "// comment 2", 26..38),
-            ],
-        );
-
-        assert_lex("// comment 1  ", &[(
-            Ok(TokenType::Comment("// comment 1  ")),
-            "// comment 1  ",
-            0..14,
-        )]);
-
-        assert_lex("/// comment 1  ", &[(
-            Ok(TokenType::DocComment("/// comment 1  ")),
-            "/// comment 1  ",
-            0..15,
-        )]);
-    }
-
-    #[test]
-    fn test_identifier() {
-        assert_lex("foo", &[(Ok(TokenType::Identifier("foo")), "foo", 0..3)]);
-        assert_lex("FOO", &[(Ok(TokenType::Identifier("FOO")), "FOO", 0..3)]);
-        assert_lex("_LUME", &[(Ok(TokenType::Identifier("_LUME")), "_LUME", 0..5)]);
-        assert_lex("__LUME__", &[(Ok(TokenType::Identifier("__LUME__")), "__LUME__", 0..8)]);
-        assert_lex("_", &[(Ok(TokenType::Identifier("_")), "_", 0..1)]);
-        assert_lex("_1", &[(Ok(TokenType::Identifier("_1")), "_1", 0..2)]);
-        assert_lex("_test1", &[(Ok(TokenType::Identifier("_test1")), "_test1", 0..6)]);
-    }
-
-    #[test]
-    fn test_number() {
-        assert_lex("0 0000", &[
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "0", 0..1),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "0000", 2..6),
-        ]);
-
-        assert_lex("0b01 0B01 0d01 0D01 0x01 0X01 0o01 0O01", &[
-            (Ok(TokenType::Integer((Radix::Binary, None))), "0b01", 0..4),
-            (Ok(TokenType::Integer((Radix::Binary, None))), "0B01", 5..9),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "0d01", 10..14),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "0D01", 15..19),
-            (Ok(TokenType::Integer((Radix::Hexadecimal, None))), "0x01", 20..24),
-            (Ok(TokenType::Integer((Radix::Hexadecimal, None))), "0X01", 25..29),
-            (Ok(TokenType::Integer((Radix::Octal, None))), "0o01", 30..34),
-            (Ok(TokenType::Integer((Radix::Octal, None))), "0O01", 35..39),
-        ]);
-
-        assert_lex("10.0 10.123", &[
-            (Ok(TokenType::Float(None)), "10.0", 0..4),
-            (Ok(TokenType::Float(None)), "10.123", 5..11),
-        ]);
-
-        assert_lex("0_0 00_00 1_000_000", &[
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "0_0", 0..3),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "00_00", 4..9),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "1_000_000", 10..19),
-        ]);
-
-        assert_lex("-1", &[
-            (Ok(TokenType::Sub), "-", 0..1),
-            (Ok(TokenType::Integer((Radix::Decimal, None))), "1", 1..2),
-        ]);
-
-        assert_lex("10e5 10E5 1.0e5 1.0E5", &[
-            (Ok(TokenType::Float(None)), "10e5", 0..4),
-            (Ok(TokenType::Float(None)), "10E5", 5..9),
-            (Ok(TokenType::Float(None)), "1.0e5", 10..15),
-            (Ok(TokenType::Float(None)), "1.0E5", 16..21),
-        ]);
-
-        assert_lex("1_u32 1_f32 1.1_f64 0x0_u64 1_000_u32 0xDEAD_BEEF_u32", &[
-            (
-                Ok(TokenType::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
-                "1_u32",
-                0..5,
-            ),
-            (Ok(TokenType::Float(Some(FloatKind::F32))), "1_f32", 6..11),
-            (Ok(TokenType::Float(Some(FloatKind::F64))), "1.1_f64", 12..19),
-            (
-                Ok(TokenType::Integer((Radix::Hexadecimal, Some(IntegerKind::U64)))),
-                "0x0_u64",
-                20..27,
-            ),
-            (
-                Ok(TokenType::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
-                "1_000_u32",
-                28..37,
-            ),
-            (
-                Ok(TokenType::Integer((Radix::Hexadecimal, Some(IntegerKind::U32)))),
-                "0xDEAD_BEEF_u32",
-                38..53,
-            ),
-        ]);
-    }
-
-    #[test]
-    fn test_string() {
-        assert_lex("\"\"", &[(Ok(TokenType::String("")), "\"\"", 0..2)]);
-        assert_lex("\"    \"", &[(Ok(TokenType::String("    ")), "\"    \"", 0..6)]);
-
-        assert_lex("\"hello world\"", &[(
-            Ok(TokenType::String("hello world")),
-            "\"hello world\"",
-            0..13,
-        )]);
-
-        assert_lex("\"hello\nworld\"", &[(
-            Ok(TokenType::String("hello\nworld")),
-            "\"hello\nworld\"",
-            0..13,
-        )]);
-
-        assert_lex("\"", &[(Err(LexerError::MissingEndingQuote), "\"", 0..1)]);
-
-        assert_lex("\"hello world", &[(
-            Err(LexerError::MissingEndingQuote),
-            "\"hello world",
-            0..12,
-        )]);
-    }
-}
-
-#[derive(Copy, Clone, PartialEq, Eq)]
-pub enum TokenKind {
+pub enum TokenType {
     As,
     Add,
     AddAssign,
@@ -849,7 +555,7 @@ pub enum TokenKind {
     In,
     Is,
     Increment,
-    Integer(u32),
+    Integer,
     LeftBracket,
     LeftCurly,
     LeftParen,
@@ -860,7 +566,6 @@ pub enum TokenKind {
     Mul,
     MulAssign,
     Namespace,
-    Newline,
     NotEqual,
     PathSeparator,
     Priv,
@@ -884,235 +589,182 @@ pub enum TokenKind {
     While,
 }
 
-impl TokenKind {
-    #[inline]
-    pub fn is_keyword(&self) -> bool {
-        matches!(
-            self,
-            TokenKind::As
-                | TokenKind::Break
-                | TokenKind::Builtin
-                | TokenKind::Continue
-                | TokenKind::Else
-                | TokenKind::External
-                | TokenKind::False
-                | TokenKind::Fn
-                | TokenKind::For
-                | TokenKind::If
-                | TokenKind::Impl
-                | TokenKind::Import
-                | TokenKind::In
-                | TokenKind::Is
-                | TokenKind::Loop
-                | TokenKind::Namespace
-                | TokenKind::Priv
-                | TokenKind::Pub
-                | TokenKind::Return
-                | TokenKind::SelfRef
-                | TokenKind::Struct
-                | TokenKind::Switch
-                | TokenKind::Trait
-                | TokenKind::True
-                | TokenKind::Use
-                | TokenKind::While
-        )
-    }
-
-    #[inline]
-    pub fn is_literal(&self) -> bool {
-        matches!(
-            self,
-            TokenKind::Integer(_) | TokenKind::Float | TokenKind::String | TokenKind::False | TokenKind::True
-        )
-    }
-
-    #[inline]
-    pub fn is_unary(&self) -> bool {
-        matches!(self, TokenKind::Exclamation | TokenKind::Sub)
-    }
-
-    #[inline]
-    pub fn is_comment(&self) -> bool {
-        matches!(self, TokenKind::Comment | TokenKind::DocComment)
-    }
-
-    #[inline]
-    pub fn is_operator(&self) -> bool {
-        matches!(
-            self,
-            TokenKind::Add
-                | TokenKind::AddAssign
-                | TokenKind::And
-                | TokenKind::Assign
-                | TokenKind::BinaryAnd
-                | TokenKind::BinaryOr
-                | TokenKind::BinaryXor
-                | TokenKind::Decrement
-                | TokenKind::Div
-                | TokenKind::DivAssign
-                | TokenKind::Equal
-                | TokenKind::Greater
-                | TokenKind::GreaterEqual
-                | TokenKind::Increment
-                | TokenKind::Less
-                | TokenKind::LessEqual
-                | TokenKind::Mul
-                | TokenKind::MulAssign
-                | TokenKind::NotEqual
-                | TokenKind::Or
-                | TokenKind::Sub
-                | TokenKind::SubAssign
-        )
-    }
-
-    #[inline]
-    pub fn has_value(&self) -> bool {
-        self.is_keyword() || self.is_operator() || self.is_comment()
-    }
-}
-
-impl From<TokenKind> for &'static str {
-    #[inline]
-    fn from(val: TokenKind) -> &'static str {
-        match val {
-            TokenKind::As => "as",
-            TokenKind::Add => "+",
-            TokenKind::AddAssign => "+=",
-            TokenKind::And => "&&",
-            TokenKind::Arrow => "->",
-            TokenKind::ArrowBig => "=>",
-            TokenKind::Assign => "=",
-            TokenKind::DocComment => "doc comment",
-            TokenKind::BinaryAnd => "&",
-            TokenKind::BinaryOr => "|",
-            TokenKind::BinaryXor => "^",
-            TokenKind::Break => "break",
-            TokenKind::Builtin => "builtin",
-            TokenKind::Colon => ":",
-            TokenKind::Comma => ",",
-            TokenKind::Comment => "comment",
-            TokenKind::Continue => "continue",
-            TokenKind::Decrement => "--",
-            TokenKind::Div => "/",
-            TokenKind::DivAssign => "/=",
-            TokenKind::Dot => ".",
-            TokenKind::DotDot => "..",
-            TokenKind::DotDotDot => "...",
-            TokenKind::Else => "else",
-            TokenKind::Enum => "enum",
-            TokenKind::Eof => "EOF",
-            TokenKind::Equal => "==",
-            TokenKind::Exclamation => "!",
-            TokenKind::External => "external",
-            TokenKind::False => "false",
-            TokenKind::Fn => "fn",
-            TokenKind::Float => "float",
-            TokenKind::For => "for",
-            TokenKind::Greater => ">",
-            TokenKind::GreaterEqual => ">=",
-            TokenKind::If => "if",
-            TokenKind::Identifier => "identifier",
-            TokenKind::Impl => "impl",
-            TokenKind::Import => "import",
-            TokenKind::In => "in",
-            TokenKind::Is => "is",
-            TokenKind::Increment => "++",
-            TokenKind::LeftBracket => "[",
-            TokenKind::LeftCurly => "{",
-            TokenKind::LeftParen => "(",
-            TokenKind::Less => "<",
-            TokenKind::LessEqual => "<=",
-            TokenKind::Let => "let",
-            TokenKind::Loop => "loop",
-            TokenKind::Mul => "*",
-            TokenKind::MulAssign => "*=",
-            TokenKind::Namespace => "namespace",
-            TokenKind::Newline => "\\n",
-            TokenKind::NotEqual => "!=",
-            TokenKind::Integer(_) => "integer",
-            TokenKind::PathSeparator => "::",
-            TokenKind::Priv => "priv",
-            TokenKind::Pub => "pub",
-            TokenKind::Question => "?",
-            TokenKind::Or => "||",
-            TokenKind::Return => "return",
-            TokenKind::RightBracket => "]",
-            TokenKind::RightCurly => "}",
-            TokenKind::RightParen => ")",
-            TokenKind::SelfRef => "self",
-            TokenKind::Semicolon => ";",
-            TokenKind::String => "string",
-            TokenKind::Struct => "struct",
-            TokenKind::Sub => "-",
-            TokenKind::SubAssign => "-=",
-            TokenKind::Switch => "switch",
-            TokenKind::Trait => "trait",
-            TokenKind::True => "true",
-            TokenKind::Use => "use",
-            TokenKind::While => "while",
+impl Display for TokenType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            TokenType::As => f.write_str("as"),
+            TokenType::Add => f.write_str("+"),
+            TokenType::AddAssign => f.write_str("+="),
+            TokenType::And => f.write_str("&&"),
+            TokenType::Arrow => f.write_str("->"),
+            TokenType::ArrowBig => f.write_str("=>"),
+            TokenType::Assign => f.write_str("="),
+            TokenType::DocComment => f.write_str("doc comment"),
+            TokenType::BinaryAnd => f.write_str("&"),
+            TokenType::BinaryOr => f.write_str("|"),
+            TokenType::BinaryXor => f.write_str("^"),
+            TokenType::Break => f.write_str("break"),
+            TokenType::Builtin => f.write_str("builtin"),
+            TokenType::Colon => f.write_str(":"),
+            TokenType::Comma => f.write_str(","),
+            TokenType::Comment => f.write_str("comment"),
+            TokenType::Continue => f.write_str("continue"),
+            TokenType::Decrement => f.write_str("--"),
+            TokenType::Div => f.write_str("/"),
+            TokenType::DivAssign => f.write_str("/="),
+            TokenType::Dot => f.write_str("."),
+            TokenType::DotDot => f.write_str(".."),
+            TokenType::DotDotDot => f.write_str("..."),
+            TokenType::Else => f.write_str("else"),
+            TokenType::Enum => f.write_str("enum"),
+            TokenType::Eof => f.write_str("EOF"),
+            TokenType::Equal => f.write_str("=="),
+            TokenType::Exclamation => f.write_str("!"),
+            TokenType::External => f.write_str("external"),
+            TokenType::False => f.write_str("false"),
+            TokenType::Fn => f.write_str("fn"),
+            TokenType::Float => f.write_str("float"),
+            TokenType::For => f.write_str("for"),
+            TokenType::Greater => f.write_str(">"),
+            TokenType::GreaterEqual => f.write_str(">="),
+            TokenType::If => f.write_str("if"),
+            TokenType::Identifier => f.write_str("identifier"),
+            TokenType::Impl => f.write_str("impl"),
+            TokenType::Import => f.write_str("import"),
+            TokenType::In => f.write_str("in"),
+            TokenType::Is => f.write_str("is"),
+            TokenType::Increment => f.write_str("++"),
+            TokenType::LeftBracket => f.write_str("["),
+            TokenType::LeftCurly => f.write_str("{"),
+            TokenType::LeftParen => f.write_str("("),
+            TokenType::Less => f.write_str("<"),
+            TokenType::LessEqual => f.write_str("<="),
+            TokenType::Let => f.write_str("let"),
+            TokenType::Loop => f.write_str("loop"),
+            TokenType::Mul => f.write_str("*"),
+            TokenType::MulAssign => f.write_str("*="),
+            TokenType::Namespace => f.write_str("namespace"),
+            TokenType::NotEqual => f.write_str("!="),
+            TokenType::Integer => f.write_str("integer"),
+            TokenType::PathSeparator => f.write_str("::"),
+            TokenType::Priv => f.write_str("priv"),
+            TokenType::Pub => f.write_str("pub"),
+            TokenType::Question => f.write_str("?"),
+            TokenType::Or => f.write_str("||"),
+            TokenType::Return => f.write_str("return"),
+            TokenType::RightBracket => f.write_str("]"),
+            TokenType::RightCurly => f.write_str("}"),
+            TokenType::RightParen => f.write_str(")"),
+            TokenType::SelfRef => f.write_str("self"),
+            TokenType::Semicolon => f.write_str(";"),
+            TokenType::String => f.write_str("string"),
+            TokenType::Struct => f.write_str("struct"),
+            TokenType::Sub => f.write_str("-"),
+            TokenType::SubAssign => f.write_str("-="),
+            TokenType::Switch => f.write_str("switch"),
+            TokenType::Trait => f.write_str("trait"),
+            TokenType::True => f.write_str("true"),
+            TokenType::Use => f.write_str("use"),
+            TokenType::While => f.write_str("while"),
         }
     }
 }
 
-impl From<TokenKind> for String {
-    fn from(val: TokenKind) -> String {
-        <TokenKind as Into<&'static str>>::into(val).to_string()
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IntegerKind {
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Radix {
+    Binary,
+    Octal,
+    Hexadecimal,
+    Decimal,
+}
+
+impl Radix {
+    pub fn base(&self) -> u32 {
+        match self {
+            Self::Binary => 2,
+            Self::Octal => 8,
+            Self::Decimal => 10,
+            Self::Hexadecimal => 16,
+        }
     }
 }
 
-impl std::fmt::Debug for TokenKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let desc: &'static str = (*self).into();
+fn lex_integer<'src>(
+    lex: &mut logos::Lexer<'src, TokenKind<'src>>,
+    kind: Option<IntegerKind>,
+) -> std::result::Result<(Radix, Option<IntegerKind>), <TokenKind<'src> as Logos<'src>>::Error> {
+    let radix = match lex.slice().get(0..2) {
+        Some("0b" | "0B") => Radix::Binary,
+        Some("0o" | "0O") => Radix::Octal,
+        Some("0x" | "0X") => Radix::Hexadecimal,
+        _ => Radix::Decimal,
+    };
 
-        write!(f, "{desc}")
-    }
+    Ok((radix, kind))
 }
 
-impl std::fmt::Display for TokenKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let desc: &'static str = (*self).into();
-
-        write!(f, "{desc}")
-    }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatKind {
+    F32,
+    F64,
 }
 
-#[derive(Clone, PartialEq, Eq)]
-pub struct Token {
+fn lex_comment<'src>(
+    lex: &mut logos::Lexer<'src, TokenKind<'src>>,
+) -> std::result::Result<&'src str, <TokenKind<'src> as Logos<'src>>::Error> {
+    let remainder = lex.remainder();
+    let line_length = remainder.find('\n').unwrap_or(remainder.len());
+
+    lex.bump(line_length);
+
+    Ok(lex.slice())
+}
+
+fn lex_string<'src>(
+    lex: &mut logos::Lexer<'src, TokenKind<'src>>,
+) -> std::result::Result<&'src str, <TokenKind<'src> as Logos<'src>>::Error> {
+    let mut c = lex.remainder().chars();
+
+    loop {
+        match c.next() {
+            None => return Err(LexerError::MissingEndingQuote),
+            Some('"') => {
+                lex.bump(1);
+                break;
+            }
+            Some(_) => lex.bump(1),
+        }
+    }
+
+    // Trim the quotes away from the slice
+    let len = lex.slice().len();
+    let trim = &lex.slice()[1..len - 1];
+
+    Ok(trim)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Token<'source> {
     /// Defines the kind of the token.
-    pub kind: TokenKind,
+    pub kind: TokenKind<'source>,
 
     /// Defines the start and end position of the token.
     pub index: Range<usize>,
-
-    /// Defines the value of the token.
-    pub value: Option<String>,
-
-    /// Defines the "kind" of the token. This is only used for integer- and
-    /// floating-point literals.
-    pub ty: Option<String>,
 }
 
-impl Token {
-    #[inline]
-    pub fn new(kind: TokenKind, value: String) -> Self {
-        Token {
-            kind,
-            index: 0..0,
-            value: Some(value),
-            ty: None,
-        }
-    }
-
-    #[inline]
-    pub fn empty(kind: TokenKind) -> Self {
-        Token {
-            kind,
-            index: 0..0,
-            value: None,
-            ty: None,
-        }
-    }
-
+impl Token<'_> {
     #[inline]
     pub fn len(&self) -> usize {
         self.index.end - self.index.start
@@ -1132,710 +784,72 @@ impl Token {
     pub fn end(&self) -> usize {
         self.index.end
     }
-
-    /// Gets the precedence of the token kind.
-    ///
-    /// Returns the precedence of the token kind, or 0 if the token kind is not
-    /// an operator.
-    #[inline]
-    pub fn precedence(&self) -> u8 {
-        OPERATOR_PRECEDENCE
-            .iter()
-            .find(|(k, _)| k == &self.kind)
-            .map_or(0, |(_, p)| *p)
-    }
-
-    /// Determines whether the token is a postfix operator.
-    #[inline]
-    pub fn is_postfix(&self) -> bool {
-        POSTFIX_OPERATORS.iter().any(|k| k == &self.kind)
-    }
-
-    /// Determines whether the token is a binary operator.
-    #[inline]
-    pub fn is_binary(&self) -> bool {
-        BINARY_OPERATORS.iter().any(|k| k == &self.kind)
-    }
-
-    /// Determines whether the token is a boolean operator.
-    #[inline]
-    pub fn is_boolean(&self) -> bool {
-        BOOLEAN_OPERATORS.iter().any(|k| k == &self.kind)
-    }
 }
 
-impl From<Token> for &'static str {
-    fn from(val: Token) -> &'static str {
-        val.kind.into()
+impl<'a> Deref for Token<'a> {
+    type Target = TokenKind<'a>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.kind
     }
-}
-
-impl From<Token> for String {
-    fn from(val: Token) -> Self {
-        val.kind.into()
-    }
-}
-
-impl std::fmt::Debug for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self.kind)?;
-
-        if !self.kind.has_value()
-            && let Some(value) = &self.value
-        {
-            write!(f, " ({value})")?;
-        }
-
-        Ok(())
-    }
-}
-
-impl From<Token> for Identifier {
-    fn from(value: Token) -> Identifier {
-        Identifier {
-            name: value.value.unwrap(),
-            location: value.index.into(),
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Whitespace {
-    #[default]
-    Ignore,
-    Newline,
 }
 
 #[derive(Debug)]
-pub struct Lexer {
+pub struct Lexer<'source> {
     /// Declares the source to lex tokens from.
     pub source: Arc<SourceFile>,
 
-    /// Defines how to lex whitespace in the source content.
-    whitespace: Whitespace,
-
-    /// Represents an index of all codepoints within the source content.
-    indexed_source: Vec<usize>,
-
-    /// Defines the current position in the source.
-    position: usize,
-
-    /// Defines the total length of the source code.
-    length: usize,
+    _data: PhantomData<&'source ()>,
 }
 
-impl Lexer {
+impl<'source> Lexer<'source> {
     /// Creates a new lexer instance.
     pub fn new(source: Arc<SourceFile>) -> Self {
-        let indexed_source = source.content.char_indices().map(|(i, _)| i).collect();
-
         Lexer {
-            length: source.content.len(),
-            whitespace: Whitespace::default(),
-            indexed_source,
             source,
-            position: 0,
+            _data: PhantomData,
         }
     }
 
-    #[inline]
-    pub fn enable_whitespace(&mut self) {
-        self.whitespace = Whitespace::Newline;
-    }
-
-    #[inline]
-    pub fn is_eof(&self) -> bool {
-        self.position >= self.indexed_source.len()
-    }
-
-    /// Tries to get the character at the current cursor position.
-    ///
-    /// Returns `None` if the cursor is at the end of the source.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn current_char(&self) -> Option<char> {
-        self.at_offset(0)
-    }
-
-    /// Tries to get the character at the current cursor position.
-    ///
-    /// Returns `\0` if the cursor is at the end of the source.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn current_char_or_eof(&self) -> char {
-        self.current_char().unwrap_or('\0')
-    }
-
-    /// Tries to get the character which is at the current cursor position,
-    /// offset by `offset`.
-    ///
-    /// Returns `None` if the cursor is at the end of the source.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn at_offset(&self, offset: usize) -> Option<char> {
-        let idx = self.position + offset;
-
-        if idx >= self.indexed_source.len() {
-            return None;
-        }
-
-        let start = self.indexed_source[idx];
-        let end = if idx + 1 < self.indexed_source.len() {
-            self.indexed_source[idx + 1]
-        } else {
-            self.length
-        };
-
-        self.source.content.get(start..end)?.chars().next()
-    }
-
-    /// Tries to get the character which is at the current cursor position,
-    /// offset by `offset`.
-    ///
-    /// Returns `\0` if the cursor is at the end of the source.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn at_offset_or_eof(&self, offset: usize) -> char {
-        self.at_offset(offset).unwrap_or('\0')
-    }
-
-    /// Tries to get the slice of the content stream, given the index and
-    /// length.
-    ///
-    /// Returns an empty string if the cursor is at the end of the source.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn content_slice(&self, start: usize, mut end: usize) -> &str {
-        if start > end || start >= self.indexed_source.len() {
-            return "";
-        }
-
-        if end >= self.indexed_source.len() {
-            end = self.indexed_source.len();
-        }
-
-        let byte_start = self.indexed_source[start];
-        let byte_end = if end < self.indexed_source.len() {
-            self.indexed_source[end]
-        } else {
-            self.length
-        };
-
-        self.source.content.get(byte_start..byte_end).unwrap_or_default()
-    }
-
-    /// Advances the cursor position of the lexer to the next line.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn next(&mut self) {
-        self.position += 1;
-    }
-
-    /// Gets the character at the current cursor position and advances the
-    /// cursor position to the next position.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn consume(&mut self) -> char {
-        let c = self.current_char_or_eof();
-
-        self.next();
-        c
-    }
-
-    /// Consumes characters while the predicate returns `true`.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn eat_while(&mut self, predicate: impl Fn(char) -> bool) {
-        loop {
-            match self.current_char() {
-                Some(c) if predicate(c) => {
-                    tracing::trace!("char matched: {c:?}");
-                    self.next();
-                }
-                Some(c) => {
-                    tracing::trace!("char not matched: {c:?}");
-                    break;
-                }
-                _ => {
-                    tracing::trace!("reached EOF");
-                    break;
-                }
-            }
-        }
-    }
-
-    /// Gets characters while the given character is found.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn take_until(&mut self, c: char) -> &str {
-        let start = self.position;
-
-        let sliced = self.content_slice(start, self.length);
-        let found_idx = match sliced.find(c).map(|i| i + start) {
-            Some(idx) => idx,
-            None => self.source.content.len(),
-        };
-
-        self.position = found_idx;
-        self.content_slice(start, found_idx)
-    }
-
-    /// Gets characters while the predicate returns `true`.
-    #[inline]
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn take_while(&mut self, predicate: impl Fn(char) -> bool) -> String {
-        let start = self.position;
-
-        self.eat_while(predicate);
-
-        self.content_slice(start, self.position).to_string()
-    }
-
-    /// Skips characters while the predicate returns `true`.
-    #[tracing::instrument(level = "TRACE", skip_all)]
-    fn skip_while(&mut self, predicate: impl Fn(char) -> bool) {
-        loop {
-            let c = self.current_char();
-            if c.is_none() || !predicate(c.unwrap()) {
-                tracing::trace!("char not matched: {c:?}");
-                break;
-            }
-
-            tracing::trace!("char matched: {c:?}");
-            self.next();
-        }
-    }
-
-    /// Gets the token at the current cursor position. The cursor is advanced to
-    /// the start of the next token.
-    ///
-    /// # Errors
-    ///
-    /// This method will return `Err` if the expected token was formatted
-    /// incorrectly, or if the lexer unexpectedly encountered end-of-file.
-    #[tracing::instrument(
-        level = "INFO",
-        name = "lume_lexer::lexer::next_token",
-        parent = None,
-        fields(start_idx, end_idx, token),
-        skip(self),
-        err
-    )]
-    pub fn next_token(&mut self) -> Result<Token> {
-        let start_idx = self.position;
-        tracing::Span::current().record("start_idx", start_idx);
-
-        let Some(first_char) = self.current_char() else {
-            return Ok(Token::empty(TokenKind::Eof));
-        };
-
-        tracing::trace!("first character: {first_char:?}");
-
-        let mut token = match first_char {
-            // Identifiers, such as keywords and standalone words.
-            'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
-
-            // Symbols, such as operators and punctuation.
-            c if SYMBOLS.contains(&c) => self.symbol()?,
-
-            // Numbers
-            '0'..='9' => self.number(),
-
-            // String literals
-            '"' => self.string()?,
-
-            // Newlines
-            '\n' | '\r' if self.whitespace == Whitespace::Newline => {
-                self.next();
-
-                return Ok(Token {
-                    kind: TokenKind::Newline,
-                    index: (start_idx..start_idx + 1),
-                    value: None,
-                    ty: None,
-                });
-            }
-
-            // Whitespace
-            ' ' | '\t' | '\n' | '\r' => {
-                self.eat_while(char::is_whitespace);
-
-                return self.next_token();
-            }
-            _ => {
-                return Err(UnexpectedCharacter {
-                    source: self.source.clone(),
-                    range: self.position..self.position + 1,
-                    char: first_char,
-                }
-                .into());
-            }
-        };
-
-        let end_idx = self.position;
-        tracing::Span::current().record("end_idx", end_idx);
-
-        token.index = start_idx..end_idx;
-
-        tracing::Span::current().record("token", format_args!("{}", token.kind));
-
-        Ok(token)
-    }
-
-    /// Parses a comment token at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
-    fn comment(&mut self) -> Option<Token> {
-        let kind = self.eat_comment_prefix()?;
-        let content = self.take_until('\n').trim().to_string();
-
-        Some(Token::new(kind, content))
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
-    fn eat_comment_prefix(&mut self) -> Option<TokenKind> {
-        // Skip over all the whitespace characters, before attempting to eat the comment
-        // prefix.
-        self.eat_while(char::is_whitespace);
-
-        // Eat the comment prefix characters.
-        match self.take_while(|c| c == '/').len() {
-            0..=1 => None,
-            3 => Some(TokenKind::DocComment),
-            _ => Some(TokenKind::Comment),
-        }
-    }
-
-    /// Parses a block of comment tokens at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
-    fn comment_block(&mut self) -> Token {
-        let mut kind = TokenKind::Comment;
-        let mut comments = Vec::new();
-
-        loop {
-            let position = self.position;
-            let Some(token) = self.comment() else {
-                break;
-            };
-
-            // If this is the first iteration, update the kind of token.
-            if comments.is_empty() {
-                kind = token.kind;
-            }
-
-            // Otherwise, if the comment type doesn't match, stop iterating.
-            if !comments.is_empty() && token.kind != kind {
-                self.position = position;
-                break;
-            }
-
-            comments.push(token.value.unwrap());
-
-            // Consume the newline character.
-            self.next();
-
-            if matches!(self.current_char(), Some('\n') | None) {
-                break;
-            }
-        }
-
-        self.position -= 1;
-
-        Token::new(kind, comments.join("\n"))
-    }
-
-    /// Parses an identifier token at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
-    fn identifier(&mut self) -> Token {
-        let content = self.take_while(|c| c.is_ascii_alphanumeric() || c == '_');
-
-        match content.as_str() {
-            "as" => Token::empty(TokenKind::As),
-            "break" => Token::empty(TokenKind::Break),
-            "builtin" => Token::empty(TokenKind::Builtin),
-            "continue" => Token::empty(TokenKind::Continue),
-            "else" => Token::empty(TokenKind::Else),
-            "enum" => Token::empty(TokenKind::Enum),
-            "external" => Token::empty(TokenKind::External),
-            "false" => Token::empty(TokenKind::False),
-            "fn" => Token::empty(TokenKind::Fn),
-            "for" => Token::empty(TokenKind::For),
-            "if" => Token::empty(TokenKind::If),
-            "impl" => Token::empty(TokenKind::Impl),
-            "import" => Token::empty(TokenKind::Import),
-            "in" => Token::empty(TokenKind::In),
-            "is" => Token::empty(TokenKind::Is),
-            "let" => Token::empty(TokenKind::Let),
-            "loop" => Token::empty(TokenKind::Loop),
-            "namespace" => Token::empty(TokenKind::Namespace),
-            "priv" => Token::empty(TokenKind::Priv),
-            "pub" => Token::empty(TokenKind::Pub),
-            "return" => Token::empty(TokenKind::Return),
-            "self" => Token::empty(TokenKind::SelfRef),
-            "struct" => Token::empty(TokenKind::Struct),
-            "switch" => Token::empty(TokenKind::Switch),
-            "trait" => Token::empty(TokenKind::Trait),
-            "true" => Token::empty(TokenKind::True),
-            "use" => Token::empty(TokenKind::Use),
-            "while" => Token::empty(TokenKind::While),
-            _ => Token::new(TokenKind::Identifier, content),
-        }
-    }
-
-    /// Parses a symbol token at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
-    fn symbol(&mut self) -> Result<Token> {
-        let max_len = (self.position + 3).min(self.length);
-        let slice = self.content_slice(self.position, self.position + max_len);
-
-        let chars: Vec<char> = slice.chars().collect();
-        let (kind, len) = match self.symbol_value(&chars) {
-            Ok((kind, len)) => (kind, len),
-            Err(err) => return Err(err),
-        };
-
-        if kind == TokenKind::Comment {
-            return Ok(self.comment_block());
-        }
-
-        let symbol: String = chars[..len].iter().collect();
-
-        for _ in 0..len {
-            self.next();
-        }
-
-        Ok(Token::new(kind, symbol))
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
-    fn symbol_value(&mut self, chars: &[char]) -> Result<(TokenKind, usize)> {
-        if chars.len() >= 3
-            && let ('.', '.', '.') = (chars[0], chars[1], chars[2])
-        {
-            return Ok((TokenKind::DotDotDot, 3));
-        }
-
-        if chars.len() >= 2 {
-            match (chars[0], chars[1]) {
-                ('+', '=') => return Ok((TokenKind::AddAssign, 2)),
-                ('&', '&') => return Ok((TokenKind::And, 2)),
-                ('-', '>') => return Ok((TokenKind::Arrow, 2)),
-                ('=', '>') => return Ok((TokenKind::ArrowBig, 2)),
-                ('/', '/') => return Ok((TokenKind::Comment, 2)),
-                ('=', '=') => return Ok((TokenKind::Equal, 2)),
-                ('-', '-') => return Ok((TokenKind::Decrement, 2)),
-                ('.', '.') => return Ok((TokenKind::DotDot, 2)),
-                ('/', '=') => return Ok((TokenKind::DivAssign, 2)),
-                ('>', '=') => return Ok((TokenKind::GreaterEqual, 2)),
-                ('+', '+') => return Ok((TokenKind::Increment, 2)),
-                ('<', '=') => return Ok((TokenKind::LessEqual, 2)),
-                ('*', '=') => return Ok((TokenKind::MulAssign, 2)),
-                ('!', '=') => return Ok((TokenKind::NotEqual, 2)),
-                ('|', '|') => return Ok((TokenKind::Or, 2)),
-                (':', ':') => return Ok((TokenKind::PathSeparator, 2)),
-                ('-', '=') => return Ok((TokenKind::SubAssign, 2)),
-                _ => {}
-            }
-        }
-
-        if !chars.is_empty() {
-            match chars[0] {
-                '+' => return Ok((TokenKind::Add, 1)),
-                '=' => return Ok((TokenKind::Assign, 1)),
-                '&' => return Ok((TokenKind::BinaryAnd, 1)),
-                '|' => return Ok((TokenKind::BinaryOr, 1)),
-                '^' => return Ok((TokenKind::BinaryXor, 1)),
-                ':' => return Ok((TokenKind::Colon, 1)),
-                ',' => return Ok((TokenKind::Comma, 1)),
-                '/' => return Ok((TokenKind::Div, 1)),
-                '.' => return Ok((TokenKind::Dot, 1)),
-                '!' => return Ok((TokenKind::Exclamation, 1)),
-                '>' => return Ok((TokenKind::Greater, 1)),
-                '[' => return Ok((TokenKind::LeftBracket, 1)),
-                '{' => return Ok((TokenKind::LeftCurly, 1)),
-                '(' => return Ok((TokenKind::LeftParen, 1)),
-                '<' => return Ok((TokenKind::Less, 1)),
-                '*' => return Ok((TokenKind::Mul, 1)),
-                '?' => return Ok((TokenKind::Question, 1)),
-                ']' => return Ok((TokenKind::RightBracket, 1)),
-                '}' => return Ok((TokenKind::RightCurly, 1)),
-                ')' => return Ok((TokenKind::RightParen, 1)),
-                ';' => return Ok((TokenKind::Semicolon, 1)),
-                '-' => return Ok((TokenKind::Sub, 1)),
-                _ => {}
-            }
-        }
-
-        Err(UnexpectedCharacter {
-            source: self.source.clone(),
-            range: self.position..self.position + 1,
-            char: chars[0],
-        }
-        .into())
-    }
-
-    /// Parses a number token at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), ret)]
-    fn number(&mut self) -> Token {
-        let start_index = self.position;
-
-        // Read the radix prefix, if any.
-        let radix = self.parse_radix_prefix();
-
-        let mut token_kind = TokenKind::Integer(radix);
-
-        // Attempt to parse any following groups, such as decimal point or float
-        // exponent.
-        match self.current_char_or_eof() {
-            '.' if self.at_offset_or_eof(1).is_ascii_digit() => {
-                self.next();
-
-                // Check for digits following the decimal point
-                if self.current_char_or_eof().is_ascii_digit() {
-                    self.consume_digits(radix);
-
-                    if matches!(self.current_char_or_eof(), 'e' | 'E') {
-                        self.next();
-                        self.consume_float_exponent();
-                    }
-                }
-
-                token_kind = TokenKind::Float;
-            }
-            'e' | 'E' => {
-                self.next();
-                self.consume_float_exponent();
-
-                token_kind = TokenKind::Float;
-            }
-            _ => {}
-        }
-
-        let end_index = self.position;
-        let number_str = self.content_slice(start_index, end_index).to_string();
-
-        let kind = match self.current_char_or_eof() {
-            '_' => {
-                self.next();
-
-                let kind = self.take_while(|c| c.is_ascii_alphanumeric());
-
-                Some(kind)
-            }
-            _ => None,
-        };
-
-        let mut token = Token::new(token_kind, number_str);
-        token.ty = kind;
-        token
-    }
-
-    /// Parses a radix prefix from the input stream.
-    ///
-    /// Radix prefixes are used to specify the base of a number literal, such
-    /// as:
-    ///   - Binary: `0b1010`
-    ///   - Octal: `0o755`
-    ///   - Hexadecimal: `0x1A`
-    ///
-    /// This method consumes characters from the token stream until it
-    /// encounters a non-digit character. If no radix prefix is found, the
-    /// method reads all base-10 digits.
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_radix_prefix(&mut self) -> u32 {
-        // Default to base-10.
-        let mut radix = 10;
-
-        if self.current_char_or_eof() == '0' {
-            self.next();
-
-            match self.current_char_or_eof() {
-                // Binary
-                'b' | 'B' => {
-                    radix = 2;
-                    self.next();
-                    self.consume_digits(radix);
-                }
-
-                // Octal
-                'o' | 'O' => {
-                    radix = 8;
-                    self.next();
-                    self.consume_digits(radix);
-                }
-
-                // Hexadecimal
-                'x' | 'X' => {
-                    radix = 16;
-                    self.next();
-                    self.consume_digits(radix);
-                }
-
-                // Decimal
-                '0'..='9' => self.consume_digits(radix),
-
-                // Otherwise, it's just a zero.
-                _ => {}
-            }
-        } else {
-            self.consume_digits(radix);
-        }
-
-        radix
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn consume_digits(&mut self, radix: u32) {
-        let mut last_numeric = self.position;
-
-        while let Some(c) = self.current_char() {
-            if !c.is_digit(radix) && c != '_' {
-                break;
-            }
-
-            self.next();
-
-            if c.is_digit(radix) {
-                last_numeric = self.position;
-            }
-        }
-
-        self.position = last_numeric;
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn consume_float_exponent(&mut self) {
-        if matches!(self.current_char_or_eof(), '-' | '+') {
-            self.next();
-        }
-
-        self.skip_while(|c| c.is_ascii_digit());
-    }
-
-    /// Parses a string token at the current cursor position.
-    #[tracing::instrument(level = "DEBUG", skip(self), err, ret)]
-    fn string(&mut self) -> Result<Token> {
-        let mut content = String::new();
-
-        // Consume the opening quote
-        self.consume();
-
-        loop {
-            let c = self.consume();
-            match c {
-                '"' => break,
-                '\0' => {
-                    return Err(MissingEndingQuote {
+    pub fn lex(&'source mut self) -> Result<Vec<Token<'source>>> {
+        let mut tokens = Vec::new();
+        let mut lexer = TokenKind::lexer(&self.source.content);
+
+        while let Some(kind) = lexer.next() {
+            let kind = match kind {
+                Ok(kind) => kind,
+                Err(LexerError::UnexpectedCharacter(c)) => {
+                    return Err(UnexpectedCharacter {
                         source: self.source.clone(),
-                        range: self.position..self.position + 1,
+                        range: lexer.span(),
+                        char: c,
                     }
                     .into());
                 }
-                _ => {}
-            }
+                Err(LexerError::MissingEndingQuote) => {
+                    return Err(MissingEndingQuote {
+                        source: self.source.clone(),
+                        range: lexer.span(),
+                    }
+                    .into());
+                }
+                Err(LexerError::Other) => unreachable!(),
+            };
 
-            content.push(c);
+            tokens.push(Token {
+                kind,
+                index: lexer.span(),
+            });
         }
 
-        Ok(Token::new(TokenKind::String, content))
+        let last_idx = self.source.content.len().saturating_sub(1);
+
+        tokens.push(Token {
+            kind: TokenKind::Eof,
+            index: last_idx.saturating_sub(1)..last_idx,
+        });
+
+        Ok(tokens)
     }
 }
 
@@ -1843,318 +857,299 @@ impl Lexer {
 mod tests {
     use super::*;
 
-    fn lexer(source: &str) -> Lexer {
-        let source = SourceFile::internal(source);
+    #[track_caller]
+    pub fn assert_lex<'src>(
+        source: &'src str,
+        tokens: &[(
+            std::result::Result<TokenKind, <TokenKind<'src> as Logos<'src>>::Error>,
+            &'src str,
+            Range<usize>,
+        )],
+    ) {
+        let mut lex = TokenKind::lexer(source);
 
-        Lexer::new(Arc::new(source))
-    }
-
-    fn lex_all(source: &str) -> Result<Vec<Token>> {
-        let mut tokens = Vec::new();
-        let mut lexer = lexer(source);
-
-        loop {
-            let token = lexer.next_token()?;
-            if token.kind == TokenKind::Eof {
-                break;
-            }
-
-            tokens.push(token);
+        for tuple in tokens {
+            assert_eq!(&(lex.next().expect("unexpected end"), lex.slice(), lex.span()), tuple);
         }
 
-        Ok(tokens)
-    }
-
-    fn token(kind: TokenKind, value: Option<String>, position: usize, end: usize) -> Token {
-        Token {
-            kind,
-            value,
-            index: position..end,
-            ty: None,
-        }
-    }
-
-    fn token_ty(kind: TokenKind, value: Option<String>, position: usize, end: usize, ty: &'static str) -> Token {
-        Token {
-            kind,
-            value,
-            index: position..end,
-            ty: Some(ty.to_string()),
-        }
-    }
-
-    macro_rules! assert_token {
-        (
-            $input: expr,
-            $kind: expr,
-            $value: expr,
-            $position: expr,
-            $end: expr
-        ) => {
-            let mut lexer = lexer($input);
-            let token = lexer.next_token().unwrap();
-
-            assert_eq!(token.kind, $kind);
-            assert_eq!(token.index, ($position as usize)..($end as usize));
-
-            if token.kind.has_value() && $value.is_some() {
-                let val: String = $value.unwrap().to_string();
-                assert_eq!(token.value, Some(val.to_string()));
-            }
-        };
-    }
-
-    macro_rules! assert_tokens {
-        (
-            $input: expr,
-            $(
-                $token: expr
-            ),+
-        ) => {
-            let expected = vec![$($token),+];
-
-            let mut lexer = lexer($input);
-
-            for exp in expected {
-                let token = lexer.next_token().unwrap();
-
-                assert_eq!(token.kind, exp.kind);
-
-                if token.kind.has_value() && exp.value.is_some() {
-                    let val: String = exp.value.unwrap().to_string();
-                    assert_eq!(token.value, Some(val.to_string()));
-                }
-
-                assert_eq!(token.index, exp.index);
-            }
-        };
+        assert_eq!(lex.next(), None);
     }
 
     #[test]
-    fn test_keywords_map() {
-        assert_token!("as", TokenKind::As, None::<String>, 0, 2);
-        assert_token!("break", TokenKind::Break, None::<String>, 0, 5);
-        assert_token!("builtin", TokenKind::Builtin, None::<String>, 0, 7);
-        assert_token!("continue", TokenKind::Continue, None::<String>, 0, 8);
-        assert_token!("external", TokenKind::External, None::<String>, 0, 8);
-        assert_token!("for", TokenKind::For, None::<String>, 0, 3);
-        assert_token!("fn", TokenKind::Fn, None::<String>, 0, 2);
-        assert_token!("if", TokenKind::If, None::<String>, 0, 2);
-        assert_token!("import", TokenKind::Import, None::<String>, 0, 6);
-        assert_token!("impl", TokenKind::Impl, None::<String>, 0, 4);
-        assert_token!("in", TokenKind::In, None::<String>, 0, 2);
-        assert_token!("is", TokenKind::Is, None::<String>, 0, 2);
-        assert_token!("loop", TokenKind::Loop, None::<String>, 0, 4);
-        assert_token!("namespace", TokenKind::Namespace, None::<String>, 0, 9);
-        assert_token!("self", TokenKind::SelfRef, None::<String>, 0, 4);
-        assert_token!("struct", TokenKind::Struct, None::<String>, 0, 6);
-        assert_token!("switch", TokenKind::Switch, None::<String>, 0, 6);
-        assert_token!("return", TokenKind::Return, None::<String>, 0, 6);
-        assert_token!("true", TokenKind::True, None::<String>, 0, 4);
-        assert_token!("false", TokenKind::False, None::<String>, 0, 5);
-        assert_token!("priv", TokenKind::Priv, None::<String>, 0, 4);
-        assert_token!("pub", TokenKind::Pub, None::<String>, 0, 3);
-        assert_token!("use", TokenKind::Use, None::<String>, 0, 3);
-        assert_token!("while", TokenKind::While, None::<String>, 0, 5);
+    fn test_keywords() {
+        assert_lex("as", &[(Ok(TokenKind::As), "as", 0..2)]);
+        assert_lex("break", &[(Ok(TokenKind::Break), "break", 0..5)]);
+        assert_lex("builtin", &[(Ok(TokenKind::Builtin), "builtin", 0..7)]);
+        assert_lex("continue", &[(Ok(TokenKind::Continue), "continue", 0..8)]);
+        assert_lex("external", &[(Ok(TokenKind::External), "external", 0..8)]);
+        assert_lex("for", &[(Ok(TokenKind::For), "for", 0..3)]);
+        assert_lex("fn", &[(Ok(TokenKind::Fn), "fn", 0..2)]);
+        assert_lex("if", &[(Ok(TokenKind::If), "if", 0..2)]);
+        assert_lex("import", &[(Ok(TokenKind::Import), "import", 0..6)]);
+        assert_lex("impl", &[(Ok(TokenKind::Impl), "impl", 0..4)]);
+        assert_lex("in", &[(Ok(TokenKind::In), "in", 0..2)]);
+        assert_lex("is", &[(Ok(TokenKind::Is), "is", 0..2)]);
+        assert_lex("loop", &[(Ok(TokenKind::Loop), "loop", 0..4)]);
+        assert_lex("namespace", &[(Ok(TokenKind::Namespace), "namespace", 0..9)]);
+        assert_lex("self", &[(Ok(TokenKind::SelfRef), "self", 0..4)]);
+        assert_lex("struct", &[(Ok(TokenKind::Struct), "struct", 0..6)]);
+        assert_lex("switch", &[(Ok(TokenKind::Switch), "switch", 0..6)]);
+        assert_lex("return", &[(Ok(TokenKind::Return), "return", 0..6)]);
+        assert_lex("true", &[(Ok(TokenKind::True), "true", 0..4)]);
+        assert_lex("false", &[(Ok(TokenKind::False), "false", 0..5)]);
+        assert_lex("priv", &[(Ok(TokenKind::Priv), "priv", 0..4)]);
+        assert_lex("pub", &[(Ok(TokenKind::Pub), "pub", 0..3)]);
+        assert_lex("use", &[(Ok(TokenKind::Use), "use", 0..3)]);
+        assert_lex("while", &[(Ok(TokenKind::While), "while", 0..5)]);
     }
 
     #[test]
     fn test_symbols_map() {
-        assert_token!("...", TokenKind::DotDotDot, Some("..."), 0, 3);
+        assert_lex("...", &[(Ok(TokenKind::DotDotDot), "...", 0..3)]);
 
-        assert_token!("+=", TokenKind::AddAssign, Some("+="), 0, 2);
-        assert_token!("&&", TokenKind::And, Some("&&"), 0, 2);
-        assert_token!("->", TokenKind::Arrow, Some("->"), 0, 2);
-        assert_token!("=>", TokenKind::ArrowBig, Some("=>"), 0, 2);
-        assert_token!("==", TokenKind::Equal, Some("=="), 0, 2);
-        assert_token!("--", TokenKind::Decrement, Some("--"), 0, 2);
-        assert_token!("..", TokenKind::DotDot, Some(".."), 0, 2);
-        assert_token!("/=", TokenKind::DivAssign, Some("/="), 0, 2);
-        assert_token!(">=", TokenKind::GreaterEqual, Some(">="), 0, 2);
-        assert_token!("++", TokenKind::Increment, Some("++"), 0, 2);
-        assert_token!("<=", TokenKind::LessEqual, Some("<="), 0, 2);
-        assert_token!("*=", TokenKind::MulAssign, Some("*="), 0, 2);
-        assert_token!("!=", TokenKind::NotEqual, Some("!="), 0, 2);
-        assert_token!("||", TokenKind::Or, Some("||"), 0, 2);
-        assert_token!("::", TokenKind::PathSeparator, Some("::"), 0, 2);
-        assert_token!("-=", TokenKind::SubAssign, Some("-="), 0, 2);
+        assert_lex("+=", &[(Ok(TokenKind::AddAssign), "+=", 0..2)]);
+        assert_lex("&&", &[(Ok(TokenKind::And), "&&", 0..2)]);
+        assert_lex("->", &[(Ok(TokenKind::Arrow), "->", 0..2)]);
+        assert_lex("=>", &[(Ok(TokenKind::ArrowBig), "=>", 0..2)]);
+        assert_lex("==", &[(Ok(TokenKind::Equal), "==", 0..2)]);
+        assert_lex("--", &[(Ok(TokenKind::Decrement), "--", 0..2)]);
+        assert_lex("..", &[(Ok(TokenKind::DotDot), "..", 0..2)]);
+        assert_lex("/=", &[(Ok(TokenKind::DivAssign), "/=", 0..2)]);
+        assert_lex(">=", &[(Ok(TokenKind::GreaterEqual), ">=", 0..2)]);
+        assert_lex("++", &[(Ok(TokenKind::Increment), "++", 0..2)]);
+        assert_lex("<=", &[(Ok(TokenKind::LessEqual), "<=", 0..2)]);
+        assert_lex("*=", &[(Ok(TokenKind::MulAssign), "*=", 0..2)]);
+        assert_lex("!=", &[(Ok(TokenKind::NotEqual), "!=", 0..2)]);
+        assert_lex("||", &[(Ok(TokenKind::Or), "||", 0..2)]);
+        assert_lex("::", &[(Ok(TokenKind::PathSeparator), "::", 0..2)]);
+        assert_lex("-=", &[(Ok(TokenKind::SubAssign), "-=", 0..2)]);
 
-        assert_token!("&", TokenKind::BinaryAnd, Some("&"), 0, 1);
-        assert_token!("|", TokenKind::BinaryOr, Some("|"), 0, 1);
-        assert_token!("^", TokenKind::BinaryXor, Some("^"), 0, 1);
-        assert_token!("=", TokenKind::Assign, Some("="), 0, 1);
-        assert_token!(":", TokenKind::Colon, Some(":"), 0, 1);
-        assert_token!(",", TokenKind::Comma, Some(","), 0, 1);
-        assert_token!("/", TokenKind::Div, Some("/"), 0, 1);
-        assert_token!(".", TokenKind::Dot, Some("."), 0, 1);
-        assert_token!("!", TokenKind::Exclamation, Some("!"), 0, 1);
-        assert_token!(">", TokenKind::Greater, Some(">"), 0, 1);
-        assert_token!("[", TokenKind::LeftBracket, Some("["), 0, 1);
-        assert_token!("{", TokenKind::LeftCurly, Some("{"), 0, 1);
-        assert_token!("(", TokenKind::LeftParen, Some("("), 0, 1);
-        assert_token!("<", TokenKind::Less, Some("<"), 0, 1);
-        assert_token!("*", TokenKind::Mul, Some("*"), 0, 1);
-        assert_token!("]", TokenKind::RightBracket, Some("]"), 0, 1);
-        assert_token!("}", TokenKind::RightCurly, Some("}"), 0, 1);
-        assert_token!(")", TokenKind::RightParen, Some(")"), 0, 1);
-        assert_token!(";", TokenKind::Semicolon, Some(";"), 0, 1);
-        assert_token!("-", TokenKind::Sub, Some("-"), 0, 1);
+        assert_lex("&", &[(Ok(TokenKind::BinaryAnd), "&", 0..1)]);
+        assert_lex("|", &[(Ok(TokenKind::BinaryOr), "|", 0..1)]);
+        assert_lex("^", &[(Ok(TokenKind::BinaryXor), "^", 0..1)]);
+        assert_lex("=", &[(Ok(TokenKind::Assign), "=", 0..1)]);
+        assert_lex(":", &[(Ok(TokenKind::Colon), ":", 0..1)]);
+        assert_lex(",", &[(Ok(TokenKind::Comma), ",", 0..1)]);
+        assert_lex("/", &[(Ok(TokenKind::Div), "/", 0..1)]);
+        assert_lex(".", &[(Ok(TokenKind::Dot), ".", 0..1)]);
+        assert_lex("!", &[(Ok(TokenKind::Exclamation), "!", 0..1)]);
+        assert_lex(">", &[(Ok(TokenKind::Greater), ">", 0..1)]);
+        assert_lex("[", &[(Ok(TokenKind::LeftBracket), "[", 0..1)]);
+        assert_lex("{", &[(Ok(TokenKind::LeftCurly), "{", 0..1)]);
+        assert_lex("(", &[(Ok(TokenKind::LeftParen), "(", 0..1)]);
+        assert_lex("<", &[(Ok(TokenKind::Less), "<", 0..1)]);
+        assert_lex("*", &[(Ok(TokenKind::Mul), "*", 0..1)]);
+        assert_lex("]", &[(Ok(TokenKind::RightBracket), "]", 0..1)]);
+        assert_lex("}", &[(Ok(TokenKind::RightCurly), "}", 0..1)]);
+        assert_lex(")", &[(Ok(TokenKind::RightParen), ")", 0..1)]);
+        assert_lex(";", &[(Ok(TokenKind::Semicolon), ";", 0..1)]);
+        assert_lex("-", &[(Ok(TokenKind::Sub), "-", 0..1)]);
     }
 
     #[test]
     fn test_parenthesis() {
-        assert_tokens!(
-            "()",
-            token(TokenKind::LeftParen, None, 0, 1),
-            token(TokenKind::RightParen, None, 1, 2)
-        );
+        assert_lex("()", &[
+            (Ok(TokenKind::LeftParen), "(", 0..1),
+            (Ok(TokenKind::RightParen), ")", 1..2),
+        ]);
     }
 
     #[test]
     fn test_brackets() {
-        assert_tokens!(
-            "[]",
-            token(TokenKind::LeftBracket, None, 0, 1),
-            token(TokenKind::RightBracket, None, 1, 2)
-        );
+        assert_lex("[]", &[
+            (Ok(TokenKind::LeftBracket), "[", 0..1),
+            (Ok(TokenKind::RightBracket), "]", 1..2),
+        ]);
     }
 
     #[test]
     fn test_curly_braces() {
-        assert_tokens!(
-            "{}",
-            token(TokenKind::LeftCurly, None, 0, 1),
-            token(TokenKind::RightCurly, None, 1, 2)
-        );
+        assert_lex("{}", &[
+            (Ok(TokenKind::LeftCurly), "{", 0..1),
+            (Ok(TokenKind::RightCurly), "}", 1..2),
+        ]);
     }
 
     #[test]
     fn test_comment() {
-        assert_token!("//", TokenKind::Comment, Some(""), 0, 2);
-        assert_token!("///", TokenKind::DocComment, Some(""), 0, 3);
-        assert_token!("// testing", TokenKind::Comment, Some("testing"), 0, 10);
-        assert_token!("/// testing", TokenKind::DocComment, Some("testing"), 0, 11);
+        assert_lex("//", &[(Ok(TokenKind::Comment("//")), "//", 0..2)]);
+        assert_lex("///", &[(Ok(TokenKind::DocComment("///")), "///", 0..3)]);
 
-        assert_tokens!(
+        assert_lex("// testing", &[(
+            Ok(TokenKind::Comment("// testing")),
+            "// testing",
+            0..10,
+        )]);
+
+        assert_lex("/// testing", &[(
+            Ok(TokenKind::DocComment("/// testing")),
+            "/// testing",
+            0..11,
+        )]);
+
+        assert_lex(
             "// comment 1
             // comment 2",
-            token(TokenKind::Comment, Some("comment 1\ncomment 2".into()), 0, 37)
+            &[
+                (Ok(TokenKind::Comment("// comment 1")), "// comment 1", 0..12),
+                (Ok(TokenKind::Comment("// comment 2")), "// comment 2", 25..37),
+            ],
         );
 
-        assert_tokens!(
+        assert_lex(
             "// comment 1
             //
             // comment 2",
-            token(TokenKind::Comment, Some("comment 1\n\ncomment 2".into()), 0, 52)
+            &[
+                (Ok(TokenKind::Comment("// comment 1")), "// comment 1", 0..12),
+                (Ok(TokenKind::Comment("//")), "//", 25..27),
+                (Ok(TokenKind::Comment("// comment 2")), "// comment 2", 40..52),
+            ],
         );
 
-        assert_tokens!(
+        assert_lex(
             "/// comment 1
             /// comment 2",
-            token(TokenKind::DocComment, Some("comment 1\ncomment 2".into()), 0, 39)
+            &[
+                (Ok(TokenKind::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenKind::DocComment("/// comment 2")), "/// comment 2", 26..39),
+            ],
         );
 
-        assert_tokens!(
+        assert_lex(
             "/// comment 1
             ///
             /// comment 2",
-            token(TokenKind::DocComment, Some("comment 1\n\ncomment 2".into()), 0, 55)
+            &[
+                (Ok(TokenKind::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenKind::DocComment("///")), "///", 26..29),
+                (Ok(TokenKind::DocComment("/// comment 2")), "/// comment 2", 42..55),
+            ],
         );
 
-        assert_tokens!(
+        assert_lex(
             "/// comment 1
             // comment 2",
-            token(TokenKind::DocComment, Some("comment 1".into()), 0, 13),
-            token(TokenKind::Comment, Some("comment 2".into()), 26, 38)
+            &[
+                (Ok(TokenKind::DocComment("/// comment 1")), "/// comment 1", 0..13),
+                (Ok(TokenKind::Comment("// comment 2")), "// comment 2", 26..38),
+            ],
         );
 
-        assert_tokens!(
+        assert_lex("// comment 1  ", &[(
+            Ok(TokenKind::Comment("// comment 1  ")),
             "// comment 1  ",
-            token(TokenKind::Comment, Some("comment 1".into()), 0, 14)
-        );
+            0..14,
+        )]);
 
-        assert_tokens!(
+        assert_lex("/// comment 1  ", &[(
+            Ok(TokenKind::DocComment("/// comment 1  ")),
             "/// comment 1  ",
-            token(TokenKind::DocComment, Some("comment 1".into()), 0, 15)
-        );
+            0..15,
+        )]);
     }
 
     #[test]
     fn test_identifier() {
-        assert_token!("foo", TokenKind::Identifier, Some("foo"), 0, 3);
-        assert_token!("FOO", TokenKind::Identifier, Some("FOO"), 0, 3);
-        assert_token!("_LUME", TokenKind::Identifier, Some("_LUME"), 0, 5);
-        assert_token!("__LUME__", TokenKind::Identifier, Some("__LUME__"), 0, 8);
-        assert_token!("_", TokenKind::Identifier, Some("_"), 0, 1);
-        assert_token!("_1", TokenKind::Identifier, Some("_1"), 0, 2);
-        assert_token!("_test1", TokenKind::Identifier, Some("_test1"), 0, 6);
+        assert_lex("foo", &[(Ok(TokenKind::Identifier("foo")), "foo", 0..3)]);
+        assert_lex("FOO", &[(Ok(TokenKind::Identifier("FOO")), "FOO", 0..3)]);
+        assert_lex("_LUME", &[(Ok(TokenKind::Identifier("_LUME")), "_LUME", 0..5)]);
+        assert_lex("__LUME__", &[(Ok(TokenKind::Identifier("__LUME__")), "__LUME__", 0..8)]);
+        assert_lex("_", &[(Ok(TokenKind::Identifier("_")), "_", 0..1)]);
+        assert_lex("_1", &[(Ok(TokenKind::Identifier("_1")), "_1", 0..2)]);
+        assert_lex("_test1", &[(Ok(TokenKind::Identifier("_test1")), "_test1", 0..6)]);
     }
 
     #[test]
     fn test_number() {
-        assert_token!("1", TokenKind::Integer(10), Some("1"), 0, 1);
-        assert_token!("10", TokenKind::Integer(10), Some("10"), 0, 2);
-        assert_token!("0b01", TokenKind::Integer(2), Some("0b01"), 0, 4);
-        assert_token!("0B01", TokenKind::Integer(2), Some("0B01"), 0, 4);
-        assert_token!("0x01", TokenKind::Integer(16), Some("0x01"), 0, 4);
-        assert_token!("0X01", TokenKind::Integer(16), Some("0X01"), 0, 4);
-        assert_token!("0o01", TokenKind::Integer(8), Some("0o01"), 0, 4);
-        assert_token!("0O01", TokenKind::Integer(8), Some("0O01"), 0, 4);
-        assert_token!("0", TokenKind::Integer(10), Some("0"), 0, 1);
-        assert_token!("0000", TokenKind::Integer(10), Some("0000"), 0, 4);
-        assert_token!("10.0", TokenKind::Float, Some("10.0"), 0, 4);
-        assert_token!("10.123", TokenKind::Float, Some("10.123"), 0, 6);
-        assert_token!("0_0", TokenKind::Integer(10), Some("0_0"), 0, 3);
-        assert_token!("00_00", TokenKind::Integer(10), Some("00_00"), 0, 5);
-        assert_token!("1_000_000", TokenKind::Integer(10), Some("1_000_000"), 0, 9);
+        assert_lex("0 0000", &[
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "0", 0..1),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "0000", 2..6),
+        ]);
 
-        assert_tokens!(
-            "-1",
-            token(TokenKind::Sub, None, 0, 1),
-            token(TokenKind::Integer(10), Some("1".into()), 1, 2)
-        );
+        assert_lex("0b01 0B01 0d01 0D01 0x01 0X01 0o01 0O01", &[
+            (Ok(TokenKind::Integer((Radix::Binary, None))), "0b01", 0..4),
+            (Ok(TokenKind::Integer((Radix::Binary, None))), "0B01", 5..9),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "0d01", 10..14),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "0D01", 15..19),
+            (Ok(TokenKind::Integer((Radix::Hexadecimal, None))), "0x01", 20..24),
+            (Ok(TokenKind::Integer((Radix::Hexadecimal, None))), "0X01", 25..29),
+            (Ok(TokenKind::Integer((Radix::Octal, None))), "0o01", 30..34),
+            (Ok(TokenKind::Integer((Radix::Octal, None))), "0O01", 35..39),
+        ]);
 
-        assert_tokens!("10e5", token(TokenKind::Float, Some("10e5".into()), 0, 4));
-        assert_tokens!("10E5", token(TokenKind::Float, Some("10E5".into()), 0, 4));
-        assert_tokens!("1.0e5", token(TokenKind::Float, Some("1.0e5".into()), 0, 5));
-        assert_tokens!("1.0E5", token(TokenKind::Float, Some("1.0E5".into()), 0, 5));
+        assert_lex("10.0 10.123", &[
+            (Ok(TokenKind::Float(None)), "10.0", 0..4),
+            (Ok(TokenKind::Float(None)), "10.123", 5..11),
+        ]);
 
-        assert_tokens!("1_u32", token_ty(TokenKind::Integer(10), Some("1".into()), 0, 5, "u32"));
-        assert_tokens!("1_f32", token_ty(TokenKind::Integer(10), Some("1".into()), 0, 5, "f32"));
-        assert_tokens!("1.1_f64", token_ty(TokenKind::Float, Some("1.1".into()), 0, 7, "f64"));
+        assert_lex("0_0 00_00 1_000_000", &[
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "0_0", 0..3),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "00_00", 4..9),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "1_000_000", 10..19),
+        ]);
 
-        assert_tokens!(
-            "0x0_u64",
-            token_ty(TokenKind::Integer(16), Some("0x0".into()), 0, 7, "u64")
-        );
+        assert_lex("-1", &[
+            (Ok(TokenKind::Sub), "-", 0..1),
+            (Ok(TokenKind::Integer((Radix::Decimal, None))), "1", 1..2),
+        ]);
 
-        assert_tokens!(
-            "1_000_u32",
-            token_ty(TokenKind::Integer(10), Some("1_000".into()), 0, 9, "u32")
-        );
+        assert_lex("10e5 10E5 1.0e5 1.0E5", &[
+            (Ok(TokenKind::Float(None)), "10e5", 0..4),
+            (Ok(TokenKind::Float(None)), "10E5", 5..9),
+            (Ok(TokenKind::Float(None)), "1.0e5", 10..15),
+            (Ok(TokenKind::Float(None)), "1.0E5", 16..21),
+        ]);
 
-        assert_tokens!(
-            "0xDEAD_BEEF_u32",
-            token_ty(TokenKind::Integer(16), Some("0xDEAD_BEEF".into()), 0, 15, "u32")
-        );
+        assert_lex("1_u32 1_f32 1.1_f64 0x0_u64 1_000_u32 0xDEAD_BEEF_u32", &[
+            (
+                Ok(TokenKind::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
+                "1_u32",
+                0..5,
+            ),
+            (Ok(TokenKind::Float(Some(FloatKind::F32))), "1_f32", 6..11),
+            (Ok(TokenKind::Float(Some(FloatKind::F64))), "1.1_f64", 12..19),
+            (
+                Ok(TokenKind::Integer((Radix::Hexadecimal, Some(IntegerKind::U64)))),
+                "0x0_u64",
+                20..27,
+            ),
+            (
+                Ok(TokenKind::Integer((Radix::Decimal, Some(IntegerKind::U32)))),
+                "1_000_u32",
+                28..37,
+            ),
+            (
+                Ok(TokenKind::Integer((Radix::Hexadecimal, Some(IntegerKind::U32)))),
+                "0xDEAD_BEEF_u32",
+                38..53,
+            ),
+        ]);
     }
 
     #[test]
     fn test_string() {
-        assert_token!("\"\"", TokenKind::String, Some(""), 0, 2);
-        assert_token!("\"    \"", TokenKind::String, Some("    "), 0, 6);
-        assert_token!("\"hello world\"", TokenKind::String, Some("hello world"), 0, 13);
-        assert_token!("\"hello\nworld\"", TokenKind::String, Some("hello\nworld"), 0, 13);
+        assert_lex("\"\"", &[(Ok(TokenKind::String("")), "\"\"", 0..2)]);
+        assert_lex("\"    \"", &[(Ok(TokenKind::String("    ")), "\"    \"", 0..6)]);
 
-        lex_all("\"hello world")
-            .inspect_err(|err| {
-                assert_eq!(&err.message(), "expected ending quote");
-            })
-            .unwrap_err();
-    }
+        assert_lex("\"hello world\"", &[(
+            Ok(TokenKind::String("hello world")),
+            "\"hello world\"",
+            0..13,
+        )]);
 
-    #[test]
-    fn test_fuzz() {
-        lex_all("1_1_").unwrap();
+        assert_lex("\"hello\nworld\"", &[(
+            Ok(TokenKind::String("hello\nworld")),
+            "\"hello\nworld\"",
+            0..13,
+        )]);
+
+        assert_lex("\"", &[(Err(LexerError::MissingEndingQuote), "\"", 0..1)]);
+
+        assert_lex("\"hello world", &[(
+            Err(LexerError::MissingEndingQuote),
+            "\"hello world",
+            0..12,
+        )]);
     }
 }
