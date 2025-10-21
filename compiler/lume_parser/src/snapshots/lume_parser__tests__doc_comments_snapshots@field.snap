@@ -6,13 +6,11 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
     TypeDefinition(
         Struct(
             StructDefinition {
-                visibility: Private(
-                    Private {
-                        location: Location(
-                            0..0,
-                        ),
-                    },
-                ),
+                visibility: Private {
+                    location: Location(
+                        0..0,
+                    ),
+                },
                 name: Identifier {
                     name: "Foo",
                     location: Location(
@@ -22,13 +20,11 @@ expression: "parse(\"struct Foo {\n            /// This is a doc comment\n      
                 builtin: false,
                 fields: [
                     Field {
-                        visibility: Public(
-                            Public {
-                                location: Location(
-                                    63..66,
-                                ),
-                            },
-                        ),
+                        visibility: Public {
+                            location: Location(
+                                63..66,
+                            ),
+                        },
                         name: Identifier {
                             name: "bar",
                             location: Location(

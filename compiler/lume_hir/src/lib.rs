@@ -701,6 +701,7 @@ pub enum Visibility {
     // Order matters here, since `Ord` and `PartialOrd` determines
     // the order of enums by the order of their variants!
     Private,
+    Internal,
     Public,
 }
 
@@ -708,6 +709,7 @@ impl std::fmt::Display for Visibility {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Public => write!(f, "pub"),
+            Self::Internal => write!(f, "pub(internal)"),
             Self::Private => write!(f, "priv"),
         }
     }

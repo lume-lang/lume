@@ -5,13 +5,11 @@ expression: "parse(\"pub fn foo {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Public(
-                Public {
-                    location: Location(
-                        0..3,
-                    ),
-                },
-            ),
+            visibility: Public {
+                location: Location(
+                    0..3,
+                ),
+            },
             external: false,
             name: Identifier {
                 name: "foo",

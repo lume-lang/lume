@@ -246,15 +246,30 @@ impl Parser<'_> {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_visibility(&mut self) -> Result<Visibility> {
         match self.token().kind {
-            TokenKind::Pub => Ok(Visibility::Public(Box::new(Public {
-                location: self.consume(TokenType::Pub)?.index.into(),
-            }))),
-            TokenKind::Priv => Ok(Visibility::Private(Box::new(Private {
+            TokenKind::Pub => {
+                let token = self.consume(TokenType::Pub)?;
+
+                if self.check(TokenType::LeftParen) {
+                    self.consume(TokenType::Internal)?;
+
+                    let start = token.start();
+                    let end = self.consume(TokenType::RightParen)?.end();
+
+                    return Ok(Visibility::Internal {
+                        location: (start..end).into(),
+                    });
+                }
+
+                Ok(Visibility::Public {
+                    location: token.index.into(),
+                })
+            }
+            TokenKind::Priv => Ok(Visibility::Private {
                 location: self.consume(TokenType::Priv)?.index.into(),
-            }))),
-            _ => Ok(Visibility::Private(Box::new(Private {
+            }),
+            _ => Ok(Visibility::Private {
                 location: (self.position..self.position).into(),
-            }))),
+            }),
         }
     }
 

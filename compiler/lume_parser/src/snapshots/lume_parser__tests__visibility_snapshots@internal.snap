@@ -1,20 +1,20 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"priv fn foo {}\")"
+expression: "parse(\"pub(internal) fn foo {}\")"
 ---
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
+            visibility: Internal {
                 location: Location(
-                    0..4,
+                    0..13,
                 ),
             },
             external: false,
             name: Identifier {
                 name: "foo",
                 location: Location(
-                    8..11,
+                    17..20,
                 ),
             },
             parameters: [],
@@ -23,11 +23,11 @@ expression: "parse(\"priv fn foo {}\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    12..14,
+                    21..23,
                 ),
             },
             location: Location(
-                0..14,
+                0..23,
             ),
             documentation: None,
         },

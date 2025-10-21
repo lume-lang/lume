@@ -483,16 +483,16 @@ node_location!(Parameter);
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Visibility {
-    Public(Box<Public>),
-    Private(Box<Private>),
+    Public { location: Location },
+    Internal { location: Location },
+    Private { location: Location },
 }
 
 impl Node for Visibility {
     #[inline]
     fn location(&self) -> &Location {
         match self {
-            Self::Public(e) => &e.location,
-            Self::Private(e) => &e.location,
+            Self::Public { location } | Self::Internal { location } | Self::Private { location } => location,
         }
     }
 }
@@ -503,6 +503,13 @@ pub struct Public {
 }
 
 node_location!(Public);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PublicInternal {
+    pub location: Location,
+}
+
+node_location!(PublicInternal);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Private {

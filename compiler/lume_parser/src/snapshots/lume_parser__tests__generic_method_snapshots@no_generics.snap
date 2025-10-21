@@ -29,13 +29,11 @@ expression: "parse(\"impl Test { fn test() -> void {} }\")"
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private(
-                        Private {
-                            location: Location(
-                                12..12,
-                            ),
-                        },
-                    ),
+                    visibility: Private {
+                        location: Location(
+                            12..12,
+                        ),
+                    },
                     external: false,
                     name: Identifier {
                         name: "test",
