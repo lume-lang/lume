@@ -1492,6 +1492,7 @@ dependencies = [
  "indexmap",
  "insta",
  "levenshtein",
+ "lume_architect",
  "lume_errors",
  "lume_errors_test",
  "lume_hir",

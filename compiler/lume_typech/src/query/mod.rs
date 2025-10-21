@@ -1,6 +1,8 @@
 pub(crate) mod diagnostics;
 
 use error_snippet::Result;
+use lume_architect::cached_query;
+use lume_hir::{Node, Visibility};
 pub use lume_infer::query::Callable;
 use lume_span::NodeId;
 use lume_types::{Function, Method, TypeRef};
@@ -471,5 +473,98 @@ impl TyCheckCtx {
         }
 
         Ok(expected_type)
+    }
+
+    /// Determines whether the given node is visible outside it's owning
+    /// package.
+    ///
+    /// If no node with the given ID is found or if the node cannot hold
+    /// a visibility modifier, returns `false`.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
+        self.visibility_of(id)
+            .map(|vis| vis == Visibility::Public)
+            .unwrap_or(false)
+    }
+
+    /// Determines whether the node `a` can "see" node `b`, with regard to
+    /// the visibility rules of `b`.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_visible_to(&self, a: NodeId, b: NodeId) -> Result<bool> {
+        // Since trait methods cannot have visibilities, we have them separately here.
+        if let Some(Node::TraitMethodImpl(method_impl)) = self.hir_node(b) {
+            let trait_def = self.hir_trait_def_of_method_impl(method_impl)?;
+
+            return self.is_visible_to(a, trait_def.id);
+        }
+
+        if let Some(Node::TraitMethodDef(method_def)) = self.hir_node(b) {
+            let trait_id = self.hir_parent_of(method_def.id).expect("expected trait def parent");
+            let trait_def = self.hir_expect_trait(trait_id);
+
+            return self.is_visible_to(a, trait_def.id);
+        }
+
+        let Some(b_vis) = self.visibility_of(b) else {
+            return Err(diagnostics::CannotHoldVisibility {
+                source: self.hir_span_of_node(b),
+            }
+            .into());
+        };
+
+        match b_vis {
+            // Public items are always visible
+            Visibility::Public => return Ok(true),
+
+            // Internal items are visible to everything within the same package
+            Visibility::Internal => return Ok(a.package == b.package),
+
+            Visibility::Private => match self.hir_expect_node(b) {
+                Node::Function(_) | Node::Type(_) => Ok(self.is_same_source(a, b)),
+
+                Node::Field(field) => {
+                    let struct_def = self.owning_struct_of_field(field.id)?;
+
+                    // If the struct itself isn't visible, the field visibility won't matter.
+                    if !self.is_visible_to(a, struct_def.id)? {
+                        return Ok(false);
+                    }
+
+                    let Some(parent_type) = self.parent_type_of(a)? else {
+                        return Ok(false);
+                    };
+
+                    Ok(struct_def.id == parent_type.instance_of)
+                }
+
+                Node::Method(method_def) => {
+                    let impl_type = self.impl_type_of_method(method_def.id)?;
+
+                    if let Some(parent_type) = self.parent_type_of(a)? {
+                        return self.check_type_compatibility(&parent_type, &impl_type);
+                    };
+
+                    Ok(false)
+                }
+
+                Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) => unreachable!("handled in start of method"),
+
+                Node::TraitImpl(_) | Node::Impl(_) | Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => {
+                    return Err(diagnostics::CannotHoldVisibility {
+                        source: self.hir_span_of_node(b),
+                    }
+                    .into());
+                }
+            },
+        }
+    }
+
+    /// Determines whether the nodes `a` and `b` share the same source file.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_same_source(&self, a: NodeId, b: NodeId) -> bool {
+        self.hir_span_of_node(a).file.id == self.hir_span_of_node(b).file.id
     }
 }

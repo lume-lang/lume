@@ -1061,17 +1061,4 @@ impl TyInferCtx {
             Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => None,
         }
     }
-
-    /// Determines whether the given node is visible outside it's owning
-    /// package.
-    ///
-    /// If no node with the given ID is found or if the node cannot hold
-    /// a visibility modifier, returns `false`.
-    #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
-        self.visibility_of(id)
-            .map(|vis| vis == Visibility::Public)
-            .unwrap_or(false)
-    }
 }
