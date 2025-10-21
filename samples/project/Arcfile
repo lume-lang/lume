@@ -1,9 +1,8 @@
-Package "sample" {
-    version = "1.0.0"
-    lume_version = "^0"
-    description = "A sample Lume project using Arc"
-    license = "MIT"
-    repository = "https://github.com/lume-lang/lume"
+[package]
+name = "sample"
+version = "1.0.0"
+lume_version = "^0"
 
-    dependencies = []
-}
+license = "MIT"
+description = "A sample Lume project using Arc"
+repository = "https://github.com/lume-lang/lume"
