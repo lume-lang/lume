@@ -35,5 +35,5 @@ namespace std::ops
 /// ```
 trait Cast<T> {
     /// Convert the input instance into a new instance of [`T`].
-    pub fn cast(self) -> T;
+    fn cast(self) -> T;
 }
