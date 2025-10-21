@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_architect::cached_query;
-use lume_hir::{CallExpression, Identifier, Node, Path};
+use lume_hir::{CallExpression, Identifier, Node, Path, Visibility};
 use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
 
@@ -1040,5 +1040,38 @@ impl TyInferCtx {
             lume_hir::LiteralKind::Float(lit) => lit.kind.is_none(),
             _ => false,
         }
+    }
+
+    /// Gets the visibility of the given node, if one can be applied to it.
+    ///
+    /// If the type of node cannot have a visibility modifier, returns [`None`].
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn visibility_of(&self, id: NodeId) -> Option<Visibility> {
+        match self.hir_node(id)? {
+            Node::Function(n) => Some(n.visibility),
+            Node::Type(def) => match def {
+                lume_hir::TypeDefinition::Enum(n) => Some(n.visibility),
+                lume_hir::TypeDefinition::Struct(n) => Some(n.visibility),
+                lume_hir::TypeDefinition::Trait(n) => Some(n.visibility),
+            },
+            Node::TraitImpl(_) | Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) | Node::Impl(_) => None,
+            Node::Field(n) => Some(n.visibility),
+            Node::Method(n) => Some(n.visibility),
+            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => None,
+        }
+    }
+
+    /// Determines whether the given node is visible outside it's owning
+    /// package.
+    ///
+    /// If no node with the given ID is found or if the node cannot hold
+    /// a visibility modifier, returns `false`.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
+        self.visibility_of(id)
+            .map(|vis| vis == Visibility::Public)
+            .unwrap_or(false)
     }
 }

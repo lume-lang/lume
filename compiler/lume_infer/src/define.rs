@@ -290,7 +290,7 @@ impl TyInferCtx {
                 method.id,
                 type_ref.clone(),
                 qualified_name,
-                method.visibility,
+                None,
                 lume_types::MethodKind::TraitDefinition,
             );
         }
@@ -316,13 +316,9 @@ impl TyInferCtx {
                 lume_types::MethodKind::Implementation
             };
 
-            let method_id = self.tdb_mut().method_alloc(
-                method.id,
-                type_ref.clone(),
-                qualified_name,
-                method.visibility,
-                method_kind,
-            );
+            let method_id = self
+                .tdb_mut()
+                .method_alloc(method.id, type_ref.clone(), qualified_name, None, method_kind);
 
             let trait_use_ty = self.tdb_mut().use_mut(trait_impl.id).unwrap();
             trait_use_ty.methods.push(method_id);
@@ -475,7 +471,7 @@ impl TyInferCtx {
                 method.id,
                 type_ref.clone(),
                 qualified_name,
-                method.visibility,
+                Some(method.visibility),
                 method_kind,
             );
 

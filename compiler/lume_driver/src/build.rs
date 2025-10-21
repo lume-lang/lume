@@ -113,7 +113,7 @@ pub struct CompiledPackage<'a> {
 }
 
 fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
-    PackageMetadata::create(pkg.package, pkg.tcx.hir())
+    PackageMetadata::create(pkg.package, &pkg.tcx)
 }
 
 impl<'a> Compiler<'a> {
