@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self + other; } }\")"
+expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + other; } }\")"
 ---
 [
     TypeDefinition(
@@ -22,17 +22,10 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                 type_parameters: [],
                 methods: [
                     TraitMethodDefinition {
-                        visibility: Public(
-                            Public {
-                                location: Location(
-                                    12..15,
-                                ),
-                            },
-                        ),
                         name: Identifier {
                             name: "add",
                             location: Location(
-                                19..22,
+                                14..17,
                             ),
                         },
                         parameters: [
@@ -40,7 +33,7 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                 name: Identifier {
                                     name: "other",
                                     location: Location(
-                                        23..28,
+                                        18..23,
                                     ),
                                 },
                                 param_type: Named(
@@ -51,23 +44,23 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                                 name: Identifier {
                                                     name: "Int32",
                                                     location: Location(
-                                                        30..35,
+                                                        25..30,
                                                     ),
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    30..35,
+                                                    25..30,
                                                 ),
                                             },
                                             location: Location(
-                                                30..35,
+                                                25..30,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    23..35,
+                                    18..30,
                                 ),
                             },
                         ],
@@ -81,16 +74,16 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
-                                                    40..45,
+                                                    35..40,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                40..45,
+                                                35..40,
                                             ),
                                         },
                                         location: Location(
-                                            40..45,
+                                            35..40,
                                         ),
                                     },
                                 },
@@ -109,7 +102,7 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                                                 name: Identifier {
                                                                     name: "self",
                                                                     location: Location(
-                                                                        55..59,
+                                                                        50..54,
                                                                     ),
                                                                 },
                                                             },
@@ -120,16 +113,16 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                                                 name: Identifier {
                                                                     name: "+",
                                                                     location: Location(
-                                                                        60..61,
+                                                                        55..56,
                                                                     ),
                                                                 },
                                                                 type_arguments: [],
                                                                 location: Location(
-                                                                    60..61,
+                                                                    55..56,
                                                                 ),
                                                             },
                                                             location: Location(
-                                                                60..61,
+                                                                55..56,
                                                             ),
                                                         },
                                                         arguments: [
@@ -138,37 +131,37 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32 { return self
                                                                     name: Identifier {
                                                                         name: "other",
                                                                         location: Location(
-                                                                            62..67,
+                                                                            57..62,
                                                                         ),
                                                                     },
                                                                 },
                                                             ),
                                                         ],
                                                         location: Location(
-                                                            55..67,
+                                                            50..62,
                                                         ),
                                                     },
                                                 ),
                                             ),
                                             location: Location(
-                                                48..68,
+                                                43..63,
                                             ),
                                         },
                                     ),
                                 ],
                                 location: Location(
-                                    46..70,
+                                    41..65,
                                 ),
                             },
                         ),
                         location: Location(
-                            16..70,
+                            11..65,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..72,
+                    0..67,
                 ),
                 documentation: None,
             },

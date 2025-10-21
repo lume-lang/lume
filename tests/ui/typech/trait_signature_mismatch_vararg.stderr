@@ -1,7 +1,7 @@
 × error[LM4169]: implemented method does not match definition signature
    ╭─[trait_signature_mismatch_vararg.lm:6:5]
  5 │ use Foo in Int32 {
- 6 │     pub fn foo(val: Int32) { }
-   ∶     ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected signature fn foo(...val: Array<Int32>) -> Void, found fn foo(val: Int32) -> Void
+ 6 │     fn foo(val: Int32) { }
+   ∶     ^^^^^^^^^^^^^^^^^^^^^^ expected signature fn foo(...val: Array<Int32>) -> Void, found fn foo(val: Int32) -> Void
  7 │ }
    ╰──

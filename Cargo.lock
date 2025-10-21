@@ -1304,6 +1304,7 @@ dependencies = [
  "indexmap",
  "lume_hir",
  "lume_session",
+ "lume_typech",
  "serde",
 ]
 

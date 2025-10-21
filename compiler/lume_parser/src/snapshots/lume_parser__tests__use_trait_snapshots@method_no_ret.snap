@@ -3,15 +3,8 @@ source: compiler/lume_parser/src/tests.rs
 expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int32) {}\n        }\")"
 ---
 [
-    Use(
-        ImplTrait {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+    TraitImpl(
+        TraitImplementation {
             name: Named(
                 NamedType {
                     name: Path {
@@ -58,13 +51,6 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
             ),
             methods: [
                 TraitMethodImplementation {
-                    visibility: Private(
-                        Private {
-                            location: Location(
-                                40..40,
-                            ),
-                        },
-                    ),
                     external: false,
                     name: Identifier {
                         name: "add",

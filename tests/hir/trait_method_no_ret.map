@@ -16,16 +16,15 @@ Map {
             },
             methods: [
                 TraitMethodDefinition {
-                    visibility: Public,
                     name: Identifier {
                         name: "add",
-                        location: trait_method_no_ret.lm:19:22,
+                        location: trait_method_no_ret.lm:15:18,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: trait_method_no_ret.lm:23:28,
+                                location: trait_method_no_ret.lm:19:24,
                             },
                             param_type: Type {
                                 id: NodeId {
@@ -41,15 +40,15 @@ Map {
                                     name: Namespace {
                                         name: Identifier {
                                             name: "int",
-                                            location: trait_method_no_ret.lm:30:33,
+                                            location: trait_method_no_ret.lm:26:29,
                                         },
                                     },
-                                    location: trait_method_no_ret.lm:30:33,
+                                    location: trait_method_no_ret.lm:26:29,
                                 },
-                                location: trait_method_no_ret.lm:30:33,
+                                location: trait_method_no_ret.lm:26:29,
                             },
                             vararg: false,
-                            location: trait_method_no_ret.lm:23:33,
+                            location: trait_method_no_ret.lm:19:29,
                         },
                     ],
                     type_parameters: [],
@@ -70,13 +69,13 @@ Map {
                     },
                     block: Block {
                         statements: [],
-                        location: trait_method_no_ret.lm:35:38,
+                        location: trait_method_no_ret.lm:31:34,
                     },
-                    location: trait_method_no_ret.lm:16:38,
+                    location: trait_method_no_ret.lm:12:34,
                 },
             ],
             type_parameters: [],
-            location: trait_method_no_ret.lm:0:40,
+            location: trait_method_no_ret.lm:0:36,
         },
     ],
 }

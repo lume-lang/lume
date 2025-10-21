@@ -1,7 +1,6 @@
 Map {
     items: [
-        TraitDefinition {
-            visibility: Private,
+        TraitImplementation {
             name: Type {
                 id: NodeId {
                     package: PackageId(

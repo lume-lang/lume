@@ -1,6 +1,6 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
+expression: "parse(\"trait Add { fn add(other: Int32) -> Int32; }\")"
 ---
 [
     TypeDefinition(
@@ -22,17 +22,10 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
                 type_parameters: [],
                 methods: [
                     TraitMethodDefinition {
-                        visibility: Public(
-                            Public {
-                                location: Location(
-                                    12..15,
-                                ),
-                            },
-                        ),
                         name: Identifier {
                             name: "add",
                             location: Location(
-                                19..22,
+                                15..18,
                             ),
                         },
                         parameters: [
@@ -40,7 +33,7 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
                                 name: Identifier {
                                     name: "other",
                                     location: Location(
-                                        23..28,
+                                        19..24,
                                     ),
                                 },
                                 param_type: Named(
@@ -51,23 +44,23 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
                                                 name: Identifier {
                                                     name: "Int32",
                                                     location: Location(
-                                                        30..35,
+                                                        26..31,
                                                     ),
                                                 },
                                                 type_arguments: [],
                                                 location: Location(
-                                                    30..35,
+                                                    26..31,
                                                 ),
                                             },
                                             location: Location(
-                                                30..35,
+                                                26..31,
                                             ),
                                         },
                                     },
                                 ),
                                 vararg: false,
                                 location: Location(
-                                    23..35,
+                                    19..31,
                                 ),
                             },
                         ],
@@ -81,16 +74,16 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
                                             name: Identifier {
                                                 name: "Int32",
                                                 location: Location(
-                                                    40..45,
+                                                    36..41,
                                                 ),
                                             },
                                             type_arguments: [],
                                             location: Location(
-                                                40..45,
+                                                36..41,
                                             ),
                                         },
                                         location: Location(
-                                            40..45,
+                                            36..41,
                                         ),
                                     },
                                 },
@@ -98,13 +91,13 @@ expression: "parse(\"trait Add { pub fn add(other: Int32) -> Int32; }\")"
                         ),
                         block: None,
                         location: Location(
-                            16..46,
+                            12..42,
                         ),
                         documentation: None,
                     },
                 ],
                 location: Location(
-                    0..48,
+                    0..44,
                 ),
                 documentation: None,
             },

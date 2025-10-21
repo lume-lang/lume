@@ -1,7 +1,0 @@
-trait Foo {
-    pub fn foo();
-}
-
-use Foo in Int32 {
-    fn foo() { }
-}

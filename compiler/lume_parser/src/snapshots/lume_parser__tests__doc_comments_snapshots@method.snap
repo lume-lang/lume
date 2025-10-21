@@ -5,13 +5,6 @@ expression: "parse(\"impl Foo {\n            /// This is a doc comment\n        
 [
     Impl(
         Implementation {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
             name: Named(
                 NamedType {
                     name: Path {

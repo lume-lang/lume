@@ -1,4 +1,4 @@
 trait Foo {
     /// This is a doc comment
-    pub fn bar() -> void { }
+    fn bar() -> void { }
 }
