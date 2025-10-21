@@ -4,31 +4,49 @@ use super::*;
 
 #[track_caller]
 fn parse(input: &str) -> Vec<TopLevelExpression> {
-    let parser = Parser::parse_str(input);
+    let source = Arc::new(SourceFile::internal(input));
 
-    parser.unwrap()
+    let mut lexer = lume_lexer::Lexer::new(source.clone());
+    let tokens = lexer.lex().unwrap();
+
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    parser.disable_recovery();
+
+    parser.parse().unwrap()
 }
 
 #[track_caller]
 fn parse_err(input: &str) -> Error {
-    let parser = Parser::parse_str(input);
+    let source = Arc::new(SourceFile::internal(input));
 
-    parser.unwrap_err()
+    let mut lexer = lume_lexer::Lexer::new(source.clone());
+    let tokens = lexer.lex().unwrap();
+
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
+    parser.disable_recovery();
+
+    parser.parse().unwrap_err()
 }
 
 #[track_caller]
 fn parse_expr(input: &str) -> Vec<Statement> {
-    let mut parser = Parser::new_with_str(input);
+    let source = Arc::new(SourceFile::internal(input));
 
-    parser.prepare().unwrap();
+    let mut lexer = lume_lexer::Lexer::new(source.clone());
+    let tokens = lexer.lex().unwrap();
+
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
     parser.parse_statements().unwrap()
 }
 
 #[track_caller]
 fn parse_expr_err(input: &str) -> Error {
-    let mut parser = Parser::new_with_str(input);
+    let source = Arc::new(SourceFile::internal(input));
 
-    parser.prepare().unwrap();
+    let mut lexer = lume_lexer::Lexer::new(source.clone());
+    let tokens = lexer.lex().unwrap();
+
+    let mut parser = Parser::new(source, tokens, DiagCtxHandle::shim()).unwrap();
     parser.parse_statements().unwrap_err()
 }
 
@@ -123,95 +141,10 @@ fn test_newline_module() {
 
 #[test]
 fn test_imports() {
-    assert_eq!(Parser::parse_str("import std (Int)").unwrap(), vec![
-        TopLevelExpression::Import(Box::new(Import {
-            path: ImportPath {
-                path: vec![Identifier {
-                    name: "std".into(),
-                    location: Location(7..10)
-                }],
-                location: Location(7..10)
-            },
-            names: vec![Identifier {
-                name: "Int".into(),
-                location: Location(12..15)
-            }],
-            location: Location(0..16)
-        }))
-    ]);
-
-    assert_eq!(Parser::parse_str("import std::io (File)").unwrap(), vec![
-        TopLevelExpression::Import(Box::new(Import {
-            path: ImportPath {
-                path: vec![
-                    Identifier {
-                        name: "std".into(),
-                        location: Location(7..10)
-                    },
-                    Identifier {
-                        name: "io".into(),
-                        location: Location(12..14)
-                    }
-                ],
-                location: Location(8..14)
-            },
-            names: vec![Identifier {
-                name: "File".into(),
-                location: Location(16..20)
-            }],
-            location: Location(0..21)
-        }))
-    ]);
-
-    assert_eq!(Parser::parse_str("import std::io (File, Buffer)").unwrap(), vec![
-        TopLevelExpression::Import(Box::new(Import {
-            path: ImportPath {
-                path: vec![
-                    Identifier {
-                        name: "std".into(),
-                        location: Location(7..10)
-                    },
-                    Identifier {
-                        name: "io".into(),
-                        location: Location(12..14)
-                    }
-                ],
-                location: Location(7..14)
-            },
-            names: vec![
-                Identifier {
-                    name: "File".into(),
-                    location: Location(16..20)
-                },
-                Identifier {
-                    name: "Buffer".into(),
-                    location: Location(22..28)
-                }
-            ],
-            location: Location(0..29)
-        }))
-    ]);
-
-    assert_eq!(Parser::parse_str("import std::io ()").unwrap(), vec![
-        TopLevelExpression::Import(Box::new(Import {
-            path: ImportPath {
-                path: vec![
-                    Identifier {
-                        name: "std".into(),
-                        location: Location(7..10)
-                    },
-                    Identifier {
-                        name: "io".into(),
-                        location: Location(12..14)
-                    }
-                ],
-                location: Location(7..14)
-            },
-            names: vec![],
-            location: Location(0..17)
-        }))
-    ]);
-
+    assert_snap_eq!("import std (Int)", "single");
+    assert_snap_eq!("import std::io (File)", "nested");
+    assert_snap_eq!("import std::io (File, Buffer)", "multiple");
+    assert_snap_eq!("import std::io ()", "empty");
     assert_err_eq!("import std::io", "invalid import path");
     assert_err_eq!("import std::io::", "expected identifier");
     assert_err_eq!("import ::std::io", "expected identifier");

@@ -48,7 +48,7 @@ expression: "parse(\"fn external main() -> void\")"
             block: Block {
                 statements: [],
                 location: Location(
-                    26..26,
+                    25..25,
                 ),
             },
             location: Location(

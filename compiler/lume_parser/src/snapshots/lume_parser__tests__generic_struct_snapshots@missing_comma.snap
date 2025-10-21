@@ -17,5 +17,5 @@ MissingDelimiterInSequence {
         ),
     },
     range: 15..17,
-    delimiter: ,,
+    delimiter: Comma,
 }

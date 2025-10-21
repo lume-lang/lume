@@ -1,11 +1,11 @@
 use error_snippet::Result;
 use lume_ast::*;
-use lume_lexer::{IDENTIFIER_SEPARATOR, Token, TokenKind, UNARY_PRECEDENCE};
+use lume_lexer::{Token, TokenKind, TokenType, UNARY_PRECEDENCE};
 
+use crate::Parser;
 use crate::errors::*;
-use crate::{Parser, err};
 
-impl Parser {
+impl Parser<'_> {
     /// Parses an expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_expression(&mut self) -> Result<Expression> {
@@ -15,7 +15,7 @@ impl Parser {
     /// Parses an expression on the current cursor position, if one is defined.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_opt_expression(&mut self) -> Result<Option<Expression>> {
-        if self.peek(TokenKind::Semicolon) {
+        if self.peek(TokenType::Semicolon) {
             Ok(None)
         } else {
             Ok(Some(self.parse_expression()?))
@@ -29,7 +29,7 @@ impl Parser {
         let mut left = self.parse_prefix_expression()?;
 
         // If a semicolon is present, consider the expression finished.
-        if self.peek(TokenKind::Semicolon) {
+        if self.peek(TokenType::Semicolon) {
             return Ok(left);
         }
 
@@ -49,7 +49,7 @@ impl Parser {
     fn parse_prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token().kind;
 
-        tracing::trace!("expression kind: {kind}");
+        tracing::trace!("expression kind: {}", kind.as_type());
 
         match kind {
             TokenKind::LeftParen => self.parse_nested_expression(),
@@ -58,12 +58,17 @@ impl Parser {
             TokenKind::If => self.parse_if_conditional(),
             TokenKind::Switch => self.parse_switch_expression(),
             TokenKind::SelfRef => self.parse_self_reference(),
-            TokenKind::Identifier => self.parse_named_expression(),
+            TokenKind::Identifier(_) => self.parse_named_expression(),
 
             k if k.is_literal() => self.parse_literal(),
             k if k.is_unary() => self.parse_unary(),
 
-            _ => Err(err!(self, InvalidExpression, actual, kind)),
+            k => Err(InvalidExpression {
+                source: self.source.clone(),
+                range: self.token().index,
+                actual: k.as_type(),
+            }
+            .into()),
         }
     }
 
@@ -72,7 +77,7 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_following_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
-        if self.peek(TokenKind::DotDot) {
+        if self.peek(TokenType::DotDot) {
             tracing::trace!("member expr is range");
 
             return self.parse_range_expression(left);
@@ -88,25 +93,25 @@ impl Parser {
         // would be parsed as an operator expression, such as `c = Call(New('Foo'), '.',
         // [Call('bar')])`, where it really should be something like `c =
         // Member(New('Foo'), 'bar')`.
-        if self.peek(TokenKind::Dot) {
+        if self.peek(TokenType::Dot) {
             tracing::trace!("expression is member");
 
             return self.parse_member(left);
         }
 
-        if self.peek(TokenKind::Assign) {
+        if self.peek(TokenType::Assign) {
             tracing::trace!("expression is assignment");
 
             return self.parse_assignment(left);
         }
 
-        if self.peek(TokenKind::As) {
+        if self.peek(TokenType::As) {
             tracing::trace!("expression is cast");
 
             return self.parse_cast(left);
         }
 
-        if self.peek(TokenKind::Is) {
+        if self.peek(TokenType::Is) {
             tracing::trace!("expression is instance checking");
 
             return self.parse_is(left);
@@ -114,7 +119,14 @@ impl Parser {
 
         let operator = match self.consume_any() {
             t if t.kind.is_operator() => t,
-            t => return Err(err!(self, InvalidExpression, actual, t.kind)),
+            t => {
+                return Err(InvalidExpression {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                    actual: t.kind.as_type(),
+                }
+                .into());
+            }
         };
 
         if operator.is_postfix() {
@@ -160,7 +172,7 @@ impl Parser {
             callee: left,
             name: Path {
                 name: PathSegment::callable(Identifier {
-                    name: operator.into(),
+                    name: operator.as_type().to_string(),
                     location: operator_loc.clone().into(),
                 }),
                 root: Vec::new(),
@@ -221,7 +233,7 @@ impl Parser {
             callee: lhs,
             name: Path {
                 name: PathSegment::callable(Identifier {
-                    name: operator.into(),
+                    name: operator.kind.as_type().to_string(),
                     location: operator_loc.clone().into(),
                 }),
                 root: Vec::new(),
@@ -267,11 +279,11 @@ impl Parser {
     /// within parentheses.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_nested_expression(&mut self) -> Result<Expression> {
-        self.consume(TokenKind::LeftParen)?;
+        self.consume(TokenType::LeftParen)?;
 
         let expression = self.parse_expression_with_precedence(0)?;
 
-        self.consume(TokenKind::RightParen)?;
+        self.consume(TokenType::RightParen)?;
 
         Ok(expression)
     }
@@ -282,7 +294,7 @@ impl Parser {
         let token = self.token();
         let location: Location = token.index.into();
 
-        let values = self.consume_comma_seq(TokenKind::LeftBracket, TokenKind::RightBracket, |p| {
+        let values = self.consume_comma_seq(TokenType::LeftBracket, TokenType::RightBracket, |p| {
             p.parse_expression()
         })?;
 
@@ -300,11 +312,10 @@ impl Parser {
     /// Parses a switch expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_switch_expression(&mut self) -> Result<Expression> {
-        let start = self.consume(TokenKind::Switch)?.start();
+        let start = self.consume(TokenType::Switch)?.start();
         let operand = self.parse_expression()?;
-        let cases = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_switch_case)?;
-
-        let end = self.token().end();
+        let cases = self.consume_comma_seq(TokenType::LeftCurly, TokenType::RightCurly, Parser::parse_switch_case)?;
+        let end = self.previous_token().end();
 
         Ok(Expression::Switch(Box::new(Switch {
             operand,
@@ -318,7 +329,7 @@ impl Parser {
     fn parse_switch_case(&mut self) -> Result<SwitchCase> {
         let pattern = self.parse_pattern()?;
 
-        self.consume(TokenKind::ArrowBig)?;
+        self.consume(TokenType::ArrowBig)?;
 
         let branch = self.parse_expression()?;
 
@@ -335,9 +346,9 @@ impl Parser {
     /// Parses a range expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_range_expression(&mut self, lower: Expression) -> Result<Expression> {
-        self.consume(TokenKind::DotDot)?;
+        self.consume(TokenType::DotDot)?;
 
-        let inclusive = self.check(TokenKind::Assign);
+        let inclusive = self.check(TokenType::Assign);
         let upper = self.parse_expression()?;
 
         let start = lower.location().start();
@@ -357,13 +368,13 @@ impl Parser {
     /// Parses a `self` reference expression on the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_self_reference(&mut self) -> Result<Expression> {
-        let location = self.consume(TokenKind::SelfRef)?.index;
+        let location = self.consume(TokenType::SelfRef)?.index;
         let identifier = Identifier {
             name: "self".to_string(),
             location: location.into(),
         };
 
-        if self.peek(IDENTIFIER_SEPARATOR) {
+        if self.peek(TokenType::PathSeparator) {
             return self.parse_path_expression(identifier);
         }
 
@@ -382,9 +393,9 @@ impl Parser {
 
             // If the next token is a question mark, it's a method invocation
             TokenKind::Question => {
-                let tok = self.consume(TokenKind::Question)?;
+                let tok = self.consume(TokenType::Question)?;
 
-                identifier.name.push_str(&tok.kind.to_string());
+                identifier.name.push_str(&tok.kind.as_type().to_string());
                 identifier.location.0.end += tok.len();
 
                 self.parse_call(None, identifier)
@@ -397,7 +408,7 @@ impl Parser {
             TokenKind::Assign => self.parse_assignment(identifier.as_var()),
 
             // If the identifier is following by a separator, it's refering to a namespaced identifier
-            IDENTIFIER_SEPARATOR => self.parse_path_expression(identifier),
+            TokenKind::PathSeparator => self.parse_path_expression(identifier),
 
             // If the identifier is followed by a left curly brace, it's a struct construction.
             // We only assume this if the identifier is actually camel-case, as it might otherwise not
@@ -411,13 +422,13 @@ impl Parser {
                 // If we fail to parse the type arguments, move back to the original position
                 // and continue parsing at the fallthrough case.
                 let has_type_args = self.parse_type_arguments().is_ok();
-                let next_token = self.token().kind;
+                let next_token = self.token().kind.as_type();
 
                 self.move_to(current_idx);
 
                 match (has_type_args, next_token) {
-                    (_, TokenKind::LeftParen) => self.parse_call(None, identifier),
-                    (_, TokenKind::LeftCurly) => self.parse_construction_expression(identifier),
+                    (_, TokenType::LeftParen) => self.parse_call(None, identifier),
+                    (_, TokenType::LeftCurly) => self.parse_construction_expression(identifier),
                     (true, _) => self.parse_path_expression(identifier),
                     (false, _) => Ok(self.parse_variable(identifier)),
                 }
@@ -468,7 +479,7 @@ impl Parser {
     /// Parses an "if" conditional statement at the current cursor position.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_if_conditional(&mut self) -> Result<Expression> {
-        let start = self.consume(TokenKind::If)?.start();
+        let start = self.consume(TokenType::If)?.start();
         let mut cases = Vec::new();
 
         // Append the primary case
@@ -516,12 +527,12 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
-            if !self.peek(TokenKind::Else) || !self.peek_next(TokenKind::If) {
+            if !self.peek(TokenType::Else) || !self.peek_next(TokenType::If) {
                 break;
             }
 
-            self.consume(TokenKind::Else)?;
-            self.consume(TokenKind::If)?;
+            self.consume(TokenType::Else)?;
+            self.consume(TokenType::If)?;
 
             self.parse_conditional_case(cases)?;
         }
@@ -537,7 +548,7 @@ impl Parser {
     /// Returns `Err` if the parser hits an unexpected token.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
-        let start = match self.consume_if(TokenKind::Else) {
+        let start = match self.consume_if(TokenType::Else) {
             Some(t) => t.index.start,
             None => return Ok(()),
         };
@@ -561,12 +572,12 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // Consume the dot token
-        self.consume(TokenKind::Dot)?;
+        self.consume(TokenType::Dot)?;
 
         let name = self.parse_callable_name()?;
 
         // If the next token is an opening parenthesis, it's a method invocation
-        if self.peek(TokenKind::LeftParen) || self.peek(TokenKind::Less) {
+        if self.peek(TokenType::LeftParen) || self.peek(TokenType::Less) {
             tracing::trace!("member expr is method invocation");
 
             let identifier = Identifier {
@@ -587,7 +598,7 @@ impl Parser {
         }));
 
         // If there is yet another dot, it's part of a longer expression.
-        if self.peek(TokenKind::Dot) {
+        if self.peek(TokenType::Dot) {
             tracing::trace!("member expr is being chained");
 
             return self.parse_member(expression);
@@ -602,7 +613,7 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_cast(&mut self, source: Expression) -> Result<Expression> {
         // Consume the `as` token
-        self.consume(TokenKind::As)?;
+        self.consume(TokenType::As)?;
 
         let ty = self.parse_type()?;
 
@@ -620,7 +631,7 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_is(&mut self, target: Expression) -> Result<Expression> {
         // Consume the `is` token
-        self.consume(TokenKind::Is)?;
+        self.consume(TokenType::Is)?;
 
         let pattern = self.parse_pattern()?;
 
@@ -638,7 +649,7 @@ impl Parser {
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_assignment(&mut self, target: Expression) -> Result<Expression> {
         // Consume the equal sign
-        self.consume(TokenKind::Assign)?;
+        self.consume(TokenType::Assign)?;
 
         let value = self.parse_expression()?;
 
@@ -694,7 +705,7 @@ impl Parser {
                 })))
             }
             PathSegment::Variant { location, .. } => {
-                let arguments = if self.peek(TokenKind::LeftParen) {
+                let arguments = if self.peek(TokenType::LeftParen) {
                     self.parse_call_arguments()?
                 } else {
                     Vec::new()
@@ -716,7 +727,7 @@ impl Parser {
         self.move_to_pos(name.location.start());
 
         let path = self.parse_path()?;
-        let fields = self.consume_comma_seq(TokenKind::LeftCurly, TokenKind::RightCurly, Parser::parse_field)?;
+        let fields = self.consume_comma_seq(TokenType::LeftCurly, TokenType::RightCurly, Parser::parse_field)?;
 
         let start = name.location().start();
         let end = self.token().end();
@@ -730,7 +741,7 @@ impl Parser {
     fn parse_field(&mut self) -> Result<ConstructorField> {
         let name = self.parse_identifier()?;
 
-        let value = if self.check(TokenKind::Colon) {
+        let value = if self.check(TokenType::Colon) {
             self.parse_expression()?
         } else {
             name.clone().as_var()
@@ -766,11 +777,12 @@ impl Parser {
         let location: Location = token.index.into();
 
         let literal = match token.kind {
-            TokenKind::Integer(radix) => {
-                let mut value = token.value.unwrap();
+            TokenKind::Integer((radix, kind)) => {
+                let slice = self.source.content.get(location.0.clone()).unwrap();
+                let mut value = slice.to_string();
 
                 // Remove all underscores from the literal
-                while let Some(idx) = value.find('"') {
+                while let Some(idx) = value.find('_') {
                     value.remove(idx);
                 }
 
@@ -789,24 +801,33 @@ impl Parser {
                     }
                 }
 
-                let Ok(int_value) = i64::from_str_radix(&value, radix) else {
-                    return Err(err!(self, InvalidLiteral, value, value, target, token.kind));
+                // Remove the literal kind from the value, since they cannot be parsed.
+                match kind {
+                    Some(lume_lexer::IntegerKind::I8 | lume_lexer::IntegerKind::U8) => value.truncate(value.len() - 2),
+                    Some(_) => value.truncate(value.len() - 3),
+                    None => {}
+                }
+
+                let Ok(int_value) = i64::from_str_radix(&value, radix.base()) else {
+                    return Err(InvalidLiteral {
+                        source: self.source.clone(),
+                        range: self.token().index,
+                        value: slice.to_string(),
+                        target: token.kind.as_type(),
+                    }
+                    .into());
                 };
 
-                let kind = if let Some(ty) = token.ty {
-                    match ty.as_str() {
-                        "i8" => Some(IntKind::I8),
-                        "u8" => Some(IntKind::U8),
-                        "i16" => Some(IntKind::I16),
-                        "u16" => Some(IntKind::U16),
-                        "i32" => Some(IntKind::I32),
-                        "u32" => Some(IntKind::U32),
-                        "i64" => Some(IntKind::I64),
-                        "u64" => Some(IntKind::U64),
-                        t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
-                    }
-                } else {
-                    None
+                let kind = match kind {
+                    Some(lume_lexer::IntegerKind::I8) => Some(IntKind::I8),
+                    Some(lume_lexer::IntegerKind::U8) => Some(IntKind::U8),
+                    Some(lume_lexer::IntegerKind::I16) => Some(IntKind::I16),
+                    Some(lume_lexer::IntegerKind::U16) => Some(IntKind::U16),
+                    Some(lume_lexer::IntegerKind::I32) => Some(IntKind::I32),
+                    Some(lume_lexer::IntegerKind::U32) => Some(IntKind::U32),
+                    Some(lume_lexer::IntegerKind::I64) => Some(IntKind::I64),
+                    Some(lume_lexer::IntegerKind::U64) => Some(IntKind::U64),
+                    None => None,
                 };
 
                 Literal::Int(Box::new(IntLiteral {
@@ -815,20 +836,34 @@ impl Parser {
                     kind,
                 }))
             }
-            TokenKind::Float => {
-                let value = token.value.unwrap();
+            TokenKind::Float(kind) => {
+                let slice = self.source.content.get(location.0.clone()).unwrap();
+                let mut value = slice.to_string();
+
+                // Remove all underscores from the literal
+                while let Some(idx) = value.find('_') {
+                    value.remove(idx);
+                }
+
+                // Remove the literal kind from the value, since they cannot be parsed.
+                if kind.is_some() {
+                    value.truncate(value.len() - 3);
+                }
+
                 let Ok(float_value) = value.parse::<f64>() else {
-                    return Err(err!(self, InvalidLiteral, value, value, target, token.kind));
+                    return Err(InvalidLiteral {
+                        source: self.source.clone(),
+                        range: self.token().index,
+                        value: slice.to_string(),
+                        target: token.kind.as_type(),
+                    }
+                    .into());
                 };
 
-                let kind = if let Some(ty) = token.ty {
-                    match ty.as_str() {
-                        "f32" => Some(FloatKind::F32),
-                        "f64" => Some(FloatKind::F64),
-                        t => return Err(err!(self, InvalidLiteralType, found, t.to_string())),
-                    }
-                } else {
-                    None
+                let kind = match kind {
+                    Some(lume_lexer::FloatKind::F32) => Some(FloatKind::F32),
+                    Some(lume_lexer::FloatKind::F64) => Some(FloatKind::F64),
+                    None => None,
                 };
 
                 Literal::Float(Box::new(FloatLiteral {
@@ -837,14 +872,20 @@ impl Parser {
                     kind,
                 }))
             }
-            TokenKind::String => {
-                let value = token.value.unwrap();
-
-                Literal::String(Box::new(StringLiteral { value, location }))
-            }
+            TokenKind::String(value) => Literal::String(Box::new(StringLiteral {
+                value: value.to_string(),
+                location,
+            })),
             TokenKind::True => Literal::Boolean(Box::new(BooleanLiteral { value: true, location })),
             TokenKind::False => Literal::Boolean(Box::new(BooleanLiteral { value: false, location })),
-            k => return Err(err!(self, Unimplemented, desc, format!("{:?} literals", k))),
+            k => {
+                return Err(Unimplemented {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                    desc: format!("{} literals", k.as_type()),
+                }
+                .into());
+            }
         };
 
         self.skip();
@@ -857,7 +898,14 @@ impl Parser {
     fn parse_unary(&mut self) -> Result<Expression> {
         let operator = match self.consume_any() {
             t if t.kind.is_unary() => t,
-            t => return Err(err!(self, InvalidExpression, actual, t.kind)),
+            t => {
+                return Err(InvalidExpression {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                    actual: t.kind.as_type(),
+                }
+                .into());
+            }
         };
 
         let right = self.parse_expression_with_precedence(UNARY_PRECEDENCE)?;
@@ -902,7 +950,7 @@ impl Parser {
     /// `None`.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub(super) fn parse_opt_assignment(&mut self) -> Result<Option<Expression>> {
-        if self.check(TokenKind::Assign) {
+        if self.check(TokenType::Assign) {
             Ok(Some(self.parse_expression()?))
         } else {
             Ok(None)

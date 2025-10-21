@@ -1,0 +1,33 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"import std::io ()\")"
+---
+[
+    Import(
+        Import {
+            path: ImportPath {
+                path: [
+                    Identifier {
+                        name: "std",
+                        location: Location(
+                            7..10,
+                        ),
+                    },
+                    Identifier {
+                        name: "io",
+                        location: Location(
+                            12..14,
+                        ),
+                    },
+                ],
+                location: Location(
+                    7..14,
+                ),
+            },
+            names: [],
+            location: Location(
+                0..17,
+            ),
+        },
+    ),
+]

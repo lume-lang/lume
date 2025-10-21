@@ -17,5 +17,5 @@ InvalidExpression {
         ),
     },
     range: 7..8,
-    actual: ;,
+    actual: Semicolon,
 }

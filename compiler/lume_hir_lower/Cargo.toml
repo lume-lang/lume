@@ -12,6 +12,7 @@ arc = { path = "../arc" }
 lume_ast = { path = "../lume_ast" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_hir = { path = "../lume_hir" }
+lume_lexer = { path = "../lume_lexer" }
 lume_parser = { path = "../lume_parser" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }

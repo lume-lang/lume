@@ -17,5 +17,5 @@ UnexpectedType {
         ),
     },
     range: 35..36,
-    actual: ?,
+    actual: Question,
 }

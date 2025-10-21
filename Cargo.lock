@@ -1225,6 +1225,7 @@ dependencies = [
  "lume_errors",
  "lume_errors_test",
  "lume_hir",
+ "lume_lexer",
  "lume_parser",
  "lume_session",
  "lume_span",

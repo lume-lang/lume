@@ -2,7 +2,7 @@ use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet_derive::Diagnostic;
-use lume_lexer::TokenKind;
+use lume_lexer::TokenType;
 use lume_span::SourceFile;
 
 #[derive(Diagnostic, Debug)]
@@ -11,11 +11,11 @@ pub struct UnexpectedToken {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected {expected:?}, got {actual:?} instead")]
+    #[label("expected {expected}, got {actual} instead")]
     pub range: Range<usize>,
 
-    pub expected: TokenKind,
-    pub actual: TokenKind,
+    pub expected: TokenType,
+    pub actual: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -24,10 +24,10 @@ pub struct UnexpectedType {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected type, got {actual:?} instead")]
+    #[label("expected type, got {actual} instead")]
     pub range: Range<usize>,
 
-    pub actual: TokenKind,
+    pub actual: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -36,10 +36,10 @@ pub struct InvalidTopLevelStatement {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected a top-level statement, got {actual:?} instead")]
+    #[label("expected a top-level statement, got {actual} instead")]
     pub range: Range<usize>,
 
-    pub actual: TokenKind,
+    pub actual: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -48,10 +48,10 @@ pub struct ExpectedIdentifier {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected identifier, found {actual:?} instead")]
+    #[label("expected identifier, found {actual} instead")]
     pub range: Range<usize>,
 
-    pub actual: TokenKind,
+    pub actual: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -140,10 +140,10 @@ pub struct InvalidExpression {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("expected expression, got {actual:?} instead")]
+    #[label("expected expression, got {actual} instead")]
     pub range: Range<usize>,
 
-    pub actual: TokenKind,
+    pub actual: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -176,23 +176,11 @@ pub struct InvalidLiteral {
     #[span]
     pub source: Arc<SourceFile>,
 
-    #[label("failed to parse literal value {value} as {target:?}")]
+    #[label("failed to parse literal value {value} as {target}")]
     pub range: Range<usize>,
 
     pub value: String,
-    pub target: TokenKind,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "invalid literal type", code = "LM1079")]
-pub struct InvalidLiteralType {
-    #[span]
-    pub source: Arc<SourceFile>,
-
-    #[label("invalid literal type suffix {found}")]
-    pub range: Range<usize>,
-
-    pub found: String,
+    pub target: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -204,7 +192,7 @@ pub struct MissingDelimiterInSequence {
     #[label("expected {delimiter} in sequence")]
     pub range: Range<usize>,
 
-    pub delimiter: TokenKind,
+    pub delimiter: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -234,7 +222,7 @@ pub struct InvalidImportPath {
     #[label("expected a one or more identifiers to import, found {found}")]
     pub range: Range<usize>,
 
-    pub found: TokenKind,
+    pub found: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -246,7 +234,7 @@ pub struct InvalidPattern {
     #[label("expected pattern, found {found}")]
     pub range: Range<usize>,
 
-    pub found: TokenKind,
+    pub found: TokenType,
 }
 
 #[derive(Diagnostic, Debug)]
