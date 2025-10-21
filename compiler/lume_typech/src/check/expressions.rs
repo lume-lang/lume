@@ -299,7 +299,11 @@ impl TyCheckCtx {
 
                 self.logical_expression(expr)
             }
-            lume_hir::ExpressionKind::Member(expr) => self.expression(expr.callee),
+            lume_hir::ExpressionKind::Member(expr) => {
+                self.expression(expr.callee)?;
+
+                self.member_expression(expr)
+            }
             lume_hir::ExpressionKind::Scope(expr) => {
                 for stmt in &expr.body {
                     self.statement(*stmt)?;
@@ -451,6 +455,17 @@ impl TyCheckCtx {
             );
         }
 
+        if !self.is_visible_to(expr.id(), callable.id())? {
+            self.dcx().emit(
+                InaccessibleMethod {
+                    source: expr.location(),
+                    method_def: callable.name().location,
+                    method_name: callable.name().clone(),
+                }
+                .into(),
+            );
+        }
+
         Ok(())
     }
 
@@ -555,6 +570,51 @@ impl TyCheckCtx {
                 found: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
+        }
+
+        Ok(())
+    }
+
+    /// Asserts that the expression has visible access to the field which it is
+    /// referring to.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn member_expression(&self, expr: &lume_hir::Member) -> Result<()> {
+        let callee_ty = self.type_of(expr.callee)?;
+        let callee_def = self.hir_expect_struct(callee_ty.instance_of);
+
+        if !self.is_visible_to(expr.id, callee_def.id)? {
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: callee_def.name.location,
+                    type_name: callee_def.name().clone(),
+                }
+                .into(),
+            );
+        }
+
+        let Some(field) = callee_def.fields().find(|field| field.name.as_str() == expr.name) else {
+            self.dcx().emit(
+                UnknownField {
+                    source: expr.location,
+                    ty: self.new_named_type(&callee_ty, true)?,
+                    field: expr.name.clone(),
+                }
+                .into(),
+            );
+
+            return Ok(());
+        };
+
+        if !self.is_visible_to(expr.id, field.id)? {
+            self.dcx().emit(
+                InaccessibleField {
+                    source: expr.location,
+                    field_def: field.name.location,
+                    field_name: field.name.to_string(),
+                }
+                .into(),
+            );
         }
 
         Ok(())

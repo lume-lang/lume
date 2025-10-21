@@ -2,6 +2,7 @@ use error_snippet::Result;
 use lume_architect::cached_query;
 use lume_hir::{Node, NodeRef};
 use lume_span::*;
+use lume_types::TypeRef;
 
 use super::diagnostics;
 use crate::TyInferCtx;
@@ -430,6 +431,55 @@ impl TyInferCtx {
         };
 
         Ok(trait_method_def)
+    }
+
+    /// Gets the target type of the given method, given the type within the
+    /// parent `impl` block.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn impl_type_of_method(&self, method_id: NodeId) -> Result<TypeRef> {
+        for parent in self.hir_parent_iter(method_id) {
+            if let lume_hir::Node::Impl(impl_block) = parent {
+                return self.mk_type_ref_from(&impl_block.target, method_id);
+            }
+        }
+
+        Err(diagnostics::NoParentImpl {
+            source: self.hir_span_of_node(method_id),
+        }
+        .into())
+    }
+
+    /// Gets the parent type of the given node.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
+        for parent in self.hir_parent_iter(id) {
+            match parent {
+                Node::Impl(impl_def) => {
+                    return self.mk_type_ref_from(&impl_def.target, id).map(Some);
+                }
+                Node::TraitImpl(trait_impl) => {
+                    return self.mk_type_ref_from(&trait_impl.target, id).map(Some);
+                }
+                _ => {}
+            };
+        }
+
+        Ok(None)
+    }
+
+    /// Gets the parent type of the given field.
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn owning_struct_of_field(&self, field_id: NodeId) -> Result<&lume_hir::StructDefinition> {
+        for parent in self.hir_parent_iter(field_id) {
+            if let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = parent {
+                return Ok(struct_def);
+            }
+        }
+
+        Err(diagnostics::NoParentStruct {
+            source: self.hir_span_of_node(field_id),
+        }
+        .into())
     }
 
     /// Returns the span of the HIR definition with the given ID.
