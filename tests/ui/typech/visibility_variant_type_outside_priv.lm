@@ -1,0 +1,7 @@
+//# source-file
+enum Variant { A, B }
+
+//# source-file
+fn main() {
+    let _ = Variant::A;
+}

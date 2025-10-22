@@ -1,4 +1,4 @@
-× error[LM4394]: field bar is inaccessible
+× error[LM4395]: field bar is inaccessible
     ╭─[visibility_field_access_priv.lm:15:13]
  14 │     let foo = Foo::new();
  15 │     let _ = foo.bar;

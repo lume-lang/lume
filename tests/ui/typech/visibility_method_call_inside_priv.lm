@@ -1,0 +1,16 @@
+//# test-outcome=success
+
+struct Foo { }
+
+impl Foo {
+    fn bar(self) { }
+
+    pub fn baz(self) {
+        self.bar();
+    }
+}
+
+fn main() {
+    let foo = Foo { };
+    foo.baz();
+}
