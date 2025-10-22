@@ -6,8 +6,8 @@
  7 │ }
    ∶
  1 │ struct A {
- 2 │     foo: Boolean;
-   ∶          ^^^^^^^ ...because of type defined here
+ 2 │     pub foo: Boolean;
+   ∶              ^^^^^^^ ...because of type defined here
  3 │ }
    ╰──
    help: expected type Boolean
