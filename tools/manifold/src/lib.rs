@@ -183,14 +183,13 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
         }
 
         eprintln!("test result: {}", "FAILURE".red());
-
-        return Ok(1);
+    } else {
+        println!("test result: {}", "SUCCESS".green());
     }
 
-    println!("test result: {}", "SUCCESS".green());
     println!("tests passed: {success_count}, tests failed: {failure_count}");
 
-    Ok(0)
+    Ok(i32::from(failure_count > 0))
 }
 
 fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollectedTest>> {
