@@ -1,0 +1,22 @@
+//# test-outcome=success
+
+struct Foo { }
+
+impl Foo {
+    fn bar(self) { }
+}
+
+trait Trait {
+    fn baz(self);
+}
+
+use Trait in Foo {
+    fn baz(self) {
+        self.bar();
+    }
+}
+
+fn main() {
+    let foo = Foo { };
+    foo.baz();
+}

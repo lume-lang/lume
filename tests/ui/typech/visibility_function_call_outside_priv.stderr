@@ -1,0 +1,12 @@
+× error[LM4394]: function foo is inaccessible
+   ╭─[visibility_function_call_outside_priv.lm_2:3:5]
+ 2 │ fn main() {
+ 3 │     foo();
+   ∶     ^^^^^^ function foo is inaccessible, because of it's visibility
+ 4 │ }
+   ╰──
+   ╭─[visibility_function_call_outside_priv.lm_1:2:4]
+ 1 │
+ 2 │ fn foo() { }
+   ∶    ^^^ function defined here
+   ╰──

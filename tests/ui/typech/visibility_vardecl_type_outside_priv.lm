@@ -1,0 +1,11 @@
+//# source-file
+struct Foo { }
+
+pub fn foo() -> Foo {
+    Foo { }
+}
+
+//# source-file
+fn main() {
+    let _: Foo = foo();
+}

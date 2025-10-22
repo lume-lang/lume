@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+struct Foo {
+    a: Int32;
+}
+
+impl Foo {
+    pub fn new() -> Foo {
+        Foo { a: 0 }
+    }
+}

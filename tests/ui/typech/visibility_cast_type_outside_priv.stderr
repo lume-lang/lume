@@ -1,0 +1,13 @@
+× error[LM4392]: type Foo is inaccessible
+   ╭─[visibility_cast_type_outside_priv.lm_2:4:18]
+ 3 │     let a = 1_i32;
+ 4 │     let b = a as Foo;
+   ∶                  ^^^ type Foo is inaccessible, because of it's visibility
+ 5 │ }
+   ╰──
+    ╭─[visibility_cast_type_outside_priv.lm_1:4:8]
+ 3  │
+ 4  │ struct Foo {
+    ∶        ^^^ type defined here
+ 5  │     a: Int32;
+    ╰──

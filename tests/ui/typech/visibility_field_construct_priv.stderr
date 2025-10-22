@@ -1,4 +1,4 @@
-× error[LM4394]: field bar is inaccessible
+× error[LM4395]: field bar is inaccessible
    ╭─[visibility_field_construct_priv.lm:7:9]
  6 │     let foo = Foo {
  7 │         bar: 0

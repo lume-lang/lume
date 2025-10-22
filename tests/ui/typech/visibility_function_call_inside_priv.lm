@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+fn foo() { }
+
+fn main() {
+    foo();
+}

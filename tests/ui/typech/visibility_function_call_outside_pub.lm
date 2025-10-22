@@ -1,0 +1,9 @@
+//# test-outcome=success
+
+//# source-file
+pub fn foo() { }
+
+//# source-file
+fn main() {
+    foo();
+}

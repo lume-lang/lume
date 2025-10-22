@@ -1,0 +1,22 @@
+//# test-outcome=success
+
+//# source-file
+import std::ops (Cast)
+
+pub struct Foo {
+    a: Int32;
+}
+
+use Cast<Foo> in Int32 {
+    fn cast(self) -> Foo {
+        Foo {
+            a: self
+        }
+    }
+}
+
+//# source-file
+fn main() {
+    let a = 1_i32;
+    let b = a as Foo;
+}
