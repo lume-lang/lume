@@ -561,6 +561,35 @@ impl TyCheckCtx {
         }
     }
 
+    /// Determines whether the given type `ty` is visible for the node `from`,
+    /// with regard to the visibility rules of `ty`.
+    ///
+    /// This method also checks whether the type arguments within the type
+    /// are visible to `from`.
+    #[cached_query(result)]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_type_visible_to(&self, ty: &TypeRef, from: NodeId) -> Result<bool> {
+        // All standard types are always implicitly visible from any node.
+        if !matches!(
+            &self.tdb().ty_expect(ty.instance_of)?.kind,
+            lume_types::TypeKind::User(_)
+        ) {
+            return Ok(true);
+        }
+
+        if !self.is_visible_to(from, ty.instance_of)? {
+            return Ok(false);
+        }
+
+        for type_arg in &ty.type_arguments {
+            if !self.is_type_visible_to(type_arg, from)? {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
+    }
+
     /// Determines whether the nodes `a` and `b` share the same source file.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]

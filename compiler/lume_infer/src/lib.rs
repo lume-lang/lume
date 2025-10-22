@@ -331,7 +331,7 @@ impl TyInferCtx {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
-        let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+        let type_parameters = type_parameters_hir.iter().collect::<Vec<_>>();
 
         self.find_type_ref_generic(name, &type_parameters)
     }

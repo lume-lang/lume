@@ -520,6 +520,24 @@ impl TyInferCtx {
         self.tdb().ty_expect_trait(use_ref.trait_.instance_of)
     }
 
+    /// Returns the struct definition with the given type ID.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn struct_def_type(&self, id: NodeId) -> Result<&lume_hir::StructDefinition> {
+        let Some(parent_ty) = self.tdb().type_(id) else {
+            return Err(lume_types::errors::NodeNotFound { id }.into());
+        };
+
+        let lume_types::TypeKind::User(lume_types::UserType::Struct(struct_ty)) = &parent_ty.kind else {
+            return Err(lume_types::errors::UnexpectedTypeKind {
+                found: parent_ty.kind.as_kind_ref(),
+                expected: lume_types::TypeKindRef::Struct,
+            }
+            .into());
+        };
+
+        Ok(self.hir_expect_struct(struct_ty.id))
+    }
+
     /// Returns the enum definition with the given type ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     pub fn enum_def_type(&self, id: NodeId) -> Result<&lume_hir::EnumDefinition> {

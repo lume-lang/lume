@@ -150,10 +150,10 @@ impl TyInferCtx {
     /// Returns the [`lume_hir::Field`] with the given ID, if any.
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_field(&self, id: NodeId) -> Option<&lume_hir::Field> {
-        self.hir_parent_node_of(id).and_then(|item| match item {
-            lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(s)) => s.fields.get(id.index.as_usize()),
+        match self.hir_node(id)? {
+            lume_hir::Node::Field(field) => Some(field),
             _ => None,
-        })
+        }
     }
 
     /// Returns the [`lume_hir::Field`] with the given ID, if any.
