@@ -153,6 +153,22 @@ impl TyCheckCtx {
         let value_type = self.type_of(stmt.value)?;
         let resolved_type = self.type_of_vardecl(stmt)?;
 
+        if let Some(explicit_type) = &stmt.declared_type {
+            let explicit_type = self.mk_type_ref_from(explicit_type, stmt.id)?;
+            let type_def = self.tdb().ty_expect(explicit_type.instance_of)?;
+
+            if !self.is_type_visible_to(&explicit_type, stmt.id)? {
+                self.dcx().emit(
+                    InaccessibleType {
+                        source: explicit_type.location,
+                        type_def: type_def.name.location,
+                        type_name: type_def.name.clone(),
+                    }
+                    .into(),
+                );
+            }
+        }
+
         if !self.check_type_compatibility(&value_type, &resolved_type)? {
             let value_expr = self.hir().expect_expression(stmt.value)?;
             let declared_type = stmt.declared_type.clone().unwrap();
@@ -412,6 +428,19 @@ impl TyCheckCtx {
         let source_type = self.type_of(expr.source)?;
         let dest_type = self.mk_type_ref(&expr.target)?;
 
+        if !self.is_type_visible_to(&dest_type, expr.id)? {
+            let type_def = self.tdb().ty_expect(dest_type.instance_of)?;
+
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.target.location,
+                    type_def: type_def.name.location,
+                    type_name: type_def.name.clone(),
+                }
+                .into(),
+            );
+        }
+
         let source_named = self.new_named_type(&source_type, false)?;
         let dest_named = self.new_named_type(&dest_type, false)?;
 
@@ -456,14 +485,25 @@ impl TyCheckCtx {
         }
 
         if !self.is_visible_to(expr.id(), callable.id())? {
-            self.dcx().emit(
-                InaccessibleMethod {
-                    source: expr.location(),
-                    method_def: callable.name().location,
-                    method_name: callable.name().clone(),
-                }
-                .into(),
-            );
+            if let lume_infer::query::Callable::Function(_) = callable {
+                self.dcx().emit(
+                    InaccessibleFunction {
+                        source: expr.location(),
+                        func_def: callable.name().location,
+                        func_name: callable.name().clone(),
+                    }
+                    .into(),
+                );
+            } else {
+                self.dcx().emit(
+                    InaccessibleMethod {
+                        source: expr.location(),
+                        method_def: callable.name().location,
+                        method_name: callable.name().clone(),
+                    }
+                    .into(),
+                );
+            }
         }
 
         Ok(())
@@ -662,6 +702,21 @@ impl TyCheckCtx {
             let case_branch_ty = self.type_of(case.branch)?;
             let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
 
+            if matches!(case.pattern.kind, lume_hir::PatternKind::Variant(_))
+                && !self.is_type_visible_to(&case_pattern_ty, expr.id)?
+            {
+                let type_def = self.tdb().ty_expect(case_pattern_ty.instance_of)?;
+
+                self.dcx().emit(
+                    InaccessibleType {
+                        source: case.pattern.location,
+                        type_def: type_def.name.location,
+                        type_name: type_def.name.clone(),
+                    }
+                    .into(),
+                );
+            }
+
             if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
                 self.dcx().emit(err);
             }
@@ -680,6 +735,17 @@ impl TyCheckCtx {
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
         let enum_def = self.enum_def_of_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
+
+        if !self.is_visible_to(expr.id, enum_def.id)? {
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: enum_def.name.location,
+                    type_name: enum_def.name.clone(),
+                }
+                .into(),
+            );
+        }
 
         if expr.arguments.len() != enum_case_def.parameters.len() {
             return Err(crate::query::diagnostics::ArgumentCountMismatch {
