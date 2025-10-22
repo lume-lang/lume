@@ -249,7 +249,19 @@ pub struct InaccessibleMethod {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "field {field_name:+} is inaccessible", code = "LM4394")]
+#[diagnostic(message = "function {func_name:+} is inaccessible", code = "LM4394")]
+pub struct InaccessibleFunction {
+    #[label(source, "function {func_name:+} is inaccessible, because of it's visibility")]
+    pub source: Location,
+
+    #[label(source, help, "function defined here")]
+    pub func_def: Location,
+
+    pub func_name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "field {field_name:+} is inaccessible", code = "LM4395")]
 pub struct InaccessibleField {
     #[label(source, "field {field_name:+} is inaccessible, because of it's visibility")]
     pub source: Location,

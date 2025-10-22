@@ -480,7 +480,7 @@ impl TyInferCtx {
             }
         };
 
-        Result::Ok(ty.with_location(pat.location))
+        Ok(ty.with_location(pat.location))
     }
 
     /// Returns the *type* of the field within the enum definition with the
