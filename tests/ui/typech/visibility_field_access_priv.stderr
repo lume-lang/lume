@@ -1,0 +1,12 @@
+× error[LM4394]: field bar is inaccessible
+    ╭─[visibility_field_access_priv.lm:15:13]
+ 14 │     let foo = Foo::new();
+ 15 │     let _ = foo.bar;
+    ∶             ^^^^^^^ field bar is inaccessible, because of it's visibility
+ 16 │ }
+    ∶
+ 1  │ struct Foo {
+ 2  │     bar: Int32;
+    ∶     ^^^ field defined here
+ 3  │ }
+    ╰──
