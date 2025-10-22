@@ -1,0 +1,13 @@
+//# test-outcome=success
+
+struct Foo { }
+
+impl Foo {
+    pub fn bar(self) { }
+}
+
+fn foo() {
+    let foo = Foo { };
+
+    foo.bar();
+}

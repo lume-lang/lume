@@ -1,0 +1,12 @@
+× error[LM4393]: method Foo::bar is inaccessible
+    ╭─[visibility_method_outside_priv.lm:10:9]
+ 9  │
+ 10 │     foo.bar();
+    ∶         ^^^^^^ method Foo::bar is inaccessible, because of it's visibility
+ 11 │ }
+    ∶
+ 3  │ impl Foo {
+ 4  │     fn bar(self) { }
+    ∶        ^^^ method defined here
+ 5  │ }
+    ╰──

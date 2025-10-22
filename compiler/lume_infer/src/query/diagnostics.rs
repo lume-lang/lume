@@ -78,3 +78,17 @@ pub struct NoReturningAncestor {
     #[label(source, "expected returning ancestor, found None")]
     pub source: Location,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find parent `impl` block", code = "LM4218")]
+pub struct NoParentImpl {
+    #[label(source, "expected `impl` block ancestor, found None")]
+    pub source: Location,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "could not find parent `struct` block", code = "LM4219")]
+pub struct NoParentStruct {
+    #[label(source, "expected `struct` block ancestor, found None")]
+    pub source: Location,
+}

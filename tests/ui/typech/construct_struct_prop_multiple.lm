@@ -1,8 +1,8 @@
 //# test-outcome=success
 
 struct A {
-    foo: Boolean;
-    bar: Boolean;
+    pub foo: Boolean;
+    pub bar: Boolean;
 }
 
 fn foo() {

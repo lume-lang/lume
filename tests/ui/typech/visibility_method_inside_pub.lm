@@ -1,0 +1,11 @@
+//# test-outcome=success
+
+struct Foo { }
+
+impl Foo {
+    pub fn bar(self) { }
+
+    pub fn baz(self) {
+        self.bar();
+    }
+}

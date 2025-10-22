@@ -6,13 +6,11 @@ expression: "parse(\"trait Add { }\")"
     TypeDefinition(
         Trait(
             TraitDefinition {
-                visibility: Private(
-                    Private {
-                        location: Location(
-                            0..0,
-                        ),
-                    },
-                ),
+                visibility: Private {
+                    location: Location(
+                        0..0,
+                    ),
+                },
                 name: Identifier {
                     name: "Add",
                     location: Location(

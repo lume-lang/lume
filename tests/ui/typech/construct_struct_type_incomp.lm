@@ -1,5 +1,5 @@
 struct A {
-    foo: Boolean;
+    pub foo: Boolean;
 }
 
 fn foo() {

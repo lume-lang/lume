@@ -5,13 +5,11 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+            visibility: Private {
+                location: Location(
+                    0..0,
+                ),
+            },
             external: false,
             name: Identifier {
                 name: "foo",

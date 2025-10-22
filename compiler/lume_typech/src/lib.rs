@@ -1,5 +1,6 @@
 use std::ops::Deref;
 
+use lume_architect::DatabaseContext;
 use lume_errors::DiagCtx;
 use lume_infer::TyInferCtx;
 use lume_types::TypeDatabaseContext;
@@ -47,5 +48,11 @@ impl Deref for TyCheckCtx {
 
     fn deref(&self) -> &Self::Target {
         &self.infer
+    }
+}
+
+impl DatabaseContext for TyCheckCtx {
+    fn db(&self) -> &lume_architect::Database {
+        DatabaseContext::db(self.gcx())
     }
 }

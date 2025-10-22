@@ -1,0 +1,35 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse(\"pub(internal) fn foo {}\")"
+---
+[
+    FunctionDefinition(
+        FunctionDefinition {
+            visibility: Internal {
+                location: Location(
+                    0..13,
+                ),
+            },
+            external: false,
+            name: Identifier {
+                name: "foo",
+                location: Location(
+                    17..20,
+                ),
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: None,
+            block: Block {
+                statements: [],
+                location: Location(
+                    21..23,
+                ),
+            },
+            location: Location(
+                0..23,
+            ),
+            documentation: None,
+        },
+    ),
+]

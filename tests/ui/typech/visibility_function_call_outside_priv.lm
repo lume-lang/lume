@@ -1,0 +1,7 @@
+//# source-file
+fn foo() { }
+
+//# source-file
+fn main() {
+    foo();
+}

@@ -1,0 +1,12 @@
+× error[LM4395]: field a is inaccessible
+   ╭─[visibility_construct_field_outside_priv.lm:6:19]
+ 5 │ fn main() {
+ 6 │     let a = Foo { a: 0 };
+   ∶                   ^^^^ field a is inaccessible, because of it's visibility
+ 7 │ }
+   ∶
+ 1 │ struct Foo {
+ 2 │     a: Int32;
+   ∶     ^ field defined here
+ 3 │ }
+   ╰──

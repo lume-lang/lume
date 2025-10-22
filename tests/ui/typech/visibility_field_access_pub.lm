@@ -1,0 +1,10 @@
+//# test-outcome=success
+
+struct Foo {
+    pub bar: Int32;
+}
+
+fn foo() {
+    let foo = Foo { bar: 0 };
+    let _ = foo.bar;
+}

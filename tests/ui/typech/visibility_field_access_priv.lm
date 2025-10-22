@@ -1,0 +1,16 @@
+struct Foo {
+    bar: Int32;
+}
+
+impl Foo {
+    pub fn new() -> Foo {
+        Foo {
+            bar: 0
+        }
+    }
+}
+
+fn foo() {
+    let foo = Foo::new();
+    let _ = foo.bar;
+}

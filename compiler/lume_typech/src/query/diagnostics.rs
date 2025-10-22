@@ -55,3 +55,10 @@ pub(crate) struct InstanceCallOnStaticMethod {
 
     pub method_name: Path,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "node cannot hold visibility modifiers", code = "LM4126")]
+pub struct CannotHoldVisibility {
+    #[label(source, "expected node with visibility modifier")]
+    pub source: Location,
+}

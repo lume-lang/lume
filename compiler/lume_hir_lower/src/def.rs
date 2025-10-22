@@ -64,14 +64,18 @@ impl LowerModule<'_> {
             None
         };
 
-        Ok(lume_hir::Field {
+        let field = lume_hir::Field {
             id,
             name,
             visibility,
             field_type,
             default_value,
             location,
-        })
+        };
+
+        self.map.nodes.insert(id, Node::Field(field.clone()));
+
+        Ok(field)
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
@@ -171,7 +175,6 @@ impl LowerModule<'_> {
     fn def_trait_methods(&mut self, expr: lume_ast::TraitMethodDefinition) -> Result<lume_hir::TraitMethodDefinition> {
         let id = self.next_node_id();
 
-        let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, true)?;
@@ -182,7 +185,6 @@ impl LowerModule<'_> {
         Ok(lume_hir::TraitMethodDefinition {
             id,
             name,
-            visibility,
             type_parameters,
             parameters,
             return_type,
@@ -354,11 +356,9 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    pub(super) fn def_trait_impl(&mut self, expr: lume_ast::ImplTrait) -> Result<lume_hir::Node> {
+    pub(super) fn def_trait_impl(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-
-        let visibility = lower_visibility(&expr.visibility);
         let name = self.type_ref(*expr.name)?;
         let target = self.type_ref(*expr.target)?;
 
@@ -380,7 +380,6 @@ impl LowerModule<'_> {
             id,
             name: Box::new(name),
             target: Box::new(target),
-            visibility,
             methods,
             type_parameters,
             location,
@@ -394,7 +393,6 @@ impl LowerModule<'_> {
     ) -> Result<lume_hir::TraitMethodImplementation> {
         let id = self.next_node_id();
 
-        let visibility = lower_visibility(&expr.visibility);
         let name = self.identifier(expr.name);
         let parameters = self.parameters(expr.parameters, true)?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -409,7 +407,6 @@ impl LowerModule<'_> {
 
         Ok(lume_hir::TraitMethodImplementation {
             id,
-            visibility,
             name,
             parameters,
             type_parameters,
@@ -446,6 +443,7 @@ impl LowerModule<'_> {
 fn lower_visibility(expr: &lume_ast::Visibility) -> lume_hir::Visibility {
     match expr {
         lume_ast::Visibility::Public { .. } => lume_hir::Visibility::Public,
+        lume_ast::Visibility::Internal { .. } => lume_hir::Visibility::Internal,
         lume_ast::Visibility::Private { .. } => lume_hir::Visibility::Private,
     }
 }

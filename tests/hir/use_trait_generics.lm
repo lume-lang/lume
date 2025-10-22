@@ -1,3 +1,3 @@
 use Add<Int32, Int64> in Int32 {
-    pub fn add(other: Int32) -> Int64 {}
+    fn add(other: Int32) -> Int64 {}
 }

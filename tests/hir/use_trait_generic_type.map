@@ -1,7 +1,6 @@
 Map {
     items: [
-        TraitDefinition {
-            visibility: Private,
+        TraitImplementation {
             name: Type {
                 id: NodeId {
                     package: PackageId(
@@ -98,10 +97,9 @@ Map {
             },
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public,
                     name: Identifier {
                         name: "next",
-                        location: use_trait_generic_type.lm:44:48,
+                        location: use_trait_generic_type.lm:40:44,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -111,24 +109,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "T",
-                                    location: use_trait_generic_type.lm:54:55,
+                                    location: use_trait_generic_type.lm:50:51,
                                 },
                                 type_arguments: [],
-                                location: use_trait_generic_type.lm:54:55,
+                                location: use_trait_generic_type.lm:50:51,
                             },
-                            location: use_trait_generic_type.lm:54:55,
+                            location: use_trait_generic_type.lm:50:51,
                         },
-                        location: use_trait_generic_type.lm:54:55,
+                        location: use_trait_generic_type.lm:50:51,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generic_type.lm:56:58,
+                        location: use_trait_generic_type.lm:52:54,
                     },
-                    location: use_trait_generic_type.lm:37:58,
+                    location: use_trait_generic_type.lm:37:54,
                 },
             ],
             type_parameters: [],
-            location: use_trait_generic_type.lm:0:60,
+            location: use_trait_generic_type.lm:0:56,
         },
     ],
 }

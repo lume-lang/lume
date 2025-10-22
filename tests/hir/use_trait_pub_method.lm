@@ -1,3 +1,0 @@
-use Add in Int32 {
-    pub fn add(other: Int32) -> Int32 {}
-}

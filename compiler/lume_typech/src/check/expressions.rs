@@ -153,6 +153,22 @@ impl TyCheckCtx {
         let value_type = self.type_of(stmt.value)?;
         let resolved_type = self.type_of_vardecl(stmt)?;
 
+        if let Some(explicit_type) = &stmt.declared_type {
+            let explicit_type = self.mk_type_ref_from(explicit_type, stmt.id)?;
+            let type_def = self.tdb().ty_expect(explicit_type.instance_of)?;
+
+            if !self.is_type_visible_to(&explicit_type, stmt.id)? {
+                self.dcx().emit(
+                    InaccessibleType {
+                        source: explicit_type.location,
+                        type_def: type_def.name.location,
+                        type_name: type_def.name.clone(),
+                    }
+                    .into(),
+                );
+            }
+        }
+
         if !self.check_type_compatibility(&value_type, &resolved_type)? {
             let value_expr = self.hir().expect_expression(stmt.value)?;
             let declared_type = stmt.declared_type.clone().unwrap();
@@ -299,7 +315,11 @@ impl TyCheckCtx {
 
                 self.logical_expression(expr)
             }
-            lume_hir::ExpressionKind::Member(expr) => self.expression(expr.callee),
+            lume_hir::ExpressionKind::Member(expr) => {
+                self.expression(expr.callee)?;
+
+                self.member_expression(expr)
+            }
             lume_hir::ExpressionKind::Scope(expr) => {
                 for stmt in &expr.body {
                     self.statement(*stmt)?;
@@ -408,6 +428,19 @@ impl TyCheckCtx {
         let source_type = self.type_of(expr.source)?;
         let dest_type = self.mk_type_ref(&expr.target)?;
 
+        if !self.is_type_visible_to(&dest_type, expr.id)? {
+            let type_def = self.tdb().ty_expect(dest_type.instance_of)?;
+
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.target.location,
+                    type_def: type_def.name.location,
+                    type_name: type_def.name.clone(),
+                }
+                .into(),
+            );
+        }
+
         let source_named = self.new_named_type(&source_type, false)?;
         let dest_named = self.new_named_type(&dest_type, false)?;
 
@@ -451,6 +484,28 @@ impl TyCheckCtx {
             );
         }
 
+        if !self.is_visible_to(expr.id(), callable.id())? {
+            if let lume_infer::query::Callable::Function(_) = callable {
+                self.dcx().emit(
+                    InaccessibleFunction {
+                        source: expr.location(),
+                        func_def: callable.name().location,
+                        func_name: callable.name().clone(),
+                    }
+                    .into(),
+                );
+            } else {
+                self.dcx().emit(
+                    InaccessibleMethod {
+                        source: expr.location(),
+                        method_def: callable.name().location,
+                        method_name: callable.name().clone(),
+                    }
+                    .into(),
+                );
+            }
+        }
+
         Ok(())
     }
 
@@ -474,6 +529,19 @@ impl TyCheckCtx {
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
         let constructed_type = self.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
+        if !self.is_type_visible_to(&constructed_type, expr.id)? {
+            let type_def = self.hir_expect_struct(constructed_type.instance_of);
+
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: type_def.name.location,
+                    type_name: expr.path.clone(),
+                }
+                .into(),
+            );
+        }
+
         let fields = self.tdb().find_fields(constructed_type.instance_of);
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
@@ -489,6 +557,19 @@ impl TyCheckCtx {
 
                 continue;
             };
+
+            if !self.is_visible_to(expr.id, field.id)? {
+                let hir_field = self.hir_field(field.id).expect("expected HIR field with same ID");
+
+                self.dcx().emit(
+                    InaccessibleField {
+                        source: constructor_field.location,
+                        field_def: hir_field.name.location,
+                        field_name: field.name.clone(),
+                    }
+                    .into(),
+                );
+            }
 
             let prop_ty = &field.field_type;
             let field_ty = self.type_of(constructor_field.value)?;
@@ -560,6 +641,51 @@ impl TyCheckCtx {
         Ok(())
     }
 
+    /// Asserts that the expression has visible access to the field which it is
+    /// referring to.
+    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    fn member_expression(&self, expr: &lume_hir::Member) -> Result<()> {
+        let callee_ty = self.type_of(expr.callee)?;
+        let callee_def = self.hir_expect_struct(callee_ty.instance_of);
+
+        if !self.is_visible_to(expr.id, callee_def.id)? {
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: callee_def.name.location,
+                    type_name: callee_def.name().clone(),
+                }
+                .into(),
+            );
+        }
+
+        let Some(field) = callee_def.fields().find(|field| field.name.as_str() == expr.name) else {
+            self.dcx().emit(
+                UnknownField {
+                    source: expr.location,
+                    ty: self.new_named_type(&callee_ty, true)?,
+                    field: expr.name.clone(),
+                }
+                .into(),
+            );
+
+            return Ok(());
+        };
+
+        if !self.is_visible_to(expr.id, field.id)? {
+            self.dcx().emit(
+                InaccessibleField {
+                    source: expr.location,
+                    field_def: field.name.location,
+                    field_name: field.name.to_string(),
+                }
+                .into(),
+            );
+        }
+
+        Ok(())
+    }
+
     /// Asserts that the patterns in the switch expression are valid for the
     /// operand, as well as checking that all branch expressions are
     /// compatible.
@@ -575,6 +701,21 @@ impl TyCheckCtx {
         for case in &expr.cases {
             let case_branch_ty = self.type_of(case.branch)?;
             let case_pattern_ty = self.type_of_pattern(&case.pattern)?;
+
+            if matches!(case.pattern.kind, lume_hir::PatternKind::Variant(_))
+                && !self.is_type_visible_to(&case_pattern_ty, expr.id)?
+            {
+                let type_def = self.tdb().ty_expect(case_pattern_ty.instance_of)?;
+
+                self.dcx().emit(
+                    InaccessibleType {
+                        source: case.pattern.location,
+                        type_def: type_def.name.location,
+                        type_name: type_def.name.clone(),
+                    }
+                    .into(),
+                );
+            }
 
             if let Err(err) = self.ensure_type_compatibility(&case_branch_ty, &branch_ty) {
                 self.dcx().emit(err);
@@ -594,6 +735,17 @@ impl TyCheckCtx {
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
         let enum_def = self.enum_def_of_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;
+
+        if !self.is_visible_to(expr.id, enum_def.id)? {
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: enum_def.name.location,
+                    type_name: enum_def.name.clone(),
+                }
+                .into(),
+            );
+        }
 
         if expr.arguments.len() != enum_case_def.parameters.len() {
             return Err(crate::query::diagnostics::ArgumentCountMismatch {

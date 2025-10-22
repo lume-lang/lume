@@ -1,5 +1,5 @@
 use error_snippet_derive::Diagnostic;
-use lume_hir::Visibility;
+use lume_hir::Path;
 use lume_span::Location;
 use lume_types::NamedTypeRef;
 
@@ -87,16 +87,6 @@ pub struct TraitImplTypeParameterCountMismatch {
 
     pub expected: usize,
     pub found: usize,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "implemented method does not match definition visibility", code = "LM4168")]
-pub struct TraitMethodVisibilityMismatch {
-    #[label(source, "expected method to be {expected}, found {found}")]
-    pub source: Location,
-
-    pub expected: Visibility,
-    pub found: Visibility,
 }
 
 #[derive(Diagnostic, Debug)]
@@ -232,4 +222,52 @@ pub struct MissingReturnBranch {
     pub source: Location,
 
     pub expected: NamedTypeRef,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "type {type_name:+} is inaccessible", code = "LM4392")]
+pub struct InaccessibleType {
+    #[label(source, "type {type_name:+} is inaccessible, because of it's visibility")]
+    pub source: Location,
+
+    #[label(source, help, "type defined here")]
+    pub type_def: Location,
+
+    pub type_name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "method {method_name:+} is inaccessible", code = "LM4393")]
+pub struct InaccessibleMethod {
+    #[label(source, "method {method_name:+} is inaccessible, because of it's visibility")]
+    pub source: Location,
+
+    #[label(source, help, "method defined here")]
+    pub method_def: Location,
+
+    pub method_name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "function {func_name:+} is inaccessible", code = "LM4394")]
+pub struct InaccessibleFunction {
+    #[label(source, "function {func_name:+} is inaccessible, because of it's visibility")]
+    pub source: Location,
+
+    #[label(source, help, "function defined here")]
+    pub func_def: Location,
+
+    pub func_name: Path,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "field {field_name:+} is inaccessible", code = "LM4395")]
+pub struct InaccessibleField {
+    #[label(source, "field {field_name:+} is inaccessible, because of it's visibility")]
+    pub source: Location,
+
+    #[label(source, help, "field defined here")]
+    pub field_def: Location,
+
+    pub field_name: String,
 }

@@ -1,0 +1,12 @@
+× error[LM4392]: type Foo is inaccessible
+   ╭─[visibility_vardecl_type_outside_priv.lm_2:3:12]
+ 2 │ fn main() {
+ 3 │     let _: Foo = foo();
+   ∶            ^^^ type Foo is inaccessible, because of it's visibility
+ 4 │ }
+   ╰──
+   ╭─[visibility_vardecl_type_outside_priv.lm_1:2:8]
+ 1 │
+ 2 │ struct Foo { }
+   ∶        ^^^ type defined here
+   ╰──

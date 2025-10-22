@@ -231,6 +231,9 @@ pub enum TokenKind<'source> {
     #[regex("(?&integer)u64", |lex| lex_integer(lex, Some(IntegerKind::U64)))]
     Integer((Radix, Option<IntegerKind>)),
 
+    #[token("internal")]
+    Internal,
+
     #[token("[")]
     LeftBracket,
 
@@ -371,6 +374,7 @@ impl TokenKind<'_> {
             TokenKind::Is => TokenType::Is,
             TokenKind::Increment => TokenType::Increment,
             TokenKind::Integer(_) => TokenType::Integer,
+            TokenKind::Internal => TokenType::Internal,
             TokenKind::LeftBracket => TokenType::LeftBracket,
             TokenKind::LeftCurly => TokenType::LeftCurly,
             TokenKind::LeftParen => TokenType::LeftParen,
@@ -422,6 +426,7 @@ impl TokenKind<'_> {
                 | TokenKind::Impl
                 | TokenKind::Import
                 | TokenKind::In
+                | TokenKind::Internal
                 | TokenKind::Is
                 | TokenKind::Loop
                 | TokenKind::Namespace
@@ -556,6 +561,7 @@ pub enum TokenType {
     Is,
     Increment,
     Integer,
+    Internal,
     LeftBracket,
     LeftCurly,
     LeftParen,
@@ -634,6 +640,7 @@ impl Display for TokenType {
             TokenType::In => f.write_str("in"),
             TokenType::Is => f.write_str("is"),
             TokenType::Increment => f.write_str("++"),
+            TokenType::Internal => f.write_str("internal"),
             TokenType::LeftBracket => f.write_str("["),
             TokenType::LeftCurly => f.write_str("{"),
             TokenType::LeftParen => f.write_str("("),
@@ -888,6 +895,7 @@ mod tests {
         assert_lex("import", &[(Ok(TokenKind::Import), "import", 0..6)]);
         assert_lex("impl", &[(Ok(TokenKind::Impl), "impl", 0..4)]);
         assert_lex("in", &[(Ok(TokenKind::In), "in", 0..2)]);
+        assert_lex("internal", &[(Ok(TokenKind::Internal), "internal", 0..8)]);
         assert_lex("is", &[(Ok(TokenKind::Is), "is", 0..2)]);
         assert_lex("loop", &[(Ok(TokenKind::Loop), "loop", 0..4)]);
         assert_lex("namespace", &[(Ok(TokenKind::Namespace), "namespace", 0..9)]);

@@ -1,7 +1,6 @@
 Map {
     items: [
-        TraitDefinition {
-            visibility: Private,
+        TraitImplementation {
             name: Type {
                 id: NodeId {
                     package: PackageId(
@@ -118,16 +117,15 @@ Map {
             },
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public,
                     name: Identifier {
                         name: "add",
-                        location: use_trait_generics.lm:44:47,
+                        location: use_trait_generics.lm:40:43,
                     },
                     parameters: [
                         Parameter {
                             name: Identifier {
                                 name: "other",
-                                location: use_trait_generics.lm:48:53,
+                                location: use_trait_generics.lm:44:49,
                             },
                             param_type: Type {
                                 id: NodeId {
@@ -150,17 +148,17 @@ Map {
                                     name: Type {
                                         name: Identifier {
                                             name: "Int32",
-                                            location: use_trait_generics.lm:55:60,
+                                            location: use_trait_generics.lm:51:56,
                                         },
                                         type_arguments: [],
-                                        location: use_trait_generics.lm:55:60,
+                                        location: use_trait_generics.lm:51:56,
                                     },
-                                    location: use_trait_generics.lm:55:60,
+                                    location: use_trait_generics.lm:51:56,
                                 },
-                                location: use_trait_generics.lm:55:60,
+                                location: use_trait_generics.lm:51:56,
                             },
                             vararg: false,
-                            location: use_trait_generics.lm:48:60,
+                            location: use_trait_generics.lm:44:56,
                         },
                     ],
                     type_parameters: [],
@@ -177,24 +175,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "Int64",
-                                    location: use_trait_generics.lm:65:70,
+                                    location: use_trait_generics.lm:61:66,
                                 },
                                 type_arguments: [],
-                                location: use_trait_generics.lm:65:70,
+                                location: use_trait_generics.lm:61:66,
                             },
-                            location: use_trait_generics.lm:65:70,
+                            location: use_trait_generics.lm:61:66,
                         },
-                        location: use_trait_generics.lm:65:70,
+                        location: use_trait_generics.lm:61:66,
                     },
                     block: Block {
                         statements: [],
-                        location: use_trait_generics.lm:71:73,
+                        location: use_trait_generics.lm:67:69,
                     },
-                    location: use_trait_generics.lm:37:73,
+                    location: use_trait_generics.lm:37:69,
                 },
             ],
             type_parameters: [],
-            location: use_trait_generics.lm:0:75,
+            location: use_trait_generics.lm:0:71,
         },
     ],
 }

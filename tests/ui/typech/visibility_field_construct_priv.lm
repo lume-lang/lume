@@ -1,0 +1,9 @@
+struct Foo {
+    bar: Int32;
+}
+
+fn foo() {
+    let foo = Foo {
+        bar: 0
+    };
+}

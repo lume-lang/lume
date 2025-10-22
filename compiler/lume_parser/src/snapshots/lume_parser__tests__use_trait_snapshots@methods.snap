@@ -1,17 +1,10 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string() -> String {\n                return self;\n            }\n\n            pub fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
+expression: "parse(\"\n        use Cast in Int32 {\n            fn to_string() -> String {\n                return self;\n            }\n\n            fn to_int() -> Int32 {\n                return self;\n            }\n        }\")"
 ---
 [
-    Use(
-        ImplTrait {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+    TraitImpl(
+        TraitImplementation {
             name: Named(
                 NamedType {
                     name: Path {
@@ -58,18 +51,11 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
             ),
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                41..44,
-                            ),
-                        },
-                    ),
                     external: false,
                     name: Identifier {
                         name: "to_string",
                         location: Location(
-                            48..57,
+                            44..53,
                         ),
                     },
                     parameters: [],
@@ -83,16 +69,16 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         name: Identifier {
                                             name: "String",
                                             location: Location(
-                                                63..69,
+                                                59..65,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            63..69,
+                                            59..65,
                                         ),
                                     },
                                     location: Location(
-                                        63..69,
+                                        59..65,
                                     ),
                                 },
                             },
@@ -108,39 +94,32 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                                 name: Identifier {
                                                     name: "self",
                                                     location: Location(
-                                                        95..99,
+                                                        91..95,
                                                     ),
                                                 },
                                             },
                                         ),
                                     ),
                                     location: Location(
-                                        88..100,
+                                        84..96,
                                     ),
                                 },
                             ),
                         ],
                         location: Location(
-                            70..114,
+                            66..110,
                         ),
                     },
                     location: Location(
-                        41..114,
+                        41..110,
                     ),
                 },
                 TraitMethodImplementation {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                128..131,
-                            ),
-                        },
-                    ),
                     external: false,
                     name: Identifier {
                         name: "to_int",
                         location: Location(
-                            135..141,
+                            127..133,
                         ),
                     },
                     parameters: [],
@@ -154,16 +133,16 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                         name: Identifier {
                                             name: "Int32",
                                             location: Location(
-                                                147..152,
+                                                139..144,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            147..152,
+                                            139..144,
                                         ),
                                     },
                                     location: Location(
-                                        147..152,
+                                        139..144,
                                     ),
                                 },
                             },
@@ -179,30 +158,30 @@ expression: "parse(\"\n        use Cast in Int32 {\n            pub fn to_string
                                                 name: Identifier {
                                                     name: "self",
                                                     location: Location(
-                                                        178..182,
+                                                        170..174,
                                                     ),
                                                 },
                                             },
                                         ),
                                     ),
                                     location: Location(
-                                        171..183,
+                                        163..175,
                                     ),
                                 },
                             ),
                         ],
                         location: Location(
-                            153..197,
+                            145..189,
                         ),
                     },
                     location: Location(
-                        128..197,
+                        124..189,
                     ),
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..207,
+                9..199,
             ),
         },
     ),

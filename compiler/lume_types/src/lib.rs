@@ -192,7 +192,7 @@ pub enum MethodKind {
 pub struct Method {
     pub id: NodeId,
     pub kind: MethodKind,
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub callee: TypeRef,
     pub name: Path,
     pub type_parameters: Vec<NodeId>,
@@ -1338,7 +1338,7 @@ impl TypeDatabaseContext {
         id: NodeId,
         owner: TypeRef,
         name: Path,
-        visibility: Visibility,
+        visibility: Option<Visibility>,
         kind: MethodKind,
     ) -> NodeId {
         self.methods.insert(id, Method {

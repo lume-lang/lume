@@ -469,7 +469,7 @@ impl<'a> LowerModule<'a> {
             }
             lume_ast::TopLevelExpression::TypeDefinition(t) => self.def_type(*t)?,
             lume_ast::TopLevelExpression::FunctionDefinition(f) => self.def_function(*f)?,
-            lume_ast::TopLevelExpression::Use(f) => self.def_trait_impl(*f)?,
+            lume_ast::TopLevelExpression::TraitImpl(f) => self.def_trait_impl(*f)?,
             lume_ast::TopLevelExpression::Impl(f) => self.def_impl(*f)?,
         };
 

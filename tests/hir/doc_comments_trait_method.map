@@ -16,10 +16,9 @@ Map {
             },
             methods: [
                 TraitMethodDefinition {
-                    visibility: Public,
                     name: Identifier {
                         name: "bar",
-                        location: doc_comments_trait_method.lm:53:56,
+                        location: doc_comments_trait_method.lm:49:52,
                     },
                     parameters: [],
                     type_parameters: [],
@@ -29,24 +28,24 @@ Map {
                             name: Type {
                                 name: Identifier {
                                     name: "void",
-                                    location: doc_comments_trait_method.lm:62:66,
+                                    location: doc_comments_trait_method.lm:58:62,
                                 },
                                 type_arguments: [],
-                                location: doc_comments_trait_method.lm:62:66,
+                                location: doc_comments_trait_method.lm:58:62,
                             },
-                            location: doc_comments_trait_method.lm:62:66,
+                            location: doc_comments_trait_method.lm:58:62,
                         },
-                        location: doc_comments_trait_method.lm:62:66,
+                        location: doc_comments_trait_method.lm:58:62,
                     },
                     block: Block {
                         statements: [],
-                        location: doc_comments_trait_method.lm:67:70,
+                        location: doc_comments_trait_method.lm:63:66,
                     },
-                    location: doc_comments_trait_method.lm:50:70,
+                    location: doc_comments_trait_method.lm:46:66,
                 },
             ],
             type_parameters: [],
-            location: doc_comments_trait_method.lm:0:72,
+            location: doc_comments_trait_method.lm:0:68,
         },
     ],
 }

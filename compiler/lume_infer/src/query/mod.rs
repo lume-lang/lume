@@ -1,6 +1,6 @@
 use error_snippet::Result;
 use lume_architect::cached_query;
-use lume_hir::{CallExpression, Identifier, Node, Path};
+use lume_hir::{CallExpression, Identifier, Node, Path, Visibility};
 use lume_span::NodeId;
 use lume_types::{Function, Method, Trait, TypeRef};
 
@@ -480,7 +480,7 @@ impl TyInferCtx {
             }
         };
 
-        Result::Ok(ty.with_location(pat.location))
+        Ok(ty.with_location(pat.location))
     }
 
     /// Returns the *type* of the field within the enum definition with the
@@ -518,6 +518,24 @@ impl TyInferCtx {
         };
 
         self.tdb().ty_expect_trait(use_ref.trait_.instance_of)
+    }
+
+    /// Returns the struct definition with the given type ID.
+    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    pub fn struct_def_type(&self, id: NodeId) -> Result<&lume_hir::StructDefinition> {
+        let Some(parent_ty) = self.tdb().type_(id) else {
+            return Err(lume_types::errors::NodeNotFound { id }.into());
+        };
+
+        let lume_types::TypeKind::User(lume_types::UserType::Struct(struct_ty)) = &parent_ty.kind else {
+            return Err(lume_types::errors::UnexpectedTypeKind {
+                found: parent_ty.kind.as_kind_ref(),
+                expected: lume_types::TypeKindRef::Struct,
+            }
+            .into());
+        };
+
+        Ok(self.hir_expect_struct(struct_ty.id))
     }
 
     /// Returns the enum definition with the given type ID.
@@ -1039,6 +1057,26 @@ impl TyInferCtx {
             lume_hir::LiteralKind::Int(lit) => lit.kind.is_none(),
             lume_hir::LiteralKind::Float(lit) => lit.kind.is_none(),
             _ => false,
+        }
+    }
+
+    /// Gets the visibility of the given node, if one can be applied to it.
+    ///
+    /// If the type of node cannot have a visibility modifier, returns [`None`].
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn visibility_of(&self, id: NodeId) -> Option<Visibility> {
+        match self.hir_node(id)? {
+            Node::Function(n) => Some(n.visibility),
+            Node::Type(def) => match def {
+                lume_hir::TypeDefinition::Enum(n) => Some(n.visibility),
+                lume_hir::TypeDefinition::Struct(n) => Some(n.visibility),
+                lume_hir::TypeDefinition::Trait(n) => Some(n.visibility),
+            },
+            Node::TraitImpl(_) | Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) | Node::Impl(_) => None,
+            Node::Field(n) => Some(n.visibility),
+            Node::Method(n) => Some(n.visibility),
+            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => None,
         }
     }
 }

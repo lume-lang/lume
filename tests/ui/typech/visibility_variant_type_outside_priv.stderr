@@ -1,0 +1,12 @@
+× error[LM4392]: type Variant is inaccessible
+   ╭─[visibility_variant_type_outside_priv.lm_2:3:22]
+ 2 │ fn main() {
+ 3 │     let _ = Variant::A;
+   ∶                      ^ type Variant is inaccessible, because of it's visibility
+ 4 │ }
+   ╰──
+   ╭─[visibility_variant_type_outside_priv.lm_1:2:6]
+ 1 │
+ 2 │ enum Variant { A, B }
+   ∶      ^^^^^^^ type defined here
+   ╰──

@@ -1,7 +1,7 @@
 //# test-outcome=success
 
 struct A {
-    foo: Boolean = false;
+    pub foo: Boolean = false;
 }
 
 fn foo() {

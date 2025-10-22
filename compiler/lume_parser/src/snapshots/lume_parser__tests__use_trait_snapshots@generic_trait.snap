@@ -1,17 +1,10 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            pub fn next() -> T { }\n        }\")"
+expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            fn next() -> T { }\n        }\")"
 ---
 [
-    Use(
-        ImplTrait {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+    TraitImpl(
+        TraitImplementation {
             name: Named(
                 NamedType {
                     name: Path {
@@ -104,18 +97,11 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
             ),
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                57..60,
-                            ),
-                        },
-                    ),
                     external: false,
                     name: Identifier {
                         name: "next",
                         location: Location(
-                            64..68,
+                            60..64,
                         ),
                     },
                     parameters: [],
@@ -129,16 +115,16 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                                         name: Identifier {
                                             name: "T",
                                             location: Location(
-                                                74..75,
+                                                70..71,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            74..75,
+                                            70..71,
                                         ),
                                     },
                                     location: Location(
-                                        74..75,
+                                        70..71,
                                     ),
                                 },
                             },
@@ -147,11 +133,11 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                     block: Block {
                         statements: [],
                         location: Location(
-                            76..79,
+                            72..75,
                         ),
                     },
                     location: Location(
-                        57..79,
+                        57..75,
                     ),
                 },
             ],
@@ -167,7 +153,7 @@ expression: "parse(\"\n        use<T> Enumerable<T> in Vector<T> {\n            
                 },
             ],
             location: Location(
-                9..89,
+                9..85,
             ),
         },
     ),

@@ -1,17 +1,10 @@
 ---
 source: compiler/lume_parser/src/tests.rs
-expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -> Boolean { }\n        }\")"
+expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Boolean { }\n        }\")"
 ---
 [
-    Use(
-        ImplTrait {
-            visibility: Private(
-                Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
-            ),
+    TraitImpl(
+        TraitImplementation {
             name: Named(
                 NamedType {
                     name: Path {
@@ -58,18 +51,11 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
             ),
             methods: [
                 TraitMethodImplementation {
-                    visibility: Public(
-                        Public {
-                            location: Location(
-                                41..44,
-                            ),
-                        },
-                    ),
                     external: false,
                     name: Identifier {
                         name: "zero?",
                         location: Location(
-                            48..53,
+                            44..49,
                         ),
                     },
                     parameters: [],
@@ -83,16 +69,16 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                                         name: Identifier {
                                             name: "Boolean",
                                             location: Location(
-                                                59..66,
+                                                55..62,
                                             ),
                                         },
                                         type_arguments: [],
                                         location: Location(
-                                            59..66,
+                                            55..62,
                                         ),
                                     },
                                     location: Location(
-                                        59..66,
+                                        55..62,
                                     ),
                                 },
                             },
@@ -101,17 +87,17 @@ expression: "parse(\"\n        use Zero in Int32 {\n            pub fn zero?() -
                     block: Block {
                         statements: [],
                         location: Location(
-                            67..70,
+                            63..66,
                         ),
                     },
                     location: Location(
-                        41..70,
+                        41..66,
                     ),
                 },
             ],
             type_parameters: [],
             location: Location(
-                9..80,
+                9..76,
             ),
         },
     ),

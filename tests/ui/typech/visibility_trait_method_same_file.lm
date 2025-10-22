@@ -1,0 +1,16 @@
+//# test-outcome=success
+
+trait Trait {
+    fn call(self);
+}
+
+struct Foo { }
+
+use Trait in Foo {
+    fn call(self) { }
+}
+
+fn foo() {
+    let foo = Foo { };
+    foo.call();
+}

@@ -1,9 +1,9 @@
 //# test-outcome=success
 
 trait Foo {
-    pub fn foo(self) { }
+    fn foo(self) { }
 }
 
 use<T> Foo in T {
-    pub fn foo(self) { }
+    fn foo(self) { }
 }

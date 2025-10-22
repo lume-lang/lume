@@ -607,15 +607,16 @@ fn test_enum_snapshots() {
 fn test_visibility_snapshots() {
     assert_snap_eq!("fn foo {}", "default");
     assert_snap_eq!("priv fn foo {}", "priv");
+    assert_snap_eq!("pub(internal) fn foo {}", "internal");
     assert_snap_eq!("pub fn foo {}", "pub");
 }
 
 #[test]
 fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { }", "empty");
-    assert_snap_eq!("trait Add { pub fn add(other: Int32) -> Int32; }", "method");
+    assert_snap_eq!("trait Add { fn add(other: Int32) -> Int32; }", "method");
     assert_snap_eq!(
-        "trait Add { pub fn add(other: Int32) -> Int32 { return self + other; } }",
+        "trait Add {fn add(other: Int32) -> Int32 { return self + other; } }",
         "method_impl"
     );
     assert_snap_eq!("trait Add<T> { }", "generic");
@@ -623,7 +624,7 @@ fn test_trait_snapshots() {
     assert_snap_eq!("trait Add { fn add(other: Int32) -> Int32; }", "private_method");
     assert_snap_eq!("trait Add<T: Numeric> {}", "constrained_generic");
     assert_snap_eq!("trait Add<T1: Numeric, T2: Numeric> {}", "constrained_generics");
-    assert_snap_eq!("trait Add { pub fn add(other: Int32) { } }", "method_no_ret");
+    assert_snap_eq!("trait Add { fn add(other: Int32) { } }", "method_no_ret");
 }
 
 #[test]
@@ -643,16 +644,6 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Add in Int32 {
-            pub fn add(other: Int32) -> Int32 {
-                return self + other;
-            }
-        }",
-        "pub_method"
-    );
-
-    assert_snap_eq!(
-        "
-        use Add in Int32 {
             fn add(other: Int32) {}
         }",
         "method_no_ret"
@@ -661,11 +652,11 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Cast in Int32 {
-            pub fn to_string() -> String {
+            fn to_string() -> String {
                 return self;
             }
 
-            pub fn to_int() -> Int32 {
+            fn to_int() -> Int32 {
                 return self;
             }
         }",
@@ -675,7 +666,7 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Zero in Int32 {
-            pub fn zero?() -> Boolean { }
+            fn zero?() -> Boolean { }
         }",
         "boolean_method"
     );
@@ -683,7 +674,7 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Add<Int32> in Int32 {
-            pub fn add(other: Int32) -> Int32 {
+            fn add(other: Int32) -> Int32 {
                 return self + other;
             }
         }",
@@ -693,7 +684,7 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Add<Int32, Int64> in Int32 {
-            pub fn add(other: Int32) -> Int64 {
+            fn add(other: Int32) -> Int64 {
                 return self + other;
             }
         }",
@@ -703,7 +694,7 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use Enumerable<T> in Vector<T> {
-            pub fn next() -> T { }
+            fn next() -> T { }
         }",
         "generic_type"
     );
@@ -711,7 +702,7 @@ fn test_use_trait_snapshots() {
     assert_snap_eq!(
         "
         use<T> Enumerable<T> in Vector<T> {
-            pub fn next() -> T { }
+            fn next() -> T { }
         }",
         "generic_trait"
     );
@@ -764,7 +755,7 @@ fn test_doc_comments_snapshots() {
     assert_snap_eq!(
         "trait Foo {
             /// This is a doc comment
-            pub fn bar() -> void { }
+            fn bar() -> void { }
         }",
         "trait_method"
     );

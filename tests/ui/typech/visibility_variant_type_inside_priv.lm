@@ -1,0 +1,7 @@
+//# test-outcome=success
+
+enum Variant { A, B }
+
+fn main() {
+    let _ = Variant::A;
+}

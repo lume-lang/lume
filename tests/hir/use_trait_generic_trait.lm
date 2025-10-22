@@ -1,3 +1,3 @@
 use<T> Enumerable<T> in Vector<T> {
-    pub fn next() -> T { }
+    fn next() -> T { }
 }
