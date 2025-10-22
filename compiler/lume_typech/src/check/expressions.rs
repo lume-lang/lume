@@ -489,6 +489,19 @@ impl TyCheckCtx {
     fn construct_expression(&self, expr: &lume_hir::Construct) -> Result<()> {
         let constructed_type = self.find_type_ref_from(&expr.path, expr.id)?.unwrap();
 
+        if !self.is_type_visible_to(&constructed_type, expr.id)? {
+            let type_def = self.hir_expect_struct(constructed_type.instance_of);
+
+            self.dcx().emit(
+                InaccessibleType {
+                    source: expr.location,
+                    type_def: type_def.name.location,
+                    type_name: expr.path.clone(),
+                }
+                .into(),
+            );
+        }
+
         let fields = self.tdb().find_fields(constructed_type.instance_of);
         let mut fields_left = expr.fields.iter().map(|field| &field.name).collect::<IndexSet<_>>();
 
@@ -504,6 +517,19 @@ impl TyCheckCtx {
 
                 continue;
             };
+
+            if !self.is_visible_to(expr.id, field.id)? {
+                let hir_field = self.hir_field(field.id).expect("expected HIR field with same ID");
+
+                self.dcx().emit(
+                    InaccessibleField {
+                        source: constructor_field.location,
+                        field_def: hir_field.name.location,
+                        field_name: field.name.clone(),
+                    }
+                    .into(),
+                );
+            }
 
             let prop_ty = &field.field_type;
             let field_ty = self.type_of(constructor_field.value)?;
