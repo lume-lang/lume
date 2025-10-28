@@ -742,13 +742,13 @@ impl Parser<'_> {
         let name = self.parse_identifier()?;
 
         let value = if self.check(TokenType::Colon) {
-            self.parse_expression()?
+            Some(self.parse_expression()?)
         } else {
-            name.clone().as_var()
+            None
         };
 
         let start = name.location().start();
-        let end = value.location().end();
+        let end = self.previous_token().end();
         let location = (start..end).into();
 
         Ok(ConstructorField { name, value, location })

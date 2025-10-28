@@ -344,10 +344,12 @@ impl PathSegment {
     }
 
     /// Takes the type arguments from the path segment.
-    pub fn take_type_arguments(self) -> Vec<Type> {
+    pub fn take_type_arguments(&mut self) -> Vec<Type> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => type_arguments,
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => {
+                type_arguments.drain(..).collect()
+            }
         }
     }
 }
@@ -439,7 +441,7 @@ impl Path {
         self.name.type_arguments()
     }
 
-    pub fn take_type_arguments(self) -> Vec<Type> {
+    pub fn take_type_arguments(&mut self) -> Vec<Type> {
         self.name.take_type_arguments()
     }
 }
@@ -596,13 +598,13 @@ node_location!(Namespace);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionDefinition {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Box<Type>>,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
     pub documentation: Option<String>,
 }
@@ -641,7 +643,7 @@ impl TypeDefinition {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub builtin: bool,
     pub fields: Vec<Field>,
@@ -654,7 +656,7 @@ node_location!(StructDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Field {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub field_type: Type,
     pub default_value: Option<Expression>,
@@ -666,13 +668,13 @@ node_location!(Field);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MethodDefinition {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub external: bool,
     pub name: Identifier,
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Box<Type>>,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
     pub documentation: Option<String>,
 }
@@ -681,7 +683,7 @@ node_location!(MethodDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,
     pub methods: Vec<TraitMethodDefinition>,
@@ -706,7 +708,7 @@ node_location!(TraitMethodDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumDefinition {
-    pub visibility: Visibility,
+    pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,
     pub cases: Vec<EnumDefinitionCase>,
@@ -766,7 +768,7 @@ pub struct TraitMethodImplementation {
     pub parameters: Vec<Parameter>,
     pub type_parameters: Vec<TypeParameter>,
     pub return_type: Option<Box<Type>>,
-    pub block: Block,
+    pub block: Option<Block>,
     pub location: Location,
 }
 
@@ -1018,7 +1020,7 @@ node_location!(Construct);
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct ConstructorField {
     pub name: Identifier,
-    pub value: Expression,
+    pub value: Option<Expression>,
     pub location: Location,
 }
 

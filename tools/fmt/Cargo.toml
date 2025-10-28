@@ -1,0 +1,26 @@
+[package]
+name = "lume_fmt"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+lume_ast = { path = "../../compiler/lume_ast" }
+lume_errors = { path = "../../crates/lume_errors" }
+lume_lexer = { path = "../../compiler/lume_lexer" }
+lume_span = { path = "../../crates/lume_span" }
+lume_parser = { path = "../../compiler/lume_parser" }
+
+clap = { workspace = true }
+error_snippet = { workspace = true }
+logos = { version = "=0.15.1" }
+serde = { workspace = true, features = ["derive"] }
+toml = { version = "0.9.6" }
+
+[lints]
+workspace = true

@@ -254,8 +254,10 @@ impl LowerModule<'_> {
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn expr_constructor_field(&mut self, expr: lume_ast::ConstructorField) -> Result<lume_hir::ConstructorField> {
+        let value = expr.value.unwrap_or_else(|| expr.name.clone().as_var());
+
         let name = self.identifier(expr.name);
-        let value = self.expression(expr.value)?;
+        let value = self.expression(value)?;
         let location = self.location(expr.location);
 
         Ok(lume_hir::ConstructorField { name, value, location })

@@ -12,12 +12,12 @@ impl Parser<'_> {
             TokenKind::Pub | TokenKind::Priv => self.parse_top_level_expression_visibility(),
             TokenKind::Import => self.parse_import(),
             TokenKind::Namespace => self.parse_namespace(),
-            TokenKind::Impl => self.parse_impl(),
+            TokenKind::Impl => self.parse_implementation(),
             TokenKind::Fn => self.parse_fn(),
             TokenKind::Struct => self.parse_struct(),
             TokenKind::Trait => self.parse_trait(),
             TokenKind::Enum => self.parse_enum(),
-            TokenKind::Use => self.parse_trait_impl(),
+            TokenKind::Use => self.parse_trait_implementation(),
             k => Err(InvalidTopLevelStatement {
                 source: self.source.clone(),
                 range: self.token().index,
@@ -85,7 +85,7 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_impl(&mut self) -> Result<TopLevelExpression> {
+    fn parse_implementation(&mut self) -> Result<TopLevelExpression> {
         let start = self.expect_impl()?.start();
 
         let type_parameters = self.parse_type_parameters()?;
@@ -110,10 +110,11 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_fn_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = visibility.location().start();
-
-        self.expect_fn()?;
+    fn parse_fn_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let start = visibility
+            .as_ref()
+            .map(|vis| vis.location().start())
+            .unwrap_or(self.expect_fn()?.start());
 
         let external = self.check_external();
         let name = self.parse_callable_name_or_err(
@@ -210,7 +211,8 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_struct_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
+    fn parse_struct_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let documentation = self.doc_token.take();
         let start = self.consume(TokenType::Struct)?.start();
 
         let builtin = self.check(TokenType::Builtin);
@@ -235,7 +237,7 @@ impl Parser<'_> {
             fields,
             type_parameters,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         };
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Struct(
@@ -244,7 +246,7 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_visibility(&mut self) -> Result<Visibility> {
+    fn parse_visibility(&mut self) -> Result<Option<Visibility>> {
         match self.token().kind {
             TokenKind::Pub => {
                 let token = self.consume(TokenType::Pub)?;
@@ -255,21 +257,19 @@ impl Parser<'_> {
                     let start = token.start();
                     let end = self.consume(TokenType::RightParen)?.end();
 
-                    return Ok(Visibility::Internal {
+                    return Ok(Some(Visibility::Internal {
                         location: (start..end).into(),
-                    });
+                    }));
                 }
 
-                Ok(Visibility::Public {
+                Ok(Some(Visibility::Public {
                     location: token.index.into(),
-                })
+                }))
             }
-            TokenKind::Priv => Ok(Visibility::Private {
+            TokenKind::Priv => Ok(Some(Visibility::Private {
                 location: self.consume(TokenType::Priv)?.index.into(),
-            }),
-            _ => Ok(Visibility::Private {
-                location: (self.position..self.position).into(),
-            }),
+            })),
+            _ => Ok(None),
         }
     }
 
@@ -300,7 +300,11 @@ impl Parser<'_> {
         let field_type = self.parse_type()?;
         let default_value = self.parse_opt_assignment()?;
 
-        let start = visibility.location().start();
+        let start = visibility
+            .as_ref()
+            .map(|vis| vis.location().start())
+            .unwrap_or(name.location.start());
+
         let end = self.expect_semi()?.end();
 
         Ok(Field {
@@ -318,7 +322,10 @@ impl Parser<'_> {
         self.read_doc_comment()?;
 
         let visibility = self.parse_visibility()?;
-        let start = visibility.location().start();
+        let start = visibility
+            .as_ref()
+            .map(|vis| vis.location().start())
+            .unwrap_or(self.token().start());
 
         // Report a special error if we found an identifier, such as
         // a field declaration, which isn't allowed within an `impl` block.
@@ -392,8 +399,13 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_trait_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenType::Trait)?.start();
+    fn parse_trait_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let documentation = self.doc_token.take();
+
+        let start = visibility
+            .as_ref()
+            .map(|vis| vis.location().start())
+            .unwrap_or(self.consume(TokenType::Trait)?.start());
 
         let name = self.parse_ident_or_err(
             ExpectedTraitName {
@@ -414,7 +426,7 @@ impl Parser<'_> {
             methods,
             type_parameters,
             location: (start..end).into(),
-            documentation: self.doc_token.take(),
+            documentation,
         };
 
         Ok(TopLevelExpression::TypeDefinition(Box::new(TypeDefinition::Trait(
@@ -474,8 +486,13 @@ impl Parser<'_> {
     /// }
     /// ```
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_enum_visibility(&mut self, visibility: Visibility) -> Result<TopLevelExpression> {
-        let start = self.consume(TokenType::Enum)?.start();
+    fn parse_enum_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
+        let documentation = self.doc_token.take();
+
+        let start = visibility
+            .as_ref()
+            .map(|vis| vis.location().start())
+            .unwrap_or(self.consume(TokenType::Enum)?.start());
 
         let name = self.parse_identifier()?;
         let type_parameters = self.parse_type_parameters()?;
@@ -490,7 +507,7 @@ impl Parser<'_> {
                 type_parameters,
                 cases,
                 location: (start..end).into(),
-                documentation: self.doc_token.take(),
+                documentation,
             }),
         ))))
     }
@@ -522,7 +539,7 @@ impl Parser<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn parse_trait_impl(&mut self) -> Result<TopLevelExpression> {
+    fn parse_trait_implementation(&mut self) -> Result<TopLevelExpression> {
         let start = self.consume(TokenType::Use)?.start();
         let type_parameters = self.parse_type_parameters()?;
 
@@ -531,23 +548,26 @@ impl Parser<'_> {
         self.consume(TokenType::In)?;
         let target = self.parse_type()?;
 
-        let methods = self.consume_curly_seq(Parser::parse_trait_method_impl)?;
+        let methods = self.consume_curly_seq(Parser::parse_trait_method_implementation)?;
         let end = self.previous_token().end();
 
-        let use_trait = TraitImplementation {
+        Ok(TopLevelExpression::TraitImpl(Box::new(TraitImplementation {
             type_parameters,
             name: Box::new(name),
             target: Box::new(target),
             methods,
             location: (start..end).into(),
-        };
-
-        Ok(TopLevelExpression::TraitImpl(Box::new(use_trait)))
+        })))
     }
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
-    fn parse_trait_method_impl(&mut self) -> Result<TraitMethodImplementation> {
-        let start = self.expect_fn()?.start();
+    fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
+        let visibility = self.parse_visibility()?;
+
+        let start = visibility
+            .map(|v| v.location().start())
+            .unwrap_or(self.expect_fn()?.start());
+
         let external = self.check_external();
 
         let Ok(name) = self.parse_callable_name() else {
@@ -563,7 +583,7 @@ impl Parser<'_> {
         let return_type = self.parse_fn_return_type()?;
         let block = self.parse_opt_external_block(external)?;
 
-        let end = block.location.end();
+        let end = self.previous_token().end();
 
         Ok(TraitMethodImplementation {
             external,
