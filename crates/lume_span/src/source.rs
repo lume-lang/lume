@@ -227,6 +227,24 @@ impl Location {
 
         (line, src[last_line_start..].chars().count())
     }
+
+    /// Determines whether the current location is trailing the given one.
+    ///
+    /// The location is trailing, if it exists on the same line, and exists
+    /// after the given location.
+    #[inline]
+    #[must_use]
+    pub fn is_trailing(&self, other: &Self) -> bool {
+        // If the files don't match, they cannot be trailing.
+        if self.file.id != other.file.id {
+            return false;
+        }
+
+        let self_coords = self.coordinates();
+        let other_coords = other.coordinates();
+
+        self_coords.0 == other_coords.0 && other_coords.1 < self_coords.1
+    }
 }
 
 impl std::fmt::Debug for Location {

@@ -819,15 +819,21 @@ impl<'source> Lexer<'source> {
     }
 
     pub fn lex(&'source mut self) -> Result<Vec<Token<'source>>> {
+        Self::lex_ref(&self.source.content)
+    }
+
+    pub fn lex_ref(content: &'source str) -> Result<Vec<Token<'source>>> {
+        let source_file = Arc::new(SourceFile::internal(content));
+
         let mut tokens = Vec::new();
-        let mut lexer = TokenKind::lexer(&self.source.content);
+        let mut lexer = TokenKind::lexer(content);
 
         while let Some(kind) = lexer.next() {
             let kind = match kind {
                 Ok(kind) => kind,
                 Err(LexerError::UnexpectedCharacter(c)) => {
                     return Err(UnexpectedCharacter {
-                        source: self.source.clone(),
+                        source: source_file.clone(),
                         range: lexer.span(),
                         char: c,
                     }
@@ -835,7 +841,7 @@ impl<'source> Lexer<'source> {
                 }
                 Err(LexerError::MissingEndingQuote) => {
                     return Err(MissingEndingQuote {
-                        source: self.source.clone(),
+                        source: source_file.clone(),
                         range: lexer.span(),
                     }
                     .into());
@@ -849,7 +855,7 @@ impl<'source> Lexer<'source> {
             });
         }
 
-        let last_idx = self.source.content.len().saturating_sub(1);
+        let last_idx = content.len().saturating_sub(1);
 
         tokens.push(Token {
             kind: TokenKind::Eof,

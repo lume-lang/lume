@@ -118,11 +118,7 @@ impl LowerModule<'_> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
-        let block = if expr.external {
-            None
-        } else {
-            Some(self.isolated_block(expr.block, &parameters))
-        };
+        let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
         Ok(lume_hir::MethodDefinition {
             id,
@@ -151,7 +147,7 @@ impl LowerModule<'_> {
 
         let mut methods = Vec::with_capacity(expr.methods.len());
         for method in expr.methods {
-            let method = self.def_trait_methods(method)?;
+            let method = self.def_trait_method_def(method)?;
             self.map.nodes.insert(method.id, Node::TraitMethodDef(method.clone()));
 
             methods.push(method);
@@ -172,7 +168,10 @@ impl LowerModule<'_> {
     }
 
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn def_trait_methods(&mut self, expr: lume_ast::TraitMethodDefinition) -> Result<lume_hir::TraitMethodDefinition> {
+    fn def_trait_method_def(
+        &mut self,
+        expr: lume_ast::TraitMethodDefinition,
+    ) -> Result<lume_hir::TraitMethodDefinition> {
         let id = self.next_node_id();
 
         let name = self.identifier(expr.name);
@@ -253,11 +252,7 @@ impl LowerModule<'_> {
 
         self.ensure_item_undefined(DefinedItem::Function(name.clone()))?;
 
-        let block = if expr.external {
-            None
-        } else {
-            Some(self.isolated_block(expr.block, &parameters))
-        };
+        let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
         Ok(lume_hir::Node::Function(lume_hir::FunctionDefinition {
             id,
@@ -399,11 +394,7 @@ impl LowerModule<'_> {
         let return_type = self.opt_type_ref(expr.return_type.map(|f| *f))?;
         let location = self.location(expr.location);
 
-        let block = if expr.external {
-            None
-        } else {
-            Some(self.isolated_block(expr.block, &parameters))
-        };
+        let block = expr.block.map(|block| self.isolated_block(block, &parameters));
 
         Ok(lume_hir::TraitMethodImplementation {
             id,
@@ -440,10 +431,10 @@ impl LowerModule<'_> {
     }
 }
 
-fn lower_visibility(expr: &lume_ast::Visibility) -> lume_hir::Visibility {
+fn lower_visibility(expr: &Option<lume_ast::Visibility>) -> lume_hir::Visibility {
     match expr {
-        lume_ast::Visibility::Public { .. } => lume_hir::Visibility::Public,
-        lume_ast::Visibility::Internal { .. } => lume_hir::Visibility::Internal,
-        lume_ast::Visibility::Private { .. } => lume_hir::Visibility::Private,
+        Some(lume_ast::Visibility::Public { .. }) => lume_hir::Visibility::Public,
+        Some(lume_ast::Visibility::Internal { .. }) => lume_hir::Visibility::Internal,
+        None | Some(lume_ast::Visibility::Private { .. }) => lume_hir::Visibility::Private,
     }
 }

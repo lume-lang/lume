@@ -170,13 +170,6 @@ impl<'src> Parser<'src> {
         self.token_at(self.index - 1)
     }
 
-    /// Parses the last token from the lexer.
-    ///
-    /// Returns the parsed token or a parsing error.
-    fn last_token(&self) -> Token<'src> {
-        self.token_at(self.tokens.len() - 1)
-    }
-
     /// Peeks the token from the lexer at some offset and returns it if it
     /// matches the expected kind.
     ///
@@ -639,37 +632,22 @@ impl<'src> Parser<'src> {
         Ok(Block { statements, location })
     }
 
-    /// Returns an empty block for external functions.
-    ///
-    /// Also functions as an extra layer to report errors, if a function body is
-    /// declared.
-    #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_external_block(&mut self) -> Result<Block> {
-        if self.peek(TokenType::LeftCurly) {
-            return Err(ExternalFunctionBody {
-                source: self.source.clone(),
-                range: self.token().index,
-            }
-            .into());
-        }
-
-        if self.eof() {
-            let last_token_end = self.last_token().end();
-
-            return Ok(Block::from_location(last_token_end..last_token_end));
-        }
-
-        Ok(Block::from_location(self.token().index))
-    }
-
     /// Returns an empty block for external functions and an actual block for
     /// non-external functions.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    fn parse_opt_external_block(&mut self, external: bool) -> Result<Block> {
+    fn parse_opt_external_block(&mut self, external: bool) -> Result<Option<Block>> {
         if external {
-            self.parse_external_block()
+            if self.peek(TokenType::LeftCurly) {
+                return Err(ExternalFunctionBody {
+                    source: self.source.clone(),
+                    range: self.token().index,
+                }
+                .into());
+            }
+
+            Ok(None)
         } else {
-            self.parse_block()
+            self.parse_block().map(Some)
         }
     }
 }
