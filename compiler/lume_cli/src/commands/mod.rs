@@ -1,5 +1,6 @@
 pub(crate) mod arc;
 pub(crate) mod build;
+pub(crate) mod fmt;
 pub(crate) mod run;
 
 use std::env::current_dir;
@@ -9,6 +10,7 @@ pub(crate) use arc::ArcCommand;
 pub(crate) use build::BuildCommand;
 use clap::ValueHint;
 use error_snippet::{IntoDiagnostic, Result};
+pub(crate) use fmt::FormatCommand;
 use lume_session::OptimizationLevel;
 pub(crate) use run::RunCommand;
 
