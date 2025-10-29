@@ -83,35 +83,47 @@ Map {
                                         type_arguments: [],
                                         location: <internal>:0:0,
                                     },
-                                    callee: StaticCall {
-                                        name: Path {
-                                            root: [
-                                                Namespace {
-                                                    name: Identifier {
-                                                        name: "std",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                },
-                                                Type {
-                                                    name: Identifier {
-                                                        name: "Array",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    type_arguments: [],
-                                                    location: <internal>:0:0,
-                                                },
-                                            ],
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "new",
-                                                    location: <internal>:0:0,
-                                                },
-                                                type_arguments: [],
-                                                location: <internal>:0:0,
-                                            },
+                                    callee: Variable {
+                                        name: Identifier {
+                                            name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        arguments: [],
+                                        reference: VariableDeclaration {
+                                            name: "!array",
+                                            declared_type: None,
+                                            value: StaticCall {
+                                                name: Path {
+                                                    root: [
+                                                        Namespace {
+                                                            name: Identifier {
+                                                                name: "std",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                        },
+                                                        Type {
+                                                            name: Identifier {
+                                                                name: "Array",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            type_arguments: [],
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ],
+                                                    name: Callable {
+                                                        name: Identifier {
+                                                            name: "new",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        type_arguments: [],
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    location: <internal>:0:0,
+                                                },
+                                                arguments: [],
+                                                location: loop_iter_loop_statement_var.lm:32:33,
+                                            },
+                                            location: loop_iter_loop_statement_var.lm:32:33,
+                                        },
                                         location: loop_iter_loop_statement_var.lm:32:33,
                                     },
                                     arguments: [
@@ -134,35 +146,47 @@ Map {
                                         type_arguments: [],
                                         location: <internal>:0:0,
                                     },
-                                    callee: StaticCall {
-                                        name: Path {
-                                            root: [
-                                                Namespace {
-                                                    name: Identifier {
-                                                        name: "std",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                },
-                                                Type {
-                                                    name: Identifier {
-                                                        name: "Array",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    type_arguments: [],
-                                                    location: <internal>:0:0,
-                                                },
-                                            ],
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "new",
-                                                    location: <internal>:0:0,
-                                                },
-                                                type_arguments: [],
-                                                location: <internal>:0:0,
-                                            },
+                                    callee: Variable {
+                                        name: Identifier {
+                                            name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        arguments: [],
+                                        reference: VariableDeclaration {
+                                            name: "!array",
+                                            declared_type: None,
+                                            value: StaticCall {
+                                                name: Path {
+                                                    root: [
+                                                        Namespace {
+                                                            name: Identifier {
+                                                                name: "std",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                        },
+                                                        Type {
+                                                            name: Identifier {
+                                                                name: "Array",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            type_arguments: [],
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ],
+                                                    name: Callable {
+                                                        name: Identifier {
+                                                            name: "new",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        type_arguments: [],
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    location: <internal>:0:0,
+                                                },
+                                                arguments: [],
+                                                location: loop_iter_loop_statement_var.lm:32:33,
+                                            },
+                                            location: loop_iter_loop_statement_var.lm:32:33,
+                                        },
                                         location: loop_iter_loop_statement_var.lm:32:33,
                                     },
                                     arguments: [
@@ -185,35 +209,47 @@ Map {
                                         type_arguments: [],
                                         location: <internal>:0:0,
                                     },
-                                    callee: StaticCall {
-                                        name: Path {
-                                            root: [
-                                                Namespace {
-                                                    name: Identifier {
-                                                        name: "std",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                },
-                                                Type {
-                                                    name: Identifier {
-                                                        name: "Array",
-                                                        location: <internal>:0:0,
-                                                    },
-                                                    type_arguments: [],
-                                                    location: <internal>:0:0,
-                                                },
-                                            ],
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "new",
-                                                    location: <internal>:0:0,
-                                                },
-                                                type_arguments: [],
-                                                location: <internal>:0:0,
-                                            },
+                                    callee: Variable {
+                                        name: Identifier {
+                                            name: "!array",
                                             location: <internal>:0:0,
                                         },
-                                        arguments: [],
+                                        reference: VariableDeclaration {
+                                            name: "!array",
+                                            declared_type: None,
+                                            value: StaticCall {
+                                                name: Path {
+                                                    root: [
+                                                        Namespace {
+                                                            name: Identifier {
+                                                                name: "std",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                        },
+                                                        Type {
+                                                            name: Identifier {
+                                                                name: "Array",
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            type_arguments: [],
+                                                            location: <internal>:0:0,
+                                                        },
+                                                    ],
+                                                    name: Callable {
+                                                        name: Identifier {
+                                                            name: "new",
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        type_arguments: [],
+                                                        location: <internal>:0:0,
+                                                    },
+                                                    location: <internal>:0:0,
+                                                },
+                                                arguments: [],
+                                                location: loop_iter_loop_statement_var.lm:32:33,
+                                            },
+                                            location: loop_iter_loop_statement_var.lm:32:33,
+                                        },
                                         location: loop_iter_loop_statement_var.lm:32:33,
                                     },
                                     arguments: [
@@ -334,35 +370,47 @@ Map {
                                                 type_arguments: [],
                                                 location: <internal>:0:0,
                                             },
-                                            callee: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            type_arguments: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        type_arguments: [],
-                                                        location: <internal>:0:0,
-                                                    },
+                                            callee: Variable {
+                                                name: Identifier {
+                                                    name: "!array",
                                                     location: <internal>:0:0,
                                                 },
-                                                arguments: [],
+                                                reference: VariableDeclaration {
+                                                    name: "!array",
+                                                    declared_type: None,
+                                                    value: StaticCall {
+                                                        name: Path {
+                                                            root: [
+                                                                Namespace {
+                                                                    name: Identifier {
+                                                                        name: "std",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                },
+                                                                Type {
+                                                                    name: Identifier {
+                                                                        name: "Array",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                    type_arguments: [],
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                            ],
+                                                            name: Callable {
+                                                                name: Identifier {
+                                                                    name: "new",
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                                type_arguments: [],
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        arguments: [],
+                                                        location: loop_iter_loop_statement_var.lm:32:33,
+                                                    },
+                                                    location: loop_iter_loop_statement_var.lm:32:33,
+                                                },
                                                 location: loop_iter_loop_statement_var.lm:32:33,
                                             },
                                             arguments: [
@@ -385,35 +433,47 @@ Map {
                                                 type_arguments: [],
                                                 location: <internal>:0:0,
                                             },
-                                            callee: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            type_arguments: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        type_arguments: [],
-                                                        location: <internal>:0:0,
-                                                    },
+                                            callee: Variable {
+                                                name: Identifier {
+                                                    name: "!array",
                                                     location: <internal>:0:0,
                                                 },
-                                                arguments: [],
+                                                reference: VariableDeclaration {
+                                                    name: "!array",
+                                                    declared_type: None,
+                                                    value: StaticCall {
+                                                        name: Path {
+                                                            root: [
+                                                                Namespace {
+                                                                    name: Identifier {
+                                                                        name: "std",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                },
+                                                                Type {
+                                                                    name: Identifier {
+                                                                        name: "Array",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                    type_arguments: [],
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                            ],
+                                                            name: Callable {
+                                                                name: Identifier {
+                                                                    name: "new",
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                                type_arguments: [],
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        arguments: [],
+                                                        location: loop_iter_loop_statement_var.lm:32:33,
+                                                    },
+                                                    location: loop_iter_loop_statement_var.lm:32:33,
+                                                },
                                                 location: loop_iter_loop_statement_var.lm:32:33,
                                             },
                                             arguments: [
@@ -436,35 +496,47 @@ Map {
                                                 type_arguments: [],
                                                 location: <internal>:0:0,
                                             },
-                                            callee: StaticCall {
-                                                name: Path {
-                                                    root: [
-                                                        Namespace {
-                                                            name: Identifier {
-                                                                name: "std",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                        },
-                                                        Type {
-                                                            name: Identifier {
-                                                                name: "Array",
-                                                                location: <internal>:0:0,
-                                                            },
-                                                            type_arguments: [],
-                                                            location: <internal>:0:0,
-                                                        },
-                                                    ],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "new",
-                                                            location: <internal>:0:0,
-                                                        },
-                                                        type_arguments: [],
-                                                        location: <internal>:0:0,
-                                                    },
+                                            callee: Variable {
+                                                name: Identifier {
+                                                    name: "!array",
                                                     location: <internal>:0:0,
                                                 },
-                                                arguments: [],
+                                                reference: VariableDeclaration {
+                                                    name: "!array",
+                                                    declared_type: None,
+                                                    value: StaticCall {
+                                                        name: Path {
+                                                            root: [
+                                                                Namespace {
+                                                                    name: Identifier {
+                                                                        name: "std",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                },
+                                                                Type {
+                                                                    name: Identifier {
+                                                                        name: "Array",
+                                                                        location: <internal>:0:0,
+                                                                    },
+                                                                    type_arguments: [],
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                            ],
+                                                            name: Callable {
+                                                                name: Identifier {
+                                                                    name: "new",
+                                                                    location: <internal>:0:0,
+                                                                },
+                                                                type_arguments: [],
+                                                                location: <internal>:0:0,
+                                                            },
+                                                            location: <internal>:0:0,
+                                                        },
+                                                        arguments: [],
+                                                        location: loop_iter_loop_statement_var.lm:32:33,
+                                                    },
+                                                    location: loop_iter_loop_statement_var.lm:32:33,
+                                                },
                                                 location: loop_iter_loop_statement_var.lm:32:33,
                                             },
                                             arguments: [

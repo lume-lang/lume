@@ -79,7 +79,7 @@ impl LowerModule<'_> {
     fn expr_array(&mut self, expr: lume_ast::Array) -> Result<lume_hir::Expression> {
         let location = self.location(expr.location);
 
-        let (var, var_value) = {
+        let var = {
             let val_id = self.next_node_id();
             let val = lume_hir::Expression::static_call(val_id, ARRAY_NEW_PATH.clone(), vec![], location);
             self.map.nodes.insert(val_id, lume_hir::Node::Expression(val));
@@ -88,16 +88,24 @@ impl LowerModule<'_> {
             let var = lume_hir::Statement::define_variable(var_id, ARRAY_INTERNAL_NAME.into(), val_id, location);
             self.map.nodes.insert(var_id, lume_hir::Node::Statement(var.clone()));
 
-            (var, val_id)
+            var
+        };
+
+        let lume_hir::StatementKind::Variable(decl) = &var.kind else {
+            unreachable!()
         };
 
         let mut body = vec![var.id];
+
+        let var_ref_id = self.next_node_id();
+        let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
+        self.map.nodes.insert(var_ref_id, lume_hir::Node::Expression(var_ref));
 
         for value in expr.values {
             let value = self.expression(value)?;
 
             let val_id = self.next_node_id();
-            let val = lume_hir::Expression::call(val_id, ARRAY_PUSH_PATH.clone(), var_value, vec![value], location);
+            let val = lume_hir::Expression::call(val_id, ARRAY_PUSH_PATH.clone(), var_ref_id, vec![value], location);
             self.map.nodes.insert(val_id, lume_hir::Node::Expression(val));
 
             let push_id = self.next_node_id();
@@ -106,10 +114,6 @@ impl LowerModule<'_> {
 
             body.push(push_id);
         }
-
-        let lume_hir::StatementKind::Variable(decl) = &var.kind else {
-            unreachable!()
-        };
 
         let var_ref_id = self.next_node_id();
         let var_ref = lume_hir::Expression::variable(var_ref_id, ARRAY_INTERNAL_NAME.into(), decl.clone(), location);
@@ -121,12 +125,14 @@ impl LowerModule<'_> {
 
         body.push(res_id);
 
-        let id = self.next_node_id();
-
         Ok(lume_hir::Expression {
-            id,
+            id: self.next_node_id(),
             location,
-            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope { id, body, location }),
+            kind: lume_hir::ExpressionKind::Scope(lume_hir::Scope {
+                id: self.next_node_id(),
+                body,
+                location,
+            }),
         })
     }
 

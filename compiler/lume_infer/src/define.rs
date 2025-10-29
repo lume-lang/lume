@@ -1010,7 +1010,10 @@ impl TyInferCtx {
 
     fn define_expr_scope(&self, tree: &mut BTreeMap<NodeId, NodeId>, expr_id: NodeId, parent: NodeId) -> Result<()> {
         if let Some(existing) = tree.insert(expr_id, parent) {
-            assert_eq!(existing, parent);
+            assert_eq!(
+                existing, parent,
+                "expected the parent of {expr_id:?}\n\tto be {existing:?},\n\tfound {parent:?}"
+            );
         }
 
         let expr = self.hir.expression(expr_id).unwrap();
