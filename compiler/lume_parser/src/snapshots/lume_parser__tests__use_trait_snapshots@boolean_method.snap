@@ -84,12 +84,14 @@ expression: "parse(\"\n        use Zero in Int32 {\n            fn zero?() -> Bo
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            63..66,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                63..66,
+                            ),
+                        },
+                    ),
                     location: Location(
                         41..66,
                     ),

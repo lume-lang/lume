@@ -84,32 +84,34 @@ expression: "parse(\"\n        use Cast in Int32 {\n            fn to_string() -
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        Variable(
-                                            Variable {
-                                                name: Identifier {
-                                                    name: "self",
-                                                    location: Location(
-                                                        91..95,
-                                                    ),
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "self",
+                                                        location: Location(
+                                                            91..95,
+                                                        ),
+                                                    },
                                                 },
-                                            },
+                                            ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        84..96,
-                                    ),
-                                },
+                                        location: Location(
+                                            84..96,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                66..110,
                             ),
-                        ],
-                        location: Location(
-                            66..110,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         41..110,
                     ),
@@ -148,32 +150,34 @@ expression: "parse(\"\n        use Cast in Int32 {\n            fn to_string() -
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        Variable(
-                                            Variable {
-                                                name: Identifier {
-                                                    name: "self",
-                                                    location: Location(
-                                                        170..174,
-                                                    ),
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "self",
+                                                        location: Location(
+                                                            170..174,
+                                                        ),
+                                                    },
                                                 },
-                                            },
+                                            ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        163..175,
-                                    ),
-                                },
+                                        location: Location(
+                                            163..175,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                145..189,
                             ),
-                        ],
-                        location: Location(
-                            145..189,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         124..189,
                     ),

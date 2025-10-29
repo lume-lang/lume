@@ -5,11 +5,7 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "main",
@@ -52,12 +48,14 @@ expression: "parse(\"fn main() -> std::Int32 {}\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    24..26,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        24..26,
+                    ),
+                },
+            ),
             location: Location(
                 0..26,
             ),

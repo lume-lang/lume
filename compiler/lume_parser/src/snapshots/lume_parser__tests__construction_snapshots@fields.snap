@@ -32,15 +32,17 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                                 6..9,
                             ),
                         },
-                        value: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        11..12,
-                                    ),
-                                    kind: None,
-                                },
+                        value: Some(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 0,
+                                        location: Location(
+                                            11..12,
+                                        ),
+                                        kind: None,
+                                    },
+                                ),
                             ),
                         ),
                         location: Location(
@@ -54,15 +56,17 @@ expression: "parse_expr(\"Foo { bar: 0, baz: 1 };\")"
                                 14..17,
                             ),
                         },
-                        value: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 1,
-                                    location: Location(
-                                        19..20,
-                                    ),
-                                    kind: None,
-                                },
+                        value: Some(
+                            Literal(
+                                Int(
+                                    IntLiteral {
+                                        value: 1,
+                                        location: Location(
+                                            19..20,
+                                        ),
+                                        kind: None,
+                                    },
+                                ),
                             ),
                         ),
                         location: Location(

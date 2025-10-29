@@ -164,69 +164,71 @@ expression: "parse(\"\n        use Add<Int32, Int64> in Int32 {\n            fn 
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        IntrinsicCall(
-                                            IntrinsicCall {
-                                                callee: Variable(
-                                                    Variable {
-                                                        name: Identifier {
-                                                            name: "self",
-                                                            location: Location(
-                                                                109..113,
-                                                            ),
-                                                        },
-                                                    },
-                                                ),
-                                                name: Path {
-                                                    root: [],
-                                                    name: Callable {
-                                                        name: Identifier {
-                                                            name: "+",
-                                                            location: Location(
-                                                                114..115,
-                                                            ),
-                                                        },
-                                                        type_arguments: [],
-                                                        location: Location(
-                                                            114..115,
-                                                        ),
-                                                    },
-                                                    location: Location(
-                                                        114..115,
-                                                    ),
-                                                },
-                                                arguments: [
-                                                    Variable(
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            IntrinsicCall(
+                                                IntrinsicCall {
+                                                    callee: Variable(
                                                         Variable {
                                                             name: Identifier {
-                                                                name: "other",
+                                                                name: "self",
                                                                 location: Location(
-                                                                    116..121,
+                                                                    109..113,
                                                                 ),
                                                             },
                                                         },
                                                     ),
-                                                ],
-                                                location: Location(
-                                                    109..121,
-                                                ),
-                                            },
+                                                    name: Path {
+                                                        root: [],
+                                                        name: Callable {
+                                                            name: Identifier {
+                                                                name: "+",
+                                                                location: Location(
+                                                                    114..115,
+                                                                ),
+                                                            },
+                                                            type_arguments: [],
+                                                            location: Location(
+                                                                114..115,
+                                                            ),
+                                                        },
+                                                        location: Location(
+                                                            114..115,
+                                                        ),
+                                                    },
+                                                    arguments: [
+                                                        Variable(
+                                                            Variable {
+                                                                name: Identifier {
+                                                                    name: "other",
+                                                                    location: Location(
+                                                                        116..121,
+                                                                    ),
+                                                                },
+                                                            },
+                                                        ),
+                                                    ],
+                                                    location: Location(
+                                                        109..121,
+                                                    ),
+                                                },
+                                            ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        102..122,
-                                    ),
-                                },
+                                        location: Location(
+                                            102..122,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                84..136,
                             ),
-                        ],
-                        location: Location(
-                            84..136,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         54..136,
                     ),

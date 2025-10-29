@@ -29,11 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private {
-                        location: Location(
-                            32..32,
-                        ),
-                    },
+                    visibility: None,
                     external: false,
                     name: Identifier {
                         name: "bar",
@@ -77,12 +73,14 @@ expression: "parse(\"\n        impl Foo {\n            fn bar<T>() -> Int32 { }\
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            53..56,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                53..56,
+                            ),
+                        },
+                    ),
                     location: Location(
                         32..56,
                     ),

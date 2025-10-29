@@ -5,11 +5,7 @@ expression: "parse(\"fn main() {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "main",
@@ -20,12 +16,14 @@ expression: "parse(\"fn main() {}\")"
             parameters: [],
             type_parameters: [],
             return_type: None,
-            block: Block {
-                statements: [],
-                location: Location(
-                    10..12,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        10..12,
+                    ),
+                },
+            ),
             location: Location(
                 0..12,
             ),

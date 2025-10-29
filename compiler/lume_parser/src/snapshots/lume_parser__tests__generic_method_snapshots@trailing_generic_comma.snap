@@ -29,11 +29,7 @@ expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private {
-                        location: Location(
-                            12..12,
-                        ),
-                    },
+                    visibility: None,
                     external: false,
                     name: Identifier {
                         name: "test",
@@ -77,12 +73,14 @@ expression: "parse(\"impl Test { fn test<T1,>() -> void {} }\")"
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            35..37,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                35..37,
+                            ),
+                        },
+                    ),
                     location: Location(
                         12..37,
                     ),

@@ -5,11 +5,7 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "test",
@@ -152,12 +148,14 @@ expression: "parse(\"fn test<T1: Numeric + Floating, T2: Numeric + Floating>() -
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    66..68,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        66..68,
+                    ),
+                },
+            ),
             location: Location(
                 0..68,
             ),

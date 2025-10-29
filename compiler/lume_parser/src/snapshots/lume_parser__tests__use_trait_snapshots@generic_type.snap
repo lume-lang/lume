@@ -130,12 +130,14 @@ expression: "parse(\"\n        use Enumerable<T> in Vector<T> {\n            fn 
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            69..72,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                69..72,
+                            ),
+                        },
+                    ),
                     location: Location(
                         54..72,
                     ),

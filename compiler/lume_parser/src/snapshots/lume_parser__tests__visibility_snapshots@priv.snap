@@ -5,11 +5,13 @@ expression: "parse(\"priv fn foo {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..4,
-                ),
-            },
+            visibility: Some(
+                Private {
+                    location: Location(
+                        0..4,
+                    ),
+                },
+            ),
             external: false,
             name: Identifier {
                 name: "foo",
@@ -20,12 +22,14 @@ expression: "parse(\"priv fn foo {}\")"
             parameters: [],
             type_parameters: [],
             return_type: None,
-            block: Block {
-                statements: [],
-                location: Location(
-                    12..14,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        12..14,
+                    ),
+                },
+            ),
             location: Location(
                 0..14,
             ),

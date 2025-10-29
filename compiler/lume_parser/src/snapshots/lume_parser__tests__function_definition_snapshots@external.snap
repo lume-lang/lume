@@ -5,11 +5,7 @@ expression: "parse(\"fn external main() -> void\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: true,
             name: Identifier {
                 name: "main",
@@ -43,12 +39,7 @@ expression: "parse(\"fn external main() -> void\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    25..25,
-                ),
-            },
+            block: None,
             location: Location(
                 0..26,
             ),

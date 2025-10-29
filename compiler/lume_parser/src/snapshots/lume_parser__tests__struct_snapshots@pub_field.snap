@@ -6,11 +6,7 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
     TypeDefinition(
         Struct(
             StructDefinition {
-                visibility: Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
+                visibility: None,
                 name: Identifier {
                     name: "Foo",
                     location: Location(
@@ -20,11 +16,13 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
                 builtin: false,
                 fields: [
                     Field {
-                        visibility: Public {
-                            location: Location(
-                                34..37,
-                            ),
-                        },
+                        visibility: Some(
+                            Public {
+                                location: Location(
+                                    34..37,
+                                ),
+                            },
+                        ),
                         name: Identifier {
                             name: "x",
                             location: Location(

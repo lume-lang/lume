@@ -29,11 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private {
-                        location: Location(
-                            32..32,
-                        ),
-                    },
+                    visibility: None,
                     external: false,
                     name: Identifier {
                         name: "bar",
@@ -44,12 +40,14 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() { }\n        }\"
                     parameters: [],
                     type_parameters: [],
                     return_type: None,
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            41..44,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                41..44,
+                            ),
+                        },
+                    ),
                     location: Location(
                         32..44,
                     ),

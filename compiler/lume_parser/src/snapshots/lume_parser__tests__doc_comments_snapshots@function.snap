@@ -5,11 +5,7 @@ expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    34..34,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "foo",
@@ -43,12 +39,14 @@ expression: "parse(\"/// This is a doc comment\n        fn foo() -> void { }\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    51..54,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        51..54,
+                    ),
+                },
+            ),
             location: Location(
                 34..54,
             ),

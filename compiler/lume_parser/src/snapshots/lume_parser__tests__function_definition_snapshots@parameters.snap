@@ -5,11 +5,7 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "main",
@@ -119,12 +115,14 @@ expression: "parse(\"fn main(argc: UInt8, arcv: [String]) -> void { }\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    45..48,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        45..48,
+                    ),
+                },
+            ),
             location: Location(
                 0..48,
             ),

@@ -29,11 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn empty?() -> Boolean { 
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private {
-                        location: Location(
-                            32..32,
-                        ),
-                    },
+                    visibility: None,
                     external: false,
                     name: Identifier {
                         name: "empty?",
@@ -67,12 +63,14 @@ expression: "parse(\"\n        impl Foo {\n            fn empty?() -> Boolean { 
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            55..58,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                55..58,
+                            ),
+                        },
+                    ),
                     location: Location(
                         32..58,
                     ),

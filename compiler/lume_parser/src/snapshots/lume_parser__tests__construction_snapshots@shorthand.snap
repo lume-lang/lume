@@ -32,16 +32,7 @@ expression: "parse_expr(\"Foo { bar };\")"
                                 6..9,
                             ),
                         },
-                        value: Variable(
-                            Variable {
-                                name: Identifier {
-                                    name: "bar",
-                                    location: Location(
-                                        6..9,
-                                    ),
-                                },
-                            },
-                        ),
+                        value: None,
                         location: Location(
                             6..9,
                         ),

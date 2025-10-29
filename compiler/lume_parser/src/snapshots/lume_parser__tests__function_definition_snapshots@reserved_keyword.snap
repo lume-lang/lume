@@ -5,11 +5,7 @@ expression: "parse(\"fn loop() -> void {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "loop",
@@ -43,12 +39,14 @@ expression: "parse(\"fn loop() -> void {}\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    18..20,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        18..20,
+                    ),
+                },
+            ),
             location: Location(
                 0..20,
             ),

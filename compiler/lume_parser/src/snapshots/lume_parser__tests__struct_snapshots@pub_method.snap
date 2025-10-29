@@ -29,11 +29,13 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Public {
-                        location: Location(
-                            32..35,
-                        ),
-                    },
+                    visibility: Some(
+                        Public {
+                            location: Location(
+                                32..35,
+                            ),
+                        },
+                    ),
                     external: false,
                     name: Identifier {
                         name: "bar",
@@ -67,33 +69,35 @@ expression: "parse(\"\n        impl Foo {\n            pub fn bar() -> Int32 {\n
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 0,
-                                                    location: Location(
-                                                        79..80,
-                                                    ),
-                                                    kind: None,
-                                                },
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 0,
+                                                        location: Location(
+                                                            79..80,
+                                                        ),
+                                                        kind: None,
+                                                    },
+                                                ),
                                             ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        72..81,
-                                    ),
-                                },
+                                        location: Location(
+                                            72..81,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                54..95,
                             ),
-                        ],
-                        location: Location(
-                            54..95,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         32..95,
                     ),
