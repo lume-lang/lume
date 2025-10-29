@@ -26,7 +26,6 @@ pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::mem::ptr_read", lume_runtime::mem::lumert_ptr_read as *const u8),
     ("std::mem::ptr_write", lume_runtime::mem::lumert_ptr_write as *const u8),
     ("std::mem::GC::invoke", lume_gc::trigger_collection_force as *const u8),
-    ("std::io::format", lume_runtime::io::format as *const u8),
     ("std::io::print", lume_runtime::io::print as *const u8),
     ("std::io::println", lume_runtime::io::println as *const u8),
     ("std::Int8::to_string", lume_runtime::io::int8_tostring as *const u8),
