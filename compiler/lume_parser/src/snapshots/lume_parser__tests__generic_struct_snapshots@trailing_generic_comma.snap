@@ -6,11 +6,7 @@ expression: "parse(\"struct Test<T1,> {}\")"
     TypeDefinition(
         Struct(
             StructDefinition {
-                visibility: Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
+                visibility: None,
                 name: Identifier {
                     name: "Test",
                     location: Location(

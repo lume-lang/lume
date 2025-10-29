@@ -5,11 +5,13 @@ expression: "parse(\"pub fn foo {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Public {
-                location: Location(
-                    0..3,
-                ),
-            },
+            visibility: Some(
+                Public {
+                    location: Location(
+                        0..3,
+                    ),
+                },
+            ),
             external: false,
             name: Identifier {
                 name: "foo",
@@ -20,12 +22,14 @@ expression: "parse(\"pub fn foo {}\")"
             parameters: [],
             type_parameters: [],
             return_type: None,
-            block: Block {
-                statements: [],
-                location: Location(
-                    11..13,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        11..13,
+                    ),
+                },
+            ),
             location: Location(
                 0..13,
             ),

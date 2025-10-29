@@ -6,11 +6,7 @@ expression: "parse(\"\n        enum Foo {\n            Bar()\n        }\")"
     TypeDefinition(
         Enum(
             EnumDefinition {
-                visibility: Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
+                visibility: None,
                 name: Identifier {
                     name: "Foo",
                     location: Location(

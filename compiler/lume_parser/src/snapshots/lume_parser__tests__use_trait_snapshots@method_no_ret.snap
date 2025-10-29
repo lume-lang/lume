@@ -96,12 +96,14 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                     ],
                     type_parameters: [],
                     return_type: None,
-                    block: Block {
-                        statements: [],
-                        location: Location(
-                            61..63,
-                        ),
-                    },
+                    block: Some(
+                        Block {
+                            statements: [],
+                            location: Location(
+                                61..63,
+                            ),
+                        },
+                    ),
                     location: Location(
                         40..63,
                     ),

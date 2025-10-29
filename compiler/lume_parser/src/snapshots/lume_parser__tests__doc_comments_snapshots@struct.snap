@@ -6,11 +6,7 @@ expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
     TypeDefinition(
         Struct(
             StructDefinition {
-                visibility: Private {
-                    location: Location(
-                        34..34,
-                    ),
-                },
+                visibility: None,
                 name: Identifier {
                     name: "Foo",
                     location: Location(

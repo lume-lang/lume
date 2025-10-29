@@ -5,11 +5,7 @@ expression: "parse(\"fn main() -> void { let a = 0; }\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "main",
@@ -43,38 +39,40 @@ expression: "parse(\"fn main() -> void { let a = 0; }\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [
-                    VariableDeclaration(
-                        VariableDeclaration {
-                            name: Identifier {
-                                name: "a",
+            block: Some(
+                Block {
+                    statements: [
+                        VariableDeclaration(
+                            VariableDeclaration {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        24..25,
+                                    ),
+                                },
+                                variable_type: None,
+                                value: Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                28..29,
+                                            ),
+                                            kind: None,
+                                        },
+                                    ),
+                                ),
                                 location: Location(
-                                    24..25,
+                                    20..30,
                                 ),
                             },
-                            variable_type: None,
-                            value: Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            28..29,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                            location: Location(
-                                20..30,
-                            ),
-                        },
+                        ),
+                    ],
+                    location: Location(
+                        18..32,
                     ),
-                ],
-                location: Location(
-                    18..32,
-                ),
-            },
+                },
+            ),
             location: Location(
                 0..32,
             ),

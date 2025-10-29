@@ -6,11 +6,7 @@ expression: "parse(\"trait Foo {\n            /// This is a doc comment\n       
     TypeDefinition(
         Trait(
             TraitDefinition {
-                visibility: Private {
-                    location: Location(
-                        0..0,
-                    ),
-                },
+                visibility: None,
                 name: Identifier {
                     name: "Foo",
                     location: Location(

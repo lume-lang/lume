@@ -29,11 +29,13 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Public {
-                        location: Location(
-                            32..35,
-                        ),
-                    },
+                    visibility: Some(
+                        Public {
+                            location: Location(
+                                32..35,
+                            ),
+                        },
+                    ),
                     external: false,
                     name: Identifier {
                         name: "==",
@@ -67,32 +69,34 @@ expression: "parse(\"\n        impl Foo {\n            pub fn ==() -> Boolean {\
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        Literal(
-                                            Boolean(
-                                                BooleanLiteral {
-                                                    value: true,
-                                                    location: Location(
-                                                        80..84,
-                                                    ),
-                                                },
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            Literal(
+                                                Boolean(
+                                                    BooleanLiteral {
+                                                        value: true,
+                                                        location: Location(
+                                                            80..84,
+                                                        ),
+                                                    },
+                                                ),
                                             ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        73..85,
-                                    ),
-                                },
+                                        location: Location(
+                                            73..85,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                55..99,
                             ),
-                        ],
-                        location: Location(
-                            55..99,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         32..99,
                     ),

@@ -5,11 +5,7 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "foo",
@@ -55,12 +51,14 @@ expression: "parse(\"fn foo(...args: Int32) {}\")"
             ],
             type_parameters: [],
             return_type: None,
-            block: Block {
-                statements: [],
-                location: Location(
-                    23..25,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        23..25,
+                    ),
+                },
+            ),
             location: Location(
                 0..25,
             ),

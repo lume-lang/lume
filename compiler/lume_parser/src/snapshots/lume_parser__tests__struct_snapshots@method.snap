@@ -29,11 +29,7 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
             ),
             methods: [
                 MethodDefinition {
-                    visibility: Private {
-                        location: Location(
-                            32..32,
-                        ),
-                    },
+                    visibility: None,
                     external: false,
                     name: Identifier {
                         name: "bar",
@@ -67,33 +63,35 @@ expression: "parse(\"\n        impl Foo {\n            fn bar() -> Int32 {\n    
                             },
                         ),
                     ),
-                    block: Block {
-                        statements: [
-                            Return(
-                                Return {
-                                    value: Some(
-                                        Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 0,
-                                                    location: Location(
-                                                        75..76,
-                                                    ),
-                                                    kind: None,
-                                                },
+                    block: Some(
+                        Block {
+                            statements: [
+                                Return(
+                                    Return {
+                                        value: Some(
+                                            Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 0,
+                                                        location: Location(
+                                                            75..76,
+                                                        ),
+                                                        kind: None,
+                                                    },
+                                                ),
                                             ),
                                         ),
-                                    ),
-                                    location: Location(
-                                        68..77,
-                                    ),
-                                },
+                                        location: Location(
+                                            68..77,
+                                        ),
+                                    },
+                                ),
+                            ],
+                            location: Location(
+                                50..91,
                             ),
-                        ],
-                        location: Location(
-                            50..91,
-                        ),
-                    },
+                        },
+                    ),
                     location: Location(
                         32..91,
                     ),

@@ -5,11 +5,7 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
 [
     FunctionDefinition(
         FunctionDefinition {
-            visibility: Private {
-                location: Location(
-                    0..0,
-                ),
-            },
+            visibility: None,
             external: false,
             name: Identifier {
                 name: "test",
@@ -62,12 +58,14 @@ expression: "parse(\"fn test<T1, T2>() -> void {}\")"
                     },
                 ),
             ),
-            block: Block {
-                statements: [],
-                location: Location(
-                    26..28,
-                ),
-            },
+            block: Some(
+                Block {
+                    statements: [],
+                    location: Location(
+                        26..28,
+                    ),
+                },
+            ),
             location: Location(
                 0..28,
             ),
