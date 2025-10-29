@@ -1188,7 +1188,6 @@ name = "lume_fmt"
 version = "0.1.1"
 dependencies = [
  "error_snippet",
- "logos",
  "lume_ast",
  "lume_errors",
  "lume_lexer",
