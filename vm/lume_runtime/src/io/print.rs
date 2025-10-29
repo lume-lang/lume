@@ -16,13 +16,6 @@ pub extern "C" fn println(fmt: *const c_char, args: *const Array<*const c_char>)
     flush_stdout();
 }
 
-#[unsafe(export_name = "std::io::format")]
-pub extern "C" fn format(fmt: *const c_char, args: *const Array<*const c_char>) -> *const c_char {
-    let formatted = internal_format_ffi(fmt, args);
-
-    crate::string::cstr_from_string(formatted)
-}
-
 /// Flushes any buffered content in `stdout` to the processes output.
 ///
 /// This is mostly used when using `std::io::print` without a newline, which
