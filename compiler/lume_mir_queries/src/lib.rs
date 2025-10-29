@@ -1,4 +1,5 @@
 pub mod analysis;
+pub mod lookup;
 
 use lume_architect::DatabaseContext;
 use lume_mir::ModuleMap;

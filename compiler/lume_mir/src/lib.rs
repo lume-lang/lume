@@ -3,6 +3,7 @@ use std::hash::Hash;
 use indexmap::{IndexMap, IndexSet};
 use lume_span::{Interned, Location, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
+use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
 
 pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
@@ -115,6 +116,7 @@ impl std::fmt::Display for Signature {
 pub struct Parameter {
     pub name: Interned<String>,
     pub ty: Type,
+    pub type_ref: TypeRef,
 
     #[serde(skip)]
     pub location: Location,
@@ -1152,6 +1154,13 @@ impl Operand {
             true
         } else {
             false
+        }
+    }
+
+    pub fn integer(bits: u8, signed: bool, value: i64) -> Self {
+        Self {
+            kind: OperandKind::Integer { bits, signed, value },
+            location: Location::empty(),
         }
     }
 }

@@ -120,6 +120,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             self.func.signature.parameters.push(lume_mir::Parameter {
                 name: param.name,
                 ty: param_ty.clone(),
+                type_ref: param.ty.clone(),
                 location: param.location,
             });
 
@@ -206,7 +207,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         location: Location,
     ) -> lume_mir::Operand {
         let func_sig = self.transformer.mcx.mir().function(func_id).signature.clone();
-        let args = self.normalize_call_argumets(&func_sig.parameters, &args);
+        let args = self.normalize_call_argumets(&func_sig.parameters, &args, func_sig.vararg);
 
         #[cfg(debug_assertions)]
         {
@@ -237,7 +238,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         ret_ty: lume_mir::Type,
         location: Location,
     ) -> lume_mir::Operand {
-        let args = self.normalize_call_argumets(&signature.parameters, &args);
+        let args = self.normalize_call_argumets(&signature.parameters, &args, signature.vararg);
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
             kind: lume_mir::DeclarationKind::IndirectCall { ptr, signature, args },
@@ -254,6 +255,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         &mut self,
         params: &[lume_mir::Parameter],
         args: &[lume_mir::Operand],
+        vararg: bool,
     ) -> Vec<lume_mir::Operand> {
         let mut args = args.to_vec();
 
@@ -288,7 +290,63 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             };
         }
 
+        if vararg && args.len() >= params.len() - 1 {
+            return self.merge_vararg_operands(params, args);
+        }
+
         args
+    }
+
+    fn merge_vararg_operands(
+        &mut self,
+        params: &[lume_mir::Parameter],
+        mut args: Vec<lume_mir::Operand>,
+    ) -> Vec<lume_mir::Operand> {
+        let mut new_args = args.drain(..params.len() - 1).collect::<Vec<_>>();
+        let vararg_type = &params.last().unwrap().type_ref;
+        let metadata_reg = self.declare_metadata_of(vararg_type, vararg_type.location);
+
+        let array_alloc_func = self
+            .transformer
+            .mcx
+            .find_function("std::Array<`1>::with_capacity")
+            .expect("expected to find std::Array:with_capacity function");
+
+        let array_push_func = self
+            .transformer
+            .mcx
+            .find_function("std::Array<`1>::push")
+            .expect("expected to find std::Array:push function")
+            .id;
+
+        let vararg_arr_reg = self
+            .func
+            .declare(array_alloc_func.signature.return_type.clone(), lume_mir::Declaration {
+                kind: lume_mir::DeclarationKind::Call {
+                    func_id: array_alloc_func.id,
+                    args: vec![
+                        lume_mir::Operand::integer(64, false, args.len().cast_signed() as i64),
+                        lume_mir::Operand::reference_of(metadata_reg),
+                    ],
+                },
+                location: vararg_type.location,
+            });
+
+        for arg in args {
+            self.call(
+                array_push_func,
+                vec![
+                    lume_mir::Operand::reference_of(vararg_arr_reg),
+                    arg,
+                    lume_mir::Operand::reference_of(metadata_reg),
+                ],
+                lume_mir::Type::void(),
+                vararg_type.location,
+            );
+        }
+
+        new_args.push(lume_mir::Operand::reference_of(vararg_arr_reg));
+        new_args
     }
 
     /// Gets the metadata entry of the given type.
