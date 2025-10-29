@@ -64,6 +64,6 @@ use ToString in String {
     }
 }
 
-fn external print(fmt: String, ...args: String)
+pub fn external print(fmt: String, ...args: String)
 
-fn external println(fmt: String, ...args: String)
+pub fn external println(fmt: String, ...args: String)
