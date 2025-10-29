@@ -263,37 +263,6 @@ impl TyInferCtx {
         }
     }
 
-    /// Returns the *type* of the given [`lume_hir::Parameter`], before the
-    /// ancestry tree has been initialized.
-    #[cached_query(result)]
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_parameter_pre(
-        &self,
-        param: &lume_hir::Parameter,
-        type_params: &[&TypeParameter],
-    ) -> Result<TypeRef> {
-        let elemental_type = self.mk_type_ref_generic(&param.param_type, type_params)?;
-
-        if param.vararg {
-            Result::Ok(self.std_ref_array(elemental_type))
-        } else {
-            Result::Ok(elemental_type)
-        }
-    }
-
-    /// Returns the *type* of the given [`lume_hir::Parameter`].
-    #[cached_query(result)]
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
-    pub fn type_of_parameter(&self, param: &lume_hir::Parameter, owner: NodeId) -> Result<TypeRef> {
-        let elemental_type = self.mk_type_ref_from(&param.param_type, owner)?;
-
-        if param.vararg {
-            Result::Ok(self.std_ref_array(elemental_type))
-        } else {
-            Result::Ok(elemental_type)
-        }
-    }
-
     /// Returns the return type of the given [`lume_hir::Scope`].
     #[cached_query(result)]
     #[tracing::instrument(level = "TRACE", skip(self), err)]
