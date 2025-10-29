@@ -3,18 +3,13 @@ use std::sync::Arc;
 
 use clap::Parser;
 use error_snippet::{Label, WithSource};
-use lume_errors::{DiagCtx, DiagCtxHandle, GraphicalRenderer, IntoDiagnostic, MapDiagnostic, Result, SimpleDiagnostic};
+use lume_errors::*;
 use lume_fmt::Config;
 use lume_span::{PackageId, SourceFile};
 
-#[derive(Parser, Debug, Clone)]
-#[clap(
-    name = "fmt",
-    version = env!("CARGO_PKG_VERSION"),
-    about = "Formatter for Lume source code",
-    long_about = None
-)]
-pub struct Options {
+#[derive(Debug, clap::Parser)]
+#[command(name = "fmt", about = "Formatter for Lume source code", long_about = None)]
+pub struct FormatCommand {
     #[arg(help = "Defines which files to format")]
     pub files: Vec<String>,
 
@@ -25,36 +20,32 @@ pub struct Options {
     pub write: bool,
 }
 
-fn main() {
-    let dcx = DiagCtx::new();
-    dcx.with_none(|handle| lumefmt_entry(handle));
+impl FormatCommand {
+    #[allow(clippy::needless_pass_by_value)]
+    pub(crate) fn run(&self, dcx: DiagCtxHandle) {
+        let opts = FormatCommand::parse();
 
-    let mut renderer = GraphicalRenderer::new();
-    dcx.render_stderr(&mut renderer);
-}
+        let config = match read_config_file(opts.config.clone()) {
+            Ok(config) => config,
+            Err(err) => {
+                dcx.emit_and_push(err);
+                return;
+            }
+        };
 
-fn lumefmt_entry(dcx: DiagCtxHandle) {
-    let opts = Options::parse();
-    let config = match read_config_file(opts.config.clone()) {
-        Ok(config) => config,
-        Err(err) => {
-            dcx.emit_and_push(err);
-            return;
-        }
-    };
-
-    for file_path in &opts.files {
-        if let Err(err) = format_file(PathBuf::from(file_path), &opts, &config) {
-            dcx.emit_and_push(
-                SimpleDiagnostic::new(format!("error while formatting input file: {file_path}"))
-                    .add_cause(err)
-                    .into(),
-            );
+        for file_path in &opts.files {
+            if let Err(err) = format_file(PathBuf::from(file_path), &opts, &config) {
+                dcx.emit_and_push(
+                    SimpleDiagnostic::new(format!("error while formatting input file: {file_path}"))
+                        .add_cause(err)
+                        .into(),
+                );
+            }
         }
     }
 }
 
-fn format_file(input_path: PathBuf, opts: &Options, config: &Config) -> Result<()> {
+fn format_file(input_path: PathBuf, opts: &FormatCommand, config: &Config) -> Result<()> {
     let content = std::fs::read_to_string(&input_path).map_diagnostic()?;
     let formatted = lume_fmt::format_src(&content, &config)?;
 

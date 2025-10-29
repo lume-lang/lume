@@ -11,13 +11,16 @@ doctest = false
 [dependencies]
 arc = { path = "../arc" }
 lume_driver = { path = "../lume_driver" }
+lume_fmt = { path = "../../tools/fmt" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_session = { path = "../lume_session", features = ["cli"] }
+lume_span = { path = "../../crates/lume_span" }
 lume_trace = { path = "../../crates/lume_trace", features = ["init"] }
 
 clap = { workspace = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
+toml = { version = "0.9.6" }
 tracing = { workspace = true }
 
 [features]

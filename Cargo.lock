@@ -1129,8 +1129,11 @@ dependencies = [
  "error_snippet_derive",
  "lume_driver",
  "lume_errors",
+ "lume_fmt",
  "lume_session",
+ "lume_span",
  "lume_trace",
+ "toml",
  "tracing",
 ]
 
@@ -1184,7 +1187,6 @@ dependencies = [
 name = "lume_fmt"
 version = "0.1.1"
 dependencies = [
- "clap",
  "error_snippet",
  "logos",
  "lume_ast",
@@ -1193,7 +1195,6 @@ dependencies = [
  "lume_parser",
  "lume_span",
  "serde",
- "toml",
 ]
 
 [[package]]
