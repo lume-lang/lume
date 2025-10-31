@@ -30,6 +30,10 @@ impl CraneliftBackend {
         for metadata_entry in found_types.values() {
             self.build_type_metadata_buffer(metadata_entry);
 
+            for type_param_metadata in &metadata_entry.type_parameters {
+                self.build_type_parameter_metadata_buffer(type_param_metadata, metadata_entry.full_name.clone());
+            }
+
             for field_metadata in &metadata_entry.fields {
                 self.build_field_metadata_buffer(field_metadata, metadata_entry);
             }
@@ -48,7 +52,7 @@ impl CraneliftBackend {
                 }
 
                 for type_param_metadata in &method_metadata.type_parameters {
-                    self.build_type_parameter_metadata_buffer(type_param_metadata, method_metadata);
+                    self.build_type_parameter_metadata_buffer(type_param_metadata, method_metadata.full_name.clone());
                 }
             }
         }
@@ -125,12 +129,11 @@ impl CraneliftBackend {
 
     #[inline]
     #[allow(clippy::unused_self)]
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, method = method_metadata.full_name))]
-    fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, method_metadata: &MethodMetadata) -> String {
-        let mut metadata_name = method_metadata.full_name.clone();
-        metadata_name.push_str(&param.name);
-
-        metadata_name
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, owner = owner_name))]
+    fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, mut owner_name: String) -> String {
+        owner_name.push('`');
+        owner_name.push_str(&param.name);
+        owner_name
     }
 
     /// Finds an existing data declaration for a metadata value with the given
@@ -256,6 +259,22 @@ impl CraneliftBackend {
     #[tracing::instrument(level = "DEBUG", skip_all)]
     fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
+            let array_name = format!("{}__type_params", metadata.symbol_name());
+
+            self.module_mut()
+                .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
+                .unwrap();
+
+            for type_param in &metadata.type_parameters {
+                let metadata_name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
+
+                lume_trace::debug!("declaring type parameter metadata: {metadata_name}");
+
+                self.module_mut()
+                    .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
+                    .unwrap();
+            }
+
             for method in &metadata.methods {
                 let array_name = format!("{}__type_params", method.symbol_name());
 
@@ -264,7 +283,7 @@ impl CraneliftBackend {
                     .unwrap();
 
                 for type_param in &method.type_parameters {
-                    let metadata_name = self.metadata_name_of_type_param(type_param, method);
+                    let metadata_name = self.metadata_name_of_type_param(type_param, method.full_name.clone());
 
                     lume_trace::debug!("declaring type parameter metadata: {metadata_name}");
 
@@ -319,6 +338,18 @@ impl CraneliftBackend {
             &metadata.methods,
             |builder, method| {
                 let name = method.symbol_name();
+                let data_id = self.find_decl_by_name(&name);
+
+                builder.append_data_address(data_id);
+            },
+        );
+
+        // Type.type_parameters
+        builder.append_slice_ptr_of(
+            format!("{}__type_params", metadata.symbol_name()),
+            &metadata.type_parameters,
+            |builder, type_param| {
+                let name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
                 let data_id = self.find_decl_by_name(&name);
 
                 builder.append_data_address(data_id);
@@ -392,7 +423,7 @@ impl CraneliftBackend {
             format!("{}__type_params", metadata.symbol_name()),
             &metadata.type_parameters,
             |builder, param| {
-                let name = self.metadata_name_of_type_param(param, metadata);
+                let name = self.metadata_name_of_type_param(param, metadata.full_name.clone());
                 let data_id = self.find_decl_by_name(&name);
 
                 builder.append_data_address(data_id);
@@ -429,9 +460,9 @@ impl CraneliftBackend {
         self.define_metadata(data_id, metadata_name, &builder.finish());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, method = method_metadata.full_name))]
-    fn build_type_parameter_metadata_buffer(&self, metadata: &TypeParameterMetadata, method_metadata: &MethodMetadata) {
-        let metadata_name = self.metadata_name_of_type_param(metadata, method_metadata);
+    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, owner = owner_name))]
+    fn build_type_parameter_metadata_buffer(&self, metadata: &TypeParameterMetadata, owner_name: String) {
+        let metadata_name = self.metadata_name_of_type_param(metadata, owner_name);
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
 
