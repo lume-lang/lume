@@ -33,6 +33,13 @@ impl ReificationPass<'_> {
         let methods = self.methods_on_type(type_ref)?;
         let drop_method = self.find_drop_method(type_ref);
 
+        let type_parameters = self
+            .tcx
+            .hir_avail_type_params(type_id)
+            .iter()
+            .map(|param| self.type_parameter_metadata(param.id))
+            .collect::<Result<Vec<_>>>()?;
+
         let type_arguments = type_ref
             .type_arguments
             .iter()
@@ -48,6 +55,7 @@ impl ReificationPass<'_> {
             type_id,
             fields,
             methods,
+            type_parameters,
             type_arguments,
             drop_method,
         });

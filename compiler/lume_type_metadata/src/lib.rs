@@ -52,6 +52,10 @@ pub struct TypeMetadata {
     /// declared.
     pub methods: Vec<MethodMetadata>,
 
+    /// Gets all the type parameters defined on the type, in the order
+    /// that they're declared.
+    pub type_parameters: Vec<TypeParameterMetadata>,
+
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
     pub type_arguments: Vec<TypeMetadataId>,

@@ -19,6 +19,10 @@ pub struct Type {
     /// Gets all the methods defined on the type, in the order that they're declared.
     pub methods: Array<Method>;
 
+    /// Gets all the type parameters defined on the type, in the order
+    /// that they're declared.
+    pub type_parameters: Array<TypeParameter>;
+
     /// Gets all the type arguments defined on the type, in the order
     /// that they're declared.
     pub type_arguments: Array<Type>;
