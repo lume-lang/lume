@@ -787,7 +787,7 @@ impl TyInferCtx {
         );
 
         let drop_type_ref = self.find_type_ref(&drop_type_path).unwrap()?;
-        let drop_method_name = Identifier::from("drop");
+        let drop_method_name = Identifier::from("dispose");
 
         let method = self.lookup_impl_methods_on(&drop_type_ref, &drop_method_name).next()?;
 
