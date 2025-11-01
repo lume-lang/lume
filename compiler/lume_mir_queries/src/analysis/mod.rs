@@ -1,6 +1,5 @@
 use std::ops::ControlFlow;
 
-use indexmap::IndexSet;
 use lume_architect::cached_query;
 use lume_mir::*;
 use lume_span::NodeId;
@@ -58,7 +57,7 @@ impl MirQueryCtx<'_> {
         block_id: BasicBlockId,
         reg: RegisterId,
     ) -> EscapeResult {
-        let mut call_stack = IndexSet::with_capacity(ESCAPE_ANALYSIS_CALL_LIMIT);
+        let mut call_stack = Vec::with_capacity(ESCAPE_ANALYSIS_CALL_LIMIT);
 
         match self.does_register_escape_inner(func, block_id, reg, &mut call_stack) {
             ControlFlow::Break(reason) => EscapeResult::Escaped { reason },
@@ -71,7 +70,7 @@ impl MirQueryCtx<'_> {
         func: &lume_mir::Function,
         block_id: BasicBlockId,
         reg: RegisterId,
-        call_stack: &mut IndexSet<NodeId>,
+        call_stack: &mut Vec<NodeId>,
     ) -> ControlFlow<EscapeReason, ()> {
         // Limit the analysis to not make this analysis incredibly slow.
         if call_stack.len() > ESCAPE_ANALYSIS_CALL_LIMIT {
@@ -84,7 +83,7 @@ impl MirQueryCtx<'_> {
             return ControlFlow::Break(EscapeReason::Indeterminate);
         }
 
-        call_stack.insert(func.id);
+        call_stack.push(func.id);
 
         let block = func.block(block_id);
 
@@ -112,7 +111,18 @@ impl MirQueryCtx<'_> {
                     DeclarationKind::IndirectCall { .. } => {
                         return ControlFlow::Break(EscapeReason::Indeterminate);
                     }
-                    DeclarationKind::Cast { .. } | DeclarationKind::Intrinsic { .. } => {}
+                    DeclarationKind::Cast { operand, .. } => {
+                        self.does_register_escape_inner(func, block_id, *operand, call_stack)?;
+                    }
+                    DeclarationKind::Intrinsic { args, .. } => {
+                        for (idx, arg) in args.iter().enumerate() {
+                            if arg.stores_register(reg) {
+                                let param = RegisterId::new(idx);
+
+                                self.does_register_escape_inner(func, block_id, param, call_stack)?;
+                            }
+                        }
+                    }
                 },
                 InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
                     if value.stores_register(reg) {
@@ -164,7 +174,7 @@ impl MirQueryCtx<'_> {
         func: &lume_mir::Function,
         call_site: &BlockBranchSite,
         reg: RegisterId,
-        call_stack: &mut IndexSet<NodeId>,
+        call_stack: &mut Vec<NodeId>,
     ) -> ControlFlow<EscapeReason, ()> {
         for (idx, arg) in call_site.arguments.iter().enumerate() {
             if arg.stores_register(reg) {

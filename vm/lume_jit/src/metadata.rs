@@ -6,8 +6,30 @@ use lume_type_metadata::*;
 
 use crate::CraneliftBackend;
 
-const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const u8>();
-const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const u8>();
+const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const ()>();
+const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const ()>();
+
+struct MetadataEntries {
+    pub type_metadata: String,
+    pub field_metadata: String,
+    pub method_metadata: String,
+    pub parameter_metadata: String,
+    pub type_parameter_metadata: String,
+}
+
+#[inline]
+fn metadata_entry(entries: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'static str) -> String {
+    entries
+        .values()
+        .find_map(|ty| {
+            if ty.full_name == name {
+                Some(ty.symbol_name())
+            } else {
+                None
+            }
+        })
+        .expect("expected to find metadata of `std::Type`")
+}
 
 impl CraneliftBackend {
     #[tracing::instrument(level = "DEBUG", skip(self))]
@@ -25,17 +47,29 @@ impl CraneliftBackend {
         self.declare_all_parameter_metadata(found_types.values());
         self.declare_all_type_parameter_metadata(found_types.values());
 
+        let metadata_symbols = MetadataEntries {
+            type_metadata: metadata_entry(&found_types, "std::Type"),
+            field_metadata: metadata_entry(&found_types, "std::Field"),
+            method_metadata: metadata_entry(&found_types, "std::Method"),
+            parameter_metadata: metadata_entry(&found_types, "std::Parameter"),
+            type_parameter_metadata: metadata_entry(&found_types, "std::TypeParameter"),
+        };
+
         let mut defined_methods = IndexSet::new();
 
         for metadata_entry in found_types.values() {
-            self.build_type_metadata_buffer(metadata_entry);
+            self.build_type_metadata_buffer(metadata_entry, &metadata_symbols);
 
             for type_param_metadata in &metadata_entry.type_parameters {
-                self.build_type_parameter_metadata_buffer(type_param_metadata, metadata_entry.full_name.clone());
+                self.build_type_parameter_metadata_buffer(
+                    type_param_metadata,
+                    metadata_entry.full_name.clone(),
+                    &metadata_symbols,
+                );
             }
 
             for field_metadata in &metadata_entry.fields {
-                self.build_field_metadata_buffer(field_metadata, metadata_entry);
+                self.build_field_metadata_buffer(field_metadata, metadata_entry, &metadata_symbols);
             }
 
             for method_metadata in &metadata_entry.methods {
@@ -45,14 +79,18 @@ impl CraneliftBackend {
 
                 defined_methods.insert(method_metadata.func_id);
 
-                self.build_method_metadata_buffer(method_metadata);
+                self.build_method_metadata_buffer(method_metadata, &metadata_symbols);
 
                 for param_metadata in &method_metadata.parameters {
-                    self.build_parameter_metadata_buffer(param_metadata, method_metadata);
+                    self.build_parameter_metadata_buffer(param_metadata, method_metadata, &metadata_symbols);
                 }
 
                 for type_param_metadata in &method_metadata.type_parameters {
-                    self.build_type_parameter_metadata_buffer(type_param_metadata, method_metadata.full_name.clone());
+                    self.build_type_parameter_metadata_buffer(
+                        type_param_metadata,
+                        method_metadata.full_name.clone(),
+                        &metadata_symbols,
+                    );
                 }
             }
         }
@@ -304,9 +342,12 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
-    fn build_type_metadata_buffer(&self, metadata: &TypeMetadata) {
+    fn build_type_metadata_buffer(&self, metadata: &TypeMetadata, metadata_symbols: &MetadataEntries) {
         let data_id = self.find_type_decl(metadata.id);
         let mut builder = MemoryBlockBuilder::new(self);
+
+        // Metadata entry
+        builder.append_metadata_address(&metadata_symbols.type_metadata);
 
         // Type.type_id
         builder.append(metadata.type_id_usize());
@@ -328,7 +369,7 @@ impl CraneliftBackend {
                 let name = self.metadata_name_of_field(field, metadata);
                 let data_id = self.find_decl_by_name(&name);
 
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
             },
         );
 
@@ -340,7 +381,7 @@ impl CraneliftBackend {
                 let name = method.symbol_name();
                 let data_id = self.find_decl_by_name(&name);
 
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
             },
         );
 
@@ -352,7 +393,7 @@ impl CraneliftBackend {
                 let name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
                 let data_id = self.find_decl_by_name(&name);
 
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
             },
         );
 
@@ -362,7 +403,7 @@ impl CraneliftBackend {
             &metadata.type_arguments,
             |builder, type_arg| {
                 let data_id = self.find_type_decl(*type_arg);
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, 0);
             },
         );
 
@@ -379,26 +420,37 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, ty = type_metadata.full_name))]
-    fn build_field_metadata_buffer(&self, metadata: &FieldMetadata, type_metadata: &TypeMetadata) {
+    fn build_field_metadata_buffer(
+        &self,
+        metadata: &FieldMetadata,
+        type_metadata: &TypeMetadata,
+        metadata_symbols: &MetadataEntries,
+    ) {
         let metadata_name = self.metadata_name_of_field(metadata, type_metadata);
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
+
+        // Metadata entry
+        builder.append_metadata_address(&metadata_symbols.field_metadata);
 
         // Field.name
         builder.append_str_address(metadata.name.clone());
 
         // Field.type
         let type_data_id = self.find_type_decl(metadata.ty);
-        builder.append_data_address(type_data_id);
+        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
 
         self.define_metadata(data_id, metadata_name, &builder.finish());
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
-    fn build_method_metadata_buffer(&self, metadata: &MethodMetadata) {
+    fn build_method_metadata_buffer(&self, metadata: &MethodMetadata, metadata_symbols: &MetadataEntries) {
         let metadata_name = metadata.symbol_name();
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
+
+        // Metadata entry
+        builder.append_metadata_address(&metadata_symbols.method_metadata);
 
         // Method.id
         builder.append(metadata.definition_id.as_usize());
@@ -414,7 +466,7 @@ impl CraneliftBackend {
                 let name = self.metadata_name_of_param(param, metadata);
                 let data_id = self.find_decl_by_name(&name);
 
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
             },
         );
 
@@ -426,13 +478,13 @@ impl CraneliftBackend {
                 let name = self.metadata_name_of_type_param(param, metadata.full_name.clone());
                 let data_id = self.find_decl_by_name(&name);
 
-                builder.append_data_address(data_id);
+                builder.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
             },
         );
 
         // Method.return_type
         let type_data_id = self.find_type_decl(metadata.return_type);
-        builder.append_data_address(type_data_id);
+        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
 
         // Method.func_ptr
         let func_ptr = self.declared_funcs.get(&metadata.func_id).unwrap();
@@ -442,17 +494,25 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, method = method_metadata.full_name))]
-    fn build_parameter_metadata_buffer(&self, metadata: &ParameterMetadata, method_metadata: &MethodMetadata) {
+    fn build_parameter_metadata_buffer(
+        &self,
+        metadata: &ParameterMetadata,
+        method_metadata: &MethodMetadata,
+        metadata_symbols: &MetadataEntries,
+    ) {
         let metadata_name = self.metadata_name_of_param(metadata, method_metadata);
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
+
+        // Metadata entry
+        builder.append_metadata_address(&metadata_symbols.parameter_metadata);
 
         // Parameter.name
         builder.append_str_address(metadata.name.clone());
 
         // Parameter.type
         let type_data_id = self.find_type_decl(metadata.ty);
-        builder.append_data_address(type_data_id);
+        builder.append_data_address(type_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
 
         // Parameter.vararg
         builder.append_byte(u8::from(metadata.vararg));
@@ -461,10 +521,18 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, owner = owner_name))]
-    fn build_type_parameter_metadata_buffer(&self, metadata: &TypeParameterMetadata, owner_name: String) {
+    fn build_type_parameter_metadata_buffer(
+        &self,
+        metadata: &TypeParameterMetadata,
+        owner_name: String,
+        metadata_symbols: &MetadataEntries,
+    ) {
         let metadata_name = self.metadata_name_of_type_param(metadata, owner_name);
         let data_id = self.find_decl_by_name(&metadata_name);
         let mut builder = MemoryBlockBuilder::new(self);
+
+        // Metadata entry
+        builder.append_metadata_address(&metadata_symbols.type_parameter_metadata);
 
         // TypeParameter.name
         builder.append_str_address(metadata.name.clone());
@@ -472,7 +540,7 @@ impl CraneliftBackend {
         // TypeParameter.constraints
         builder.append_slice_of(&metadata.constraints, |builder, constraint| {
             let constraint_data_id = self.find_type_decl(*constraint);
-            builder.append_data_address(constraint_data_id);
+            builder.append_data_address(constraint_data_id, NATIVE_PTR_SIZE.cast_signed() as i64);
         });
 
         self.define_metadata(data_id, metadata_name, &builder.finish());
@@ -539,7 +607,7 @@ struct MemoryBlockBuilder<'back> {
     backend: &'back CraneliftBackend,
 
     data: Vec<u8>,
-    data_relocs: Vec<(usize, DataId)>,
+    data_relocs: Vec<(usize, DataId, i64)>,
     func_relocs: Vec<(usize, FuncId)>,
     offset: usize,
 }
@@ -658,7 +726,7 @@ impl<'back> MemoryBlockBuilder<'back> {
         }
 
         self.backend.define_metadata(data_id, decl_name, &builder.finish());
-        self.append_data_address(data_id);
+        self.append_data_address(data_id, 0);
 
         self
     }
@@ -673,10 +741,10 @@ impl<'back> MemoryBlockBuilder<'back> {
     }
 
     /// Appends a pointer (relocation) of the given data to the data block.
-    pub fn append_data_address(&mut self, id: DataId) -> &mut Self {
+    pub fn append_data_address(&mut self, id: DataId, addend: i64) -> &mut Self {
         self.data.resize(self.data.len() + NATIVE_PTR_SIZE, 0x00);
 
-        self.data_relocs.push((self.offset, id));
+        self.data_relocs.push((self.offset, id, addend));
         self.offset += NATIVE_PTR_SIZE;
         self
     }
@@ -690,7 +758,15 @@ impl<'back> MemoryBlockBuilder<'back> {
 
         let name_data_id = self.backend.declare_static_string(&value);
 
-        self.append_data_address(name_data_id)
+        self.append_data_address(name_data_id, 0)
+    }
+
+    /// Appends a pointer (relocation) of the metadata with the given symbol
+    /// name.
+    pub fn append_metadata_address(&mut self, metadata_name: &str) -> &mut Self {
+        let data_id = self.backend.find_decl_by_name(metadata_name);
+
+        self.append_data_address(data_id, NATIVE_PTR_SIZE.cast_signed() as i64)
     }
 
     /// Takes the builder instance and returns the underlying
@@ -702,11 +778,11 @@ impl<'back> MemoryBlockBuilder<'back> {
 
         ctx.define(self.data.into_boxed_slice());
 
-        for (offset, data_reloc) in self.data_relocs {
+        for (offset, data_reloc, addend) in self.data_relocs {
             let gv = self.backend.module_mut().declare_data_in_data(data_reloc, &mut ctx);
 
             #[allow(clippy::cast_possible_truncation)]
-            ctx.write_data_addr(offset as u32, gv, 0);
+            ctx.write_data_addr(offset as u32, gv, addend);
         }
 
         for (offset, func_reloc) in self.func_relocs {

@@ -399,12 +399,11 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
 
 fn method_metadata_type() -> lume_mir::Type {
     lume_mir::Type::pointer(lume_mir::Type::structure(String::from("std::Method"), vec![
+        lume_mir::Type::u64(),                           // id,
         lume_mir::Type::pointer(lume_mir::Type::void()), // full_name,
-        lume_mir::Type::u64(),                           // size,
-        lume_mir::Type::u64(),                           // alignment,
-        lume_mir::Type::u64(),                           // type_id,
-        lume_mir::Type::pointer(lume_mir::Type::void()), // fields,
-        lume_mir::Type::pointer(lume_mir::Type::void()), // methods,
-        lume_mir::Type::pointer(lume_mir::Type::void()), // type_arguments,
+        lume_mir::Type::pointer(lume_mir::Type::void()), // parameters,
+        lume_mir::Type::pointer(lume_mir::Type::void()), // type_parameters,
+        lume_mir::Type::void(),                          // return_type
+        lume_mir::Type::void(),                          // func_ptr
     ]))
 }
