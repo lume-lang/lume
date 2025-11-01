@@ -153,16 +153,16 @@ impl FunctionTransformer<'_, '_> {
         // The first type in all object allocations must be a pointer to the metadata
         // of the type, so it can be reflected at runtime.
         let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
-        let metadata_ptr_size = std::mem::size_of::<*const u32>();
+        let metadata_ptr_size = std::mem::size_of::<*const ()>();
 
         let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
         let struct_type = lume_mir::Type::structure(name, prop_types);
         let struct_ptr = lume_mir::Type::pointer(struct_type.clone());
 
-        let reg = self.func.add_register(struct_ptr);
+        let alloc_reg = self.func.add_register(struct_ptr.clone());
         self.func
             .current_block_mut()
-            .allocate(reg, struct_type, metadata_reg, expr.location);
+            .allocate(alloc_reg, struct_type, metadata_reg, expr.location);
 
         // Store the metadata reference in the first element in the structure.
         let metadata_value = lume_mir::Operand {
@@ -172,7 +172,7 @@ impl FunctionTransformer<'_, '_> {
 
         self.func
             .current_block_mut()
-            .store_field(reg, 0, metadata_value, expr.location);
+            .store_field(alloc_reg, 0, metadata_value, expr.location);
 
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
@@ -182,13 +182,37 @@ impl FunctionTransformer<'_, '_> {
 
             self.func
                 .current_block_mut()
-                .store_field(reg, offset, value, expr.location);
+                .store_field(alloc_reg, offset, value, expr.location);
 
             offset += size;
         }
 
+        let offset_reg = self.func.declare(struct_ptr, lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic {
+                name: lume_mir::Intrinsic::IntAdd {
+                    bits: 64,
+                    signed: false,
+                },
+                args: vec![
+                    lume_mir::Operand {
+                        kind: lume_mir::OperandKind::Reference { id: alloc_reg },
+                        location: expr.location,
+                    },
+                    lume_mir::Operand {
+                        kind: lume_mir::OperandKind::Integer {
+                            bits: 64,
+                            signed: false,
+                            value: lume_mir::POINTER_SIZE.cast_signed() as i64,
+                        },
+                        location: expr.location,
+                    },
+                ],
+            },
+            location: expr.location,
+        });
+
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: reg },
+            kind: lume_mir::OperandKind::Reference { id: offset_reg },
             location: expr.location,
         }
     }
@@ -946,8 +970,7 @@ impl FunctionTransformer<'_, '_> {
     }
 
     fn field_offset(&self, field: &lume_types::Field) -> usize {
-        let metadata_ptr_size = std::mem::size_of::<*const u32>();
-        let mut offset = metadata_ptr_size;
+        let mut offset = 0;
 
         for (idx, prop) in self.tcx().tdb().find_fields(field.owner).enumerate() {
             if idx == field.index {

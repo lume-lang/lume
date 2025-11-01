@@ -94,7 +94,9 @@ impl LowerFunction<'_> {
                         panic!("bug!: no type metadata allocated for `{}`", metadata.full_name);
                     };
 
-                    value
+                    self.builder
+                        .ins()
+                        .iadd_imm(value, lume_mir::POINTER_SIZE.cast_signed() as i64)
                 }
             },
         }
