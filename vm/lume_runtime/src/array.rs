@@ -3,13 +3,8 @@
 //! None of these structs are meant to be exported - they exist purely to
 //! better read arguments passed to Rust from Lume.
 
-use lume_rt_metadata::TypeMetadata;
-
 #[repr(C)]
 pub struct Array<T> {
-    /// Defines all the items in the list.
-    pub metadata: *const TypeMetadata,
-
     /// Defines the amount of items within the list.
     pub length: std::os::raw::c_ulonglong,
 
