@@ -326,7 +326,7 @@ impl FunctionTransformer<'_, '_> {
                     kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
                         kind: lume_mir::OperandKind::LoadField {
                             target: loaded_op,
-                            offset: lume_mir::POINTER_SIZE,
+                            offset: 0,
                             index: 0,
                             field_type: lume_mir::Type::u8(),
                         },
@@ -1037,7 +1037,7 @@ impl FunctionTransformer<'_, '_> {
 
     fn variant_field_offset(&self, id: lume_span::NodeId, field_idx: usize) -> usize {
         // We start off with the size of the discriminant of the variant.
-        let mut offset = lume_mir::POINTER_SIZE + lume_mir::Type::u8().bytesize();
+        let mut offset = lume_mir::Type::u8().bytesize();
 
         let pattern = self.tcx().hir_expect_pattern(id);
         let lume_hir::PatternKind::Variant(variant_pattern) = &pattern.kind else {
