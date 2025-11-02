@@ -16,6 +16,7 @@ unsafe extern "C" {
 pub(crate) type DropPointer = extern "C" fn(*mut u8);
 
 const PAGE_SIZE: usize = 0x1000;
+const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
 pub(crate) struct BumpAllocator {
@@ -100,14 +101,14 @@ impl Drop for BumpAllocator {
 
 pub(crate) struct YoungGeneration {
     allocator: BumpAllocator,
-    drop_list: Vec<(*mut u8, DropPointer)>,
+    drop_list: IndexMap<*mut u8, DropPointer>,
 }
 
 impl YoungGeneration {
     pub(crate) fn new(initial_size: usize) -> Self {
         Self {
             allocator: BumpAllocator::new(initial_size),
-            drop_list: Vec::new(),
+            drop_list: IndexMap::new(),
         }
     }
 
@@ -119,9 +120,9 @@ impl YoungGeneration {
                 let drop_ptr = unsafe { metadata.read() }.drop_ptr;
 
                 if !drop_ptr.is_null() {
-                    self.drop_list.push((ptr, unsafe {
+                    self.drop_list.insert(ptr, unsafe {
                         std::mem::transmute::<*const std::ffi::c_void, DropPointer>(drop_ptr)
-                    }));
+                    });
                 }
             }
 
@@ -131,11 +132,17 @@ impl YoungGeneration {
         }
     }
 
+    /// Removes the object, referenced by the given pointer, from the allocator
+    /// without invoking the associated drop pointer, if any.
+    pub(crate) fn unregister_object(&mut self, ptr: *mut u8) {
+        self.drop_list.shift_remove(&ptr);
+    }
+
     /// "Clears" the generation by resetting the bump pointer, as well
     /// as clearing the set of allocations made by the allocator.
     pub(crate) fn clear(&mut self) {
         for (ptr, drop_ptr) in self.drop_list.drain(..) {
-            drop_ptr(ptr);
+            drop_ptr(unsafe { ptr.byte_add(POINTER_SIZE) });
         }
 
         self.allocator.clear();
@@ -151,6 +158,10 @@ impl YoungGeneration {
     /// address to the pointer in the stack frame.
     pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
         frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
+            // Since the pointer is pointer to an object, the allocation will actually start
+            // just before the given pointer, since the metadata is defined at [-0x8].
+            let obj_ptr = unsafe { obj_ptr.byte_sub(POINTER_SIZE) };
+
             if obj_ptr >= self.allocator.base && obj_ptr <= self.allocator.current {
                 Some(stack_ptr)
             } else {
@@ -204,7 +215,7 @@ impl OldGeneration {
         for (ptr, (size, drop_ptr)) in self.allocations.drain(..) {
             if !drop_ptr.is_null() {
                 let drop_ptr: DropPointer = unsafe { std::mem::transmute(drop_ptr) };
-                drop_ptr(ptr);
+                drop_ptr(unsafe { ptr.byte_add(POINTER_SIZE) });
             }
 
             let layout = Layout::from_size_align(size, POINTER_ALIGNMENT).unwrap();
@@ -308,22 +319,29 @@ impl GenerationalAllocator {
     /// all the allocations have been handled, the 1st generation is cleared.
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
         for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
-            let live_obj = unsafe { stack_ptr.read() }.cast_mut();
-            let metadata_ptr = unsafe { live_obj.cast_const().cast::<*const TypeMetadata>().read_unaligned() };
+            // The metadata of the object is stored at [-0x08], so the actual start of
+            // the allocation is there.
+            let alloc_start = unsafe { stack_ptr.read().byte_sub(POINTER_SIZE) }.cast_mut();
+
+            let metadata_ptr = unsafe { alloc_start.cast::<*const TypeMetadata>().read_unaligned() };
             let obj_size = unsafe { metadata_ptr.read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.
             let new_live_ptr = self.old.alloc(obj_size, metadata_ptr);
-            unsafe { memcpy(new_live_ptr, live_obj, obj_size) };
+            unsafe { memcpy(new_live_ptr, alloc_start, obj_size) };
 
-            lume_trace::trace!("[G1->G2] promoted {live_obj:p} (now {new_live_ptr:p})");
+            lume_trace::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
 
             // Replace the pointer on the stack with newly moved object pointer,
             // so when the function reloads the object register from the stack,
             // it'll be to the new object.
             unsafe {
-                *stack_ptr.cast_mut() = new_live_ptr.cast_const();
+                *stack_ptr.cast_mut() = new_live_ptr.byte_add(POINTER_SIZE).cast_const();
             }
+
+            // Unregister the allocation from the 1st generation, so the value isn't
+            // disposed, when calling `clear`.
+            self.young.unregister_object(alloc_start);
         }
 
         self.young.clear();
