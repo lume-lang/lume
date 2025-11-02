@@ -1,0 +1,20 @@
+//# test-return = 8
+
+import std::io (println)
+import std::ops (Dispose)
+
+struct Foo {
+    pub a: UInt8 = 8;
+}
+
+use Dispose in Foo {
+    fn dispose(self) {
+        println("disposed!");
+    }
+}
+
+fn main() -> UInt8 {
+    let foo = Foo { };
+
+    foo.a
+}
