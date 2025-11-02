@@ -858,7 +858,7 @@ impl FunctionTransformer<'_, '_> {
         // The first type in all object allocations must be a pointer to the metadata
         // of the type, so it can be reflected at runtime.
         let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
-        let metadata_ptr_size = std::mem::size_of::<*const u32>();
+        let metadata_ptr_size = std::mem::size_of::<*const ()>();
 
         let mut union_cases = Vec::new();
 
@@ -877,10 +877,10 @@ impl FunctionTransformer<'_, '_> {
         }
 
         let union_type = lume_mir::Type::union(union_cases);
-        let reg = self.func.add_register(union_type.clone());
+        let alloc_reg = self.func.add_register(union_type.clone());
         self.func
             .current_block_mut()
-            .allocate(reg, union_type, metadata_reg, expr.location);
+            .allocate(alloc_reg, union_type.clone(), metadata_reg, expr.location);
 
         // Store the metadata reference in the first element in the union.
         let metadata_value = lume_mir::Operand {
@@ -890,7 +890,7 @@ impl FunctionTransformer<'_, '_> {
 
         self.func
             .current_block_mut()
-            .store_field(reg, 0, metadata_value, expr.location);
+            .store_field(alloc_reg, 0, metadata_value, expr.location);
 
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
@@ -898,7 +898,7 @@ impl FunctionTransformer<'_, '_> {
         // Store the discriminant of the variant right after the metadata
         self.func
             .current_block_mut()
-            .store_field(reg, offset, discriminant, expr.location);
+            .store_field(alloc_reg, offset, discriminant, expr.location);
 
         offset += 1;
 
@@ -908,13 +908,37 @@ impl FunctionTransformer<'_, '_> {
 
             self.func
                 .current_block_mut()
-                .store_field(reg, offset, value, expr.location);
+                .store_field(alloc_reg, offset, value, expr.location);
 
             offset += operand_size;
         }
 
+        let offset_reg = self.func.declare(union_type, lume_mir::Declaration {
+            kind: lume_mir::DeclarationKind::Intrinsic {
+                name: lume_mir::Intrinsic::IntAdd {
+                    bits: 64,
+                    signed: false,
+                },
+                args: vec![
+                    lume_mir::Operand {
+                        kind: lume_mir::OperandKind::Reference { id: alloc_reg },
+                        location: expr.location,
+                    },
+                    lume_mir::Operand {
+                        kind: lume_mir::OperandKind::Integer {
+                            bits: 64,
+                            signed: false,
+                            value: lume_mir::POINTER_SIZE.cast_signed() as i64,
+                        },
+                        location: expr.location,
+                    },
+                ],
+            },
+            location: expr.location,
+        });
+
         lume_mir::Operand {
-            kind: lume_mir::OperandKind::Reference { id: reg },
+            kind: lume_mir::OperandKind::Reference { id: offset_reg },
             location: expr.location,
         }
     }
