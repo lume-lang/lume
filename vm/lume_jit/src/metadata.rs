@@ -581,28 +581,6 @@ impl Encode for usize {
     }
 }
 
-impl<T: Encode> Encode for [T] {
-    fn encode(&self) -> Box<[u8]> {
-        let mut bytes = Vec::new();
-
-        // Write the length of the slice
-        bytes.extend_from_slice(&self.len().to_ne_bytes()[..]);
-
-        // Write every item in the slice as a single block
-        for item in self {
-            bytes.extend(item.encode());
-        }
-
-        bytes.into_boxed_slice()
-    }
-}
-
-impl<T: Encode> Encode for Vec<T> {
-    fn encode(&self) -> Box<[u8]> {
-        Encode::encode(self.as_slice())
-    }
-}
-
 struct MemoryBlockBuilder<'back> {
     backend: &'back CraneliftBackend,
 
@@ -719,11 +697,28 @@ impl<'back> MemoryBlockBuilder<'back> {
         let data_id = self.backend.find_decl_by_name(&decl_name);
         let mut builder = MemoryBlockBuilder::new(self.backend);
 
+        // Array.length
         builder.append(slice.len());
 
+        // Array.capacity
+        builder.append(slice.len());
+
+        let ptr_decl_name = format!("{decl_name}__ptr");
+        let ptr_data_id = self
+            .backend
+            .module_mut()
+            .declare_data(&ptr_decl_name, cranelift_module::Linkage::Local, false, false)
+            .unwrap();
+
+        let mut ptr_builder = MemoryBlockBuilder::new(self.backend);
+
         for item in slice {
-            f(&mut builder, item);
+            f(&mut ptr_builder, item);
         }
+
+        self.backend
+            .define_metadata(ptr_data_id, ptr_decl_name, &ptr_builder.finish());
+        builder.append_data_address(ptr_data_id, 0);
 
         self.backend.define_metadata(data_id, decl_name, &builder.finish());
         self.append_data_address(data_id, 0);
