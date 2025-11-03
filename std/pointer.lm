@@ -26,9 +26,7 @@ impl<T> Pointer<T> {
     /// This method does not read with a byte offset. The byte offset of this method
     /// will be `ptr + (size_of<T> * offset)`.
     pub fn read_offset(self, offset: UInt64) -> T {
-        let size = std::type_of<T>().size;
-
-        return ptr_read<T>(self, offset * size);
+        return ptr_read<T>(self, offset);
     }
 
     /// Writes a new value to the memory location the current pointer is pointing to,
@@ -37,8 +35,6 @@ impl<T> Pointer<T> {
     /// This method does not write with a byte offset. The byte offset of this method
     /// will be `ptr + (size_of<T> * offset)`.
     pub fn write_offset(self, value: T, offset: UInt64) {
-        let size = std::type_of<T>().size;
-
-        ptr_write<T>(self, value, offset * size);
+        ptr_write<T>(self, value, offset);
     }
 }

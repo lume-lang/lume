@@ -70,7 +70,8 @@ impl<T> Array<T> {
             return Optional<T>::None;
         }
 
-        let value = self.ptr.read_offset(index);
+        let offset = std::type_of<T>().size * index;
+        let value = self.ptr.read_offset(offset);
 
         Optional<T>::Some(value)
     }
@@ -78,7 +79,9 @@ impl<T> Array<T> {
     /// Sets an element at position `index` within the array to the given value `value`.
     pub fn set(self, index: UInt64, value: T) {
         // TODO: panic if index > len
-        self.ptr.write_offset(value, index);
+        let offset = std::type_of<T>().size * index;
+
+        self.ptr.write_offset(value, offset);
     }
 
     /// Appends a new element to the end of the array.
@@ -87,7 +90,9 @@ impl<T> Array<T> {
             self.reserve(self.capacity + 1_u64);
         }
 
-        self.ptr.write_offset(value, self.length);
+        let offset = std::type_of<T>().size * self.length;
+
+        self.ptr.write_offset(value, offset);
         self.length = self.length + 1_u64;
     }
 
