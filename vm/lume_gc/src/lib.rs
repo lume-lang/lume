@@ -1,7 +1,7 @@
 pub(crate) mod alloc;
 pub(crate) mod arch;
 
-use alloc::GA;
+use alloc::with_allocator;
 use std::cmp::Ordering;
 use std::fmt::Display;
 use std::sync::OnceLock;
@@ -296,7 +296,7 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
 /// To see whether a collection is required, use
 /// [`alloc::GenerationalAllocator::is_collection_required`].
 pub fn trigger_collection() {
-    if GA.try_read().is_ok_and(|alloc| alloc.is_collection_required()) {
+    if with_allocator(|alloc| alloc.is_collection_required()) {
         trigger_collection_force();
     }
 }
@@ -317,7 +317,7 @@ pub fn trigger_collection_force() {
 
     lume_trace::trace!("collection triggered");
 
-    GA.try_write().unwrap().promote_allocations(&frame);
+    with_allocator(|alloc| alloc.promote_allocations(&frame));
 }
 
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
@@ -327,7 +327,7 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
         panic!("bug!: could not find stack map for allocation call");
     };
 
-    GA.try_write().unwrap().alloc(size, metadata, &frame)
+    with_allocator(|alloc| alloc.alloc(size, metadata, &frame))
 }
 
 /// Static version of [`alloc::GenerationalAllocator::drop_allocations`], so it
@@ -339,5 +339,5 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
 pub fn drop_allocations() {
     lume_trace::trace!("dropping all allocations");
 
-    GA.try_write().unwrap().drop_allocations();
+    with_allocator(|alloc| alloc.drop_allocations());
 }

@@ -1,7 +1,8 @@
 extern crate alloc;
 
 use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
-use std::sync::{LazyLock, RwLock};
+use std::cell::UnsafeCell;
+use std::sync::OnceLock;
 
 use indexmap::IndexMap;
 use lume_rt_metadata::TypeMetadata;
@@ -363,5 +364,18 @@ fn get_total_memory() -> usize {
     sys.total_memory() as usize
 }
 
-pub static GA: LazyLock<RwLock<GenerationalAllocator>> =
-    LazyLock::new(|| RwLock::new(GenerationalAllocator::with_root(6)));
+struct Global<T> {
+    inner: UnsafeCell<T>,
+}
+
+unsafe impl<T> Sync for Global<T> where T: Send {}
+
+static GA: OnceLock<Global<GenerationalAllocator>> = OnceLock::new();
+
+pub fn with_allocator<R, F: FnOnce(&mut GenerationalAllocator) -> R>(f: F) -> R {
+    let global = GA.get_or_init(|| Global {
+        inner: UnsafeCell::new(GenerationalAllocator::with_root(6)),
+    });
+
+    unsafe { f(&mut *global.inner.get()) }
+}
