@@ -35,7 +35,7 @@ fn internal_format_ffi(fmt: *const c_char, args: *const Array<*const c_char>) ->
     let mut args_strings = Vec::with_capacity(args.length as usize);
 
     for arg in &args {
-        let arg_str = crate::string::cstr_to_string(arg.cast());
+        let arg_str = crate::string::cstr_to_string(unsafe { arg.read() }.cast());
 
         args_strings.push(arg_str);
     }

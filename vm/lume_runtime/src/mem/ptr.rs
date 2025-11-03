@@ -7,25 +7,22 @@ unsafe extern "C" {
 /// Reads an existing value from the memory location the current pointer is
 /// pointing to, offset by the given amount of bytes.
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
-pub unsafe extern "C" fn lumert_ptr_read(ptr: *mut u8, offset: usize, metadata: *const TypeMetadata) -> *mut u8 {
-    let value_size = unsafe { metadata.read().size };
-    let dest = unsafe { crate::mem::lumert_alloc(value_size, metadata) };
-
-    unsafe { memcpy(dest, ptr.byte_add(offset), value_size) };
-
-    dest
+pub unsafe extern "C" fn lumert_ptr_read(ptr: *mut (), offset: usize, _metadata: *const TypeMetadata) -> *mut () {
+    unsafe { ptr.byte_add(offset) }
 }
 
 /// Writes a new value to the memory location the current pointer is pointing
 /// to, offset by the given amount of bytes.
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_ptr_write(
-    ptr: *mut u8,
-    value: *const u8,
+    ptr: *mut (),
+    value: *const (),
     offset: usize,
-    metadata: *const TypeMetadata,
+    _metadata: *const TypeMetadata,
 ) {
-    let value_size = unsafe { metadata.read().size };
+    unsafe {
+        let ptr: *mut *const () = ptr.add(offset).cast();
 
-    unsafe { memcpy(ptr.byte_add(offset), value, value_size) };
+        *ptr = value;
+    }
 }
