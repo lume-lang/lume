@@ -1,0 +1,32 @@
+namespace std::mem
+
+import std (Pointer)
+import std::ops (Dispose)
+
+/// A heap-allocated value, containing a value of type `T`.
+pub struct Box<T> {
+    ptr: Pointer<T>;
+}
+
+impl<T> Box<T> {
+    /// Allocates a new `Box<T>`, then places `value` into it.
+    pub fn new(value: T) -> Box<T> {
+        let size = std::type_of<T>().size;
+        let ptr = std::mem::alloc<T>(size);
+
+        Box<T> {
+            ptr
+        }
+    }
+
+    /// Gets the inner pointer, which the box is referring to.
+    pub fn ptr(self) -> Pointer<T> {
+        self.ptr
+    }
+}
+
+use<T> Dispose in Box<T> {
+    fn dispose(self) {
+        std::mem::dealloc<T>(self.ptr);
+    }
+}

@@ -23,6 +23,10 @@ pub struct TypeMetadataId(pub usize);
 
 impl From<&lume_types::TypeRef> for TypeMetadataId {
     fn from(value: &lume_types::TypeRef) -> Self {
+        if value.is_scalar_type() {
+            return Self(value.instance_of.index.as_usize());
+        }
+
         Self(hash_id(&value.instance_of))
     }
 }

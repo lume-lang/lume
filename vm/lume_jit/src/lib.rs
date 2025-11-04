@@ -23,6 +23,7 @@ pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::mem::alloc", lume_runtime::mem::lumert_alloc as *const u8),
     ("std::mem::realloc", lume_runtime::mem::lumert_realloc as *const u8),
     ("std::mem::dealloc", lume_runtime::mem::lumert_dealloc as *const u8),
+    ("std::mem::ptr_ref", lume_runtime::mem::lumert_ptr_ref as *const u8),
     ("std::mem::ptr_read", lume_runtime::mem::lumert_ptr_read as *const u8),
     ("std::mem::ptr_write", lume_runtime::mem::lumert_ptr_write as *const u8),
     ("std::mem::GC::invoke", lume_gc::trigger_collection_force as *const u8),
