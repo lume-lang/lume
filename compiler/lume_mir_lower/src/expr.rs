@@ -145,6 +145,24 @@ impl FunctionTransformer<'_, '_> {
         let name = self.tcx().new_named_type(&expr.ty, true).unwrap().to_string();
         let props = self.tcx().tdb().find_fields(expr.ty.instance_of).collect::<Vec<_>>();
 
+        // Sort all the constructor expressions so they have the same order as
+        // the fields within the type. If this isn't done, the value of a field may be
+        // set to the wrong field.
+        let mut field_exprs = expr.fields.clone();
+        field_exprs.sort_by_key(|field| {
+            props
+                .iter()
+                .enumerate()
+                .find_map(|(idx, prop)| {
+                    if prop.name.as_str() == field.name.as_str() {
+                        Some(idx)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap()
+        });
+
         let prop_types = props
             .iter()
             .map(|prop| self.lower_type(&prop.field_type))
@@ -177,7 +195,7 @@ impl FunctionTransformer<'_, '_> {
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
 
-        for (field, size) in expr.fields.iter().zip(prop_sizes) {
+        for (field, size) in field_exprs.iter().zip(prop_sizes) {
             let value = self.expression(&field.value);
 
             self.func
