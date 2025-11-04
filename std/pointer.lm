@@ -1,6 +1,6 @@
 namespace std
 
-import std::mem (ptr_read, ptr_write)
+import std::mem (ptr_ref, ptr_read, ptr_write)
 
 /// Defines a raw pointer, which can be used to access memory directly.
 ///
@@ -10,7 +10,13 @@ pub struct builtin Pointer<T>
 { }
 
 impl<T> Pointer<T> {
-    /// Writes a new value to the memory location the current pointer is pointing to.
+    /// Gets the pointer as a reference, pointing to the same address as the
+    /// pointer itself.
+    pub fn as_ref(self) -> T {
+        return ptr_ref<T>(self);
+    }
+
+    /// Reads the value from the memory location, which the current pointer is pointing to.
     pub fn read(self) -> T {
         return ptr_read<T>(self, 0_u64);
     }

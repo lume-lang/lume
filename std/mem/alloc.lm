@@ -14,6 +14,9 @@ pub fn external realloc<T>(ptr: Pointer<T>, size: UInt64) -> Pointer<T>
 /// Deallocates a memory blocked, pointed to by `ptr`.
 pub fn external dealloc<T>(ptr: Pointer<T>)
 
+/// Gets the given pointer as a reference, to the value which the pointer is pointing to.
+pub fn external ptr_ref<T>(ptr: Pointer<T>) -> T
+
 /// Reads an existing value from the memory location the current pointer is pointing to,
 /// offset by the given amount of bytes.
 pub fn external ptr_read<T>(ptr: Pointer<T>, offset: UInt64) -> T

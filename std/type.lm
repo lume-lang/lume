@@ -33,6 +33,16 @@ pub struct Type {
     pub drop_method: UInt64;
 }
 
+impl Type {
+    /// Attempts to determine whether the given type is a scalar or not.
+    pub fn is_scalar(self) -> Boolean {
+        // 11 (0xB) is the TypeID of Double, the last scalar type in Lume.
+        //
+        // See lume_types/src/lib.rs for all the scalar type IDs.
+        self.type_id <= 11
+    }
+}
+
 pub struct Field {
     /// Gets the name of the field.
     pub name: String;

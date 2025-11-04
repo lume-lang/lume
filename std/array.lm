@@ -52,7 +52,7 @@ impl<T> Array<T> {
 
     /// Allocates a new, empty array with at least the given capacity.
     pub fn with_capacity(capacity: UInt64) -> Array<T> {
-        let type_size = std::type_of<T>().size;
+        let type_size = std::type_of<Pointer<T>>().size;
         let ptr = alloc<T>(type_size * capacity);
 
         return Array<T> {
@@ -70,7 +70,7 @@ impl<T> Array<T> {
             return Optional<T>::None;
         }
 
-        let offset = std::type_of<T>().size * index;
+        let offset = std::type_of<Pointer<T>>().size * index;
         let value = self.ptr.read_offset(offset);
 
         Optional<T>::Some(value)
@@ -79,7 +79,8 @@ impl<T> Array<T> {
     /// Sets an element at position `index` within the array to the given value `value`.
     pub fn set(self, index: UInt64, value: T) {
         // TODO: panic if index > len
-        let offset = std::type_of<T>().size * index;
+        let value = ref_or_box<T>(value);
+        let offset = std::type_of<Pointer<T>>().size * index;
 
         self.ptr.write_offset(value, offset);
     }
@@ -90,9 +91,7 @@ impl<T> Array<T> {
             self.reserve(self.capacity + 1_u64);
         }
 
-        let offset = std::type_of<T>().size * self.length;
-
-        self.ptr.write_offset(value, offset);
+        self.set(self.length, value);
         self.length = self.length + 1_u64;
     }
 
@@ -106,11 +105,23 @@ impl<T> Array<T> {
             return;
         }
 
-        let type_size = std::type_of<T>().size;
-
         self.capacity = capacity;
-        self.ptr = realloc<T>(self.ptr, type_size * self.capacity);
+        self.ptr = realloc<T>(self.ptr, std::type_of<Pointer<T>>().size * self.capacity);
     }
+}
+
+/// If the given value is a scalar type, it is boxed and it's
+/// pointer is returned as a reference.
+///
+/// If the type is already a reference, it is returned as-is.
+fn ref_or_box<T>(value: T) -> T {
+    if std::type_of<T>().is_scalar() {
+        let boxed: std::mem::Box<T> = std::mem::Box<T>::new(value);
+
+        return boxed.ptr().as_ref();
+    }
+
+    value
 }
 
 use<T> Dispose in Array<T> {
