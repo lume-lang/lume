@@ -25,7 +25,7 @@ pub unsafe extern "C" fn lumert_ptr_write(
     ptr: *mut (),
     value: *const (),
     offset: usize,
-    metadata: *const TypeMetadata,
+    _metadata: *const TypeMetadata,
 ) {
     unsafe {
         let dest: *mut *const () = ptr.byte_add(offset).cast();
