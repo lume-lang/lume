@@ -27,7 +27,6 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
             lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
-            lume_hir::ExpressionKind::Field(expr) => self.field_expression(expr),
             lume_hir::ExpressionKind::Switch(expr) => self.switch_expression(expr)?,
             lume_hir::ExpressionKind::Scope(expr) => self.scope_expression(expr)?,
             lume_hir::ExpressionKind::Variable(expr) => self.variable_expression(expr),

@@ -341,9 +341,7 @@ impl TyCheckCtx {
 
                 self.variant_expression(expr)
             }
-            lume_hir::ExpressionKind::Literal(_)
-            | lume_hir::ExpressionKind::Field(_)
-            | lume_hir::ExpressionKind::Variable(_) => Ok(()),
+            lume_hir::ExpressionKind::Literal(_) | lume_hir::ExpressionKind::Variable(_) => Ok(()),
         }
     }
 

@@ -157,14 +157,6 @@ impl TyInferCtx {
 
                 field.field_type.clone()
             }
-            lume_hir::ExpressionKind::Field(field) => {
-                let pattern = self.hir_expect_pattern(field.pattern);
-                let lume_hir::PatternKind::Variant(variant_pat) = &pattern.kind else {
-                    panic!("bug!: found field expression referencing non-variant pattern");
-                };
-
-                self.type_of_variant_field(&variant_pat.name, field.field)?
-            }
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
                 Some(case) => self.type_of(case.branch)?,
@@ -781,7 +773,6 @@ impl TyInferCtx {
                 }
                 lume_hir::ExpressionKind::If(_) | lume_hir::ExpressionKind::Is(_) => Ok(Some(TypeRef::bool())),
                 lume_hir::ExpressionKind::Literal(_) => unreachable!("literals cannot have sub expressions"),
-                lume_hir::ExpressionKind::Field(_) => todo!("expected_type_of field expression"),
                 lume_hir::ExpressionKind::Switch(switch) => {
                     if switch.operand == id {
                         return Ok(None);

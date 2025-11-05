@@ -1316,16 +1316,6 @@ pub enum ExpressionKind {
     Literal(Literal),
     Logical(Logical),
     Member(Member),
-
-    /// Defines a reference to a field within a pattern.
-    ///
-    /// ```lume
-    /// switch a {
-    ///    Some(b) => b,
-    ///               ^ Field expression
-    /// }
-    /// ```
-    Field(PatternField),
     Scope(Scope),
     Switch(Switch),
     Variable(Variable),
