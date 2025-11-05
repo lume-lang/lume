@@ -311,8 +311,16 @@ fn test_switch_snapshots() {
     assert_expr_snap_eq!("switch a { 1 => 4, 2 => 6 }", "literal");
     assert_expr_snap_eq!("switch a { Address::V4 => 4, Address::V6 => 6 }", "variant");
     assert_expr_snap_eq!(
+        "switch a { std::Address::V4 => 4, std::Address::V6 => 6 }",
+        "variant_absolute_path"
+    );
+    assert_expr_snap_eq!(
         "switch a { Optional::Some(a) => a, Optional::None => 0 }",
         "variant_backed"
+    );
+    assert_expr_snap_eq!(
+        "switch a { std::Optional::Some(a) => a, std::Optional::None => 0 }",
+        "variant_absolute_backed"
     );
     assert_expr_err_snap_eq!("switch a { a => b c => d }", "missing_comma");
 }

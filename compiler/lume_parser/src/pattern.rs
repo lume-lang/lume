@@ -32,15 +32,11 @@ impl Parser<'_> {
 
     #[tracing::instrument(level = "TRACE", skip(self), err)]
     fn parse_named_pattern(&mut self) -> Result<Pattern> {
-        let index = self.expect(TokenType::Identifier)?.index;
-        let name = self.source.content.get(index).unwrap();
+        let path = self.parse_path()?;
 
-        if name.starts_with(|c: char| c.is_ascii_lowercase()) {
-            let name = self.parse_identifier()?;
-
-            Ok(Pattern::Identifier(name))
+        if path.root.is_empty() && path.name.name().is_lower() {
+            Ok(Pattern::Identifier(path.name.name().clone()))
         } else {
-            let path = self.parse_path()?;
             let fields = if self.peek(TokenType::LeftParen) {
                 self.consume_paren_seq(Parser::parse_pattern)?
             } else {
