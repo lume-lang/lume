@@ -1,0 +1,226 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: switch_variant_absolute.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: switch_variant_absolute.lm:3:6,
+                },
+                location: switch_variant_absolute.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Final {
+                        value: Switch {
+                            operand: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: switch_variant_absolute.lm:22:23,
+                            },
+                            cases: [
+                                SwitchCase {
+                                    pattern: Pattern {
+                                        kind: VariantPattern {
+                                            name: Path {
+                                                root: [
+                                                    Namespace {
+                                                        name: Identifier {
+                                                            name: "std",
+                                                            location: switch_variant_absolute.lm:34:37,
+                                                        },
+                                                    },
+                                                    Type {
+                                                        name: Identifier {
+                                                            name: "Optional",
+                                                            location: switch_variant_absolute.lm:39:47,
+                                                        },
+                                                        type_arguments: [
+                                                            Type {
+                                                                id: NodeId {
+                                                                    package: PackageId(
+                                                                        1881,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        6143724420395906933,
+                                                                    ),
+                                                                },
+                                                                name: Path {
+                                                                    root: [
+                                                                        Namespace {
+                                                                            name: Identifier {
+                                                                                name: "std",
+                                                                                location: switch_variant_absolute.lm:0:0,
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                    name: Type {
+                                                                        name: Identifier {
+                                                                            name: "Int32",
+                                                                            location: switch_variant_absolute.lm:48:53,
+                                                                        },
+                                                                        type_arguments: [],
+                                                                        location: switch_variant_absolute.lm:48:53,
+                                                                    },
+                                                                    location: switch_variant_absolute.lm:48:53,
+                                                                },
+                                                                location: switch_variant_absolute.lm:48:53,
+                                                            },
+                                                        ],
+                                                        location: switch_variant_absolute.lm:39:54,
+                                                    },
+                                                ],
+                                                name: Variant {
+                                                    name: Identifier {
+                                                        name: "Some",
+                                                        location: switch_variant_absolute.lm:56:60,
+                                                    },
+                                                    location: switch_variant_absolute.lm:56:60,
+                                                },
+                                                location: switch_variant_absolute.lm:56:60,
+                                            },
+                                            fields: [
+                                                Pattern {
+                                                    kind: IdentifierPattern {
+                                                        name: Identifier {
+                                                            name: "a",
+                                                            location: switch_variant_absolute.lm:61:62,
+                                                        },
+                                                        location: switch_variant_absolute.lm:61:62,
+                                                    },
+                                                    location: switch_variant_absolute.lm:61:62,
+                                                },
+                                            ],
+                                            location: switch_variant_absolute.lm:56:66,
+                                        },
+                                        location: switch_variant_absolute.lm:56:66,
+                                    },
+                                    branch: Variable {
+                                        name: Identifier {
+                                            name: "a",
+                                            location: switch_variant_absolute.lm:67:68,
+                                        },
+                                        reference: Pattern {
+                                            kind: IdentifierPattern {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: switch_variant_absolute.lm:61:62,
+                                                },
+                                                location: switch_variant_absolute.lm:61:62,
+                                            },
+                                            location: switch_variant_absolute.lm:61:62,
+                                        },
+                                        location: switch_variant_absolute.lm:67:68,
+                                    },
+                                    location: switch_variant_absolute.lm:56:68,
+                                },
+                                SwitchCase {
+                                    pattern: Pattern {
+                                        kind: VariantPattern {
+                                            name: Path {
+                                                root: [
+                                                    Namespace {
+                                                        name: Identifier {
+                                                            name: "std",
+                                                            location: switch_variant_absolute.lm:78:81,
+                                                        },
+                                                    },
+                                                    Type {
+                                                        name: Identifier {
+                                                            name: "Optional",
+                                                            location: switch_variant_absolute.lm:83:91,
+                                                        },
+                                                        type_arguments: [
+                                                            Type {
+                                                                id: NodeId {
+                                                                    package: PackageId(
+                                                                        1881,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        6143724420395906933,
+                                                                    ),
+                                                                },
+                                                                name: Path {
+                                                                    root: [
+                                                                        Namespace {
+                                                                            name: Identifier {
+                                                                                name: "std",
+                                                                                location: switch_variant_absolute.lm:0:0,
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                    name: Type {
+                                                                        name: Identifier {
+                                                                            name: "Int32",
+                                                                            location: switch_variant_absolute.lm:92:97,
+                                                                        },
+                                                                        type_arguments: [],
+                                                                        location: switch_variant_absolute.lm:92:97,
+                                                                    },
+                                                                    location: switch_variant_absolute.lm:92:97,
+                                                                },
+                                                                location: switch_variant_absolute.lm:92:97,
+                                                            },
+                                                        ],
+                                                        location: switch_variant_absolute.lm:83:98,
+                                                    },
+                                                ],
+                                                name: Variant {
+                                                    name: Identifier {
+                                                        name: "None",
+                                                        location: switch_variant_absolute.lm:100:104,
+                                                    },
+                                                    location: switch_variant_absolute.lm:100:104,
+                                                },
+                                                location: switch_variant_absolute.lm:100:104,
+                                            },
+                                            fields: [],
+                                            location: switch_variant_absolute.lm:100:107,
+                                        },
+                                        location: switch_variant_absolute.lm:100:107,
+                                    },
+                                    branch: Literal {
+                                        kind: IntLiteral {
+                                            value: 0,
+                                            kind: None,
+                                        },
+                                        location: switch_variant_absolute.lm:108:109,
+                                    },
+                                    location: switch_variant_absolute.lm:100:109,
+                                },
+                            ],
+                            location: switch_variant_absolute.lm:15:116,
+                        },
+                        location: switch_variant_absolute.lm:15:116,
+                    },
+                ],
+                location: switch_variant_absolute.lm:9:118,
+            },
+            location: switch_variant_absolute.lm:0:118,
+        },
+    ],
+}

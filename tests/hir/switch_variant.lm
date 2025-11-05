@@ -1,0 +1,6 @@
+fn foo() {
+    switch 0 {
+        Optional<Int32>::Some(a) => a,
+        Optional<Int32>::None => 0,
+    }
+}
