@@ -386,7 +386,6 @@ impl PrettyPrint for ExpressionKind {
             Self::Literal(e) => e.pretty_fmt(map, f),
             Self::Logical(e) => e.pretty_fmt(map, f),
             Self::Member(e) => e.pretty_fmt(map, f),
-            Self::Field(e) => e.pretty_fmt(map, f),
             Self::Scope(e) => e.pretty_fmt(map, f),
             Self::Switch(e) => e.pretty_fmt(map, f),
             Self::Variable(e) => e.pretty_fmt(map, f),

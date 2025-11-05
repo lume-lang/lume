@@ -254,9 +254,7 @@ impl UnificationPass {
                     self.unify_pattern(tcx, expr.id, &case.pattern)?;
                 }
             }
-            lume_hir::ExpressionKind::Literal(_)
-            | lume_hir::ExpressionKind::Variable(_)
-            | lume_hir::ExpressionKind::Field(_) => (),
+            lume_hir::ExpressionKind::Literal(_) | lume_hir::ExpressionKind::Variable(_) => (),
         }
 
         Ok(())
