@@ -1,0 +1,214 @@
+Map {
+    items: [
+        FunctionDefinition {
+            visibility: Private,
+            name: Path {
+                root: [],
+                name: Type {
+                    name: Identifier {
+                        name: "foo",
+                        location: switch_variant.lm:3:6,
+                    },
+                    type_arguments: [],
+                    location: switch_variant.lm:3:6,
+                },
+                location: switch_variant.lm:3:6,
+            },
+            parameters: [],
+            type_parameters: [],
+            return_type: Type {
+                name: Path {
+                    root: [],
+                    name: Type {
+                        name: Identifier {
+                            name: "Void",
+                            location: <internal>:0:0,
+                        },
+                        type_arguments: [],
+                        location: <internal>:0:0,
+                    },
+                    location: <internal>:0:0,
+                },
+                location: <internal>:0:0,
+            },
+            block: Block {
+                statements: [
+                    Final {
+                        value: Switch {
+                            operand: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: switch_variant.lm:22:23,
+                            },
+                            cases: [
+                                SwitchCase {
+                                    pattern: Pattern {
+                                        kind: VariantPattern {
+                                            name: Path {
+                                                root: [
+                                                    Type {
+                                                        name: Identifier {
+                                                            name: "Optional",
+                                                            location: switch_variant.lm:34:42,
+                                                        },
+                                                        type_arguments: [
+                                                            Type {
+                                                                id: NodeId {
+                                                                    package: PackageId(
+                                                                        1881,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        6143724420395906933,
+                                                                    ),
+                                                                },
+                                                                name: Path {
+                                                                    root: [
+                                                                        Namespace {
+                                                                            name: Identifier {
+                                                                                name: "std",
+                                                                                location: switch_variant.lm:0:0,
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                    name: Type {
+                                                                        name: Identifier {
+                                                                            name: "Int32",
+                                                                            location: switch_variant.lm:43:48,
+                                                                        },
+                                                                        type_arguments: [],
+                                                                        location: switch_variant.lm:43:48,
+                                                                    },
+                                                                    location: switch_variant.lm:43:48,
+                                                                },
+                                                                location: switch_variant.lm:43:48,
+                                                            },
+                                                        ],
+                                                        location: switch_variant.lm:34:49,
+                                                    },
+                                                ],
+                                                name: Variant {
+                                                    name: Identifier {
+                                                        name: "Some",
+                                                        location: switch_variant.lm:51:55,
+                                                    },
+                                                    location: switch_variant.lm:51:55,
+                                                },
+                                                location: switch_variant.lm:51:55,
+                                            },
+                                            fields: [
+                                                Pattern {
+                                                    kind: IdentifierPattern {
+                                                        name: Identifier {
+                                                            name: "a",
+                                                            location: switch_variant.lm:56:57,
+                                                        },
+                                                        location: switch_variant.lm:56:57,
+                                                    },
+                                                    location: switch_variant.lm:56:57,
+                                                },
+                                            ],
+                                            location: switch_variant.lm:51:61,
+                                        },
+                                        location: switch_variant.lm:51:61,
+                                    },
+                                    branch: Variable {
+                                        name: Identifier {
+                                            name: "a",
+                                            location: switch_variant.lm:62:63,
+                                        },
+                                        reference: Pattern {
+                                            kind: IdentifierPattern {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: switch_variant.lm:56:57,
+                                                },
+                                                location: switch_variant.lm:56:57,
+                                            },
+                                            location: switch_variant.lm:56:57,
+                                        },
+                                        location: switch_variant.lm:62:63,
+                                    },
+                                    location: switch_variant.lm:51:63,
+                                },
+                                SwitchCase {
+                                    pattern: Pattern {
+                                        kind: VariantPattern {
+                                            name: Path {
+                                                root: [
+                                                    Type {
+                                                        name: Identifier {
+                                                            name: "Optional",
+                                                            location: switch_variant.lm:73:81,
+                                                        },
+                                                        type_arguments: [
+                                                            Type {
+                                                                id: NodeId {
+                                                                    package: PackageId(
+                                                                        1881,
+                                                                    ),
+                                                                    index: Idx(
+                                                                        6143724420395906933,
+                                                                    ),
+                                                                },
+                                                                name: Path {
+                                                                    root: [
+                                                                        Namespace {
+                                                                            name: Identifier {
+                                                                                name: "std",
+                                                                                location: switch_variant.lm:0:0,
+                                                                            },
+                                                                        },
+                                                                    ],
+                                                                    name: Type {
+                                                                        name: Identifier {
+                                                                            name: "Int32",
+                                                                            location: switch_variant.lm:82:87,
+                                                                        },
+                                                                        type_arguments: [],
+                                                                        location: switch_variant.lm:82:87,
+                                                                    },
+                                                                    location: switch_variant.lm:82:87,
+                                                                },
+                                                                location: switch_variant.lm:82:87,
+                                                            },
+                                                        ],
+                                                        location: switch_variant.lm:73:88,
+                                                    },
+                                                ],
+                                                name: Variant {
+                                                    name: Identifier {
+                                                        name: "None",
+                                                        location: switch_variant.lm:90:94,
+                                                    },
+                                                    location: switch_variant.lm:90:94,
+                                                },
+                                                location: switch_variant.lm:90:94,
+                                            },
+                                            fields: [],
+                                            location: switch_variant.lm:90:97,
+                                        },
+                                        location: switch_variant.lm:90:97,
+                                    },
+                                    branch: Literal {
+                                        kind: IntLiteral {
+                                            value: 0,
+                                            kind: None,
+                                        },
+                                        location: switch_variant.lm:98:99,
+                                    },
+                                    location: switch_variant.lm:90:99,
+                                },
+                            ],
+                            location: switch_variant.lm:15:106,
+                        },
+                        location: switch_variant.lm:15:106,
+                    },
+                ],
+                location: switch_variant.lm:9:108,
+            },
+            location: switch_variant.lm:0:108,
+        },
+    ],
+}
