@@ -1,0 +1,159 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"switch a { std::Optional::Some(a) => a, std::Optional::None => 0 }\")"
+---
+[
+    Expression(
+        Switch(
+            Switch {
+                operand: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                7..8,
+                            ),
+                        },
+                    },
+                ),
+                cases: [
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: Location(
+                                                    11..14,
+                                                ),
+                                            },
+                                        },
+                                        Type {
+                                            name: Identifier {
+                                                name: "Optional",
+                                                location: Location(
+                                                    16..24,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                16..24,
+                                            ),
+                                        },
+                                    ],
+                                    name: Variant {
+                                        name: Identifier {
+                                            name: "Some",
+                                            location: Location(
+                                                26..30,
+                                            ),
+                                        },
+                                        location: Location(
+                                            26..30,
+                                        ),
+                                    },
+                                    location: Location(
+                                        26..30,
+                                    ),
+                                },
+                                fields: [
+                                    Identifier(
+                                        Identifier {
+                                            name: "a",
+                                            location: Location(
+                                                31..32,
+                                            ),
+                                        },
+                                    ),
+                                ],
+                                location: Location(
+                                    26..36,
+                                ),
+                            },
+                        ),
+                        branch: Variable(
+                            Variable {
+                                name: Identifier {
+                                    name: "a",
+                                    location: Location(
+                                        37..38,
+                                    ),
+                                },
+                            },
+                        ),
+                        location: Location(
+                            26..38,
+                        ),
+                    },
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: Location(
+                                                    40..43,
+                                                ),
+                                            },
+                                        },
+                                        Type {
+                                            name: Identifier {
+                                                name: "Optional",
+                                                location: Location(
+                                                    45..53,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                45..53,
+                                            ),
+                                        },
+                                    ],
+                                    name: Variant {
+                                        name: Identifier {
+                                            name: "None",
+                                            location: Location(
+                                                55..59,
+                                            ),
+                                        },
+                                        location: Location(
+                                            55..59,
+                                        ),
+                                    },
+                                    location: Location(
+                                        55..59,
+                                    ),
+                                },
+                                fields: [],
+                                location: Location(
+                                    55..62,
+                                ),
+                            },
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 0,
+                                    location: Location(
+                                        63..64,
+                                    ),
+                                    kind: None,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            55..64,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..66,
+                ),
+            },
+        ),
+    ),
+]

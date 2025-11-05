@@ -1,0 +1,151 @@
+---
+source: compiler/lume_parser/src/tests.rs
+expression: "parse_expr(\"switch a { std::Address::V4 => 4, std::Address::V6 => 6 }\")"
+---
+[
+    Expression(
+        Switch(
+            Switch {
+                operand: Variable(
+                    Variable {
+                        name: Identifier {
+                            name: "a",
+                            location: Location(
+                                7..8,
+                            ),
+                        },
+                    },
+                ),
+                cases: [
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: Location(
+                                                    11..14,
+                                                ),
+                                            },
+                                        },
+                                        Type {
+                                            name: Identifier {
+                                                name: "Address",
+                                                location: Location(
+                                                    16..23,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                16..23,
+                                            ),
+                                        },
+                                    ],
+                                    name: Variant {
+                                        name: Identifier {
+                                            name: "V4",
+                                            location: Location(
+                                                25..27,
+                                            ),
+                                        },
+                                        location: Location(
+                                            25..27,
+                                        ),
+                                    },
+                                    location: Location(
+                                        25..27,
+                                    ),
+                                },
+                                fields: [],
+                                location: Location(
+                                    25..30,
+                                ),
+                            },
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 4,
+                                    location: Location(
+                                        31..32,
+                                    ),
+                                    kind: None,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            25..32,
+                        ),
+                    },
+                    SwitchCase {
+                        pattern: Variant(
+                            VariantPattern {
+                                name: Path {
+                                    root: [
+                                        Namespace {
+                                            name: Identifier {
+                                                name: "std",
+                                                location: Location(
+                                                    34..37,
+                                                ),
+                                            },
+                                        },
+                                        Type {
+                                            name: Identifier {
+                                                name: "Address",
+                                                location: Location(
+                                                    39..46,
+                                                ),
+                                            },
+                                            type_arguments: [],
+                                            location: Location(
+                                                39..46,
+                                            ),
+                                        },
+                                    ],
+                                    name: Variant {
+                                        name: Identifier {
+                                            name: "V6",
+                                            location: Location(
+                                                48..50,
+                                            ),
+                                        },
+                                        location: Location(
+                                            48..50,
+                                        ),
+                                    },
+                                    location: Location(
+                                        48..50,
+                                    ),
+                                },
+                                fields: [],
+                                location: Location(
+                                    48..53,
+                                ),
+                            },
+                        ),
+                        branch: Literal(
+                            Int(
+                                IntLiteral {
+                                    value: 6,
+                                    location: Location(
+                                        54..55,
+                                    ),
+                                    kind: None,
+                                },
+                            ),
+                        ),
+                        location: Location(
+                            48..55,
+                        ),
+                    },
+                ],
+                location: Location(
+                    0..57,
+                ),
+            },
+        ),
+    ),
+]
