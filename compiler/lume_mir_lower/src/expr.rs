@@ -1042,15 +1042,12 @@ impl FunctionTransformer<'_, '_> {
             panic!("bug!: attempting to get field offset of non-variant pattern");
         };
 
-        let enum_case = self.tcx().enum_case_with_name(&variant_pattern.name).unwrap();
-        let field_type = enum_case
-            .parameters
-            .get(field_idx)
-            .expect("bug!: pattern {:+} with field id of {field_idx} is out of bounds");
+        let field_type = self
+            .tcx()
+            .type_of_variant_field(&variant_pattern.name, field_idx)
+            .unwrap();
 
-        let field_type_ty = self.tcx().mk_type_ref_from(field_type, id).unwrap();
-
-        self.lower_type(&field_type_ty)
+        self.lower_type(&field_type)
     }
 
     fn variant_field_offset(&self, id: lume_span::NodeId, field_idx: usize) -> usize {

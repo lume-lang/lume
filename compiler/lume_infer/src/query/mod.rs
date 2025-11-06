@@ -430,8 +430,9 @@ impl TyInferCtx {
                             };
 
                             let field_idx = variant_pat.fields.iter().position(|f| f.id == def_id).unwrap();
+                            let field_type = self.type_of_variant_field(&variant_pat.name, field_idx)?;
 
-                            return self.type_of_variant_field(&variant_pat.name, field_idx);
+                            return Ok(field_type);
                         }
                         _ => {}
                     }
@@ -461,7 +462,13 @@ impl TyInferCtx {
             .into());
         };
 
-        self.mk_type_ref_from(enum_field, enum_def.id)
+        let field_type = self.mk_type_ref_from(enum_field, enum_def.id)?;
+
+        let type_args = self.mk_type_refs_from(&variant_name.all_type_arguments(), enum_def.id)?;
+        let type_params = enum_def.type_parameters.as_id_refs();
+        let instantiated_field_type = self.instantiate_type_from(&field_type, &type_params, &type_args);
+
+        Ok(instantiated_field_type)
     }
 
     /// Returns the fully-qualified [`Path`] of the given [`TypeRef`].
