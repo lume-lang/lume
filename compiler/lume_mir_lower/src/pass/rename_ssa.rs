@@ -1,7 +1,5 @@
 use super::*;
 
-type RegisterMapping = IndexMap<(RegisterId, BasicBlockId), RegisterId>;
-
 /// Some backend implementations, specifically Cranelift, does not allow using
 /// the same register across block boundaries. Because of the *conservative*
 /// nature of Cranelift optimization, we must do this preprocessing ourselves.
@@ -84,7 +82,7 @@ impl Pass for RenameSsaVariables {
             .cloned()
             .collect::<Vec<Register>>();
 
-        let mut register_mapping = RegisterMapping::new();
+        let mut register_mapping = RegisterMapping::new(func.name.clone());
 
         for block in func.blocks.values_mut() {
             let block_id = block.id;
@@ -107,7 +105,7 @@ impl Pass for RenameSsaVariables {
                 Self::update_regs_term(term, block_id, &mut register_mapping);
             }
 
-            for (old, new) in &register_mapping {
+            for (old, new) in &register_mapping.mapping {
                 let old_reg = func.registers.register(old.0);
 
                 if new_registers.len() <= new.as_usize() {
@@ -121,7 +119,7 @@ impl Pass for RenameSsaVariables {
                 };
             }
 
-            register_mapping.clear();
+            register_mapping.mapping.clear();
         }
 
         func.registers.replace_all(new_registers.into_iter());
@@ -137,7 +135,7 @@ impl RenameSsaVariables {
     ) -> RegisterId {
         let new = RegisterId::new(self.register_counter);
 
-        mapping.insert((old, block), new);
+        mapping.insert(block, old, new);
         self.register_counter += 1;
 
         new
@@ -151,7 +149,7 @@ impl RenameSsaVariables {
     ) -> RegisterId {
         let new = RegisterId::new(self.register_counter);
 
-        mapping.insert((*old, block), new);
+        mapping.insert(block, *old, new);
         self.register_counter += 1;
 
         *old = new;
@@ -169,14 +167,14 @@ impl RenameSsaVariables {
             InstructionKind::Assign { .. } => unreachable!("bug!: assignments should be removed in previous SSA pass"),
             InstructionKind::Allocate { register, metadata, .. } => {
                 self.rename_register_index_mut(register, block, mapping);
-                *metadata = *mapping.get(&(*metadata, block)).unwrap();
+                *metadata = mapping.get(block, *metadata);
             }
             InstructionKind::Store { target, value } | InstructionKind::StoreField { target, value, .. } => {
-                *target = *mapping.get(&(*target, block)).unwrap();
+                *target = mapping.get(block, *target);
                 Self::update_regs_op(value, block, mapping);
             }
             InstructionKind::ObjectRegister { register } => {
-                *register = *mapping.get(&(*register, block)).unwrap();
+                *register = mapping.get(block, *register);
             }
             InstructionKind::CreateSlot { .. } | InstructionKind::StoreSlot { .. } => {}
         }
@@ -199,7 +197,7 @@ impl RenameSsaVariables {
                 then_block,
                 else_block,
             } => {
-                *condition = *mapping.get(&(*condition, block)).unwrap();
+                *condition = mapping.get(block, *condition);
 
                 for arg in &mut then_block.arguments {
                     Self::update_regs_op(arg, block, mapping);
@@ -214,7 +212,7 @@ impl RenameSsaVariables {
                 arms,
                 fallback,
             } => {
-                *operand = *mapping.get(&(*operand, block)).unwrap();
+                *operand = mapping.get(block, *operand);
 
                 for arm in arms {
                     for arg in &mut arm.1.arguments {
@@ -234,7 +232,7 @@ impl RenameSsaVariables {
         match &mut decl.kind {
             DeclarationKind::Operand(op) => Self::update_regs_op(op, block, mapping),
             DeclarationKind::Cast { operand, .. } => {
-                *operand = *mapping.get(&(*operand, block)).unwrap();
+                *operand = mapping.get(block, *operand);
             }
             DeclarationKind::Call { args, .. } | DeclarationKind::Intrinsic { args, .. } => {
                 for arg in args {
@@ -242,7 +240,7 @@ impl RenameSsaVariables {
                 }
             }
             DeclarationKind::IndirectCall { ptr, args, .. } => {
-                *ptr = *mapping.get(&(*ptr, block)).unwrap();
+                *ptr = mapping.get(block, *ptr);
 
                 for arg in args {
                     Self::update_regs_op(arg, block, mapping);
@@ -254,13 +252,13 @@ impl RenameSsaVariables {
     fn update_regs_op(op: &mut Operand, block: BasicBlockId, mapping: &mut RegisterMapping) {
         match &mut op.kind {
             OperandKind::Load { id } | OperandKind::Reference { id } => {
-                *id = *mapping.get(&(*id, block)).unwrap();
+                *id = mapping.get(block, *id);
             }
             OperandKind::LoadField { target, .. } => {
-                *target = *mapping.get(&(*target, block)).unwrap();
+                *target = mapping.get(block, *target);
             }
             OperandKind::Bitcast { source, .. } => {
-                *source = *mapping.get(&(*source, block)).unwrap();
+                *source = mapping.get(block, *source);
             }
             OperandKind::Boolean { .. }
             | OperandKind::Integer { .. }
@@ -269,5 +267,30 @@ impl RenameSsaVariables {
             | OperandKind::LoadSlot { .. }
             | OperandKind::SlotAddress { .. } => {}
         }
+    }
+}
+
+struct RegisterMapping {
+    func: String,
+    pub mapping: IndexMap<(RegisterId, BasicBlockId), RegisterId>,
+}
+
+impl RegisterMapping {
+    pub fn new(func: String) -> Self {
+        Self {
+            func,
+            mapping: IndexMap::new(),
+        }
+    }
+
+    pub fn get(&mut self, block: BasicBlockId, id: RegisterId) -> RegisterId {
+        *self
+            .mapping
+            .get(&(id, block))
+            .unwrap_or_else(|| panic!("could not find register {id} in {block} in {}", self.func))
+    }
+
+    pub fn insert(&mut self, block: BasicBlockId, old: RegisterId, new: RegisterId) {
+        self.mapping.insert((old, block), new);
     }
 }
