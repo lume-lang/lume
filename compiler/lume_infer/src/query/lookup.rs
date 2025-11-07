@@ -674,9 +674,12 @@ impl TyInferCtx {
 
                 // Append all the type parameters which are available on the method,
                 // such as the type parameters on the implementation.
-                signature
-                    .type_params
-                    .extend(self.hir_avail_type_params(method.id).into_iter().map(|param| param.id));
+                signature.type_params.extend(
+                    self.hir_avail_type_params(method.id)
+                        .inner
+                        .into_iter()
+                        .map(|param| param.id),
+                );
 
                 Ok(signature)
             }

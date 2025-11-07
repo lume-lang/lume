@@ -323,14 +323,14 @@ impl TyInferCtx {
     /// Returns all the type parameters available for the [`lume_hir::Def`] with
     /// the given ID.
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn hir_avail_type_params(&self, def: NodeId) -> Vec<lume_hir::TypeParameter> {
+    pub fn hir_avail_type_params(&self, def: NodeId) -> lume_hir::TypeParameters {
         let mut acc = Vec::new();
 
         for parent in self.hir_parent_iter(def) {
             acc.extend_from_slice(&parent.type_parameters().inner);
         }
 
-        acc
+        lume_hir::TypeParameters { inner: acc }
     }
 
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.

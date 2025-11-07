@@ -155,7 +155,10 @@ impl TyInferCtx {
                     .into());
                 };
 
-                field.field_type.clone()
+                let field_type = &field.field_type;
+                let type_params = self.hir_avail_type_params(callee_type.instance_of).as_id_refs();
+
+                self.instantiate_type_from(field_type, &type_params, &callee_type.type_arguments)
             }
             lume_hir::ExpressionKind::Scope(scope) => self.type_of_scope(scope)?,
             lume_hir::ExpressionKind::Switch(switch) => match switch.cases.first() {
