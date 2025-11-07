@@ -897,8 +897,11 @@ impl TyInferCtx {
             }
 
             let parameter = &callable.signature().params.inner()[argument_idx];
+
             if self.is_type_generic(&parameter.ty)? {
                 return Ok(None);
+            } else {
+                return Ok(Some(parameter.ty.clone()));
             }
         }
 
