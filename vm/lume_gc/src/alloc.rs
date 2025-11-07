@@ -396,7 +396,7 @@ impl GenerationalAllocator {
             // so when the function reloads the object register from the stack,
             // it'll be to the new object.
             unsafe {
-                *stack_ptr.cast_mut() = new_live_ptr.byte_add(POINTER_SIZE).cast_const();
+                std::ptr::write_unaligned(stack_ptr.cast_mut(), new_live_ptr.byte_add(POINTER_SIZE).cast_const());
             }
 
             // Unregister the allocation from the 1st generation, so the value isn't
