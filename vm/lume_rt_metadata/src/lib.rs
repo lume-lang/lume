@@ -138,7 +138,7 @@ impl<T> List<T> {
         let len = self.len();
         let ptr = unsafe {
             self.base
-                .byte_add(std::mem::size_of::<usize>() * 2)
+                .byte_add(std::mem::size_of::<usize>())
                 .cast::<*const *const T>()
                 .read()
         };

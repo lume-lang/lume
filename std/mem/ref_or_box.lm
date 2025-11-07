@@ -1,0 +1,15 @@
+namespace std::mem
+
+/// If the given value is a scalar type, it is boxed and it's
+/// pointer is returned as a reference.
+///
+/// If the type is already a reference, it is returned as-is.
+pub(internal) fn ref_or_box<T>(value: T) -> T {
+    if std::type_of<T>().is_scalar() {
+        let boxed: std::mem::Box<T> = std::mem::Box<T>::new(value);
+
+        return boxed.ptr().as_ref();
+    }
+
+    value
+}
