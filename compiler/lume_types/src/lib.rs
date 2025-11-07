@@ -14,18 +14,18 @@ use crate::errors::*;
 
 pub mod errors;
 
-pub const TYPEREF_VOID_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00000);
-pub const TYPEREF_BOOL_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00001);
-pub const TYPEREF_INT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00002);
-pub const TYPEREF_INT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00003);
-pub const TYPEREF_INT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00004);
-pub const TYPEREF_INT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00005);
-pub const TYPEREF_UINT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00006);
-pub const TYPEREF_UINT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00007);
-pub const TYPEREF_UINT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00008);
-pub const TYPEREF_UINT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_00009);
-pub const TYPEREF_FLOAT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0000A);
-pub const TYPEREF_FLOAT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0000B);
+pub const TYPEREF_VOID_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0000);
+pub const TYPEREF_BOOL_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0001);
+pub const TYPEREF_INT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0002);
+pub const TYPEREF_INT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0003);
+pub const TYPEREF_INT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0004);
+pub const TYPEREF_INT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0005);
+pub const TYPEREF_UINT8_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0006);
+pub const TYPEREF_UINT16_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0007);
+pub const TYPEREF_UINT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0008);
+pub const TYPEREF_UINT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_0009);
+pub const TYPEREF_FLOAT32_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_000A);
+pub const TYPEREF_FLOAT64_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0x0000_000B);
 pub const TYPEREF_UNKNOWN_ID: NodeId = NodeId::from_usize(PackageId::empty(), 0xFFFF_FFFF);
 
 #[derive(Debug, Clone, PartialEq, Eq)]

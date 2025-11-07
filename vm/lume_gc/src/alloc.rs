@@ -12,6 +12,7 @@ use crate::FrameStackMap;
 
 unsafe extern "C" {
     pub fn memcpy(dst: *mut u8, src: *mut u8, len: usize);
+    pub fn memset(ptr: *mut u8, c: i32, n: usize);
 }
 
 pub(crate) type DropPointer = extern "C" fn(*mut u8);
@@ -19,6 +20,8 @@ pub(crate) type DropPointer = extern "C" fn(*mut u8);
 const PAGE_SIZE: usize = 0x1000;
 const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
+
+const BLOCK_TYPE_ID: usize = 0xB356997D_6F328F57;
 
 /// Gets the metadata pointer of the given managed object pointer.
 #[inline]
@@ -79,14 +82,8 @@ impl BumpAllocator {
         self.current = self.base;
 
         #[cfg(feature = "paranoid")]
-        {
-            unsafe extern "C" {
-                pub fn memset(ptr: *mut u8, c: i32, n: usize);
-            }
-
-            unsafe {
-                memset(self.base.cast_mut(), 0, self.layout.size());
-            }
+        unsafe {
+            memset(self.base.cast_mut(), 0, self.layout.size());
         }
     }
 
@@ -195,23 +192,46 @@ impl YoungGeneration {
     /// be referenced by any existing GC reference.
     pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> IndexSet<*const *const u8> {
         let mut gc_refs = IndexSet::new();
+        let mut objects = IndexSet::new();
         let mut worklist = self.living_gc_roots(frame).collect::<IndexSet<_>>();
 
         while let Some(root_ptr) = worklist.pop() {
-            if !gc_refs.insert(root_ptr) {
+            let obj_ptr = unsafe { root_ptr.read() };
+
+            if !objects.insert(obj_ptr) || !gc_refs.insert(root_ptr) {
                 // We've already visited the pointer - skip it and all it's descendants.
                 continue;
             }
 
-            let obj_ptr = unsafe { root_ptr.read() };
-            let metadata_ptr = metadata_of(obj_ptr);
+            let metadata = unsafe { metadata_of(obj_ptr).read() };
+
+            if metadata.type_id.0 == BLOCK_TYPE_ID {
+                let block_len = unsafe { obj_ptr.cast::<u64>().read() } as usize;
+                let block_ptr = unsafe { obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
+
+                let mut offset = 0;
+
+                while offset + POINTER_SIZE <= block_len {
+                    let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
+                    let block_item = unsafe { block_item_ptr.read().byte_sub(POINTER_SIZE) };
+
+                    if self.is_ptr_object(block_item) {
+                        worklist.insert(block_item_ptr);
+                    }
+
+                    offset += POINTER_SIZE;
+                }
+
+                continue;
+            }
 
             let mut offset = 0;
 
-            for field_metadata_ptr in unsafe { metadata_ptr.read() }.fields.items() {
+            for field_metadata_ptr in metadata.fields.items() {
                 let field_ptr = unsafe { obj_ptr.byte_add(offset).cast::<*const u8>() };
+                let field = unsafe { field_ptr.read() };
 
-                if self.is_ptr_object(unsafe { field_ptr.read() }) {
+                if self.is_ptr_object(field) {
                     worklist.insert(field_ptr);
                 }
 
