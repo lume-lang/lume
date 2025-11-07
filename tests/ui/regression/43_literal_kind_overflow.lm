@@ -1,0 +1,5 @@
+//# test-outcome=success
+
+fn foo() {
+    let arr = Array<Int32>::with_capacity(100);
+}
