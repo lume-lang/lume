@@ -136,7 +136,12 @@ impl<T> List<T> {
     #[must_use]
     pub fn items(&self) -> &[*const T] {
         let len = self.len();
-        let ptr = unsafe { self.base.byte_add(std::mem::size_of::<usize>()).cast::<*const T>() };
+        let ptr = unsafe {
+            self.base
+                .byte_add(std::mem::size_of::<usize>() * 2)
+                .cast::<*const *const T>()
+                .read()
+        };
 
         unsafe { std::slice::from_raw_parts(ptr, len) }
     }
