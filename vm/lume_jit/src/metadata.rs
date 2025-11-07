@@ -700,9 +700,6 @@ impl<'back> MemoryBlockBuilder<'back> {
         // Array.length
         builder.append(slice.len());
 
-        // Array.capacity
-        builder.append(slice.len());
-
         let ptr_decl_name = format!("{decl_name}__ptr");
         let ptr_data_id = self
             .backend

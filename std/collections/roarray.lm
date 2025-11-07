@@ -1,0 +1,57 @@
+namespace std::collections
+
+import std (Optional)
+import std::mem (alloc, realloc, dealloc)
+import std::ops (Dispose)
+
+/// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
+/// is a generic type, all values within the array must be of the same type.
+///
+/// While they can be created like any other class using [`Array::new()`], they are most often created
+/// implicitly by using the array literal syntax. To create an array, surround a comma-separated list of
+/// values with square brackets:
+///
+/// ```
+/// # Create an empty array
+/// []
+///
+/// # Create an array with values
+/// [1, 2, 3]
+/// ```
+///
+/// Both of these literals create an array of type `Array<Int32>`, or more generally, `[Int32]`. To explicitly define
+/// the type of the array, you can declare it's type like so:
+///
+/// ```
+/// let a: [Int32] = [10, 20, 30];
+/// ```
+pub struct ReadOnlyArray<T>
+{
+    /// Defines the amount of items currently stored within the array.
+    length: UInt64;
+
+    /// Pointer to the memory allocated for the array items.
+    ptr: Pointer<T>;
+}
+
+impl<T> ReadOnlyArray<T> {
+    /// Gets the element at position `index` within the array.
+    ///
+    /// If `index` is outside of the bounds of the array, returns `Optional::None`.
+    pub fn get(self, index: UInt64) -> Optional<T> {
+        if index > self.length {
+            return Optional<T>::None;
+        }
+
+        let offset = std::type_of<Pointer<T>>().size * index;
+        let value = self.ptr.read_offset(offset);
+
+        Optional<T>::Some(value)
+    }
+}
+
+use<T> Dispose in ReadOnlyArray<T> {
+    fn dispose(self) {
+        dealloc<T>(self.ptr);
+    }
+}

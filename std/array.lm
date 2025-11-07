@@ -1,7 +1,7 @@
 namespace std
 
 import std (Optional)
-import std::mem (alloc, realloc, dealloc)
+import std::mem (Block)
 import std::ops (Dispose)
 
 /// Defines an ordered, integer-indexed container which can be used as a container for values. Since the `Array` type
@@ -28,38 +28,37 @@ import std::ops (Dispose)
 pub struct Array<T>
 {
     /// Defines the amount of items currently stored within the array.
-    length: UInt64;
+    pub length: UInt64;
 
-    /// Defines the number of items which can be stored in the array
-    /// without reallocation.
-    capacity: UInt64;
-
-    /// Pointer to the memory allocated for the array items.
-    ptr: Pointer<T>;
+    /// Heap-allocated memory block for the array items.
+    pub mem: Block<T>;
 }
 
 impl<T> Array<T> {
     /// Allocates a new, empty array.
     pub fn new() -> Array<T> {
-        let ptr = alloc<T>(0_u64);
+        let mem = Block<T>::new(0_u64);
 
         return Array<T> {
             length: 0_u64,
-            capacity: 0_u64,
-            ptr
+            mem
         };
     }
 
     /// Allocates a new, empty array with at least the given capacity.
     pub fn with_capacity(capacity: UInt64) -> Array<T> {
         let type_size = std::type_of<Pointer<T>>().size;
-        let ptr = alloc<T>(type_size * capacity);
+        let mem = Block<T>::new(type_size * capacity);
 
         return Array<T> {
             length: 0_u64,
-            capacity,
-            ptr
+            mem
         };
+    }
+
+    /// Gets the capacity of the array.
+    pub fn capacity(self) -> UInt64 {
+        self.mem.size() / std::type_of<Pointer<T>>().size
     }
 
     /// Gets the element at position `index` within the array.
@@ -71,7 +70,7 @@ impl<T> Array<T> {
         }
 
         let offset = std::type_of<Pointer<T>>().size * index;
-        let value = self.ptr.read_offset(offset);
+        let value = self.mem.read(offset);
 
         Optional<T>::Some(value)
     }
@@ -79,16 +78,16 @@ impl<T> Array<T> {
     /// Sets an element at position `index` within the array to the given value `value`.
     pub fn set(self, index: UInt64, value: T) {
         // TODO: panic if index > len
-        let value = ref_or_box<T>(value);
+        let value = std::mem::ref_or_box<T>(value);
         let offset = std::type_of<Pointer<T>>().size * index;
 
-        self.ptr.write_offset(value, offset);
+        self.mem.write(value, offset);
     }
 
     /// Appends a new element to the end of the array.
     pub fn push(self, value: T) {
-        if self.length == self.capacity {
-            self.reserve(self.capacity + 1_u64);
+        if self.length == self.capacity() {
+            self.reserve(self.capacity() + 1_u64);
         }
 
         self.set(self.length, value);
@@ -101,31 +100,10 @@ impl<T> Array<T> {
     /// If `capacity` is less than the current capacity, the array is not
     /// reallocated. Otherwise, the array is resized to at least `capacity` items.
     pub fn reserve(self, capacity: UInt64) {
-        if self.capacity >= capacity {
+        if self.capacity() >= capacity {
             return;
         }
 
-        self.capacity = capacity;
-        self.ptr = realloc<T>(self.ptr, std::type_of<Pointer<T>>().size * self.capacity);
-    }
-}
-
-/// If the given value is a scalar type, it is boxed and it's
-/// pointer is returned as a reference.
-///
-/// If the type is already a reference, it is returned as-is.
-fn ref_or_box<T>(value: T) -> T {
-    if std::type_of<T>().is_scalar() {
-        let boxed: std::mem::Box<T> = std::mem::Box<T>::new(value);
-
-        return boxed.ptr().as_ref();
-    }
-
-    value
-}
-
-use<T> Dispose in Array<T> {
-    fn dispose(self) {
-        dealloc<T>(self.ptr);
+        self.mem.expand(std::type_of<Pointer<T>>().size * capacity);
     }
 }

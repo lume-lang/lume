@@ -8,9 +8,6 @@ pub struct Array<T> {
     /// Defines the amount of items within the list.
     pub length: std::os::raw::c_ulonglong,
 
-    /// Defines the amount of capacity within the list.
-    pub capacity: std::os::raw::c_ulonglong,
-
     /// Defines all the items in the list.
     pub items: *const T,
 }

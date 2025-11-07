@@ -1,0 +1,63 @@
+namespace std::mem
+
+import std (Pointer)
+import std::ops (Dispose)
+
+/// A contiguous region of heap-allocated memory.
+pub struct Block<T> {
+    /// Defines the amount of space allocated for the block, measure in bytes.
+    size: UInt64;
+
+    /// Pointer to the start of the memory block, which exists within the heap.
+    ptr: Pointer<T>;
+}
+
+impl<T> Block<T> {
+    /// Allocates a new `Block<T>`, with a size of `size` bytes.
+    pub fn new(size: UInt64) -> Block<T> {
+        let ptr = std::mem::alloc<T>(size);
+
+        Block<T> {
+            size,
+            ptr
+        }
+    }
+
+    /// Gets the size of the memory block in bytes.
+    pub fn size(self) -> UInt64 {
+        self.size
+    }
+
+    /// Gets the pointer of the memory block in bytes.
+    pub fn ptr(self) -> Pointer<T> {
+        self.ptr
+    }
+
+    /// Re-allocates the `Block<T>` to a new size of `new_size` bytes.
+    pub fn expand(self, new_size: UInt64) {
+        self.ptr = std::mem::realloc<T>(self.ptr, new_size);
+        self.size = new_size;
+    }
+
+    /// Reads the value from the block, offset by the given amount of bytes.
+    ///
+    /// This method does not read with a item index. The item index of this method
+    /// will be `(offset / size_of<T>)`.
+    pub fn read(self, offset: UInt64) -> T {
+        std::mem::ptr_read<T>(self.ptr, offset)
+    }
+
+    /// Writes a new value to the block, offset by the given amount of bytes.
+    ///
+    /// This method does not write with a item index. The item index of this method
+    /// will be `(offset / size_of<T>)`.
+    pub fn write(self, value: T, offset: UInt64) {
+        std::mem::ptr_write<T>(self.ptr, value, offset);
+    }
+}
+
+use<T> Dispose in Block<T> {
+    fn dispose(self) {
+        std::mem::dealloc<T>(self.ptr);
+    }
+}
