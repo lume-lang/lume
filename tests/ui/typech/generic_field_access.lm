@@ -1,0 +1,17 @@
+//# test-outcome=success
+
+struct Object<T> {
+    pub inner: T;
+}
+
+struct Foo {
+    pub a: Int32;
+}
+
+fn main() -> Int32 {
+    let obj = Object<Foo> {
+        inner: Foo { a: 3 }
+    };
+
+    obj.inner.a
+}
