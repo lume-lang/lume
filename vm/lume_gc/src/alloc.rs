@@ -4,7 +4,7 @@ use alloc::alloc::{GlobalAlloc, Layout, alloc, dealloc};
 use std::cell::UnsafeCell;
 use std::sync::OnceLock;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_rt_metadata::TypeMetadata;
 use mimalloc::MiMalloc;
 
@@ -19,6 +19,16 @@ pub(crate) type DropPointer = extern "C" fn(*mut u8);
 const PAGE_SIZE: usize = 0x1000;
 const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
+
+/// Gets the metadata pointer of the given managed object pointer.
+#[inline]
+fn metadata_of(obj_ptr: *const u8) -> *const TypeMetadata {
+    // The metadata of the object is stored at [-0x08], so the actual start of
+    // the allocation is there.
+    let alloc_start = unsafe { obj_ptr.byte_sub(POINTER_SIZE) }.cast_mut();
+
+    unsafe { alloc_start.cast::<*const TypeMetadata>().read_unaligned() }
+}
 
 pub(crate) struct BumpAllocator {
     /// Defines the layouf of the memory block which backs the allocator.
@@ -149,6 +159,28 @@ impl YoungGeneration {
         self.allocator.clear();
     }
 
+    /// Attempts to find all GC roots found inside of the given stack map.
+    /// The returned iterator will iterate over a list of pointers, which
+    /// point to an item inside the current stack frame.
+    ///
+    /// To get the address of the underlying allocation, simply read the
+    /// pointer. This is to facilitate the GC moving the underlying
+    /// allocation to a different address, whereafter it can write the new
+    /// address to the pointer in the stack frame.
+    pub(crate) fn living_gc_roots(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
+        frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
+            // Since the pointer is pointer to an object, the allocation will actually start
+            // just before the given pointer, since the metadata is defined at [-0x8].
+            let obj_ptr = unsafe { obj_ptr.byte_sub(POINTER_SIZE) };
+
+            if self.is_ptr_object(obj_ptr) {
+                Some(stack_ptr)
+            } else {
+                None
+            }
+        })
+    }
+
     /// Attempts to find all GC references found inside of the given stack map.
     /// The returned iterator will iterate over a list of pointers, which
     /// point to an item inside the current stack frame.
@@ -157,18 +189,45 @@ impl YoungGeneration {
     /// pointer. This is to facilitate the GC moving the underlying
     /// allocation to a different address, whereafter it can write the new
     /// address to the pointer in the stack frame.
-    pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> impl Iterator<Item = *const *const u8> {
-        frame.iter_stack_value_locations().filter_map(|(stack_ptr, obj_ptr)| {
-            // Since the pointer is pointer to an object, the allocation will actually start
-            // just before the given pointer, since the metadata is defined at [-0x8].
-            let obj_ptr = unsafe { obj_ptr.byte_sub(POINTER_SIZE) };
+    ///
+    /// This method is an expansion of [`living_gc_roots`]. It expands the
+    /// returned GC roots into a tree of all GC references, which can
+    /// be referenced by any existing GC reference.
+    pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> IndexSet<*const *const u8> {
+        let mut gc_refs = IndexSet::new();
+        let mut worklist = self.living_gc_roots(frame).collect::<IndexSet<_>>();
 
-            if obj_ptr >= self.allocator.base && obj_ptr <= self.allocator.current {
-                Some(stack_ptr)
-            } else {
-                None
+        while let Some(root_ptr) = worklist.pop() {
+            if !gc_refs.insert(root_ptr) {
+                // We've already visited the pointer - skip it and all it's descendants.
+                continue;
             }
-        })
+
+            let obj_ptr = unsafe { root_ptr.read() };
+            let metadata_ptr = metadata_of(obj_ptr);
+
+            let mut offset = 0;
+
+            for field_metadata_ptr in unsafe { metadata_ptr.read() }.fields.items() {
+                let field_ptr = unsafe { obj_ptr.byte_add(offset).cast::<*const u8>() };
+
+                if self.is_ptr_object(unsafe { field_ptr.read() }) {
+                    worklist.insert(field_ptr);
+                }
+
+                let field_metadata = unsafe { field_metadata_ptr.read() };
+                offset += unsafe { field_metadata.ty.read() }.size;
+            }
+        }
+
+        gc_refs
+    }
+
+    /// Discerns whether the given pointer is a reference to an
+    /// object within the current allocator generation.
+    #[inline]
+    fn is_ptr_object(&self, obj_ptr: *const u8) -> bool {
+        obj_ptr >= self.allocator.base && obj_ptr <= self.allocator.current
     }
 }
 
@@ -319,7 +378,7 @@ impl GenerationalAllocator {
     /// who where not alive in the 1st generation are deallocated. After
     /// all the allocations have been handled, the 1st generation is cleared.
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
-        for stack_ptr in self.young.living_gc_objects(frame).collect::<Vec<_>>() {
+        for stack_ptr in self.young.living_gc_objects(frame) {
             // The metadata of the object is stored at [-0x08], so the actual start of
             // the allocation is there.
             let alloc_start = unsafe { stack_ptr.read().byte_sub(POINTER_SIZE) }.cast_mut();
