@@ -105,7 +105,7 @@ impl FunctionTransformer<'_, '_> {
         };
 
         let decl = lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
             location: expr.location,
         };
 
@@ -123,15 +123,15 @@ impl FunctionTransformer<'_, '_> {
 
         let source = self.expression(&expr.source);
         let operand = self.declare(lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Operand(source),
+            kind: Box::new(lume_mir::DeclarationKind::Operand(source)),
             location: expr.location,
         });
 
         let decl = lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Cast {
+            kind: Box::new(lume_mir::DeclarationKind::Cast {
                 operand,
                 bits: expr.target.bitwidth(),
-            },
+            }),
             location: expr.location,
         };
 
@@ -206,7 +206,7 @@ impl FunctionTransformer<'_, '_> {
         }
 
         let offset_reg = self.func.declare(struct_ptr, lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntAdd {
                     bits: 64,
                     signed: false,
@@ -225,7 +225,7 @@ impl FunctionTransformer<'_, '_> {
                         location: expr.location,
                     },
                 ],
-            },
+            }),
             location: expr.location,
         });
 
@@ -314,7 +314,7 @@ impl FunctionTransformer<'_, '_> {
                 };
 
                 let result = self.declare(lume_mir::Declaration {
-                    kind: intrinsic,
+                    kind: Box::new(intrinsic),
                     location: pattern.location,
                 });
 
@@ -341,7 +341,7 @@ impl FunctionTransformer<'_, '_> {
                     .unwrap();
 
                 let operand_disc = self.func.declare_raw(lume_mir::Type::u8(), lume_mir::Declaration {
-                    kind: lume_mir::DeclarationKind::Operand(lume_mir::Operand {
+                    kind: Box::new(lume_mir::DeclarationKind::Operand(lume_mir::Operand {
                         kind: lume_mir::OperandKind::LoadField {
                             target: loaded_op,
                             offset: 0,
@@ -349,7 +349,7 @@ impl FunctionTransformer<'_, '_> {
                             field_type: lume_mir::Type::u8(),
                         },
                         location: pattern.location,
-                    }),
+                    })),
                     location: pattern.location,
                 });
 
@@ -372,7 +372,7 @@ impl FunctionTransformer<'_, '_> {
                 };
 
                 let mut cmp_result = self.declare(lume_mir::Declaration {
-                    kind: cmp_intrinsic,
+                    kind: Box::new(cmp_intrinsic),
                     location: pattern.location,
                 });
 
@@ -409,7 +409,7 @@ impl FunctionTransformer<'_, '_> {
                     };
 
                     cmp_result = self.declare(lume_mir::Declaration {
-                        kind: field_cmp_intrinsic,
+                        kind: Box::new(field_cmp_intrinsic),
                         location: field_pattern.location,
                     });
                 }
@@ -433,7 +433,7 @@ impl FunctionTransformer<'_, '_> {
         let args = expr.arguments.iter().map(|arg| self.expression(arg)).collect();
 
         let decl = lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
             location: expr.location,
         };
 
@@ -705,7 +705,7 @@ impl FunctionTransformer<'_, '_> {
                 let metadata_entry = metadata_store.get(id).unwrap();
 
                 lume_mir::Intrinsic::Metadata {
-                    metadata: metadata_entry.clone(),
+                    metadata: Box::new(metadata_entry.clone()),
                 }
             }
         }
@@ -722,7 +722,7 @@ impl FunctionTransformer<'_, '_> {
         };
 
         let decl = lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic { name, args },
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
             location: expr.location,
         };
 
@@ -932,7 +932,7 @@ impl FunctionTransformer<'_, '_> {
         }
 
         let offset_reg = self.func.declare(union_type, lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntAdd {
                     bits: 64,
                     signed: false,
@@ -951,7 +951,7 @@ impl FunctionTransformer<'_, '_> {
                         location: expr.location,
                     },
                 ],
-            },
+            }),
             location: expr.location,
         });
 

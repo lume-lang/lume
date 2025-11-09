@@ -461,7 +461,7 @@ impl TyInferCtx {
                     return self.mk_type_ref_from(&trait_impl.target, id).map(Some);
                 }
                 _ => {}
-            };
+            }
         }
 
         Ok(None)

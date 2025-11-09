@@ -89,7 +89,7 @@ impl MirQueryCtx<'_> {
 
         for inst in block.instructions() {
             match &inst.kind {
-                InstructionKind::Let { register, decl, .. } => match &decl.kind {
+                InstructionKind::Let { register, decl, .. } => match decl.kind.as_ref() {
                     DeclarationKind::Operand(op) => {
                         if op.stores_register(reg) {
                             self.does_register_escape_inner(func, block_id, *register, call_stack)?;

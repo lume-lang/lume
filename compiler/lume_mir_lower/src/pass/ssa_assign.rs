@@ -111,7 +111,7 @@ impl ConvertAssignmentExpressions {
                 inst.kind = InstructionKind::Let {
                     register: *target,
                     decl: Declaration {
-                        kind: DeclarationKind::Operand(value.clone()),
+                        kind: Box::new(DeclarationKind::Operand(value.clone())),
                         location: inst.location,
                     },
                     ty,
@@ -181,7 +181,7 @@ impl ConvertAssignmentExpressions {
     }
 
     fn update_regs_decl(&mut self, decl: &mut Declaration) {
-        match &mut decl.kind {
+        match decl.kind.as_mut() {
             DeclarationKind::Operand(op) => self.update_regs_op(op),
             DeclarationKind::Cast { operand, .. } => {
                 self.get_moved_register(operand);

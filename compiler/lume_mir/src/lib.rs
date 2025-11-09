@@ -258,7 +258,7 @@ impl Function {
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        if let DeclarationKind::Operand(op) = &decl.kind
+        if let DeclarationKind::Operand(op) = decl.kind.as_ref()
             && let OperandKind::Load { id } | OperandKind::Reference { id } = &op.kind
         {
             *id
@@ -271,7 +271,7 @@ impl Function {
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare(ty, Declaration {
             location: value.location,
-            kind: DeclarationKind::Operand(value),
+            kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
 
@@ -289,7 +289,7 @@ impl Function {
     pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare_raw(ty, Declaration {
             location: value.location,
-            kind: DeclarationKind::Operand(value),
+            kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
 
@@ -1002,7 +1002,7 @@ impl std::fmt::Display for Instruction {
 /// Represents the right-hand side of a declaration instruction.
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Declaration {
-    pub kind: DeclarationKind,
+    pub kind: Box<DeclarationKind>,
 
     #[serde(skip)]
     pub location: Location,
@@ -1032,7 +1032,7 @@ pub enum DeclarationKind {
 
 impl Declaration {
     pub fn register_refs(&self) -> Vec<RegisterId> {
-        match &self.kind {
+        match self.kind.as_ref() {
             DeclarationKind::Operand(op) => op.register_refs(),
             DeclarationKind::Cast { operand, .. } => vec![*operand],
             DeclarationKind::Intrinsic { args, .. } | DeclarationKind::Call { args, .. } => {
@@ -1050,7 +1050,7 @@ impl Declaration {
 
 impl std::fmt::Display for Declaration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.kind {
+        match self.kind.as_ref() {
             DeclarationKind::Operand(op) => op.fmt(f),
             DeclarationKind::Cast { operand, bits } => write!(f, "{operand} as i{bits}"),
             DeclarationKind::Intrinsic { name, args } => write!(
@@ -1101,7 +1101,7 @@ pub enum Intrinsic {
     BooleanNe,
     BooleanAnd,
     BooleanOr,
-    Metadata { metadata: TypeMetadata },
+    Metadata { metadata: Box<TypeMetadata> },
 }
 
 impl std::fmt::Display for Intrinsic {
@@ -1743,7 +1743,7 @@ pub enum TypeKind {
     Pointer { elemental: Box<Type> },
 
     /// Defines a metadata type.
-    Metadata { inner: TypeMetadata },
+    Metadata { inner: Box<TypeMetadata> },
 
     /// Defines a void type.
     Void,

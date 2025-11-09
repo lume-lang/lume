@@ -50,12 +50,7 @@ impl<'src> Parser<'src> {
     /// it's input to parse.
     pub fn new(source: Arc<SourceFile>, mut tokens: Vec<Token<'src>>, dcx: DiagCtxHandle) -> Result<Self> {
         // Filter away any comment tokens, if present.
-        if tokens.iter().any(|t| t.as_type() == TokenType::Comment) {
-            tokens = tokens
-                .into_iter()
-                .filter(|t| t.as_type() != TokenType::Comment)
-                .collect();
-        }
+        tokens.retain(|t| t.as_type() != TokenType::Comment);
 
         Ok(Parser {
             source,

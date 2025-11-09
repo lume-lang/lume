@@ -21,7 +21,7 @@ impl LowerModule<'_> {
         let id = self.next_node_id();
 
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
@@ -53,7 +53,7 @@ impl LowerModule<'_> {
     fn def_field(&mut self, expr: lume_ast::Field) -> Result<lume_hir::Field> {
         let id = self.next_node_id();
 
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.identifier(expr.name);
         let field_type = self.type_ref(expr.field_type)?;
         let location = self.location(expr.location);
@@ -111,7 +111,7 @@ impl LowerModule<'_> {
     fn def_impl_method(&mut self, expr: lume_ast::MethodDefinition) -> Result<lume_hir::MethodDefinition> {
         let id = self.next_node_id();
 
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.identifier(expr.name);
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, true)?;
@@ -137,7 +137,7 @@ impl LowerModule<'_> {
         let id = self.next_node_id();
 
         let name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let location = self.location(expr.location);
 
@@ -197,7 +197,7 @@ impl LowerModule<'_> {
 
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let location = self.location(expr.location);
 
         self.ensure_item_undefined(DefinedItem::Type(name.clone()))?;
@@ -243,7 +243,7 @@ impl LowerModule<'_> {
     pub(super) fn def_function(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
-        let visibility = lower_visibility(&expr.visibility);
+        let visibility = lower_visibility(expr.visibility.as_ref());
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let type_parameters = self.type_parameters(expr.type_parameters)?;
         let parameters = self.parameters(expr.parameters, false)?;
@@ -431,7 +431,7 @@ impl LowerModule<'_> {
     }
 }
 
-fn lower_visibility(expr: &Option<lume_ast::Visibility>) -> lume_hir::Visibility {
+fn lower_visibility(expr: Option<&lume_ast::Visibility>) -> lume_hir::Visibility {
     match expr {
         Some(lume_ast::Visibility::Public { .. }) => lume_hir::Visibility::Public,
         Some(lume_ast::Visibility::Internal { .. }) => lume_hir::Visibility::Internal,

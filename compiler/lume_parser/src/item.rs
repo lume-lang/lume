@@ -113,8 +113,7 @@ impl Parser<'_> {
     fn parse_fn_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
         let start = visibility
             .as_ref()
-            .map(|vis| vis.location().start())
-            .unwrap_or(self.expect_fn()?.start());
+            .map_or(self.expect_fn()?.start(), |vis| vis.location().start());
 
         let external = self.check_external();
         let name = self.parse_callable_name_or_err(
@@ -302,8 +301,7 @@ impl Parser<'_> {
 
         let start = visibility
             .as_ref()
-            .map(|vis| vis.location().start())
-            .unwrap_or(name.location.start());
+            .map_or(name.location.start(), |vis| vis.location().start());
 
         let end = self.expect_semi()?.end();
 
@@ -324,8 +322,7 @@ impl Parser<'_> {
         let visibility = self.parse_visibility()?;
         let start = visibility
             .as_ref()
-            .map(|vis| vis.location().start())
-            .unwrap_or(self.token().start());
+            .map_or(self.token().start(), |vis| vis.location().start());
 
         // Report a special error if we found an identifier, such as
         // a field declaration, which isn't allowed within an `impl` block.
@@ -404,8 +401,7 @@ impl Parser<'_> {
 
         let start = visibility
             .as_ref()
-            .map(|vis| vis.location().start())
-            .unwrap_or(self.consume(TokenType::Trait)?.start());
+            .map_or(self.consume(TokenType::Trait)?.start(), |vis| vis.location().start());
 
         let name = self.parse_ident_or_err(
             ExpectedTraitName {
@@ -491,8 +487,7 @@ impl Parser<'_> {
 
         let start = visibility
             .as_ref()
-            .map(|vis| vis.location().start())
-            .unwrap_or(self.consume(TokenType::Enum)?.start());
+            .map_or(self.consume(TokenType::Enum)?.start(), |vis| vis.location().start());
 
         let name = self.parse_identifier()?;
         let type_parameters = self.parse_type_parameters()?;
@@ -564,10 +559,7 @@ impl Parser<'_> {
     fn parse_trait_method_implementation(&mut self) -> Result<TraitMethodImplementation> {
         let visibility = self.parse_visibility()?;
 
-        let start = visibility
-            .map(|v| v.location().start())
-            .unwrap_or(self.expect_fn()?.start());
-
+        let start = visibility.map_or(self.expect_fn()?.start(), |v| v.location().start());
         let external = self.check_external();
 
         let Ok(name) = self.parse_callable_name() else {

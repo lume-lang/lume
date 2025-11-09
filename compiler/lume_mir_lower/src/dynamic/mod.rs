@@ -80,7 +80,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             .builder
             .func
             .declare(method_metadata_type(), lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Intrinsic {
+                kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
                         signed: false,
@@ -99,7 +99,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                             location: Location::empty(),
                         },
                     ],
-                },
+                }),
                 location: Location::empty(),
             });
 
@@ -140,7 +140,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         loop_exit: BasicBlockId,
     ) {
         let loop_cmp = self.builder.declare(lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntLt {
                     bits: 64,
                     signed: false,
@@ -155,7 +155,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                         location: Location::empty(),
                     },
                 ],
-            },
+            }),
             location: Location::empty(),
         });
 
@@ -190,7 +190,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         loop_continue: BasicBlockId,
     ) -> RegisterId {
         let offset_reg = self.builder.declare(lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntMul {
                     bits: 64,
                     signed: false,
@@ -209,7 +209,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                         location: Location::empty(),
                     },
                 ],
-            },
+            }),
             location: Location::empty(),
         });
 
@@ -217,7 +217,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
             .builder
             .func
             .declare(method_metadata_type(), lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Intrinsic {
+                kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                     name: lume_mir::Intrinsic::IntAdd {
                         bits: 64,
                         signed: false,
@@ -232,14 +232,14 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                             location: Location::empty(),
                         },
                     ],
-                },
+                }),
                 location: Location::empty(),
             });
 
         let method_id_reg = self.load_field(method_ptr_reg, lume_mir::Type::pointer(lume_mir::Type::u64()), 0, 0);
 
         let id_cmp = self.builder.declare(lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntEq {
                     bits: 64,
                     signed: false,
@@ -258,7 +258,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                         location: Location::empty(),
                     },
                 ],
-            },
+            }),
             location: Location::empty(),
         });
 
@@ -337,7 +337,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
         loop_header: BasicBlockId,
     ) {
         let next_idx_reg = self.builder.declare(lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::IntAdd {
                     bits: 64,
                     signed: false,
@@ -356,7 +356,7 @@ impl<'shim, 'mir, 'tcx> DynamicShimBuilder<'shim, 'mir, 'tcx> {
                         location: Location::empty(),
                     },
                 ],
-            },
+            }),
             location: Location::empty(),
         });
 

@@ -34,7 +34,8 @@ pub enum FileName {
 impl FileName {
     /// Attempts to convert the [`FileName`] to a [`PathBuf`] instance.
     pub fn to_pathbuf(&self) -> &PathBuf {
-        static EMPTY_BUF: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(PathBuf::new);
+        #[allow(clippy::redundant_closure)]
+        static EMPTY_BUF: std::sync::LazyLock<PathBuf> = std::sync::LazyLock::new(|| PathBuf::new());
 
         match self {
             FileName::Internal => &EMPTY_BUF,

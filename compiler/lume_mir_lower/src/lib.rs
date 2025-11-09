@@ -194,7 +194,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     fn declare_value(&mut self, value: lume_mir::Operand) -> RegisterId {
         self.declare(lume_mir::Declaration {
             location: value.location,
-            kind: lume_mir::DeclarationKind::Operand(value),
+            kind: Box::new(lume_mir::DeclarationKind::Operand(value)),
         })
     }
 
@@ -219,7 +219,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         }
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Call { func_id, args },
+            kind: Box::new(lume_mir::DeclarationKind::Call { func_id, args }),
             location,
         });
 
@@ -241,7 +241,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let args = self.normalize_call_argumets(&signature.parameters, &args, signature.vararg);
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::IndirectCall { ptr, signature, args },
+            kind: Box::new(lume_mir::DeclarationKind::IndirectCall { ptr, signature, args }),
             location,
         });
 
@@ -322,13 +322,13 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let vararg_arr_reg = self
             .func
             .declare(array_alloc_func.signature.return_type.clone(), lume_mir::Declaration {
-                kind: lume_mir::DeclarationKind::Call {
+                kind: Box::new(lume_mir::DeclarationKind::Call {
                     func_id: array_alloc_func.id,
                     args: vec![
                         lume_mir::Operand::integer(64, false, args.len().cast_signed() as i64),
                         lume_mir::Operand::reference_of(metadata_reg),
                     ],
-                },
+                }),
                 location: vararg_type.location,
             });
 
@@ -362,7 +362,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
         lume_mir::Type {
             kind: lume_mir::TypeKind::Metadata {
-                inner: metadata_entry.to_owned(),
+                inner: Box::new(metadata_entry.to_owned()),
             },
             is_generic: false,
         }
@@ -374,12 +374,12 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         let metadata_type = self.metadata_type_of(type_ref);
 
         self.func.declare(metadata_type, lume_mir::Declaration {
-            kind: lume_mir::DeclarationKind::Intrinsic {
+            kind: Box::new(lume_mir::DeclarationKind::Intrinsic {
                 name: lume_mir::Intrinsic::Metadata {
-                    metadata: metadata_entry.to_owned(),
+                    metadata: Box::new(metadata_entry.to_owned()),
                 },
                 args: Vec::new(),
-            },
+            }),
             location,
         })
     }

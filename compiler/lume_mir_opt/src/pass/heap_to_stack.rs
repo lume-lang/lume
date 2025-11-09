@@ -85,7 +85,7 @@ fn replace_reg_with_slot(
             InstructionKind::Let { register: id, decl, .. } => {
                 debug_assert_ne!(*id, register, "declaration instruction should have been skipped");
 
-                match &mut decl.kind {
+                match decl.kind.as_mut() {
                     DeclarationKind::Operand(operand) => replace_reg_in_op(operand, register, slot),
                     DeclarationKind::Cast { .. } => unreachable!("can't cast stack-slot"),
                     DeclarationKind::Intrinsic { args, .. } | DeclarationKind::Call { args, .. } => {

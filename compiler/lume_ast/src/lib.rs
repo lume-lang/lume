@@ -347,9 +347,7 @@ impl PathSegment {
     pub fn take_type_arguments(&mut self) -> Vec<Type> {
         match self {
             Self::Namespace { .. } | Self::Variant { .. } => Vec::new(),
-            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => {
-                type_arguments.drain(..).collect()
-            }
+            Self::Type { type_arguments, .. } | Self::Callable { type_arguments, .. } => std::mem::take(type_arguments),
         }
     }
 }

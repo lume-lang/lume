@@ -1,4 +1,4 @@
-use std::collections::{HashSet, LinkedList};
+use std::collections::{HashSet, VecDeque};
 use std::fmt::Display;
 use std::ops::Range;
 use std::sync::Arc;
@@ -87,7 +87,7 @@ struct Document<'src> {
     pub comments: Vec<(Range<usize>, &'src str)>,
 }
 
-fn parse_document<'src>(content: &'src str) -> Result<Document<'src>> {
+fn parse_document(content: &str) -> Result<Document<'_>> {
     let dcx = DiagCtx::new();
     let source_file = Arc::new(SourceFile::internal(content));
 
@@ -268,7 +268,7 @@ enum NodeKind {
 
 struct Builder<'src> {
     source: Arc<SourceFile>,
-    comments: LinkedList<(Range<usize>, &'src str)>,
+    comments: VecDeque<(Range<usize>, &'src str)>,
 
     current_group: usize,
 }
@@ -299,7 +299,7 @@ impl<'src> Builder<'src> {
         Node::nodes(nodes)
     }
 
-    pub fn build(source: &'src str, doc: Document) -> Node {
+    pub fn build(source: &str, doc: Document) -> Node {
         let mut builder = Builder::new(source, doc.comments);
 
         builder.build_root(doc.items)
@@ -312,25 +312,13 @@ impl<'src> Builder<'src> {
         id
     }
 
-    fn write_doc_comment(&mut self, doc: String) -> Node {
-        let mut nodes = Vec::new();
-
-        for line in doc.lines() {
-            nodes.push(Node::text_str("/// "));
-            nodes.push(Node::text_str(line.trim()));
-            nodes.push(Node::forced_line());
-        }
-
-        Node::nodes(nodes)
-    }
-
     fn leading_comment(&mut self, span: &Location) -> Option<String> {
-        if let Some((comment_span, _)) = self.comments.front() {
-            if comment_span.start < span.0.start {
-                let (_, slice) = self.comments.pop_front().unwrap();
+        if let Some((comment_span, _)) = self.comments.front()
+            && comment_span.start < span.0.start
+        {
+            let (_, slice) = self.comments.pop_front().unwrap();
 
-                return Some(slice.to_string());
-            }
+            return Some(slice.to_string());
         }
 
         None
@@ -571,11 +559,11 @@ impl<'src> Builder<'src> {
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
     fn build_item(&mut self, item: TopLevelExpression) -> Node {
         match item {
             TopLevelExpression::Import(item) => self.build_import(*item),
-            TopLevelExpression::Namespace(item) => self.build_namespace(*item),
+            TopLevelExpression::Namespace(item) => build_namespace(*item),
             TopLevelExpression::FunctionDefinition(item) => self.build_function_definition(*item),
             TopLevelExpression::TypeDefinition(type_def) => match *type_def {
                 TypeDefinition::Struct(item) => self.build_struct_definition(*item),
@@ -607,29 +595,14 @@ impl<'src> Builder<'src> {
         Node::nodes(nodes)
     }
 
-    fn build_namespace(&mut self, item: Namespace) -> Node {
-        let mut nodes = vec![Node::text_str("namespace"), Node::space()];
-        let path_len = item.path.path.len();
-
-        for (idx, path) in item.path.path.into_iter().enumerate() {
-            nodes.push(Node::text(path.name));
-
-            if idx < path_len - 1 {
-                nodes.push(Node::text_str("::"));
-            }
-        }
-
-        Node::nodes(nodes)
-    }
-
     fn build_function_definition(&mut self, item: FunctionDefinition) -> Node {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
-        nodes.push(self.build_visibility(item.visibility));
+        nodes.push(build_visibility(item.visibility));
         nodes.push(Node::text_str("fn"));
         nodes.push(Node::space());
 
@@ -664,10 +637,10 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
-        nodes.push(self.build_visibility(item.visibility));
+        nodes.push(build_visibility(item.visibility));
         nodes.push(Node::text_str("struct"));
         nodes.push(Node::space());
 
@@ -682,10 +655,10 @@ impl<'src> Builder<'src> {
 
         let fields = self.idented_force(item.fields, "{", "}", |builder, nodes, field| {
             if let Some(doc) = field.documentation {
-                nodes.push(builder.write_doc_comment(doc));
+                nodes.push(write_doc_comment(doc));
             }
 
-            nodes.push(builder.build_visibility(field.visibility));
+            nodes.push(build_visibility(field.visibility));
 
             nodes.push(Node::text(field.name.name));
             nodes.push(Node::text_str(":"));
@@ -713,10 +686,10 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
-        nodes.push(self.build_visibility(item.visibility));
+        nodes.push(build_visibility(item.visibility));
         nodes.push(Node::text_str("trait"));
         nodes.push(Node::space());
 
@@ -737,7 +710,7 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
         nodes.push(Node::text_str("fn"));
@@ -771,10 +744,10 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
-        nodes.push(self.build_visibility(item.visibility));
+        nodes.push(build_visibility(item.visibility));
         nodes.push(Node::text_str("enum"));
         nodes.push(Node::space());
 
@@ -795,7 +768,7 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
         nodes.push(Node::text(item.name.name));
@@ -816,14 +789,13 @@ impl<'src> Builder<'src> {
     }
 
     fn build_implementation(&mut self, item: Implementation) -> Node {
-        let mut nodes = Vec::new();
-
-        nodes.push(Node::text_str("impl"));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(Node::space());
-
-        nodes.push(self.build_type(*item.name));
-        nodes.push(Node::space());
+        let mut nodes = vec![
+            Node::text_str("impl"),
+            self.build_type_parameters(item.type_parameters),
+            Node::space(),
+            self.build_type(*item.name),
+            Node::space(),
+        ];
 
         let methods = self.idented_force(item.methods, "{", "}", |builder, nodes, method| {
             nodes.push(builder.build_method_definition(method));
@@ -838,7 +810,7 @@ impl<'src> Builder<'src> {
         let mut nodes = Vec::new();
 
         if let Some(doc_comment) = item.documentation {
-            nodes.push(self.write_doc_comment(doc_comment));
+            nodes.push(write_doc_comment(doc_comment));
         }
 
         nodes.push(Node::text_str("fn"));
@@ -871,18 +843,16 @@ impl<'src> Builder<'src> {
     }
 
     fn build_trait_implementation(&mut self, item: TraitImplementation) -> Node {
-        let mut nodes = Vec::new();
-
-        nodes.push(Node::text_str("use"));
-        nodes.push(self.build_type_parameters(item.type_parameters));
-        nodes.push(Node::space());
-
-        nodes.push(self.build_type(*item.name));
-        nodes.push(Node::space());
-        nodes.push(Node::text_str("in"));
-
-        nodes.push(self.build_type(*item.target));
-        nodes.push(Node::space());
+        let mut nodes = vec![
+            Node::text_str("use"),
+            self.build_type_parameters(item.type_parameters),
+            Node::space(),
+            self.build_type(*item.name),
+            Node::space(),
+            Node::text_str("in"),
+            self.build_type(*item.target),
+            Node::space(),
+        ];
 
         let methods = self.idented_force(item.methods, "{", "}", |builder, nodes, method| {
             nodes.push(builder.build_trait_method_implementation(method));
@@ -949,18 +919,33 @@ impl<'src> Builder<'src> {
 
         Node::nodes(nodes)
     }
+}
 
-    fn build_visibility(&mut self, item: Option<Visibility>) -> Node {
-        match item {
-            Some(Visibility::Public { .. }) => Node::text_str("pub "),
-            Some(Visibility::Internal { .. }) => Node::text_str("pub(internal) "),
-            Some(Visibility::Private { .. }) => Node::text_str("priv "),
-            None => Node::empty(),
+fn build_namespace(item: Namespace) -> Node {
+    let mut nodes = vec![Node::text_str("namespace"), Node::space()];
+    let path_len = item.path.path.len();
+
+    for (idx, path) in item.path.path.into_iter().enumerate() {
+        nodes.push(Node::text(path.name));
+
+        if idx < path_len - 1 {
+            nodes.push(Node::text_str("::"));
         }
+    }
+
+    Node::nodes(nodes)
+}
+
+fn build_visibility(item: Option<Visibility>) -> Node {
+    match item {
+        Some(Visibility::Public { .. }) => Node::text_str("pub "),
+        Some(Visibility::Internal { .. }) => Node::text_str("pub(internal) "),
+        Some(Visibility::Private { .. }) => Node::text_str("priv "),
+        None => Node::empty(),
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
     fn build_path(&mut self, item: Path) -> Node {
         let mut nodes = Vec::new();
 
@@ -996,7 +981,7 @@ impl<'src> Builder<'src> {
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
     fn build_pattern(&mut self, item: Pattern) -> Node {
         match item {
             Pattern::Literal(pat) => {
@@ -1035,7 +1020,7 @@ impl<'src> Builder<'src> {
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
     fn build_type(&mut self, ty: Type) -> Node {
         match ty {
             Type::Named(mut ty) => {
@@ -1117,7 +1102,7 @@ impl<'src> Builder<'src> {
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
     fn build_block(&mut self, block: Block) -> Node {
         self.idented_force(block.statements, "{", "}", |builder, nodes, stmt| {
             nodes.push(builder.build_statement(stmt));
@@ -1194,7 +1179,8 @@ impl<'src> Builder<'src> {
     }
 }
 
-impl<'src> Builder<'src> {
+impl Builder<'_> {
+    #[allow(clippy::too_many_lines)]
     fn build_expression(&mut self, expr: Expression) -> Node {
         let leading_comment = self.leading_comment(expr.location());
         let trailing_comment = self.trailing_comment(expr.location());
@@ -1479,6 +1465,18 @@ impl<'src> Builder<'src> {
     }
 }
 
+fn write_doc_comment(doc: String) -> Node {
+    let mut nodes = Vec::new();
+
+    for line in doc.lines() {
+        nodes.push(Node::text_str("/// "));
+        nodes.push(Node::text_str(line.trim()));
+        nodes.push(Node::forced_line());
+    }
+
+    Node::nodes(nodes)
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Wrap {
     Enabled,
@@ -1637,7 +1635,7 @@ impl Renderer<'_> {
                 }
             }
             NodeKind::IfWrap(group, a, b) => {
-                if self.wrapped.contains(&group) {
+                if self.wrapped.contains(group) {
                     self.width_of(a)
                 } else {
                     self.width_of(b)

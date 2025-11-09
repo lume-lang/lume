@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_wraps, reason = "callbacks to Logos")]
+
 use std::fmt::Display;
 use std::marker::PhantomData;
 use std::ops::{Deref, Range};

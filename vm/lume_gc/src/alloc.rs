@@ -12,6 +12,8 @@ use crate::FrameStackMap;
 
 unsafe extern "C" {
     pub fn memcpy(dst: *mut u8, src: *mut u8, len: usize);
+
+    #[cfg(feature = "paranoid")]
     pub fn memset(ptr: *mut u8, c: i32, n: usize);
 }
 
@@ -21,7 +23,7 @@ const PAGE_SIZE: usize = 0x1000;
 const POINTER_SIZE: usize = std::mem::size_of::<*const ()>();
 const POINTER_ALIGNMENT: usize = std::mem::align_of::<*const ()>();
 
-const BLOCK_TYPE_ID: usize = 0xB356997D_6F328F57;
+const BLOCK_TYPE_ID: usize = 0xB356_997D_6F32_8F57;
 
 /// Gets the metadata pointer of the given managed object pointer.
 #[inline]

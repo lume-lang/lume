@@ -10,11 +10,11 @@ const NATIVE_PTR_SIZE: usize = std::mem::size_of::<*const ()>();
 const NATIVE_PTR_ALIGN: usize = std::mem::align_of::<*const ()>();
 
 struct MetadataEntries {
-    pub type_metadata: String,
-    pub field_metadata: String,
-    pub method_metadata: String,
-    pub parameter_metadata: String,
-    pub type_parameter_metadata: String,
+    pub ty: String,
+    pub field: String,
+    pub method: String,
+    pub parameter: String,
+    pub type_parameter: String,
 }
 
 #[inline]
@@ -48,11 +48,11 @@ impl CraneliftBackend {
         self.declare_all_type_parameter_metadata(found_types.values());
 
         let metadata_symbols = MetadataEntries {
-            type_metadata: metadata_entry(&found_types, "std::Type"),
-            field_metadata: metadata_entry(&found_types, "std::Field"),
-            method_metadata: metadata_entry(&found_types, "std::Method"),
-            parameter_metadata: metadata_entry(&found_types, "std::Parameter"),
-            type_parameter_metadata: metadata_entry(&found_types, "std::TypeParameter"),
+            ty: metadata_entry(&found_types, "std::Type"),
+            field: metadata_entry(&found_types, "std::Field"),
+            method: metadata_entry(&found_types, "std::Method"),
+            parameter: metadata_entry(&found_types, "std::Parameter"),
+            type_parameter: metadata_entry(&found_types, "std::TypeParameter"),
         };
 
         let mut defined_methods = IndexSet::new();
@@ -347,7 +347,7 @@ impl CraneliftBackend {
         let mut builder = MemoryBlockBuilder::new(self);
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.type_metadata);
+        builder.append_metadata_address(&metadata_symbols.ty);
 
         // Type.type_id
         builder.append(metadata.type_id_usize());
@@ -431,7 +431,7 @@ impl CraneliftBackend {
         let mut builder = MemoryBlockBuilder::new(self);
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.field_metadata);
+        builder.append_metadata_address(&metadata_symbols.field);
 
         // Field.name
         builder.append_str_address(metadata.name.clone());
@@ -450,7 +450,7 @@ impl CraneliftBackend {
         let mut builder = MemoryBlockBuilder::new(self);
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.method_metadata);
+        builder.append_metadata_address(&metadata_symbols.method);
 
         // Method.id
         builder.append(metadata.definition_id.as_usize());
@@ -505,7 +505,7 @@ impl CraneliftBackend {
         let mut builder = MemoryBlockBuilder::new(self);
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.parameter_metadata);
+        builder.append_metadata_address(&metadata_symbols.parameter);
 
         // Parameter.name
         builder.append_str_address(metadata.name.clone());
@@ -532,7 +532,7 @@ impl CraneliftBackend {
         let mut builder = MemoryBlockBuilder::new(self);
 
         // Metadata entry
-        builder.append_metadata_address(&metadata_symbols.type_parameter_metadata);
+        builder.append_metadata_address(&metadata_symbols.type_parameter);
 
         // TypeParameter.name
         builder.append_str_address(metadata.name.clone());

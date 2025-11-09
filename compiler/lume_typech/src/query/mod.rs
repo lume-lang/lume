@@ -483,9 +483,7 @@ impl TyCheckCtx {
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn is_visible_outside_package(&self, id: NodeId) -> bool {
-        self.visibility_of(id)
-            .map(|vis| vis == Visibility::Public)
-            .unwrap_or(false)
+        self.visibility_of(id) == Some(Visibility::Public)
     }
 
     /// Determines whether the node `a` can "see" node `b`, with regard to
@@ -544,7 +542,7 @@ impl TyCheckCtx {
 
                     if let Some(parent_type) = self.parent_type_of(a)? {
                         return self.check_type_compatibility(&parent_type, &impl_type);
-                    };
+                    }
 
                     Ok(false)
                 }

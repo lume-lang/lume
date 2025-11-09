@@ -5,7 +5,7 @@ use crate::LowerFunction;
 impl LowerFunction<'_> {
     #[tracing::instrument(level = "TRACE", skip_all, fields(decl = %decl), ret(Display))]
     pub(crate) fn cg_declaration(&mut self, decl: &lume_mir::Declaration) -> Value {
-        match &decl.kind {
+        match decl.kind.as_ref() {
             lume_mir::DeclarationKind::Operand(op) => self.cg_operand(op),
             lume_mir::DeclarationKind::Cast { operand, bits } => {
                 let operand_ty = self.func.registers.register_ty(*operand);

@@ -1,7 +1,6 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use clap::Parser;
 use error_snippet::{Label, WithSource};
 use lume_errors::*;
 use lume_fmt::Config;
@@ -23,9 +22,7 @@ pub struct FormatCommand {
 impl FormatCommand {
     #[allow(clippy::needless_pass_by_value)]
     pub(crate) fn run(&self, dcx: DiagCtxHandle) {
-        let opts = FormatCommand::parse();
-
-        let config = match read_config_file(opts.config.clone()) {
+        let config = match read_config_file(self.config.clone()) {
             Ok(config) => config,
             Err(err) => {
                 dcx.emit_and_push(err);
@@ -33,8 +30,8 @@ impl FormatCommand {
             }
         };
 
-        for file_path in &opts.files {
-            if let Err(err) = format_file(PathBuf::from(file_path), &opts, &config) {
+        for file_path in &self.files {
+            if let Err(err) = self.format_file(PathBuf::from(file_path), &config) {
                 dcx.emit_and_push(
                     SimpleDiagnostic::new(format!("error while formatting input file: {file_path}"))
                         .add_cause(err)
@@ -43,23 +40,23 @@ impl FormatCommand {
             }
         }
     }
-}
 
-fn format_file(input_path: PathBuf, opts: &FormatCommand, config: &Config) -> Result<()> {
-    let content = std::fs::read_to_string(&input_path).map_diagnostic()?;
-    let formatted = lume_fmt::format_src(&content, &config)?;
+    fn format_file(&self, input_path: PathBuf, config: &Config) -> Result<()> {
+        let content = std::fs::read_to_string(&input_path).map_diagnostic()?;
+        let formatted = lume_fmt::format_src(&content, config)?;
 
-    if opts.write {
-        std::fs::write(&input_path, &formatted).map_diagnostic()?;
-    } else {
-        println!("{formatted}");
+        if self.write {
+            std::fs::write(&input_path, &formatted).map_diagnostic()?;
+        } else {
+            println!("{formatted}");
+        }
+
+        Ok(())
     }
-
-    Ok(())
 }
 
 fn read_config_file(config_path: Option<PathBuf>) -> Result<Config> {
-    let Some(config_path) = config_path.or_else(|| find_config_file()) else {
+    let Some(config_path) = config_path.or_else(find_config_file) else {
         return Ok(Config::default());
     };
 

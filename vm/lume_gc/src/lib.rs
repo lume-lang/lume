@@ -1,3 +1,6 @@
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_ptr_alignment)]
+
 pub(crate) mod alloc;
 pub(crate) mod arch;
 

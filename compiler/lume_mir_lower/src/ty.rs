@@ -65,7 +65,7 @@ impl FunctionTransformer<'_, '_> {
     }
 
     pub(super) fn type_of_decl(&self, decl: &lume_mir::Declaration) -> lume_mir::Type {
-        match &decl.kind {
+        match decl.kind.as_ref() {
             lume_mir::DeclarationKind::Operand(val) => self.type_of_value(val),
             lume_mir::DeclarationKind::Intrinsic { name, .. } => match name {
                 lume_mir::Intrinsic::IntEq { .. }

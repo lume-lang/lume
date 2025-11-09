@@ -900,12 +900,11 @@ impl TyInferCtx {
             }
 
             let parameter = &callable.signature().params.inner()[argument_idx];
-
             if self.is_type_generic(&parameter.ty)? {
                 return Ok(None);
-            } else {
-                return Ok(Some(parameter.ty.clone()));
             }
+
+            return Ok(Some(parameter.ty.clone()));
         }
 
         let signature = self.instantiate_signature_from_args(callable, call)?;
@@ -1046,10 +1045,15 @@ impl TyInferCtx {
                 lume_hir::TypeDefinition::Struct(n) => Some(n.visibility),
                 lume_hir::TypeDefinition::Trait(n) => Some(n.visibility),
             },
-            Node::TraitImpl(_) | Node::TraitMethodDef(_) | Node::TraitMethodImpl(_) | Node::Impl(_) => None,
+            Node::TraitImpl(_)
+            | Node::TraitMethodDef(_)
+            | Node::TraitMethodImpl(_)
+            | Node::Impl(_)
+            | Node::Pattern(_)
+            | Node::Statement(_)
+            | Node::Expression(_) => None,
             Node::Field(n) => Some(n.visibility),
             Node::Method(n) => Some(n.visibility),
-            Node::Pattern(_) | Node::Statement(_) | Node::Expression(_) => None,
         }
     }
 }
