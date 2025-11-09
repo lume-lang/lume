@@ -33,6 +33,19 @@ fn metadata_of(obj_ptr: *const u8) -> *const TypeMetadata {
     unsafe { alloc_start.cast::<*const TypeMetadata>().read_unaligned() }
 }
 
+/// Record of a single object reference, along with all pointers which reference
+/// it.
+pub(crate) struct ObjectReference {
+    /// The object pointer itself.
+    pub object: *const u8,
+
+    /// Set of all pointers pointing to `object`.
+    ///
+    /// Pointers within this set can be from various different locations
+    /// in memory, such as stack locations, fields within other objects, etc.
+    pub references: IndexSet<*const *const u8>,
+}
+
 pub(crate) struct BumpAllocator {
     /// Defines the layouf of the memory block which backs the allocator.
     layout: Layout,
@@ -190,27 +203,50 @@ impl YoungGeneration {
     /// This method is an expansion of [`living_gc_roots`]. It expands the
     /// returned GC roots into a tree of all GC references, which can
     /// be referenced by any existing GC reference.
-    pub(crate) fn living_gc_objects(&self, frame: &FrameStackMap) -> IndexSet<*const *const u8> {
-        let mut gc_refs = IndexSet::new();
-        let mut objects = IndexSet::new();
+    ///
+    /// Objects are pushed to the iterator in the order that they're found. This
+    /// means that objects closer to the roots appear earlier in the
+    /// iterator, than any child objects.
+    pub(crate) fn living_gc_objects(
+        &self,
+        frame: &FrameStackMap,
+    ) -> impl DoubleEndedIterator<Item = ObjectReference> + use<> {
+        let mut object_refs = IndexMap::<*const u8, ObjectReference>::new();
         let mut worklist = self.living_gc_roots(frame).collect::<IndexSet<_>>();
 
         while let Some(root_ptr) = worklist.pop() {
             let obj_ptr = unsafe { root_ptr.read() };
 
-            if !objects.insert(obj_ptr) || !gc_refs.insert(root_ptr) {
+            if let Some(obj_ref) = object_refs.get_mut(&obj_ptr) {
                 // We've already visited the pointer - skip it and all it's descendants.
-                continue;
+                if !obj_ref.references.insert(root_ptr) {
+                    continue;
+                }
+            } else {
+                object_refs.insert(obj_ptr, ObjectReference {
+                    object: obj_ptr,
+                    references: indexmap::indexset! {
+                        root_ptr
+                    },
+                });
             }
 
             let metadata = unsafe { metadata_of(obj_ptr).read() };
 
+            // Niche handling for `std::mem::Block` types.
+            //
+            // Since they only represent a block of contiguous memory, a
+            // pointer could theoretically exist anywhere within
+            // it. Instead of checking each byte within the block, we check all long words
+            // in the block, chunked by poitner size.
             if metadata.type_id.0 == BLOCK_TYPE_ID {
                 let block_len = unsafe { obj_ptr.cast::<u64>().read() } as usize;
                 let block_ptr = unsafe { obj_ptr.byte_add(POINTER_SIZE).cast::<*const u8>().read() };
 
                 let mut offset = 0;
 
+                // If the block size isn't divisible by the pointer size, we skip any
+                // remaining bytes, since they couldn't fit a pointer anyway.
                 while offset + POINTER_SIZE <= block_len {
                     let block_item_ptr = unsafe { block_ptr.byte_add(offset).cast::<*const u8>() };
                     let block_item = unsafe { block_item_ptr.read().byte_sub(POINTER_SIZE) };
@@ -240,7 +276,7 @@ impl YoungGeneration {
             }
         }
 
-        gc_refs
+        object_refs.into_values()
     }
 
     /// Discerns whether the given pointer is a reference to an
@@ -398,12 +434,15 @@ impl GenerationalAllocator {
     /// who where not alive in the 1st generation are deallocated. After
     /// all the allocations have been handled, the 1st generation is cleared.
     pub(crate) fn promote_allocations(&mut self, frame: &FrameStackMap) {
-        for stack_ptr in self.young.living_gc_objects(frame) {
+        // Reverse the list of all objects. Object references are added in the order
+        // that they're found, but we must promote child objects first, so that
+        // any parent object doesn't copy the old location of the child.
+        for ObjectReference { object, references } in self.young.living_gc_objects(frame).rev() {
             // The metadata of the object is stored at [-0x08], so the actual start of
             // the allocation is there.
-            let alloc_start = unsafe { stack_ptr.read().byte_sub(POINTER_SIZE) }.cast_mut();
+            let alloc_start = unsafe { object.byte_sub(POINTER_SIZE) }.cast_mut();
 
-            let metadata_ptr = unsafe { alloc_start.cast::<*const TypeMetadata>().read_unaligned() };
+            let metadata_ptr = metadata_of(object);
             let obj_size = unsafe { metadata_ptr.read() }.size;
 
             // Copy the 1st generation object to the 2nd generation.
@@ -415,8 +454,12 @@ impl GenerationalAllocator {
             // Replace the pointer on the stack with newly moved object pointer,
             // so when the function reloads the object register from the stack,
             // it'll be to the new object.
-            unsafe {
-                std::ptr::write_unaligned(stack_ptr.cast_mut(), new_live_ptr.byte_add(POINTER_SIZE).cast_const());
+            let new_object_ptr = unsafe { new_live_ptr.byte_add(POINTER_SIZE).cast_const() };
+
+            for reference in references {
+                unsafe {
+                    std::ptr::write_unaligned(reference.cast_mut(), new_object_ptr);
+                }
             }
 
             // Unregister the allocation from the 1st generation, so the value isn't
