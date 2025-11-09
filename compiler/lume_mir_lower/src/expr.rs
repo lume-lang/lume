@@ -28,12 +28,12 @@ impl FunctionTransformer<'_, '_> {
             let target_reg = self.load_operand(&op);
             let loaded_reg = self.func.declare_value_raw(return_ty, lume_mir::Operand {
                 kind: lume_mir::OperandKind::Load { id: target_reg },
-                location: expr.location(),
+                location: expr.location().clone_inner(),
             });
 
             return lume_mir::Operand {
                 kind: lume_mir::OperandKind::Reference { id: loaded_reg },
-                location: expr.location(),
+                location: expr.location().clone_inner(),
             };
         }
 
@@ -46,32 +46,36 @@ impl FunctionTransformer<'_, '_> {
 
         match &target_expr.kind {
             lume_mir::OperandKind::Reference { id } => {
-                self.func.current_block_mut().assign(*id, value, expr.location);
+                self.func
+                    .current_block_mut()
+                    .assign(*id, value, expr.location.clone_inner());
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Reference { id: *id },
-                    location: expr.location,
+                    location: expr.location.clone_inner(),
                 }
             }
             lume_mir::OperandKind::Load { id } => {
-                self.func.current_block_mut().store(*id, value, expr.location);
+                self.func
+                    .current_block_mut()
+                    .store(*id, value, expr.location.clone_inner());
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Load { id: *id },
-                    location: expr.location,
+                    location: expr.location.clone_inner(),
                 }
             }
             lume_mir::OperandKind::LoadField { target, offset, .. } => {
                 self.func
                     .current_block_mut()
-                    .store_field(*target, *offset, value, expr.location);
+                    .store_field(*target, *offset, value, expr.location.clone_inner());
 
                 target_expr
             }
             lume_mir::OperandKind::LoadSlot { target, offset, .. } => {
                 self.func
                     .current_block_mut()
-                    .store_slot(*target, *offset, value, expr.location);
+                    .store_slot(*target, *offset, value, expr.location.clone_inner());
 
                 target_expr
             }
@@ -106,14 +110,14 @@ impl FunctionTransformer<'_, '_> {
 
         let decl = lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         let reg = self.declare(decl);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Load { id: reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -124,7 +128,7 @@ impl FunctionTransformer<'_, '_> {
         let source = self.expression(&expr.source);
         let operand = self.declare(lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Operand(source)),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         });
 
         let decl = lume_mir::Declaration {
@@ -132,12 +136,12 @@ impl FunctionTransformer<'_, '_> {
                 operand,
                 bits: expr.target.bitwidth(),
             }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: self.declare(decl) },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -170,7 +174,7 @@ impl FunctionTransformer<'_, '_> {
 
         // The first type in all object allocations must be a pointer to the metadata
         // of the type, so it can be reflected at runtime.
-        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
+        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location.clone_inner());
         let metadata_ptr_size = std::mem::size_of::<*const ()>();
 
         let prop_sizes = prop_types.iter().map(lume_mir::Type::bytesize).collect::<Vec<_>>();
@@ -180,17 +184,17 @@ impl FunctionTransformer<'_, '_> {
         let alloc_reg = self.func.add_register(struct_ptr.clone());
         self.func
             .current_block_mut()
-            .allocate(alloc_reg, struct_type, metadata_reg, expr.location);
+            .allocate(alloc_reg, struct_type, metadata_reg, expr.location.clone_inner());
 
         // Store the metadata reference in the first element in the structure.
         let metadata_value = lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: metadata_reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         self.func
             .current_block_mut()
-            .store_field(alloc_reg, 0, metadata_value, expr.location);
+            .store_field(alloc_reg, 0, metadata_value, expr.location.clone_inner());
 
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
@@ -200,7 +204,7 @@ impl FunctionTransformer<'_, '_> {
 
             self.func
                 .current_block_mut()
-                .store_field(alloc_reg, offset, value, expr.location);
+                .store_field(alloc_reg, offset, value, expr.location.clone_inner());
 
             offset += size;
         }
@@ -214,7 +218,7 @@ impl FunctionTransformer<'_, '_> {
                 args: vec![
                     lume_mir::Operand {
                         kind: lume_mir::OperandKind::Reference { id: alloc_reg },
-                        location: expr.location,
+                        location: expr.location.clone_inner(),
                     },
                     lume_mir::Operand {
                         kind: lume_mir::OperandKind::Integer {
@@ -222,16 +226,16 @@ impl FunctionTransformer<'_, '_> {
                             signed: false,
                             value: lume_mir::POINTER_SIZE.cast_signed() as i64,
                         },
-                        location: expr.location,
+                        location: expr.location.clone_inner(),
                     },
                 ],
             }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         });
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: offset_reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -251,7 +255,7 @@ impl FunctionTransformer<'_, '_> {
             ret_ty = lume_mir::Type::pointer(ret_ty);
         }
 
-        self.call(expr.function, args, ret_ty, expr.location)
+        self.call(expr.function, args, ret_ty, expr.location.clone_inner())
     }
 
     fn is_expression(&mut self, expr: &lume_tir::Is) -> lume_mir::Operand {
@@ -283,7 +287,7 @@ impl FunctionTransformer<'_, '_> {
                         name: lume_mir::Intrinsic::BooleanEq,
                         args: vec![operand, lume_mir::Operand {
                             kind: lume_mir::OperandKind::Boolean { value: *bool },
-                            location: lit.location,
+                            location: lit.location.clone_inner(),
                         }],
                     },
                     lume_tir::LiteralKind::Int(int) => lume_mir::DeclarationKind::Intrinsic {
@@ -297,7 +301,7 @@ impl FunctionTransformer<'_, '_> {
                                 signed: int.signed(),
                                 value: int.value(),
                             },
-                            location: lit.location,
+                            location: lit.location.clone_inner(),
                         }],
                     },
                     lume_tir::LiteralKind::Float(float) => lume_mir::DeclarationKind::Intrinsic {
@@ -307,7 +311,7 @@ impl FunctionTransformer<'_, '_> {
                                 bits: float.bits(),
                                 value: float.value(),
                             },
-                            location: lit.location,
+                            location: lit.location.clone_inner(),
                         }],
                     },
                     lume_tir::LiteralKind::String(_) => unimplemented!(),
@@ -315,12 +319,12 @@ impl FunctionTransformer<'_, '_> {
 
                 let result = self.declare(lume_mir::Declaration {
                     kind: Box::new(intrinsic),
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 });
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Reference { id: result },
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 }
             }
 
@@ -330,7 +334,7 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Boolean { value: true },
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 }
             }
 
@@ -348,9 +352,9 @@ impl FunctionTransformer<'_, '_> {
                             index: 0,
                             field_type: lume_mir::Type::u8(),
                         },
-                        location: pattern.location,
+                        location: pattern.location.clone_inner(),
                     })),
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 });
 
                 let cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
@@ -358,7 +362,7 @@ impl FunctionTransformer<'_, '_> {
                     args: vec![
                         lume_mir::Operand {
                             kind: lume_mir::OperandKind::Reference { id: operand_disc },
-                            location: pattern.location,
+                            location: pattern.location.clone_inner(),
                         },
                         lume_mir::Operand {
                             kind: lume_mir::OperandKind::Integer {
@@ -366,14 +370,14 @@ impl FunctionTransformer<'_, '_> {
                                 signed: false,
                                 value: (discriminant_value as u64).cast_signed(),
                             },
-                            location: pattern.location,
+                            location: pattern.location.clone_inner(),
                         },
                     ],
                 };
 
                 let mut cmp_result = self.declare(lume_mir::Declaration {
                     kind: Box::new(cmp_intrinsic),
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 });
 
                 for (idx, field_pattern) in variant.fields.iter().enumerate() {
@@ -393,7 +397,7 @@ impl FunctionTransformer<'_, '_> {
                             index: idx + 1,
                             field_type: field_type.clone(),
                         },
-                        location: field_pattern.location,
+                        location: field_pattern.location.clone_inner(),
                     };
 
                     let field_cmp_operand = self.pattern(field_pattern, field_operand, field_type);
@@ -402,7 +406,7 @@ impl FunctionTransformer<'_, '_> {
                         args: vec![
                             lume_mir::Operand {
                                 kind: lume_mir::OperandKind::Reference { id: cmp_result },
-                                location: pattern.location,
+                                location: pattern.location.clone_inner(),
                             },
                             field_cmp_operand,
                         ],
@@ -410,20 +414,20 @@ impl FunctionTransformer<'_, '_> {
 
                     cmp_result = self.declare(lume_mir::Declaration {
                         kind: Box::new(field_cmp_intrinsic),
-                        location: field_pattern.location,
+                        location: field_pattern.location.clone_inner(),
                     });
                 }
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Reference { id: cmp_result },
-                    location: pattern.location,
+                    location: pattern.location.clone_inner(),
                 }
             }
 
             // Wildcard patterns are always true, so we implicitly replace it with a `true` expression.
             lume_tir::PatternKind::Wildcard => lume_mir::Operand {
                 kind: lume_mir::OperandKind::Boolean { value: true },
-                location: pattern.location,
+                location: pattern.location.clone_inner(),
             },
         }
     }
@@ -434,14 +438,14 @@ impl FunctionTransformer<'_, '_> {
 
         let decl = lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         let reg = self.declare(decl);
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -494,7 +498,7 @@ impl FunctionTransformer<'_, '_> {
 
                 self.func
                     .current_block_mut()
-                    .branch_with(merge_block, args, expr.location);
+                    .branch_with(merge_block, args, expr.location.clone_inner());
             }
 
             self.func.set_current_block(cond_else);
@@ -520,12 +524,14 @@ impl FunctionTransformer<'_, '_> {
 
                 self.func
                     .current_block_mut()
-                    .branch_with(merge_block, args, expr.location);
+                    .branch_with(merge_block, args, expr.location.clone_inner());
             }
         }
 
         if let Some(merge_block) = merge_block {
-            self.func.current_block_mut().branch(merge_block, expr.location);
+            self.func
+                .current_block_mut()
+                .branch(merge_block, expr.location.clone_inner());
 
             self.func.set_current_block(merge_block);
         }
@@ -533,7 +539,7 @@ impl FunctionTransformer<'_, '_> {
         if let Some(return_reg) = return_reg {
             lume_mir::Operand {
                 kind: lume_mir::OperandKind::Reference { id: return_reg },
-                location: expr.location,
+                location: expr.location.clone_inner(),
             }
         } else {
             self.null_operand()
@@ -572,7 +578,7 @@ impl FunctionTransformer<'_, '_> {
                         lhs_expr,
                         inter_block,
                         else_block,
-                        expr.location(),
+                        expr.location().clone_inner(),
                     );
 
                     self.func.set_current_block(inter_block);
@@ -580,9 +586,12 @@ impl FunctionTransformer<'_, '_> {
                     let rhs_val = self.expression(&comp_expr.rhs);
                     let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
 
-                    self.func
-                        .current_block_mut()
-                        .conditional_branch(rhs_expr, then_block, else_block, expr.location());
+                    self.func.current_block_mut().conditional_branch(
+                        rhs_expr,
+                        then_block,
+                        else_block,
+                        expr.location().clone_inner(),
+                    );
                 }
 
                 // Build graph for logical OR expressions
@@ -609,7 +618,7 @@ impl FunctionTransformer<'_, '_> {
                         lhs_expr,
                         then_block,
                         inter_block,
-                        expr.location(),
+                        expr.location().clone_inner(),
                     );
 
                     self.func.set_current_block(inter_block);
@@ -617,18 +626,24 @@ impl FunctionTransformer<'_, '_> {
                     let rhs_val = self.expression(&comp_expr.rhs);
                     let rhs_expr = self.func.declare_value(lume_mir::Type::boolean(), rhs_val);
 
-                    self.func
-                        .current_block_mut()
-                        .conditional_branch(rhs_expr, then_block, else_block, expr.location());
+                    self.func.current_block_mut().conditional_branch(
+                        rhs_expr,
+                        then_block,
+                        else_block,
+                        expr.location().clone_inner(),
+                    );
                 }
             }
         } else {
             let cond_val = self.expression(expr);
             let cond_expr = self.func.declare_value(lume_mir::Type::boolean(), cond_val);
 
-            self.func
-                .current_block_mut()
-                .conditional_branch(cond_expr, then_block, else_block, expr.location());
+            self.func.current_block_mut().conditional_branch(
+                cond_expr,
+                then_block,
+                else_block,
+                expr.location().clone_inner(),
+            );
         }
     }
 
@@ -723,12 +738,12 @@ impl FunctionTransformer<'_, '_> {
 
         let decl = lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Intrinsic { name, args }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: self.declare(decl) },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -747,7 +762,7 @@ impl FunctionTransformer<'_, '_> {
                 index,
                 field_type,
             },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -781,7 +796,7 @@ impl FunctionTransformer<'_, '_> {
 
             lume_mir::Operand {
                 kind: lume_mir::OperandKind::Bitcast { source, target },
-                location,
+                location: location.clone_inner(),
             }
         } else {
             self.expression(&expr.operand)
@@ -792,7 +807,7 @@ impl FunctionTransformer<'_, '_> {
         self.variables.insert(expr.operand_var, operand_reg);
 
         let value_ty = self.lower_type(&expr.fallback.ty);
-        let value_slot = self.func.alloc_slot(value_ty, location);
+        let value_slot = self.func.alloc_slot(value_ty, location.clone_inner());
 
         for (pattern, branch) in &expr.entries {
             let block = self.func.new_active_block();
@@ -807,8 +822,12 @@ impl FunctionTransformer<'_, '_> {
             };
 
             let value = self.expression(branch);
-            self.func.current_block_mut().store_slot(value_slot, 0, value, location);
-            self.func.current_block_mut().branch(merge_block, location);
+            self.func
+                .current_block_mut()
+                .store_slot(value_slot, 0, value, location.clone_inner());
+            self.func
+                .current_block_mut()
+                .branch(merge_block, location.clone_inner());
 
             arms.push((arm_pattern, lume_mir::BlockBranchSite::new(block)));
         }
@@ -816,8 +835,12 @@ impl FunctionTransformer<'_, '_> {
         let fallback_block = self.func.new_active_block();
 
         let value = self.expression(&expr.fallback);
-        self.func.current_block_mut().store_slot(value_slot, 0, value, location);
-        self.func.current_block_mut().branch(merge_block, location);
+        self.func
+            .current_block_mut()
+            .store_slot(value_slot, 0, value, location.clone_inner());
+        self.func
+            .current_block_mut()
+            .branch(merge_block, location.clone_inner());
 
         let fallback = lume_mir::BlockBranchSite::new(fallback_block);
 
@@ -828,7 +851,7 @@ impl FunctionTransformer<'_, '_> {
                 arms,
                 fallback,
             },
-            location,
+            location: location.clone_inner(),
         });
 
         self.func.set_current_block(merge_block);
@@ -838,12 +861,12 @@ impl FunctionTransformer<'_, '_> {
                 id: value_slot,
                 offset: 0,
             },
-            location,
+            location: location.clone_inner(),
         });
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Load { id: slot_addr },
-            location,
+            location: location.clone_inner(),
         }
     }
 
@@ -855,7 +878,7 @@ impl FunctionTransformer<'_, '_> {
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -866,7 +889,7 @@ impl FunctionTransformer<'_, '_> {
                 signed: false,
                 value: i64::from(expr.index),
             },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         let enum_ty = self.tcx().type_of(expr.id).unwrap();
@@ -875,7 +898,7 @@ impl FunctionTransformer<'_, '_> {
 
         // The first type in all object allocations must be a pointer to the metadata
         // of the type, so it can be reflected at runtime.
-        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location);
+        let metadata_reg = self.declare_metadata_of(&expr.ty, expr.location.clone_inner());
         let metadata_ptr_size = std::mem::size_of::<*const ()>();
 
         let mut union_cases = Vec::new();
@@ -896,19 +919,22 @@ impl FunctionTransformer<'_, '_> {
 
         let union_type = lume_mir::Type::union(union_cases);
         let alloc_reg = self.func.add_register(union_type.clone());
-        self.func
-            .current_block_mut()
-            .allocate(alloc_reg, union_type.clone(), metadata_reg, expr.location);
+        self.func.current_block_mut().allocate(
+            alloc_reg,
+            union_type.clone(),
+            metadata_reg,
+            expr.location.clone_inner(),
+        );
 
         // Store the metadata reference in the first element in the union.
         let metadata_value = lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: metadata_reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         };
 
         self.func
             .current_block_mut()
-            .store_field(alloc_reg, 0, metadata_value, expr.location);
+            .store_field(alloc_reg, 0, metadata_value, expr.location.clone_inner());
 
         // Since the element at offset 0 is the metadata, we start just after it.
         let mut offset = metadata_ptr_size;
@@ -916,7 +942,7 @@ impl FunctionTransformer<'_, '_> {
         // Store the discriminant of the variant right after the metadata
         self.func
             .current_block_mut()
-            .store_field(alloc_reg, offset, discriminant, expr.location);
+            .store_field(alloc_reg, offset, discriminant, expr.location.clone_inner());
 
         offset += 1;
 
@@ -926,7 +952,7 @@ impl FunctionTransformer<'_, '_> {
 
             self.func
                 .current_block_mut()
-                .store_field(alloc_reg, offset, value, expr.location);
+                .store_field(alloc_reg, offset, value, expr.location.clone_inner());
 
             offset += operand_size;
         }
@@ -940,7 +966,7 @@ impl FunctionTransformer<'_, '_> {
                 args: vec![
                     lume_mir::Operand {
                         kind: lume_mir::OperandKind::Reference { id: alloc_reg },
-                        location: expr.location,
+                        location: expr.location.clone_inner(),
                     },
                     lume_mir::Operand {
                         kind: lume_mir::OperandKind::Integer {
@@ -948,16 +974,16 @@ impl FunctionTransformer<'_, '_> {
                             signed: false,
                             value: lume_mir::POINTER_SIZE.cast_signed() as i64,
                         },
-                        location: expr.location,
+                        location: expr.location.clone_inner(),
                     },
                 ],
             }),
-            location: expr.location,
+            location: expr.location.clone_inner(),
         });
 
         lume_mir::Operand {
             kind: lume_mir::OperandKind::Reference { id: offset_reg },
-            location: expr.location,
+            location: expr.location.clone_inner(),
         }
     }
 
@@ -966,7 +992,7 @@ impl FunctionTransformer<'_, '_> {
         match expr {
             lume_tir::LiteralKind::Boolean(val) => lume_mir::Operand {
                 kind: lume_mir::OperandKind::Boolean { value: *val },
-                location,
+                location: location.clone_inner(),
             },
             lume_tir::LiteralKind::Int(val) => {
                 let (bits, signed, value) = match val {
@@ -982,7 +1008,7 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Integer { value, bits, signed },
-                    location,
+                    location: location.clone_inner(),
                 }
             }
             lume_tir::LiteralKind::Float(val) => {
@@ -993,12 +1019,12 @@ impl FunctionTransformer<'_, '_> {
 
                 lume_mir::Operand {
                     kind: lume_mir::OperandKind::Float { value, bits },
-                    location,
+                    location: location.clone_inner(),
                 }
             }
             lume_tir::LiteralKind::String(val) => lume_mir::Operand {
                 kind: lume_mir::OperandKind::String { value: *val },
-                location,
+                location: location.clone_inner(),
             },
         }
     }

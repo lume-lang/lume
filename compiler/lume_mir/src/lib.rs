@@ -121,8 +121,6 @@ pub struct Parameter {
     pub name: Interned<String>,
     pub ty: Type,
     pub type_ref: TypeRef,
-
-    #[serde(skip)]
     pub location: Location,
 }
 
@@ -150,7 +148,6 @@ pub struct Function {
     #[serde(skip)]
     scope: Box<Scope>,
 
-    #[serde(skip)]
     pub location: Location,
 }
 
@@ -274,14 +271,14 @@ impl Function {
     /// Declares a new local with the given value in the current block.
     pub fn declare_value(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare(ty, Declaration {
-            location: value.location,
+            location: value.location.clone(),
             kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
 
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_raw(&mut self, ty: Type, decl: Declaration) -> RegisterId {
-        let loc = decl.location;
+        let loc = decl.location.clone();
 
         let ptr = self.add_register(ty.clone());
         self.current_block_mut().declare(ptr, decl, ty, loc);
@@ -292,7 +289,7 @@ impl Function {
     /// Declares a new local with the given declaration in the current block.
     pub fn declare_value_raw(&mut self, ty: Type, value: Operand) -> RegisterId {
         self.declare_raw(ty, Declaration {
-            location: value.location,
+            location: value.location.clone(),
             kind: Box::new(DeclarationKind::Operand(value)),
         })
     }
@@ -908,8 +905,6 @@ impl std::fmt::Display for SlotId {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub kind: InstructionKind,
-
-    #[serde(skip)]
     pub location: Location,
 }
 
@@ -1007,8 +1002,6 @@ impl std::fmt::Display for Instruction {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Declaration {
     pub kind: Box<DeclarationKind>,
-
-    #[serde(skip)]
     pub location: Location,
 }
 
@@ -1138,8 +1131,6 @@ impl std::fmt::Display for Intrinsic {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Operand {
     pub kind: OperandKind,
-
-    #[serde(skip)]
     pub location: Location,
 }
 
@@ -1304,8 +1295,6 @@ impl std::fmt::Display for Operand {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Terminator {
     pub kind: TerminatorKind,
-
-    #[serde(skip)]
     pub location: Location,
 }
 

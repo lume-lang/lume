@@ -1337,6 +1337,7 @@ version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_errors",
+ "lume_session",
  "lume_span",
  "lume_type_metadata",
  "lume_types",
@@ -1441,6 +1442,7 @@ dependencies = [
  "lume_span",
  "rust-embed",
  "semver",
+ "serde",
  "tracing",
 ]
 

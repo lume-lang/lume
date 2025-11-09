@@ -22,7 +22,8 @@ rust-embed = { version = "=8.7.0", features = [
     "interpolate-folder-path",
     "include-exclude",
 ] }
-semver = { version = "^1" }
+semver = { version = "^1", features = ["serde"] }
+serde = { workspace = true, features = ["derive"] }
 tracing = { workspace = true }
 
 [features]

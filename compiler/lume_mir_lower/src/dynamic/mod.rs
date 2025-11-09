@@ -1,5 +1,6 @@
 use lume_mir::{BasicBlockId, RegisterId, Signature};
-use lume_span::{Location, NodeId};
+use lume_span::NodeId;
+use lume_span::source::Location;
 
 use crate::FunctionTransformer;
 
