@@ -13,6 +13,7 @@ use lume_architect::{Database, DatabaseContext};
 use lume_errors::DiagCtx;
 use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
+use serde::{Deserialize, Serialize};
 
 #[derive(Default)]
 pub struct Options {
@@ -177,7 +178,7 @@ impl DatabaseContext for GlobalCtx {
 unsafe impl Send for GlobalCtx {}
 unsafe impl Sync for GlobalCtx {}
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Package {
     /// Uniquely identifies the package.
     pub id: PackageId,
@@ -364,7 +365,7 @@ impl Default for Package {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct Dependencies {
     /// Defines whether the parent [`Package`] should compile without linking
     /// the standard library. Defaults to [`false`].

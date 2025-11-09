@@ -2,7 +2,6 @@ use std::collections::HashSet;
 
 use indexmap::{IndexMap, IndexSet};
 use lume_mir::*;
-use lume_span::Location;
 
 pub(crate) mod define_block_params;
 pub(crate) mod define_edges;

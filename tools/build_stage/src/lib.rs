@@ -94,7 +94,7 @@ impl ManifoldDriver {
     /// Builds the MIR map from the current [`ManifoldDriver`] instance.
     pub fn build_mir(&self) -> Result<ModuleMap> {
         let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
+        let mir = lume_mir_lower::ModuleTransformer::transform(self.package.clone(), &tcx, tir);
 
         Ok(mir)
     }
@@ -103,7 +103,7 @@ impl ManifoldDriver {
     /// in-memory.
     pub fn jit(&self) -> Result<()> {
         let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
+        let mir = lume_mir_lower::ModuleTransformer::transform(self.package.clone(), &tcx, tir);
 
         lume_jit::generate(mir).unwrap();
 
@@ -113,7 +113,7 @@ impl ManifoldDriver {
     /// Compiles  from the current [`ManifoldDriver`] instance.
     pub fn compile(&self) -> Result<PathBuf> {
         let (tcx, tir) = self.build_tir()?;
-        let mir = lume_mir_lower::ModuleTransformer::transform(&tcx, tir);
+        let mir = lume_mir_lower::ModuleTransformer::transform(self.package.clone(), &tcx, tir);
 
         let output_file_path = self.gcx.binary_output_path(&self.package.name);
         lume_fuse::fuse_binary_file(&self.gcx, mir, &output_file_path)?;

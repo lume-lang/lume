@@ -46,7 +46,7 @@ impl FunctionTransformer<'_, '_> {
     fn break_loop(&mut self, stmt: &lume_tir::Break) -> Option<lume_mir::Operand> {
         let (_, end) = self.func.expect_loop_target();
 
-        self.func.current_block_mut().branch(end, stmt.location);
+        self.func.current_block_mut().branch(end, stmt.location.clone_inner());
 
         None
     }
@@ -54,7 +54,7 @@ impl FunctionTransformer<'_, '_> {
     fn continue_loop(&mut self, stmt: &lume_tir::Continue) -> Option<lume_mir::Operand> {
         let (body, _) = self.func.expect_loop_target();
 
-        self.func.current_block_mut().branch(body, stmt.location);
+        self.func.current_block_mut().branch(body, stmt.location.clone_inner());
 
         None
     }
@@ -66,7 +66,9 @@ impl FunctionTransformer<'_, '_> {
     fn return_value(&mut self, stmt: &lume_tir::Return) -> Option<lume_mir::Operand> {
         let value = stmt.value.clone().map(|val| self.expression(&val));
 
-        self.func.current_block_mut().return_any(value, stmt.location);
+        self.func
+            .current_block_mut()
+            .return_any(value, stmt.location.clone_inner());
 
         None
     }
@@ -80,7 +82,9 @@ impl FunctionTransformer<'_, '_> {
             Some(self.func.new_block())
         };
 
-        self.func.current_block_mut().branch(body_block, stmt.location);
+        self.func
+            .current_block_mut()
+            .branch(body_block, stmt.location.clone_inner());
 
         if let Some(merge_block) = merge_block {
             self.func.enter_loop_scope(body_block, merge_block);
@@ -94,10 +98,14 @@ impl FunctionTransformer<'_, '_> {
         }
 
         // Loop back to the start of the loop body
-        self.func.current_block_mut().branch(body_block, stmt.location);
+        self.func
+            .current_block_mut()
+            .branch(body_block, stmt.location.clone_inner());
 
         if let Some(merge_block) = merge_block {
-            self.func.current_block_mut().branch(merge_block, stmt.location);
+            self.func
+                .current_block_mut()
+                .branch(merge_block, stmt.location.clone_inner());
             self.func.set_current_block(merge_block);
         }
 

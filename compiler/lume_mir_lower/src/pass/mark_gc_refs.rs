@@ -1,3 +1,5 @@
+use lume_span::source::Location;
+
 use super::*;
 
 /// Attempts to mark managed objects as GC references, by adding

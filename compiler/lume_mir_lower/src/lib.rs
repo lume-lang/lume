@@ -8,7 +8,9 @@ use std::collections::HashMap;
 
 use lume_mir::{Function, ModuleMap, RegisterId};
 use lume_mir_queries::MirQueryCtx;
-use lume_span::{Location, NodeId};
+use lume_session::Package;
+use lume_span::NodeId;
+use lume_span::source::Location;
 use lume_type_metadata::{TypeMetadata, TypeMetadataId};
 use lume_typech::TyCheckCtx;
 
@@ -22,9 +24,9 @@ pub struct ModuleTransformer<'tcx> {
 
 impl<'tcx> ModuleTransformer<'tcx> {
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR) -> ModuleMap {
+    pub fn transform(package: Package, tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR) -> ModuleMap {
         let mut transformer = Self {
-            mcx: MirQueryCtx::new(tcx, ModuleMap::new(tir.metadata)),
+            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, tir.metadata)),
         };
 
         for func in tir.functions.values() {
@@ -67,7 +69,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     pub fn define(transformer: &'mir mut ModuleTransformer<'tcx>, id: NodeId, func: &lume_tir::Function) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name_as_str(), func.location),
+            func: Function::new(id, func.name_as_str(), func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
@@ -84,7 +86,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     ) -> Function {
         let mut transformer = Self {
             transformer,
-            func: Function::new(id, func.name_as_str(), func.location),
+            func: Function::new(id, func.name_as_str(), func.location.clone_inner()),
             variables: HashMap::new(),
         };
 
@@ -106,7 +108,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             }
             lume_tir::FunctionKind::Unreachable => {
                 let _entry_block = transformer.func.new_active_block();
-                transformer.func.current_block_mut().unreachable(func.location);
+                transformer
+                    .func
+                    .current_block_mut()
+                    .unreachable(func.location.clone_inner());
             }
         }
 
@@ -121,7 +126,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                 name: param.name,
                 ty: param_ty.clone(),
                 type_ref: param.ty.clone(),
-                location: param.location,
+                location: param.location.clone_inner(),
             });
 
             // Offset the register counter by the number of parameters
@@ -148,7 +153,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         if block.has_return_value()
             && let Some(return_value) = return_value
         {
-            let location = return_value.location;
+            let location = return_value.location.clone();
 
             self.func.current_block_mut().return_value(return_value, location);
         }
@@ -193,7 +198,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     /// Defines a new operand declaration in the current function block.
     fn declare_value(&mut self, value: lume_mir::Operand) -> RegisterId {
         self.declare(lume_mir::Declaration {
-            location: value.location,
+            location: value.location.clone(),
             kind: Box::new(lume_mir::DeclarationKind::Operand(value)),
         })
     }
@@ -220,7 +225,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::Call { func_id, args }),
-            location,
+            location: location.clone(),
         });
 
         lume_mir::Operand {
@@ -242,7 +247,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
 
         let call_inst = self.func.declare(ret_ty, lume_mir::Declaration {
             kind: Box::new(lume_mir::DeclarationKind::IndirectCall { ptr, signature, args }),
-            location,
+            location: location.clone(),
         });
 
         lume_mir::Operand {
@@ -279,14 +284,14 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             }
 
             let arg_ty = self.type_of_value(arg);
-            let slot = self.func.alloc_slot(arg_ty, arg.location);
+            let slot = self.func.alloc_slot(arg_ty, arg.location.clone());
             self.func
                 .current_block_mut()
-                .store_slot(slot, 0, arg.clone(), arg.location);
+                .store_slot(slot, 0, arg.clone(), arg.location.clone());
 
             *arg = lume_mir::Operand {
                 kind: lume_mir::OperandKind::SlotAddress { id: slot, offset: 0 },
-                location: arg.location,
+                location: arg.location.clone(),
             };
         }
 
@@ -304,7 +309,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
     ) -> Vec<lume_mir::Operand> {
         let mut new_args = args.drain(..params.len() - 1).collect::<Vec<_>>();
         let vararg_type = &params.last().unwrap().type_ref;
-        let metadata_reg = self.declare_metadata_of(vararg_type, vararg_type.location);
+        let metadata_reg = self.declare_metadata_of(vararg_type, vararg_type.location.clone_inner());
 
         let array_alloc_func = self
             .transformer
@@ -341,7 +346,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                     lume_mir::Operand::reference_of(metadata_reg),
                 ],
                 lume_mir::Type::void(),
-                vararg_type.location,
+                vararg_type.location.clone_inner(),
             );
         }
 

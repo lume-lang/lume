@@ -33,6 +33,12 @@ impl<T: Clone + Hash + Eq + Send + Sync + 'static> Internable for T {
 #[derive(PartialEq, Eq)]
 pub struct Interned<T>(usize, std::marker::PhantomData<T>);
 
+impl<T: Clone + 'static> Interned<T> {
+    pub fn clone_inner(&self) -> T {
+        Interner::with(|interner| interner.get(*self)).clone()
+    }
+}
+
 impl<T> Clone for Interned<T> {
     fn clone(&self) -> Self {
         *self
