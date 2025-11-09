@@ -38,7 +38,7 @@ impl Driver {
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
-        let mut dependencies = gcx.session.dep_graph.iter().collect::<Vec<_>>();
+        let mut dependencies = gcx.session.dep_graph.iter().cloned().collect::<Vec<_>>();
 
         // Build all the dependencies of the package in reverse, so all the
         // dependencies without any sub-dependencies can be built first.
@@ -85,7 +85,7 @@ pub struct CheckedPackage {
     pub sources: SourceMap,
 }
 
-impl<'a> Compiler<'a> {
+impl Compiler {
     /// Checks the given [`Package`] for errors, such as parsing-, semantic- or
     /// configuration errors.
     ///
@@ -95,7 +95,8 @@ impl<'a> Compiler<'a> {
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
-    pub fn check_package(package: &'a Package, gcx: Arc<GlobalCtx>) -> Result<CheckedPackage> {
+    pub fn check_package(package: Package, gcx: Arc<GlobalCtx>) -> Result<CheckedPackage> {
+        let package_id = package.id;
         let mut compiler = Self {
             package,
             gcx,
@@ -108,7 +109,7 @@ impl<'a> Compiler<'a> {
         let (tcx, _) = compiler.type_check(sources)?;
 
         Ok(CheckedPackage {
-            package: package.id,
+            package: package_id,
             tcx,
             sources: compiler.source_map,
         })

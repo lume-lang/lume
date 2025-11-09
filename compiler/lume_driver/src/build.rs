@@ -1,5 +1,6 @@
 use lume_errors::{MapDiagnostic, SimpleDiagnostic};
 use lume_metadata::PackageMetadata;
+use lume_tir_lower::StaticMetadata;
 
 use crate::*;
 
@@ -40,13 +41,13 @@ impl Driver {
         };
 
         let gcx = Arc::new(GlobalCtx::new(session, self.dcx.to_context()));
-        let mut dependencies = gcx.session.dep_graph.iter().collect::<Vec<_>>();
+        let mut dependencies = gcx.session.dep_graph.iter().cloned().collect::<Vec<_>>();
 
         // Build all the dependencies of the package in reverse, so all the
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut merged_map = lume_mir::ModuleMap::default();
+        let mut merged_map = lume_mir::ModuleMap::new(self.package.clone(), StaticMetadata::default());
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
@@ -100,10 +101,7 @@ fn write_metadata_object(gcx: &Arc<GlobalCtx>, metadata: &PackageMetadata) -> Re
     Ok(())
 }
 
-pub struct CompiledPackage<'a> {
-    /// Defines the specific [`Package`] instance which was compiled.
-    package: &'a Package,
-
+pub struct CompiledPackage {
     /// Defines the type-checking context which was used under
     /// compilation of the package.
     tcx: TyCheckCtx,
@@ -113,10 +111,10 @@ pub struct CompiledPackage<'a> {
 }
 
 fn compiled_pkg_metadata(pkg: &CompiledPackage) -> PackageMetadata {
-    PackageMetadata::create(pkg.package, &pkg.tcx)
+    PackageMetadata::create(&pkg.mir.package, &pkg.tcx)
 }
 
-impl<'a> Compiler<'a> {
+impl Compiler {
     /// Builds the [`Package`] with the given ID from the [`Project`] into an
     /// MIR map.
     ///
@@ -127,10 +125,10 @@ impl<'a> Compiler<'a> {
     /// - or some unexpected error occured which hasn't been handled gracefully.
     #[tracing::instrument(skip_all, fields(package = %package.name), err)]
     pub fn build_package(
-        package: &'a Package,
+        package: Package,
         gcx: Arc<GlobalCtx>,
         dep_hir: &lume_hir::map::Map,
-    ) -> Result<CompiledPackage<'a>> {
+    ) -> Result<CompiledPackage> {
         let mut compiler = Self {
             package,
             gcx,
@@ -147,6 +145,6 @@ impl<'a> Compiler<'a> {
         let (tcx, typed_ir) = compiler.type_check(sources)?;
         let mir = compiler.codegen(&tcx, typed_ir)?;
 
-        Ok(CompiledPackage { package, tcx, mir })
+        Ok(CompiledPackage { tcx, mir })
     }
 }

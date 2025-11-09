@@ -1,7 +1,9 @@
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
-use lume_span::{Interned, Location, NodeId};
+use lume_session::Package;
+use lume_span::source::Location;
+use lume_span::{Interned, NodeId};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
@@ -13,14 +15,16 @@ pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 /// which is referenced by later expressions, such as call sites.
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct ModuleMap {
+    pub package: Package,
     pub metadata: StaticMetadata,
     pub functions: IndexMap<NodeId, Function>,
 }
 
 impl ModuleMap {
     /// Creates a new empty [`ModuleMap`].
-    pub fn new(metadata: StaticMetadata) -> Self {
+    pub fn new(package: Package, metadata: StaticMetadata) -> Self {
         Self {
+            package,
             metadata,
             ..Default::default()
         }
