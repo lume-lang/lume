@@ -79,9 +79,9 @@ impl Driver {
     }
 }
 
-pub struct Compiler<'a> {
+pub struct Compiler {
     /// Defines the specific [`Package`] instance to compile.
-    package: &'a Package,
+    package: Package,
 
     /// Defines the global compilation context.
     gcx: Arc<GlobalCtx>,
@@ -90,13 +90,13 @@ pub struct Compiler<'a> {
     source_map: SourceMap,
 }
 
-impl Compiler<'_> {
+impl Compiler {
     /// Parses all the source files within the current [`Package`] into HIR.
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
         self.gcx
             .dcx
-            .with(|dcx| lume_hir_lower::LowerState::lower(self.package, &mut self.source_map, dcx))
+            .with(|dcx| lume_hir_lower::LowerState::lower(&self.package, &mut self.source_map, dcx))
     }
 
     /// Type checks all the given source files.
@@ -124,9 +124,9 @@ impl Compiler<'_> {
     /// Generates MIR for all the modules within the given state object.
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
-    fn codegen(&mut self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
-        let mir =
-            tracing::info_span!("mir lowering").in_scope(|| lume_mir_lower::ModuleTransformer::transform(tcx, tir));
+    fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
+        let mir = tracing::info_span!("mir lowering")
+            .in_scope(|| lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir));
 
         let mir = tracing::info_span!("mir optimization").in_scope(|| lume_mir_opt::Optimizer::optimize(tcx, mir));
 
