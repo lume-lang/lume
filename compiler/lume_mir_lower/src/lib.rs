@@ -334,7 +334,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                         lume_mir::Operand::reference_of(metadata_reg),
                     ],
                 }),
-                location: vararg_type.location,
+                location: vararg_type.location.clone_inner(),
             });
 
         for arg in args {

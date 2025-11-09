@@ -77,7 +77,7 @@ impl SourceFileId {
 }
 
 /// A single source file within a package.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Hash, Debug, PartialEq, Eq)]
 pub struct SourceFile {
     /// Defines the unique identifier of the source file.
     pub id: SourceFileId,
