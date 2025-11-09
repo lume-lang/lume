@@ -3,7 +3,7 @@ use std::hash::Hash;
 use indexmap::{IndexMap, IndexSet};
 use lume_session::Package;
 use lume_span::source::Location;
-use lume_span::{Interned, NodeId};
+use lume_span::{Interned, NodeId, SourceFile};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
 use lume_types::TypeRef;
 use serde::{Deserialize, Serialize};
@@ -57,6 +57,20 @@ impl ModuleMap {
                 dest.functions.insert(id, func);
             }
         }
+    }
+
+    /// Returns a map of all functions in the MIR map, grouped by their parent
+    /// source file.
+    pub fn group_by_file(&self) -> IndexMap<&SourceFile, Vec<&Function>> {
+        let mut files = IndexMap::<&SourceFile, Vec<&Function>>::new();
+
+        for func in self.functions.values() {
+            let file = func.location.file.as_ref();
+
+            files.entry(file).or_default().push(func);
+        }
+
+        files
     }
 }
 

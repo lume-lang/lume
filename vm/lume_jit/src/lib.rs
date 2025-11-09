@@ -1,3 +1,4 @@
+pub mod dwarf;
 pub(crate) mod inst;
 pub(crate) mod metadata;
 pub(crate) mod ty;
@@ -18,6 +19,9 @@ use lume_errors::{Result, SimpleDiagnostic};
 use lume_gc::{CompiledFunctionMetadata, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_span::NodeId;
+use lume_span::source::Location;
+
+use crate::dwarf::RootDebugContext;
 
 pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
     ("std::type_of", lume_runtime::type_of as *const u8),
@@ -167,12 +171,25 @@ impl CraneliftBackend {
         let mut builder_ctx = FunctionBuilderContext::new();
         let mut function_metadata = HashMap::new();
 
+        let mut debug_ctx = if true {
+            let mut debug_ctx = RootDebugContext::new(&self.context, self.module().isa());
+            debug_ctx.populate_dwarf_unit();
+
+            Some(debug_ctx)
+        } else {
+            None
+        };
+
         for func in self.context.functions.values() {
             if func.signature.external {
                 continue;
             }
 
-            self.define_function(func, &mut ctx, &mut builder_ctx)?;
+            if let Some(debug_ctx) = debug_ctx.as_mut() {
+                debug_ctx.declare_function(func);
+            }
+
+            self.define_function(func, &mut ctx, &mut builder_ctx, debug_ctx.as_mut())?;
 
             let compiled_code = ctx.compiled_code().expect("expected context to be compiled");
             let code_len = compiled_code.buffer.total_size() as usize;
@@ -207,7 +224,7 @@ impl CraneliftBackend {
                 continue;
             }
 
-            let Some(metadata) = function_metadata.remove(def) else {
+            let Some(metadata) = function_metadata.get_mut(def) else {
                 continue;
             };
 
@@ -217,12 +234,16 @@ impl CraneliftBackend {
             func_stack_maps.push(CompiledFunctionMetadata {
                 start,
                 end,
-                stack_locations: metadata.stack_locations,
+                stack_locations: std::mem::take(&mut metadata.stack_locations),
             });
         }
 
         #[cfg(not(fuzzing))]
         lume_gc::declare_stack_maps(func_stack_maps);
+
+        if let Some(mut debug_ctx) = debug_ctx.take() {
+            debug_ctx.define_functions(self, &module, &function_metadata)?;
+        }
 
         Ok(module)
     }
@@ -280,6 +301,7 @@ impl CraneliftBackend {
         func: &lume_mir::Function,
         ctx: &mut cranelift::codegen::Context,
         builder_ctx: &mut FunctionBuilderContext,
+        mut debug_ctx: Option<&mut RootDebugContext>,
     ) -> Result<()> {
         let declared_func = self.declared_funcs.get(&func.id).unwrap();
         ctx.func.signature = declared_func.sig.clone();
@@ -318,6 +340,10 @@ impl CraneliftBackend {
                 .add_cause(SimpleDiagnostic::new(format!("{err:#?}")));
 
             return Err(diagnostic.into());
+        }
+
+        if let Some(debug_ctx) = debug_ctx.as_mut() {
+            debug_ctx.define_function(func.id, &ctx);
         }
 
         Ok(())

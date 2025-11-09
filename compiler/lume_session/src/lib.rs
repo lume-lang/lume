@@ -226,13 +226,13 @@ impl Package {
 
     /// Gets the relative path to a file within the project directory.
     #[expect(clippy::missing_panics_doc, reason = "infallible")]
-    pub fn relative_source_path<'a>(&'a self, file: &'a Path) -> &'a Path {
+    pub fn relative_source_path<'a>(&'a self, file: &'a Path) -> PathBuf {
         let root = self.root();
 
-        if file.is_absolute() && file.starts_with(root) {
-            file.strip_prefix(root).unwrap()
+        if file.is_absolute() {
+            file.to_path_buf()
         } else {
-            file
+            root.join(file)
         }
     }
 

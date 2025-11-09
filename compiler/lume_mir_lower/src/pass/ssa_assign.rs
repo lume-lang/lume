@@ -112,7 +112,7 @@ impl ConvertAssignmentExpressions {
                     register: *target,
                     decl: Declaration {
                         kind: Box::new(DeclarationKind::Operand(value.clone())),
-                        location: inst.location,
+                        location: inst.location.clone(),
                     },
                     ty,
                 };
