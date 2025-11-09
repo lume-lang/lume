@@ -10,9 +10,10 @@ use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
 use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
+use cranelift_codegen::ir::SourceLoc;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_gc::{CompiledFunctionMetadata, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
@@ -46,6 +47,7 @@ pub type EntrypointAddress = extern "C" fn() -> i32;
 #[derive(Debug, Clone)]
 struct DeclaredFunction {
     pub id: cranelift_module::FuncId,
+    pub name: String,
     pub sig: Signature,
 }
 
@@ -104,6 +106,7 @@ pub(crate) struct CraneliftBackend {
     intrinsics: IntrinsicFunctions,
 
     static_data: RwLock<HashMap<String, DataId>>,
+    location_indices: RwLock<IndexSet<Location>>,
     flags: settings::Flags,
 }
 
@@ -139,6 +142,7 @@ impl CraneliftBackend {
             intrinsics,
             flags,
             static_data: RwLock::new(HashMap::new()),
+            location_indices: RwLock::new(IndexSet::new()),
         })
     }
 
@@ -149,8 +153,11 @@ impl CraneliftBackend {
         for func in functions.values() {
             let (func_id, sig) = self.declare_function(func)?;
 
-            self.declared_funcs
-                .insert(func.id, DeclaredFunction { id: func_id, sig });
+            self.declared_funcs.insert(func.id, DeclaredFunction {
+                id: func_id,
+                name: func.name.clone(),
+                sig,
+            });
         }
 
         self.context.functions = functions;
@@ -352,6 +359,18 @@ impl CraneliftBackend {
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
         self.declare_static_data(value, value.as_bytes())
     }
+
+    pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
+        let (idx, _) = self.location_indices.try_write().unwrap().insert_full(loc);
+
+        SourceLoc::new(idx as u32)
+    }
+
+    pub(crate) fn lookup_source_loc(&self, loc: SourceLoc) -> Location {
+        let map = self.location_indices.try_read().unwrap();
+
+        map.get_index(loc.bits() as usize).unwrap().clone()
+    }
 }
 
 #[tracing::instrument(level = "TRACE", skip(module), err)]
@@ -419,6 +438,8 @@ impl<'ctx> LowerFunction<'ctx> {
     }
 
     pub fn define(mut self) {
+        self.set_srcloc(self.func.location.clone());
+
         // Allocate all blocks, so they can be referenced by earlier blocks
         for (idx, block) in self.func.blocks.values().enumerate() {
             if idx == 0 {
@@ -565,6 +586,12 @@ impl<'ctx> LowerFunction<'ctx> {
 
     pub(crate) fn retrieve_slot(&self, slot: SlotId) -> StackSlot {
         *self.slots.get(&slot).unwrap()
+    }
+
+    pub(crate) fn set_srcloc(&mut self, loc: Location) {
+        let src_loc = self.backend.calculate_source_loc(loc);
+
+        self.builder.set_srcloc(src_loc);
     }
 
     pub(crate) fn icmp(&mut self, cmp: IntCC, x: &lume_mir::Operand, y: &lume_mir::Operand) -> Value {
