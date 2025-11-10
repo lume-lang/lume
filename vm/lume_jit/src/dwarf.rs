@@ -51,7 +51,7 @@ impl<'ctx> RootDebugContext<'ctx> {
     pub(crate) fn new(ctx: &'ctx ModuleMap, isa: &dyn TargetIsa) -> Self {
         let encoding = Encoding {
             format: gimli::Format::Dwarf32,
-            version: 4,
+            version: 5,
             address_size: isa.frontend_config().pointer_bytes(),
         };
 
@@ -309,6 +309,9 @@ impl<'ctx> RootDebugContext<'ctx> {
 
             let encoding = line_program.encoding();
 
+            let mut file_info = FileInfo::default();
+            file_info.source = Some(LineString::String(loc.file.content.as_bytes().to_vec()));
+
             match &loc.file.name {
                 lume_span::FileName::Real(path) => {
                     let absolute_path = self.ctx.package.root().join(path);
@@ -330,7 +333,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                     };
 
                     let file_name = LineString::new(file_name, encoding, line_strings);
-                    line_program.add_file(file_name, dir_id, None)
+                    line_program.add_file(file_name, dir_id, Some(file_info))
                 }
                 lume_span::FileName::StandardLibrary(path) => {
                     let file_name = path.to_string_lossy().as_bytes().to_vec();
@@ -342,13 +345,13 @@ impl<'ctx> RootDebugContext<'ctx> {
                     ));
 
                     let file_name = LineString::new(file_name, line_program.encoding(), line_strings);
-                    line_program.add_file(file_name, dir_id, None)
+                    line_program.add_file(file_name, dir_id, Some(file_info))
                 }
                 lume_span::FileName::Internal => {
                     let dir_id = line_program.default_directory();
                     let dummy_file_name = LineString::new("<internal>", line_program.encoding(), line_strings);
 
-                    line_program.add_file(dummy_file_name, dir_id, None)
+                    line_program.add_file(dummy_file_name, dir_id, Some(file_info))
                 }
             }
         })
