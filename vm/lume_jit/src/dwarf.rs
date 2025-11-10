@@ -123,6 +123,9 @@ impl<'ctx> RootDebugContext<'ctx> {
             let comp_dir = self.dwarf.strings.add(self.ctx.package.path.display().to_string());
             entry.set(gimli::DW_AT_comp_dir, AttributeValue::StringRef(comp_dir));
 
+            // DW_AT_stmt_list
+            entry.set(gimli::DW_AT_stmt_list, AttributeValue::LineProgramRef);
+
             self.file_units.insert(file.id, unit_id);
         }
     }
