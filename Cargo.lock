@@ -1326,6 +1326,7 @@ dependencies = [
  "lume_gc",
  "lume_mir",
  "lume_runtime",
+ "lume_session",
  "lume_span",
  "lume_trace",
  "lume_type_metadata",

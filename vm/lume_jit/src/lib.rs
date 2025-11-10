@@ -18,6 +18,7 @@ use indexmap::{IndexMap, IndexSet};
 use lume_errors::{Result, SimpleDiagnostic};
 use lume_gc::{CompiledFunctionMetadata, FunctionStackMap};
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
+use lume_session::DebugInfo;
 use lume_span::NodeId;
 use lume_span::source::Location;
 
@@ -171,7 +172,7 @@ impl CraneliftBackend {
         let mut builder_ctx = FunctionBuilderContext::new();
         let mut function_metadata = HashMap::new();
 
-        let mut debug_ctx = if true {
+        let mut debug_ctx = if self.context.options.debug_info > DebugInfo::None {
             let mut debug_ctx = RootDebugContext::new(&self.context, self.module().isa());
             debug_ctx.populate_dwarf_unit();
 
