@@ -144,7 +144,7 @@ impl<'ctx> RootDebugContext<'ctx> {
         entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
 
         // DW_AT_external
-        entry.set(gimli::DW_AT_external, AttributeValue::Flag(false));
+        entry.set(gimli::DW_AT_external, AttributeValue::Flag(func.signature.external));
 
         // DW_AT_calling_convention
         entry.set(
