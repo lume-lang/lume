@@ -173,10 +173,7 @@ impl CraneliftBackend {
         let mut function_metadata = HashMap::new();
 
         let mut debug_ctx = if self.context.options.debug_info > DebugInfo::None {
-            let mut debug_ctx = RootDebugContext::new(&self.context, self.module().isa());
-            debug_ctx.populate_dwarf_unit();
-
-            Some(debug_ctx)
+            Some(RootDebugContext::new(&self.context, self.module().isa()))
         } else {
             None
         };
@@ -242,8 +239,8 @@ impl CraneliftBackend {
         #[cfg(not(fuzzing))]
         lume_gc::declare_stack_maps(func_stack_maps);
 
-        if let Some(mut debug_ctx) = debug_ctx.take() {
-            debug_ctx.define_functions(self, &module, &function_metadata)?;
+        if let Some(debug_ctx) = debug_ctx.take() {
+            debug_ctx.finish(self, &module, &function_metadata)?;
         }
 
         Ok(module)
