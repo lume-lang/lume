@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 pub(crate) use arc::ArcCommand;
 pub(crate) use build::BuildCommand;
-use clap::ValueHint;
+use clap::{ValueEnum, ValueHint};
 use error_snippet::{IntoDiagnostic, Result};
 pub(crate) use fmt::FormatCommand;
 use lume_session::OptimizationLevel;
@@ -58,6 +58,29 @@ pub struct BuildOptions {
     #[arg(help = "Path to the project", value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
+    #[arg(long, help = "Path to the runner executable to fuse with", value_name = "LIB", value_hint = ValueHint::FilePath)]
+    pub runner_path: Option<PathBuf>,
+
+    #[arg(
+        short = 'O',
+        long = "optimize",
+        default_value = "2",
+        help = "Optimization level",
+        value_parser = clap::builder::PossibleValuesParser::new(["0", "1", "2", "3", "s", "z"])
+    )]
+    pub optimize: String,
+
+    #[arg(
+        short = 'g',
+        long,
+        help = "Generate source-level debug information",
+        value_enum,
+        num_args = 0..=1,
+        require_equals = true,
+        default_missing_value = "partial"
+    )]
+    pub debug_info: DebugInfo,
+
     #[arg(long, help = "Print the type context before analyzing")]
     pub print_type_ctx: bool,
 
@@ -72,18 +95,20 @@ Optionally, can supply the name of a pass, where the MIR will be printed before 
         num_args = 0..=1
     )]
     pub dump_mir: Option<Vec<String>>,
+}
 
-    #[arg(
-        short = 'O',
-        long = "optimize",
-        default_value = "2",
-        help = "Optimization level",
-        value_parser = clap::builder::PossibleValuesParser::new(["0", "1", "2", "3", "s", "z"])
-    )]
-    pub optimize: String,
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugInfo {
+    /// Produces no debug information at all.
+    None,
 
-    #[arg(long, help = "Path to the runner executable to fuse with", value_name = "LIB", value_hint = ValueHint::FilePath)]
-    pub runner_path: Option<PathBuf>,
+    /// Include source-level debug information, useful for debugging. This
+    /// includes line number tables, symbol names and source file references.
+    Partial,
+
+    /// Include extra information for debugging, including a full copy of all
+    /// source files.
+    Full,
 }
 
 impl BuildOptions {
@@ -99,6 +124,11 @@ impl BuildOptions {
                 "s" => OptimizationLevel::Os,
                 "z" => OptimizationLevel::Oz,
                 _ => unreachable!(),
+            },
+            debug_info: match self.debug_info {
+                DebugInfo::None => lume_session::DebugInfo::None,
+                DebugInfo::Partial => lume_session::DebugInfo::Partial,
+                DebugInfo::Full => lume_session::DebugInfo::Full,
             },
             runner_path: self.runner_path.clone(),
             source_overrides: None,
