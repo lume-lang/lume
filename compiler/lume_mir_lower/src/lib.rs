@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 use lume_mir::{Function, ModuleMap, RegisterId};
 use lume_mir_queries::MirQueryCtx;
-use lume_session::Package;
+use lume_session::{Options, Package};
 use lume_span::NodeId;
 use lume_span::source::Location;
 use lume_type_metadata::{TypeMetadata, TypeMetadataId};
@@ -24,9 +24,9 @@ pub struct ModuleTransformer<'tcx> {
 
 impl<'tcx> ModuleTransformer<'tcx> {
     /// Transforms the supplied context into a MIR map.
-    pub fn transform(package: Package, tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR) -> ModuleMap {
+    pub fn transform(package: Package, tcx: &'tcx TyCheckCtx, tir: lume_tir::TypedIR, options: Options) -> ModuleMap {
         let mut transformer = Self {
-            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, tir.metadata)),
+            mcx: MirQueryCtx::new(tcx, ModuleMap::new(package, options, tir.metadata)),
         };
 
         for func in tir.functions.values() {

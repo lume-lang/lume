@@ -15,7 +15,7 @@ use lume_span::{FileName, PackageId, SourceFile};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-#[derive(Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Options {
     /// Defines whether the type context should be printed to `stdio`, after
     /// it's been inferred and type checked.
@@ -26,6 +26,9 @@ pub struct Options {
 
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
+
+    /// Defines the amount of debug information to preserve in the binary.
+    pub debug_info: DebugInfo,
 
     /// Defines the absolute path to the runner executable.
     pub runner_path: Option<PathBuf>,
@@ -39,7 +42,7 @@ pub struct Options {
 }
 
 /// Defines how much the generated IR should be optimized.
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OptimizationLevel {
     O0,
     O1,
@@ -99,6 +102,15 @@ impl OptimizationLevel {
             Self::Os => 2,
         }
     }
+}
+
+/// Defines how much debug information should be included in the binary.
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DebugInfo {
+    None,
+    Partial,
+    #[default]
+    Full,
 }
 
 /// Represents a compilation session, invoked by the driver.

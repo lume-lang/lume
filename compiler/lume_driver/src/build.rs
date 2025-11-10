@@ -47,7 +47,12 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut merged_map = lume_mir::ModuleMap::new(self.package.clone(), StaticMetadata::default());
+        let mut merged_map = lume_mir::ModuleMap::new(
+            self.package.clone(),
+            gcx.session.options.clone(),
+            StaticMetadata::default(),
+        );
+
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {

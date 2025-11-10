@@ -125,8 +125,9 @@ impl Compiler {
     #[cfg(feature = "codegen")]
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
-        let mir = tracing::info_span!("mir lowering")
-            .in_scope(|| lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir));
+        let mir = tracing::info_span!("mir lowering").in_scope(|| {
+            lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir, self.gcx.session.options.clone())
+        });
 
         let mir = tracing::info_span!("mir optimization").in_scope(|| lume_mir_opt::Optimizer::optimize(tcx, mir));
 

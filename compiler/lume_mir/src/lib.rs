@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use indexmap::{IndexMap, IndexSet};
-use lume_session::Package;
+use lume_session::{Options, Package};
 use lume_span::source::Location;
 use lume_span::{Interned, NodeId, SourceFile};
 use lume_type_metadata::{StaticMetadata, TypeMetadata};
@@ -13,18 +13,20 @@ pub const POINTER_SIZE: usize = std::mem::size_of::<*const u32>();
 /// Represents a map of all functions within a compilation
 /// module. Functions are identified by their unique ID,
 /// which is referenced by later expressions, such as call sites.
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct ModuleMap {
     pub package: Package,
+    pub options: Options,
     pub metadata: StaticMetadata,
     pub functions: IndexMap<NodeId, Function>,
 }
 
 impl ModuleMap {
     /// Creates a new empty [`ModuleMap`].
-    pub fn new(package: Package, metadata: StaticMetadata) -> Self {
+    pub fn new(package: Package, options: Options, metadata: StaticMetadata) -> Self {
         Self {
             package,
+            options,
             metadata,
             ..Default::default()
         }
