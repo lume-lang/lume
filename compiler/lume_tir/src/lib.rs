@@ -300,6 +300,19 @@ pub enum Statement {
 }
 
 impl Statement {
+    pub fn location(&self) -> Location {
+        match self {
+            Self::Variable(stmt) => stmt.location,
+            Self::Break(stmt) => stmt.location,
+            Self::Continue(stmt) => stmt.location,
+            Self::Final(stmt) => stmt.location,
+            Self::Return(stmt) => stmt.location,
+            Self::InfiniteLoop(stmt) => stmt.location,
+            Self::IteratorLoop(stmt) => stmt.location,
+            Self::Expression(stmt) => stmt.location(),
+        }
+    }
+
     /// Determines whether the given statement or all branches within
     /// the statement branch away from the current control flow.
     pub fn is_returning(&self) -> bool {

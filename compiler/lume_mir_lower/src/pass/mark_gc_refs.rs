@@ -41,9 +41,16 @@ impl Pass for MarkObjectReferences {
 
         while let Some((block, offset, register)) = self.reference_inst.pop() {
             let block = func.block_mut(block);
+
+            let location = block
+                .instructions
+                .get(offset.saturating_sub(1))
+                .or_else(|| block.instructions.get(offset))
+                .map_or(Location::empty(), |inst| inst.location.clone());
+
             let inst = lume_mir::Instruction {
                 kind: lume_mir::InstructionKind::ObjectRegister { register },
-                location: Location::empty(),
+                location,
             };
 
             // Even though it's valid for the offset to be the same length

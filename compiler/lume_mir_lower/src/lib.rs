@@ -163,7 +163,13 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         //
         // We're assuming it'll be a void return, since the type checker should
         // have detected a missing return statement in a non-void function.
-        self.func.current_block_mut().return_void(Location::empty());
+        let ret_loc = block
+            .statements
+            .last()
+            .map(|stmt| stmt.location().clone_inner())
+            .unwrap_or(Location::empty());
+
+        self.func.current_block_mut().return_void(ret_loc);
     }
 
     pub(crate) fn tcx(&self) -> &TyCheckCtx {
@@ -307,9 +313,13 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
         params: &[lume_mir::Parameter],
         mut args: Vec<lume_mir::Operand>,
     ) -> Vec<lume_mir::Operand> {
+        let last_arg = args.last().map(|a| a.location.clone());
+
         let mut new_args = args.drain(..params.len() - 1).collect::<Vec<_>>();
         let vararg_type = &params.last().unwrap().type_ref;
-        let metadata_reg = self.declare_metadata_of(vararg_type, vararg_type.location.clone_inner());
+
+        let vararg_loc = last_arg.unwrap_or_else(|| vararg_type.location.clone_inner());
+        let metadata_reg = self.declare_metadata_of(vararg_type, vararg_loc.clone());
 
         let array_alloc_func = self
             .transformer
@@ -334,7 +344,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                         lume_mir::Operand::reference_of(metadata_reg),
                     ],
                 }),
-                location: vararg_type.location.clone_inner(),
+                location: vararg_loc.clone(),
             });
 
         for arg in args {
@@ -346,7 +356,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
                     lume_mir::Operand::reference_of(metadata_reg),
                 ],
                 lume_mir::Type::void(),
-                vararg_type.location.clone_inner(),
+                vararg_loc.clone(),
             );
         }
 
