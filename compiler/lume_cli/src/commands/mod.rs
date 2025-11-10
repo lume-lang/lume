@@ -75,7 +75,9 @@ pub struct BuildOptions {
         help = "Generate source-level debug information",
         value_enum,
         num_args = 0..=1,
-        default_missing_value = "partial"
+        required = false,
+        default_value = "partial",
+        default_missing_value = "partial",
     )]
     pub debug_info: DebugInfo,
 
