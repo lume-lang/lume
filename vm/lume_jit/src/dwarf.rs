@@ -36,11 +36,12 @@ pub(crate) fn producer() -> String {
 /// a whole.
 pub(crate) struct RootDebugContext<'ctx> {
     ctx: &'ctx ModuleMap,
-    dwarf_unit: DwarfUnit,
+    dwarf: Dwarf,
+    encoding: Encoding,
     endianess: RunTimeEndian,
     stack_register: Register,
 
-    file_units: IndexMap<SourceFileId, UnitEntryId>,
+    file_units: IndexMap<SourceFileId, UnitId>,
     func_entries: IndexMap<NodeId, UnitEntryId>,
     func_mach_src: IndexMap<NodeId, Vec<MachSrcLoc<Final>>>,
     source_locations: IndexMap<SourceFileId, FileId>,
@@ -54,7 +55,7 @@ impl<'ctx> RootDebugContext<'ctx> {
             address_size: isa.frontend_config().pointer_bytes(),
         };
 
-        let dwarf_unit = DwarfUnit::new(encoding);
+        let dwarf = Dwarf::new();
 
         let endianess = match isa.endianness() {
             Endianness::Big => RunTimeEndian::Big,
@@ -70,7 +71,8 @@ impl<'ctx> RootDebugContext<'ctx> {
 
         Self {
             ctx,
-            dwarf_unit,
+            dwarf,
+            encoding,
             endianess,
             stack_register,
             file_units: IndexMap::new(),
@@ -83,28 +85,43 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Populates the given root DWARF unit with attributes relating
     /// to the given codegen context.
     pub(crate) fn populate_dwarf_unit(&mut self) {
-        let root = self.dwarf_unit.unit.root();
-
         for (file, _) in self.ctx.group_by_file() {
-            let unit_id = self.dwarf_unit.unit.add(root, gimli::DW_TAG_compile_unit);
-            let unit = self.dwarf_unit.unit.get_mut(unit_id);
+            // Define line program
+            let line_strings = &mut self.dwarf.line_strings;
+            let file_name = file.name.to_pathbuf().file_name().unwrap();
+
+            let working_dir = LineString::new(self.ctx.package.path.display().to_string(), self.encoding, line_strings);
+            let source_file = LineString::new(file_name.to_str().unwrap(), self.encoding, line_strings);
+
+            let line_program = LineProgram::new(
+                self.encoding,
+                LineEncoding::default(),
+                working_dir,
+                None,
+                source_file,
+                None,
+            );
+
+            let unit_id = self.dwarf.units.add(Unit::new(self.encoding, line_program));
+            let unit = self.dwarf.units.get_mut(unit_id);
+            let entry = unit.get_mut(unit.root());
 
             let file_name = file.name.to_pathbuf().file_name().unwrap();
 
             // DW_AT_language
-            unit.set(gimli::DW_AT_language, AttributeValue::Language(DW_LANG_LUME));
+            entry.set(gimli::DW_AT_language, AttributeValue::Language(DW_LANG_LUME));
 
             // DW_AT_producer
-            let producter_str = self.dwarf_unit.strings.add(producer());
-            unit.set(gimli::DW_AT_producer, AttributeValue::StringRef(producter_str));
+            let producter_str = self.dwarf.strings.add(producer());
+            entry.set(gimli::DW_AT_producer, AttributeValue::StringRef(producter_str));
 
             // DW_AT_name
-            let name = self.dwarf_unit.strings.add(file_name.to_str().unwrap());
-            unit.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
+            let name = self.dwarf.strings.add(file_name.to_str().unwrap());
+            entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
 
             // DW_AT_comp_dir
-            let comp_dir = self.dwarf_unit.strings.add(self.ctx.package.path.display().to_string());
-            unit.set(gimli::DW_AT_comp_dir, AttributeValue::StringRef(comp_dir));
+            let comp_dir = self.dwarf.strings.add(self.ctx.package.path.display().to_string());
+            entry.set(gimli::DW_AT_comp_dir, AttributeValue::StringRef(comp_dir));
 
             self.file_units.insert(file.id, unit_id);
         }
@@ -113,13 +130,14 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Declares the initial debug information for the given function, so the
     /// layout of the DWARF tag is laid out. Some fields may be unset.
     pub(crate) fn declare_function(&mut self, func: &Function) {
-        let compile_unit = *self.file_units.get(&func.location.file.id).unwrap();
+        let compile_unit_id = *self.file_units.get(&func.location.file.id).unwrap();
+        let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
 
-        let entry_id = self.dwarf_unit.unit.add(compile_unit, gimli::DW_TAG_subprogram);
-        let entry = self.dwarf_unit.unit.get_mut(entry_id);
+        let entry_id = compile_unit.add(compile_unit.root(), gimli::DW_TAG_subprogram);
+        let entry = compile_unit.get_mut(entry_id);
 
         // DW_AT_name
-        let name = self.dwarf_unit.strings.add(func.name.clone());
+        let name = self.dwarf.strings.add(func.name.clone());
         entry.set(gimli::DW_AT_name, AttributeValue::StringRef(name));
 
         // DW_AT_external
@@ -157,22 +175,7 @@ impl<'ctx> RootDebugContext<'ctx> {
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
         for (file, functions) in self.ctx.group_by_file() {
-            let compile_unit = *self.file_units.get(&file.id).unwrap();
-
-            // Define line program
-            let encoding = self.dwarf_unit.unit.encoding();
-            let line_strings = &mut self.dwarf_unit.line_strings;
-            let file_name = file.name.to_pathbuf().file_name().unwrap();
-
-            let working_dir = LineString::new(self.ctx.package.path.display().to_string(), encoding, line_strings);
-            let source_file = LineString::new(file_name.to_str().unwrap(), encoding, line_strings);
-
-            self.dwarf_unit.unit.line_program =
-                LineProgram::new(encoding, LineEncoding::default(), working_dir, None, source_file, None);
-
-            // DW_AT_stmt_list
-            let unit = self.dwarf_unit.unit.get_mut(compile_unit);
-            unit.set(gimli::DW_AT_stmt_list, AttributeValue::LineProgramRef);
+            let compile_unit_id = *self.file_units.get(&file.id).unwrap();
 
             for func in functions {
                 let Some(entry_id) = self.func_entries.get(&func.id).copied() else {
@@ -188,14 +191,16 @@ impl<'ctx> RootDebugContext<'ctx> {
 
                 let func_start_addr = Address::Constant(func_start.addr() as u64);
 
-                let entry = self.dwarf_unit.unit.get_mut(entry_id);
+                let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+                let entry = compile_unit.get_mut(entry_id);
                 entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_start_addr));
                 entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size as u64));
 
-                self.dwarf_unit.unit.line_program.begin_sequence(Some(func_start_addr));
+                compile_unit.line_program.begin_sequence(Some(func_start_addr));
 
                 for MachSrcLoc { start, loc, .. } in self.func_mach_src.swap_remove(&func.id).unwrap() {
-                    self.dwarf_unit.unit.line_program.row().address_offset = u64::from(start);
+                    let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+                    compile_unit.line_program.row().address_offset = u64::from(start);
 
                     let location = if !loc.is_default() {
                         backend.lookup_source_loc(loc)
@@ -203,20 +208,23 @@ impl<'ctx> RootDebugContext<'ctx> {
                         self.ctx.function(func.id).location.clone()
                     };
 
-                    let (file_id, line, _) = self.get_source_span(location);
+                    let (file_id, line, _) = self.get_source_span(location, compile_unit_id);
 
-                    self.dwarf_unit.unit.line_program.row().file = file_id;
-                    self.dwarf_unit.unit.line_program.row().line = line as u64;
-                    self.dwarf_unit.unit.line_program.row().column = 1;
-                    self.dwarf_unit.unit.line_program.generate_row();
+                    let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+                    compile_unit.line_program.row().file = file_id;
+                    compile_unit.line_program.row().line = line as u64;
+                    compile_unit.line_program.row().column = 1;
+                    compile_unit.line_program.generate_row();
                 }
 
-                self.dwarf_unit.unit.line_program.end_sequence(func_end.addr() as u64);
+                let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+                compile_unit.line_program.end_sequence(func_end.addr() as u64);
 
                 // DW_AT_decl_*
-                let (file_id, line, _) = self.get_source_span(func.location.clone());
+                let (file_id, line, _) = self.get_source_span(func.location.clone(), compile_unit_id);
 
-                let entry = self.dwarf_unit.unit.get_mut(entry_id);
+                let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+                let entry = compile_unit.get_mut(entry_id);
                 entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
                 entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
             }
@@ -260,7 +268,7 @@ impl<'ctx> RootDebugContext<'ctx> {
         }
 
         let mut sections = Sections::new(EndianVec::<RunTimeEndian>::new(self.endianess));
-        self.dwarf_unit.write(&mut sections).unwrap();
+        self.dwarf.write(&mut sections).unwrap();
 
         sections
             .for_each_mut(|id, section| {
@@ -284,9 +292,9 @@ impl<'ctx> RootDebugContext<'ctx> {
         Ok(())
     }
 
-    fn get_source_span(&mut self, loc: Location) -> (FileId, usize, usize) {
+    fn get_source_span(&mut self, loc: Location, unit: UnitId) -> (FileId, usize, usize) {
         let (line, column) = loc.coordinates();
-        let file_id = self.add_source_file(loc);
+        let file_id = self.add_source_file(loc, unit);
 
         (file_id, line + 1, column + 1)
     }
@@ -294,10 +302,10 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Gets the [`FileId`] which corresponds to the file associated with the
     /// given [`Location`]. If no [`FileId`] exists for the given [`Location`],
     /// a new one is created and returned.
-    fn add_source_file(&mut self, loc: Location) -> FileId {
+    fn add_source_file(&mut self, loc: Location, unit: UnitId) -> FileId {
         *self.source_locations.entry(loc.file.id).or_insert_with(|| {
-            let line_program: &mut LineProgram = &mut self.dwarf_unit.unit.line_program;
-            let line_strings: &mut LineStringTable = &mut self.dwarf_unit.line_strings;
+            let line_program: &mut LineProgram = &mut self.dwarf.units.get_mut(unit).line_program;
+            let line_strings: &mut LineStringTable = &mut self.dwarf.line_strings;
 
             let encoding = line_program.encoding();
 
