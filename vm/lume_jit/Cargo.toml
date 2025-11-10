@@ -12,6 +12,7 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_gc = { path = "../lume_gc" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_runtime = { path = "../lume_runtime" }
+lume_session = { path = "../../compiler/lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_trace = { path = "../../crates/lume_trace" }
 lume_type_metadata = { path = "../../compiler/lume_type_metadata" }

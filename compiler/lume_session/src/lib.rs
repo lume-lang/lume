@@ -105,12 +105,20 @@ impl OptimizationLevel {
 }
 
 /// Defines how much debug information should be included in the binary.
-#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DebugInfo {
     None,
     Partial,
     #[default]
     Full,
+}
+
+impl DebugInfo {
+    /// Determines whether to embed source content into the binary, given the
+    /// debug info level.
+    pub fn embed_sources(self) -> bool {
+        self >= Self::Full
+    }
 }
 
 /// Represents a compilation session, invoked by the driver.

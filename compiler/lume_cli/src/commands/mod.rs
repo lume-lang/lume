@@ -71,12 +71,10 @@ pub struct BuildOptions {
     pub optimize: String,
 
     #[arg(
-        short = 'g',
         long,
         help = "Generate source-level debug information",
         value_enum,
         num_args = 0..=1,
-        require_equals = true,
         default_missing_value = "partial"
     )]
     pub debug_info: DebugInfo,
