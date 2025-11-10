@@ -231,12 +231,13 @@ impl<'ctx> RootDebugContext<'ctx> {
                 compile_unit.line_program.end_sequence(func_end.addr() as u64);
 
                 // DW_AT_decl_*
-                let (file_id, line, _) = self.get_source_span(func.location.clone(), compile_unit_id);
+                let (file_id, line, column) = self.get_source_span(func.location.clone(), compile_unit_id);
 
                 let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
                 let entry = compile_unit.get_mut(entry_id);
                 entry.set(gimli::DW_AT_decl_file, AttributeValue::FileIndex(Some(file_id)));
                 entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
+                entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
             }
         }
 
