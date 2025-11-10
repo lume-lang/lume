@@ -69,7 +69,7 @@ impl<'ctx> RootDebugContext<'ctx> {
             arch => panic!("unsupported ISA archicture: {arch}"),
         };
 
-        Self {
+        let mut debug_ctx = Self {
             ctx,
             dwarf,
             encoding,
@@ -79,12 +79,15 @@ impl<'ctx> RootDebugContext<'ctx> {
             func_entries: IndexMap::new(),
             func_mach_src: IndexMap::new(),
             source_locations: IndexMap::new(),
-        }
+        };
+
+        debug_ctx.create_compile_units();
+
+        debug_ctx
     }
 
-    /// Populates the given root DWARF unit with attributes relating
-    /// to the given codegen context.
-    pub(crate) fn populate_dwarf_unit(&mut self) {
+    /// Creates compile units for all files within the compilation context.
+    fn create_compile_units(&mut self) {
         for (file, _) in self.ctx.group_by_file() {
             // Define line program
             let line_strings = &mut self.dwarf.line_strings;
@@ -164,6 +167,8 @@ impl<'ctx> RootDebugContext<'ctx> {
         self.func_entries.insert(func.id, entry_id);
     }
 
+    /// Retrieves the source locations from the given function and places them
+    /// into the DWARF unit.
     pub(crate) fn define_function(&mut self, func_id: NodeId, ctx: &cranelift::codegen::Context) {
         let mcr = ctx.compiled_code().unwrap();
         let mach_loc = mcr.buffer.get_srclocs_sorted().to_vec();
@@ -171,7 +176,9 @@ impl<'ctx> RootDebugContext<'ctx> {
         self.func_mach_src.insert(func_id, mach_loc);
     }
 
-    pub(crate) fn define_functions(
+    /// Populates all the function units in the DWARF unit with correct function
+    /// addresses, as well as building a valid line program.
+    fn populate_function_units(
         &mut self,
         backend: &CraneliftBackend,
         module: &JITModule,
@@ -233,17 +240,20 @@ impl<'ctx> RootDebugContext<'ctx> {
             }
         }
 
-        self.emit_obj(backend, module, function_metadata)?;
-
         Ok(())
     }
 
-    pub fn emit_obj(
-        &mut self,
+    /// Finish building the final DWARF debug binary and registers it via the
+    /// GDB/LLDB JIT interface descriptor, making it available when debugging
+    /// the binary.
+    pub fn finish(
+        mut self,
         backend: &CraneliftBackend,
         module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
+        self.populate_function_units(backend, module, function_metadata)?;
+
         let endian = match self.endianess {
             RunTimeEndian::Big => object::Endianness::Big,
             RunTimeEndian::Little => object::Endianness::Little,
@@ -295,6 +305,8 @@ impl<'ctx> RootDebugContext<'ctx> {
         Ok(())
     }
 
+    /// Gets the source span of the given [`Location`], from within the given
+    /// compilation unit.
     fn get_source_span(&mut self, loc: Location, unit: UnitId) -> (FileId, usize, usize) {
         let (line, column) = loc.coordinates();
         let file_id = self.add_source_file(loc, unit);
