@@ -19,7 +19,7 @@ use object::{self, BinaryFormat, SectionKind, SymbolKind, SymbolScope};
 use crate::{CraneliftBackend, FunctionMetadata};
 
 /// DWARF identifier for the Lume language
-pub const DW_LANG_LUME: DwLang = DwLang(0x00D8_u16);
+pub const DW_LANG_LUME: DwLang = DwLang(0xA8D8_u16);
 
 /// Returns the content of the "producer" tag (`DW_AT_producer`) in the
 /// resulting DWARF debug info unit.
