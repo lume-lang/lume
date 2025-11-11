@@ -187,6 +187,8 @@ impl<'ctx> RootDebugContext<'ctx> {
         for (file, functions) in self.ctx.group_by_file() {
             let compile_unit_id = *self.file_units.get(&file.id).unwrap();
 
+            let mut ranges = Vec::new();
+
             for func in functions {
                 let Some(entry_id) = self.func_entries.get(&func.id).copied() else {
                     continue;
@@ -205,6 +207,11 @@ impl<'ctx> RootDebugContext<'ctx> {
                 let entry = compile_unit.get_mut(entry_id);
                 entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_start_addr));
                 entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size as u64));
+
+                ranges.push(Range::StartLength {
+                    begin: func_start_addr,
+                    length: func_size as u64,
+                });
 
                 compile_unit.line_program.begin_sequence(Some(func_start_addr));
 
@@ -239,6 +246,12 @@ impl<'ctx> RootDebugContext<'ctx> {
                 entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
                 entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
             }
+
+            let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
+            let range_list_id = compile_unit.ranges.add(RangeList(ranges));
+
+            let root = compile_unit.get_mut(compile_unit.root());
+            root.set(gimli::DW_AT_ranges, AttributeValue::RangeListRef(range_list_id));
         }
 
         Ok(())
