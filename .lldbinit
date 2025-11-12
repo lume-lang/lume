@@ -1,0 +1,25 @@
+#####
+##
+##  NOTE:
+##
+##  This file will NOT automatically the loaded by LLDB.
+##  To allow LLDB to the local `.lldbinit` files, create an
+##  `.lldbinit` file in your home directory with the following content:
+##
+##    settings set target.load-cwd-lldbinit true
+##
+##  You can also use the following command:
+##
+##    echo "settings set target.load-cwd-lldbinit true" >> ~/.lldbinit
+##
+#####
+
+## Required for LLDB to use the GDB JIT interface.
+##
+## Leave this on - otherwise, you will get no debug information.
+settings set plugin.jit-loader.gdb.enable on
+
+## Sets a breakpoint just before entering the JIT-compiled host.
+##
+## Uncomment if you need to debug anything within the JIT itself.
+b --file lume_runner/src/main.rs --line 33
