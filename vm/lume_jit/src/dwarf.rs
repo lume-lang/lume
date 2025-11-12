@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use cranelift::codegen::ir::Endianness;
 use cranelift::prelude::isa::TargetIsa;
 use cranelift_codegen::{Final, MachSrcLoc};
+use cranelift_jit::JITModule;
 use gimli::write::*;
 use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian};
 use indexmap::IndexMap;
@@ -180,6 +181,7 @@ impl<'ctx> RootDebugContext<'ctx> {
     fn populate_function_units(
         &mut self,
         backend: &CraneliftBackend,
+        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
         for (file, functions) in self.ctx.group_by_file() {
@@ -196,7 +198,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                 let metadata = function_metadata.get(&func.id).unwrap();
                 let func_size = metadata.total_size;
 
-                let func_start = backend.module().get_finalized_function(func_decl.id);
+                let func_start = module.get_finalized_function(func_decl.id);
                 let func_end = unsafe { func_start.byte_add(func_size) };
 
                 let func_start_addr = Address::Constant(func_start.addr() as u64);
@@ -261,9 +263,10 @@ impl<'ctx> RootDebugContext<'ctx> {
     pub fn finish(
         mut self,
         backend: &CraneliftBackend,
+        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
-        self.populate_function_units(backend, function_metadata)?;
+        self.populate_function_units(backend, module, function_metadata)?;
 
         let arch = match backend.isa.triple().architecture {
             target_lexicon::Architecture::Aarch64(_) => object::Architecture::Aarch64,
@@ -279,14 +282,14 @@ impl<'ctx> RootDebugContext<'ctx> {
             RunTimeEndian::Little => object::Endianness::Little,
         };
 
-        let (bytes_ptr, bytes_len) = self.get_compiled_region(backend, function_metadata);
+        let (bytes_ptr, bytes_len) = self.get_compiled_region(backend, module, function_metadata);
 
         let mut object = Object::new(BinaryFormat::Elf, arch, endian);
         let text_id = object.section_id(StandardSection::Text);
 
         for node_id in self.func_entries.keys() {
             let func_decl = backend.declared_funcs.get(node_id).unwrap();
-            let func_start = backend.module().get_finalized_function(func_decl.id);
+            let func_start = module.get_finalized_function(func_decl.id);
 
             let offset = func_start.addr() - bytes_ptr.addr();
             let size = function_metadata.get(node_id).unwrap().total_size;
@@ -409,6 +412,7 @@ impl<'ctx> RootDebugContext<'ctx> {
     fn get_compiled_region(
         &self,
         backend: &CraneliftBackend,
+        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> (*const u8, usize) {
         let mut func_spans = HashMap::new();
@@ -417,7 +421,7 @@ impl<'ctx> RootDebugContext<'ctx> {
             let func_decl = backend.declared_funcs.get(node_id).unwrap();
             let metadata = function_metadata.get(node_id).unwrap();
 
-            let func_start = backend.module().get_finalized_function(func_decl.id);
+            let func_start = module.get_finalized_function(func_decl.id);
             let func_end = unsafe { func_start.byte_add(metadata.total_size) };
 
             func_spans.insert(*node_id, func_start..func_end);
