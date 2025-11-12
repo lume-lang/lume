@@ -243,7 +243,7 @@ impl CraneliftBackend {
         lume_gc::declare_stack_maps(func_stack_maps);
 
         if let Some(debug_ctx) = debug_ctx.take() {
-            debug_ctx.finish(self, &function_metadata)?;
+            debug_ctx.finish(self, &module, &function_metadata)?;
         }
 
         Ok(module)
