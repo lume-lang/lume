@@ -55,24 +55,26 @@ pub fn project_or_cwd(path: Option<&PathBuf>) -> Result<String> {
 
 #[derive(Debug, clap::Parser)]
 pub struct BuildOptions {
-    #[arg(help = "Path to the project", value_name = "DIR", value_hint = ValueHint::DirPath)]
+    /// Path to the project
+    #[arg(value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
-    #[arg(long, help = "Path to the runner executable to fuse with", value_name = "LIB", value_hint = ValueHint::FilePath)]
+    /// Path to the runner executable to fuse with
+    #[arg(long, value_name = "LIB", value_hint = ValueHint::FilePath)]
     pub runner_path: Option<PathBuf>,
 
+    /// Optimization level
     #[arg(
         short = 'O',
         long = "optimize",
         default_value = "2",
-        help = "Optimization level",
         value_parser = clap::builder::PossibleValuesParser::new(["0", "1", "2", "3", "s", "z"])
     )]
     pub optimize: String,
 
+    /// Generate source-level debug information
     #[arg(
         long,
-        help = "Generate source-level debug information",
         value_enum,
         num_args = 0..=1,
         required = false,
@@ -81,18 +83,21 @@ pub struct BuildOptions {
     )]
     pub debug_info: DebugInfo,
 
-    #[arg(long, help = "Print the type context before analyzing")]
+    /// Print the type context before analyzing
+    #[arg(long, help_heading = "Development")]
     pub print_type_ctx: bool,
 
+    /// Prints the generated MIR
+    ///
+    /// Optionally, can supply the name of a pass, where the MIR will be printed
+    /// before executing.
     #[arg(
         long,
-        help = "Prints the generated MIR",
-        long_help = "Prints the generated MIR for all functions.
-Optionally, can supply the name of a pass, where the MIR will be printed before executing.",
+        help_heading = "Development",
         value_name = "PASS",
         value_delimiter = ',',
         required = false,
-        num_args = 0..=1
+        num_args = 0..=1,
     )]
     pub dump_mir: Option<Vec<String>>,
 }
