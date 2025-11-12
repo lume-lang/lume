@@ -5,7 +5,6 @@ use std::sync::Mutex;
 use cranelift::codegen::ir::Endianness;
 use cranelift::prelude::isa::TargetIsa;
 use cranelift_codegen::{Final, MachSrcLoc};
-use cranelift_jit::JITModule;
 use gimli::write::*;
 use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian};
 use indexmap::IndexMap;
@@ -14,7 +13,7 @@ use lume_mir::{Function, ModuleMap};
 use lume_span::source::Location;
 use lume_span::{NodeId, SourceFileId};
 use object::write::{Object, StandardSection, StandardSegment, Symbol, SymbolSection};
-use object::{self, BinaryFormat, SectionKind, SymbolKind, SymbolScope};
+use object::{BinaryFormat, NativeEndian, SectionKind, SymbolKind, SymbolScope};
 
 use crate::{CraneliftBackend, FunctionMetadata};
 
@@ -181,7 +180,6 @@ impl<'ctx> RootDebugContext<'ctx> {
     fn populate_function_units(
         &mut self,
         backend: &CraneliftBackend,
-        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
         for (file, functions) in self.ctx.group_by_file() {
@@ -198,7 +196,7 @@ impl<'ctx> RootDebugContext<'ctx> {
                 let metadata = function_metadata.get(&func.id).unwrap();
                 let func_size = metadata.total_size;
 
-                let func_start = module.get_finalized_function(func_decl.id);
+                let func_start = backend.module().get_finalized_function(func_decl.id);
                 let func_end = unsafe { func_start.byte_add(func_size) };
 
                 let func_start_addr = Address::Constant(func_start.addr() as u64);
@@ -263,29 +261,31 @@ impl<'ctx> RootDebugContext<'ctx> {
     pub fn finish(
         mut self,
         backend: &CraneliftBackend,
-        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
-        self.populate_function_units(backend, module, function_metadata)?;
+        self.populate_function_units(backend, function_metadata)?;
 
         let endian = match self.endianess {
             RunTimeEndian::Big => object::Endianness::Big,
             RunTimeEndian::Little => object::Endianness::Little,
         };
 
+        let (bytes_ptr, bytes_len) = self.get_compiled_region(backend, function_metadata);
+
         let mut object = Object::new(BinaryFormat::Elf, object::Architecture::Aarch64, endian);
         let text_id = object.section_id(StandardSection::Text);
 
         for node_id in self.func_entries.keys() {
             let func_decl = backend.declared_funcs.get(node_id).unwrap();
-            let metadata = function_metadata.get(node_id).unwrap();
+            let func_start = backend.module().get_finalized_function(func_decl.id);
 
-            let func_start = module.get_finalized_function(func_decl.id).cast_mut();
+            let offset = func_start.addr() - bytes_ptr.addr();
+            let size = function_metadata.get(node_id).unwrap().total_size;
 
             object.add_symbol(Symbol {
                 name: func_decl.name.as_bytes().to_vec(),
-                value: func_start.addr() as u64,
-                size: metadata.total_size as u64,
+                value: offset as u64,
+                size: size as u64,
                 kind: SymbolKind::Text,
                 scope: SymbolScope::Dynamic,
                 weak: false,
@@ -314,7 +314,10 @@ impl<'ctx> RootDebugContext<'ctx> {
             .map_diagnostic()?;
 
         let bytes = object.write().unwrap();
-        register_jit_code(&bytes);
+        let symfile_addr = Box::leak(bytes.into_boxed_slice());
+
+        patch_binary_file(symfile_addr, bytes_ptr, bytes_len)?;
+        register_jit_code(symfile_addr);
 
         Ok(())
     }
@@ -391,6 +394,109 @@ impl<'ctx> RootDebugContext<'ctx> {
             }
         })
     }
+
+    /// Gets the pointer to the span which contains all the JIT-compiled
+    /// functions from Cranelift.
+    fn get_compiled_region(
+        &self,
+        backend: &CraneliftBackend,
+        function_metadata: &HashMap<NodeId, FunctionMetadata>,
+    ) -> (*const u8, usize) {
+        let mut func_spans = HashMap::new();
+
+        for node_id in self.func_entries.keys() {
+            let func_decl = backend.declared_funcs.get(node_id).unwrap();
+            let metadata = function_metadata.get(node_id).unwrap();
+
+            let func_start = backend.module().get_finalized_function(func_decl.id);
+            let func_end = unsafe { func_start.byte_add(metadata.total_size) };
+
+            func_spans.insert(*node_id, func_start..func_end);
+        }
+
+        let code_start = func_spans.values().map(|r| r.start).min().unwrap_or_default();
+        let code_end = func_spans.values().map(|r| r.end).max().unwrap_or_default();
+        let code_size = unsafe { code_end.byte_offset_from(code_start).cast_unsigned() };
+
+        (code_start, code_size)
+    }
+}
+
+/// `object` restricts which attributes can be defined as a custom value, so we
+/// manually patch the ELF binary.
+///
+/// This operation MUST be done in-memory and without copying the file content.
+fn patch_binary_file(bytes: &mut [u8], code_start: *const u8, code_size: usize) -> Result<()> {
+    use object::elf::FileHeader64;
+    use object::read::elf::ElfFile;
+
+    const SECTION_HEADER_SIZE: usize = 64;
+
+    const TEXT_SECTION_TYPE: u32 = object::elf::SHT_PROGBITS;
+    const TEXT_SECTION_FLAGS: u64 = (object::elf::SHF_ALLOC | object::elf::SHF_EXECINSTR) as u64;
+
+    fn read_u32(bytes: &[u8], offset: usize) -> u32 {
+        let slice = &bytes[offset..offset + 4];
+        let arr: &[u8; 4] = slice.try_into().unwrap();
+
+        u32::from_ne_bytes(*arr)
+    }
+
+    fn read_u64(bytes: &[u8], offset: usize) -> u64 {
+        let slice = &bytes[offset..offset + 8];
+        let arr: &[u8; 8] = slice.try_into().unwrap();
+
+        u64::from_ne_bytes(*arr)
+    }
+
+    fn write_u64(bytes: &mut [u8], offset: usize, value: u64) {
+        bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    let file = ElfFile::<FileHeader64<NativeEndian>>::parse(bytes as &[u8]).map_diagnostic()?;
+    let section_num = file.elf_header().e_shnum.get(NativeEndian);
+    let section_off = file.elf_header().e_shoff.get(NativeEndian);
+
+    let mut offset = section_off as usize;
+
+    for _ in 0..section_num {
+        let sh_type = read_u32(bytes, offset + 4);
+        let sh_flag = read_u64(bytes, offset + 8);
+
+        // Attempt to determine whether this is the `.text` section without having to
+        // lookup the string table.
+        let is_text_section = sh_type == TEXT_SECTION_TYPE && sh_flag == TEXT_SECTION_FLAGS;
+
+        // For the `.text` section:
+        //   - set `sh_addr` to the in-memory location of the compiled functions,
+        //   - set `sh_size` to the size of the compiled region in bytes.
+        if is_text_section {
+            // sh_addr
+            write_u64(bytes, offset + 16, code_start.addr() as u64);
+
+            // sh_size
+            write_u64(bytes, offset + 32, code_size as u64);
+        }
+        // For all non-`.text` sections:
+        //   - set `sh_addr` to the in-memory location of the ELF binary,
+        //   - set `sh_flag` to `SHF_ALLOC` so debuggers will load them into memory.
+        //
+        // Skip the NULL section
+        else if sh_type != 0 {
+            let sh_offset = read_u64(bytes, offset + 24);
+            let sh_abs_addr = unsafe { bytes.as_ptr().byte_add(sh_offset as usize) };
+
+            // sh_flag
+            write_u64(bytes, offset + 8, object::elf::SHF_ALLOC as u64);
+
+            // sh_addr
+            write_u64(bytes, offset + 16, sh_abs_addr.addr() as u64);
+        }
+
+        offset += SECTION_HEADER_SIZE;
+    }
+
+    Ok(())
 }
 
 #[repr(C)]
@@ -439,15 +545,13 @@ pub extern "C" fn __jit_debug_register_code() {
 
 static LIST: Mutex<Vec<GlobalPointer<JITCodeEntry>>> = Mutex::new(Vec::new());
 
-fn register_jit_code(symfile_data: &[u8]) {
+fn register_jit_code(symfile_addr: &[u8]) {
     unsafe {
-        let symfile_addr = Box::leak(symfile_data.to_vec().into_boxed_slice());
-
         let entry = Box::into_raw(Box::new(JITCodeEntry {
             next_entry: std::ptr::null_mut(),
             prev_entry: std::ptr::null_mut(),
             symfile_addr: symfile_addr.as_ptr(),
-            symfile_size: symfile_data.len() as u64,
+            symfile_size: symfile_addr.len() as u64,
         }));
 
         {
