@@ -6,12 +6,13 @@ pub(crate) mod value;
 
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use cranelift::codegen::ir::{BlockArg, GlobalValue, StackSlot};
 use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
 use cranelift_codegen::ir::SourceLoc;
+use cranelift_codegen::isa::TargetIsa;
 use cranelift_jit::{JITBuilder, JITModule};
 use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
 use indexmap::{IndexMap, IndexSet};
@@ -112,6 +113,7 @@ pub(crate) struct CraneliftBackend {
 
     static_data: RwLock<HashMap<String, DataId>>,
     location_indices: RwLock<IndexSet<Location>>,
+    isa: Arc<dyn TargetIsa>,
     flags: settings::Flags,
 }
 
@@ -123,7 +125,7 @@ impl CraneliftBackend {
 
         let flags = settings::Flags::new(settings);
         let isa = cranelift_native::builder().unwrap().finish(flags.clone()).unwrap();
-        let mut builder = JITBuilder::with_isa(isa, cranelift_module::default_libcall_names());
+        let mut builder = JITBuilder::with_isa(isa.clone(), cranelift_module::default_libcall_names());
 
         for (name, ptr) in INTRINSIC_FUNCTIONS {
             builder.symbol(*name, *ptr);
@@ -146,6 +148,7 @@ impl CraneliftBackend {
             declared_funcs: IndexMap::new(),
             intrinsics,
             flags,
+            isa,
             static_data: RwLock::new(HashMap::new()),
             location_indices: RwLock::new(IndexSet::new()),
         })

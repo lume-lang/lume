@@ -265,6 +265,15 @@ impl<'ctx> RootDebugContext<'ctx> {
     ) -> Result<()> {
         self.populate_function_units(backend, function_metadata)?;
 
+        let arch = match backend.isa.triple().architecture {
+            target_lexicon::Architecture::Aarch64(_) => object::Architecture::Aarch64,
+            target_lexicon::Architecture::Riscv64(_) => object::Architecture::Riscv64,
+            target_lexicon::Architecture::X86_64 | target_lexicon::Architecture::X86_64h => {
+                object::Architecture::X86_64
+            }
+            arch => panic!("unsupported ISA archicture: {arch}"),
+        };
+
         let endian = match self.endianess {
             RunTimeEndian::Big => object::Endianness::Big,
             RunTimeEndian::Little => object::Endianness::Little,
@@ -272,7 +281,7 @@ impl<'ctx> RootDebugContext<'ctx> {
 
         let (bytes_ptr, bytes_len) = self.get_compiled_region(backend, function_metadata);
 
-        let mut object = Object::new(BinaryFormat::Elf, object::Architecture::Aarch64, endian);
+        let mut object = Object::new(BinaryFormat::Elf, arch, endian);
         let text_id = object.section_id(StandardSection::Text);
 
         for node_id in self.func_entries.keys() {
