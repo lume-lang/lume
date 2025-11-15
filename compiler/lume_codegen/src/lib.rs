@@ -50,27 +50,17 @@ struct IntrinsicFunctions {
     pub gc_alloc: cranelift_module::FuncId,
 }
 
-/// Compiles the given MIR map and returns the fully-compiled [`ObjectProduct`].
+/// Compiles the given MIR map and returns the fully-compiled bytecode of the
+/// resulting object file.
 ///
 /// # Errors
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
 #[tracing::instrument(level = "DEBUG", skip_all, err)]
-pub fn generate<'ctx>(mir: ModuleMap) -> Result<ObjectProduct> {
-    CraneliftBackend::new(mir)?.generate()
-}
+pub fn generate<'ctx>(mir: ModuleMap) -> Result<Vec<u8>> {
+    let object = CraneliftBackend::new(mir)?.generate()?;
 
-/// JIT compiles the given MIR map and returns an address pointer to the
-/// compiled `main` function.
-///
-/// # Errors
-///
-/// Returns `Err` if the compiler returned an error while compiling the MIR.
-#[tracing::instrument(level = "DEBUG", skip_all, err)]
-pub fn generate_main<'ctx>(mir: ModuleMap) -> Result<Vec<u8>> {
-    let module = generate(mir)?;
-
-    module.emit().map_diagnostic()
+    object.emit().map_diagnostic()
 }
 
 pub(crate) struct CraneliftBackend {

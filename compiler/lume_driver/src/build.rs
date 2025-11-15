@@ -59,7 +59,8 @@ impl Driver {
 
             write_metadata_object(&gcx, &metadata)?;
 
-            objects.push((metadata.header.name.clone(), lume_jit::generate_main(compiled.mir)?));
+            let object = lume_codegen::generate(compiled.mir)?;
+            objects.push((metadata.header.name.clone(), object));
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);

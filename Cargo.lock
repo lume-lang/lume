@@ -154,11 +154,11 @@ name = "build_stage"
 version = "0.1.1"
 dependencies = [
  "arc",
+ "lume_codegen",
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
- "lume_jit",
  "lume_linker",
  "lume_mir",
  "lume_mir_lower",
@@ -1169,17 +1169,42 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_codegen"
+version = "0.1.1"
+dependencies = [
+ "cranelift",
+ "cranelift-codegen",
+ "cranelift-module",
+ "cranelift-native",
+ "cranelift-object",
+ "gimli",
+ "indexmap",
+ "lume_errors",
+ "lume_gc",
+ "lume_mir",
+ "lume_runtime",
+ "lume_session",
+ "lume_span",
+ "lume_trace",
+ "lume_type_metadata",
+ "object",
+ "serde",
+ "target-lexicon",
+ "tracing",
+]
+
+[[package]]
 name = "lume_driver"
 version = "0.1.1"
 dependencies = [
  "arc",
  "error_snippet",
  "error_snippet_derive",
+ "lume_codegen",
  "lume_errors",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
- "lume_jit",
  "lume_linker",
  "lume_metadata",
  "lume_mir",
@@ -1292,31 +1317,6 @@ dependencies = [
  "lume_session",
  "lume_span",
  "lume_types",
- "tracing",
-]
-
-[[package]]
-name = "lume_jit"
-version = "0.1.1"
-dependencies = [
- "cranelift",
- "cranelift-codegen",
- "cranelift-module",
- "cranelift-native",
- "cranelift-object",
- "gimli",
- "indexmap",
- "lume_errors",
- "lume_gc",
- "lume_mir",
- "lume_runtime",
- "lume_session",
- "lume_span",
- "lume_trace",
- "lume_type_metadata",
- "object",
- "serde",
- "target-lexicon",
  "tracing",
 ]
 

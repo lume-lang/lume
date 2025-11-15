@@ -1,5 +1,5 @@
 [package]
-name = "lume_jit"
+name = "lume_codegen"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -9,13 +9,13 @@ doctest = false
 
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
-lume_gc = { path = "../lume_gc" }
-lume_mir = { path = "../../compiler/lume_mir" }
-lume_runtime = { path = "../lume_runtime" }
-lume_session = { path = "../../compiler/lume_session" }
+lume_gc = { path = "../../vm/lume_gc" }
+lume_mir = { path = "../lume_mir" }
+lume_runtime = { path = "../../vm/lume_runtime" }
+lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
 lume_trace = { path = "../../crates/lume_trace" }
-lume_type_metadata = { path = "../../compiler/lume_type_metadata" }
+lume_type_metadata = { path = "../lume_type_metadata" }
 
 gimli = { version = "0.32.3", features = ["write"] }
 indexmap = { workspace = true }
