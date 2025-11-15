@@ -115,7 +115,7 @@ impl ManifoldDriver {
             self.gcx.session.options.clone(),
         );
 
-        lume_jit::generate(mir).unwrap();
+        lume_codegen::generate(mir).unwrap();
 
         Ok(())
     }
@@ -130,7 +130,7 @@ impl ManifoldDriver {
             self.gcx.session.options.clone(),
         );
 
-        let object = lume_jit::generate_main(mir)?;
+        let object = lume_codegen::generate(mir)?;
 
         let output_file_path = self.gcx.binary_output_path(&self.package.name);
         let object_file = lume_linker::write_object_files(&self.gcx, vec![(self.package.name.clone(), object)])?;
