@@ -20,7 +20,7 @@ use lume_rt_metadata::TypeMetadata;
 /// The spilled GC references are defined as a list of offsets,
 /// relative to the stack pointer which contain a reference to a living
 /// GC reference.
-pub type FunctionStackMap = Vec<(usize, usize, Vec<usize>)>;
+pub type FunctionStackMap = Vec<(u32, u32, Vec<u32>)>;
 
 /// Metadata entry for a single compiled function.
 #[derive(Debug)]
@@ -91,6 +91,11 @@ unsafe impl Sync for CompiledFunctionMetadata {}
 
 static FUNC_STACK_MAPS: OnceLock<Vec<CompiledFunctionMetadata>> = OnceLock::new();
 
+unsafe extern "C" {
+    #[link_name = "__STACK_MAPS"]
+    static __STACK_MAPS: u8;
+}
+
 /// Declares the stack maps for all generated functions in the runtime.
 ///
 /// # Panics
@@ -113,6 +118,10 @@ pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
 /// This function will panic if the stack maps have not yet been declared. To
 /// declare them, use [`declare_stack_maps`].
 fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunctionMetadata> {
+    println!("Stack map section len => {} bytes", unsafe {
+        (&__STACK_MAPS as *const u8 as *const u64).read()
+    });
+
     let stack_maps = FUNC_STACK_MAPS.get().expect("expected function stack map to be set");
 
     if let Ok(idx) = stack_maps.binary_search_by(|probe| probe.ordering_of(pc)) {
@@ -181,15 +190,15 @@ impl FrameStackMap {
     /// For more information, see [`stack_locations`] which will get the
     /// absolute addresses of the GC references.
     #[inline]
-    pub(crate) fn stack_offsets(&self) -> &[usize] {
+    pub(crate) fn stack_offsets(&self) -> &[u32] {
         let offset = self.offset();
 
         self.map
             .stack_locations
             .iter()
-            .find_map(|loc| {
-                if loc.0 <= offset && loc.0 + loc.1 >= offset {
-                    Some(loc.2.as_slice())
+            .find_map(|(start, len, stack_offsets)| {
+                if *start as usize <= offset && *start as usize + *len as usize >= offset {
+                    Some(stack_offsets.as_slice())
                 } else {
                     None
                 }
@@ -211,7 +220,7 @@ impl FrameStackMap {
     pub(crate) fn stack_locations(&self) -> impl Iterator<Item = *const *const u8> {
         self.stack_offsets()
             .iter()
-            .map(|offset| unsafe { self.stack_pointer().byte_add(*offset).cast::<*const u8>() })
+            .map(|offset| unsafe { self.stack_pointer().byte_add(*offset as usize).cast::<*const u8>() })
     }
 
     /// Attempts to find all GC references found inside of the stack map for the
@@ -298,6 +307,7 @@ fn find_current_stack_map() -> Option<FrameStackMap> {
 ///
 /// To see whether a collection is required, use
 /// [`alloc::GenerationalAllocator::is_collection_required`].
+#[unsafe(export_name = "std::mem::GC::step")]
 pub fn trigger_collection() {
     if with_allocator(|alloc| alloc.is_collection_required()) {
         trigger_collection_force();
@@ -312,7 +322,7 @@ pub fn trigger_collection() {
 ///
 /// To see whether a collection is required, use
 /// [`alloc::GenerationalAllocator::is_collection_required`].
-#[inline]
+#[unsafe(export_name = "std::mem::GC::invoke")]
 pub fn trigger_collection_force() {
     let Some(frame) = find_current_stack_map() else {
         panic!("bug!: could not find stack map for allocation call");
@@ -325,6 +335,7 @@ pub fn trigger_collection_force() {
 
 /// Static version of [`alloc::GenerationalAllocator::alloc`], so it can be
 /// used as a function pointer in Cranelift.
+#[unsafe(export_name = "std::mem::GC::alloc")]
 pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
     let Some(frame) = find_current_stack_map() else {
         panic!("bug!: could not find stack map for allocation call");

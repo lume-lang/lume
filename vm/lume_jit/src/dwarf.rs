@@ -1,20 +1,18 @@
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::Mutex;
 
 use cranelift::codegen::ir::Endianness;
 use cranelift::prelude::isa::TargetIsa;
 use cranelift_codegen::{Final, MachSrcLoc};
-use cranelift_jit::JITModule;
+use cranelift_object::ObjectProduct;
 use gimli::write::*;
-use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian};
+use gimli::{DwLang, Encoding, LineEncoding, Register, RunTimeEndian, SectionId};
 use indexmap::IndexMap;
 use lume_errors::{MapDiagnostic, Result};
 use lume_mir::{Function, ModuleMap};
 use lume_span::source::Location;
 use lume_span::{NodeId, SourceFileId};
-use object::write::{Object, StandardSection, StandardSegment, Symbol, SymbolSection};
-use object::{BinaryFormat, NativeEndian, SectionKind, SymbolKind, SymbolScope};
+use object::SectionKind;
+use object::write::{StandardSegment, SymbolId};
 
 use crate::{CraneliftBackend, FunctionMetadata};
 
@@ -50,7 +48,7 @@ pub(crate) struct RootDebugContext<'ctx> {
 impl<'ctx> RootDebugContext<'ctx> {
     pub(crate) fn new(ctx: &'ctx ModuleMap, isa: &dyn TargetIsa) -> Self {
         let encoding = Encoding {
-            format: gimli::Format::Dwarf32,
+            format: gimli::Format::Dwarf64,
             version: 5,
             address_size: isa.frontend_config().pointer_bytes(),
         };
@@ -178,16 +176,13 @@ impl<'ctx> RootDebugContext<'ctx> {
 
     /// Populates all the function units in the DWARF unit with correct function
     /// addresses, as well as building a valid line program.
-    fn populate_function_units(
+    pub(crate) fn populate_function_units(
         &mut self,
         backend: &CraneliftBackend,
-        module: &JITModule,
         function_metadata: &HashMap<NodeId, FunctionMetadata>,
     ) -> Result<()> {
         for (file, functions) in self.ctx.group_by_file() {
             let compile_unit_id = *self.file_units.get(&file.id).unwrap();
-
-            let mut ranges = Vec::new();
 
             for func in functions {
                 let Some(entry_id) = self.func_entries.get(&func.id).copied() else {
@@ -196,26 +191,20 @@ impl<'ctx> RootDebugContext<'ctx> {
 
                 let func_decl = backend.declared_funcs.get(&func.id).unwrap();
                 let metadata = function_metadata.get(&func.id).unwrap();
+
+                let func_addr = crate::address_for_func(func_decl.id);
                 let func_size = metadata.total_size;
-
-                let func_start = module.get_finalized_function(func_decl.id);
-                let func_end = unsafe { func_start.byte_add(func_size) };
-
-                let func_start_addr = Address::Constant(func_start.addr() as u64);
 
                 let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
                 let entry = compile_unit.get_mut(entry_id);
-                entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_start_addr));
+                entry.set(gimli::DW_AT_low_pc, AttributeValue::Address(func_addr));
                 entry.set(gimli::DW_AT_high_pc, AttributeValue::Udata(func_size as u64));
 
-                ranges.push(Range::StartLength {
-                    begin: func_start_addr,
-                    length: func_size as u64,
-                });
+                compile_unit.line_program.begin_sequence(Some(func_addr));
 
-                compile_unit.line_program.begin_sequence(Some(func_start_addr));
+                let mut range_end = 0;
 
-                for MachSrcLoc { start, loc, .. } in self.func_mach_src.swap_remove(&func.id).unwrap() {
+                for MachSrcLoc { start, end, loc } in self.func_mach_src.swap_remove(&func.id).unwrap() {
                     let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
                     compile_unit.line_program.row().address_offset = u64::from(start);
 
@@ -232,10 +221,12 @@ impl<'ctx> RootDebugContext<'ctx> {
                     compile_unit.line_program.row().line = line as u64;
                     compile_unit.line_program.row().column = 1;
                     compile_unit.line_program.generate_row();
+
+                    range_end = end;
                 }
 
                 let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
-                compile_unit.line_program.end_sequence(func_end.addr() as u64);
+                compile_unit.line_program.end_sequence(range_end as u64);
 
                 // DW_AT_decl_*
                 let (file_id, line, column) = self.get_source_span(func.location.clone(), compile_unit_id);
@@ -246,12 +237,6 @@ impl<'ctx> RootDebugContext<'ctx> {
                 entry.set(gimli::DW_AT_decl_line, AttributeValue::Udata(line as u64));
                 entry.set(gimli::DW_AT_decl_column, AttributeValue::Udata(column as u64));
             }
-
-            let compile_unit = self.dwarf.units.get_mut(compile_unit_id);
-            let range_list_id = compile_unit.ranges.add(RangeList(ranges));
-
-            let root = compile_unit.get_mut(compile_unit.root());
-            root.set(gimli::DW_AT_ranges, AttributeValue::RangeListRef(range_list_id));
         }
 
         Ok(())
@@ -260,76 +245,17 @@ impl<'ctx> RootDebugContext<'ctx> {
     /// Finish building the final DWARF debug binary and registers it via the
     /// GDB/LLDB JIT interface descriptor, making it available when debugging
     /// the binary.
-    pub fn finish(
-        mut self,
-        backend: &CraneliftBackend,
-        module: &JITModule,
-        function_metadata: &HashMap<NodeId, FunctionMetadata>,
-    ) -> Result<()> {
-        self.populate_function_units(backend, module, function_metadata)?;
-
-        let arch = match backend.isa.triple().architecture {
-            target_lexicon::Architecture::Aarch64(_) => object::Architecture::Aarch64,
-            target_lexicon::Architecture::Riscv64(_) => object::Architecture::Riscv64,
-            target_lexicon::Architecture::X86_64 | target_lexicon::Architecture::X86_64h => {
-                object::Architecture::X86_64
-            }
-            arch => panic!("unsupported ISA archicture: {arch}"),
-        };
-
-        let endian = match self.endianess {
-            RunTimeEndian::Big => object::Endianness::Big,
-            RunTimeEndian::Little => object::Endianness::Little,
-        };
-
-        let (bytes_ptr, bytes_len) = self.get_compiled_region(backend, module, function_metadata);
-
-        let mut object = Object::new(BinaryFormat::Elf, arch, endian);
-        let text_id = object.section_id(StandardSection::Text);
-
-        for node_id in self.func_entries.keys() {
-            let func_decl = backend.declared_funcs.get(node_id).unwrap();
-            let func_start = module.get_finalized_function(func_decl.id);
-
-            let offset = func_start.addr() - bytes_ptr.addr();
-            let size = function_metadata.get(node_id).unwrap().total_size;
-
-            object.add_symbol(Symbol {
-                name: func_decl.name.as_bytes().to_vec(),
-                value: offset as u64,
-                size: size as u64,
-                kind: SymbolKind::Text,
-                scope: SymbolScope::Dynamic,
-                weak: false,
-                section: SymbolSection::Section(text_id),
-                flags: object::SymbolFlags::None,
-            });
-        }
-
-        let mut sections = Sections::new(EndianVec::<RunTimeEndian>::new(self.endianess));
+    pub fn finish(mut self, product: &mut ObjectProduct) -> Result<()> {
+        let mut sections = Sections::new(WriterRelocate::new(self.endianess));
         self.dwarf.write(&mut sections).unwrap();
 
         sections
             .for_each_mut(|id, section| {
-                let name = id.name().as_bytes().to_vec();
-                let debug_id = object.segment_name(StandardSegment::Debug);
+                let debug_id = product.object.segment_name(StandardSegment::Debug);
 
-                if !section.slice().is_empty() {
-                    let data = section.take().to_vec();
-
-                    let section_id = object.add_section(debug_id.to_vec(), name, SectionKind::Debug);
-                    object.append_section_data(section_id, &data, 8);
-                }
-
-                gimli::write::Result::Ok(())
+                section.write_to_section(&mut product.object, debug_id, id.name(), SectionKind::Debug)
             })
             .map_diagnostic()?;
-
-        let bytes = object.write().unwrap();
-        let symfile_addr = Box::leak(bytes.into_boxed_slice());
-
-        patch_binary_file(symfile_addr, bytes_ptr, bytes_len)?;
-        register_jit_code(symfile_addr);
 
         Ok(())
     }
@@ -406,183 +332,167 @@ impl<'ctx> RootDebugContext<'ctx> {
             }
         })
     }
+}
 
-    /// Gets the pointer to the span which contains all the JIT-compiled
-    /// functions from Cranelift.
-    fn get_compiled_region(
-        &self,
-        backend: &CraneliftBackend,
-        module: &JITModule,
-        function_metadata: &HashMap<NodeId, FunctionMetadata>,
-    ) -> (*const u8, usize) {
-        let mut func_spans = HashMap::new();
+#[derive(Clone)]
+pub(crate) struct DebugReloc {
+    pub(crate) offset: u32,
+    pub(crate) size: u8,
+    pub(crate) name: DebugRelocName,
+    pub(crate) addend: i64,
+    pub(crate) kind: object::RelocationKind,
+}
 
-        for node_id in self.func_entries.keys() {
-            let func_decl = backend.declared_funcs.get(node_id).unwrap();
-            let metadata = function_metadata.get(node_id).unwrap();
+#[derive(Clone)]
+pub(crate) enum DebugRelocName {
+    Section(SectionId),
+    Symbol(usize),
+}
 
-            let func_start = module.get_finalized_function(func_decl.id);
-            let func_end = unsafe { func_start.byte_add(metadata.total_size) };
+/// A [`Writer`] that collects all necessary relocations.
+#[derive(Clone)]
+pub(super) struct WriterRelocate {
+    pub(super) relocs: Vec<DebugReloc>,
+    pub(super) writer: EndianVec<RunTimeEndian>,
+}
 
-            func_spans.insert(*node_id, func_start..func_end);
+impl WriterRelocate {
+    pub(super) fn new(endian: RunTimeEndian) -> Self {
+        WriterRelocate {
+            relocs: Vec::new(),
+            writer: EndianVec::new(endian),
+        }
+    }
+
+    pub(super) fn write_to_section(
+        &mut self,
+        dest: &mut object::write::Object,
+        segment: impl AsRef<[u8]>,
+        section: impl AsRef<[u8]>,
+        kind: SectionKind,
+    ) -> gimli::write::Result<()> {
+        if !self.writer.slice().is_empty() {
+            let data = self.writer.take().to_vec();
+
+            let section_id = dest.add_section(segment.as_ref().to_vec(), section.as_ref().to_vec(), kind);
+            dest.append_section_data(section_id, &data, 8);
         }
 
-        let code_start = func_spans.values().map(|r| r.start).min().unwrap_or_default();
-        let code_end = func_spans.values().map(|r| r.end).max().unwrap_or_default();
-        let code_size = unsafe { code_end.byte_offset_from(code_start).cast_unsigned() };
-
-        (code_start, code_size)
+        gimli::write::Result::Ok(())
     }
 }
 
-/// `object` restricts which attributes can be defined as a custom value, so we
-/// manually patch the ELF binary.
-///
-/// This operation MUST be done in-memory and without copying the file content.
-fn patch_binary_file(bytes: &mut [u8], code_start: *const u8, code_size: usize) -> Result<()> {
-    use object::elf::FileHeader64;
-    use object::read::elf::ElfFile;
+impl Writer for WriterRelocate {
+    type Endian = RunTimeEndian;
 
-    const SECTION_HEADER_SIZE: usize = 64;
-
-    const TEXT_SECTION_TYPE: u32 = object::elf::SHT_PROGBITS;
-    const TEXT_SECTION_FLAGS: u64 = (object::elf::SHF_ALLOC | object::elf::SHF_EXECINSTR) as u64;
-
-    fn read_u32(bytes: &[u8], offset: usize) -> u32 {
-        let slice = &bytes[offset..offset + 4];
-        let arr: &[u8; 4] = slice.try_into().unwrap();
-
-        u32::from_ne_bytes(*arr)
+    fn endian(&self) -> Self::Endian {
+        self.writer.endian()
     }
 
-    fn read_u64(bytes: &[u8], offset: usize) -> u64 {
-        let slice = &bytes[offset..offset + 8];
-        let arr: &[u8; 8] = slice.try_into().unwrap();
-
-        u64::from_ne_bytes(*arr)
+    fn len(&self) -> usize {
+        self.writer.len()
     }
 
-    fn write_u64(bytes: &mut [u8], offset: usize, value: u64) {
-        bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+    fn write(&mut self, bytes: &[u8]) -> gimli::write::Result<()> {
+        self.writer.write(bytes)
     }
 
-    let file = ElfFile::<FileHeader64<NativeEndian>>::parse(bytes as &[u8]).map_diagnostic()?;
-    let section_num = file.elf_header().e_shnum.get(NativeEndian);
-    let section_off = file.elf_header().e_shoff.get(NativeEndian);
-
-    let mut offset = section_off as usize;
-
-    for _ in 0..section_num {
-        let sh_type = read_u32(bytes, offset + 4);
-        let sh_flag = read_u64(bytes, offset + 8);
-
-        // Attempt to determine whether this is the `.text` section without having to
-        // lookup the string table.
-        let is_text_section = sh_type == TEXT_SECTION_TYPE && sh_flag == TEXT_SECTION_FLAGS;
-
-        // For the `.text` section:
-        //   - set `sh_addr` to the in-memory location of the compiled functions,
-        //   - set `sh_size` to the size of the compiled region in bytes.
-        if is_text_section {
-            // sh_addr
-            write_u64(bytes, offset + 16, code_start.addr() as u64);
-
-            // sh_size
-            write_u64(bytes, offset + 32, code_size as u64);
-        }
-        // For all non-`.text` sections:
-        //   - set `sh_addr` to the in-memory location of the ELF binary,
-        //   - set `sh_flag` to `SHF_ALLOC` so debuggers will load them into memory.
-        //
-        // Skip the NULL section
-        else if sh_type != 0 {
-            let sh_offset = read_u64(bytes, offset + 24);
-            let sh_abs_addr = unsafe { bytes.as_ptr().byte_add(sh_offset as usize) };
-
-            // sh_flag
-            write_u64(bytes, offset + 8, object::elf::SHF_ALLOC as u64);
-
-            // sh_addr
-            write_u64(bytes, offset + 16, sh_abs_addr.addr() as u64);
-        }
-
-        offset += SECTION_HEADER_SIZE;
+    fn write_at(&mut self, offset: usize, bytes: &[u8]) -> gimli::write::Result<()> {
+        self.writer.write_at(offset, bytes)
     }
 
-    Ok(())
-}
+    fn write_address(&mut self, address: Address, size: u8) -> gimli::write::Result<()> {
+        match address {
+            Address::Constant(val) => self.write_udata(val, size),
+            Address::Symbol { symbol, addend } => {
+                self.relocs.push(DebugReloc {
+                    offset: self.len() as u32,
+                    size,
+                    name: DebugRelocName::Symbol(symbol),
+                    addend,
+                    kind: object::RelocationKind::Absolute,
+                });
 
-#[repr(C)]
-pub struct JITCodeEntry {
-    pub next_entry: *mut JITCodeEntry,
-    pub prev_entry: *mut JITCodeEntry,
-    pub symfile_addr: *const u8,
-    pub symfile_size: u64,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct GlobalPointer<T>(*mut T);
-
-impl<T> Deref for GlobalPointer<T> {
-    type Target = *mut T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-unsafe impl<T> Send for GlobalPointer<T> {}
-unsafe impl<T> Sync for GlobalPointer<T> {}
-
-#[repr(C)]
-pub struct JITDescriptor {
-    pub version: u32,
-    pub action_flag: i32,
-    pub relevant_entry: *mut JITCodeEntry,
-    pub first_entry: *mut JITCodeEntry,
-}
-
-#[unsafe(no_mangle)]
-#[allow(non_upper_case_globals, reason = "external object reference")]
-pub static mut __jit_debug_descriptor: JITDescriptor = JITDescriptor {
-    version: 1,
-    action_flag: 0,
-    relevant_entry: std::ptr::null_mut(),
-    first_entry: std::ptr::null_mut(),
-};
-
-#[unsafe(no_mangle)]
-pub extern "C" fn __jit_debug_register_code() {
-    // Empty function — the debugger sets a breakpoint here.
-}
-
-static LIST: Mutex<Vec<GlobalPointer<JITCodeEntry>>> = Mutex::new(Vec::new());
-
-fn register_jit_code(symfile_addr: &[u8]) {
-    unsafe {
-        let entry = Box::into_raw(Box::new(JITCodeEntry {
-            next_entry: std::ptr::null_mut(),
-            prev_entry: std::ptr::null_mut(),
-            symfile_addr: symfile_addr.as_ptr(),
-            symfile_size: symfile_addr.len() as u64,
-        }));
-
-        {
-            let mut list = LIST.lock().unwrap();
-
-            if let Some(head) = list.last() {
-                (*head.0).next_entry = entry;
-                (*entry).prev_entry = head.0;
-            } else {
-                __jit_debug_descriptor.first_entry = entry;
+                self.write_udata(0, size)
             }
-
-            list.push(GlobalPointer(entry));
         }
+    }
 
-        __jit_debug_descriptor.relevant_entry = entry;
-        __jit_debug_descriptor.action_flag = 1; // JIT_REGISTER
-        __jit_debug_register_code();
-        __jit_debug_descriptor.action_flag = 0;
+    fn write_offset(&mut self, val: usize, section: SectionId, size: u8) -> gimli::write::Result<()> {
+        let offset = self.len() as u32;
+        self.relocs.push(DebugReloc {
+            offset,
+            size,
+            name: DebugRelocName::Section(section),
+            addend: val as i64,
+            kind: object::RelocationKind::Absolute,
+        });
+
+        self.write_udata(0, size)
+    }
+
+    fn write_offset_at(&mut self, offset: usize, val: usize, section: SectionId, size: u8) -> gimli::write::Result<()> {
+        self.relocs.push(DebugReloc {
+            offset: offset as u32,
+            size,
+            name: DebugRelocName::Section(section),
+            addend: val as i64,
+            kind: object::RelocationKind::Absolute,
+        });
+
+        self.write_udata_at(offset, 0, size)
+    }
+
+    fn write_eh_pointer(&mut self, address: Address, eh_pe: gimli::DwEhPe, size: u8) -> gimli::write::Result<()> {
+        match address {
+            // Address::Constant arm copied from gimli
+            Address::Constant(val) => {
+                // Indirect doesn't matter here.
+                let val = match eh_pe.application() {
+                    gimli::DW_EH_PE_absptr => val,
+                    gimli::DW_EH_PE_pcrel => {
+                        // FIXME better handling of sign
+                        let offset = self.len() as u64;
+                        offset.wrapping_sub(val)
+                    }
+                    _ => {
+                        return Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe));
+                    }
+                };
+
+                self.write_eh_pointer_data(val, eh_pe.format(), size)
+            }
+            Address::Symbol { symbol, addend } => match eh_pe.application() {
+                gimli::DW_EH_PE_pcrel => {
+                    let size = match eh_pe.format() {
+                        gimli::DW_EH_PE_sdata4 => 4,
+                        gimli::DW_EH_PE_sdata8 => 8,
+                        _ => return Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe)),
+                    };
+
+                    self.relocs.push(DebugReloc {
+                        offset: self.len() as u32,
+                        size,
+                        name: DebugRelocName::Symbol(symbol),
+                        addend,
+                        kind: object::RelocationKind::Relative,
+                    });
+
+                    self.write_udata(0, size)
+                }
+                gimli::DW_EH_PE_absptr => {
+                    self.relocs.push(DebugReloc {
+                        offset: self.len() as u32,
+                        size,
+                        name: DebugRelocName::Symbol(symbol),
+                        addend,
+                        kind: object::RelocationKind::Absolute,
+                    });
+
+                    self.write_udata(0, size)
+                }
+                _ => Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe)),
+            },
+        }
     }
 }

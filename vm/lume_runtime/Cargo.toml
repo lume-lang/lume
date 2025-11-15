@@ -4,7 +4,11 @@ version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 
+[lib]
+crate-type = ["lib", "staticlib"]
+
 [dependencies]
+lume_gc = { path = "../lume_gc" }
 lume_rt_metadata = { path = "../lume_rt_metadata" }
 
 [lints]

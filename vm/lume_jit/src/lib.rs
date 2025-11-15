@@ -13,40 +13,22 @@ use cranelift::codegen::verify_function;
 use cranelift::prelude::*;
 use cranelift_codegen::ir::SourceLoc;
 use cranelift_codegen::isa::TargetIsa;
-use cranelift_jit::{JITBuilder, JITModule};
-use cranelift_module::{DataDescription, DataId, FuncOrDataId, Linkage, Module};
+use cranelift_module::{DataDescription, DataId, FuncId, Linkage, Module};
+use cranelift_object::{ObjectBuilder, ObjectModule, ObjectProduct};
+use gimli::write::{Address, Writer};
 use indexmap::{IndexMap, IndexSet};
-use lume_errors::{Result, SimpleDiagnostic};
-use lume_gc::{CompiledFunctionMetadata, FunctionStackMap};
+use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
+use lume_gc::FunctionStackMap;
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_session::DebugInfo;
 use lume_span::NodeId;
 use lume_span::source::Location;
+use object::write::Object;
 
-use crate::dwarf::RootDebugContext;
+use crate::dwarf::{RootDebugContext, WriterRelocate};
 
-pub const INTRINSIC_FUNCTIONS: &[(&str, *const u8)] = &[
-    ("std::type_of", lume_runtime::type_of as *const u8),
-    ("std::mem::alloc", lume_runtime::mem::lumert_alloc as *const u8),
-    ("std::mem::realloc", lume_runtime::mem::lumert_realloc as *const u8),
-    ("std::mem::dealloc", lume_runtime::mem::lumert_dealloc as *const u8),
-    ("std::mem::ptr_ref", lume_runtime::mem::lumert_ptr_ref as *const u8),
-    ("std::mem::ptr_read", lume_runtime::mem::lumert_ptr_read as *const u8),
-    ("std::mem::ptr_write", lume_runtime::mem::lumert_ptr_write as *const u8),
-    ("std::mem::GC::invoke", lume_gc::trigger_collection_force as *const u8),
-    ("std::io::print", lume_runtime::io::print as *const u8),
-    ("std::io::println", lume_runtime::io::println as *const u8),
-    ("std::Int8::to_string", lume_runtime::io::int8_tostring as *const u8),
-    ("std::Int16::to_string", lume_runtime::io::int16_tostring as *const u8),
-    ("std::Int32::to_string", lume_runtime::io::int32_tostring as *const u8),
-    ("std::Int64::to_string", lume_runtime::io::int64_tostring as *const u8),
-    ("std::UInt8::to_string", lume_runtime::io::uint8_tostring as *const u8),
-    ("std::UInt16::to_string", lume_runtime::io::uint16_tostring as *const u8),
-    ("std::UInt32::to_string", lume_runtime::io::uint32_tostring as *const u8),
-    ("std::UInt64::to_string", lume_runtime::io::uint64_tostring as *const u8),
-    ("std::Float::to_string", lume_runtime::io::float_tostring as *const u8),
-    ("std::Double::to_string", lume_runtime::io::double_tostring as *const u8),
-];
+pub const GC_ALLOC: &str = "std::mem::GC::alloc";
+pub const GC_STEP: &str = "std::mem::GC::step";
 
 pub type EntrypointAddress = extern "C" fn() -> i32;
 
@@ -69,13 +51,13 @@ struct IntrinsicFunctions {
     pub gc_alloc: cranelift_module::FuncId,
 }
 
-/// JIT compiles the given MIR map and returns the fully-compiled [`JITModule`].
+/// Compiles the given MIR map and returns the fully-compiled [`ObjectProduct`].
 ///
 /// # Errors
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
 #[tracing::instrument(level = "DEBUG", skip_all, err)]
-pub fn generate<'ctx>(mir: ModuleMap) -> Result<JITModule> {
+pub fn generate<'ctx>(mir: ModuleMap) -> Result<ObjectProduct> {
     CraneliftBackend::new(mir)?.generate()
 }
 
@@ -86,27 +68,15 @@ pub fn generate<'ctx>(mir: ModuleMap) -> Result<JITModule> {
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
 #[tracing::instrument(level = "DEBUG", skip_all, err)]
-pub fn generate_main<'ctx>(mir: ModuleMap) -> Result<EntrypointAddress> {
+pub fn generate_main<'ctx>(mir: ModuleMap) -> Result<Vec<u8>> {
     let module = generate(mir)?;
 
-    let main_func = match module.get_name("main") {
-        Some(FuncOrDataId::Func(func_id)) => func_id,
-        Some(FuncOrDataId::Data(_)) => {
-            return Err(
-                SimpleDiagnostic::new("expected `main` to be function declaration, found data declartion").into(),
-            );
-        }
-        None => return Err(SimpleDiagnostic::new("could not find declaration with name `main`").into()),
-    };
-
-    let main_ptr = module.get_finalized_function(main_func);
-
-    Ok(unsafe { std::mem::transmute::<*const u8, EntrypointAddress>(main_ptr) })
+    module.emit().map_diagnostic()
 }
 
 pub(crate) struct CraneliftBackend {
     context: ModuleMap,
-    module: Option<Rc<RwLock<JITModule>>>,
+    module: Option<Rc<RwLock<ObjectModule>>>,
 
     declared_funcs: IndexMap<NodeId, DeclaredFunction>,
     intrinsics: IntrinsicFunctions,
@@ -122,24 +92,23 @@ impl CraneliftBackend {
         let mut settings = cranelift::codegen::settings::builder();
         settings.set("preserve_frame_pointers", "true").unwrap();
         settings.set("unwind_info", "true").unwrap();
+        settings.set("is_pic", "true").unwrap();
 
         let flags = settings::Flags::new(settings);
         let isa = cranelift_native::builder().unwrap().finish(flags.clone()).unwrap();
-        let mut builder = JITBuilder::with_isa(isa.clone(), cranelift_module::default_libcall_names());
+        let builder = ObjectBuilder::new(
+            isa.clone(),
+            context.package.name.clone(),
+            cranelift_module::default_libcall_names(),
+        )
+        .map_diagnostic()?;
 
-        for (name, ptr) in INTRINSIC_FUNCTIONS {
-            builder.symbol(*name, *ptr);
-        }
-
-        builder.symbol("gc_step", lume_gc::trigger_collection as *const u8);
-        builder.symbol("gc_alloc", lume_gc::allocate_object as *const u8);
-
-        let mut module = JITModule::new(builder);
+        let mut module = ObjectModule::new(builder);
         let ptr_ty = module.target_config().pointer_type();
 
         let intrinsics = IntrinsicFunctions {
-            gc_step: import_function(&mut module, "gc_step", &[], None)?,
-            gc_alloc: import_function(&mut module, "gc_alloc", &[ptr_ty, ptr_ty], Some(ptr_ty))?,
+            gc_step: import_function(&mut module, GC_STEP, &[], None)?,
+            gc_alloc: import_function(&mut module, GC_ALLOC, &[ptr_ty, ptr_ty], Some(ptr_ty))?,
         };
 
         Ok(Self {
@@ -155,7 +124,7 @@ impl CraneliftBackend {
     }
 
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
-    fn generate(&mut self) -> lume_errors::Result<JITModule> {
+    fn generate(&mut self) -> lume_errors::Result<ObjectProduct> {
         let functions = std::mem::take(&mut self.context.functions);
 
         for func in functions.values() {
@@ -197,9 +166,9 @@ impl CraneliftBackend {
 
             let mut stack_locations = Vec::new();
             for (offset, length, map) in compiled_code.buffer.user_stack_maps() {
-                let refs = map.entries().map(|(_, offset)| offset as usize).collect();
+                let refs = map.entries().map(|(_, offset)| offset).collect();
 
-                stack_locations.push((*offset as usize, *length as usize, refs));
+                stack_locations.push((*offset, *length, refs));
             }
 
             function_metadata.insert(func.id, FunctionMetadata {
@@ -210,52 +179,31 @@ impl CraneliftBackend {
             self.module().clear_context(&mut ctx);
         }
 
-        let mut module = Rc::into_inner(self.module.take().unwrap())
+        if let Some(debug_ctx) = debug_ctx.as_mut() {
+            debug_ctx.populate_function_units(self, &function_metadata)?;
+        }
+
+        let module: ObjectModule = Rc::into_inner(self.module.take().unwrap())
             .unwrap()
             .into_inner()
             .unwrap();
 
-        module.finalize_definitions().map_error()?;
-
-        let mut func_stack_maps = Vec::new();
-
-        for (def, func) in &self.declared_funcs {
-            let func_def = self.context.functions.get(def).unwrap();
-            if func_def.signature.external {
-                continue;
-            }
-
-            let Some(metadata) = function_metadata.get_mut(def) else {
-                continue;
-            };
-
-            let start = module.get_finalized_function(func.id);
-            let end = unsafe { start.byte_add(metadata.total_size) };
-
-            func_stack_maps.push(CompiledFunctionMetadata {
-                start,
-                end,
-                stack_locations: std::mem::take(&mut metadata.stack_locations),
-            });
-        }
-
-        #[cfg(not(fuzzing))]
-        lume_gc::declare_stack_maps(func_stack_maps);
+        let mut object = module.finish();
 
         if let Some(debug_ctx) = debug_ctx.take() {
-            debug_ctx.finish(self, &module, &function_metadata)?;
+            debug_ctx.finish(&mut object)?;
         }
 
-        Ok(module)
+        Ok(object)
     }
 
     #[track_caller]
-    pub(crate) fn module(&self) -> RwLockReadGuard<'_, JITModule> {
+    pub(crate) fn module(&self) -> RwLockReadGuard<'_, ObjectModule> {
         self.module.as_ref().unwrap().try_read().unwrap()
     }
 
     #[track_caller]
-    pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, JITModule> {
+    pub(crate) fn module_mut(&self) -> RwLockWriteGuard<'_, ObjectModule> {
         self.module.as_ref().unwrap().try_write().unwrap()
     }
 
@@ -272,7 +220,7 @@ impl CraneliftBackend {
         let func_id = self
             .module_mut()
             .declare_function(&func.name, linkage, &sig)
-            .map_error()?;
+            .map_diagnostic()?;
 
         Ok((func_id, sig))
     }
@@ -419,18 +367,28 @@ fn import_function<TModule: Module>(
 
     let func_id = module
         .declare_function(name, cranelift_module::Linkage::Import, &sig)
-        .map_error()?;
+        .map_diagnostic()?;
 
     Ok(func_id)
 }
 
-trait MapModuleResult<T> {
-    fn map_error(self) -> T;
+pub(crate) fn address_for_func(func_id: FuncId) -> Address {
+    let symbol = func_id.as_u32();
+    assert!(symbol & 1 << 31 == 0);
+
+    Address::Symbol {
+        symbol: symbol as usize,
+        addend: 0,
+    }
 }
 
-impl<T> MapModuleResult<Result<T>> for cranelift_module::ModuleResult<T> {
-    fn map_error(self) -> Result<T> {
-        self.map_err(lume_errors::IntoDiagnostic::into_diagnostic)
+pub(crate) fn address_for_data(data_id: DataId) -> Address {
+    let symbol = data_id.as_u32();
+    assert!(symbol & 1 << 31 == 0);
+
+    Address::Symbol {
+        symbol: (symbol | 1 << 31) as usize,
+        addend: 0,
     }
 }
 
