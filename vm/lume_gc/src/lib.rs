@@ -7,7 +7,7 @@ pub(crate) mod arch;
 use alloc::with_allocator;
 use std::cmp::Ordering;
 use std::fmt::Display;
-use std::sync::OnceLock;
+use std::sync::LazyLock;
 
 use lume_rt_metadata::TypeMetadata;
 
@@ -20,7 +20,7 @@ use lume_rt_metadata::TypeMetadata;
 /// The spilled GC references are defined as a list of offsets,
 /// relative to the stack pointer which contain a reference to a living
 /// GC reference.
-pub type FunctionStackMap = Vec<(u32, u32, Vec<u32>)>;
+pub type FunctionStackMap = Vec<(u64, u64, Vec<u64>)>;
 
 /// Metadata entry for a single compiled function.
 #[derive(Debug)]
@@ -89,24 +89,64 @@ impl CompiledFunctionMetadata {
 unsafe impl Send for CompiledFunctionMetadata {}
 unsafe impl Sync for CompiledFunctionMetadata {}
 
-static FUNC_STACK_MAPS: OnceLock<Vec<CompiledFunctionMetadata>> = OnceLock::new();
+static FUNC_STACK_MAPS: LazyLock<Vec<CompiledFunctionMetadata>> = LazyLock::new(declare_stack_maps);
 
 unsafe extern "C" {
+    /// Static reference to the `__STACK_MAPS` symbol.
+    ///
+    /// See `CraneliftBackend::declare_stack_maps`.
     #[link_name = "__STACK_MAPS"]
     static __STACK_MAPS: u8;
 }
 
 /// Declares the stack maps for all generated functions in the runtime.
 ///
-/// # Panics
-///
-/// This function **will** panic if the stack maps are declared more than once.
-pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
-    stack_maps.sort_by_key(|func| func.start.addr());
+/// This function should only ever be executed *once* at startup, since it's
+/// somewhat slow.
+pub fn declare_stack_maps() -> Vec<CompiledFunctionMetadata> {
+    let ptr = unsafe { &__STACK_MAPS as *const u8 };
+    let mut offset = 0;
 
-    FUNC_STACK_MAPS
-        .set(stack_maps)
-        .expect("function stack maps should only be assigned once");
+    let read_u64 = |offset: &mut usize| -> u64 {
+        let val = unsafe { (ptr.byte_add(*offset) as *const u64).read() };
+        *offset += 8;
+
+        val
+    };
+
+    let nfuncs = read_u64(&mut offset) as usize;
+    let mut metadata = Vec::with_capacity(nfuncs);
+
+    for _ in 0..nfuncs {
+        let addr = read_u64(&mut offset) as *const u8;
+        let size = read_u64(&mut offset) as usize;
+        let end = unsafe { addr.byte_add(size) };
+
+        let nloc = read_u64(&mut offset) as usize;
+        let mut stack_locations = Vec::with_capacity(nloc);
+
+        for _ in 0..nloc {
+            let start = read_u64(&mut offset);
+            let size = read_u64(&mut offset);
+
+            let noffset = read_u64(&mut offset) as usize;
+            let mut stack_offsets = Vec::with_capacity(noffset);
+
+            for _ in 0..noffset {
+                stack_offsets.push(read_u64(&mut offset));
+            }
+
+            stack_locations.push((start, size, stack_offsets));
+        }
+
+        metadata.push(CompiledFunctionMetadata {
+            start: addr,
+            end,
+            stack_locations,
+        });
+    }
+
+    metadata
 }
 
 /// Attempts to find the stack map for the function, which contains the given
@@ -118,14 +158,8 @@ pub fn declare_stack_maps(mut stack_maps: Vec<CompiledFunctionMetadata>) {
 /// This function will panic if the stack maps have not yet been declared. To
 /// declare them, use [`declare_stack_maps`].
 fn find_current_stack_map_of_addr(pc: *const u8) -> Option<&'static CompiledFunctionMetadata> {
-    println!("Stack map section len => {} bytes", unsafe {
-        (&__STACK_MAPS as *const u8 as *const u64).read()
-    });
-
-    let stack_maps = FUNC_STACK_MAPS.get().expect("expected function stack map to be set");
-
-    if let Ok(idx) = stack_maps.binary_search_by(|probe| probe.ordering_of(pc)) {
-        return stack_maps.get(idx);
+    if let Ok(idx) = FUNC_STACK_MAPS.binary_search_by(|probe| probe.ordering_of(pc)) {
+        return FUNC_STACK_MAPS.get(idx);
     }
 
     None
@@ -190,7 +224,7 @@ impl FrameStackMap {
     /// For more information, see [`stack_locations`] which will get the
     /// absolute addresses of the GC references.
     #[inline]
-    pub(crate) fn stack_offsets(&self) -> &[u32] {
+    pub(crate) fn stack_offsets(&self) -> &[u64] {
         let offset = self.offset();
 
         self.map
