@@ -18,14 +18,14 @@ use cranelift_object::{ObjectBuilder, ObjectModule, ObjectProduct};
 use gimli::write::{Address, Writer};
 use indexmap::{IndexMap, IndexSet};
 use lume_errors::{MapDiagnostic, Result, SimpleDiagnostic};
-use lume_gc::FunctionStackMap;
 use lume_mir::{BlockBranchSite, ModuleMap, RegisterId, SlotId};
 use lume_session::DebugInfo;
 use lume_span::NodeId;
 use lume_span::source::Location;
-use object::write::Object;
+use object::write::Relocation;
+use object::{RelocationEncoding, RelocationFlags};
 
-use crate::dwarf::{RootDebugContext, WriterRelocate};
+use crate::dwarf::{DebugRelocName, RootDebugContext, WriterRelocate};
 
 pub const GC_ALLOC: &str = "std::mem::GC::alloc";
 pub const GC_STEP: &str = "std::mem::GC::step";
@@ -35,14 +35,13 @@ pub type EntrypointAddress = extern "C" fn() -> i32;
 #[derive(Debug, Clone)]
 struct DeclaredFunction {
     pub id: cranelift_module::FuncId,
-    pub name: String,
     pub sig: Signature,
 }
 
 #[derive(Debug, Clone)]
 struct FunctionMetadata {
     pub total_size: usize,
-    pub stack_locations: FunctionStackMap,
+    pub stack_locations: Vec<(usize, usize, Vec<usize>)>,
 }
 
 #[derive(Debug, Clone)]
@@ -130,11 +129,8 @@ impl CraneliftBackend {
         for func in functions.values() {
             let (func_id, sig) = self.declare_function(func)?;
 
-            self.declared_funcs.insert(func.id, DeclaredFunction {
-                id: func_id,
-                name: func.name.clone(),
-                sig,
-            });
+            self.declared_funcs
+                .insert(func.id, DeclaredFunction { id: func_id, sig });
         }
 
         self.context.functions = functions;
@@ -166,9 +162,9 @@ impl CraneliftBackend {
 
             let mut stack_locations = Vec::new();
             for (offset, length, map) in compiled_code.buffer.user_stack_maps() {
-                let refs = map.entries().map(|(_, offset)| offset).collect();
+                let refs = map.entries().map(|(_, offset)| offset as usize).collect();
 
-                stack_locations.push((*offset, *length, refs));
+                stack_locations.push((*offset as usize, *length as usize, refs));
             }
 
             function_metadata.insert(func.id, FunctionMetadata {
@@ -189,6 +185,7 @@ impl CraneliftBackend {
             .unwrap();
 
         let mut object = module.finish();
+        self.declare_stack_maps(&mut object, function_metadata)?;
 
         if let Some(debug_ctx) = debug_ctx.take() {
             debug_ctx.finish(&mut object)?;
@@ -348,6 +345,151 @@ impl CraneliftBackend {
     }
 }
 
+impl CraneliftBackend {
+    /// Write the function stack maps to a symbol within the given object, so we
+    /// can read them within the GC at runtime.
+    ///
+    /// The content of the symbol (simply named `__STACK_MAPS`) is structured
+    /// like so:
+    /// ```
+    /// // Data structure of the `__STACK_MAPS` symbol itself
+    /// Symbol:
+    ///     // List of stack maps within the program - one per applicable function.
+    ///     nfunc       u64
+    ///     funcs       [StackMap; nfunc]
+    ///
+    /// // Data structure for a single function, outlining all the stack
+    /// // locations which can contain GC references.
+    /// StackMap:
+    ///     // Memory address of the function which the stack map is referencing.
+    ///     addr        u64
+    ///
+    ///     // Size of the function (in bytes).
+    ///     size        u64
+    ///
+    ///     // List of stack locations within the function.
+    ///     nloc        u64
+    ///     locs        [StackLocation; nloc]
+    ///
+    /// StackLocation:
+    ///     // Range in which the stack location is valid, relative to the
+    ///     // start of the function.
+    ///     start       u64
+    ///     size        u64
+    ///
+    ///     // List of offsets relative to the stack pointer, which contains a
+    ///     // pointer to a GC reference.
+    ///     noffset     u64
+    ///     offsets     [u64; noffset]
+    /// ```
+    fn declare_stack_maps(
+        &self,
+        product: &mut ObjectProduct,
+        function_metadata: HashMap<NodeId, FunctionMetadata>,
+    ) -> Result<()> {
+        let endian = match self.isa.endianness() {
+            cranelift_codegen::ir::Endianness::Big => gimli::RunTimeEndian::Big,
+            cranelift_codegen::ir::Endianness::Little => gimli::RunTimeEndian::Little,
+        };
+
+        let mut nfunc = 0_u64;
+        let mut stack_maps = WriterRelocate::new(endian);
+
+        for (def, func) in &self.declared_funcs {
+            let func_def = self.context.functions.get(def).unwrap();
+            if func_def.signature.external {
+                continue;
+            }
+
+            let Some(metadata) = function_metadata.get(def) else {
+                continue;
+            };
+
+            let addr = address_for_func(func.id);
+
+            // Write the address range of the function declaration
+            stack_maps
+                .write_address(addr, self.isa.pointer_bytes())
+                .map_diagnostic()?;
+
+            stack_maps.write_u64(metadata.total_size as u64).map_diagnostic()?;
+
+            stack_maps
+                .write_u64(metadata.stack_locations.len() as u64)
+                .map_diagnostic()?;
+
+            for (start, len, stack_offsets) in &metadata.stack_locations {
+                stack_maps.write_u64(*start as u64).map_diagnostic()?;
+                stack_maps.write_u64(*len as u64).map_diagnostic()?;
+
+                stack_maps.write_u64(stack_offsets.len() as u64).map_diagnostic()?;
+
+                for stack_offset in stack_offsets {
+                    stack_maps.write_u64(*stack_offset as u64).map_diagnostic()?;
+                }
+            }
+
+            nfunc += 1;
+        }
+
+        let section_id = product.object.section_id(object::write::StandardSection::Data);
+
+        let section_offset = product
+            .object
+            .append_section_data(section_id, &u64::to_ne_bytes(nfunc), 8);
+
+        // Size of the symbol must include the function found (`nfunc`).
+        let symbol_size = size_of::<u64>() + stack_maps.writer.slice().len();
+
+        product.object.add_symbol(object::write::Symbol {
+            name: b"__STACK_MAPS".to_vec(),
+            value: section_offset,
+            size: symbol_size as u64,
+            kind: object::write::SymbolKind::Data,
+            scope: object::write::SymbolScope::Linkage,
+            weak: false,
+            section: object::write::SymbolSection::Section(section_id),
+            flags: object::SymbolFlags::None,
+        });
+
+        // Write the rest of the symbol content.
+        let content_offset = product
+            .object
+            .append_section_data(section_id, stack_maps.writer.slice(), 1);
+
+        for reloc in &stack_maps.relocs {
+            let symbol = match reloc.name {
+                DebugRelocName::Section(_) => unreachable!(),
+                DebugRelocName::Symbol(id) => {
+                    let id = id.try_into().unwrap();
+
+                    if id & 1 << 31 == 0 {
+                        product.function_symbol(FuncId::from_u32(id))
+                    } else {
+                        product.data_symbol(DataId::from_u32(id & !(1 << 31)))
+                    }
+                }
+            };
+
+            product
+                .object
+                .add_relocation(section_id, Relocation {
+                    offset: content_offset + u64::from(reloc.offset),
+                    symbol,
+                    flags: RelocationFlags::Generic {
+                        kind: reloc.kind,
+                        encoding: RelocationEncoding::Generic,
+                        size: reloc.size * 8,
+                    },
+                    addend: reloc.addend,
+                })
+                .unwrap();
+        }
+
+        Ok(())
+    }
+}
+
 #[tracing::instrument(level = "TRACE", skip(module), err)]
 fn import_function<TModule: Module>(
     module: &mut TModule,
@@ -378,16 +520,6 @@ pub(crate) fn address_for_func(func_id: FuncId) -> Address {
 
     Address::Symbol {
         symbol: symbol as usize,
-        addend: 0,
-    }
-}
-
-pub(crate) fn address_for_data(data_id: DataId) -> Address {
-    let symbol = data_id.as_u32();
-    assert!(symbol & 1 << 31 == 0);
-
-    Address::Symbol {
-        symbol: (symbol | 1 << 31) as usize,
         addend: 0,
     }
 }

@@ -12,7 +12,7 @@ use lume_mir::{Function, ModuleMap};
 use lume_span::source::Location;
 use lume_span::{NodeId, SourceFileId};
 use object::SectionKind;
-use object::write::{StandardSegment, SymbolId};
+use object::write::StandardSegment;
 
 use crate::{CraneliftBackend, FunctionMetadata};
 
@@ -344,6 +344,7 @@ pub(crate) struct DebugReloc {
 }
 
 #[derive(Clone)]
+#[expect(dead_code, reason = "section relocations are currently not used")]
 pub(crate) enum DebugRelocName {
     Section(SectionId),
     Symbol(usize),
