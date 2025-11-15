@@ -11,10 +11,10 @@ doctest = false
 [dependencies]
 arc = { path = "../../compiler/arc" }
 lume_errors = { path = "../../crates/lume_errors" }
-lume_fuse = { path = "../../compiler/lume_fuse" }
 lume_hir = { path = "../../compiler/lume_hir" }
 lume_hir_lower = { path = "../../compiler/lume_hir_lower" }
 lume_infer = { path = "../../compiler/lume_infer" }
+lume_linker = { path = "../../compiler/lume_linker" }
 lume_jit = { path = "../../vm/lume_jit" }
 lume_mir = { path = "../../compiler/lume_mir" }
 lume_mir_lower = { path = "../../compiler/lume_mir_lower" }

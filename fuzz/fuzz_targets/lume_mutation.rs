@@ -16,6 +16,6 @@ fuzz_target!(|data: &[u8]| {
         let dcx = DiagCtx::new();
         let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
 
-        let _ = manifold_driver.jit();
+        let _ = manifold_driver.compile();
     }
 });

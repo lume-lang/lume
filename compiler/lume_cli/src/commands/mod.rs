@@ -59,9 +59,9 @@ pub struct BuildOptions {
     #[arg(value_name = "DIR", value_hint = ValueHint::DirPath)]
     pub path: Option<PathBuf>,
 
-    /// Path to the runner executable to fuse with
+    /// Path to the runtime library to link with
     #[arg(long, value_name = "LIB", value_hint = ValueHint::FilePath)]
-    pub runner_path: Option<PathBuf>,
+    pub runtime_path: Option<PathBuf>,
 
     /// Optimization level
     #[arg(
@@ -82,6 +82,10 @@ pub struct BuildOptions {
         default_missing_value = "partial",
     )]
     pub debug_info: DebugInfo,
+
+    /// Which linker to use when linking objects together
+    #[arg(long, value_enum)]
+    pub linker: Option<Linker>,
 
     /// Print the type context before analyzing
     #[arg(long, help_heading = "Development")]
@@ -116,6 +120,12 @@ pub enum DebugInfo {
     Full,
 }
 
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Linker {
+    Clang,
+    Gcc,
+}
+
 impl BuildOptions {
     pub fn options(&self) -> lume_session::Options {
         lume_session::Options {
@@ -135,7 +145,12 @@ impl BuildOptions {
                 DebugInfo::Partial => lume_session::DebugInfo::Partial,
                 DebugInfo::Full => lume_session::DebugInfo::Full,
             },
-            runner_path: self.runner_path.clone(),
+            linker: match self.linker {
+                Some(Linker::Clang) => Some(lume_session::LinkerPreference::Clang),
+                Some(Linker::Gcc) => Some(lume_session::LinkerPreference::Gcc),
+                None => None,
+            },
+            runtime_path: self.runtime_path.clone(),
             source_overrides: None,
         }
     }
