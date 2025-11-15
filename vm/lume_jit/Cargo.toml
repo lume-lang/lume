@@ -30,6 +30,7 @@ cranelift-codegen = { version = "=0.123.2", features = ["unwind"] }
 cranelift-jit = "=0.123.2"
 cranelift-module = "=0.123.2"
 cranelift-native = "=0.123.2"
+cranelift-object = { version = "=0.123.2" }
 
 [features]
 tracing = ["lume_trace/enable"]

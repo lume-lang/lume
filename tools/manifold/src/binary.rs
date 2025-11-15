@@ -92,7 +92,7 @@ fn compile(path: &Path, content: String) -> Result<PathBuf> {
     let dcx = DiagCtx::new();
     let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
 
-    manifold_driver.compile()
+    manifold_driver.link()
 }
 
 fn determine_expected_result_code(test_case: &TestCase) -> Option<u8> {

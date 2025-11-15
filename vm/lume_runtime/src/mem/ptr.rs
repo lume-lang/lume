@@ -6,6 +6,7 @@ unsafe extern "C" {
 
 /// Gets the given pointer as a reference, to the value which the pointer is
 /// pointing to.
+#[unsafe(export_name = "std::mem::ptr_ref")]
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_ptr_ref(ptr: *mut (), _metadata: *const TypeMetadata) -> *mut () {
     ptr
@@ -13,6 +14,7 @@ pub unsafe extern "C" fn lumert_ptr_ref(ptr: *mut (), _metadata: *const TypeMeta
 
 /// Reads an existing value from the memory location the current pointer is
 /// pointing to, offset by the given amount of bytes.
+#[unsafe(export_name = "std::mem::ptr_read")]
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_ptr_read(ptr: *mut (), offset: usize, _metadata: *const TypeMetadata) -> *mut () {
     unsafe { ptr.byte_add(offset).cast::<*mut ()>().read() }
@@ -20,6 +22,7 @@ pub unsafe extern "C" fn lumert_ptr_read(ptr: *mut (), offset: usize, _metadata:
 
 /// Writes a new value to the memory location the current pointer is pointing
 /// to, offset by the given amount of bytes.
+#[unsafe(export_name = "std::mem::ptr_write")]
 #[expect(clippy::missing_safety_doc, reason = "early alpha stage")]
 pub unsafe extern "C" fn lumert_ptr_write(
     ptr: *mut (),

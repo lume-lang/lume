@@ -6,7 +6,6 @@ rust-version.workspace = true
 
 [dependencies]
 lume_rt_metadata = { path = "../lume_rt_metadata" }
-lume_runtime = { path = "../lume_runtime" }
 lume_trace = { path = "../../crates/lume_trace" }
 
 indexmap = { workspace = true }
