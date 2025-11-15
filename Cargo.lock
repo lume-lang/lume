@@ -161,11 +161,11 @@ version = "0.1.1"
 dependencies = [
  "arc",
  "lume_errors",
- "lume_fuse",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
  "lume_jit",
+ "lume_linker",
  "lume_mir",
  "lume_mir_lower",
  "lume_session",
@@ -448,6 +448,21 @@ checksum = "7f75ef0a6a2efed3a2a14812318e28dc82c214eab5399c13d70878e2f88947b5"
 dependencies = [
  "cranelift-codegen",
  "libc",
+ "target-lexicon",
+]
+
+[[package]]
+name = "cranelift-object"
+version = "0.123.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ede9e63983baa4c2530dd2ab7ee25b171c6acf0414c00e1f1899606aa8b26d40"
+dependencies = [
+ "anyhow",
+ "cranelift-codegen",
+ "cranelift-control",
+ "cranelift-module",
+ "log",
+ "object",
  "target-lexicon",
 ]
 
@@ -1147,6 +1162,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "lume_assets"
+version = "0.1.1"
+dependencies = [
+ "dirs",
+ "lume_errors",
+]
+
+[[package]]
 name = "lume_ast"
 version = "0.1.1"
 dependencies = [
@@ -1179,11 +1202,11 @@ dependencies = [
  "error_snippet",
  "error_snippet_derive",
  "lume_errors",
- "lume_fuse",
  "lume_hir",
  "lume_hir_lower",
  "lume_infer",
  "lume_jit",
+ "lume_linker",
  "lume_metadata",
  "lume_mir",
  "lume_mir_lower",
@@ -1231,24 +1254,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "lume_fuse"
-version = "0.1.1"
-dependencies = [
- "dirs",
- "error_snippet",
- "lume_errors",
- "lume_mir",
- "lume_session",
- "postcard",
-]
-
-[[package]]
 name = "lume_gc"
 version = "0.1.1"
 dependencies = [
  "indexmap",
  "lume_rt_metadata",
- "lume_runtime",
  "lume_trace",
  "mimalloc",
  "sysinfo",
@@ -1320,6 +1330,7 @@ dependencies = [
  "cranelift-jit",
  "cranelift-module",
  "cranelift-native",
+ "cranelift-object",
  "gimli",
  "indexmap",
  "lume_errors",
@@ -1347,6 +1358,19 @@ dependencies = [
  "lume_ast",
  "lume_span",
  "tracing",
+]
+
+[[package]]
+name = "lume_linker"
+version = "0.1.1"
+dependencies = [
+ "dirs",
+ "error_snippet",
+ "lume_assets",
+ "lume_errors",
+ "lume_mir",
+ "lume_session",
+ "lume_trace",
 ]
 
 [[package]]
@@ -1447,22 +1471,10 @@ name = "lume_rt_metadata"
 version = "0.1.1"
 
 [[package]]
-name = "lume_runner"
-version = "0.1.1"
-dependencies = [
- "lume_gc",
- "lume_jit",
- "lume_mir",
- "lume_trace",
- "memmap2",
- "postcard",
- "serde",
-]
-
-[[package]]
 name = "lume_runtime"
 version = "0.1.1"
 dependencies = [
+ "lume_gc",
  "lume_rt_metadata",
 ]
 
@@ -1622,15 +1634,6 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
-
-[[package]]
-name = "memmap2"
-version = "0.9.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "843a98750cd611cc2965a8213b53b43e715f13c37a9e096c6408e69990961db7"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "mimalloc"

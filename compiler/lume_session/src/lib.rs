@@ -27,11 +27,14 @@ pub struct Options {
     /// Defines the optimization level for the generated LLVM IR.
     pub optimize: OptimizationLevel,
 
+    /// Defines which linker to use when linking objects together.
+    pub linker: Option<LinkerPreference>,
+
     /// Defines the amount of debug information to preserve in the binary.
     pub debug_info: DebugInfo,
 
-    /// Defines the absolute path to the runner executable.
-    pub runner_path: Option<PathBuf>,
+    /// Defines the absolute path to the runtime library.
+    pub runtime_path: Option<PathBuf>,
 
     /// Defines an optional list of overrides for source files.
     ///
@@ -119,6 +122,14 @@ impl DebugInfo {
     pub fn embed_sources(self) -> bool {
         self >= Self::Full
     }
+}
+
+/// Defines how much the generated IR should be optimized.
+#[derive(Serialize, Deserialize, Default, Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LinkerPreference {
+    #[default]
+    Clang,
+    Gcc,
 }
 
 /// Represents a compilation session, invoked by the driver.

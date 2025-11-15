@@ -1,6 +1,5 @@
 use lume_errors::{MapDiagnostic, SimpleDiagnostic};
 use lume_metadata::PackageMetadata;
-use lume_tir_lower::StaticMetadata;
 
 use crate::*;
 
@@ -47,12 +46,7 @@ impl Driver {
         // dependencies without any sub-dependencies can be built first.
         dependencies.reverse();
 
-        let mut merged_map = lume_mir::ModuleMap::new(
-            self.package.clone(),
-            gcx.session.options.clone(),
-            StaticMetadata::default(),
-        );
-
+        let mut objects = Vec::new();
         let mut dependency_hir = lume_hir::map::Map::empty(PackageId::empty());
 
         for dependency in dependencies {
@@ -65,11 +59,13 @@ impl Driver {
 
             write_metadata_object(&gcx, &metadata)?;
 
-            compiled.mir.merge_into(&mut merged_map);
+            objects.push((metadata.header.name.clone(), lume_jit::generate_main(compiled.mir)?));
         }
 
         let output_file_path = gcx.binary_output_path(&self.package.name);
-        lume_fuse::fuse_binary_file(&gcx, merged_map, &output_file_path)?;
+
+        let object_files = lume_linker::write_object_files(&gcx, objects)?;
+        lume_linker::link_objects(object_files, &output_file_path, &gcx.session.options)?;
 
         Ok(CompiledExecutable {
             binary: output_file_path,

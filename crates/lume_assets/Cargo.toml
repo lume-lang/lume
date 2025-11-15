@@ -1,0 +1,17 @@
+[package]
+name = "lume_assets"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+lume_errors = { path = "../lume_errors" }
+
+dirs = { version = "=6.0.0" }
+
+[lints]
+workspace = true
