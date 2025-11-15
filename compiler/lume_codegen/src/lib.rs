@@ -30,8 +30,6 @@ use crate::dwarf::{DebugRelocName, RootDebugContext, WriterRelocate};
 pub const GC_ALLOC: &str = "std::mem::GC::alloc";
 pub const GC_STEP: &str = "std::mem::GC::step";
 
-pub type EntrypointAddress = extern "C" fn() -> i32;
-
 #[derive(Debug, Clone)]
 struct DeclaredFunction {
     pub id: cranelift_module::FuncId,

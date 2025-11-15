@@ -5,7 +5,7 @@ rust-version = { workspace = true }
 edition = { workspace = true }
 
 [workspace]
-members = ["compiler/lume_cli", "tools/*", "fuzz"]
+members = ["compiler/lume_cli", "tools/*", "fuzz", "rt/lume_runtime"]
 resolver = "3"
 
 [[bin]]
