@@ -8,6 +8,7 @@ use lume_span::SourceFile;
 
 use crate::errors::*;
 
+pub mod attr;
 mod errors;
 pub mod expr;
 pub mod generic;
@@ -41,6 +42,9 @@ pub struct Parser<'src> {
     /// Defines the documentation comment for the current item, if any.
     doc_token: Option<String>,
 
+    /// Defines the attributes for the current item, if any.
+    attributes: Option<Vec<Attribute>>,
+
     /// Defines whether the parser should attempt to recover from errors.
     attempt_recovery: bool,
 }
@@ -59,6 +63,7 @@ impl<'src> Parser<'src> {
             position: 0,
             tokens,
             doc_token: None,
+            attributes: None,
             attempt_recovery: true,
         })
     }
@@ -117,6 +122,7 @@ impl<'src> Parser<'src> {
             }
 
             self.read_doc_comment()?;
+            self.attributes = Some(self.parse_attributes()?);
 
             expressions.push(self.parse_top_level_expression()?);
         }
@@ -323,7 +329,7 @@ impl<'src> Parser<'src> {
     ) -> Result<Vec<T>> {
         let mut v = Vec::new();
 
-        while self.consume_if(close).is_none() {
+        while !self.check(close) {
             v.push(f(self)?);
         }
 
@@ -451,6 +457,26 @@ impl<'src> Parser<'src> {
     fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<Vec<T>> {
         self.consume(TokenType::LeftCurly)?;
         self.consume_seq_to_end(TokenType::RightCurly, f)
+    }
+
+    /// Parses a a sequence of zero-or-more items, where the closure
+    /// `f` is invoked, as long as the given `open` token is present.
+    ///
+    /// This is useful for when you need zero-or-more items without consuming
+    /// any tokens, such as attributes.
+    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    fn consume_any_seq<T>(
+        &mut self,
+        open: TokenType,
+        mut f: impl FnMut(&mut Parser<'src>) -> Result<T>,
+    ) -> Result<Vec<T>> {
+        let mut v = Vec::new();
+
+        if self.peek(open) {
+            v.push(f(self)?);
+        }
+
+        Ok(v)
     }
 
     /// Checks whether the current token is of the given type. If so, the token

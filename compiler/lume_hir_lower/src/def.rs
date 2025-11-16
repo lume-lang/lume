@@ -19,6 +19,7 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_struct(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let visibility = lower_visibility(expr.visibility.as_ref());
@@ -135,6 +136,7 @@ impl LowerModule<'_> {
     #[tracing::instrument(level = "DEBUG", skip_all, err)]
     fn def_trait(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
+        self.add_lang_items(id, &expr.attributes)?;
 
         let name = self.expand_self_name(expr.name.clone(), &expr.type_parameters)?;
         let visibility = lower_visibility(expr.visibility.as_ref());

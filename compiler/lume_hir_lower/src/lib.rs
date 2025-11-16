@@ -369,6 +369,36 @@ impl<'a> LowerModule<'a> {
         Ok(None)
     }
 
+    /// Adds the given node `![lang_item(name = ...)]` to the `lang_items` map,
+    /// if present in the given slice.
+    fn add_lang_items(&mut self, node: NodeId, attrs: &[lume_ast::Attribute]) -> Result<()> {
+        for attr in attrs {
+            if attr.name.as_str() != "lang_item" {
+                continue;
+            }
+
+            let Some(name_arg) = attr.arguments.iter().find(|arg| arg.key.as_str() == "name") else {
+                return Err(errors::LangItemMissingName {
+                    source: self.file.clone(),
+                    range: attr.location.0.clone(),
+                }
+                .into());
+            };
+
+            let lume_ast::Literal::String(lang_name) = &name_arg.value else {
+                return Err(errors::LangItemInvalidNameType {
+                    source: self.file.clone(),
+                    range: attr.location.0.clone(),
+                }
+                .into());
+            };
+
+            self.map.lang_items.insert(lang_name.value.clone(), node);
+        }
+
+        Ok(())
+    }
+
     fn identifier(&self, expr: lume_ast::Identifier) -> Identifier {
         let location = self.location(expr.location.clone());
 

@@ -146,3 +146,26 @@ pub struct DuplicateParameter {
 
     pub name: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "no `name` argument in `lang_item` attribute", code = "LM3061")]
+pub struct LangItemMissingName {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("`![lang_item]` attribute must define a `name` string argument")]
+    pub range: Range<usize>,
+}
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(
+    message = "`name` argument in `lang_item` attribute must be a string",
+    code = "LM3062"
+)]
+pub struct LangItemInvalidNameType {
+    #[span]
+    pub source: Arc<SourceFile>,
+
+    #[label("`![lang_item]` attribute must define a `name` string argument")]
+    pub range: Range<usize>,
+}
