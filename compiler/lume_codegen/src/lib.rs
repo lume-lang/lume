@@ -310,12 +310,12 @@ impl CraneliftBackend {
         }
     }
 
-    pub(crate) fn declare_static_data(&self, key: &str, value: &[u8]) -> DataId {
+    pub(crate) fn declare_static_data<V: Into<Vec<u8>>>(&self, key: &str, value: V) -> DataId {
         let mut data_ctx = DataDescription::new();
         data_ctx.set_align(8);
         data_ctx.set_used(true);
 
-        data_ctx.define(value.to_vec().into_boxed_slice());
+        data_ctx.define(value.into().into_boxed_slice());
 
         self.declare_static_data_ctx(key, &data_ctx)
     }
@@ -325,7 +325,14 @@ impl CraneliftBackend {
     }
 
     pub(crate) fn declare_static_string(&self, value: &str) -> DataId {
-        self.declare_static_data(value, value.as_bytes())
+        let mut bytes = value.as_bytes().to_vec();
+
+        let has_terminator = bytes.last().map_or(false, |b| *b == 0);
+        if !has_terminator {
+            bytes.push(0);
+        }
+
+        self.declare_static_data(value, bytes)
     }
 
     pub(crate) fn calculate_source_loc(&self, loc: Location) -> SourceLoc {
