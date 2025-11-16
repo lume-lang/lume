@@ -6,6 +6,7 @@ expression: "parse(\"struct Test<T: Numeric> {}\")"
     TypeDefinition(
         Struct(
             StructDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Test",

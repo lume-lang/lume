@@ -6,6 +6,7 @@ expression: "parse(\"trait Add { }\")"
     TypeDefinition(
         Trait(
             TraitDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Add",

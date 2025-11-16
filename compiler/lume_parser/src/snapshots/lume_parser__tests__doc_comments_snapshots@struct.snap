@@ -6,6 +6,7 @@ expression: "parse(\"/// This is a doc comment\n        struct Foo { }\")"
     TypeDefinition(
         Struct(
             StructDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Foo",

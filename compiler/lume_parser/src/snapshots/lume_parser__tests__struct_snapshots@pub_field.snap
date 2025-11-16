@@ -6,6 +6,7 @@ expression: "parse(\"\n        struct Foo {\n            pub x: Int32 = 1;\n    
     TypeDefinition(
         Struct(
             StructDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Foo",

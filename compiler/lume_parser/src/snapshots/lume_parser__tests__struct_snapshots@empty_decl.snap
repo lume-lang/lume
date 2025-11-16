@@ -6,6 +6,7 @@ expression: "parse(\"struct Int32 {}\")"
     TypeDefinition(
         Struct(
             StructDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Int32",
