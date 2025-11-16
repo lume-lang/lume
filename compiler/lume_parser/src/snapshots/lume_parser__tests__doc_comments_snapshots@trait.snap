@@ -6,6 +6,7 @@ expression: "parse(\"/// This is a doc comment\n        trait Foo { }\")"
     TypeDefinition(
         Trait(
             TraitDefinition {
+                attributes: [],
                 visibility: None,
                 name: Identifier {
                     name: "Foo",
