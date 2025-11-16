@@ -177,7 +177,9 @@ impl LowerFunction<'_> {
             | lume_mir::TypeKind::Boolean
             | lume_mir::TypeKind::String
             | lume_mir::TypeKind::Pointer { .. } => self.alloca(ty.bytesize(), None),
-            lume_mir::TypeKind::Metadata { .. } | lume_mir::TypeKind::Void => unreachable!(),
+            lume_mir::TypeKind::Metadata { .. } | lume_mir::TypeKind::Void | lume_mir::TypeKind::Never => {
+                unreachable!()
+            }
         }
     }
 }

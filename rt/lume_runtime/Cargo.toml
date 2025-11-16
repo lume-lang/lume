@@ -8,8 +8,15 @@ rust-version.workspace = true
 crate-type = ["lib", "staticlib"]
 
 [dependencies]
+backtrace = { version = "=0.3.76" }
 lume_gc = { path = "../lume_gc" }
 lume_rt_metadata = { path = "../lume_rt_metadata" }
 
+owo-colors = { version = "4.2", optional = true }
+
 [lints]
 workspace = true
+
+[features]
+default = ["color"]
+color = ["dep:owo-colors"]

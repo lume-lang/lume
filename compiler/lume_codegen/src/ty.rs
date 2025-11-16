@@ -30,7 +30,8 @@ impl CraneliftBackend {
             | lume_mir::TypeKind::Tuple { .. }
             | lume_mir::TypeKind::Pointer { .. }
             | lume_mir::TypeKind::Metadata { .. }
-            | lume_mir::TypeKind::Void => self.cl_ptr_type(),
+            | lume_mir::TypeKind::Void
+            | lume_mir::TypeKind::Never => self.cl_ptr_type(),
         }
     }
 

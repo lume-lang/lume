@@ -8,6 +8,7 @@ pub(crate) mod define_edges;
 pub(crate) mod mark_gc_refs;
 pub(crate) mod pass_block_args;
 pub(crate) mod remove_orphans;
+pub(crate) mod remove_unreachable;
 pub(crate) mod rename_ssa;
 pub(crate) mod ssa_assign;
 
@@ -32,6 +33,7 @@ pub(crate) trait Pass {
 
 impl FunctionTransformer<'_, '_> {
     pub(crate) fn run_passes(&mut self) {
+        self.run_pass::<remove_unreachable::RemoveUnreachable>();
         self.run_pass::<define_edges::DefineBlockEdges>();
         self.run_pass::<remove_orphans::RemoveOrphanBlocks>();
         self.run_pass::<define_block_params::DefineBlockParameters>();

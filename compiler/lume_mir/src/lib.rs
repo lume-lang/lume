@@ -1520,6 +1520,13 @@ impl Type {
         }
     }
 
+    pub fn never() -> Self {
+        Self {
+            kind: TypeKind::Never,
+            is_generic: false,
+        }
+    }
+
     pub fn integer(bits: u8, signed: bool) -> Self {
         match (bits, signed) {
             (8, true) => Self::i8(),
@@ -1646,6 +1653,10 @@ impl Type {
         self.kind == TypeKind::Void
     }
 
+    pub fn is_never(&self) -> bool {
+        self.kind == TypeKind::Never
+    }
+
     pub fn is_reference_type(&self) -> bool {
         self.kind.is_reference_type()
     }
@@ -1705,7 +1716,7 @@ impl Type {
             TypeKind::Integer { bits, .. } | TypeKind::Float { bits } => (*bits / 8) as usize,
             TypeKind::Boolean => 1,
             TypeKind::String | TypeKind::Pointer { .. } | TypeKind::Metadata { .. } => POINTER_SIZE,
-            TypeKind::Void => 0,
+            TypeKind::Void | TypeKind::Never => 0,
         }
     }
 }
@@ -1756,6 +1767,9 @@ pub enum TypeKind {
 
     /// Defines a void type.
     Void,
+
+    /// Defines an unreachable type.
+    Never,
 }
 
 impl TypeKind {
@@ -1796,6 +1810,7 @@ impl std::fmt::Display for TypeKind {
             Self::Pointer { elemental } => write!(f, "ptr {elemental}"),
             Self::Metadata { inner } => write!(f, "metadata {}", inner.full_name),
             Self::Void => write!(f, "void"),
+            Self::Never => write!(f, "never"),
         }
     }
 }

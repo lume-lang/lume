@@ -774,6 +774,15 @@ impl TyInferCtx {
         Ok(false)
     }
 
+    /// Determines whether the given [`TypeRef`] is the `Never` type.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_type_never(&self, ty: &TypeRef) -> bool {
+        let never_type = self.lang_item_type("never").expect("expected `Never` lang item");
+
+        never_type.instance_of == ty.instance_of
+    }
+
     /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from
     /// the standard library.
     #[cached_query]

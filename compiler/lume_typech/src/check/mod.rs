@@ -47,6 +47,11 @@ impl TyCheckCtx {
             return Ok(());
         }
 
+        // The `Never` type is inherently compatible with everything.
+        if self.is_type_never(from) {
+            return Ok(());
+        }
+
         // Special case for `void` types, since they are always identical, no matter
         // whether they have different underlying IDs.
         match (from.is_void(), to.is_void()) {

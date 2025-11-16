@@ -4,6 +4,10 @@ use crate::FunctionTransformer;
 
 impl FunctionTransformer<'_, '_> {
     pub(super) fn lower_type(&self, type_ref: &lume_types::TypeRef) -> lume_mir::Type {
+        if self.tcx().is_type_never(type_ref) {
+            return lume_mir::Type::never();
+        }
+
         let ty = self.tcx().db().type_(type_ref.instance_of).unwrap();
 
         match &ty.kind {

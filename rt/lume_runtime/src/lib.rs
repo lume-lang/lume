@@ -1,6 +1,7 @@
 pub mod array;
 pub mod io;
 pub mod mem;
+pub mod process;
 pub mod string;
 
 pub use lume_gc::*;

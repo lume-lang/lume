@@ -1,0 +1,11 @@
+namespace std::process
+
+![lang_item(name = "never")]
+pub struct Never { }
+
+/// Terminates the process immediately.
+///
+/// This function will terminate the process immediately, without unwinding
+/// the stack. As a consequence, any objects currently on the stack will not
+/// have their destructor invoked.
+pub fn external abort() -> Never
