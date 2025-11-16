@@ -472,6 +472,24 @@ impl Block {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct Attribute {
+    pub name: Identifier,
+    pub arguments: Vec<AttributeArgument>,
+    pub location: Location,
+}
+
+node_location!(Attribute);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AttributeArgument {
+    pub key: Identifier,
+    pub value: Literal,
+    pub location: Location,
+}
+
+node_location!(AttributeArgument);
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parameter {
     pub name: Identifier,
     pub param_type: Type,
@@ -641,6 +659,7 @@ impl TypeDefinition {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct StructDefinition {
+    pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub builtin: bool,
@@ -681,6 +700,7 @@ node_location!(MethodDefinition);
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct TraitDefinition {
+    pub attributes: Vec<Attribute>,
     pub visibility: Option<Visibility>,
     pub name: Identifier,
     pub type_parameters: Vec<TypeParameter>,

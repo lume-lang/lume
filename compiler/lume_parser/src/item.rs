@@ -212,7 +212,12 @@ impl Parser<'_> {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_struct_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
         let documentation = self.doc_token.take();
-        let start = self.consume(TokenType::Struct)?.start();
+        let attributes = self.attributes.take().unwrap_or_default();
+
+        let start = attributes
+            .first()
+            .map(|attr| attr.location.start())
+            .unwrap_or(self.consume(TokenType::Struct)?.start());
 
         let builtin = self.check(TokenType::Builtin);
 
@@ -230,6 +235,7 @@ impl Parser<'_> {
         let end = self.previous_token().end();
 
         let struct_def = StructDefinition {
+            attributes,
             visibility,
             name,
             builtin,
@@ -398,6 +404,7 @@ impl Parser<'_> {
     #[tracing::instrument(level = "DEBUG", skip(self), err)]
     fn parse_trait_visibility(&mut self, visibility: Option<Visibility>) -> Result<TopLevelExpression> {
         let documentation = self.doc_token.take();
+        let attributes = self.attributes.take().unwrap_or_default();
 
         let start = visibility
             .as_ref()
@@ -417,6 +424,7 @@ impl Parser<'_> {
         let end = self.previous_token().end();
 
         let trait_def = TraitDefinition {
+            attributes,
             visibility,
             name,
             methods,
