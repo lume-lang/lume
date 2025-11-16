@@ -842,6 +842,19 @@ impl TyInferCtx {
         Ok(false)
     }
 
+    /// Determines whether the given function is an entrypoint.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn is_entrypoint(&self, id: NodeId) -> bool {
+        let Some(node) = self.hir.node(id) else { return false };
+
+        let lume_hir::Node::Function(func) = node else {
+            return false;
+        };
+
+        func.name.root.is_empty() && func.name.name.name().as_str() == "main"
+    }
+
     /// Determines whether the given [`TypeRef`] is the `Never` type.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]
