@@ -137,7 +137,7 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             }
         }
 
-        if !self.tcx().is_visible_outside_package(func.id) {
+        if !self.tcx().is_visible_outside_package(func.id) && !self.tcx().is_entrypoint(func.id) {
             self.func.signature.internal = true;
         }
 
