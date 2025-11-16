@@ -775,35 +775,26 @@ impl TyInferCtx {
     }
 
     /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from
-    /// the standard library, if found.
-    ///
-    /// If the method is not found, returns [`None`].
+    /// the standard library.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self))]
-    pub fn drop_method_def(&self) -> Option<NodeId> {
-        let drop_type_path = lume_hir::Path::from_parts(
-            Some([
-                lume_hir::PathSegment::namespace("std"),
-                lume_hir::PathSegment::namespace("ops"),
-            ]),
-            lume_hir::PathSegment::ty("Dispose"),
-        );
-
-        let drop_type_ref = self.find_type_ref(&drop_type_path).unwrap()?;
+    pub fn drop_method_def(&self) -> NodeId {
+        let drop_type_ref = self.lang_item_type("dispose_trait").unwrap();
         let drop_method_name = Identifier::from("dispose");
 
-        let method = self.lookup_impl_methods_on(&drop_type_ref, &drop_method_name).next()?;
+        let method = self
+            .lookup_impl_methods_on(&drop_type_ref, &drop_method_name)
+            .next()
+            .unwrap();
 
-        Some(method.id)
+        method.id
     }
 
     /// Determines whether the given method is a dropper.
     #[cached_query]
     #[tracing::instrument(level = "TRACE", skip(self), ret)]
     pub fn is_method_dropper(&self, method: NodeId) -> bool {
-        let Some(dropper_method_id) = self.drop_method_def() else {
-            return false;
-        };
+        let dropper_method_id = self.drop_method_def();
 
         if let Some(lume_hir::Node::TraitMethodImpl(method_impl)) = self.hir_node(method)
             && let Ok(method_def) = self.hir_trait_method_def_of_impl(method_impl)

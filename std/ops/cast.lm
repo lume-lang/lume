@@ -33,6 +33,7 @@ namespace std::ops
 /// let bool_value = false;
 /// let int_value = bool_value as Int32;
 /// ```
+![lang_item(name = "cast_trait")]
 pub trait Cast<T> {
     /// Convert the input instance into a new instance of [`T`].
     fn cast(self) -> T;

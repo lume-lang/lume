@@ -445,9 +445,7 @@ impl TyCheckCtx {
         let expr_location = self.hir_expect_expr(expr.id).location;
 
         // Resolve the `Cast` type from the type context
-        let cast_ref = self.find_type_ref(&Path::cast())?.unwrap();
-        let mut cast_trait = TypeRef::new(cast_ref.instance_of, cast_ref.location);
-
+        let mut cast_trait = self.lang_item_type("cast_trait").unwrap();
         cast_trait.type_arguments.push(dest_type);
 
         if !self.trait_impl_by(&cast_trait, &source_type)? {
