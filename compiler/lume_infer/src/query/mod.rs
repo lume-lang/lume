@@ -480,6 +480,26 @@ impl TyInferCtx {
         Ok(&self.tdb().ty_expect(type_ref.instance_of)?.name)
     }
 
+    /// Gets the `lang_item` with the given name from the HIR map.
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn lang_item(&self, name: &str) -> Option<NodeId> {
+        self.hir
+            .lang_items
+            .iter()
+            .find_map(|(key, id)| (key == name).then_some(*id))
+    }
+
+    /// Gets the `lang_item` with the given name from the HIR map, turned into a
+    /// [`TypeRef`].
+    #[cached_query]
+    #[tracing::instrument(level = "TRACE", skip(self))]
+    pub fn lang_item_type(&self, name: &str) -> Option<TypeRef> {
+        let id = self.lang_item(name)?;
+
+        Some(TypeRef::new(id, self.hir_span_of_node(id)))
+    }
+
     /// Returns the [`Trait`] definition, which matches the [`Use`] declaration
     /// with the given ID.
     #[tracing::instrument(level = "TRACE", skip(self), err)]

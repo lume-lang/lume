@@ -501,13 +501,6 @@ impl Path {
         Self::from_parts(Some([PathSegment::namespace("std")]), PathSegment::ty("Boolean"))
     }
 
-    pub fn cast() -> Self {
-        Self::from_parts(
-            Some([PathSegment::namespace("std"), PathSegment::namespace("ops")]),
-            PathSegment::ty("Cast"),
-        )
-    }
-
     /// Gets the parent symbol, which contains the current symbol instance.
     ///
     /// For example, given a [`Path`] of `std::io::File::open()`, returns

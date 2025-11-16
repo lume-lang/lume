@@ -2,6 +2,7 @@ namespace std::ops
 
 /// Custom handler to execute whenever the parent object
 /// is dropped and/or deallocated.
+![lang_item(name = "dispose_trait")]
 pub trait Dispose {
     fn dispose(self);
 }
