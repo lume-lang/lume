@@ -206,6 +206,8 @@ impl CraneliftBackend {
 
         let linkage = if func.signature.external {
             cranelift_module::Linkage::Import
+        } else if func.signature.internal {
+            cranelift_module::Linkage::Local
         } else {
             cranelift_module::Linkage::Export
         };

@@ -96,6 +96,9 @@ pub struct Signature {
     /// either in another module or in an external library.
     pub external: bool,
 
+    /// Defines whether the function is accessible to the local package only.
+    pub internal: bool,
+
     /// Defines whether the function supports a variable amount of
     /// arguments.
     pub vararg: bool,

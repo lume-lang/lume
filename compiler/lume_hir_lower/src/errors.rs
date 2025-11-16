@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use error_snippet_derive::Diagnostic;
 use lume_span::SourceFile;
+use lume_span::source::Location;
 
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "invalid namespace path", code = "LM3005")]
@@ -105,14 +106,11 @@ pub struct UndeclaredVariable {
 #[derive(Diagnostic, Debug)]
 #[diagnostic(message = "duplicate definition", code = "LM3028")]
 pub struct DuplicateDefinition {
-    #[span]
-    pub source: Arc<SourceFile>,
+    #[label(source, "item {name} is already defined within this file")]
+    pub duplicate_range: Location,
 
-    #[label("item {name} is already defined within this file")]
-    pub duplicate_range: Range<usize>,
-
-    #[label(note, "original definition found here")]
-    pub original_range: Range<usize>,
+    #[label(source, note, "original definition found here")]
+    pub original_range: Location,
 
     pub name: String,
 }
