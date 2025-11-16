@@ -2,6 +2,7 @@ pub mod dwarf;
 pub(crate) mod inst;
 pub(crate) mod metadata;
 pub(crate) mod ty;
+pub(crate) mod unwind;
 pub(crate) mod value;
 
 use std::collections::HashMap;
@@ -26,6 +27,7 @@ use object::write::Relocation;
 use object::{RelocationEncoding, RelocationFlags};
 
 use crate::dwarf::{DebugRelocName, RootDebugContext, WriterRelocate};
+use crate::unwind::RootUnwindContext;
 
 pub const GC_ALLOC: &str = "std::mem::GC::alloc";
 pub const GC_STEP: &str = "std::mem::GC::step";
@@ -134,6 +136,8 @@ impl CraneliftBackend {
             None
         };
 
+        let mut unwind_ctx = RootUnwindContext::new(self.isa.clone());
+
         for func in self.context.functions.values() {
             if func.signature.external {
                 continue;
@@ -144,6 +148,8 @@ impl CraneliftBackend {
             }
 
             self.define_function(func, &mut ctx, &mut builder_ctx, debug_ctx.as_mut())?;
+
+            unwind_ctx.add_function(func.id, &ctx);
 
             let compiled_code = ctx.compiled_code().expect("expected context to be compiled");
             let code_len = compiled_code.buffer.total_size() as usize;
@@ -178,6 +184,8 @@ impl CraneliftBackend {
         if let Some(debug_ctx) = debug_ctx.take() {
             debug_ctx.finish(&mut object)?;
         }
+
+        unwind_ctx.write(self, &mut object)?;
 
         Ok(object)
     }

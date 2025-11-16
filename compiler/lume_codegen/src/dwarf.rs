@@ -242,9 +242,8 @@ impl<'ctx> RootDebugContext<'ctx> {
         Ok(())
     }
 
-    /// Finish building the final DWARF debug binary and registers it via the
-    /// GDB/LLDB JIT interface descriptor, making it available when debugging
-    /// the binary.
+    /// Finish building the final DWARF debugging sections in given object file,
+    /// as well as adding unwind frames.
     pub fn finish(mut self, product: &mut ObjectProduct) -> Result<()> {
         let mut sections = Sections::new(WriterRelocate::new(self.endianess));
         self.dwarf.write(&mut sections).unwrap();
@@ -456,9 +455,7 @@ impl Writer for WriterRelocate {
                         let offset = self.len() as u64;
                         offset.wrapping_sub(val)
                     }
-                    _ => {
-                        return Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe));
-                    }
+                    _ => return Err(gimli::write::Error::UnsupportedPointerEncoding(eh_pe)),
                 };
 
                 self.write_eh_pointer_data(val, eh_pe.format(), size)
