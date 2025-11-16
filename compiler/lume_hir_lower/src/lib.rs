@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::ops::Range;
 use std::sync::Arc;
 
 use error_snippet::Result;
@@ -124,6 +123,7 @@ impl<'a> LowerState<'a> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
         let mut item_idx = NodeId::empty(self.package.id);
+        let mut defined_items = HashSet::<DefinedItem>::new();
 
         let use_std = !self.package.dependencies.no_std;
 
@@ -142,7 +142,15 @@ impl<'a> LowerState<'a> {
 
             // Lowers the parsed module expressions down to HIR.
             self.dcx.with(|handle| {
-                LowerModule::lower(&mut lume_hir, &mut item_idx, source_file, handle, expressions, use_std)
+                LowerModule::lower(
+                    &mut lume_hir,
+                    &mut item_idx,
+                    &mut defined_items,
+                    source_file,
+                    handle,
+                    expressions,
+                    use_std,
+                )
             })?;
         }
 
@@ -163,8 +171,8 @@ impl DefinedItem {
         }
     }
 
-    pub fn location(&self) -> &Range<usize> {
-        &self.path().location.index
+    pub fn location(&self) -> Location {
+        self.path().location
     }
 }
 
@@ -231,12 +239,14 @@ impl<'a> LowerModule<'a> {
     pub fn lower(
         map: &'a mut Map,
         node_idx: &'a mut NodeId,
+        mut defined: &mut HashSet<DefinedItem>,
         file: Arc<SourceFile>,
         dcx: DiagCtxHandle,
         expressions: Vec<lume_ast::TopLevelExpression>,
         import_std: bool,
     ) -> Result<()> {
         let mut lower = LowerModule::new(map, *node_idx, file, dcx);
+        std::mem::swap(&mut lower.defined, &mut defined);
 
         if import_std {
             lower.insert_implicit_imports()?;
@@ -255,6 +265,7 @@ impl<'a> LowerModule<'a> {
         lower.dcx.ensure_untainted()?;
 
         *node_idx = lower.current_node;
+        *defined = std::mem::take(&mut lower.defined);
 
         Ok(())
     }
@@ -283,9 +294,11 @@ impl<'a> LowerModule<'a> {
     fn ensure_item_undefined(&mut self, item: DefinedItem) -> Result<()> {
         if let Some(existing) = self.defined.get(&item) {
             return Err(crate::errors::DuplicateDefinition {
-                source: self.file.clone(),
-                duplicate_range: item.location().clone(),
-                original_range: existing.location().clone(),
+                duplicate_range: lume_span::source::Location {
+                    file: self.file.clone(),
+                    index: item.location().index.clone(),
+                },
+                original_range: existing.location().clone_inner(),
                 name: item.path().to_string(),
             }
             .into());

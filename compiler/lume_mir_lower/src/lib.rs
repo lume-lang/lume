@@ -137,6 +137,10 @@ impl<'mir, 'tcx> FunctionTransformer<'mir, 'tcx> {
             }
         }
 
+        if !self.tcx().is_visible_outside_package(func.id) {
+            self.func.signature.internal = true;
+        }
+
         if func.kind == lume_tir::FunctionKind::Dropper {
             self.func.signature.is_dropper = true;
         }
