@@ -12,7 +12,7 @@ backtrace = { version = "=0.3.76" }
 lume_gc = { path = "../lume_gc" }
 lume_rt_metadata = { path = "../lume_rt_metadata" }
 
-owo-colors = { version = "4.2", optional = true }
+owo-colors = { version = "4.2", optional = true, features = ["supports-colors"] }
 
 [lints]
 workspace = true

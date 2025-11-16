@@ -13,18 +13,24 @@ impl Display for SymbolInfo<'_> {
     #[cfg(feature = "color")]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use owo_colors::OwoColorize;
+        use owo_colors::Stream::Stdout;
 
         write!(
             f,
             "  frame #{}: {:016p} {}",
             self.idx,
-            self.ip.yellow(),
+            self.ip.if_supports_color(Stdout, |t| t.yellow()),
             self.name.unwrap_or("??")
         )?;
 
         match (self.file, self.line) {
-            (Some(file), Some(line)) => write!(f, " at {}:{}", file.cyan(), line.yellow()),
-            (Some(file), None) => write!(f, " in {}", file.cyan()),
+            (Some(file), Some(line)) => write!(
+                f,
+                " at {}:{}",
+                file.if_supports_color(Stdout, |t| t.cyan()),
+                line.if_supports_color(Stdout, |t| t.yellow())
+            ),
+            (Some(file), None) => write!(f, " in {}", file.if_supports_color(Stdout, |t| t.cyan())),
             (_, _) => Ok(()),
         }
     }
