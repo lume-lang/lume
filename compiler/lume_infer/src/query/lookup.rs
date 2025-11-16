@@ -2,7 +2,7 @@ use error_snippet::{IntoDiagnostic, Result};
 use levenshtein::levenshtein;
 use lume_architect::cached_query;
 use lume_hir::{Identifier, Path, WithLocation};
-use lume_span::NodeId;
+use lume_span::{Location, NodeId};
 use lume_types::{Function, FunctionSigOwned, Method, MethodKind, TypeKind, TypeRef};
 
 use super::diagnostics::{self};
@@ -127,12 +127,12 @@ impl TyInferCtx {
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
-    pub fn lookup_methods_on(
-        &self,
-        ty: &'_ lume_types::TypeRef,
-        name: &'_ Identifier,
+    pub fn lookup_methods_on<'a>(
+        &'a self,
+        ty: &lume_types::TypeRef,
+        name: &Identifier,
         blanket_lookup: BlanketLookup,
-    ) -> Vec<&'_ Method> {
+    ) -> Vec<&'a Method> {
         let direct_impl = self.lookup_impl_methods_on(ty, name);
 
         match blanket_lookup {
@@ -152,19 +152,54 @@ impl TyInferCtx {
     /// arguments. To check whether any given [`Method`] is valid for a
     /// given context, see [`ThirBuildCtx::check_method()`].
     #[tracing::instrument(level = "TRACE", skip_all)]
-    pub fn lookup_method_on(&self, ty: &'_ lume_types::TypeRef, name: &'_ Identifier) -> Option<&Method> {
+    pub fn lookup_method_on<'a>(&'a self, ty: &lume_types::TypeRef, name: &Identifier) -> Option<&'a Method> {
         // First check whether any method is defined directly on the type
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);
-
-        match methods.first() {
-            Some(method) => Some(method),
-
-            // If not, attempt to look for blanket implementations as well.
-            None => self
-                .lookup_methods_on(ty, name, BlanketLookup::Include)
-                .first()
-                .copied(),
+        if let Some(idx) = self.find_local_method(&ty.location, &methods) {
+            return Some(&methods[idx]);
         }
+
+        // If not, attempt to look for blanket implementations as well.
+        let methods = self.lookup_methods_on(ty, name, BlanketLookup::Include);
+        let idx = self.find_local_method(&ty.location, &methods)?;
+
+        Some(&methods[idx])
+    }
+
+    /// Find the index into `methods` with the method which is "closest" to the
+    /// given location.
+    ///
+    /// First, the method attempts to find a method which is defined in the same
+    /// file as `local_loc`. If none is found, it looks for a method which
+    /// exists within the same package as `local_loc`. If that also fails,
+    /// it returns the index of the first method in the slice.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn find_local_method(&self, local_loc: &Location, methods: &[&Method]) -> Option<usize> {
+        // Methods defined within the same file as the given location.
+        if let Some(idx) = methods
+            .iter()
+            .position(|m| self.hir_span_of_node(m.id).file.id == local_loc.file.id)
+        {
+            return Some(idx);
+        }
+
+        // Methods defined within the same package as the given location.
+        if let Some(idx) = methods
+            .iter()
+            .position(|m| self.hir_span_of_node(m.id).file.package == local_loc.file.package)
+        {
+            return Some(idx);
+        }
+
+        // Methods which are visible outside of their owning package
+        if let Some(idx) = methods
+            .iter()
+            .position(|m| m.visibility == Some(lume_hir::Visibility::Public))
+        {
+            return Some(idx);
+        }
+
+        if methods.is_empty() { None } else { Some(0) }
     }
 
     /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't
@@ -356,16 +391,49 @@ impl TyInferCtx {
                 } else {
                     let functions = self.probe_functions(&call.name);
 
-                    let Some(function) = functions.first() else {
+                    let Some(func_idx) = self.find_local_function(&call.location, &functions) else {
                         let missing_func_err = self.fold_function_suggestions(call)?;
 
                         return Err(missing_func_err.into());
                     };
 
-                    Ok(Callable::Function(function))
+                    Ok(Callable::Function(functions[func_idx]))
                 }
             }
         }
+    }
+
+    /// Find the index into `funcs` with the function which is "closest" to the
+    /// given location.
+    ///
+    /// First, the function attempts to find a function which is defined in the
+    /// same file as `local_loc`. If none is found, it looks for a function
+    /// which exists within the same package as `local_loc`. If that also
+    /// fails, it returns the index of the first function in the slice.
+    #[tracing::instrument(level = "TRACE", skip_all)]
+    fn find_local_function(&self, local_loc: &Location, funcs: &[&Function]) -> Option<usize> {
+        // Functions defined within the same file as the given location.
+        if let Some(idx) = funcs
+            .iter()
+            .position(|c| self.hir_span_of_node(c.id).file.id == local_loc.file.id)
+        {
+            return Some(idx);
+        }
+
+        // Functions defined within the same package as the given location.
+        if let Some(idx) = funcs
+            .iter()
+            .position(|c| self.hir_span_of_node(c.id).file.package == local_loc.file.package)
+        {
+            return Some(idx);
+        }
+
+        // Functions which are visible outside of their owning package
+        if let Some(idx) = funcs.iter().position(|c| c.visibility == lume_hir::Visibility::Public) {
+            return Some(idx);
+        }
+
+        if funcs.is_empty() { None } else { Some(0) }
     }
 
     /// Looks up all [`Method`]s and attempts to find a single [`Method`], which
