@@ -22,11 +22,11 @@ serde = { workspace = true, features = ["derive"] }
 target-lexicon = { version = "=0.13.2" }
 tracing = { workspace = true }
 
-cranelift = "=0.123.2"
-cranelift-codegen = { version = "=0.123.2", features = ["unwind"] }
-cranelift-module = "=0.123.2"
-cranelift-native = "=0.123.2"
-cranelift-object = { version = "=0.123.2" }
+cranelift = "=0.125.4"
+cranelift-codegen = { version = "=0.125.4", features = ["unwind"] }
+cranelift-module = "=0.125.4"
+cranelift-native = "=0.125.4"
+cranelift-object = { version = "=0.125.4" }
 
 [features]
 tracing = ["lume_trace/enable"]
