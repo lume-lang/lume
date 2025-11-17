@@ -36,4 +36,12 @@ pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
     let level = session.options.optimize;
 
     run_pass::<heap_to_stack::HeapToStack>(mcx, level, func_id);
+
+    // If the `dump_mir` property is defined but empty, we dump the function MIR
+    // after all the passes have been executed.
+    if let Some(dump_mir) = mcx.tcx().gcx().session.options.dump_mir.as_ref()
+        && dump_mir.is_empty()
+    {
+        println!("{}", mcx.mir().function(func_id));
+    }
 }

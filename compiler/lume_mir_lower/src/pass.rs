@@ -41,14 +41,6 @@ impl FunctionTransformer<'_, '_> {
         self.run_pass::<ssa_assign::ConvertAssignmentExpressions>();
         self.run_pass::<rename_ssa::RenameSsaVariables>();
         self.run_pass::<mark_gc_refs::MarkObjectReferences>();
-
-        // If the `dump_mir` property is defined but empty, we dump the function MIR
-        // after all the passes have been executed.
-        if let Some(dump_mir) = self.tcx().gcx().session.options.dump_mir.as_ref()
-            && dump_mir.is_empty()
-        {
-            println!("{}", self.func);
-        }
     }
 
     #[inline]
