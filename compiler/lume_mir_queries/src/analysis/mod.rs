@@ -115,12 +115,23 @@ impl MirQueryCtx<'_> {
                         self.does_register_escape_inner(func, block_id, *operand, call_stack)?;
                     }
                     DeclarationKind::Intrinsic { args, .. } => {
+                        let mut stores_reg = false;
+
                         for (idx, arg) in args.iter().enumerate() {
                             if arg.stores_register(reg) {
                                 let param = RegisterId::new(idx);
 
                                 self.does_register_escape_inner(func, block_id, param, call_stack)?;
+                                stores_reg = true;
                             }
+                        }
+
+                        // If any of the arguments match the register we're checking for,
+                        // look to see if the newly declared register escapes. If so, the register
+                        // likely escapes, since intrinsic operations often use the register as an
+                        // offset to a pointer.
+                        if stores_reg {
+                            self.does_register_escape_inner(func, block_id, *register, call_stack)?;
                         }
                     }
                 },
