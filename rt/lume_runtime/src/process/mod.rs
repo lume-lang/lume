@@ -1,4 +1,7 @@
 use std::fmt::Display;
+use std::os::raw::c_char;
+
+use crate::array::Array;
 
 #[derive(Default)]
 struct SymbolInfo<'sym> {
@@ -57,6 +60,8 @@ impl Display for SymbolInfo<'_> {
 pub extern "C" fn abort() {
     let mut idx = 0;
 
+    println!("thread stacktrace:");
+
     backtrace::trace(|frame| {
         let mut resolved = false;
         idx += 1;
@@ -90,4 +95,13 @@ pub extern "C" fn abort() {
     });
 
     std::process::exit(255);
+}
+
+#[unsafe(export_name = "std::process::bail")]
+pub extern "C" fn bail(fmt: *const c_char, args: *const Array<*const c_char>) {
+    println!("thread bailed:");
+    crate::io::println(fmt, args);
+
+    println!();
+    abort();
 }

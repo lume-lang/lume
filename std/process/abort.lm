@@ -1,5 +1,24 @@
 namespace std::process
 
+/// The "never" type is used as a return type for functions and methods which
+/// never return. This type is mostly used for process-ending functions, such as
+/// [`abort`] and [`bail`], since they inherently cannot return.
+///
+/// This is entirely different from not returning any value. When a function
+/// returns "void" or nothing, the function is still expected to eventually return
+/// and return control to the caller. When the [`Never`] type is used as a return
+/// type, the function is never expected to return.
+///
+/// The [`Never`] type can be implicitly cast to any other type, since you are never
+/// expected to retrieve a value of type [`Never`]. This allows for code like this:
+/// ```lm
+/// fn force_open(val: Optional<Int32>) -> Int32 {
+///     switch val {
+///         Optional<Int32>::Some(val) => val,
+///         Optional<Int32>::None => bail("attempted to force open `None`"),
+///     }
+/// }
+/// ```
 ![lang_item(name = "never")]
 pub struct Never { }
 
@@ -9,3 +28,12 @@ pub struct Never { }
 /// the stack. As a consequence, any objects currently on the stack will not
 /// have their destructor invoked.
 pub fn external abort() -> Never
+
+/// Terminates the process immediately, with the given error message or developer
+/// feedback. This function is preferred to [`abort`] for fail conditions, since it
+/// can provide some useful feedback to the caller.
+///
+/// Just like [`abort`], this function will terminate the process immediately,
+/// without unwinding the stack. As a consequence, any objects currently on the
+/// stack will not have their destructor invoked.
+pub fn external bail(fmt: String, ...args: String) -> Never
