@@ -1,0 +1,15 @@
+//# test-return = 8
+
+struct Foo {
+    pub a: Int32 = 8;
+}
+
+fn main() -> Int32 {
+    let arr = Array<Foo>::new();
+    arr.push(Foo { });
+
+    std::mem::GC::invoke();
+    let f = arr.get(0_u64).force();
+
+    f.a
+}
