@@ -1779,7 +1779,7 @@ impl TypeKind {
     pub fn is_reference_type(&self) -> bool {
         matches!(
             self,
-            Self::Struct { .. } | Self::String | Self::Pointer { .. } | Self::Metadata { .. }
+            Self::Struct { .. } | Self::Union { .. } | Self::String | Self::Pointer { .. } | Self::Metadata { .. }
         )
     }
 }
