@@ -435,7 +435,7 @@ impl FunctionTransformer<'_, '_> {
 
         // If the field is a scalar type, it should be loaded directly since any
         // following operations might expect it to be a non-pointer.
-        if !field_type.is_reference_type() {
+        if !field_type.is_reference_type() || field_type.is_generic {
             let field_operand = lume_mir::Operand {
                 kind: lume_mir::OperandKind::LoadField {
                     target: parent_operand,
