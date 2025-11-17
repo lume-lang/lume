@@ -442,6 +442,10 @@ impl Path {
     pub fn take_type_arguments(&mut self) -> Vec<Type> {
         self.name.take_type_arguments()
     }
+
+    pub fn is_variant(&self) -> bool {
+        matches!(self.name, PathSegment::Variant { .. })
+    }
 }
 
 impl std::fmt::Display for Path {
