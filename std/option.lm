@@ -8,3 +8,17 @@ pub enum Optional<T> {
     Some(T),
     None
 }
+
+impl<T> Optional<T> {
+    /// Unwraps the contained value, if the value is [`Some`].
+    ///
+    /// If the contained value is [`None`], the function will bail. This is useful in cases
+    /// where you are sure the value is [`Some`], but is generally discouraged is all other
+    /// cases. When possible, match the value instead with `switch`.
+    pub fn force(self) -> T {
+        switch self {
+            Optional<T>::Some(inner) => inner,
+            Optional<T>::None => std::process::bail("attempted to force `None` value"),
+        }
+    }
+}
