@@ -390,17 +390,57 @@ impl FunctionTransformer<'_, '_> {
                     let field_offset = self.variant_field_offset(pattern.id, idx);
                     let field_type = self.variant_field_type(pattern.id, idx);
 
-                    let field_operand = lume_mir::Operand {
-                        kind: lume_mir::OperandKind::LoadField {
-                            target: loaded_op,
-                            offset: field_offset,
-                            index: idx + 1,
-                            field_type: field_type.clone(),
-                        },
-                        location: field_pattern.location.clone_inner(),
+                    let field_cmp_operand = if field_type.is_reference_type() {
+                        let field_operand_ptr = lume_mir::DeclarationKind::Intrinsic {
+                            name: lume_mir::Intrinsic::IntAdd {
+                                bits: 64,
+                                signed: false,
+                            },
+                            args: vec![
+                                lume_mir::Operand {
+                                    kind: lume_mir::OperandKind::Reference { id: loaded_op },
+                                    location: pattern.location.clone_inner(),
+                                },
+                                lume_mir::Operand {
+                                    kind: lume_mir::OperandKind::Integer {
+                                        bits: 64,
+                                        signed: false,
+                                        value: 1,
+                                    },
+                                    location: pattern.location.clone_inner(),
+                                },
+                            ],
+                        };
+
+                        let field_operand_reg =
+                            self.func
+                                .declare(lume_mir::Type::pointer(lume_mir::Type::void()), lume_mir::Declaration {
+                                    kind: Box::new(field_operand_ptr),
+                                    location: pattern.location.clone_inner(),
+                                });
+
+                        let mut field_operand = lume_mir::Operand::reference_of(field_operand_reg);
+                        field_operand.location = pattern.location.clone_inner();
+
+                        self.pattern(
+                            field_pattern,
+                            field_operand,
+                            lume_mir::Type::pointer(lume_mir::Type::void()),
+                        )
+                    } else {
+                        let field_operand = lume_mir::Operand {
+                            kind: lume_mir::OperandKind::LoadField {
+                                target: loaded_op,
+                                offset: field_offset,
+                                index: idx + 1,
+                                field_type: field_type.clone(),
+                            },
+                            location: field_pattern.location.clone_inner(),
+                        };
+
+                        self.pattern(field_pattern, field_operand, field_type)
                     };
 
-                    let field_cmp_operand = self.pattern(field_pattern, field_operand, field_type);
                     let field_cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::BooleanAnd,
                         args: vec![
