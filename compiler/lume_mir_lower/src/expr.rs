@@ -1,3 +1,4 @@
+use lume_mir::RegisterId;
 use lume_span::Location;
 
 use crate::FunctionTransformer;
@@ -387,59 +388,7 @@ impl FunctionTransformer<'_, '_> {
                         continue;
                     }
 
-                    let field_offset = self.variant_field_offset(pattern.id, idx);
-                    let field_type = self.variant_field_type(pattern.id, idx);
-
-                    let field_cmp_operand = if field_type.is_reference_type() {
-                        let field_operand_ptr = lume_mir::DeclarationKind::Intrinsic {
-                            name: lume_mir::Intrinsic::IntAdd {
-                                bits: 64,
-                                signed: false,
-                            },
-                            args: vec![
-                                lume_mir::Operand {
-                                    kind: lume_mir::OperandKind::Reference { id: loaded_op },
-                                    location: pattern.location.clone_inner(),
-                                },
-                                lume_mir::Operand {
-                                    kind: lume_mir::OperandKind::Integer {
-                                        bits: 64,
-                                        signed: false,
-                                        value: 1,
-                                    },
-                                    location: pattern.location.clone_inner(),
-                                },
-                            ],
-                        };
-
-                        let field_operand_reg =
-                            self.func
-                                .declare(lume_mir::Type::pointer(lume_mir::Type::void()), lume_mir::Declaration {
-                                    kind: Box::new(field_operand_ptr),
-                                    location: pattern.location.clone_inner(),
-                                });
-
-                        let mut field_operand = lume_mir::Operand::reference_of(field_operand_reg);
-                        field_operand.location = pattern.location.clone_inner();
-
-                        self.pattern(
-                            field_pattern,
-                            field_operand,
-                            lume_mir::Type::pointer(lume_mir::Type::void()),
-                        )
-                    } else {
-                        let field_operand = lume_mir::Operand {
-                            kind: lume_mir::OperandKind::LoadField {
-                                target: loaded_op,
-                                offset: field_offset,
-                                index: idx + 1,
-                                field_type: field_type.clone(),
-                            },
-                            location: field_pattern.location.clone_inner(),
-                        };
-
-                        self.pattern(field_pattern, field_operand, field_type)
-                    };
+                    let field_cmp_operand = self.load_variant_subpattern(pattern, loaded_op, field_pattern, idx);
 
                     let field_cmp_intrinsic = lume_mir::DeclarationKind::Intrinsic {
                         name: lume_mir::Intrinsic::BooleanAnd,
@@ -470,6 +419,77 @@ impl FunctionTransformer<'_, '_> {
                 location: pattern.location.clone_inner(),
             },
         }
+    }
+
+    /// Loads the given subpattern from some parent pattern into a register and
+    /// returns it as an operand.
+    fn load_variant_subpattern(
+        &mut self,
+        parent_pattern: &lume_tir::Pattern,
+        parent_operand: RegisterId,
+        subpattern: &lume_tir::Pattern,
+        field_idx: usize,
+    ) -> lume_mir::Operand {
+        let field_offset = self.variant_field_offset(parent_pattern.id, field_idx);
+        let field_type = self.variant_field_type(parent_pattern.id, field_idx);
+
+        // If the field is a scalar type, it should be loaded directly since any
+        // following operations might expect it to be a non-pointer.
+        if !field_type.is_reference_type() {
+            let field_operand = lume_mir::Operand {
+                kind: lume_mir::OperandKind::LoadField {
+                    target: parent_operand,
+                    offset: field_offset,
+                    index: field_idx + 1,
+                    field_type: field_type.clone(),
+                },
+                location: subpattern.location.clone_inner(),
+            };
+
+            return self.pattern(subpattern, field_operand, field_type);
+        }
+
+        // If the field is a reference type, we define a new register which is equal to
+        // the field pointer itself, plus the size of the discriminant.
+
+        let discriminant_size = lume_mir::Type::u8().bytesize();
+
+        let field_operand_ptr = lume_mir::DeclarationKind::Intrinsic {
+            name: lume_mir::Intrinsic::IntAdd {
+                bits: 64,
+                signed: false,
+            },
+            args: vec![
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Reference { id: parent_operand },
+                    location: parent_pattern.location.clone_inner(),
+                },
+                lume_mir::Operand {
+                    kind: lume_mir::OperandKind::Integer {
+                        bits: 64,
+                        signed: false,
+                        value: discriminant_size.cast_signed() as i64,
+                    },
+                    location: parent_pattern.location.clone_inner(),
+                },
+            ],
+        };
+
+        let field_operand_reg =
+            self.func
+                .declare(lume_mir::Type::pointer(lume_mir::Type::void()), lume_mir::Declaration {
+                    kind: Box::new(field_operand_ptr),
+                    location: parent_pattern.location.clone_inner(),
+                });
+
+        let mut field_operand = lume_mir::Operand::reference_of(field_operand_reg);
+        field_operand.location = parent_pattern.location.clone_inner();
+
+        self.pattern(
+            subpattern,
+            field_operand,
+            lume_mir::Type::pointer(lume_mir::Type::void()),
+        )
     }
 
     fn intrinsic_call(&mut self, expr: &lume_tir::IntrinsicCall) -> lume_mir::Operand {
