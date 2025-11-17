@@ -1,0 +1,24 @@
+//# test-return = 6
+
+struct Foo {
+    pub a: Int32 = 4;
+    pub b: Int32 = 6;
+    pub c: Int32 = 8;
+}
+
+// Ensure that the returned value is NOT allocated on the stack,
+// since it would return bogus when the stack is altered.
+fn foo() -> Foo {
+    Foo { }
+}
+
+// Function to intentionally change the stack
+fn some_func(a: Int64, b: Int64, c: Int64) {}
+
+fn main() -> Int32 {
+    let foo: Foo = foo();
+
+    some_func(15, 30, 45);
+
+    foo.b
+}

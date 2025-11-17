@@ -1,0 +1,9 @@
+//# test-return = 9
+
+fn main() -> Int32 {
+    let a = 1_i32;
+
+    a = 9;
+
+    a
+}

@@ -1,0 +1,15 @@
+//# test-return = 2
+
+fn main() -> Int32 {
+    let a = 10_i32;
+
+    loop {
+        if a > 2 {
+            a = a - 1;
+        } else {
+            break;
+        }
+    }
+
+    a
+}

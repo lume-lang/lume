@@ -6,6 +6,7 @@ rust-version.workspace = true
 
 [dependencies]
 lume_errors = { path = "../../crates/lume_errors" }
+lume_gc = { path = "../../rt/lume_gc", features = ["paranoid"] }
 lume_span = { path = "../../crates/lume_span" }
 
 build_stage = { path = "../build_stage" }

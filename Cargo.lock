@@ -1600,6 +1600,7 @@ dependencies = [
  "error_snippet",
  "glob",
  "lume_errors",
+ "lume_gc",
  "lume_span",
  "owo-colors",
  "rayon",
