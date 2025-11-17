@@ -1092,6 +1092,8 @@ impl TyInferCtx {
                 Ok(())
             }
             lume_hir::ExpressionKind::Switch(s) => {
+                self.define_expr_scope(tree, s.operand, expr_id)?;
+
                 for case in &s.cases {
                     self.define_pat_scope(tree, &case.pattern, expr_id)?;
                     self.define_expr_scope(tree, case.branch, expr_id)?;
