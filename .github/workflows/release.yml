@@ -36,9 +36,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
 
-      - name: Compile runtime
-        run: cargo build --release --package lume_runtime
-
       - name: Compile workspace and upload binaries
         uses: taiki-e/upload-rust-binary-action@v1
         with:

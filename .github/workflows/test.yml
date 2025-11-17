@@ -21,7 +21,7 @@ jobs:
         run: cargo build --package lume_runtime --verbose
 
       - name: Build workspace
-        run: cargo build --workspace --verbose
+        run: cargo build --all-targets --verbose
 
       - name: Run tests
         run: cargo test --workspace --verbose
