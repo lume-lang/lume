@@ -23,6 +23,7 @@ impl OptimizerPass for HeapToStack {
         level.speed_level() >= 2
     }
 
+    #[libftrace::traced(level = Debug)]
     fn execute(&mut self, mcx: &mut MirQueryCtx, func_id: NodeId) {
         let mut replacements = Vec::new();
 

@@ -24,7 +24,6 @@ rust-embed = { version = "=8.7.0", features = [
 ] }
 semver = { version = "^1", features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
-tracing = { workspace = true }
 
 [features]
 cli = ["dep:clap"]

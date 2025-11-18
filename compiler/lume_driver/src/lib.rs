@@ -92,7 +92,7 @@ pub struct Compiler {
 
 impl Compiler {
     /// Parses all the source files within the current [`Package`] into HIR.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn parse(&mut self) -> Result<lume_hir::map::Map> {
         self.gcx
             .dcx
@@ -100,36 +100,37 @@ impl Compiler {
     }
 
     /// Type checks all the given source files.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn type_check(&mut self, hir: lume_hir::map::Map) -> Result<(TyCheckCtx, TypedIR)> {
         let tcx = TyCtx::new(self.gcx.clone());
 
         // Defines the types of all nodes within the HIR maps.
         let mut ticx = TyInferCtx::new(tcx, hir);
-        tracing::info_span!("type inference").in_scope(|| ticx.infer())?;
+        ticx.infer()?;
+        libftrace::info!("finished type inference");
 
         // Then, make sure they're all valid.
         let mut tccx = TyCheckCtx::new(ticx);
-        tracing::info_span!("type checking").in_scope(|| tccx.typecheck())?;
+        tccx.typecheck()?;
+        libftrace::info!("finished type checking");
 
         if self.gcx.session.options.print_type_context {
             println!("{:#?}", tccx.tdb());
         }
 
-        let typed_ir = tracing::info_span!("tir lowering").in_scope(|| lume_tir_lower::Lower::build(&tccx))?;
+        let typed_ir = lume_tir_lower::Lower::build(&tccx)?;
 
         Ok((tccx, typed_ir))
     }
 
     /// Generates MIR for all the modules within the given state object.
     #[cfg(feature = "codegen")]
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn codegen(self, tcx: &TyCheckCtx, tir: TypedIR) -> Result<lume_mir::ModuleMap> {
-        let mir = tracing::info_span!("mir lowering").in_scope(|| {
-            lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir, self.gcx.session.options.clone())
-        });
+        let opts = self.gcx.session.options.clone();
+        let mir = lume_mir_lower::ModuleTransformer::transform(self.package, tcx, tir, opts);
 
-        let mir = tracing::info_span!("mir optimization").in_scope(|| lume_mir_opt::Optimizer::optimize(tcx, mir));
+        let mir = lume_mir_opt::Optimizer::optimize(tcx, mir);
 
         Ok(mir)
     }

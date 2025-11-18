@@ -1,7 +1,7 @@
 use crate::LowerModule;
 
 impl LowerModule<'_> {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn literal(&mut self, expr: lume_ast::Literal) -> lume_hir::Literal {
         match expr {
             lume_ast::Literal::Int(t) => self.lit_int(*t),
@@ -11,7 +11,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn lit_int(&mut self, expr: lume_ast::IntLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value;
@@ -25,7 +25,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn lit_float(&mut self, expr: lume_ast::FloatLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value;
@@ -39,7 +39,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn lit_string(&mut self, expr: lume_ast::StringLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value.clone();
@@ -52,7 +52,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn lit_boolean(&mut self, expr: lume_ast::BooleanLiteral) -> lume_hir::Literal {
         let id = self.next_node_id();
         let value = expr.value;

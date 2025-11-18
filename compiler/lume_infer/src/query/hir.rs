@@ -31,19 +31,18 @@ impl Iterator for ParentHirIterator<'_> {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn hir_nodes(&self) -> impl Iterator<Item = &Node> {
         self.hir.nodes.values()
     }
 
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace, fields(id), ret)]
     pub fn hir_node(&self, id: NodeId) -> Option<&Node> {
         self.hir.node(id)
     }
 
     /// Returns the [`lume_hir::Node`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace, fields(id), ret)]
     pub fn hir_expect_node(&self, id: NodeId) -> &Node {
         match self.hir_node(id) {
             Some(item) => item,
@@ -52,13 +51,13 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::NodeRef`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace, fields(id), ret)]
     pub fn hir_node_ref(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.hir_node(id).map(|n| n.as_ref())
     }
 
     /// Returns the method with the given ID, if any, boxed as [`NodeRef`].
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace, fields(id), ret)]
     pub fn hir_method(&self, id: NodeId) -> Option<NodeRef<'_>> {
         self.hir_node(id).and_then(|item| match item {
             lume_hir::Node::Impl(item) => Some(lume_hir::NodeRef::Method(item.methods.get(id.index.as_usize())?)),
@@ -73,7 +72,7 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::Statement`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_stmt(&self, id: NodeId) -> Option<&lume_hir::Statement> {
         self.hir.statement(id)
     }
@@ -84,7 +83,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::Statement`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_stmt(&self, id: NodeId) -> &lume_hir::Statement {
         match self.hir_stmt(id) {
             Some(item) => item,
@@ -93,7 +92,7 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::Expression`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expr(&self, id: NodeId) -> Option<&lume_hir::Expression> {
         self.hir.expression(id)
     }
@@ -104,7 +103,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::Expression`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_expr(&self, id: NodeId) -> &lume_hir::Expression {
         match self.hir_expr(id) {
             Some(item) => item,
@@ -113,7 +112,7 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::Pattern`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_pat(&self, id: NodeId) -> Option<&lume_hir::Pattern> {
         if let lume_hir::Node::Pattern(pattern) = self.hir.nodes.get(&id)? {
             Some(pattern)
@@ -128,7 +127,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::Pattern`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_pattern(&self, id: NodeId) -> &lume_hir::Pattern {
         match self.hir_expect_node(id) {
             lume_hir::Node::Pattern(pat) => pat,
@@ -137,7 +136,7 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::CallExpression`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_call_expr(&self, id: NodeId) -> Option<lume_hir::CallExpression<'_>> {
         match &self.hir_expr(id)?.kind {
             lume_hir::ExpressionKind::InstanceCall(call) => Some(lume_hir::CallExpression::Instanced(call)),
@@ -148,7 +147,7 @@ impl TyInferCtx {
     }
 
     /// Returns the [`lume_hir::Field`] with the given ID, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_field(&self, id: NodeId) -> Option<&lume_hir::Field> {
         match self.hir_node(id)? {
             lume_hir::Node::Field(field) => Some(field),
@@ -162,7 +161,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::Field`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_field(&self, id: NodeId) -> &lume_hir::Field {
         let Some(field) = self.hir_field(id) else {
             panic!("expected HIR field with ID of {id:?}")
@@ -177,7 +176,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::TypeDefinition`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_type(&self, id: NodeId) -> &lume_hir::TypeDefinition {
         let lume_hir::Node::Type(ty) = self.hir_expect_node(id) else {
             panic!("expected HIR type with ID of {id:?}")
@@ -192,7 +191,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::StructDefinition`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_struct(&self, id: NodeId) -> &lume_hir::StructDefinition {
         let lume_hir::TypeDefinition::Struct(ty) = self.hir_expect_type(id) else {
             panic!("expected HIR struct with ID of {id:?}")
@@ -207,7 +206,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::EnumDefinition`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_enum(&self, id: NodeId) -> &lume_hir::EnumDefinition {
         let lume_hir::TypeDefinition::Enum(ty) = self.hir_expect_type(id) else {
             panic!("expected HIR enum with ID of {id:?}")
@@ -222,7 +221,7 @@ impl TyInferCtx {
     ///
     /// Panics if no [`lume_hir::TraitDefinition`] with the given ID was found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_expect_trait(&self, id: NodeId) -> &lume_hir::TraitDefinition {
         let lume_hir::TypeDefinition::Trait(ty) = self.hir_expect_type(id) else {
             panic!("expected HIR trait with ID of {id:?}")
@@ -234,14 +233,14 @@ impl TyInferCtx {
     /// Returns the parent of the given HIR element, if any is found.
     #[cached_query]
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_parent_of(&self, id: NodeId) -> Option<NodeId> {
         self.ancestry.get(&id).copied()
     }
 
     /// Returns the parent of the given HIR element, if any is found.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_parent_node_of<'a>(&'a self, id: NodeId) -> Option<&'a Node> {
         self.hir_parent_of(id).and_then(|id| self.hir.node(id))
     }
@@ -257,7 +256,6 @@ impl TyInferCtx {
     }
 
     /// Returns the parent of the given HIR element, if any is found.
-    #[tracing::instrument(level = "TRACE", skip(self))]
     #[track_caller]
     pub fn hir_parent_iter(&self, def: NodeId) -> impl Iterator<Item = &Node> {
         self.hir_parent_id_iter(def).filter_map(move |id| self.hir_node(id))
@@ -266,7 +264,7 @@ impl TyInferCtx {
     /// Attempts to find the closest switch expression from the given
     /// definition.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_switch_expression(&self, source: NodeId) -> Option<&lume_hir::Switch> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Expression(expr) = parent else {
@@ -283,7 +281,7 @@ impl TyInferCtx {
 
     /// Attempts to find the closest loop from the given definition.
     #[track_caller]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_loop_target(&self, source: NodeId) -> Option<&lume_hir::Statement> {
         for parent in self.hir_parent_iter(source) {
             let lume_hir::Node::Statement(stmt) = parent else {
@@ -301,7 +299,7 @@ impl TyInferCtx {
     /// Returns the parameters available for the [`lume_hir::Def`] with the
     /// given ID.
     #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_avail_params(&self, def: NodeId) -> Vec<lume_hir::Parameter> {
         let mut acc = Vec::new();
 
@@ -322,7 +320,7 @@ impl TyInferCtx {
 
     /// Returns all the type parameters available for the [`lume_hir::Def`] with
     /// the given ID.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_avail_type_params(&self, def: NodeId) -> lume_hir::TypeParameters {
         let mut acc = Vec::new();
 
@@ -334,7 +332,7 @@ impl TyInferCtx {
     }
 
     /// Gets the return type of the [`lume_hir::Node`] with the given ID.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_node_return_type<'a>(&self, item: &'a lume_hir::Node) -> Option<&'a lume_hir::Type> {
         match item {
             lume_hir::Node::Function(func) => Some(&func.return_type),
@@ -352,7 +350,7 @@ impl TyInferCtx {
     /// # Errors
     ///
     /// If no matching ancestor is found, returns [`Err`].
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn hir_ctx_return_type(&self, def: NodeId) -> Result<lume_types::TypeRef> {
         let type_params_hir = self.hir_avail_type_params(def);
         let type_params = type_params_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
@@ -373,7 +371,7 @@ impl TyInferCtx {
     /// Attempts to get the body of the given [`NodeId`], if it contains a body.
     ///
     /// Otherwise, returns [`None`].
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_body_of_node(&self, id: NodeId) -> Option<&lume_hir::Block> {
         match self.hir_node(id)? {
             lume_hir::Node::Method(method) => method.block.as_ref(),
@@ -384,7 +382,7 @@ impl TyInferCtx {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_trait_def_of_impl(
         &self,
         trait_impl: &lume_hir::TraitImplementation,
@@ -401,7 +399,7 @@ impl TyInferCtx {
         Ok(self.hir_expect_trait(trait_kind.id))
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_trait_def_of_method_impl(
         &self,
         trait_method_impl: &lume_hir::TraitMethodImplementation,
@@ -415,7 +413,7 @@ impl TyInferCtx {
         panic!("bug!: trait method implementation defined outside trait implementation");
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_trait_method_def_of_impl(
         &self,
         trait_method_impl: &lume_hir::TraitMethodImplementation,
@@ -435,7 +433,7 @@ impl TyInferCtx {
 
     /// Gets the target type of the given method, given the type within the
     /// parent `impl` block.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn impl_type_of_method(&self, method_id: NodeId) -> Result<TypeRef> {
         for parent in self.hir_parent_iter(method_id) {
             if let lume_hir::Node::Impl(impl_block) = parent {
@@ -450,7 +448,7 @@ impl TyInferCtx {
     }
 
     /// Gets the parent type of the given node.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for parent in self.hir_parent_iter(id) {
             match parent {
@@ -468,7 +466,7 @@ impl TyInferCtx {
     }
 
     /// Gets the parent type of the given field.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn owning_struct_of_field(&self, field_id: NodeId) -> Result<&lume_hir::StructDefinition> {
         for parent in self.hir_parent_iter(field_id) {
             if let lume_hir::Node::Type(lume_hir::TypeDefinition::Struct(struct_def)) = parent {
@@ -483,7 +481,7 @@ impl TyInferCtx {
     }
 
     /// Returns the span of the HIR definition with the given ID.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn hir_span_of_node(&self, def: NodeId) -> Location {
         self.hir_expect_node(def).location()
     }

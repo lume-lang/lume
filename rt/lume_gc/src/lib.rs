@@ -362,7 +362,7 @@ pub fn trigger_collection_force() {
         panic!("bug!: could not find stack map for allocation call");
     };
 
-    lume_trace::trace!("collection triggered");
+    libftrace::trace!("collection triggered");
 
     with_allocator(|alloc| alloc.promote_allocations(&frame));
 }
@@ -385,7 +385,7 @@ pub fn allocate_object(size: usize, metadata: *const TypeMetadata) -> *mut u8 {
 /// allocator, [`GA`].
 #[inline]
 pub fn drop_allocations() {
-    lume_trace::trace!("dropping all allocations");
+    libftrace::trace!("dropping all allocations");
 
     with_allocator(|alloc| alloc.drop_allocations());
 }

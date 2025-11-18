@@ -7,7 +7,7 @@ use crate::errors::*;
 
 impl Parser<'_> {
     /// Parses some abstract type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_type(&mut self) -> Result<Type> {
         let token = self.token();
 
@@ -24,7 +24,7 @@ impl Parser<'_> {
     }
 
     /// Parses either a scalar- or generic-type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_named_type(&mut self) -> Result<Type> {
         let name = self.parse_path()?;
 
@@ -32,7 +32,7 @@ impl Parser<'_> {
     }
 
     /// Parses an array type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_array_type(&mut self) -> Result<Type> {
         let start = self.consume(TokenType::LeftBracket)?.start();
 
@@ -49,7 +49,7 @@ impl Parser<'_> {
     }
 
     /// Parses some abstract type at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_opt_type(&mut self) -> Result<Option<Type>> {
         if self.check(TokenType::Colon) {
             Ok(Some(self.parse_type()?))

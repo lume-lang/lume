@@ -32,7 +32,7 @@ fn metadata_entry(entries: &IndexMap<TypeMetadataId, TypeMetadata>, name: &'stat
 }
 
 impl CraneliftBackend {
-    #[tracing::instrument(level = "DEBUG", skip(self))]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn declare_type_metadata(&mut self) {
         let metadata_store = &self.context.metadata;
         let mut found_types = IndexMap::new();
@@ -103,7 +103,7 @@ impl CraneliftBackend {
     ///
     /// The `found` parameter defines which types have already been found,
     /// preventing infinite looping from recursive types.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(id = ?metadata.id, name = metadata.full_name))]
+    #[libftrace::traced(level = Trace, fields(id = metadata.id, name = metadata.full_name))]
     fn find_all_types_on(&self, metadata: &TypeMetadata, found: &mut IndexMap<TypeMetadataId, TypeMetadata>) {
         if found.contains_key(&metadata.id) {
             return;
@@ -147,7 +147,7 @@ impl CraneliftBackend {
 
     #[inline]
     #[allow(clippy::unused_self)]
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = field.name, ty = ty.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = field.name, ty = ty.full_name))]
     fn metadata_name_of_field(&self, field: &FieldMetadata, ty: &TypeMetadata) -> String {
         let mut field_metadata_name = ty.symbol_name();
         field_metadata_name.push_str(&field.name);
@@ -157,7 +157,7 @@ impl CraneliftBackend {
 
     #[inline]
     #[allow(clippy::unused_self)]
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, method = method.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = param.name, method = method.full_name))]
     fn metadata_name_of_param(&self, param: &ParameterMetadata, method: &MethodMetadata) -> String {
         let mut metadata_name = method.full_name.clone();
         metadata_name.push_str(&param.name);
@@ -167,7 +167,7 @@ impl CraneliftBackend {
 
     #[inline]
     #[allow(clippy::unused_self)]
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = param.name, owner = owner_name))]
+    #[libftrace::traced(level = Trace, fields(name = param.name, owner = owner_name))]
     fn metadata_name_of_type_param(&self, param: &TypeParameterMetadata, mut owner_name: String) -> String {
         owner_name.push('`');
         owner_name.push_str(&param.name);
@@ -177,7 +177,7 @@ impl CraneliftBackend {
     /// Finds an existing data declaration for a metadata value with the given
     /// name.
     #[inline]
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace)]
     fn find_decl_by_name(&self, name: &str) -> DataId {
         let Some(FuncOrDataId::Data(data_id)) = self.module().declarations().get_name(name) else {
             panic!("bug!: metadata declaration not found: {name}");
@@ -189,7 +189,7 @@ impl CraneliftBackend {
     /// Finds an existing data declaration for the type metadata with the given
     /// ID.
     #[inline]
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace)]
     fn find_type_decl(&self, id: TypeMetadataId) -> DataId {
         let metadata = self.find_metadata(id);
         let metadata_name = metadata.symbol_name();
@@ -199,7 +199,7 @@ impl CraneliftBackend {
 
     /// Declares type metadata for the types in the given iterator, but without
     /// defining it.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn declare_all_type_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             let metadata_name = metadata.symbol_name();
@@ -209,7 +209,7 @@ impl CraneliftBackend {
                 .declare_data(&array_name, cranelift_module::Linkage::Local, false, false)
                 .unwrap();
 
-            lume_trace::debug!("declaring type metadata: {metadata_name}");
+            libftrace::debug!("declaring type metadata: {metadata_name}");
 
             self.module_mut()
                 .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -219,7 +219,7 @@ impl CraneliftBackend {
 
     /// Declares the field metadata for all the types in the given iterator, but
     /// without defining it.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn declare_all_field_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             let array_name = format!("{}__fields", metadata.symbol_name());
@@ -231,7 +231,7 @@ impl CraneliftBackend {
             for field in &metadata.fields {
                 let metadata_name = self.metadata_name_of_field(field, metadata);
 
-                lume_trace::debug!("declaring field metadata: {metadata_name}");
+                libftrace::debug!("declaring field metadata: {metadata_name}");
 
                 self.module_mut()
                     .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -242,7 +242,7 @@ impl CraneliftBackend {
 
     /// Declares the field metadata for all the types in the given iterator, but
     /// without defining it.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn declare_all_method_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             let array_name = format!("{}__methods", metadata.symbol_name());
@@ -258,7 +258,7 @@ impl CraneliftBackend {
                     continue;
                 }
 
-                lume_trace::debug!("declaring method metadata: {metadata_name}");
+                libftrace::debug!("declaring method metadata: {metadata_name}");
 
                 self.module_mut()
                     .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -269,7 +269,7 @@ impl CraneliftBackend {
 
     /// Declares the parameter metadata for all the types in the given iterator,
     /// but without defining it.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn declare_all_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             for method in &metadata.methods {
@@ -282,7 +282,7 @@ impl CraneliftBackend {
                 for param in &method.parameters {
                     let metadata_name = self.metadata_name_of_param(param, method);
 
-                    lume_trace::debug!("declaring parameter metadata: {metadata_name}");
+                    libftrace::debug!("declaring parameter metadata: {metadata_name}");
 
                     self.module_mut()
                         .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -294,7 +294,7 @@ impl CraneliftBackend {
 
     /// Declares the type parameter metadata for all the types in the given
     /// iterator, but without defining it.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn declare_all_type_parameter_metadata<'a>(&self, iter: impl Iterator<Item = &'a TypeMetadata>) {
         for metadata in iter {
             let array_name = format!("{}__type_params", metadata.symbol_name());
@@ -306,7 +306,7 @@ impl CraneliftBackend {
             for type_param in &metadata.type_parameters {
                 let metadata_name = self.metadata_name_of_type_param(type_param, metadata.full_name.clone());
 
-                lume_trace::debug!("declaring type parameter metadata: {metadata_name}");
+                libftrace::debug!("declaring type parameter metadata: {metadata_name}");
 
                 self.module_mut()
                     .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -323,7 +323,7 @@ impl CraneliftBackend {
                 for type_param in &method.type_parameters {
                     let metadata_name = self.metadata_name_of_type_param(type_param, method.full_name.clone());
 
-                    lume_trace::debug!("declaring type parameter metadata: {metadata_name}");
+                    libftrace::debug!("declaring type parameter metadata: {metadata_name}");
 
                     self.module_mut()
                         .declare_data(&metadata_name, cranelift_module::Linkage::Local, false, false)
@@ -335,13 +335,13 @@ impl CraneliftBackend {
 }
 
 impl CraneliftBackend {
-    #[tracing::instrument(level = "TRACE", skip(self, desc))]
+    #[libftrace::traced(level = Trace, fields(data_id, name))]
     fn define_metadata(&self, data_id: DataId, name: String, desc: &DataDescription) {
         self.module_mut().define_data(data_id, desc).unwrap();
         self.static_data.write().unwrap().insert(name, data_id);
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
     fn build_type_metadata_buffer(&self, metadata: &TypeMetadata, metadata_symbols: &MetadataEntries) {
         let data_id = self.find_type_decl(metadata.id);
         let mut builder = MemoryBlockBuilder::new(self);
@@ -419,7 +419,7 @@ impl CraneliftBackend {
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, ty = type_metadata.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = metadata.name, ty = type_metadata.full_name))]
     fn build_field_metadata_buffer(
         &self,
         metadata: &FieldMetadata,
@@ -443,7 +443,7 @@ impl CraneliftBackend {
         self.define_metadata(data_id, metadata_name, &builder.finish());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = metadata.full_name))]
     fn build_method_metadata_buffer(&self, metadata: &MethodMetadata, metadata_symbols: &MetadataEntries) {
         let metadata_name = metadata.symbol_name();
         let data_id = self.find_decl_by_name(&metadata_name);
@@ -493,7 +493,7 @@ impl CraneliftBackend {
         self.define_metadata(data_id, metadata.full_name.clone(), &builder.finish());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, method = method_metadata.full_name))]
+    #[libftrace::traced(level = Trace, fields(name = metadata.name, method = method_metadata.full_name))]
     fn build_parameter_metadata_buffer(
         &self,
         metadata: &ParameterMetadata,
@@ -520,7 +520,7 @@ impl CraneliftBackend {
         self.define_metadata(data_id, metadata_name, &builder.finish());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = metadata.name, owner = owner_name))]
+    #[libftrace::traced(level = Trace, fields(name = metadata.name, owner = owner_name))]
     fn build_type_parameter_metadata_buffer(
         &self,
         metadata: &TypeParameterMetadata,

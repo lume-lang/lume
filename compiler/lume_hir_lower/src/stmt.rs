@@ -4,7 +4,7 @@ use crate::LowerModule;
 
 impl LowerModule<'_> {
     /// Lowers the given AST block into a HIR block, within an nested scope.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn block(&mut self, expr: lume_ast::Block) -> lume_hir::Block {
         self.locals.push_frame();
 
@@ -26,7 +26,7 @@ impl LowerModule<'_> {
     /// This functions much like [`block`], but pushes a boundary into the
     /// symbol table, separating local variables within the block from the
     /// parent scope.
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn isolated_block(&mut self, expr: lume_ast::Block, params: &[lume_hir::Parameter]) -> lume_hir::Block {
         self.locals.push_boundary();
 
@@ -50,7 +50,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn statements(&mut self, statements: Vec<lume_ast::Statement>) -> Vec<lume_span::NodeId> {
         statements
             .into_iter()
@@ -64,7 +64,7 @@ impl LowerModule<'_> {
             .collect::<Vec<_>>()
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn statement(&mut self, expr: lume_ast::Statement) -> Result<lume_span::NodeId> {
         let stmt = match expr {
             lume_ast::Statement::VariableDeclaration(s) => self.stmt_variable(*s)?,
@@ -96,7 +96,7 @@ impl LowerModule<'_> {
         Ok(id)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_variable(&mut self, statement: lume_ast::VariableDeclaration) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let name = self.identifier(statement.name);
@@ -128,7 +128,7 @@ impl LowerModule<'_> {
         Ok(statement)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_break(&mut self, statement: lume_ast::Break) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
@@ -140,7 +140,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_continue(&mut self, statement: lume_ast::Continue) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(statement.location);
@@ -152,7 +152,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_final(&mut self, statement: lume_ast::Final) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.expression(statement.value)?;
@@ -165,7 +165,7 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_return(&mut self, statement: lume_ast::Return) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let value = self.opt_expression(statement.value)?;
@@ -178,7 +178,7 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_infinite_loop(&mut self, expr: lume_ast::InfiniteLoop) -> lume_hir::Statement {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -191,7 +191,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_iterator_loop(&mut self, expr: lume_ast::IteratorLoop) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let location = self.location(expr.location);
@@ -210,7 +210,7 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn stmt_predicate_loop(&mut self, expr: lume_ast::PredicateLoop) -> Result<lume_hir::Statement> {
         let id = self.next_node_id();
         let location = self.location(expr.location);

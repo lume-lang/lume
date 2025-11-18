@@ -6,8 +6,8 @@ rust-version.workspace = true
 
 [dependencies]
 lume_rt_metadata = { path = "../lume_rt_metadata" }
-lume_trace = { path = "../../crates/lume_trace" }
 
+libftrace = { workspace = true }
 indexmap = { workspace = true }
 mimalloc = { version = "=0.1.48" }
 sysinfo = { version = "=0.37.0" }
@@ -17,7 +17,6 @@ doctest = false
 
 [features]
 paranoid = []
-tracing = ["lume_trace/enable"]
 
 [lints]
 workspace = true

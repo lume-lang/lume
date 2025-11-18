@@ -15,7 +15,7 @@ lume_span = { path = "../../crates/lume_span" }
 
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
-tracing = { workspace = true }
+libftrace = { workspace = true }
 
 [dev-dependencies]
 insta = { version = "1.42.2", features = ["yaml"] }

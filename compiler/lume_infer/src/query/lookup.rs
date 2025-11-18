@@ -26,7 +26,7 @@ pub enum BlanketLookup {
 
 impl TyInferCtx {
     /// Gets the [`Callable`] with the given ID.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn callable_of(&self, id: CallReference) -> Result<Callable<'_>> {
         match id {
             CallReference::Method(id) => {
@@ -55,7 +55,6 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip_all)]
     pub fn lookup_impl_methods_on(
         &self,
         ty: &'_ lume_types::TypeRef,
@@ -72,7 +71,7 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     pub fn lookup_trait_methods_on(
         &self,
         ty: &'_ TypeRef,
@@ -126,7 +125,7 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     pub fn lookup_methods_on<'a>(
         &'a self,
         ty: &lume_types::TypeRef,
@@ -151,7 +150,7 @@ impl TyInferCtx {
     /// the current context, such as visibility, arguments or type
     /// arguments. To check whether any given [`Method`] is valid for a
     /// given context, see [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     pub fn lookup_method_on<'a>(&'a self, ty: &lume_types::TypeRef, name: &Identifier) -> Option<&'a Method> {
         // First check whether any method is defined directly on the type
         let methods = self.lookup_methods_on(ty, name, BlanketLookup::Exclude);
@@ -173,7 +172,7 @@ impl TyInferCtx {
     /// file as `local_loc`. If none is found, it looks for a method which
     /// exists within the same package as `local_loc`. If that also fails,
     /// it returns the index of the first method in the slice.
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn find_local_method(&self, local_loc: &Location, methods: &[&Method]) -> Option<usize> {
         // Methods defined within the same file as the given location.
         if let Some(idx) = methods
@@ -209,7 +208,7 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is otherwise valid for a given
     /// context, see [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     pub fn lookup_method_suggestions(&self, ty: &lume_types::TypeRef, name: &Identifier) -> Vec<&'_ Method> {
         self.methods_defined_on(ty)
             .filter(|method| {
@@ -224,7 +223,7 @@ impl TyInferCtx {
 
     /// Folds all the functions which could be suggested from the given call
     /// expression into a single, emittable error message.
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn fold_function_suggestions<'a>(&self, expr: &lume_hir::StaticCall) -> Result<diagnostics::MissingFunction> {
         let suggestion: Option<Result<error_snippet::Error>> =
             self.lookup_function_suggestions(&expr.name).first().map(|suggestion| {
@@ -253,7 +252,7 @@ impl TyInferCtx {
 
     /// Folds all the methods which could be suggested from the given call
     /// expression into a single, emittable error message.
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn fold_method_suggestions<'a>(&self, expr: lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
         let name = match expr {
             lume_hir::CallExpression::Static(call) => &call.name.name,
@@ -303,7 +302,7 @@ impl TyInferCtx {
     /// the current context, such as visibility, arguments or type
     /// arguments. To check whether any given [`Function`] is valid for a
     /// given context, see [`ThirBuildCtx::check_function()`].
-    #[tracing::instrument(level = "TRACE", skip(self), fields(name = %name))]
+    #[libftrace::traced(level = Trace, fields(name))]
     pub fn lookup_function_suggestions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb()
             .functions()
@@ -330,7 +329,7 @@ impl TyInferCtx {
     /// the current context, such as visibility, arguments or type
     /// arguments. To check whether any given [`Function`] is valid for a
     /// given context, see [`ThirBuildCtx::check_function()`].
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn probe_functions(&self, name: &Path) -> Vec<&'_ Function> {
         self.tdb().functions().filter(|func| &func.name == name).collect()
     }
@@ -340,7 +339,7 @@ impl TyInferCtx {
     /// Functions returned by this method are not checked for validity within
     /// the current context, such as visibility, arguments or type
     /// arguments.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn probe_callable(&self, expr: lume_hir::CallExpression) -> Result<Callable<'_>> {
         match expr {
             expr @ lume_hir::CallExpression::Instanced(call) => {
@@ -410,7 +409,7 @@ impl TyInferCtx {
     /// same file as `local_loc`. If none is found, it looks for a function
     /// which exists within the same package as `local_loc`. If that also
     /// fails, it returns the index of the first function in the slice.
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn find_local_function(&self, local_loc: &Location, funcs: &[&Function]) -> Option<usize> {
         // Functions defined within the same file as the given location.
         if let Some(idx) = funcs
@@ -447,7 +446,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
     /// For a static callable lookup, see
     /// [`TyInferCtx::lookup_callable_static()`].
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn probe_callable_instance(&self, call: &lume_hir::InstanceCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Instanced(call))
     }
@@ -463,7 +462,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
     /// For a static callable lookup, see
     /// [`TyInferCtx::lookup_callable_static()`].
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn probe_callable_intrinsic(&self, call: &lume_hir::IntrinsicCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Intrinsic(call))
     }
@@ -479,7 +478,7 @@ impl TyInferCtx {
     /// For a generic callable lookup, see [`TyInferCtx::lookup_callable()`].
     /// For an instance callable lookup, see
     /// [`TyInferCtx::lookup_callable_instance()`].
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn probe_callable_static(&self, call: &lume_hir::StaticCall) -> Result<Callable<'_>> {
         self.probe_callable(lume_hir::CallExpression::Static(call))
     }
@@ -487,7 +486,7 @@ impl TyInferCtx {
     /// Instantiates a call expression against the given function signature,
     /// resolving any type arguments within and returning the instantiated
     /// signature.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn instantiate_call_expression<'a>(
         &self,
         signature: lume_types::FunctionSig<'a>,
@@ -500,7 +499,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given callable purely from the arguments
     /// passed to the callable.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_signature_from_args<'a>(
         &self,
         callable: Callable<'a>,
@@ -513,7 +512,7 @@ impl TyInferCtx {
 
     /// Attempt to instantiate the given signature purely from the arguments
     /// passed to the callable.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_function_from_args<'a>(
         &self,
         signature: lume_types::FunctionSig<'a>,
@@ -585,7 +584,7 @@ impl TyInferCtx {
 
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_function<'a>(
         &self,
         sig: lume_types::FunctionSig<'a>,
@@ -596,7 +595,7 @@ impl TyInferCtx {
 
     /// Instantiates a function signature against the given type arguments,
     /// resolving the parameters and return type within the signature.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_signature_isolate<'a>(
         &self,
         sig: lume_types::FunctionSig<'a>,
@@ -627,7 +626,7 @@ impl TyInferCtx {
     }
 
     /// Instantiates a a single type reference against the given type arguments.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
@@ -650,7 +649,7 @@ impl TyInferCtx {
 
     /// Instantiates a a single flat type reference against the given type
     /// arguments.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn instantiate_flat_type_from<'a>(
         &self,
         ty: &'a lume_types::TypeRef,
@@ -674,7 +673,7 @@ impl TyInferCtx {
     ///
     /// Type arguments are fetched from the expression itself, as well as type
     /// arguments defined on the callee of the exprssion, if any.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn type_args_in_call(&self, expr: lume_hir::CallExpression) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(expr.id());
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
@@ -705,7 +704,7 @@ impl TyInferCtx {
 
     /// Attempts the infer the instantiated type of `type_param_id` from the
     /// given set of parameter type and matching argument type.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn instantiate_argument_type<'a>(
         &self,
         type_param_id: NodeId,
@@ -734,7 +733,7 @@ impl TyInferCtx {
     /// The expanded signature of a [`Callable`] will include all the type
     /// parameters defined on parent definitions, such as on implementation
     /// blocks.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn signature_of(&self, callable: Callable) -> Result<FunctionSigOwned> {
         match callable {
             Callable::Method(method) => {
@@ -760,7 +759,7 @@ impl TyInferCtx {
     /// The expanded signature of a [`Callable`] will include all the type
     /// parameters defined on parent definitions, such as on implementation
     /// blocks.
-    #[tracing::instrument(level = "TRACE", skip_all, err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn signature_of_call_ref(&self, id: CallReference) -> Result<FunctionSigOwned> {
         let callable = self.callable_of(id)?;
 
@@ -784,7 +783,7 @@ impl TyInferCtx {
     ///
     /// The resulting variable `a` will have the type of `Boolean`, since it was
     /// resolved from the type arguments on the callable expression.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(callable = %callable.name()), err, ret)]
+    #[libftrace::traced(level = Trace, fields(callable = callable.name()), err, ret)]
     pub fn signature_of_instantiated(
         &self,
         callable: Callable,
@@ -801,14 +800,13 @@ impl TyInferCtx {
     /// current context, such as visibility, arguments or type arguments. To
     /// check whether any given [`Method`] is valid for a given context, see
     /// [`ThirBuildCtx::check_method()`].
-    #[tracing::instrument(level = "TRACE", skip(self))]
     pub fn methods_defined_on(&self, self_ty: &lume_types::TypeRef) -> impl Iterator<Item = &'_ Method> {
         self.tdb().methods_on(self_ty.instance_of)
     }
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKindRef::TypeParameter`].
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_type_parameter(&self, ty: &TypeRef) -> Result<bool> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
             TypeKind::TypeParameter(_) => Ok(true),
@@ -818,7 +816,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] is a kind of
     /// [`TypeKindRef::TypeParameter`].
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn as_type_parameter(&self, ty: &TypeRef) -> Result<Option<&lume_types::TypeParameter>> {
         match self.tdb().ty_expect(ty.instance_of)?.kind {
             TypeKind::TypeParameter(id) => Ok(self.tdb().type_parameter(id)),
@@ -827,7 +825,7 @@ impl TyInferCtx {
     }
 
     /// Determines whether the given [`TypeRef`] has any generic components.
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub fn is_type_generic(&self, ty: &TypeRef) -> Result<bool> {
         if self.is_type_parameter(ty)? {
             return Ok(true);
@@ -844,7 +842,7 @@ impl TyInferCtx {
 
     /// Determines whether the given function is an entrypoint.
     #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn is_entrypoint(&self, id: NodeId) -> bool {
         let Some(node) = self.hir.node(id) else { return false };
 
@@ -857,7 +855,7 @@ impl TyInferCtx {
 
     /// Determines whether the given [`TypeRef`] is the `Never` type.
     #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn is_type_never(&self, ty: &TypeRef) -> bool {
         let never_type = self.lang_item_type("never").expect("expected `Never` lang item");
 
@@ -867,7 +865,7 @@ impl TyInferCtx {
     /// Returns the [`DefId`] of the `std::ops::Dispose::dispose()` method from
     /// the standard library.
     #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn drop_method_def(&self) -> NodeId {
         let drop_type_ref = self.lang_item_type("dispose_trait").unwrap();
         let drop_method_name = Identifier::from("dispose");
@@ -882,7 +880,7 @@ impl TyInferCtx {
 
     /// Determines whether the given method is a dropper.
     #[cached_query]
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace, fields(method), ret)]
     pub fn is_method_dropper(&self, method: NodeId) -> bool {
         let dropper_method_id = self.drop_method_def();
 

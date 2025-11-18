@@ -16,7 +16,7 @@ lume_typech = { path = "../lume_typech" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { workspace = true }
-tracing = { workspace = true }
+libftrace = { workspace = true }
 
 [lints]
 workspace = true

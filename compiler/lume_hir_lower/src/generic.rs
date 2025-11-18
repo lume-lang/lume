@@ -5,7 +5,7 @@ use error_snippet::Result;
 use crate::LowerModule;
 
 impl LowerModule<'_> {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn type_parameters(&mut self, params: Vec<lume_ast::TypeParameter>) -> Result<lume_hir::TypeParameters> {
         let mut names: HashSet<lume_hir::Identifier> = HashSet::with_capacity(params.len());
         let mut type_params = Vec::with_capacity(params.len());

@@ -7,13 +7,13 @@ use crate::errors::*;
 
 impl Parser<'_> {
     /// Parses an expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_expression(&mut self) -> Result<Expression> {
         self.parse_expression_with_precedence(0)
     }
 
     /// Parses an expression on the current cursor position, if one is defined.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_opt_expression(&mut self) -> Result<Option<Expression>> {
         if self.peek(TokenType::Semicolon) {
             Ok(None)
@@ -24,7 +24,7 @@ impl Parser<'_> {
 
     /// Parses an expression on the current cursor position, with a minimum
     /// precedence.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_expression_with_precedence(&mut self, precedence: u8) -> Result<Expression> {
         let mut left = self.parse_prefix_expression()?;
 
@@ -45,11 +45,11 @@ impl Parser<'_> {
     /// Prefix expressions are expressions which appear at the start of an
     /// expression, such as literals of prefix operators. In Pratt Parsing,
     /// this is also called "Nud" or "Null Denotation".
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_prefix_expression(&mut self) -> Result<Expression> {
         let kind = self.token().kind;
 
-        tracing::trace!("expression kind: {}", kind.as_type());
+        libftrace::trace!("expression kind: {}", kind.as_type());
 
         match kind {
             TokenKind::LeftParen => self.parse_nested_expression(),
@@ -74,11 +74,11 @@ impl Parser<'_> {
 
     /// Parses an expression at the current cursor position, which is followed
     /// by some other expression.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_following_expression(&mut self, left: Expression) -> Result<Expression> {
         // If the expression is followed by two dots ('..'), it's a range expression.
         if self.peek(TokenType::DotDot) {
-            tracing::trace!("member expr is range");
+            libftrace::trace!("member expr is range");
 
             return self.parse_range_expression(left);
         }
@@ -94,25 +94,25 @@ impl Parser<'_> {
         // [Call('bar')])`, where it really should be something like `c =
         // Member(New('Foo'), 'bar')`.
         if self.peek(TokenType::Dot) {
-            tracing::trace!("expression is member");
+            libftrace::trace!("expression is member");
 
             return self.parse_member(left);
         }
 
         if self.peek(TokenType::Assign) {
-            tracing::trace!("expression is assignment");
+            libftrace::trace!("expression is assignment");
 
             return self.parse_assignment(left);
         }
 
         if self.peek(TokenType::As) {
-            tracing::trace!("expression is cast");
+            libftrace::trace!("expression is cast");
 
             return self.parse_cast(left);
         }
 
         if self.peek(TokenType::Is) {
-            tracing::trace!("expression is instance checking");
+            libftrace::trace!("expression is instance checking");
 
             return self.parse_is(left);
         }
@@ -142,7 +142,7 @@ impl Parser<'_> {
     /// expression, such as infix of postfix operators. In Pratt Parsing,
     /// this is also called "Led" or "Left Denotation". such as increment or
     /// decrement operators.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_infix_expression(&mut self, lhs: Expression, operator: Token) -> Result<Expression> {
         let rhs = self.parse_expression_with_precedence(operator.precedence())?;
 
@@ -161,7 +161,7 @@ impl Parser<'_> {
     ///
     /// Postfix expressions are expressions which appear at the end of an
     /// expression, such as increment or decrement operators.
-    #[tracing::instrument(level = "TRACE", skip(self, left))]
+    #[libftrace::traced(level = Trace, fields(operator))]
     fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Expression {
         let operator_loc = operator.index.clone();
 
@@ -185,7 +185,7 @@ impl Parser<'_> {
 
     /// Parses the given left-hand- and right-hand-side expressions as a binary
     /// operator expression call.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_binary_operator_expression(
         &mut self,
         lhs: Expression,
@@ -217,7 +217,7 @@ impl Parser<'_> {
 
     /// Parses the given left-hand- and right-hand-side expressions as an
     /// operator expression call.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_other_operator_expression(
         &mut self,
         lhs: Expression,
@@ -246,7 +246,7 @@ impl Parser<'_> {
 
     /// Parses the given left-hand- and right-hand-side expressions as a boolean
     /// operator expression call.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_boolean_operator_expression(
         &mut self,
         lhs: Expression,
@@ -277,7 +277,7 @@ impl Parser<'_> {
 
     /// Parses an expression on the current cursor position, which is nested
     /// within parentheses.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_nested_expression(&mut self) -> Result<Expression> {
         self.consume(TokenType::LeftParen)?;
 
@@ -289,7 +289,7 @@ impl Parser<'_> {
     }
 
     /// Parses an array expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_array_expression(&mut self) -> Result<Expression> {
         let token = self.token();
         let location: Location = token.index.into();
@@ -302,7 +302,7 @@ impl Parser<'_> {
     }
 
     /// Parses a scope expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_scope_expression(&mut self) -> Result<Expression> {
         let (body, location) = self.consume_with_loc(|p| p.consume_curly_seq(Parser::parse_statement))?;
 
@@ -310,7 +310,7 @@ impl Parser<'_> {
     }
 
     /// Parses a switch expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_switch_expression(&mut self) -> Result<Expression> {
         let start = self.consume(TokenType::Switch)?.start();
         let operand = self.parse_expression()?;
@@ -325,7 +325,7 @@ impl Parser<'_> {
     }
 
     /// Parses a switch case on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_switch_case(&mut self) -> Result<SwitchCase> {
         let pattern = self.parse_pattern()?;
 
@@ -344,7 +344,7 @@ impl Parser<'_> {
     }
 
     /// Parses a range expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_range_expression(&mut self, lower: Expression) -> Result<Expression> {
         self.consume(TokenType::DotDot)?;
 
@@ -366,7 +366,7 @@ impl Parser<'_> {
     }
 
     /// Parses a `self` reference expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_self_reference(&mut self) -> Result<Expression> {
         let location = self.consume(TokenType::SelfRef)?.index;
         let identifier = Identifier {
@@ -383,7 +383,7 @@ impl Parser<'_> {
 
     /// Parses an expression on the current cursor position, which is preceded
     /// by some identifier.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_named_expression(&mut self) -> Result<Expression> {
         let mut identifier = self.parse_identifier()?;
 
@@ -446,7 +446,7 @@ impl Parser<'_> {
     }
 
     /// Parses a call expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_call(&mut self, callee: Option<Expression>, name: Identifier) -> Result<Expression> {
         let type_arguments = self.parse_type_arguments()?;
         let type_arguments_end = self.token().end();
@@ -471,13 +471,13 @@ impl Parser<'_> {
     }
 
     /// Parses zero-or-more call arguments at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_call_arguments(&mut self) -> Result<Vec<Expression>> {
         self.consume_paren_seq(Parser::parse_expression)
     }
 
     /// Parses an "if" conditional statement at the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_if_conditional(&mut self) -> Result<Expression> {
         let start = self.consume(TokenType::If)?.start();
         let mut cases = Vec::new();
@@ -503,7 +503,7 @@ impl Parser<'_> {
 
     /// Parses a case within a conditional expression at the current cursor
     /// position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let condition = self.parse_expression()?;
         let block = self.parse_block()?;
@@ -524,7 +524,7 @@ impl Parser<'_> {
 
     /// Parses zero-or-more `else-if` cases within a conditional expression at
     /// the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_else_if_conditional_cases(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         loop {
             if !self.peek(TokenType::Else) || !self.peek_next(TokenType::If) {
@@ -546,7 +546,7 @@ impl Parser<'_> {
     /// # Errors
     ///
     /// Returns `Err` if the parser hits an unexpected token.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn parse_else_conditional_case(&mut self, cases: &mut Vec<Condition>) -> Result<()> {
         let start = match self.consume_if(TokenType::Else) {
             Some(t) => t.index.start,
@@ -569,7 +569,7 @@ impl Parser<'_> {
 
     /// Parses a member expression on the current cursor position, which is
     /// preceded by some identifier.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_member(&mut self, target: Expression) -> Result<Expression> {
         // Consume the dot token
         self.consume(TokenType::Dot)?;
@@ -578,7 +578,7 @@ impl Parser<'_> {
 
         // If the next token is an opening parenthesis, it's a method invocation
         if self.peek(TokenType::LeftParen) || self.peek(TokenType::Less) {
-            tracing::trace!("member expr is method invocation");
+            libftrace::trace!("member expr is method invocation");
 
             let identifier = Identifier {
                 name: name.name,
@@ -599,7 +599,7 @@ impl Parser<'_> {
 
         // If there is yet another dot, it's part of a longer expression.
         if self.peek(TokenType::Dot) {
-            tracing::trace!("member expr is being chained");
+            libftrace::trace!("member expr is being chained");
 
             return self.parse_member(expression);
         }
@@ -610,7 +610,7 @@ impl Parser<'_> {
 
     /// Parses a cast expression on the current cursor position, which is
     /// preceded by some identifier.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_cast(&mut self, source: Expression) -> Result<Expression> {
         // Consume the `as` token
         self.consume(TokenType::As)?;
@@ -628,7 +628,7 @@ impl Parser<'_> {
     }
 
     /// Parses an instance checking expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_is(&mut self, target: Expression) -> Result<Expression> {
         // Consume the `is` token
         self.consume(TokenType::Is)?;
@@ -646,7 +646,7 @@ impl Parser<'_> {
     }
 
     /// Parses an assignment expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_assignment(&mut self, target: Expression) -> Result<Expression> {
         // Consume the equal sign
         self.consume(TokenType::Assign)?;
@@ -664,7 +664,7 @@ impl Parser<'_> {
     }
 
     /// Parses a path expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_path_expression(&mut self, name: Identifier) -> Result<Expression> {
         // Move the cursor back to the start of the given identifier.
         self.move_to_pos(name.location.start());
@@ -721,7 +721,7 @@ impl Parser<'_> {
     }
 
     /// Parses a struct construction expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_construction_expression(&mut self, name: Identifier) -> Result<Expression> {
         // Move the cursor back to the start of the given identifier.
         self.move_to_pos(name.location.start());
@@ -737,7 +737,7 @@ impl Parser<'_> {
     }
 
     /// Parses a field expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_field(&mut self) -> Result<ConstructorField> {
         let name = self.parse_identifier()?;
 
@@ -755,7 +755,7 @@ impl Parser<'_> {
     }
 
     /// Parses a variable reference expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace, fields(target))]
     fn parse_variable(&mut self, target: Identifier) -> Expression {
         let variable = Variable { name: target };
 
@@ -763,7 +763,7 @@ impl Parser<'_> {
     }
 
     /// Parses a literal value expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_literal(&mut self) -> Result<Expression> {
         let literal = self.parse_literal_inner()?;
 
@@ -771,7 +771,7 @@ impl Parser<'_> {
     }
 
     /// Parses a literal value expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_literal_inner(&mut self) -> Result<Literal> {
         let token = self.token();
         let location: Location = token.index.into();
@@ -894,7 +894,7 @@ impl Parser<'_> {
     }
 
     /// Parses a unary expression on the current cursor position.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_unary(&mut self) -> Result<Expression> {
         let operator = match self.consume_any() {
             t if t.kind.is_unary() => t,
@@ -948,7 +948,7 @@ impl Parser<'_> {
 
     /// Parses some expression, if an equal sign is consumed. Otherwise, returns
     /// `None`.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_opt_assignment(&mut self) -> Result<Option<Expression>> {
         if self.check(TokenType::Assign) {
             Ok(Some(self.parse_expression()?))

@@ -56,7 +56,7 @@ struct IntrinsicFunctions {
 /// # Errors
 ///
 /// Returns `Err` if the compiler returned an error while compiling the MIR.
-#[tracing::instrument(level = "DEBUG", skip_all, err)]
+#[libftrace::traced(level = Debug, err)]
 pub fn generate<'ctx>(mir: ModuleMap) -> Result<Vec<u8>> {
     let object = CraneliftBackend::new(mir)?.generate()?;
 
@@ -112,7 +112,7 @@ impl CraneliftBackend {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    #[libftrace::traced(level = Debug)]
     fn generate(&mut self) -> lume_errors::Result<ObjectProduct> {
         let functions = std::mem::take(&mut self.context.functions);
 
@@ -200,7 +200,7 @@ impl CraneliftBackend {
         self.module.as_ref().unwrap().try_write().unwrap()
     }
 
-    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name))]
+    #[libftrace::traced(level = Info, fields(func = func.name))]
     fn declare_function(&mut self, func: &lume_mir::Function) -> Result<(cranelift_module::FuncId, Signature)> {
         let sig = self.create_signature_of(&func.signature);
 
@@ -220,7 +220,7 @@ impl CraneliftBackend {
         Ok((func_id, sig))
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn create_signature_of(&self, signature: &lume_mir::Signature) -> Signature {
         let mut sig = self.module().make_signature();
 
@@ -239,7 +239,7 @@ impl CraneliftBackend {
         sig
     }
 
-    #[tracing::instrument(level = "INFO", skip_all, fields(func = %func.name), err)]
+    #[libftrace::traced(level = Info, fields(func = func.name))]
     fn define_function(
         &self,
         func: &lume_mir::Function,
@@ -252,8 +252,6 @@ impl CraneliftBackend {
 
         let builder = FunctionBuilder::new(&mut ctx.func, builder_ctx);
         LowerFunction::new(self, func, builder).define();
-
-        lume_trace::debug!(name: "lowered_func", name = %func.name, function = %ctx.func);
 
         {
             // We have to pass the same flags to the verifier function as we used
@@ -275,7 +273,7 @@ impl CraneliftBackend {
         }
 
         if let Err(err) = self.module_mut().define_function(declared_func.id, ctx) {
-            tracing::error!(name: "verify", "error caused by function:\n{}", ctx.func);
+            libftrace::error!("error caused by function:\n{}", ctx.func);
 
             // Displaying verifier errors directly gives a really useless error, so to
             // actually know the issue, we're using the debug output of the error in the
@@ -495,7 +493,7 @@ impl CraneliftBackend {
     }
 }
 
-#[tracing::instrument(level = "TRACE", skip(module), err)]
+#[libftrace::traced(level = Trace, fields(name, params, ret))]
 fn import_function<TModule: Module>(
     module: &mut TModule,
     name: &'static str,
@@ -583,7 +581,7 @@ impl<'ctx> LowerFunction<'ctx> {
         self.backend.module_mut().declare_func_in_func(id, self.builder.func)
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub(crate) fn seal_block(&mut self, id: lume_mir::BasicBlockId) {
         let cg_block = *self.blocks.get(&id).unwrap();
 
@@ -597,7 +595,7 @@ impl<'ctx> LowerFunction<'ctx> {
     /// the last invocation occured and whether any memory actually needs to be
     /// collected.
     #[inline]
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub(crate) fn insert_gc_trigger(&mut self) {
         if self.func.signature.is_dropper {
             return;
@@ -607,12 +605,12 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().call(cl_gc_step, &[]);
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub(crate) fn declare_var(&mut self, register: RegisterId, ty: lume_mir::Type) -> Variable {
         let cg_ty = self.backend.cl_type_of(&ty);
         let var = self.builder.declare_var(cg_ty);
 
-        lume_trace::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
+        libftrace::debug!("declare_var {register}[{ty}] = {var}({cg_ty})");
 
         self.variables.insert(register, var);
         self.variable_types.insert(register, ty);
@@ -643,17 +641,17 @@ impl<'ctx> LowerFunction<'ctx> {
         let val = self.use_var(register);
         let ty = self.retrieve_load_type(register);
 
-        lume_trace::debug!("loading {val} from {register}, type {ty}");
+        libftrace::debug!("loading {val} from {register}, type {ty}");
 
         self.builder.ins().load(ty, MemFlags::new(), val, 0)
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(name = self.func.name, register, field, offset, ty))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
         let ptr = self.use_var(register);
 
-        lume_trace::debug!(%ptr, %ty, %register, field);
+        libftrace::debug!("load_field", ptr = ptr, ty = ty, register = register, field = field);
 
         self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
     }
@@ -674,36 +672,6 @@ impl<'ctx> LowerFunction<'ctx> {
         }
 
         self.backend.cl_type_of(elemental)
-    }
-
-    #[tracing::instrument(level = "TRACE", skip(self), fields(func = %self.func.name))]
-    pub(crate) fn retrieve_field_type(&self, register: RegisterId, index: usize) -> Type {
-        let reg_ty = self.func.registers.register_ty(register);
-
-        if let lume_mir::TypeKind::Union { cases } = &reg_ty.kind {
-            let case = cases
-                .get(index)
-                .expect("bug!: attempted to load union field out of bounds");
-
-            return self.backend.cl_type_of(case);
-        }
-
-        let lume_mir::TypeKind::Pointer { elemental } = &reg_ty.kind else {
-            panic!("bug!: attempting to load non-pointer register");
-        };
-
-        if let lume_mir::TypeKind::Union { .. } = &elemental.kind {
-            return self.backend.cl_ptr_type();
-        }
-
-        let lume_mir::TypeKind::Struct { fields, .. } = &elemental.kind else {
-            panic!("bug!: attempting to load field from non-struct register");
-        };
-
-        let field = &fields[index];
-        lume_trace::debug!(%reg_ty, %field, index);
-
-        self.backend.cl_type_of(field)
     }
 
     pub(crate) fn retrieve_slot(&self, slot: SlotId) -> StackSlot {

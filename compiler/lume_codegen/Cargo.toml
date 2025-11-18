@@ -12,24 +12,20 @@ lume_errors = { path = "../../crates/lume_errors" }
 lume_mir = { path = "../lume_mir" }
 lume_session = { path = "../lume_session" }
 lume_span = { path = "../../crates/lume_span" }
-lume_trace = { path = "../../crates/lume_trace" }
 lume_type_metadata = { path = "../lume_type_metadata" }
 
 gimli = { version = "0.32.3", features = ["write"] }
 indexmap = { workspace = true }
+libftrace = { workspace = true }
 object = { version = "0.37", features = ["read", "write"] }
 serde = { workspace = true, features = ["derive"] }
 target-lexicon = { version = "=0.13.2" }
-tracing = { workspace = true }
 
 cranelift = "=0.125.4"
 cranelift-codegen = { version = "=0.125.4", features = ["unwind"] }
 cranelift-module = "=0.125.4"
 cranelift-native = "=0.125.4"
 cranelift-object = { version = "=0.125.4" }
-
-[features]
-tracing = ["lume_trace/enable"]
 
 [lints]
 workspace = true

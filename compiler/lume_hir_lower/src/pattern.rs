@@ -3,7 +3,7 @@ use error_snippet::Result;
 use crate::LowerModule;
 
 impl LowerModule<'_> {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn pattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
         let id = self.next_node_id();
 
@@ -68,7 +68,7 @@ impl LowerModule<'_> {
         Ok(pat)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn subpattern(&mut self, pattern: lume_ast::Pattern) -> Result<lume_hir::Pattern> {
         match pattern {
             lume_ast::Pattern::Literal(_) | lume_ast::Pattern::Wildcard(_) | lume_ast::Pattern::Variant(_) => {

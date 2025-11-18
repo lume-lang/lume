@@ -6,7 +6,7 @@ use crate::Parser;
 
 impl Parser<'_> {
     /// Parses zero-or-more type parameters.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_type_parameters(&mut self) -> Result<Vec<TypeParameter>> {
         if !self.peek(TokenType::Less) {
             return Ok(Vec::new());
@@ -29,7 +29,7 @@ impl Parser<'_> {
     }
 
     /// Parses zero-or-more type arguments, boxed as [`Box<Type>`].
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_type_arguments(&mut self) -> Result<Vec<Type>> {
         if !self.peek(TokenType::Less) {
             return Ok(Vec::new());

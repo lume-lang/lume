@@ -34,7 +34,7 @@ pub(crate) fn run_pass<P: OptimizerPass>(mcx: &mut MirQueryCtx, level: Optimizat
 pub(crate) fn run_all_passes(mcx: &mut MirQueryCtx, func_id: NodeId) {
     let session = &mcx.gcx().session;
     let level = session.options.optimize;
-
+ 
     run_pass::<heap_to_stack::HeapToStack>(mcx, level, func_id);
 
     // If the `dump_mir` property is defined but empty, we dump the function MIR

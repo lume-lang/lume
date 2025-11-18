@@ -17,13 +17,7 @@ impl TyCheckCtx {
     /// Returns `Err` when either a language error occured, such as missing
     /// variables, missing methods, etc, or when expected items cannot be
     /// found within the context.
-    #[tracing::instrument(
-        level = "INFO",
-        name = "lume_typech::TyCheckCtx::typecheck",
-        parent = None,
-        skip(self),
-        err
-    )]
+    #[libftrace::traced(level = Info, err)]
     pub fn typecheck(&mut self) -> Result<()> {
         self.typech_expressions()?;
         self.typech_traits()?;
@@ -39,7 +33,7 @@ impl TyCheckCtx {
     ///
     /// Returns `Err` when the given types are incompatible or
     /// if expected items cannot be found within the context.
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub(crate) fn ensure_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<()> {
         // If the two given types are exactly the same, both underlying instance and
         // type arguments, we can be sure they're compatible.
@@ -80,7 +74,7 @@ impl TyCheckCtx {
                 return Ok(());
             }
 
-            tracing::debug!(target: "type_compat", ?from, ?to, "trait not implemented");
+            libftrace::debug!("trait not implemented: {:?} => {:?}", from, to);
 
             return Err(errors::TraitNotImplemented {
                 location: from.location,
@@ -93,7 +87,7 @@ impl TyCheckCtx {
         // If `to` refers to a type parameter, check if `from` satisfies the
         // constraints.
         if let Some(to_arg) = self.as_type_parameter(to)? {
-            tracing::debug!(target: "type_compat", ?from, ?to_arg, "checking type parameter constraints");
+            libftrace::debug!("checking type parameter constraints: {from:?} => {to:?}");
 
             for constraint in &to_arg.constraints {
                 if !self.check_type_compatibility(from, constraint)? {
@@ -108,37 +102,29 @@ impl TyCheckCtx {
                 }
             }
 
-            tracing::debug!(target: "type_compat", "type parameter constraints valid");
+            libftrace::debug!("type parameter constraints valid");
             return Ok(());
         }
 
         // If the two types share the same elemental type, the type arguments
         // may be compatible.
         if from.instance_of == to.instance_of && from.type_arguments.len() == to.type_arguments.len() {
-            tracing::debug!(target: "type_compat", ?from, ?to, "checking type argument downcast");
+            libftrace::debug!("checking type argument downcast: {from:?} => {to:?}");
 
             for (from_arg, to_arg) in from.type_arguments.iter().zip(to.type_arguments.iter()) {
                 self.ensure_type_compatibility(from_arg, to_arg)?;
             }
 
-            tracing::debug!(target: "type_compat", "type downcast to type parameter");
+            libftrace::debug!("type downcast to type parameter");
             return Ok(());
         }
 
-        if tracing::event_enabled!(tracing::Level::DEBUG) {
+        #[cfg(debug_assertions)]
+        {
             let named_from = self.new_named_type(from, false)?;
             let named_to = self.new_named_type(to, false)?;
 
-            tracing::debug!(
-                target: "type_compat",
-                %named_from,
-                %named_to,
-                "type-checking failed",
-            );
-
-            if tracing::event_enabled!(tracing::Level::TRACE) {
-                tracing::trace!(target: "type_compat", ?from, ?to, "expanded type info");
-            }
+            libftrace::debug!("type-checking failed, {named_from} => {named_to}");
         }
 
         Err(errors::MismatchedTypes {
@@ -155,7 +141,7 @@ impl TyCheckCtx {
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub(crate) fn check_type_compatibility(&self, from: &TypeRef, to: &TypeRef) -> Result<bool> {
         if let Err(err) = self.ensure_type_compatibility(from, to) {
             // Type errors will have a code attached - compiler errors will not.
@@ -178,7 +164,7 @@ impl TyCheckCtx {
     /// # Errors
     ///
     /// Returns `Err` when expected items cannot be found within the context.
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
+    #[libftrace::traced(level = Trace, err, ret)]
     pub(crate) fn check_signature_compatibility(&self, from: FunctionSig<'_>, to: FunctionSig<'_>) -> Result<bool> {
         // If the two given signatures are exactly the same, both underlying instance
         // and type arguments, we can be sure they're compatible.
