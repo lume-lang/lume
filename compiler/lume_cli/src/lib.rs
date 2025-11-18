@@ -28,6 +28,7 @@ pub enum LumeSubcommands {
 }
 
 pub fn lume_cli_entry() {
+    #[cfg(feature = "tracing")]
     libftrace::set_filter(
         libftrace::filter::from_env("LUMEC_LOG")
             .or_else(|err| {

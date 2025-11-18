@@ -22,5 +22,8 @@ error_snippet_derive = { workspace = true }
 libftrace = { workspace = true }
 toml = { version = "0.9.6" }
 
+[features]
+tracing = []
+
 [lints]
 workspace = true
