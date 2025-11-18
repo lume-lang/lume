@@ -131,10 +131,10 @@ impl LowerFunction<'_> {
             lume_mir::OperandKind::Load { id } => self.load_var(*id),
             lume_mir::OperandKind::LoadField {
                 target,
-                index,
                 offset,
                 field_type,
-            } => self.load_field(*target, *index, *offset, self.backend.cl_type_of(field_type)),
+                ..
+            } => self.load_field(*target, *offset, self.backend.cl_type_of(field_type)),
             lume_mir::OperandKind::LoadSlot {
                 target,
                 offset,

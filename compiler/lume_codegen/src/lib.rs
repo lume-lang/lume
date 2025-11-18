@@ -646,12 +646,12 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().load(ty, MemFlags::new(), val, 0)
     }
 
-    #[libftrace::traced(level = Trace, fields(name = self.func.name, register, field, offset, ty))]
+    #[libftrace::traced(level = Trace, fields(name = self.func.name, register, offset, ty))]
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-    pub(crate) fn load_field(&mut self, register: RegisterId, field: usize, offset: usize, ty: Type) -> Value {
+    pub(crate) fn load_field(&mut self, register: RegisterId, offset: usize, ty: Type) -> Value {
         let ptr = self.use_var(register);
 
-        libftrace::debug!("load_field", ptr = ptr, ty = ty, register = register, field = field);
+        libftrace::debug!("load_field", ptr = ptr, ty = ty, register = register);
 
         self.builder.ins().load(ty, MemFlags::new(), ptr, offset as i32)
     }

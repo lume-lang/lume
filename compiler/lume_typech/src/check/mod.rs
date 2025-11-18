@@ -121,10 +121,11 @@ impl TyCheckCtx {
 
         #[cfg(debug_assertions)]
         {
-            let named_from = self.new_named_type(from, false)?;
-            let named_to = self.new_named_type(to, false)?;
-
-            libftrace::debug!("type-checking failed, {named_from} => {named_to}");
+            libftrace::debug!(
+                "type-checking failed, {} => {}",
+                self.new_named_type(from, false).unwrap(),
+                self.new_named_type(to, false).unwrap()
+            );
         }
 
         Err(errors::MismatchedTypes {

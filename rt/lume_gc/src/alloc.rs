@@ -325,6 +325,7 @@ impl OldGeneration {
     /// allocator.
     pub(crate) fn clear(&mut self) {
         #[cfg(debug_assertions)]
+        #[allow(unused, reason = "iterator values will be unused when tracing is disabled")]
         for (alloc, (size, _)) in &self.allocations {
             libftrace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
         }
