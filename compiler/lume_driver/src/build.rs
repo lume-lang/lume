@@ -29,7 +29,7 @@ impl Driver {
     /// - an error occured while compiling the package,
     /// - an error occured while writing the output executable
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
+    #[libftrace::traced(level = Info, fields(root = self.package.path.display()))]
     pub fn build(mut self, mut options: Options) -> Result<CompiledExecutable> {
         self.override_root_sources(&mut options);
 
@@ -125,7 +125,7 @@ impl Compiler {
     /// Returns `Err` if:
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(package = %package.name), err)]
+    #[libftrace::traced(level = Info, fields(package = package.name))]
     pub fn build_package(
         package: Package,
         gcx: Arc<GlobalCtx>,
@@ -138,7 +138,7 @@ impl Compiler {
         };
 
         let mut sources = compiler.parse()?;
-        tracing::debug!(target: "driver", "finished parsing");
+        libftrace::debug!("finished parsing");
 
         for (node_id, node) in &dep_hir.nodes {
             sources.nodes.insert(*node_id, node.clone());

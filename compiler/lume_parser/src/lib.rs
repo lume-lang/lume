@@ -69,7 +69,7 @@ impl<'src> Parser<'src> {
     }
 
     /// Disables the parser from attempting to recover from errors.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub fn disable_recovery(&mut self) {
         self.attempt_recovery = false;
     }
@@ -83,15 +83,15 @@ impl<'src> Parser<'src> {
     ///
     /// Returns `Err` if some part of the input source is unsupported
     /// or unexpected.
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    #[libftrace::traced(level = Debug, err)]
     pub fn prepare(&mut self) -> Result<()> {
         // If we've already tokenized something, we shouldn't add any more.
         if !self.tokens.is_empty() {
-            tracing::debug!("all tokens pre-lexed ({})", self.tokens.len());
+            libftrace::debug!("all tokens pre-lexed ({})", self.tokens.len());
             return Ok(());
         }
 
-        tracing::debug!("lexed {} tokens", self.tokens.len());
+        libftrace::debug!("lexed {} tokens", self.tokens.len());
 
         Ok(())
     }
@@ -105,14 +105,7 @@ impl<'src> Parser<'src> {
     ///
     /// Returns `Err` if some part of the input is unexpected or if the
     /// parser unexpectedly reaches end-of-file.
-    #[tracing::instrument(
-        level = "INFO",
-        name = "lume_parser::parser::parse",
-        parent = None,
-        skip(self),
-        fields(file = %self.source.name)
-        err
-    )]
+    #[libftrace::traced(level = Info, fields(file = self.source.name), err)]
     pub fn parse(&mut self) -> Result<Vec<TopLevelExpression>> {
         let mut expressions = Vec::new();
 
@@ -187,7 +180,7 @@ impl<'src> Parser<'src> {
     ///
     /// Returns a boolean indicating whether the token matches the expected
     /// kind.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn peek_next(&self, kind: TokenType) -> bool {
         self.peek_offset(kind, 1)
     }
@@ -197,34 +190,34 @@ impl<'src> Parser<'src> {
     ///
     /// Returns a boolean indicating whether the token matches the expected
     /// kind.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn peek(&self, kind: TokenType) -> bool {
         self.peek_offset(kind, 0)
     }
 
     /// Advances the cursor position backwards by a single token.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn rewind(&mut self) {
         self.index -= 1;
         self.position = self.token().start();
     }
 
     /// Advances the cursor position forward by a single token.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn skip(&mut self) {
         self.index += 1;
         self.position = self.token().start();
     }
 
     /// Moves the current cursor position to the given index.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn move_to(&mut self, index: usize) {
         self.index = index;
         self.position = self.token().start();
     }
 
     /// Moves the current cursor position to the given position.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn move_to_pos(&mut self, pos: usize) {
         while self.position > pos {
             self.rewind();
@@ -235,7 +228,7 @@ impl<'src> Parser<'src> {
     /// expected kind.
     ///
     /// If the token does not match the expected kind, an error is returned.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn expect(&mut self, kind: TokenType) -> Result<Token<'src>> {
         let current = self.token();
 
@@ -257,7 +250,7 @@ impl<'src> Parser<'src> {
     /// single token.
     ///
     /// If the token does not match the expected kind, an error is returned.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn consume(&mut self, kind: TokenType) -> Result<Token<'src>> {
         match self.expect(kind) {
             Ok(token) => {
@@ -271,7 +264,7 @@ impl<'src> Parser<'src> {
 
     /// Consumes the next token from the lexer and returns it, not matter what
     /// token it is.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn consume_any(&mut self) -> Token<'src> {
         let token = self.token();
 
@@ -285,7 +278,7 @@ impl<'src> Parser<'src> {
     /// single token.
     ///
     /// If the token does not match the expected kind, `None` is returned.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn consume_if(&mut self, kind: TokenType) -> Option<Token<'src>> {
         if self.eof() {
             return None;
@@ -321,7 +314,7 @@ impl<'src> Parser<'src> {
     ///
     /// This is useful for any sequence of expressions or statements, such as
     /// blocks. Upon returning, the `close` token will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_seq_to_end<T>(
         &mut self,
         close: TokenType,
@@ -340,7 +333,7 @@ impl<'src> Parser<'src> {
     /// is invoked between each delimiter, until no more delimiters are found.
     ///
     /// This is useful for any sequence of identifiers, such as namespace paths.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_delim<T>(
         &mut self,
         delim: TokenType,
@@ -366,7 +359,7 @@ impl<'src> Parser<'src> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, the `close` token will have
     /// been consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_delim_seq_to_end<T>(
         &mut self,
         close: TokenType,
@@ -406,7 +399,7 @@ impl<'src> Parser<'src> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, the `close` token will have
     /// been consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_enclosed_delim_seq<T>(
         &mut self,
         open: TokenType,
@@ -425,7 +418,7 @@ impl<'src> Parser<'src> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, both the `open` and `close`
     /// tokens will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_comma_seq<T>(
         &mut self,
         open: TokenType,
@@ -442,7 +435,7 @@ impl<'src> Parser<'src> {
     /// This is useful for any sequence of expressions or statements, such as
     /// arrays, parameters, etc. Upon returning, both the `open` and `close`
     /// tokens will have been consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_paren_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<Vec<T>> {
         self.consume_comma_seq(TokenType::LeftParen, TokenType::RightParen, f)
     }
@@ -453,7 +446,7 @@ impl<'src> Parser<'src> {
     /// This is useful for any sequence of statements within a block.
     /// Upon returning, both the `open` and `close` tokens will have been
     /// consumed.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_curly_seq<T>(&mut self, f: impl FnMut(&mut Parser<'src>) -> Result<T>) -> Result<Vec<T>> {
         self.consume(TokenType::LeftCurly)?;
         self.consume_seq_to_end(TokenType::RightCurly, f)
@@ -464,7 +457,7 @@ impl<'src> Parser<'src> {
     ///
     /// This is useful for when you need zero-or-more items without consuming
     /// any tokens, such as attributes.
-    #[tracing::instrument(level = "TRACE", skip(self, f), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn consume_any_seq<T>(
         &mut self,
         open: TokenType,
@@ -481,20 +474,20 @@ impl<'src> Parser<'src> {
 
     /// Checks whether the current token is of the given type. If so, the token
     /// is consumed.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn check(&mut self, kind: TokenType) -> bool {
         self.consume_if(kind).is_some()
     }
 
     /// Checks whether the current token is an `External` token.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn check_external(&mut self) -> bool {
         self.check(TokenType::External)
     }
 
     /// Reads the current documentation comment into the parser's state, if any
     /// is present.
-    #[tracing::instrument(level = "DEBUG", skip(self), err)]
+    #[libftrace::traced(level = Debug, err)]
     fn read_doc_comment(&mut self) -> Result<()> {
         let mut doc_comments = Vec::new();
 
@@ -505,7 +498,7 @@ impl<'src> Parser<'src> {
         }
 
         if doc_comments.is_empty() {
-            tracing::trace!("no doc comment found");
+            libftrace::trace!("no doc comment found");
             return Ok(());
         }
 
@@ -536,7 +529,7 @@ impl<'src> Parser<'src> {
     }
 
     /// Parses the next token as an identifier.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_identifier(&mut self) -> Result<Identifier> {
         let identifier = match self.consume_any() {
             // Actual identifiers are obviously allowed, so they pass through.
@@ -566,7 +559,7 @@ impl<'src> Parser<'src> {
 
     /// Parses the next token as an identifier, optionally with an suffixed
     /// question mark.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_callable_name(&mut self) -> Result<Identifier> {
         let mut identifier = self.parse_identifier()?;
 
@@ -580,7 +573,7 @@ impl<'src> Parser<'src> {
 
     /// Parses the next token as an identifier. If the parsing fails, return
     /// `Err(err)`.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_ident_or_err(&mut self, err: Error) -> Result<Identifier> {
         match self.parse_identifier() {
             Ok(name) => Ok(name),
@@ -592,7 +585,7 @@ impl<'src> Parser<'src> {
     /// question mark.
     ///
     /// If the parsing fails, return `Err(err)`.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_callable_name_or_err(&mut self, err: Error) -> Result<Identifier> {
         match self.parse_callable_name() {
             Ok(name) => Ok(name),
@@ -606,7 +599,7 @@ impl<'src> Parser<'src> {
     /// together with periods, to form longer chains of them. They can be as
     /// short as a single link, such as `std`, but they can also be longer,
     /// such as `std::fmt::error`.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_import_path(&mut self) -> Result<ImportPath> {
         let segments = self.consume_delim(TokenType::PathSeparator, Parser::parse_identifier)?;
 
@@ -622,7 +615,7 @@ impl<'src> Parser<'src> {
     }
 
     /// Returns a block for functions or methods.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_block(&mut self) -> Result<Block> {
         let (statements, location) = self.consume_with_loc(|p| {
             let mut stmts = Vec::new();
@@ -655,7 +648,7 @@ impl<'src> Parser<'src> {
 
     /// Returns an empty block for external functions and an actual block for
     /// non-external functions.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_opt_external_block(&mut self, external: bool) -> Result<Option<Block>> {
         if external {
             if self.peek(TokenType::LeftCurly) {

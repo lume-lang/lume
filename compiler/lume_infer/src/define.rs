@@ -117,7 +117,7 @@ static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
 });
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_types(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -175,7 +175,7 @@ fn std_type_id(name: &Path) -> Option<NodeId> {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_functions(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -193,7 +193,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_implementations(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -210,7 +210,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_trait_implementations(&mut self) {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -225,7 +225,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_fields(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -256,7 +256,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_trait_methods(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -351,7 +351,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_type_parameters(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -370,7 +370,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn define_type_type_params(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
@@ -430,7 +430,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn define_impl_type_params(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let id = implementation.id;
 
@@ -488,7 +488,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn define_trait_impl_method_type_params(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         for method in &mut trait_impl.methods {
             let id = method.id;
@@ -506,7 +506,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn define_func_type_params(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let id = func.id;
 
@@ -522,7 +522,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all)]
+    #[libftrace::traced(level = Trace)]
     fn alloc_type_param_as_type(&mut self, type_param: NodeId) -> NodeId {
         let name = self.tdb().type_parameter(type_param).unwrap().name.clone();
         let symbol_name = Path::rooted(PathSegment::ty(name));
@@ -533,7 +533,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub(crate) fn define_type_constraints(&mut self) -> Result<()> {
         let mut hir = std::mem::take(&mut self.hir);
 
@@ -552,7 +552,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn define_type_type_constraints(&mut self, ty: &mut lume_hir::TypeDefinition) -> Result<()> {
         match ty {
             lume_hir::TypeDefinition::Struct(struct_def) => {
@@ -585,7 +585,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn define_impl_type_constraints(&mut self, implementation: &mut lume_hir::Implementation) -> Result<()> {
         let impl_id = implementation.id;
         let type_params = self.tdb().type_params_of(impl_id)?.to_owned();
@@ -602,7 +602,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn define_trait_impl_type_constraints(&mut self, trait_impl: &mut lume_hir::TraitImplementation) -> Result<()> {
         let use_id = trait_impl.id;
         let type_params = self.tdb().type_params_of(use_id)?.to_owned();
@@ -619,7 +619,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn define_func_type_constraints(&mut self, func: &mut lume_hir::FunctionDefinition) -> Result<()> {
         let func_id = func.id;
         let type_params = self.tdb().function(func_id).unwrap().type_parameters.clone();
@@ -629,7 +629,7 @@ impl TyInferCtx {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn lower_type_constraints(&mut self, hir: &[lume_hir::TypeParameter], ids: &[NodeId]) -> Result<()> {
         for (param_id, hir_param) in ids.iter().zip(hir.iter()) {
             for type_constraint in &hir_param.constraints {
@@ -648,7 +648,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_field_types(&mut self) -> Result<()> {
         let hir = std::mem::take(&mut self.hir);
 
@@ -678,7 +678,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_method_bodies(&mut self) -> Result<()> {
         // TODO: this is not a very good way of handling mutability issues.
         for (_, item) in &self.hir.clone().nodes {
@@ -826,7 +826,7 @@ impl TyInferCtx {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn define_scopes(&mut self) -> Result<()> {
         let mut tree = BTreeMap::new();
 
@@ -1150,7 +1150,7 @@ enum TypeArgumentInference {
 }
 
 impl TyInferCtx {
-    #[tracing::instrument(level = "DEBUG", skip_all)]
+    #[libftrace::traced(level = Debug)]
     pub(crate) fn infer_type_arguments(&mut self) -> Result<()> {
         let mut replacements = HashMap::new();
 

@@ -1378,7 +1378,6 @@ impl TypeDatabaseContext {
     /// Returns `Err` if no type with the given ID was found in the context,
     /// or if the found type is non-generic (such as [`TypeKind::Void`] or
     /// [`TypeKind::TypeParameter`]).
-    #[tracing::instrument(level = "TRACE", skip(self), err, ret)]
     pub fn type_params_of(&self, id: NodeId) -> Result<&[NodeId]> {
         if let Some(ty) = self.type_(id) {
             return Ok(ty.kind.type_parameters());

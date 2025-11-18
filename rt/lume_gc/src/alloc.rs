@@ -137,7 +137,7 @@ impl YoungGeneration {
 
     pub(crate) fn alloc(&mut self, size: usize, metadata: *const TypeMetadata) -> Option<*mut u8> {
         if let Some(ptr) = self.allocator.alloc(size) {
-            lume_trace::trace!("[G1] allocated {size} bytes ({ptr:p})");
+            libftrace::trace!("[G1] allocated {size} bytes ({ptr:p})");
 
             if !metadata.is_null() {
                 let drop_ptr = unsafe { metadata.read() }.drop_ptr;
@@ -324,10 +324,9 @@ impl OldGeneration {
     /// Clears the generation deallocating all allocations made by the
     /// allocator.
     pub(crate) fn clear(&mut self) {
-        if lume_trace::enabled!(lume_trace::Level::TRACE) {
-            for (alloc, (size, _)) in &self.allocations {
-                lume_trace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
-            }
+        #[cfg(debug_assertions)]
+        for (alloc, (size, _)) in &self.allocations {
+            libftrace::trace!("[G2] deallocated {size} bytes ({:p})", *alloc);
         }
 
         for (ptr, (size, drop_ptr)) in self.allocations.drain(..) {
@@ -376,7 +375,7 @@ impl GenerationalAllocator {
         let total_memory = get_total_memory();
         let g1_size = total_memory.unbounded_shr(u32::from(root));
 
-        lume_trace::trace!("[G1] initial memory block of {g1_size}B ({} MB)", g1_size / 1024 / 1024);
+        libftrace::trace!("[G1] initial memory block of {g1_size}B ({} MB)", g1_size / 1024 / 1024);
 
         Self::new(g1_size)
     }
@@ -396,7 +395,7 @@ impl GenerationalAllocator {
             return ptr;
         }
 
-        lume_trace::trace!("collection triggered, 1st generation exhausted");
+        libftrace::trace!("collection triggered, 1st generation exhausted");
 
         // Promote all living allocations to the 2nd generation, effectively clearing
         // the entire 1st generation for new allocations.
@@ -409,7 +408,7 @@ impl GenerationalAllocator {
 
         // While it is completely expected to allocate successfully, the fallback
         // of use the 2nd generation allocator exists, in case of allocator changes.
-        lume_trace::error!("warning: expected allocation to G1 after promotion, but it failed");
+        libftrace::error!("warning: expected allocation to G1 after promotion, but it failed");
 
         self.old.alloc(size, metadata)
     }
@@ -423,7 +422,7 @@ impl GenerationalAllocator {
         let ratio = (mem_in_use as f64) / (mem_available as f64);
 
         if ratio >= 0.95 {
-            lume_trace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
+            libftrace::trace!("collection required, memory pressure at {}%", ratio * 100.0);
 
             return true;
         }
@@ -451,7 +450,7 @@ impl GenerationalAllocator {
             let new_live_ptr = self.old.alloc(obj_size, metadata_ptr);
             unsafe { memcpy(new_live_ptr, alloc_start, obj_size) };
 
-            lume_trace::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
+            libftrace::trace!("[G1->G2] promoted {alloc_start:p} (now {new_live_ptr:p})");
 
             // Replace the pointer on the stack with newly moved object pointer,
             // so when the function reloads the object register from the stack,

@@ -50,7 +50,7 @@ impl MirQueryCtx<'_> {
     /// the method cannot determine whether the register escapes, it
     /// returns [`None`].
     #[cached_query(key = (func.id, block_id, reg))]
-    #[tracing::instrument(level = "TRACE", skip(self, func), fields(name = %func.name), ret)]
+    #[libftrace::traced(level = Trace, fields(name = func.name, block_id, reg), ret)]
     pub fn does_register_escape(
         &self,
         func: &lume_mir::Function,

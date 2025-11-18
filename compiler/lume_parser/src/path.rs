@@ -8,7 +8,7 @@ const LOWERCASE_PATH_TYPES: &[&str] = &["void", "self"];
 
 impl Parser<'_> {
     /// Parses the next token as a symbol path.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     pub(crate) fn parse_path(&mut self) -> Result<Path> {
         let mut segments = Vec::new();
 
@@ -30,7 +30,7 @@ impl Parser<'_> {
     }
 
     /// Parses the next token as a single segment of a symbol path.
-    #[tracing::instrument(level = "TRACE", skip(self))]
+    #[libftrace::traced(level = Trace)]
     fn parse_path_segment(&mut self, prev_segment: Option<&PathSegment>) -> Result<PathSegment> {
         let name = self.parse_identifier()?;
         let start = name.location.start();

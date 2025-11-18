@@ -18,7 +18,6 @@ error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 indexmap = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-tracing = { workspace = true }
 
 [lints]
 workspace = true

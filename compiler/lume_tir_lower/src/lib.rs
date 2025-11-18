@@ -75,7 +75,7 @@ impl<'tcx> Lower<'tcx> {
                 continue;
             }
 
-            tracing::debug!(target: "tir_lower", "defining method {:+}", method.name);
+            libftrace::debug!("defining method {:+}", method.name);
 
             let location = self.tcx.hir_span_of_node(method.id);
             let kind = self.determine_method_kind(method, self.tcx.hir_body_of_node(method.id).is_some());
@@ -87,7 +87,7 @@ impl<'tcx> Lower<'tcx> {
         }
 
         for func in self.tcx.tdb().functions() {
-            tracing::debug!(target: "tir_lower", "defining function {:+}", func.name);
+            libftrace::debug!("defining function {:+}", func.name);
 
             let location = self.tcx.hir_span_of_node(func.id);
 
@@ -112,7 +112,7 @@ impl<'tcx> Lower<'tcx> {
                 continue;
             }
 
-            tracing::debug!(target: "tir_lower", "lowering method {:+}", method.name);
+            libftrace::debug!("lowering method {:+}", method.name);
 
             self.lower_block(method.id)?;
         }
@@ -122,7 +122,7 @@ impl<'tcx> Lower<'tcx> {
                 continue;
             }
 
-            tracing::debug!(target: "tir_lower", "lowering function {:+}", func.name);
+            libftrace::debug!("lowering function {:+}", func.name);
 
             self.lower_block(func.id)?;
         }

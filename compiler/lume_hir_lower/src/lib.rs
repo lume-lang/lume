@@ -98,7 +98,7 @@ impl<'a> LowerState<'a> {
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid
     /// locations.
-    #[tracing::instrument(name = "lume_hir_lower::lower_state::lower", level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub fn lower(package: &'a Package, source_map: &'a mut SourceMap, dcx: DiagCtxHandle) -> Result<Map> {
         let mut lower = LowerState::new(package, source_map, dcx);
 
@@ -111,14 +111,7 @@ impl<'a> LowerState<'a> {
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid
     /// locations.
-    #[tracing::instrument(
-        parent = None,
-        name = "lume_hir_lower::lower_state::lower_into",
-        level = "INFO",
-        skip_all,
-        fields(package = self.package.name),
-        err
-    )]
+    #[libftrace::traced(level = Info, fields(package = self.package.name))]
     pub fn lower_into(&mut self) -> Result<Map> {
         // Create a new HIR map for the module.
         let mut lume_hir = Map::empty(self.package.id);
@@ -159,7 +152,7 @@ impl<'a> LowerState<'a> {
 }
 
 #[derive(Hash, Debug, PartialEq, Eq)]
-enum DefinedItem {
+pub enum DefinedItem {
     Function(Path),
     Type(Path),
 }
@@ -228,14 +221,7 @@ impl<'a> LowerModule<'a> {
     ///
     /// Returns `Err` if any AST nodes are invalid or exist in invalid
     /// locations.
-    #[tracing::instrument(
-        parent = None,
-        name = "lume_hir_lower::lower_module::lower",
-        level = "INFO",
-        skip_all,
-        fields(file = %file.name),
-        err
-    )]
+    #[libftrace::traced(level = Info, fields(file = file.name))]
     pub fn lower(
         map: &'a mut Map,
         node_idx: &'a mut NodeId,
@@ -271,7 +257,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Adds implicit imports to the module.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace)]
     fn insert_implicit_imports(&mut self) -> Result<()> {
         let import_item = lume_ast::Import::std(DEFAULT_STD_IMPORTS);
 
@@ -279,7 +265,7 @@ impl<'a> LowerModule<'a> {
     }
 
     /// Gets the next [`NodeId`] in the sequence.
-    #[tracing::instrument(level = "TRACE", skip(self), ret)]
+    #[libftrace::traced(level = Trace)]
     fn next_node_id(&mut self) -> NodeId {
         self.current_node = self.current_node.next();
 
@@ -290,7 +276,7 @@ impl<'a> LowerModule<'a> {
     ///
     /// If the item is not defined, it is added into the list of defined items.
     /// If the item is defined, raises an error to reflect it.
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace)]
     fn ensure_item_undefined(&mut self, item: DefinedItem) -> Result<()> {
         if let Some(existing) = self.defined.get(&item) {
             return Err(crate::errors::DuplicateDefinition {
@@ -517,7 +503,7 @@ impl<'a> LowerModule<'a> {
         .intern()
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
+    #[libftrace::traced(level = Debug)]
     fn top_namespace(&mut self, expr: lume_ast::Namespace) -> Result<()> {
         self.namespace = Some(self.import_path(expr.path)?);
 
@@ -552,7 +538,7 @@ impl<'a> LowerModule<'a> {
         Ok(())
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, ret, err)]
+    #[libftrace::traced(level = Debug)]
     fn top_import(&mut self, expr: lume_ast::Import) -> Result<()> {
         for imported_name in expr.names {
             let namespace = self.import_path(expr.path.clone())?;

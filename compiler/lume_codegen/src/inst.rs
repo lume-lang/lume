@@ -5,7 +5,7 @@ use super::LowerFunction;
 pub const UNREACHABLE_TRAP_CODE: u8 = 0x99;
 
 impl LowerFunction<'_> {
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_block_alloc_entry(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = self.builder.create_block();
         self.builder.append_block_params_for_function_params(cg_block);
@@ -18,7 +18,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_block_alloc(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = self.builder.create_block();
 
@@ -33,7 +33,7 @@ impl LowerFunction<'_> {
         self.blocks.insert(mir_block.id, cg_block);
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_block_in(&mut self, mir_block: &lume_mir::BasicBlock) {
         let cg_block = *self.blocks.get(&mir_block.id).unwrap();
         self.builder.switch_to_block(cg_block);
@@ -45,7 +45,7 @@ impl LowerFunction<'_> {
         self.cg_terminator(mir_block.terminator().unwrap());
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_instruction(&mut self, inst: &lume_mir::Instruction) {
         self.set_srcloc(inst.location.clone());
 
@@ -54,7 +54,7 @@ impl LowerFunction<'_> {
                 let var = self.declare_var(*register, ty.to_owned());
 
                 let value = self.cg_declaration(decl);
-                lume_trace::debug!("define_var {register}({var}) = {value} ({decl})");
+                libftrace::debug!("define_var {register}({var}) = {value} ({decl})");
 
                 self.builder.def_var(var, value);
             }
@@ -116,7 +116,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_terminator(&mut self, term: &lume_mir::Terminator) {
         self.set_srcloc(term.location.clone());
 
@@ -163,7 +163,7 @@ impl LowerFunction<'_> {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, fields(func = %self.func.name))]
+    #[libftrace::traced(level = Trace, fields(func = self.func.name))]
     pub(crate) fn cg_alloc_type(&mut self, ty: &lume_mir::Type, metadata: lume_mir::RegisterId) -> Value {
         match &ty.kind {
             lume_mir::TypeKind::Struct { .. } | lume_mir::TypeKind::Union { .. } => {

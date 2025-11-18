@@ -10,7 +10,7 @@ use crate::check::errors::*;
 impl TyCheckCtx {
     /// Type checker pass to check whether expressions yield
     /// their expected type, depending on the surrounding context.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub(crate) fn typech_expressions(&mut self) -> Result<()> {
         for (id, item) in &self.hir().nodes {
             if !self.hir_is_local_node(*id) {
@@ -593,7 +593,7 @@ impl TyCheckCtx {
 
     /// Asserts that the logical expression is performed on boolean values,
     /// since only boolean values can be tested in logical expressions.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn is_expression(&self, expr: &lume_hir::Is) -> Result<()> {
         let target_ty = self.type_of(expr.target)?;
         let pattern_ty = self.type_of_pattern(&expr.pattern)?;
@@ -607,7 +607,7 @@ impl TyCheckCtx {
 
     /// Asserts that the logical expression is performed on boolean values,
     /// since only boolean values can be tested in logical expressions.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn logical_expression(&self, expr: &lume_hir::Logical) -> Result<()> {
         let lhs = self.type_of(expr.lhs)?;
         let rhs = self.type_of(expr.rhs)?;
@@ -639,7 +639,7 @@ impl TyCheckCtx {
 
     /// Asserts that the expression has visible access to the field which it is
     /// referring to.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn member_expression(&self, expr: &lume_hir::Member) -> Result<()> {
         let callee_ty = self.type_of(expr.callee)?;
         let callee_def = self.hir_expect_struct(callee_ty.instance_of);
@@ -685,7 +685,7 @@ impl TyCheckCtx {
     /// Asserts that the patterns in the switch expression are valid for the
     /// operand, as well as checking that all branch expressions are
     /// compatible.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn switch_expression(&self, expr: &lume_hir::Switch) -> Result<()> {
         let Some(first_case) = expr.cases.first() else {
             return Ok(());
@@ -727,7 +727,7 @@ impl TyCheckCtx {
 
     /// Asserts that the variant exists on the enum type, as well as asserting
     /// the types of passed parameters, if any.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn variant_expression(&self, expr: &lume_hir::Variant) -> Result<()> {
         let enum_def = self.enum_def_of_name(&expr.name.clone().parent().unwrap())?;
         let enum_case_def = self.enum_case_with_name(&expr.name)?;

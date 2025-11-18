@@ -101,13 +101,7 @@ impl TyInferCtx {
     /// Returns `Err` when either a language error occured, such as missing
     /// variables, missing methods, etc, or when expected items cannot be
     /// found within the context.
-    #[tracing::instrument(
-        level = "INFO",
-        name = "lume_infer::TyInferCtx::infer",
-        parent = None,
-        skip(self),
-        err
-    )]
+    #[libftrace::traced(level = Info, err)]
     pub fn infer(&mut self) -> Result<()> {
         self.define_types();
         self.define_functions();
@@ -122,30 +116,24 @@ impl TyInferCtx {
         self.define_scopes()?;
         self.infer_type_arguments()?;
 
-        tracing::debug!(target: "inference", "finished inference");
+        libftrace::debug!("finished inference");
 
-        tracing::debug_span!(target: "inference", "type unification").in_scope(|| {
-            let pass = unification::UnificationPass::default();
+        let pass = unification::UnificationPass::default();
+        pass.invoke(self)?;
 
-            pass.invoke(self)?;
+        // We need to invalidate the global cache for method calls, since the
+        // unification pass has altered some items in the HIR, making those
+        // entries in the cache incorrect and/or invalid.
+        //
+        // Very few method calls would've been cached at this point in the compile
+        // process, so we can safetly clear the entire thing, without having
+        // to worry too much about the potential performance loss.
+        libftrace::debug!("unification cache invalidation");
 
-            // We need to invalidate the global cache for method calls, since the
-            // unification pass has altered some items in the HIR, making those
-            // entries in the cache incorrect and/or invalid.
-            //
-            // Very few method calls would've been cached at this point in the compile
-            // process, so we can safetly clear the entire thing, without having
-            // to worry too much about the potential performance loss.
-            tracing::debug_span!("unification cache invalidation").in_scope(|| {
-                let ctx: &lume_session::GlobalCtx = &*self;
-                let db = DatabaseContext::db(ctx);
+        let ctx: &lume_session::GlobalCtx = &*self;
+        DatabaseContext::db(ctx).clear_all();
 
-                db.clear_all();
-            });
-
-            Result::Ok(())
-        })?;
-
+        libftrace::debug!("finished type unification");
         self.dcx().ensure_untainted()?;
 
         Ok(())
@@ -153,7 +141,7 @@ impl TyInferCtx {
 
     /// Gets the HIR statement with the given ID and assert that it's a variable
     /// declaration statement.
-    #[tracing::instrument(level = "DEBUG", skip(self))]
+    #[libftrace::traced(level = Debug)]
     #[allow(dead_code, reason = "expected used in future")]
     pub(crate) fn hir_expect_var_stmt(&self, id: NodeId) -> &lume_hir::VariableDeclaration {
         let stmt = self.hir_expect_stmt(id);
@@ -165,7 +153,7 @@ impl TyInferCtx {
     }
 
     /// Lowers the given HIR type into a type reference.
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(ty = %ty.name, loc = %ty.location), err)]
+    #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location))]
     pub fn mk_type_ref(&self, ty: &lume_hir::Type) -> Result<TypeRef> {
         let params: &[&TypeParameter] = &[];
 
@@ -174,11 +162,7 @@ impl TyInferCtx {
 
     /// Lowers the given HIR type into a type reference, which also looks
     /// up the given type parameters.
-    #[tracing::instrument(
-        level = "DEBUG",
-        skip_all, fields(ty = %ty.name, loc = %ty.location, ty_params = ?type_params),
-        err
-    )]
+    #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location, ty_params = type_params))]
     pub fn mk_type_ref_generic(&self, ty: &lume_hir::Type, type_params: &[&TypeParameter]) -> Result<TypeRef> {
         let Some(found_type) = self.find_type_ref_ctx(&ty.name, type_params) else {
             return Err(self.missing_type_err(ty));
@@ -195,24 +179,20 @@ impl TyInferCtx {
     }
 
     /// Lowers the given HIR types into type references.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub fn mk_type_refs(&self, ty: &[lume_hir::Type]) -> Result<Vec<TypeRef>> {
         ty.iter().map(|t| self.mk_type_ref(t)).collect()
     }
 
     /// Lowers the given HIR types into type references.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub fn mk_type_refs_generic(&self, ty: &[lume_hir::Type], type_params: &[&TypeParameter]) -> Result<Vec<TypeRef>> {
         ty.iter().map(|t| self.mk_type_ref_generic(t, type_params)).collect()
     }
 
     /// Lowers the given HIR type, with respect to the type parameters available
     /// from the given definition.
-    #[tracing::instrument(
-        level = "DEBUG",
-        skip_all, fields(ty = %ty.name, loc = %ty.location, def = ?def),
-        err
-    )]
+    #[libftrace::traced(level = Debug, fields(ty = ty.name, loc = ty.location, def = def), err)]
     pub fn mk_type_ref_from(&self, ty: &lume_hir::Type, def: NodeId) -> Result<TypeRef> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
@@ -222,18 +202,14 @@ impl TyInferCtx {
 
     /// Lowers the given HIR type, with respect to the type parameters available
     /// from the given expression.
-    #[tracing::instrument(
-        level = "DEBUG",
-        skip_all, fields(ty = %ty.name, loc = %ty.location, expr = ?expr),
-        err
-    )]
+    #[libftrace::traced(level = Debug, fields(ty = ty.name, expr), err)]
     pub fn mk_type_ref_from_expr(&self, ty: &lume_hir::Type, expr: NodeId) -> Result<TypeRef> {
         self.mk_type_ref_from(ty, expr)
     }
 
     /// Lowers the given HIR types, with respect to the type parameters
     /// available from the given definition.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub fn mk_type_refs_from(&self, ty: &[lume_hir::Type], def: NodeId) -> Result<Vec<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
@@ -241,7 +217,7 @@ impl TyInferCtx {
         self.mk_type_refs_generic(ty, &type_parameters)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, fields(name = %name), ret)]
+    #[libftrace::traced(level = Debug, fields(name))]
     fn find_type_ref_ctx<T: AsRef<TypeParameter>>(&self, name: &Path, type_params: &[T]) -> Option<NodeId> {
         // First, attempt to find the type name within the given type parameters.
         for type_param in type_params {
@@ -260,7 +236,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid
     /// references to type IDs.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
+    #[libftrace::traced(level = Trace, fields(name))]
     pub fn find_type_ref(&self, name: &Path) -> Result<Option<TypeRef>> {
         let Some(ty) = self.tdb().find_type(name) else {
             return Ok(None);
@@ -287,7 +263,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid
     /// references to type IDs.
-    #[tracing::instrument(level = "TRACE", skip_all, fields(name = %name), err)]
+    #[libftrace::traced(level = Trace, fields(name), err)]
     pub fn find_type_ref_generic(&self, name: &Path, ty_params: &[&TypeParameter]) -> Result<Option<TypeRef>> {
         let found_ty = 'find: {
             if name.root.is_empty() {
@@ -328,7 +304,7 @@ impl TyInferCtx {
     ///
     /// Returns `Err` if one-or-more typed path segments include invalid
     /// references to type IDs.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     pub fn find_type_ref_from(&self, name: &Path, def: NodeId) -> Result<Option<TypeRef>> {
         let type_parameters_hir = self.hir_avail_type_params(def);
         let type_parameters = type_parameters_hir.iter().collect::<Vec<_>>();
@@ -494,7 +470,7 @@ impl TyInferCtx {
     }
 
     /// Lifts the given [`TypeRef`] into a HIR [`lume_hir::Type`] instance.
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     pub fn hir_lift_type(&self, ty: &TypeRef) -> Result<lume_hir::Type> {
         let id = NodeId::from_name(ty.instance_of.package, ty);
         let name = self.type_ref_name(ty)?.to_owned();

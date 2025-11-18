@@ -13,13 +13,10 @@ lume_assets = { path = "../../crates/lume_assets" }
 lume_errors = { path = "../../crates/lume_errors" }
 lume_mir = { path = "../lume_mir" }
 lume_session = { path = "../lume_session" }
-lume_trace = { path = "../../crates/lume_trace" }
 
 dirs = { version = "=6.0.0" }
 error_snippet = { workspace = true }
-
-[features]
-tracing = ["lume_trace/enable"]
+libftrace = { workspace = true }
 
 [lints]
 workspace = true

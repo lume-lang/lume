@@ -6,7 +6,7 @@ use crate::Parser;
 use crate::errors::*;
 
 impl Parser<'_> {
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     pub(super) fn parse_pattern(&mut self) -> Result<Pattern> {
         match self.token().kind {
             TokenKind::Identifier(_) => self.parse_named_pattern(),
@@ -23,14 +23,14 @@ impl Parser<'_> {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_literal_pattern(&mut self) -> Result<Pattern> {
         let literal_expr = self.parse_literal_inner()?;
 
         Ok(Pattern::Literal(literal_expr))
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_named_pattern(&mut self) -> Result<Pattern> {
         let path = self.parse_path()?;
 
@@ -54,7 +54,7 @@ impl Parser<'_> {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn parse_wildcard_pattern(&mut self) -> Result<Pattern> {
         let location = self.consume(TokenType::DotDot)?.index;
 

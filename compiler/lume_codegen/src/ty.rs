@@ -8,7 +8,7 @@ pub(crate) fn cl_bool_type() -> types::Type {
 }
 
 impl CraneliftBackend {
-    #[tracing::instrument(level = "TRACE", skip(self, ty), fields(ty = %ty), ret(Display))]
+    #[libftrace::traced(level = Trace, fields(ty))]
     pub(crate) fn cl_type_of(&self, ty: &lume_mir::Type) -> types::Type {
         match &ty.kind {
             lume_mir::TypeKind::Boolean => crate::ty::cl_bool_type(),

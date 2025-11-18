@@ -135,7 +135,7 @@ pub fn link_objects(objects: Vec<ObjectLocation>, output: &PathBuf, opts: &Optio
     cmd.arg("-o");
     cmd.arg(output);
 
-    lume_trace::info!("linker command: {cmd:?}");
+    libftrace::info!("linker command: {cmd:?}");
 
     let process = cmd.spawn().map_err(|err| {
         Into::<error_snippet::Error>::into(SimpleDiagnostic::new(format!("could not invoke linker: {err}")))

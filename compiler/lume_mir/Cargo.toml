@@ -16,9 +16,9 @@ lume_type_metadata = { path = "../lume_type_metadata" }
 lume_types = { path = "../lume_types" }
 
 indexmap = { workspace = true }
+libftrace = { workspace = true }
 postcard = "=1.1.3"
 serde = { workspace = true, features = ["derive"] }
-tracing = { workspace = true }
 
 [lints]
 workspace = true

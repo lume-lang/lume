@@ -26,7 +26,7 @@ pub(crate) struct UnificationPass {
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "INFO", name = "lume_infer::UnificationPass::invoke", skip_all, err)]
+    #[libftrace::traced(level = Info, err)]
     pub(crate) fn invoke<'tcx>(mut self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         self.unify(tcx)?;
         self.substitute_type_args(tcx)?;
@@ -37,7 +37,7 @@ impl UnificationPass {
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "DEBUG", name = "lume_infer::UnificationPass::unify", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     fn unify<'tcx>(&mut self, tcx: &'tcx TyInferCtx) -> Result<()> {
         for (id, item) in &tcx.hir.nodes {
             if !tcx.hir_is_local_node(*id) {
@@ -127,7 +127,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn unify_block<'tcx>(&mut self, tcx: &'tcx TyInferCtx, block: &lume_hir::Block) -> Result<()> {
         for stmt in &block.statements {
             self.unify_stmt(tcx, *stmt)?;
@@ -136,7 +136,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn unify_stmt<'tcx>(&mut self, tcx: &'tcx TyInferCtx, stmt: NodeId) -> Result<()> {
         let stmt = tcx.hir_expect_stmt(stmt);
 
@@ -174,7 +174,7 @@ impl UnificationPass {
         }
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn unify_expr<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: NodeId) -> Result<()> {
         let expr = tcx.hir_expect_expr(expr);
 
@@ -260,7 +260,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn unify_pattern<'tcx>(&mut self, tcx: &'tcx TyInferCtx, expr: NodeId, pattern: &lume_hir::Pattern) -> Result<()> {
         match &pattern.kind {
             lume_hir::PatternKind::Literal(_)
@@ -278,7 +278,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn verify_type_name<'tcx>(&self, tcx: &'tcx TyInferCtx, path: &lume_hir::Path) -> Result<()> {
         let mut type_path = path.clone();
 
@@ -316,7 +316,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn enqueue_path_unification<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
@@ -417,7 +417,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn resolve_type_param<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
@@ -470,7 +470,7 @@ impl UnificationPass {
         Ok(())
     }
 
-    #[tracing::instrument(level = "TRACE", skip(self, tcx, variant), err)]
+    #[libftrace::traced(level = Trace, err)]
     fn resolve_variant_type_param<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
@@ -505,7 +505,7 @@ impl UnificationPass {
         Ok(false)
     }
 
-    #[tracing::instrument(level = "TRACE", skip_all, err)]
+    #[libftrace::traced(level = Trace, err)]
     fn resolve_variant_type_param_nested<'tcx>(
         &mut self,
         tcx: &'tcx TyInferCtx,
@@ -550,7 +550,7 @@ impl UnificationPass {
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     fn substitute_type_args<'tcx>(&self, tcx: &'tcx mut TyInferCtx) -> Result<()> {
         for (reference, type_arg) in &self.substitution_map {
             let TypeParameterReference { entry, .. } = reference;
@@ -585,7 +585,7 @@ impl UnificationPass {
 }
 
 impl UnificationPass {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug, err)]
     fn verify_fulfilled_paths<'tcx>(&self, tcx: &'tcx TyInferCtx) -> Result<()> {
         for stmt in tcx.hir.statements() {
             if let lume_hir::StatementKind::Variable(decl) = &stmt.kind

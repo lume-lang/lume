@@ -7,7 +7,7 @@ use crate::errors::*;
 use crate::{DefinedItem, LowerModule};
 
 impl LowerModule<'_> {
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn def_type(&mut self, expr: lume_ast::TypeDefinition) -> Result<lume_hir::Node> {
         match expr {
             lume_ast::TypeDefinition::Struct(t) => self.def_struct(*t),
@@ -16,7 +16,7 @@ impl LowerModule<'_> {
         }
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_struct(&mut self, expr: lume_ast::StructDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.add_lang_items(id, &expr.attributes)?;
@@ -50,7 +50,7 @@ impl LowerModule<'_> {
         ))))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_field(&mut self, expr: lume_ast::Field) -> Result<lume_hir::Field> {
         let id = self.next_node_id();
 
@@ -79,7 +79,7 @@ impl LowerModule<'_> {
         Ok(field)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn def_impl(&mut self, expr: lume_ast::Implementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
@@ -108,7 +108,7 @@ impl LowerModule<'_> {
         }))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_impl_method(&mut self, expr: lume_ast::MethodDefinition) -> Result<lume_hir::MethodDefinition> {
         let id = self.next_node_id();
 
@@ -133,7 +133,7 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_trait(&mut self, expr: lume_ast::TraitDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         self.add_lang_items(id, &expr.attributes)?;
@@ -169,7 +169,7 @@ impl LowerModule<'_> {
         ))))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_trait_method_def(
         &mut self,
         expr: lume_ast::TraitMethodDefinition,
@@ -221,7 +221,7 @@ impl LowerModule<'_> {
         ))))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_enum_case(&self, idx: usize, expr: lume_ast::EnumDefinitionCase) -> Result<lume_hir::EnumDefinitionCase> {
         let name = self.expand_name(lume_ast::PathSegment::ty(expr.name))?;
         let location = self.location(expr.location);
@@ -241,7 +241,7 @@ impl LowerModule<'_> {
         Ok(symbol)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn def_function(&mut self, expr: lume_ast::FunctionDefinition) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
 
@@ -268,7 +268,7 @@ impl LowerModule<'_> {
         }))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn parameters(&mut self, params: Vec<lume_ast::Parameter>, allow_self: bool) -> Result<Vec<lume_hir::Parameter>> {
         let param_len = params.len();
         let mut parameters = Vec::with_capacity(param_len);
@@ -337,7 +337,7 @@ impl LowerModule<'_> {
         Ok(parameters)
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn parameter(&mut self, index: usize, param: lume_ast::Parameter) -> Result<lume_hir::Parameter> {
         let name = self.identifier(param.name);
         let param_type = self.type_ref(param.param_type)?;
@@ -352,7 +352,7 @@ impl LowerModule<'_> {
         })
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn def_trait_impl(&mut self, expr: lume_ast::TraitImplementation) -> Result<lume_hir::Node> {
         let id = self.next_node_id();
         let type_parameters = self.type_parameters(expr.type_parameters)?;
@@ -383,7 +383,7 @@ impl LowerModule<'_> {
         }))
     }
 
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     fn def_use_method(
         &mut self,
         expr: lume_ast::TraitMethodImplementation,

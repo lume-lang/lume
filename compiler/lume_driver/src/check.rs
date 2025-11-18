@@ -27,7 +27,7 @@ impl Driver {
     /// Returns `Err` if:
     /// - an error occured while compiling the package,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(root = %self.package.path.display()), err)]
+    #[libftrace::traced(level = Info, fields(root = self.package.path.display()))]
     pub fn check(mut self, mut options: Options) -> Result<CheckedPackageGraph> {
         self.override_root_sources(&mut options);
 
@@ -94,7 +94,7 @@ impl Compiler {
     /// Returns `Err` if:
     /// - an error occured while compiling the project,
     /// - or some unexpected error occured which hasn't been handled gracefully.
-    #[tracing::instrument(skip_all, fields(package = %package.name), err)]
+    #[libftrace::traced(level = Info, fields(package = package.name))]
     pub fn check_package(package: Package, gcx: Arc<GlobalCtx>) -> Result<CheckedPackage> {
         let package_id = package.id;
         let mut compiler = Self {
@@ -104,7 +104,7 @@ impl Compiler {
         };
 
         let sources = compiler.parse()?;
-        tracing::debug!(target: "driver", "finished parsing");
+        libftrace::debug!("finished parsing");
 
         let (tcx, _) = compiler.type_check(sources)?;
 

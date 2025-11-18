@@ -8,7 +8,7 @@ impl LowerModule<'_> {
     ///
     /// For example, the import path `std::io (File)` would become
     /// `std::io::File`.
-    #[tracing::instrument(level = "DEBUG", skip_all, err)]
+    #[libftrace::traced(level = Debug)]
     pub(super) fn import_path(&mut self, path: lume_ast::ImportPath) -> Result<lume_hir::Path> {
         let location = self.location(path.location);
 

@@ -28,10 +28,16 @@ pub enum LumeSubcommands {
 }
 
 pub fn lume_cli_entry() {
+    libftrace::set_filter(
+        libftrace::filter::from_env("LUMEC_LOG")
+            .or_else(|err| {
+                eprintln!("error: could not parse trace filter: {err:?}");
+                libftrace::filter::parse("info")
+            })
+            .unwrap(),
+    );
+
     let matches = LumeCli::parse();
-
-    lume_trace::init();
-
     let dcx = DiagCtx::new();
 
     dcx.with_none(|dcx| match matches.subcommand {

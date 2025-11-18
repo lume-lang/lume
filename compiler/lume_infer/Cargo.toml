@@ -18,8 +18,8 @@ lume_architect = { workspace = true }
 error_snippet = { workspace = true }
 error_snippet_derive = { workspace = true }
 levenshtein = { version = "=1.0.5" }
+libftrace = { workspace = true }
 indexmap = { workspace = true }
-tracing = { workspace = true }
 
 [dev-dependencies]
 arc = { path = "../arc" }
