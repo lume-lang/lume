@@ -586,16 +586,16 @@ impl TyCheckCtx {
     fn intrinsic_call_expression(&self, expr: &lume_hir::IntrinsicCall) -> Result<()> {
         let (trait_name, _) = self.lang_item_of_intrinsic(&expr.kind);
 
-        if self.lookup_intrinsic_method(expr)?.is_none() {
-            self.dcx().emit(
-                lume_infer::errors::IntrinsicNotImplemented {
-                    source: expr.location,
-                    trait_name: format!("{trait_name:+}"),
-                    operation: self.operation_name_of_intrinsic(&expr.kind),
-                }
-                .into(),
-            );
-        }
+        let Some(method) = self.lookup_intrinsic_method(expr)? else {
+            return Err(lume_infer::errors::IntrinsicNotImplemented {
+                source: expr.location,
+                trait_name: format!("{trait_name:+}"),
+                operation: self.operation_name_of_intrinsic(&expr.kind),
+            }
+            .into());
+        };
+
+        self.check_method(method, lume_hir::CallExpression::Intrinsic(expr))?;
 
         Ok(())
     }
