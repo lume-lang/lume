@@ -127,36 +127,18 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                                         value: Some(
                                             IntrinsicCall(
                                                 IntrinsicCall {
-                                                    callee: Variable(
-                                                        Variable {
-                                                            name: Identifier {
-                                                                name: "self",
-                                                                location: Location(
-                                                                    95..99,
-                                                                ),
+                                                    kind: Add {
+                                                        lhs: Variable(
+                                                            Variable {
+                                                                name: Identifier {
+                                                                    name: "self",
+                                                                    location: Location(
+                                                                        95..99,
+                                                                    ),
+                                                                },
                                                             },
-                                                        },
-                                                    ),
-                                                    name: Path {
-                                                        root: [],
-                                                        name: Callable {
-                                                            name: Identifier {
-                                                                name: "+",
-                                                                location: Location(
-                                                                    100..101,
-                                                                ),
-                                                            },
-                                                            type_arguments: [],
-                                                            location: Location(
-                                                                100..101,
-                                                            ),
-                                                        },
-                                                        location: Location(
-                                                            100..101,
                                                         ),
-                                                    },
-                                                    arguments: [
-                                                        Variable(
+                                                        rhs: Variable(
                                                             Variable {
                                                                 name: Identifier {
                                                                     name: "other",
@@ -166,7 +148,7 @@ expression: "parse(\"\n        use Add in Int32 {\n            fn add(other: Int
                                                                 },
                                                             },
                                                         ),
-                                                    ],
+                                                    },
                                                     location: Location(
                                                         95..107,
                                                     ),

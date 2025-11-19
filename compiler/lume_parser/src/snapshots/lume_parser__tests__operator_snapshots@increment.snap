@@ -6,35 +6,18 @@ expression: "parse_expr(\"a++;\")"
     Expression(
         IntrinsicCall(
             IntrinsicCall {
-                callee: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                0..1,
-                            ),
+                kind: Increment {
+                    target: Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "a",
+                                location: Location(
+                                    0..1,
+                                ),
+                            },
                         },
-                    },
-                ),
-                name: Path {
-                    root: [],
-                    name: Callable {
-                        name: Identifier {
-                            name: "++",
-                            location: Location(
-                                1..3,
-                            ),
-                        },
-                        type_arguments: [],
-                        location: Location(
-                            1..3,
-                        ),
-                    },
-                    location: Location(
-                        1..3,
                     ),
                 },
-                arguments: [],
                 location: Location(
                     0..3,
                 ),

@@ -50,16 +50,8 @@ Map {
                             cases: [
                                 Condition {
                                     condition: IntrinsicCall {
-                                        name: Callable {
-                                            name: Identifier {
-                                                name: "==",
-                                                location: conditional_equality_empty.lm:28:30,
-                                            },
-                                            type_arguments: [],
-                                            location: conditional_equality_empty.lm:28:30,
-                                        },
-                                        arguments: [
-                                            Variable {
+                                        kind: Equal {
+                                            lhs: Variable {
                                                 name: Identifier {
                                                     name: "a",
                                                     location: conditional_equality_empty.lm:26:27,
@@ -78,14 +70,14 @@ Map {
                                                 },
                                                 location: conditional_equality_empty.lm:26:27,
                                             },
-                                            Literal {
+                                            rhs: Literal {
                                                 kind: IntLiteral {
                                                     value: 1,
                                                     kind: None,
                                                 },
                                                 location: conditional_equality_empty.lm:31:32,
                                             },
-                                        ],
+                                        },
                                         location: conditional_equality_empty.lm:26:32,
                                     },
                                     block: Block {

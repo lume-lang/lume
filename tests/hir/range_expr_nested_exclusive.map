@@ -90,16 +90,8 @@ Map {
                             },
                             arguments: [
                                 IntrinsicCall {
-                                    name: Callable {
-                                        name: Identifier {
-                                            name: "+",
-                                            location: range_expr_nested_exclusive.lm:57:58,
-                                        },
-                                        type_arguments: [],
-                                        location: range_expr_nested_exclusive.lm:57:58,
-                                    },
-                                    arguments: [
-                                        Variable {
+                                    kind: Add {
+                                        lhs: Variable {
                                             name: Identifier {
                                                 name: "a",
                                                 location: range_expr_nested_exclusive.lm:55:56,
@@ -118,7 +110,7 @@ Map {
                                             },
                                             location: range_expr_nested_exclusive.lm:55:56,
                                         },
-                                        Variable {
+                                        rhs: Variable {
                                             name: Identifier {
                                                 name: "b",
                                                 location: range_expr_nested_exclusive.lm:59:60,
@@ -137,30 +129,14 @@ Map {
                                             },
                                             location: range_expr_nested_exclusive.lm:59:60,
                                         },
-                                    ],
+                                    },
                                     location: range_expr_nested_exclusive.lm:55:60,
                                 },
                                 IntrinsicCall {
-                                    name: Callable {
-                                        name: Identifier {
-                                            name: "+",
-                                            location: range_expr_nested_exclusive.lm:70:71,
-                                        },
-                                        type_arguments: [],
-                                        location: range_expr_nested_exclusive.lm:70:71,
-                                    },
-                                    arguments: [
-                                        IntrinsicCall {
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "+",
-                                                    location: range_expr_nested_exclusive.lm:66:67,
-                                                },
-                                                type_arguments: [],
-                                                location: range_expr_nested_exclusive.lm:66:67,
-                                            },
-                                            arguments: [
-                                                Variable {
+                                    kind: Add {
+                                        lhs: IntrinsicCall {
+                                            kind: Add {
+                                                lhs: Variable {
                                                     name: Identifier {
                                                         name: "a",
                                                         location: range_expr_nested_exclusive.lm:64:65,
@@ -179,7 +155,7 @@ Map {
                                                     },
                                                     location: range_expr_nested_exclusive.lm:64:65,
                                                 },
-                                                Variable {
+                                                rhs: Variable {
                                                     name: Identifier {
                                                         name: "b",
                                                         location: range_expr_nested_exclusive.lm:68:69,
@@ -198,17 +174,17 @@ Map {
                                                     },
                                                     location: range_expr_nested_exclusive.lm:68:69,
                                                 },
-                                            ],
+                                            },
                                             location: range_expr_nested_exclusive.lm:64:69,
                                         },
-                                        Literal {
+                                        rhs: Literal {
                                             kind: IntLiteral {
                                                 value: 1,
                                                 kind: None,
                                             },
                                             location: range_expr_nested_exclusive.lm:72:73,
                                         },
-                                    ],
+                                    },
                                     location: range_expr_nested_exclusive.lm:64:73,
                                 },
                             ],

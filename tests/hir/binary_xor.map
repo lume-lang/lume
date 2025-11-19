@@ -33,21 +33,22 @@ Map {
             },
             block: Block {
                 statements: [
-                    Binary {
-                        op: Xor,
-                        lhs: Literal {
-                            kind: IntLiteral {
-                                value: 0,
-                                kind: None,
+                    IntrinsicCall {
+                        kind: BinaryXor {
+                            lhs: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: binary_xor.lm:12:13,
                             },
-                            location: binary_xor.lm:12:13,
-                        },
-                        rhs: Literal {
-                            kind: IntLiteral {
-                                value: 0,
-                                kind: None,
+                            rhs: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: binary_xor.lm:16:17,
                             },
-                            location: binary_xor.lm:16:17,
                         },
                         location: binary_xor.lm:12:17,
                     },

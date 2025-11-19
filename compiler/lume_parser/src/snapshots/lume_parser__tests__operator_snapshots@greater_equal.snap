@@ -6,36 +6,18 @@ expression: "parse_expr(\"a >= b;\")"
     Expression(
         IntrinsicCall(
             IntrinsicCall {
-                callee: Variable(
-                    Variable {
-                        name: Identifier {
-                            name: "a",
-                            location: Location(
-                                0..1,
-                            ),
+                kind: GreaterEqual {
+                    lhs: Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "a",
+                                location: Location(
+                                    0..1,
+                                ),
+                            },
                         },
-                    },
-                ),
-                name: Path {
-                    root: [],
-                    name: Callable {
-                        name: Identifier {
-                            name: ">=",
-                            location: Location(
-                                2..4,
-                            ),
-                        },
-                        type_arguments: [],
-                        location: Location(
-                            2..4,
-                        ),
-                    },
-                    location: Location(
-                        2..4,
                     ),
-                },
-                arguments: [
-                    Variable(
+                    rhs: Variable(
                         Variable {
                             name: Identifier {
                                 name: "b",
@@ -45,7 +27,7 @@ expression: "parse_expr(\"a >= b;\")"
                             },
                         },
                     ),
-                ],
+                },
                 location: Location(
                     0..6,
                 ),

@@ -11,36 +11,18 @@ expression: "parse_expr(\"if a == 1 { }\")"
                         condition: Some(
                             IntrinsicCall(
                                 IntrinsicCall {
-                                    callee: Variable(
-                                        Variable {
-                                            name: Identifier {
-                                                name: "a",
-                                                location: Location(
-                                                    3..4,
-                                                ),
+                                    kind: Equal {
+                                        lhs: Variable(
+                                            Variable {
+                                                name: Identifier {
+                                                    name: "a",
+                                                    location: Location(
+                                                        3..4,
+                                                    ),
+                                                },
                                             },
-                                        },
-                                    ),
-                                    name: Path {
-                                        root: [],
-                                        name: Callable {
-                                            name: Identifier {
-                                                name: "==",
-                                                location: Location(
-                                                    5..7,
-                                                ),
-                                            },
-                                            type_arguments: [],
-                                            location: Location(
-                                                5..7,
-                                            ),
-                                        },
-                                        location: Location(
-                                            5..7,
                                         ),
-                                    },
-                                    arguments: [
-                                        Literal(
+                                        rhs: Literal(
                                             Int(
                                                 IntLiteral {
                                                     value: 1,
@@ -51,7 +33,7 @@ expression: "parse_expr(\"if a == 1 { }\")"
                                                 },
                                             ),
                                         ),
-                                    ],
+                                    },
                                     location: Location(
                                         3..9,
                                     ),

@@ -92,36 +92,18 @@ expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + ot
                                             value: Some(
                                                 IntrinsicCall(
                                                     IntrinsicCall {
-                                                        callee: Variable(
-                                                            Variable {
-                                                                name: Identifier {
-                                                                    name: "self",
-                                                                    location: Location(
-                                                                        50..54,
-                                                                    ),
+                                                        kind: Add {
+                                                            lhs: Variable(
+                                                                Variable {
+                                                                    name: Identifier {
+                                                                        name: "self",
+                                                                        location: Location(
+                                                                            50..54,
+                                                                        ),
+                                                                    },
                                                                 },
-                                                            },
-                                                        ),
-                                                        name: Path {
-                                                            root: [],
-                                                            name: Callable {
-                                                                name: Identifier {
-                                                                    name: "+",
-                                                                    location: Location(
-                                                                        55..56,
-                                                                    ),
-                                                                },
-                                                                type_arguments: [],
-                                                                location: Location(
-                                                                    55..56,
-                                                                ),
-                                                            },
-                                                            location: Location(
-                                                                55..56,
                                                             ),
-                                                        },
-                                                        arguments: [
-                                                            Variable(
+                                                            rhs: Variable(
                                                                 Variable {
                                                                     name: Identifier {
                                                                         name: "other",
@@ -131,7 +113,7 @@ expression: "parse(\"trait Add {fn add(other: Int32) -> Int32 { return self + ot
                                                                     },
                                                                 },
                                                             ),
-                                                        ],
+                                                        },
                                                         location: Location(
                                                             50..62,
                                                         ),
