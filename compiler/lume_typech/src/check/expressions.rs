@@ -31,6 +31,7 @@ impl TyCheckCtx {
                 lume_hir::TypeDefinition::Trait(trait_def) => self.define_trait_type(trait_def),
                 lume_hir::TypeDefinition::Enum(_) => Ok(()),
             },
+            lume_hir::Node::TraitImpl(trait_impl) => self.define_trait_implementation(trait_impl),
             lume_hir::Node::Impl(impl_def) => self.define_impl_type(impl_def),
             lume_hir::Node::Function(func) => self.define_function_scope(func),
             _ => Ok(()),
@@ -54,6 +55,23 @@ impl TyCheckCtx {
 
     fn define_trait_type(&self, trait_def: &lume_hir::TraitDefinition) -> Result<()> {
         for method in &trait_def.methods {
+            if let Some(block) = &method.block {
+                self.define_block_scope(block)?;
+
+                let type_parameters_hir = self.hir_avail_type_params(method.id);
+                let type_parameters = type_parameters_hir.iter().map(AsRef::as_ref).collect::<Vec<_>>();
+
+                let return_type = self.mk_type_ref_generic(&method.return_type, &type_parameters)?;
+
+                self.ensure_block_ty_match(block, &return_type)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn define_trait_implementation(&self, trait_impl: &lume_hir::TraitImplementation) -> Result<()> {
+        for method in &trait_impl.methods {
             if let Some(block) = &method.block {
                 self.define_block_scope(block)?;
 
