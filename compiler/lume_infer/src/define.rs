@@ -11,108 +11,119 @@ use crate::query::Callable;
 
 static INTRINSIC_METHODS: LazyLock<HashSet<&'static str>> = LazyLock::new(|| {
     HashSet::from([
-        "std::Boolean::==",
-        "std::Boolean::!=",
-        "std::Int8::==",
-        "std::Int8::!=",
-        "std::Int8::<",
-        "std::Int8::<=",
-        "std::Int8::>",
-        "std::Int8::>=",
-        "std::Int8::+",
-        "std::Int8::-",
-        "std::Int8::*",
-        "std::Int8::/",
-        "std::Int16::==",
-        "std::Int16::!=",
-        "std::Int16::<",
-        "std::Int16::<=",
-        "std::Int16::>",
-        "std::Int16::>=",
-        "std::Int16::+",
-        "std::Int16::-",
-        "std::Int16::*",
-        "std::Int16::/",
-        "std::Int32::==",
-        "std::Int32::!=",
-        "std::Int32::<",
-        "std::Int32::<=",
-        "std::Int32::>",
-        "std::Int32::>=",
-        "std::Int32::+",
-        "std::Int32::-",
-        "std::Int32::*",
-        "std::Int32::/",
-        "std::Int64::==",
-        "std::Int64::!=",
-        "std::Int64::<",
-        "std::Int64::<=",
-        "std::Int64::>",
-        "std::Int64::>=",
-        "std::Int64::+",
-        "std::Int64::-",
-        "std::Int64::*",
-        "std::Int64::/",
-        "std::UInt8::==",
-        "std::UInt8::!=",
-        "std::UInt8::<",
-        "std::UInt8::<=",
-        "std::UInt8::>",
-        "std::UInt8::>=",
-        "std::UInt8::+",
-        "std::UInt8::-",
-        "std::UInt8::*",
-        "std::UInt8::/",
-        "std::UInt16::==",
-        "std::UInt16::!=",
-        "std::UInt16::<",
-        "std::UInt16::<=",
-        "std::UInt16::>",
-        "std::UInt16::>=",
-        "std::UInt16::+",
-        "std::UInt16::-",
-        "std::UInt16::*",
-        "std::UInt16::/",
-        "std::UInt32::==",
-        "std::UInt32::!=",
-        "std::UInt32::<",
-        "std::UInt32::<=",
-        "std::UInt32::>",
-        "std::UInt32::>=",
-        "std::UInt32::+",
-        "std::UInt32::-",
-        "std::UInt32::*",
-        "std::UInt32::/",
-        "std::UInt64::==",
-        "std::UInt64::!=",
-        "std::UInt64::<",
-        "std::UInt64::<=",
-        "std::UInt64::>",
-        "std::UInt64::>=",
-        "std::UInt64::+",
-        "std::UInt64::-",
-        "std::UInt64::*",
-        "std::UInt64::/",
-        "std::Float::==",
-        "std::Float::!=",
-        "std::Float::<",
-        "std::Float::<=",
-        "std::Float::>",
-        "std::Float::>=",
-        "std::Float::+",
-        "std::Float::-",
-        "std::Float::*",
-        "std::Float::/",
-        "std::Double::==",
-        "std::Double::!=",
-        "std::Double::<",
-        "std::Double::<=",
-        "std::Double::>",
-        "std::Double::>=",
-        "std::Double::+",
-        "std::Double::-",
-        "std::Double::*",
-        "std::Double::/",
+        "std::Boolean::eq",
+        "std::Boolean::ne",
+        "std::Boolean::not",
+        "std::Int8::eq",
+        "std::Int8::ne",
+        "std::Int8::lt",
+        "std::Int8::le",
+        "std::Int8::gt",
+        "std::Int8::ge",
+        "std::Int8::add",
+        "std::Int8::sub",
+        "std::Int8::mul",
+        "std::Int8::div",
+        "std::Int8::negate",
+        "std::Int16::eq",
+        "std::Int16::ne",
+        "std::Int16::lt",
+        "std::Int16::le",
+        "std::Int16::gt",
+        "std::Int16::ge",
+        "std::Int16::add",
+        "std::Int16::sub",
+        "std::Int16::mul",
+        "std::Int16::div",
+        "std::Int16::negate",
+        "std::Int32::eq",
+        "std::Int32::ne",
+        "std::Int32::lt",
+        "std::Int32::le",
+        "std::Int32::gt",
+        "std::Int32::ge",
+        "std::Int32::add",
+        "std::Int32::sub",
+        "std::Int32::mul",
+        "std::Int32::div",
+        "std::Int32::negate",
+        "std::Int64::eq",
+        "std::Int64::ne",
+        "std::Int64::lt",
+        "std::Int64::le",
+        "std::Int64::gt",
+        "std::Int64::ge",
+        "std::Int64::add",
+        "std::Int64::sub",
+        "std::Int64::mul",
+        "std::Int64::div",
+        "std::Int64::negate",
+        "std::UInt8::eq",
+        "std::UInt8::ne",
+        "std::UInt8::lt",
+        "std::UInt8::le",
+        "std::UInt8::gt",
+        "std::UInt8::ge",
+        "std::UInt8::add",
+        "std::UInt8::sub",
+        "std::UInt8::mul",
+        "std::UInt8::div",
+        "std::UInt8::negate",
+        "std::UInt16::eq",
+        "std::UInt16::ne",
+        "std::UInt16::lt",
+        "std::UInt16::le",
+        "std::UInt16::gt",
+        "std::UInt16::ge",
+        "std::UInt16::add",
+        "std::UInt16::sub",
+        "std::UInt16::mul",
+        "std::UInt16::div",
+        "std::UInt16::negate",
+        "std::UInt32::eq",
+        "std::UInt32::ne",
+        "std::UInt32::lt",
+        "std::UInt32::le",
+        "std::UInt32::gt",
+        "std::UInt32::ge",
+        "std::UInt32::add",
+        "std::UInt32::sub",
+        "std::UInt32::mul",
+        "std::UInt32::div",
+        "std::UInt32::negate",
+        "std::UInt64::eq",
+        "std::UInt64::ne",
+        "std::UInt64::lt",
+        "std::UInt64::le",
+        "std::UInt64::gt",
+        "std::UInt64::ge",
+        "std::UInt64::add",
+        "std::UInt64::sub",
+        "std::UInt64::mul",
+        "std::UInt64::div",
+        "std::UInt64::negate",
+        "std::Float::eq",
+        "std::Float::ne",
+        "std::Float::lt",
+        "std::Float::le",
+        "std::Float::gt",
+        "std::Float::ge",
+        "std::Float::add",
+        "std::Float::sub",
+        "std::Float::mul",
+        "std::Float::div",
+        "std::Float::negate",
+        "std::Double::eq",
+        "std::Double::ne",
+        "std::Double::lt",
+        "std::Double::le",
+        "std::Double::gt",
+        "std::Double::ge",
+        "std::Double::add",
+        "std::Double::sub",
+        "std::Double::mul",
+        "std::Double::div",
+        "std::Double::negate",
     ])
 });
 
@@ -1033,12 +1044,6 @@ impl TyInferCtx {
 
                 Ok(())
             }
-            lume_hir::ExpressionKind::Binary(s) => {
-                self.define_expr_scope(tree, s.lhs, expr_id)?;
-                self.define_expr_scope(tree, s.rhs, expr_id)?;
-
-                Ok(())
-            }
             lume_hir::ExpressionKind::InstanceCall(s) => {
                 self.define_expr_scope(tree, s.callee, expr_id)?;
 
@@ -1049,10 +1054,8 @@ impl TyInferCtx {
                 Ok(())
             }
             lume_hir::ExpressionKind::IntrinsicCall(s) => {
-                self.define_expr_scope(tree, s.callee(), expr_id)?;
-
-                for arg in &s.arguments {
-                    self.define_expr_scope(tree, *arg, expr_id)?;
+                for arg in s.kind.arguments() {
+                    self.define_expr_scope(tree, arg, expr_id)?;
                 }
 
                 Ok(())
@@ -1067,12 +1070,6 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::Is(s) => {
                 self.define_expr_scope(tree, s.target, expr_id)?;
                 self.define_pat_scope(tree, &s.pattern, expr_id)?;
-
-                Ok(())
-            }
-            lume_hir::ExpressionKind::Logical(s) => {
-                self.define_expr_scope(tree, s.lhs, expr_id)?;
-                self.define_expr_scope(tree, s.rhs, expr_id)?;
 
                 Ok(())
             }
@@ -1170,18 +1167,7 @@ impl TyInferCtx {
 
                     call.name.place_type_arguments(replacement);
                 }
-                lume_hir::ExpressionKind::IntrinsicCall(call) => {
-                    let callable = self.probe_callable_intrinsic(call)?;
-
-                    let replacement = match self
-                        .infer_type_arguments_callable(lume_hir::CallExpression::Intrinsic(call), callable)?
-                    {
-                        TypeArgumentInference::Fulfilled => continue,
-                        TypeArgumentInference::Replace { replacement } => replacement,
-                    };
-
-                    call.name.place_type_arguments(replacement);
-                }
+                lume_hir::ExpressionKind::IntrinsicCall(_) => continue,
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     let callable = self.probe_callable_static(call)?;
 
@@ -1213,7 +1199,7 @@ impl TyInferCtx {
         callable: Callable<'_>,
     ) -> Result<TypeArgumentInference> {
         let params = callable.signature().params;
-        let args = self.hir().expect_expressions(expr.arguments())?;
+        let args = self.hir().expect_expressions(&expr.arguments())?;
 
         let mut type_args = expr.type_arguments().to_vec();
         let type_params = callable.signature().type_params;

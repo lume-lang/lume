@@ -1,0 +1,21 @@
+namespace std::ops
+
+/// Trait for checking equality between two values.
+![lang_item(name = "equal_trait")]
+pub trait Equal<T> {
+    fn eq(self, other: T) -> Boolean;
+
+    fn ne(self, other: T) -> Boolean {
+        !self.eq(other)
+    }
+}
+
+/// Trait for comparing two values with each other.
+![lang_item(name = "cmp_trait")]
+pub trait Compare<T> {
+    fn lt(self, other: T) -> Boolean;
+    fn le(self, other: T) -> Boolean;
+
+    fn gt(self, other: T) -> Boolean;
+    fn ge(self, other: T) -> Boolean;
+}

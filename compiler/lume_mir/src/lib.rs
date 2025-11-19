@@ -1100,6 +1100,7 @@ pub enum Intrinsic {
     FloatSub { bits: u8 },
     FloatMul { bits: u8 },
     FloatDiv { bits: u8 },
+    FloatNegate { bits: u8 },
     IntEq { bits: u8, signed: bool },
     IntNe { bits: u8, signed: bool },
     IntGe { bits: u8, signed: bool },
@@ -1113,10 +1114,12 @@ pub enum Intrinsic {
     IntAnd { bits: u8, signed: bool },
     IntOr { bits: u8, signed: bool },
     IntXor { bits: u8, signed: bool },
+    IntNegate { bits: u8, signed: bool },
     BooleanEq,
     BooleanNe,
     BooleanAnd,
     BooleanOr,
+    BooleanNot,
     Metadata { metadata: Box<TypeMetadata> },
 }
 
@@ -1125,12 +1128,14 @@ impl std::fmt::Display for Intrinsic {
         match &self {
             Self::FloatEq { .. } | Self::IntEq { .. } | Self::BooleanEq => write!(f, "=="),
             Self::FloatNe { .. } | Self::IntNe { .. } | Self::BooleanNe => write!(f, "!="),
-            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<<"),
+            Self::FloatLe { .. } | Self::IntLe { .. } => write!(f, "<"),
             Self::FloatLt { .. } | Self::IntLt { .. } => write!(f, "<"),
             Self::FloatGe { .. } | Self::IntGe { .. } => write!(f, ">="),
             Self::FloatGt { .. } | Self::IntGt { .. } => write!(f, ">"),
             Self::FloatAdd { .. } | Self::IntAdd { .. } => write!(f, "+"),
-            Self::FloatSub { .. } | Self::IntSub { .. } => write!(f, "-"),
+            Self::FloatSub { .. } | Self::IntSub { .. } | Self::FloatNegate { .. } | Self::IntNegate { .. } => {
+                write!(f, "-")
+            }
             Self::FloatMul { .. } | Self::IntMul { .. } => write!(f, "*"),
             Self::FloatDiv { .. } | Self::IntDiv { .. } => write!(f, "/"),
             Self::IntAnd { .. } => write!(f, "&"),
@@ -1138,6 +1143,7 @@ impl std::fmt::Display for Intrinsic {
             Self::IntXor { .. } => write!(f, "^"),
             Self::BooleanAnd { .. } => write!(f, "&&"),
             Self::BooleanOr { .. } => write!(f, "||"),
+            Self::BooleanNot { .. } => write!(f, "!"),
             Self::Metadata { metadata } => write!(f, "metadata {}", metadata.full_name),
         }
     }

@@ -41,7 +41,6 @@ impl LowerModule<'_> {
         let expr = match statement {
             lume_ast::Expression::Array(e) => self.expr_array(*e)?,
             lume_ast::Expression::Assignment(e) => self.expr_assignment(*e)?,
-            lume_ast::Expression::Binary(e) => self.expr_binary(*e)?,
             lume_ast::Expression::Call(e) => self.expr_call(*e)?,
             lume_ast::Expression::Cast(e) => self.expr_cast(*e)?,
             lume_ast::Expression::Construct(e) => self.expr_construct(*e)?,
@@ -49,7 +48,6 @@ impl LowerModule<'_> {
             lume_ast::Expression::IntrinsicCall(e) => self.expr_intrinsic_call(*e)?,
             lume_ast::Expression::Is(e) => self.expr_is(*e)?,
             lume_ast::Expression::Literal(e) => self.expr_literal(*e),
-            lume_ast::Expression::Logical(e) => self.expr_logical(*e)?,
             lume_ast::Expression::Member(e) => self.expr_member(*e)?,
             lume_ast::Expression::Range(e) => self.expr_range(*e)?,
             lume_ast::Expression::Scope(e) => self.expr_scope(*e)?,
@@ -150,37 +148,6 @@ impl LowerModule<'_> {
                 id,
                 target,
                 value,
-                location,
-            }),
-        })
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn expr_binary(&mut self, expr: lume_ast::Binary) -> Result<lume_hir::Expression> {
-        let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let lhs = self.expression(expr.lhs)?;
-        let rhs = self.expression(expr.rhs)?;
-
-        let operator_kind = match expr.op.kind {
-            lume_ast::BinaryOperatorKind::And => lume_hir::BinaryOperatorKind::And,
-            lume_ast::BinaryOperatorKind::Or => lume_hir::BinaryOperatorKind::Or,
-            lume_ast::BinaryOperatorKind::Xor => lume_hir::BinaryOperatorKind::Xor,
-        };
-
-        let operator_loc = self.location(expr.op.location);
-
-        Ok(lume_hir::Expression {
-            id,
-            location,
-            kind: lume_hir::ExpressionKind::Binary(lume_hir::Binary {
-                id,
-                lhs,
-                op: lume_hir::BinaryOperator {
-                    kind: operator_kind,
-                    location: operator_loc,
-                },
-                rhs,
                 location,
             }),
         })
@@ -309,21 +276,92 @@ impl LowerModule<'_> {
     #[libftrace::traced(level = Debug)]
     fn expr_intrinsic_call(&mut self, expr: lume_ast::IntrinsicCall) -> Result<lume_hir::Expression> {
         let id = self.next_node_id();
-        let name = self.resolve_symbol_name(&expr.name)?;
         let location = self.location(expr.location);
 
-        let mut arguments = vec![self.expression(expr.callee)?];
-        arguments.extend_from_slice(&self.expressions(expr.arguments));
+        let kind = match expr.kind {
+            // Arithmetic intrinsics
+            lume_ast::IntrinsicKind::Add { lhs, rhs } => lume_hir::IntrinsicKind::Add {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Sub { lhs, rhs } => lume_hir::IntrinsicKind::Sub {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Mul { lhs, rhs } => lume_hir::IntrinsicKind::Mul {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Div { lhs, rhs } => lume_hir::IntrinsicKind::Div {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::And { lhs, rhs } => lume_hir::IntrinsicKind::And {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Or { lhs, rhs } => lume_hir::IntrinsicKind::Or {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Negate { target } => lume_hir::IntrinsicKind::Negate {
+                target: self.expression(*target)?,
+            },
+            lume_ast::IntrinsicKind::Increment { target } => lume_hir::IntrinsicKind::Increment {
+                target: self.expression(*target)?,
+            },
+            lume_ast::IntrinsicKind::Decrement { target } => lume_hir::IntrinsicKind::Decrement {
+                target: self.expression(*target)?,
+            },
+
+            // Logical intrinsics
+            lume_ast::IntrinsicKind::BinaryAnd { lhs, rhs } => lume_hir::IntrinsicKind::BinaryAnd {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::BinaryOr { lhs, rhs } => lume_hir::IntrinsicKind::BinaryOr {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::BinaryXor { lhs, rhs } => lume_hir::IntrinsicKind::BinaryXor {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Not { target } => lume_hir::IntrinsicKind::Not {
+                target: self.expression(*target)?,
+            },
+
+            // Comparison intrinsics
+            lume_ast::IntrinsicKind::Equal { lhs, rhs } => lume_hir::IntrinsicKind::Equal {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::NotEqual { lhs, rhs } => lume_hir::IntrinsicKind::NotEqual {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Less { lhs, rhs } => lume_hir::IntrinsicKind::Less {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::LessEqual { lhs, rhs } => lume_hir::IntrinsicKind::LessEqual {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::Greater { lhs, rhs } => lume_hir::IntrinsicKind::Greater {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+            lume_ast::IntrinsicKind::GreaterEqual { lhs, rhs } => lume_hir::IntrinsicKind::GreaterEqual {
+                lhs: self.expression(*lhs)?,
+                rhs: self.expression(*rhs)?,
+            },
+        };
 
         Ok(lume_hir::Expression {
             id,
             location,
-            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall {
-                id,
-                name: name.name,
-                arguments,
-                location,
-            }),
+            kind: lume_hir::ExpressionKind::IntrinsicCall(lume_hir::IntrinsicCall { id, kind, location }),
         })
     }
 
@@ -355,36 +393,6 @@ impl LowerModule<'_> {
             location: literal.location,
             kind: lume_hir::ExpressionKind::Literal(literal),
         }
-    }
-
-    #[libftrace::traced(level = Debug)]
-    fn expr_logical(&mut self, expr: lume_ast::Logical) -> Result<lume_hir::Expression> {
-        let id = self.next_node_id();
-        let location = self.location(expr.location);
-        let lhs = self.expression(expr.lhs)?;
-        let rhs = self.expression(expr.rhs)?;
-
-        let operator_kind = match expr.op.kind {
-            lume_ast::LogicalOperatorKind::And => lume_hir::LogicalOperatorKind::And,
-            lume_ast::LogicalOperatorKind::Or => lume_hir::LogicalOperatorKind::Or,
-        };
-
-        let operator_loc = self.location(expr.op.location);
-
-        Ok(lume_hir::Expression {
-            id,
-            location,
-            kind: lume_hir::ExpressionKind::Logical(lume_hir::Logical {
-                id,
-                lhs,
-                op: lume_hir::LogicalOperator {
-                    kind: operator_kind,
-                    location: operator_loc,
-                },
-                rhs,
-                location,
-            }),
-        })
     }
 
     #[libftrace::traced(level = Debug)]

@@ -569,6 +569,7 @@ pub enum IntrinsicKind {
     FloatSub { bits: u8 },
     FloatMul { bits: u8 },
     FloatDiv { bits: u8 },
+    FloatNegate { bits: u8 },
     IntEq { bits: u8, signed: bool },
     IntNe { bits: u8, signed: bool },
     IntGe { bits: u8, signed: bool },
@@ -582,10 +583,12 @@ pub enum IntrinsicKind {
     IntAnd { bits: u8, signed: bool },
     IntOr { bits: u8, signed: bool },
     IntXor { bits: u8, signed: bool },
+    IntNegate { bits: u8, signed: bool },
     BooleanEq,
     BooleanNe,
     BooleanAnd,
     BooleanOr,
+    BooleanNot,
     Metadata { id: TypeMetadataId },
 }
 

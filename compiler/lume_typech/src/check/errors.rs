@@ -100,32 +100,6 @@ pub struct TraitMethodSignatureMismatch {
 }
 
 #[derive(Diagnostic, Debug)]
-#[diagnostic(message = "binary operation on non-matching types", code = "LM4372")]
-pub(crate) struct NonMatchingBinaryOp {
-    #[label(source, "cannot perform binary operation between non-matching types")]
-    pub source: lume_span::Location,
-
-    #[label(source, note, "found type {lhs_ty} on left-hand side...")]
-    pub lhs: lume_span::Location,
-
-    #[label(source, note, "...and found type {rhs_ty} on right-hand side")]
-    pub rhs: lume_span::Location,
-
-    pub lhs_ty: String,
-    pub rhs_ty: String,
-}
-
-#[derive(Diagnostic, Debug)]
-#[diagnostic(message = "boolean operation on non-boolean type", code = "LM4373")]
-pub(crate) struct BooleanOperationOnNonBoolean {
-    #[label(source, "expected boolean operation on {expected}, found {found}")]
-    pub source: lume_span::Location,
-
-    pub expected: String,
-    pub found: String,
-}
-
-#[derive(Diagnostic, Debug)]
 #[diagnostic(message = "cannot assign value to literal", code = "LM4375")]
 pub(crate) struct LiteralAssignment {
     #[label(source, "literal values are constant and cannot be assigned")]

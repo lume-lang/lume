@@ -375,7 +375,6 @@ impl PrettyPrint for ExpressionKind {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Assignment(e) => e.pretty_fmt(map, f),
-            Self::Binary(e) => e.pretty_fmt(map, f),
             Self::Cast(e) => e.pretty_fmt(map, f),
             Self::Construct(e) => e.pretty_fmt(map, f),
             Self::StaticCall(e) => e.pretty_fmt(map, f),
@@ -384,7 +383,6 @@ impl PrettyPrint for ExpressionKind {
             Self::If(e) => e.pretty_fmt(map, f),
             Self::Is(e) => e.pretty_fmt(map, f),
             Self::Literal(e) => e.pretty_fmt(map, f),
-            Self::Logical(e) => e.pretty_fmt(map, f),
             Self::Member(e) => e.pretty_fmt(map, f),
             Self::Scope(e) => e.pretty_fmt(map, f),
             Self::Switch(e) => e.pretty_fmt(map, f),
@@ -399,17 +397,6 @@ impl PrettyPrint for Assignment {
         f.debug_struct("Assignment")
             .field("target", pretty_item!(self.target, map))
             .field("value", pretty_item!(self.value, map))
-            .field("location", &self.location)
-            .finish()
-    }
-}
-
-impl PrettyPrint for Binary {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Binary")
-            .field("op", &self.op.kind)
-            .field("lhs", pretty_item!(self.lhs, map))
-            .field("rhs", pretty_item!(self.rhs, map))
             .field("location", &self.location)
             .finish()
     }
@@ -474,13 +461,113 @@ impl PrettyPrint for InstanceCall {
 
 impl PrettyPrint for IntrinsicCall {
     fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let arguments = pretty_list!(self.arguments, map);
-
         f.debug_struct("IntrinsicCall")
-            .field("name", &self.name)
-            .field("arguments", &arguments)
+            .field("kind", pretty_item!(self.kind, map))
             .field("location", &self.location)
             .finish()
+    }
+}
+
+impl PrettyPrint for IntrinsicKind {
+    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            // Arithmetic intrinsics
+            Self::Add { lhs, rhs } => f
+                .debug_struct("Add")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Sub { lhs, rhs } => f
+                .debug_struct("Sub")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Mul { lhs, rhs } => f
+                .debug_struct("Mul")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Div { lhs, rhs } => f
+                .debug_struct("Div")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::And { lhs, rhs } => f
+                .debug_struct("And")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Or { lhs, rhs } => f
+                .debug_struct("Or")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Negate { target } => f
+                .debug_struct("Negate")
+                .field("target", pretty_item!(*target, map))
+                .finish(),
+            Self::Increment { target } => f
+                .debug_struct("Increment")
+                .field("target", pretty_item!(*target, map))
+                .finish(),
+            Self::Decrement { target } => f
+                .debug_struct("Decrement")
+                .field("target", pretty_item!(*target, map))
+                .finish(),
+
+            // Logical intrinsics
+            Self::BinaryAnd { lhs, rhs } => f
+                .debug_struct("BinaryAnd")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::BinaryOr { lhs, rhs } => f
+                .debug_struct("BinaryOr")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::BinaryXor { lhs, rhs } => f
+                .debug_struct("BinaryXor")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Not { target } => f
+                .debug_struct("Not")
+                .field("target", pretty_item!(*target, map))
+                .finish(),
+
+            // Comparison intrinsics
+            Self::Equal { lhs, rhs } => f
+                .debug_struct("Equal")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::NotEqual { lhs, rhs } => f
+                .debug_struct("NotEqual")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Less { lhs, rhs } => f
+                .debug_struct("Less")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::LessEqual { lhs, rhs } => f
+                .debug_struct("LessEqual")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::Greater { lhs, rhs } => f
+                .debug_struct("Greater")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+            Self::GreaterEqual { lhs, rhs } => f
+                .debug_struct("GreaterEqual")
+                .field("lhs", pretty_item!(*lhs, map))
+                .field("rhs", pretty_item!(*rhs, map))
+                .finish(),
+        }
     }
 }
 
@@ -562,17 +649,6 @@ impl PrettyPrint for StringLiteral {
 impl PrettyPrint for BooleanLiteral {
     fn pretty_fmt(&self, _map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("BooleanLiteral").field("value", &self.value).finish()
-    }
-}
-
-impl PrettyPrint for Logical {
-    fn pretty_fmt(&self, map: &Map, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Logical")
-            .field("op", &self.op.kind)
-            .field("lhs", pretty_item!(self.lhs, map))
-            .field("rhs", pretty_item!(self.rhs, map))
-            .field("location", &self.location)
-            .finish()
     }
 }
 

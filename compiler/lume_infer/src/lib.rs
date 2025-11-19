@@ -10,7 +10,7 @@ use lume_span::*;
 use lume_types::{FunctionSig, NamedTypeRef, TyCtx, TypeDatabaseContext, TypeRef};
 
 mod define;
-mod errors;
+pub mod errors;
 pub mod query;
 mod unification;
 

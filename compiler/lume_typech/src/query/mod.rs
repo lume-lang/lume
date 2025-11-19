@@ -52,9 +52,9 @@ impl TyCheckCtx {
             // ```lm
             // Foo::foo(a);
             // ```
-            (lume_hir::CallExpression::Instanced(call), true) => &[&[call.callee][..], &call.arguments[..]].concat(),
-            (lume_hir::CallExpression::Intrinsic(call), true) => &call.arguments,
-            (lume_hir::CallExpression::Static(call), _) => &call.arguments,
+            (lume_hir::CallExpression::Instanced(call), true) => vec![&[call.callee][..], &call.arguments[..]].concat(),
+            (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
+            (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
                 self.dcx().emit(
                     diagnostics::InstanceCallOnStaticMethod {

@@ -125,7 +125,6 @@ impl TyInferCtx {
 
                 instantiated.clone()
             }
-            lume_hir::ExpressionKind::Binary(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::StaticCall(call) => self.type_of_call(lume_hir::CallExpression::Static(call))?,
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 self.type_of_call(lume_hir::CallExpression::Instanced(call))?
@@ -136,7 +135,6 @@ impl TyInferCtx {
             lume_hir::ExpressionKind::If(cond) => self.type_of_if_conditional(cond)?,
             lume_hir::ExpressionKind::Is(_) => TypeRef::bool(),
             lume_hir::ExpressionKind::Literal(e) => self.type_of_lit(e)?,
-            lume_hir::ExpressionKind::Logical(expr) => self.type_of(expr.lhs)?,
             lume_hir::ExpressionKind::Member(expr) => {
                 let callee_type = self.type_of(expr.callee)?;
 
@@ -787,10 +785,7 @@ impl TyInferCtx {
                 lume_hir::ExpressionKind::Assignment(_) | lume_hir::ExpressionKind::Scope(_) => {
                     self.try_expected_type_of(parent_id)
                 }
-                lume_hir::ExpressionKind::Binary(_)
-                | lume_hir::ExpressionKind::Cast(_)
-                | lume_hir::ExpressionKind::Logical(_)
-                | lume_hir::ExpressionKind::Member(_) => Ok(None),
+                lume_hir::ExpressionKind::Cast(_) | lume_hir::ExpressionKind::Member(_) => Ok(None),
                 lume_hir::ExpressionKind::Construct(construct) => self.expected_type_of_construct(id, construct),
                 lume_hir::ExpressionKind::InstanceCall(call) => {
                     self.expected_type_of_call(id, CallExpression::Instanced(call))

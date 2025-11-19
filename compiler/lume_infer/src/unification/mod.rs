@@ -195,10 +195,6 @@ impl UnificationPass {
 
                 self.enqueue_path_unification(tcx, expr.id, &construct.path)?;
             }
-            lume_hir::ExpressionKind::Binary(s) => {
-                self.unify_expr(tcx, s.lhs)?;
-                self.unify_expr(tcx, s.rhs)?;
-            }
             lume_hir::ExpressionKind::InstanceCall(call) => {
                 self.unify_expr(tcx, call.callee)?;
 
@@ -207,10 +203,8 @@ impl UnificationPass {
                 }
             }
             lume_hir::ExpressionKind::IntrinsicCall(s) => {
-                self.unify_expr(tcx, s.callee())?;
-
-                for arg in &s.arguments {
-                    self.unify_expr(tcx, *arg)?;
+                for arg in s.kind.arguments() {
+                    self.unify_expr(tcx, arg)?;
                 }
             }
             lume_hir::ExpressionKind::If(s) => {
@@ -225,10 +219,6 @@ impl UnificationPass {
             lume_hir::ExpressionKind::Is(s) => {
                 self.unify_expr(tcx, s.target)?;
                 self.unify_pattern(tcx, expr.id, &s.pattern)?;
-            }
-            lume_hir::ExpressionKind::Logical(s) => {
-                self.unify_expr(tcx, s.lhs)?;
-                self.unify_expr(tcx, s.rhs)?;
             }
             lume_hir::ExpressionKind::Member(s) => self.unify_expr(tcx, s.callee)?,
             lume_hir::ExpressionKind::StaticCall(call) => {

@@ -111,3 +111,16 @@ pub struct TypeArgumentInferenceFailedCallable {
     pub type_param_name: String,
     pub callable_name: String,
 }
+
+#[derive(Diagnostic, Debug)]
+#[diagnostic(message = "trait `{trait_name}` not implemented", code = "LM4148")]
+pub struct IntrinsicNotImplemented {
+    #[label(
+        source,
+        "cannot perform {operation}, since the left-hand side does not implement {trait_name}"
+    )]
+    pub source: Location,
+
+    pub trait_name: String,
+    pub operation: &'static str,
+}

@@ -1,0 +1,13 @@
+namespace std::ops
+
+/// Trait for performing arithmetic negation `-` operator.
+![lang_item(name = "negate_trait")]
+pub trait Negate<T> {
+    fn negate(self) -> T;
+}
+
+/// Trait for performing logical negation `!` operator.
+![lang_item(name = "not_trait")]
+pub trait Not<T> {
+    fn not(self) -> T;
+}

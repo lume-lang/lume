@@ -201,6 +201,24 @@ impl TyInferCtx {
         if methods.is_empty() { None } else { Some(0) }
     }
 
+    /// Looks up the [`Method`] which matches the given intrinsic.
+    ///
+    /// The method returned by this method is not checked for validity within
+    /// the current context, such as visibility, arguments or type
+    /// arguments.
+    #[libftrace::traced(level = Trace, err)]
+    pub fn lookup_intrinsic_method(&self, expr: &lume_hir::IntrinsicCall) -> Result<Option<&Method>> {
+        let (_, method_name) = self.lang_item_of_intrinsic(&expr.kind);
+
+        let callee_type = self.type_of(expr.kind.callee())?;
+        let method_name = Identifier {
+            name: method_name.to_string(),
+            location: expr.location,
+        };
+
+        self.lookup_method_on(&callee_type, &method_name).map(Ok).transpose()
+    }
+
     /// Looks up all [`Method`]s on the given [`TypeRef`], where the name isn't
     /// an exact match to `name`, but not too disimilar.
     ///
@@ -254,10 +272,23 @@ impl TyInferCtx {
     /// expression into a single, emittable error message.
     #[libftrace::traced(level = Trace)]
     fn fold_method_suggestions<'a>(&self, expr: lume_hir::CallExpression) -> Result<diagnostics::MissingMethod> {
+        // We don't add method suggestions to intrinsic calls.
+        if let lume_hir::CallExpression::Intrinsic(expr) = &expr {
+            let callee_id = *expr.kind.arguments().first().unwrap();
+            let callee_type = self.type_of(callee_id)?;
+
+            return Ok(diagnostics::MissingMethod {
+                source: expr.location.clone(),
+                type_name: self.new_named_type(&callee_type, false)?,
+                method_name: expr.name(),
+                suggestions: Vec::new(),
+            });
+        }
+
         let name = match expr {
             lume_hir::CallExpression::Static(call) => &call.name.name,
             lume_hir::CallExpression::Instanced(call) => &call.name,
-            lume_hir::CallExpression::Intrinsic(call) => &call.name,
+            lume_hir::CallExpression::Intrinsic(_) => unreachable!(),
         };
 
         let callee_type = match expr {
@@ -265,7 +296,7 @@ impl TyInferCtx {
                 self.find_type_ref(&call.name.clone().parent().unwrap())?.unwrap()
             }
             lume_hir::CallExpression::Instanced(call) => self.type_of(call.callee)?,
-            lume_hir::CallExpression::Intrinsic(call) => self.type_of(call.callee())?,
+            lume_hir::CallExpression::Intrinsic(_) => unreachable!(),
         };
 
         let suggestion: Option<Result<error_snippet::Error>> = self
@@ -355,13 +386,19 @@ impl TyInferCtx {
                 Ok(Callable::Method(method))
             }
             expr @ lume_hir::CallExpression::Intrinsic(call) => {
-                let callee_type = self.type_of(call.callee())?;
-                let method = self.lookup_method_on(&callee_type, call.name.name());
+                let method = self.lookup_intrinsic_method(&call)?;
 
                 let Some(method) = method else {
-                    let missing_method_err = self.fold_method_suggestions(expr)?;
+                    let trait_name = self
+                        .type_name_of_intrinsic(&call.kind)
+                        .unwrap_or_else(|| panic!("expected intrinsic type to exist: {}", call.name()));
 
-                    return Err(missing_method_err.into());
+                    return Err(crate::errors::IntrinsicNotImplemented {
+                        source: expr.location(),
+                        trait_name: format!("{trait_name:+}"),
+                        operation: self.operation_name_of_intrinsic(&call.kind),
+                    }
+                    .into());
                 };
 
                 Ok(Callable::Method(method))
@@ -528,9 +565,9 @@ impl TyInferCtx {
         let params = &callable.signature().params;
 
         let args = match (expr, callable.is_instance()) {
-            (lume_hir::CallExpression::Instanced(call), true) => &[&[call.callee][..], &call.arguments[..]].concat(),
-            (lume_hir::CallExpression::Intrinsic(call), true) => &call.arguments,
-            (lume_hir::CallExpression::Static(call), _) => &call.arguments,
+            (lume_hir::CallExpression::Instanced(call), true) => vec![&[call.callee][..], &call.arguments[..]].concat(),
+            (lume_hir::CallExpression::Intrinsic(call), true) => call.kind.arguments(),
+            (lume_hir::CallExpression::Static(call), _) => call.arguments.clone(),
             (lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_), false) => {
                 return Err(crate::errors::InstanceCallOnStaticMethod {
                     source: expr.location(),
@@ -687,7 +724,7 @@ impl TyInferCtx {
             lume_hir::CallExpression::Instanced(_) | lume_hir::CallExpression::Intrinsic(_) => {
                 let callee = match expr {
                     lume_hir::CallExpression::Instanced(call) => call.callee,
-                    lume_hir::CallExpression::Intrinsic(call) => call.callee(),
+                    lume_hir::CallExpression::Intrinsic(call) => call.kind.callee(),
                     lume_hir::CallExpression::Static(_) => unreachable!(),
                 };
 
