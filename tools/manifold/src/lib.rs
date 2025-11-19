@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use error_snippet::{Result, SimpleDiagnostic};
 use glob::glob;
-use lume_errors::MapDiagnostic;
+use lume_errors::{DiagCtx, MapDiagnostic};
 use owo_colors::OwoColorize;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -69,14 +69,14 @@ impl Eq for TestResult {}
 pub(crate) type TestFailureCallback = Box<dyn FnOnce() -> String + Send + Sync>;
 
 /// Main entrypoint for the Manifold CLI.
-pub fn manifold_entry(config: Config) -> Result<i32> {
+pub fn manifold_entry(config: Config, dcx: DiagCtx) -> Result<i32> {
     let test_root = if let Some(root) = config.test_root.clone() {
         root
     } else {
         find_test_root()?
     };
 
-    run_test_suite(config, &test_root)
+    run_test_suite(config, &test_root, dcx)
 }
 
 /// Attempts to find the root of the compiler project.
@@ -136,7 +136,7 @@ pub(crate) struct ManifoldCollectedTest {
     pub test_type: ManifoldTestType,
 }
 
-fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
+fn run_test_suite(config: Config, root: &PathBuf, dcx: DiagCtx) -> Result<i32> {
     panic::install_panic_hook();
 
     let collected_tests = collect_tests(root, &config)?;
@@ -144,12 +144,12 @@ fn run_test_suite(config: Config, root: &PathBuf) -> Result<i32> {
     let results: Vec<TestResult> = if config.sequential {
         collected_tests
             .into_iter()
-            .map(run_test_file)
+            .map(|test| run_test_file(test, dcx.clone()))
             .collect::<Result<Vec<_>>>()?
     } else {
         collected_tests
             .into_par_iter()
-            .map(run_test_file)
+            .map(|test| run_test_file(test, dcx.clone()))
             .collect::<Result<Vec<_>>>()?
     };
 
@@ -223,11 +223,11 @@ fn collect_tests(root: &PathBuf, config: &Config) -> Result<Vec<ManifoldCollecte
         .collect::<Result<Vec<_>>>()
 }
 
-fn run_test_file(test_case: ManifoldCollectedTest) -> Result<TestResult> {
+fn run_test_file(test_case: ManifoldCollectedTest, dcx: DiagCtx) -> Result<TestResult> {
     panic::set_capture_buf(Arc::default());
 
     if let Ok(result) =
-        std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.absolute_path.clone()))
+        std::panic::catch_unwind(|| run_single_test(test_case.test_type, test_case.absolute_path.clone(), dcx))
     {
         return result;
     }
@@ -260,11 +260,11 @@ fn run_test_file(test_case: ManifoldCollectedTest) -> Result<TestResult> {
     })
 }
 
-fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf) -> Result<TestResult> {
+fn run_single_test(test_type: ManifoldTestType, test_file_path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     Ok(match test_type {
         ManifoldTestType::Ui => ui::run_test(test_file_path)?,
         ManifoldTestType::Hir => hir::run_test(test_file_path)?,
-        ManifoldTestType::Binary => binary::run_test(test_file_path)?,
+        ManifoldTestType::Binary => binary::run_test(test_file_path, dcx)?,
     })
 }
 
@@ -294,11 +294,18 @@ mod test {
     use super::*;
 
     #[test]
-    fn manifold_tests() -> std::result::Result<(), ()> {
-        if manifold_entry(Config::default()).unwrap() == 0 {
+    fn manifold_tests() -> lume_errors::Result<()> {
+        let dcx = DiagCtx::new();
+
+        if manifold_entry(Config::default(), dcx.clone()).unwrap() == 0 {
             Ok(())
         } else {
-            Err(())
+            let mut renderer = error_snippet::GraphicalRenderer::new();
+            renderer.use_colors = true;
+            renderer.highlight_source = true;
+
+            dcx.render_stderr(&mut renderer);
+            Err(dcx.ensure_untainted().unwrap_err())
         }
     }
 }

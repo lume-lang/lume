@@ -5,7 +5,7 @@ fn main() {
     let config = manifold::Config::parse();
     let dcx = DiagCtx::new();
 
-    match manifold::manifold_entry(config) {
+    match manifold::manifold_entry(config, dcx.clone()) {
         Ok(code) => std::process::exit(code),
         Err(err) => {
             dcx.emit(err);

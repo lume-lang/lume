@@ -18,12 +18,12 @@ pub(crate) struct TestCase {
     file_content: String,
 }
 
-pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
+pub(crate) fn run_test(path: PathBuf, dcx: DiagCtx) -> Result<TestResult> {
     let mut stdout_path = path.clone();
     stdout_path.set_extension("stdout");
 
     let file_content = std::fs::read_to_string(&path).map_err(IntoDiagnostic::into_diagnostic)?;
-    let binary_path = compile(&path, file_content.clone())?;
+    let binary_path = compile(&path, file_content.clone(), dcx)?;
 
     let test_case = TestCase {
         source_path: path.clone(),
@@ -77,7 +77,7 @@ pub(crate) fn run_test(path: PathBuf) -> Result<TestResult> {
     crate::diff::diff_output_of(stdout, path, stdout_path)
 }
 
-fn compile(path: &Path, content: String) -> Result<PathBuf> {
+fn compile(path: &Path, content: String, dcx: DiagCtx) -> Result<PathBuf> {
     let file_name = Path::new(path.file_name().unwrap());
     let source_file = SourceFile::new(PackageId::empty(), file_name, content);
 
@@ -89,7 +89,6 @@ fn compile(path: &Path, content: String) -> Result<PathBuf> {
     stub_package.path = path.parent().unwrap().to_path_buf();
     stub_package.add_std_sources();
 
-    let dcx = DiagCtx::new();
     let manifold_driver = ManifoldDriver::new(stub_package, dcx.clone());
 
     manifold_driver.link()
