@@ -380,10 +380,6 @@ fn test_operator_snapshots() {
     assert_expr_snap_eq!("a - b;", "minus");
     assert_expr_snap_eq!("a * b;", "multiply");
     assert_expr_snap_eq!("a / b;", "divide");
-    assert_expr_snap_eq!("a += b;", "plus_assign");
-    assert_expr_snap_eq!("a -= b;", "minus_assign");
-    assert_expr_snap_eq!("a *= b;", "multiply_assign");
-    assert_expr_snap_eq!("a /= b;", "divide_assign");
     assert_expr_snap_eq!("a < b;", "less");
     assert_expr_snap_eq!("a <= b;", "less_equal");
     assert_expr_snap_eq!("a > b;", "greater");

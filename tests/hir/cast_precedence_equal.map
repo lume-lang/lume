@@ -34,16 +34,8 @@ Map {
             block: Block {
                 statements: [
                     IntrinsicCall {
-                        name: Callable {
-                            name: Identifier {
-                                name: "==",
-                                location: cast_precedence_equal.lm:21:23,
-                            },
-                            type_arguments: [],
-                            location: cast_precedence_equal.lm:21:23,
-                        },
-                        arguments: [
-                            Cast {
+                        kind: Equal {
+                            lhs: Cast {
                                 source: Literal {
                                     kind: IntLiteral {
                                         value: 0,
@@ -74,14 +66,14 @@ Map {
                                 },
                                 location: cast_precedence_equal.lm:12:20,
                             },
-                            Literal {
+                            rhs: Literal {
                                 kind: IntLiteral {
                                     value: 0,
                                     kind: None,
                                 },
                                 location: cast_precedence_equal.lm:24:25,
                             },
-                        ],
+                        },
                         location: cast_precedence_equal.lm:12:25,
                     },
                 ],

@@ -4,112 +4,72 @@ expression: "parse_expr(\"0 == 0 && 0 == 0;\")"
 ---
 [
     Expression(
-        Logical(
-            Logical {
-                lhs: IntrinsicCall(
-                    IntrinsicCall {
-                        callee: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        0..1,
+        IntrinsicCall(
+            IntrinsicCall {
+                kind: And {
+                    lhs: IntrinsicCall(
+                        IntrinsicCall {
+                            kind: Equal {
+                                lhs: Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                0..1,
+                                            ),
+                                            kind: None,
+                                        },
                                     ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        name: Path {
-                            root: [],
-                            name: Callable {
-                                name: Identifier {
-                                    name: "==",
-                                    location: Location(
-                                        2..4,
+                                ),
+                                rhs: Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                5..6,
+                                            ),
+                                            kind: None,
+                                        },
                                     ),
-                                },
-                                type_arguments: [],
-                                location: Location(
-                                    2..4,
                                 ),
                             },
                             location: Location(
-                                2..4,
+                                0..6,
                             ),
                         },
-                        arguments: [
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            5..6,
-                                        ),
-                                        kind: None,
-                                    },
+                    ),
+                    rhs: IntrinsicCall(
+                        IntrinsicCall {
+                            kind: Equal {
+                                lhs: Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                10..11,
+                                            ),
+                                            kind: None,
+                                        },
+                                    ),
                                 ),
+                                rhs: Literal(
+                                    Int(
+                                        IntLiteral {
+                                            value: 0,
+                                            location: Location(
+                                                15..16,
+                                            ),
+                                            kind: None,
+                                        },
+                                    ),
+                                ),
+                            },
+                            location: Location(
+                                10..16,
                             ),
-                        ],
-                        location: Location(
-                            0..6,
-                        ),
-                    },
-                ),
-                op: LogicalOperator {
-                    kind: And,
-                    location: Location(
-                        7..9,
+                        },
                     ),
                 },
-                rhs: IntrinsicCall(
-                    IntrinsicCall {
-                        callee: Literal(
-                            Int(
-                                IntLiteral {
-                                    value: 0,
-                                    location: Location(
-                                        10..11,
-                                    ),
-                                    kind: None,
-                                },
-                            ),
-                        ),
-                        name: Path {
-                            root: [],
-                            name: Callable {
-                                name: Identifier {
-                                    name: "==",
-                                    location: Location(
-                                        12..14,
-                                    ),
-                                },
-                                type_arguments: [],
-                                location: Location(
-                                    12..14,
-                                ),
-                            },
-                            location: Location(
-                                12..14,
-                            ),
-                        },
-                        arguments: [
-                            Literal(
-                                Int(
-                                    IntLiteral {
-                                        value: 0,
-                                        location: Location(
-                                            15..16,
-                                        ),
-                                        kind: None,
-                                    },
-                                ),
-                            ),
-                        ],
-                        location: Location(
-                            10..16,
-                        ),
-                    },
-                ),
                 location: Location(
                     0..16,
                 ),

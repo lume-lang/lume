@@ -19,37 +19,19 @@ expression: "parse_expr(\"let _ = { 4 + 7 };\")"
                             Final {
                                 value: IntrinsicCall(
                                     IntrinsicCall {
-                                        callee: Literal(
-                                            Int(
-                                                IntLiteral {
-                                                    value: 4,
-                                                    location: Location(
-                                                        10..11,
-                                                    ),
-                                                    kind: None,
-                                                },
-                                            ),
-                                        ),
-                                        name: Path {
-                                            root: [],
-                                            name: Callable {
-                                                name: Identifier {
-                                                    name: "+",
-                                                    location: Location(
-                                                        12..13,
-                                                    ),
-                                                },
-                                                type_arguments: [],
-                                                location: Location(
-                                                    12..13,
+                                        kind: Add {
+                                            lhs: Literal(
+                                                Int(
+                                                    IntLiteral {
+                                                        value: 4,
+                                                        location: Location(
+                                                            10..11,
+                                                        ),
+                                                        kind: None,
+                                                    },
                                                 ),
-                                            },
-                                            location: Location(
-                                                12..13,
                                             ),
-                                        },
-                                        arguments: [
-                                            Literal(
+                                            rhs: Literal(
                                                 Int(
                                                     IntLiteral {
                                                         value: 7,
@@ -60,7 +42,7 @@ expression: "parse_expr(\"let _ = { 4 + 7 };\")"
                                                     },
                                                 ),
                                             ),
-                                        ],
+                                        },
                                         location: Location(
                                             10..15,
                                         ),

@@ -4,16 +4,25 @@ expression: "parse_expr(\"-55;\")"
 ---
 [
     Expression(
-        Literal(
-            Int(
-                IntLiteral {
-                    value: -55,
-                    location: Location(
-                        1..3,
+        IntrinsicCall(
+            IntrinsicCall {
+                kind: Negate {
+                    target: Literal(
+                        Int(
+                            IntLiteral {
+                                value: 55,
+                                location: Location(
+                                    1..3,
+                                ),
+                                kind: None,
+                            },
+                        ),
                     ),
-                    kind: None,
                 },
-            ),
+                location: Location(
+                    0..3,
+                ),
+            },
         ),
     ),
 ]

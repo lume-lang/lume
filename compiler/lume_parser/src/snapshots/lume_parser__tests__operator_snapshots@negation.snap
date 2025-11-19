@@ -4,14 +4,23 @@ expression: "parse_expr(\"!a;\")"
 ---
 [
     Expression(
-        Variable(
-            Variable {
-                name: Identifier {
-                    name: "a",
-                    location: Location(
-                        1..2,
+        IntrinsicCall(
+            IntrinsicCall {
+                kind: Not {
+                    target: Variable(
+                        Variable {
+                            name: Identifier {
+                                name: "a",
+                                location: Location(
+                                    1..2,
+                                ),
+                            },
+                        },
                     ),
                 },
+                location: Location(
+                    0..2,
+                ),
             },
         ),
     ),

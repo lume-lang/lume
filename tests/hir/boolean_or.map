@@ -33,21 +33,22 @@ Map {
             },
             block: Block {
                 statements: [
-                    Logical {
-                        op: Or,
-                        lhs: Literal {
-                            kind: IntLiteral {
-                                value: 0,
-                                kind: None,
+                    IntrinsicCall {
+                        kind: Or {
+                            lhs: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: boolean_or.lm:12:13,
                             },
-                            location: boolean_or.lm:12:13,
-                        },
-                        rhs: Literal {
-                            kind: IntLiteral {
-                                value: 0,
-                                kind: None,
+                            rhs: Literal {
+                                kind: IntLiteral {
+                                    value: 0,
+                                    kind: None,
+                                },
+                                location: boolean_or.lm:17:18,
                             },
-                            location: boolean_or.lm:17:18,
                         },
                         location: boolean_or.lm:12:18,
                     },

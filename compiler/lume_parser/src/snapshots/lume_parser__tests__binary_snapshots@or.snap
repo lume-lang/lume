@@ -4,36 +4,32 @@ expression: "parse_expr(\"0 | 0;\")"
 ---
 [
     Expression(
-        Binary(
-            Binary {
-                lhs: Literal(
-                    Int(
-                        IntLiteral {
-                            value: 0,
-                            location: Location(
-                                0..1,
-                            ),
-                            kind: None,
-                        },
+        IntrinsicCall(
+            IntrinsicCall {
+                kind: BinaryOr {
+                    lhs: Literal(
+                        Int(
+                            IntLiteral {
+                                value: 0,
+                                location: Location(
+                                    0..1,
+                                ),
+                                kind: None,
+                            },
+                        ),
                     ),
-                ),
-                op: BinaryOperator {
-                    kind: Or,
-                    location: Location(
-                        2..3,
+                    rhs: Literal(
+                        Int(
+                            IntLiteral {
+                                value: 0,
+                                location: Location(
+                                    4..5,
+                                ),
+                                kind: None,
+                            },
+                        ),
                     ),
                 },
-                rhs: Literal(
-                    Int(
-                        IntLiteral {
-                            value: 0,
-                            location: Location(
-                                4..5,
-                            ),
-                            kind: None,
-                        },
-                    ),
-                ),
                 location: Location(
                     0..5,
                 ),

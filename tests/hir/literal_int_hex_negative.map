@@ -33,12 +33,17 @@ Map {
             },
             block: Block {
                 statements: [
-                    Literal {
-                        kind: IntLiteral {
-                            value: -85,
-                            kind: None,
+                    IntrinsicCall {
+                        kind: Negate {
+                            target: Literal {
+                                kind: IntLiteral {
+                                    value: 85,
+                                    kind: None,
+                                },
+                                location: literal_int_hex_negative.lm:13:17,
+                            },
                         },
-                        location: literal_int_hex_negative.lm:13:17,
+                        location: literal_int_hex_negative.lm:12:17,
                     },
                 ],
                 location: literal_int_hex_negative.lm:9:20,

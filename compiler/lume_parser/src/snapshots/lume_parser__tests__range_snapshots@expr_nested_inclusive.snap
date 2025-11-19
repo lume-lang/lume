@@ -16,36 +16,18 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                 Range {
                     lower: IntrinsicCall(
                         IntrinsicCall {
-                            callee: Variable(
-                                Variable {
-                                    name: Identifier {
-                                        name: "a",
-                                        location: Location(
-                                            10..11,
-                                        ),
+                            kind: Add {
+                                lhs: Variable(
+                                    Variable {
+                                        name: Identifier {
+                                            name: "a",
+                                            location: Location(
+                                                10..11,
+                                            ),
+                                        },
                                     },
-                                },
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Callable {
-                                    name: Identifier {
-                                        name: "+",
-                                        location: Location(
-                                            12..13,
-                                        ),
-                                    },
-                                    type_arguments: [],
-                                    location: Location(
-                                        12..13,
-                                    ),
-                                },
-                                location: Location(
-                                    12..13,
                                 ),
-                            },
-                            arguments: [
-                                Variable(
+                                rhs: Variable(
                                     Variable {
                                         name: Identifier {
                                             name: "b",
@@ -55,7 +37,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                         },
                                     },
                                 ),
-                            ],
+                            },
                             location: Location(
                                 10..15,
                             ),
@@ -63,73 +45,37 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                     ),
                     upper: IntrinsicCall(
                         IntrinsicCall {
-                            callee: IntrinsicCall(
-                                IntrinsicCall {
-                                    callee: Variable(
-                                        Variable {
-                                            name: Identifier {
-                                                name: "a",
-                                                location: Location(
-                                                    20..21,
-                                                ),
-                                            },
-                                        },
-                                    ),
-                                    name: Path {
-                                        root: [],
-                                        name: Callable {
-                                            name: Identifier {
-                                                name: "+",
-                                                location: Location(
-                                                    22..23,
-                                                ),
-                                            },
-                                            type_arguments: [],
-                                            location: Location(
-                                                22..23,
+                            kind: Add {
+                                lhs: IntrinsicCall(
+                                    IntrinsicCall {
+                                        kind: Add {
+                                            lhs: Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "a",
+                                                        location: Location(
+                                                            20..21,
+                                                        ),
+                                                    },
+                                                },
+                                            ),
+                                            rhs: Variable(
+                                                Variable {
+                                                    name: Identifier {
+                                                        name: "b",
+                                                        location: Location(
+                                                            24..25,
+                                                        ),
+                                                    },
+                                                },
                                             ),
                                         },
                                         location: Location(
-                                            22..23,
+                                            20..25,
                                         ),
                                     },
-                                    arguments: [
-                                        Variable(
-                                            Variable {
-                                                name: Identifier {
-                                                    name: "b",
-                                                    location: Location(
-                                                        24..25,
-                                                    ),
-                                                },
-                                            },
-                                        ),
-                                    ],
-                                    location: Location(
-                                        20..25,
-                                    ),
-                                },
-                            ),
-                            name: Path {
-                                root: [],
-                                name: Callable {
-                                    name: Identifier {
-                                        name: "+",
-                                        location: Location(
-                                            26..27,
-                                        ),
-                                    },
-                                    type_arguments: [],
-                                    location: Location(
-                                        26..27,
-                                    ),
-                                },
-                                location: Location(
-                                    26..27,
                                 ),
-                            },
-                            arguments: [
-                                Literal(
+                                rhs: Literal(
                                     Int(
                                         IntLiteral {
                                             value: 1,
@@ -140,7 +86,7 @@ expression: "parse_expr(\"let _ = ((a + b)..=(a + b + 1));\")"
                                         },
                                     ),
                                 ),
-                            ],
+                            },
                             location: Location(
                                 20..29,
                             ),
