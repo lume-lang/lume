@@ -187,13 +187,25 @@ impl LowerFunction<'_> {
 
     #[libftrace::traced(level = Trace, err)]
     fn intrinsic_expression(&mut self, expr: &lume_hir::IntrinsicCall) -> Result<lume_tir::ExpressionKind> {
-        let kind = self.intrinsic_of(expr);
         let arguments = expr
             .kind
             .arguments()
             .into_iter()
             .map(|arg| self.expression(arg))
             .collect::<Result<Vec<_>>>()?;
+
+        let Some(kind) = self.intrinsic_of(expr) else {
+            let callable = self.lower.tcx.probe_callable_intrinsic(expr)?;
+
+            return Ok(lume_tir::ExpressionKind::Call(Box::new(lume_tir::Call {
+                id: expr.id,
+                function: callable.id(),
+                arguments,
+                type_arguments: Vec::new(),
+                return_type: callable.return_type().to_owned(),
+                location: expr.location,
+            })));
+        };
 
         Ok(lume_tir::ExpressionKind::IntrinsicCall(Box::new(
             lume_tir::IntrinsicCall {
@@ -205,7 +217,7 @@ impl LowerFunction<'_> {
         )))
     }
 
-    fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_tir::IntrinsicKind {
+    fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> Option<lume_tir::IntrinsicKind> {
         let callee_ty = self.lower.tcx.type_of(expr.kind.callee()).unwrap();
 
         if callee_ty.is_integer() {
@@ -213,18 +225,18 @@ impl LowerFunction<'_> {
             let signed = callee_ty.signed();
 
             match &expr.kind {
-                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::IntEq { bits, signed },
-                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::IntNe { bits, signed },
-                lume_hir::IntrinsicKind::Greater { .. } => lume_tir::IntrinsicKind::IntGt { bits, signed },
-                lume_hir::IntrinsicKind::GreaterEqual { .. } => lume_tir::IntrinsicKind::IntGe { bits, signed },
-                lume_hir::IntrinsicKind::Less { .. } => lume_tir::IntrinsicKind::IntLt { bits, signed },
-                lume_hir::IntrinsicKind::LessEqual { .. } => lume_tir::IntrinsicKind::IntLe { bits, signed },
-                lume_hir::IntrinsicKind::Add { .. } => lume_tir::IntrinsicKind::IntAdd { bits, signed },
-                lume_hir::IntrinsicKind::Sub { .. } => lume_tir::IntrinsicKind::IntSub { bits, signed },
-                lume_hir::IntrinsicKind::Mul { .. } => lume_tir::IntrinsicKind::IntMul { bits, signed },
-                lume_hir::IntrinsicKind::Div { .. } => lume_tir::IntrinsicKind::IntDiv { bits, signed },
-                lume_hir::IntrinsicKind::Negate { .. } => lume_tir::IntrinsicKind::IntNegate { bits, signed },
-                _ => unreachable!(),
+                lume_hir::IntrinsicKind::Equal { .. } => Some(lume_tir::IntrinsicKind::IntEq { bits, signed }),
+                lume_hir::IntrinsicKind::NotEqual { .. } => Some(lume_tir::IntrinsicKind::IntNe { bits, signed }),
+                lume_hir::IntrinsicKind::Greater { .. } => Some(lume_tir::IntrinsicKind::IntGt { bits, signed }),
+                lume_hir::IntrinsicKind::GreaterEqual { .. } => Some(lume_tir::IntrinsicKind::IntGe { bits, signed }),
+                lume_hir::IntrinsicKind::Less { .. } => Some(lume_tir::IntrinsicKind::IntLt { bits, signed }),
+                lume_hir::IntrinsicKind::LessEqual { .. } => Some(lume_tir::IntrinsicKind::IntLe { bits, signed }),
+                lume_hir::IntrinsicKind::Add { .. } => Some(lume_tir::IntrinsicKind::IntAdd { bits, signed }),
+                lume_hir::IntrinsicKind::Sub { .. } => Some(lume_tir::IntrinsicKind::IntSub { bits, signed }),
+                lume_hir::IntrinsicKind::Mul { .. } => Some(lume_tir::IntrinsicKind::IntMul { bits, signed }),
+                lume_hir::IntrinsicKind::Div { .. } => Some(lume_tir::IntrinsicKind::IntDiv { bits, signed }),
+                lume_hir::IntrinsicKind::Negate { .. } => Some(lume_tir::IntrinsicKind::IntNegate { bits, signed }),
+                _ => None,
             }
         } else if callee_ty.is_float() {
             let bits = match callee_ty {
@@ -234,28 +246,28 @@ impl LowerFunction<'_> {
             };
 
             match &expr.kind {
-                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::FloatEq { bits },
-                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::FloatNe { bits },
-                lume_hir::IntrinsicKind::Greater { .. } => lume_tir::IntrinsicKind::FloatGt { bits },
-                lume_hir::IntrinsicKind::GreaterEqual { .. } => lume_tir::IntrinsicKind::FloatGe { bits },
-                lume_hir::IntrinsicKind::Less { .. } => lume_tir::IntrinsicKind::FloatLt { bits },
-                lume_hir::IntrinsicKind::LessEqual { .. } => lume_tir::IntrinsicKind::FloatLe { bits },
-                lume_hir::IntrinsicKind::Add { .. } => lume_tir::IntrinsicKind::FloatAdd { bits },
-                lume_hir::IntrinsicKind::Sub { .. } => lume_tir::IntrinsicKind::FloatSub { bits },
-                lume_hir::IntrinsicKind::Mul { .. } => lume_tir::IntrinsicKind::FloatMul { bits },
-                lume_hir::IntrinsicKind::Div { .. } => lume_tir::IntrinsicKind::FloatDiv { bits },
-                lume_hir::IntrinsicKind::Negate { .. } => lume_tir::IntrinsicKind::FloatNegate { bits },
-                _ => unreachable!(),
+                lume_hir::IntrinsicKind::Equal { .. } => Some(lume_tir::IntrinsicKind::FloatEq { bits }),
+                lume_hir::IntrinsicKind::NotEqual { .. } => Some(lume_tir::IntrinsicKind::FloatNe { bits }),
+                lume_hir::IntrinsicKind::Greater { .. } => Some(lume_tir::IntrinsicKind::FloatGt { bits }),
+                lume_hir::IntrinsicKind::GreaterEqual { .. } => Some(lume_tir::IntrinsicKind::FloatGe { bits }),
+                lume_hir::IntrinsicKind::Less { .. } => Some(lume_tir::IntrinsicKind::FloatLt { bits }),
+                lume_hir::IntrinsicKind::LessEqual { .. } => Some(lume_tir::IntrinsicKind::FloatLe { bits }),
+                lume_hir::IntrinsicKind::Add { .. } => Some(lume_tir::IntrinsicKind::FloatAdd { bits }),
+                lume_hir::IntrinsicKind::Sub { .. } => Some(lume_tir::IntrinsicKind::FloatSub { bits }),
+                lume_hir::IntrinsicKind::Mul { .. } => Some(lume_tir::IntrinsicKind::FloatMul { bits }),
+                lume_hir::IntrinsicKind::Div { .. } => Some(lume_tir::IntrinsicKind::FloatDiv { bits }),
+                lume_hir::IntrinsicKind::Negate { .. } => Some(lume_tir::IntrinsicKind::FloatNegate { bits }),
+                _ => None,
             }
         } else if callee_ty.is_bool() {
             match &expr.kind {
-                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::BooleanEq,
-                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::BooleanNe,
-                lume_hir::IntrinsicKind::Not { .. } => lume_tir::IntrinsicKind::BooleanNot,
-                _ => unreachable!(),
+                lume_hir::IntrinsicKind::Equal { .. } => Some(lume_tir::IntrinsicKind::BooleanEq),
+                lume_hir::IntrinsicKind::NotEqual { .. } => Some(lume_tir::IntrinsicKind::BooleanNe),
+                lume_hir::IntrinsicKind::Not { .. } => Some(lume_tir::IntrinsicKind::BooleanNot),
+                _ => None,
             }
         } else {
-            unreachable!()
+            None
         }
     }
 
