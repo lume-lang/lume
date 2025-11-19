@@ -8,6 +8,7 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
+afl = "*"
 libfuzzer-sys = "0.4"
 
 build_stage = { path = "../tools/build_stage" }
