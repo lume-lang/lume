@@ -448,7 +448,7 @@ impl TyInferCtx {
     }
 
     /// Gets the parent type of the given node.
-    #[libftrace::traced(level = Trace)]
+    #[libftrace::traced(level = Trace, fields(id), err, ret)]
     pub fn parent_type_of(&self, id: NodeId) -> Result<Option<TypeRef>> {
         for parent in self.hir_parent_iter(id) {
             match parent {

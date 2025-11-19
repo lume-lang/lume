@@ -534,7 +534,11 @@ impl TyCheckCtx {
                         return Ok(false);
                     };
 
-                    Ok(struct_def.id == parent_type.instance_of)
+                    if struct_def.id == parent_type.instance_of {
+                        return Ok(true);
+                    }
+
+                    Ok(self.is_same_source(a, b))
                 }
 
                 Node::Method(method_def) => {
