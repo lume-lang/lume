@@ -1,0 +1,8 @@
+//# test-return = 4
+
+fn main() -> Int8 {
+    let a = 12_i8;
+    let b = 3_i8;
+
+    return a / b;
+}
