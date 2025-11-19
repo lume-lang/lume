@@ -1,145 +1,284 @@
 namespace std
 
+import std::ops (Add, Sub, Mul, Div)
+import std::ops (Equal, Compare, Negate)
+
 /// Represents an 8-bit signed integer, which can store values from `-128` to `127`.
 pub struct builtin Int8 { }
 
-impl Int8 {
-    pub fn external ==(self, other: Int8) -> Boolean
-    pub fn external !=(self, other: Int8) -> Boolean
+use Add<Int8> in Int8 {
+    fn external add(self, other: Int8) -> Int8
+}
 
-    pub fn external <(self, other: Int8) -> Boolean
-    pub fn external <=(self, other: Int8) -> Boolean
-    pub fn external >(self, other: Int8) -> Boolean
-    pub fn external >=(self, other: Int8) -> Boolean
+use Sub<Int8> in Int8 {
+    fn external sub(self, other: Int8) -> Int8
+}
 
-    pub fn external +(self, other: Int8) -> Int8
-    pub fn external -(self, other: Int8) -> Int8
-    pub fn external *(self, other: Int8) -> Int8
-    pub fn external /(self, other: Int8) -> Int8
+use Mul<Int8> in Int8 {
+    fn external mul(self, other: Int8) -> Int8
+}
+
+use Div<Int8> in Int8 {
+    fn external div(self, other: Int8) -> Int8
+}
+
+use Equal<Int8> in Int8 {
+    fn external eq(self, other: Int8) -> Boolean
+}
+
+use Compare<Int8> in Int8 {
+    fn external lt(self, other: Int8) -> Boolean
+    fn external le(self, other: Int8) -> Boolean
+
+    fn external gt(self, other: Int8) -> Boolean
+    fn external ge(self, other: Int8) -> Boolean
+}
+
+use Negate<Int8> in Int8 {
+    fn external negate(self) -> Int8
 }
 
 /// Represents an 16-bit signed integer, which can store values from `-32768` to `32767`.
 pub struct builtin Int16 { }
 
-impl Int16 {
-    pub fn external ==(self, other: Int16) -> Boolean
-    pub fn external !=(self, other: Int16) -> Boolean
+use Add<Int16> in Int16 {
+    fn external add(self, other: Int16) -> Int16
+}
 
-    pub fn external <(self, other: Int16) -> Boolean
-    pub fn external <=(self, other: Int16) -> Boolean
-    pub fn external >(self, other: Int16) -> Boolean
-    pub fn external >=(self, other: Int16) -> Boolean
+use Sub<Int16> in Int16 {
+    fn external sub(self, other: Int16) -> Int16
+}
 
-    pub fn external +(self, other: Int16) -> Int16
-    pub fn external -(self, other: Int16) -> Int16
-    pub fn external *(self, other: Int16) -> Int16
-    pub fn external /(self, other: Int16) -> Int16
+use Mul<Int16> in Int16 {
+    fn external mul(self, other: Int16) -> Int16
+}
+
+use Div<Int16> in Int16 {
+    fn external div(self, other: Int16) -> Int16
+}
+
+use Equal<Int16> in Int16 {
+    fn external eq(self, other: Int16) -> Boolean
+}
+
+use Compare<Int16> in Int16 {
+    fn external lt(self, other: Int16) -> Boolean
+    fn external le(self, other: Int16) -> Boolean
+
+    fn external gt(self, other: Int16) -> Boolean
+    fn external ge(self, other: Int16) -> Boolean
+}
+
+use Negate<Int16> in Int16 {
+    fn external negate(self) -> Int16
 }
 
 /// Represents an 32-bit signed integer, which can store values from `-2147483648` to `2147483647`.
 pub struct builtin Int32 { }
 
-impl Int32 {
-    pub fn external ==(self, other: Int32) -> Boolean
-    pub fn external !=(self, other: Int32) -> Boolean
+use Add<Int32> in Int32 {
+    fn external add(self, other: Int32) -> Int32
+}
 
-    pub fn external <(self, other: Int32) -> Boolean
-    pub fn external <=(self, other: Int32) -> Boolean
-    pub fn external >(self, other: Int32) -> Boolean
-    pub fn external >=(self, other: Int32) -> Boolean
+use Sub<Int32> in Int32 {
+    fn external sub(self, other: Int32) -> Int32
+}
 
-    pub fn external +(self, other: Int32) -> Int32
-    pub fn external -(self, other: Int32) -> Int32
-    pub fn external *(self, other: Int32) -> Int32
-    pub fn external /(self, other: Int32) -> Int32
+use Mul<Int32> in Int32 {
+    fn external mul(self, other: Int32) -> Int32
+}
+
+use Div<Int32> in Int32 {
+    fn external div(self, other: Int32) -> Int32
+}
+
+use Equal<Int32> in Int32 {
+    fn external eq(self, other: Int32) -> Boolean
+}
+
+use Compare<Int32> in Int32 {
+    fn external lt(self, other: Int32) -> Boolean
+    fn external le(self, other: Int32) -> Boolean
+
+    fn external gt(self, other: Int32) -> Boolean
+    fn external ge(self, other: Int32) -> Boolean
+}
+
+use Negate<Int32> in Int32 {
+    fn external negate(self) -> Int32
 }
 
 /// Represents an 64-bit signed integer, which can store values from `-9223372036854775808` to `9223372036854775807`.
 pub struct builtin Int64 { }
 
-impl Int64 {
-    pub fn external ==(self, other: Int64) -> Boolean
-    pub fn external !=(self, other: Int64) -> Boolean
+use Add<Int64> in Int64 {
+    fn external add(self, other: Int64) -> Int64
+}
 
-    pub fn external <(self, other: Int64) -> Boolean
-    pub fn external <=(self, other: Int64) -> Boolean
-    pub fn external >(self, other: Int64) -> Boolean
-    pub fn external >=(self, other: Int64) -> Boolean
+use Sub<Int64> in Int64 {
+    fn external sub(self, other: Int64) -> Int64
+}
 
-    pub fn external +(self, other: Int64) -> Int64
-    pub fn external -(self, other: Int64) -> Int64
-    pub fn external *(self, other: Int64) -> Int64
-    pub fn external /(self, other: Int64) -> Int64
+use Mul<Int64> in Int64 {
+    fn external mul(self, other: Int64) -> Int64
+}
+
+use Div<Int64> in Int64 {
+    fn external div(self, other: Int64) -> Int64
+}
+
+use Equal<Int64> in Int64 {
+    fn external eq(self, other: Int64) -> Boolean
+}
+
+use Compare<Int64> in Int64 {
+    fn external lt(self, other: Int64) -> Boolean
+    fn external le(self, other: Int64) -> Boolean
+
+    fn external gt(self, other: Int64) -> Boolean
+    fn external ge(self, other: Int64) -> Boolean
+}
+
+use Negate<Int64> in Int64 {
+    fn external negate(self) -> Int64
 }
 
 /// Represents an 8-bit unsigned integer, which can store values from `0` to `255`.
 pub struct builtin UInt8 { }
 
-impl UInt8 {
-    pub fn external ==(self, other: UInt8) -> Boolean
-    pub fn external !=(self, other: UInt8) -> Boolean
+use Add<UInt8> in UInt8 {
+    fn external add(self, other: UInt8) -> UInt8
+}
 
-    pub fn external <(self, other: UInt8) -> Boolean
-    pub fn external <=(self, other: UInt8) -> Boolean
-    pub fn external >(self, other: UInt8) -> Boolean
-    pub fn external >=(self, other: UInt8) -> Boolean
+use Sub<UInt8> in UInt8 {
+    fn external sub(self, other: UInt8) -> UInt8
+}
 
-    pub fn external +(self, other: UInt8) -> UInt8
-    pub fn external -(self, other: UInt8) -> UInt8
-    pub fn external *(self, other: UInt8) -> UInt8
-    pub fn external /(self, other: UInt8) -> UInt8
+use Mul<UInt8> in UInt8 {
+    fn external mul(self, other: UInt8) -> UInt8
+}
+
+use Div<UInt8> in UInt8 {
+    fn external div(self, other: UInt8) -> UInt8
+}
+
+use Equal<UInt8> in UInt8 {
+    fn external eq(self, other: UInt8) -> Boolean
+}
+
+use Compare<UInt8> in UInt8 {
+    fn external lt(self, other: UInt8) -> Boolean
+    fn external le(self, other: UInt8) -> Boolean
+
+    fn external gt(self, other: UInt8) -> Boolean
+    fn external ge(self, other: UInt8) -> Boolean
+}
+
+use Negate<UInt8> in UInt8 {
+    fn external negate(self) -> UInt8
 }
 
 /// Represents an 16-bit unsigned integer, which can store values from `0` to `65535`.
 pub struct builtin UInt16 { }
 
-impl UInt16 {
-    pub fn external ==(self, other: UInt16) -> Boolean
-    pub fn external !=(self, other: UInt16) -> Boolean
+use Add<UInt16> in UInt16 {
+    fn external add(self, other: UInt16) -> UInt16
+}
 
-    pub fn external <(self, other: UInt16) -> Boolean
-    pub fn external <=(self, other: UInt16) -> Boolean
-    pub fn external >(self, other: UInt16) -> Boolean
-    pub fn external >=(self, other: UInt16) -> Boolean
+use Sub<UInt16> in UInt16 {
+    fn external sub(self, other: UInt16) -> UInt16
+}
 
-    pub fn external +(self, other: UInt16) -> UInt16
-    pub fn external -(self, other: UInt16) -> UInt16
-    pub fn external *(self, other: UInt16) -> UInt16
-    pub fn external /(self, other: UInt16) -> UInt16
+use Mul<UInt16> in UInt16 {
+    fn external mul(self, other: UInt16) -> UInt16
+}
+
+use Div<UInt16> in UInt16 {
+    fn external div(self, other: UInt16) -> UInt16
+}
+
+use Equal<UInt16> in UInt16 {
+    fn external eq(self, other: UInt16) -> Boolean
+}
+
+use Compare<UInt16> in UInt16 {
+    fn external lt(self, other: UInt16) -> Boolean
+    fn external le(self, other: UInt16) -> Boolean
+
+    fn external gt(self, other: UInt16) -> Boolean
+    fn external ge(self, other: UInt16) -> Boolean
+}
+
+use Negate<UInt16> in UInt16 {
+    fn external negate(self) -> UInt16
 }
 
 /// Represents an 32-bit unsigned integer, which can store values from `0` to `4294967295`.
 pub struct builtin UInt32 { }
 
-impl UInt32 {
-    pub fn external ==(self, other: UInt32) -> Boolean
-    pub fn external !=(self, other: UInt32) -> Boolean
+use Add<UInt32> in UInt32 {
+    fn external add(self, other: UInt32) -> UInt32
+}
 
-    pub fn external <(self, other: UInt32) -> Boolean
-    pub fn external <=(self, other: UInt32) -> Boolean
-    pub fn external >(self, other: UInt32) -> Boolean
-    pub fn external >=(self, other: UInt32) -> Boolean
+use Sub<UInt32> in UInt32 {
+    fn external sub(self, other: UInt32) -> UInt32
+}
 
-    pub fn external +(self, other: UInt32) -> UInt32
-    pub fn external -(self, other: UInt32) -> UInt32
-    pub fn external *(self, other: UInt32) -> UInt32
-    pub fn external /(self, other: UInt32) -> UInt32
+use Mul<UInt32> in UInt32 {
+    fn external mul(self, other: UInt32) -> UInt32
+}
+
+use Div<UInt32> in UInt32 {
+    fn external div(self, other: UInt32) -> UInt32
+}
+
+use Equal<UInt32> in UInt32 {
+    fn external eq(self, other: UInt32) -> Boolean
+}
+
+use Compare<UInt32> in UInt32 {
+    fn external lt(self, other: UInt32) -> Boolean
+    fn external le(self, other: UInt32) -> Boolean
+
+    fn external gt(self, other: UInt32) -> Boolean
+    fn external ge(self, other: UInt32) -> Boolean
+}
+
+use Negate<UInt32> in UInt32 {
+    fn external negate(self) -> UInt32
 }
 
 /// Represents an 64-bit unsigned integer, which can store values from `0` to `18446744073709551615`.
 pub struct builtin UInt64 { }
 
-impl UInt64 {
-    pub fn external ==(self, other: UInt64) -> Boolean
-    pub fn external !=(self, other: UInt64) -> Boolean
+use Add<UInt64> in UInt64 {
+    fn external add(self, other: UInt64) -> UInt64
+}
 
-    pub fn external <(self, other: UInt64) -> Boolean
-    pub fn external <=(self, other: UInt64) -> Boolean
-    pub fn external >(self, other: UInt64) -> Boolean
-    pub fn external >=(self, other: UInt64) -> Boolean
+use Sub<UInt64> in UInt64 {
+    fn external sub(self, other: UInt64) -> UInt64
+}
 
-    pub fn external +(self, other: UInt64) -> UInt64
-    pub fn external -(self, other: UInt64) -> UInt64
-    pub fn external *(self, other: UInt64) -> UInt64
-    pub fn external /(self, other: UInt64) -> UInt64
+use Mul<UInt64> in UInt64 {
+    fn external mul(self, other: UInt64) -> UInt64
+}
+
+use Div<UInt64> in UInt64 {
+    fn external div(self, other: UInt64) -> UInt64
+}
+
+use Equal<UInt64> in UInt64 {
+    fn external eq(self, other: UInt64) -> Boolean
+}
+
+use Compare<UInt64> in UInt64 {
+    fn external lt(self, other: UInt64) -> Boolean
+    fn external le(self, other: UInt64) -> Boolean
+
+    fn external gt(self, other: UInt64) -> Boolean
+    fn external ge(self, other: UInt64) -> Boolean
+}
+
+use Negate<UInt64> in UInt64 {
+    fn external negate(self) -> UInt64
 }

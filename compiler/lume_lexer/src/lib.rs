@@ -56,11 +56,40 @@ pub const UNARY_PRECEDENCE: u8 = 3;
 /// Defines all the operators which are notated as postfix, as opposed to infix.
 pub const POSTFIX_OPERATORS: &[TokenKind] = &[TokenKind::Increment, TokenKind::Decrement];
 
+/// Defines all the operators which are notated as infix, as opposed to postfix.
+pub const INFIX_OPERATORS: &[TokenKind] = &[
+    TokenKind::BinaryAnd,
+    TokenKind::BinaryOr,
+    TokenKind::BinaryXor,
+    TokenKind::Add,
+    TokenKind::Sub,
+    TokenKind::Mul,
+    TokenKind::Div,
+    TokenKind::And,
+    TokenKind::Or,
+    TokenKind::Equal,
+    TokenKind::NotEqual,
+    TokenKind::Less,
+    TokenKind::LessEqual,
+    TokenKind::Greater,
+    TokenKind::GreaterEqual,
+];
+
 /// Defines all the operators which are used in binary contexts.
 pub const BINARY_OPERATORS: &[TokenKind] = &[TokenKind::BinaryAnd, TokenKind::BinaryOr, TokenKind::BinaryXor];
 
 /// Defines all the operators which are used in boolean contexts.
 pub const BOOLEAN_OPERATORS: &[TokenKind] = &[TokenKind::And, TokenKind::Or];
+
+/// Defines all the operators which are used in comparison contexts.
+pub const COMPARISON_OPERATORS: &[TokenKind] = &[
+    TokenKind::Equal,
+    TokenKind::NotEqual,
+    TokenKind::Less,
+    TokenKind::LessEqual,
+    TokenKind::Greater,
+    TokenKind::GreaterEqual,
+];
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub enum LexerError {
@@ -505,16 +534,10 @@ impl TokenKind<'_> {
         POSTFIX_OPERATORS.iter().any(|k| k == self)
     }
 
-    /// Determines whether the token is a binary operator.
+    /// Determines whether the token is a infix operator.
     #[inline]
-    pub fn is_binary(&self) -> bool {
-        BINARY_OPERATORS.iter().any(|k| k == self)
-    }
-
-    /// Determines whether the token is a boolean operator.
-    #[inline]
-    pub fn is_boolean(&self) -> bool {
-        BOOLEAN_OPERATORS.iter().any(|k| k == self)
+    pub fn is_infix(&self) -> bool {
+        INFIX_OPERATORS.iter().any(|k| k == self)
     }
 }
 

@@ -12,7 +12,6 @@ impl LowerFunction<'_> {
 
         let kind = match &expr.kind {
             lume_hir::ExpressionKind::Assignment(expr) => self.assignment_expression(expr)?,
-            lume_hir::ExpressionKind::Binary(expr) => self.binary_expression(expr)?,
             lume_hir::ExpressionKind::Cast(expr) => self.cast_expression(expr)?,
             lume_hir::ExpressionKind::Construct(expr) => self.construct_expression(expr)?,
             lume_hir::ExpressionKind::InstanceCall(expr) => {
@@ -25,7 +24,6 @@ impl LowerFunction<'_> {
             lume_hir::ExpressionKind::IntrinsicCall(expr) => self.intrinsic_expression(expr)?,
             lume_hir::ExpressionKind::Is(expr) => self.is_expression(expr)?,
             lume_hir::ExpressionKind::Literal(expr) => self.literal_expression(expr),
-            lume_hir::ExpressionKind::Logical(expr) => self.logical_expression(expr)?,
             lume_hir::ExpressionKind::Member(expr) => self.member_expression(expr)?,
             lume_hir::ExpressionKind::Switch(expr) => self.switch_expression(expr)?,
             lume_hir::ExpressionKind::Scope(expr) => self.scope_expression(expr)?,
@@ -46,26 +44,6 @@ impl LowerFunction<'_> {
             id: expr.id,
             target,
             value,
-            location: expr.location,
-        })))
-    }
-
-    #[libftrace::traced(level = Trace, err)]
-    fn binary_expression(&mut self, expr: &lume_hir::Binary) -> Result<lume_tir::ExpressionKind> {
-        let lhs = self.expression(expr.lhs)?;
-        let rhs = self.expression(expr.rhs)?;
-
-        let op = match expr.op.kind {
-            lume_hir::BinaryOperatorKind::And => lume_tir::BinaryOperator::And,
-            lume_hir::BinaryOperatorKind::Or => lume_tir::BinaryOperator::Or,
-            lume_hir::BinaryOperatorKind::Xor => lume_tir::BinaryOperator::Xor,
-        };
-
-        Ok(lume_tir::ExpressionKind::Binary(Box::new(lume_tir::Binary {
-            id: expr.id,
-            lhs,
-            op,
-            rhs,
             location: expr.location,
         })))
     }
@@ -137,7 +115,7 @@ impl LowerFunction<'_> {
         }
 
         for arg in expr.arguments() {
-            arguments.push(self.expression(*arg)?);
+            arguments.push(self.expression(arg)?);
         }
 
         let mut type_arguments = Vec::with_capacity(expr.type_arguments().len());
@@ -211,9 +189,10 @@ impl LowerFunction<'_> {
     fn intrinsic_expression(&mut self, expr: &lume_hir::IntrinsicCall) -> Result<lume_tir::ExpressionKind> {
         let kind = self.intrinsic_of(expr);
         let arguments = expr
-            .arguments
-            .iter()
-            .map(|arg| self.expression(*arg))
+            .kind
+            .arguments()
+            .into_iter()
+            .map(|arg| self.expression(arg))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(lume_tir::ExpressionKind::IntrinsicCall(Box::new(
@@ -227,23 +206,24 @@ impl LowerFunction<'_> {
     }
 
     fn intrinsic_of(&mut self, expr: &lume_hir::IntrinsicCall) -> lume_tir::IntrinsicKind {
-        let callee_ty = self.lower.tcx.type_of(expr.callee()).unwrap();
+        let callee_ty = self.lower.tcx.type_of(expr.kind.callee()).unwrap();
 
         if callee_ty.is_integer() {
             let bits = callee_ty.bitwidth();
             let signed = callee_ty.signed();
 
-            match expr.name.name().as_str() {
-                "==" => lume_tir::IntrinsicKind::IntEq { bits, signed },
-                "!=" => lume_tir::IntrinsicKind::IntNe { bits, signed },
-                ">" => lume_tir::IntrinsicKind::IntGt { bits, signed },
-                ">=" => lume_tir::IntrinsicKind::IntGe { bits, signed },
-                "<" => lume_tir::IntrinsicKind::IntLt { bits, signed },
-                "<=" => lume_tir::IntrinsicKind::IntLe { bits, signed },
-                "+" => lume_tir::IntrinsicKind::IntAdd { bits, signed },
-                "-" => lume_tir::IntrinsicKind::IntSub { bits, signed },
-                "*" => lume_tir::IntrinsicKind::IntMul { bits, signed },
-                "/" => lume_tir::IntrinsicKind::IntDiv { bits, signed },
+            match &expr.kind {
+                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::IntEq { bits, signed },
+                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::IntNe { bits, signed },
+                lume_hir::IntrinsicKind::Greater { .. } => lume_tir::IntrinsicKind::IntGt { bits, signed },
+                lume_hir::IntrinsicKind::GreaterEqual { .. } => lume_tir::IntrinsicKind::IntGe { bits, signed },
+                lume_hir::IntrinsicKind::Less { .. } => lume_tir::IntrinsicKind::IntLt { bits, signed },
+                lume_hir::IntrinsicKind::LessEqual { .. } => lume_tir::IntrinsicKind::IntLe { bits, signed },
+                lume_hir::IntrinsicKind::Add { .. } => lume_tir::IntrinsicKind::IntAdd { bits, signed },
+                lume_hir::IntrinsicKind::Sub { .. } => lume_tir::IntrinsicKind::IntSub { bits, signed },
+                lume_hir::IntrinsicKind::Mul { .. } => lume_tir::IntrinsicKind::IntMul { bits, signed },
+                lume_hir::IntrinsicKind::Div { .. } => lume_tir::IntrinsicKind::IntDiv { bits, signed },
+                lume_hir::IntrinsicKind::Negate { .. } => lume_tir::IntrinsicKind::IntNegate { bits, signed },
                 _ => unreachable!(),
             }
         } else if callee_ty.is_float() {
@@ -253,23 +233,25 @@ impl LowerFunction<'_> {
                 _ => unreachable!(),
             };
 
-            match expr.name.name().as_str() {
-                "==" => lume_tir::IntrinsicKind::FloatEq { bits },
-                "!=" => lume_tir::IntrinsicKind::FloatNe { bits },
-                ">" => lume_tir::IntrinsicKind::FloatGt { bits },
-                ">=" => lume_tir::IntrinsicKind::FloatGe { bits },
-                "<" => lume_tir::IntrinsicKind::FloatLt { bits },
-                "<=" => lume_tir::IntrinsicKind::FloatLe { bits },
-                "+" => lume_tir::IntrinsicKind::FloatAdd { bits },
-                "-" => lume_tir::IntrinsicKind::FloatSub { bits },
-                "*" => lume_tir::IntrinsicKind::FloatMul { bits },
-                "/" => lume_tir::IntrinsicKind::FloatDiv { bits },
+            match &expr.kind {
+                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::FloatEq { bits },
+                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::FloatNe { bits },
+                lume_hir::IntrinsicKind::Greater { .. } => lume_tir::IntrinsicKind::FloatGt { bits },
+                lume_hir::IntrinsicKind::GreaterEqual { .. } => lume_tir::IntrinsicKind::FloatGe { bits },
+                lume_hir::IntrinsicKind::Less { .. } => lume_tir::IntrinsicKind::FloatLt { bits },
+                lume_hir::IntrinsicKind::LessEqual { .. } => lume_tir::IntrinsicKind::FloatLe { bits },
+                lume_hir::IntrinsicKind::Add { .. } => lume_tir::IntrinsicKind::FloatAdd { bits },
+                lume_hir::IntrinsicKind::Sub { .. } => lume_tir::IntrinsicKind::FloatSub { bits },
+                lume_hir::IntrinsicKind::Mul { .. } => lume_tir::IntrinsicKind::FloatMul { bits },
+                lume_hir::IntrinsicKind::Div { .. } => lume_tir::IntrinsicKind::FloatDiv { bits },
+                lume_hir::IntrinsicKind::Negate { .. } => lume_tir::IntrinsicKind::FloatNegate { bits },
                 _ => unreachable!(),
             }
         } else if callee_ty.is_bool() {
-            match expr.name.name().as_str() {
-                "==" => lume_tir::IntrinsicKind::BooleanEq,
-                "!=" => lume_tir::IntrinsicKind::BooleanNe,
+            match &expr.kind {
+                lume_hir::IntrinsicKind::Equal { .. } => lume_tir::IntrinsicKind::BooleanEq,
+                lume_hir::IntrinsicKind::NotEqual { .. } => lume_tir::IntrinsicKind::BooleanNe,
+                lume_hir::IntrinsicKind::Not { .. } => lume_tir::IntrinsicKind::BooleanNot,
                 _ => unreachable!(),
             }
         } else {
@@ -339,25 +321,6 @@ impl LowerFunction<'_> {
             kind,
             location: expr.location,
         }
-    }
-
-    #[libftrace::traced(level = Trace, err)]
-    fn logical_expression(&mut self, expr: &lume_hir::Logical) -> Result<lume_tir::ExpressionKind> {
-        let lhs = self.expression(expr.lhs)?;
-        let rhs = self.expression(expr.rhs)?;
-
-        let op = match expr.op.kind {
-            lume_hir::LogicalOperatorKind::And => lume_tir::LogicalOperator::And,
-            lume_hir::LogicalOperatorKind::Or => lume_tir::LogicalOperator::Or,
-        };
-
-        Ok(lume_tir::ExpressionKind::Logical(Box::new(lume_tir::Logical {
-            id: expr.id,
-            lhs,
-            op,
-            rhs,
-            location: expr.location,
-        })))
     }
 
     #[libftrace::traced(level = Trace, err)]

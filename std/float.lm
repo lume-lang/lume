@@ -1,37 +1,74 @@
 namespace std
 
+import std::ops (Add, Sub, Mul, Div)
+import std::ops (Equal, Compare, Negate)
+
 /// Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
 pub struct builtin Float { }
 
-impl Float {
-    pub fn external ==(self, other: Float) -> Boolean
-    pub fn external !=(self, other: Float) -> Boolean
+use Add<Float> in Float {
+    fn external add(self, other: Float) -> Float
+}
 
-    pub fn external <(self, other: Float) -> Boolean
-    pub fn external <=(self, other: Float) -> Boolean
-    pub fn external >(self, other: Float) -> Boolean
-    pub fn external >=(self, other: Float) -> Boolean
+use Sub<Float> in Float {
+    fn external sub(self, other: Float) -> Float
+}
 
-    pub fn external +(self, other: Float) -> Float
-    pub fn external -(self, other: Float) -> Float
-    pub fn external *(self, other: Float) -> Float
-    pub fn external /(self, other: Float) -> Float
+use Mul<Float> in Float {
+    fn external mul(self, other: Float) -> Float
+}
+
+use Div<Float> in Float {
+    fn external div(self, other: Float) -> Float
+}
+
+use Equal<Float> in Float {
+    fn external eq(self, other: Float) -> Boolean
+}
+
+use Compare<Float> in Float {
+    fn external lt(self, other: Float) -> Boolean
+    fn external le(self, other: Float) -> Boolean
+
+    fn external gt(self, other: Float) -> Boolean
+    fn external ge(self, other: Float) -> Boolean
+}
+
+use Negate<Float> in Float {
+    fn external negate(self) -> Float
 }
 
 /// Represents an 64-bit double-precision floating-point number, which is precise to ~16 decimal places.
 pub struct builtin Double { }
 
-impl Double {
-    pub fn external ==(self, other: Double) -> Boolean
-    pub fn external !=(self, other: Double) -> Boolean
+use Add<Double> in Double {
+    fn external add(self, other: Double) -> Double
+}
 
-    pub fn external <(self, other: Double) -> Boolean
-    pub fn external <=(self, other: Double) -> Boolean
-    pub fn external >(self, other: Double) -> Boolean
-    pub fn external >=(self, other: Double) -> Boolean
+use Sub<Double> in Double {
+    fn external sub(self, other: Double) -> Double
+}
 
-    pub fn external +(self, other: Double) -> Double
-    pub fn external -(self, other: Double) -> Double
-    pub fn external *(self, other: Double) -> Double
-    pub fn external /(self, other: Double) -> Double
+use Mul<Double> in Double {
+    fn external mul(self, other: Double) -> Double
+}
+
+use Div<Double> in Double {
+    fn external div(self, other: Double) -> Double
+}
+
+use Equal<Double> in Double {
+    fn external eq(self, other: Double) -> Boolean
+}
+
+use Compare<Double> in Double {
+    fn external lt(self, other: Double) -> Boolean
+    fn external le(self, other: Double) -> Boolean
+
+    fn external gt(self, other: Double) -> Boolean
+    fn external ge(self, other: Double) -> Boolean
+}
+
+use Negate<Double> in Double {
+    fn external negate(self) -> Double
 }

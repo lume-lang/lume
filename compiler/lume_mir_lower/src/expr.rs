@@ -719,6 +719,7 @@ impl FunctionTransformer<'_, '_> {
             lume_tir::IntrinsicKind::FloatSub { bits } => lume_mir::Intrinsic::FloatSub { bits: *bits },
             lume_tir::IntrinsicKind::FloatMul { bits } => lume_mir::Intrinsic::FloatMul { bits: *bits },
             lume_tir::IntrinsicKind::FloatDiv { bits } => lume_mir::Intrinsic::FloatDiv { bits: *bits },
+            lume_tir::IntrinsicKind::FloatNegate { bits } => lume_mir::Intrinsic::FloatNegate { bits: *bits },
             lume_tir::IntrinsicKind::IntEq { bits, signed } => lume_mir::Intrinsic::IntEq {
                 bits: *bits,
                 signed: *signed,
@@ -771,10 +772,15 @@ impl FunctionTransformer<'_, '_> {
                 bits: *bits,
                 signed: *signed,
             },
+            lume_tir::IntrinsicKind::IntNegate { bits, signed } => lume_mir::Intrinsic::IntNegate {
+                bits: *bits,
+                signed: *signed,
+            },
             lume_tir::IntrinsicKind::BooleanEq => lume_mir::Intrinsic::BooleanEq,
             lume_tir::IntrinsicKind::BooleanNe => lume_mir::Intrinsic::BooleanNe,
             lume_tir::IntrinsicKind::BooleanAnd => lume_mir::Intrinsic::BooleanAnd,
             lume_tir::IntrinsicKind::BooleanOr => lume_mir::Intrinsic::BooleanOr,
+            lume_tir::IntrinsicKind::BooleanNot => lume_mir::Intrinsic::BooleanNot,
             lume_tir::IntrinsicKind::Metadata { id } => {
                 let metadata_store = &self.transformer.mcx.mir().metadata.metadata;
                 let metadata_entry = metadata_store.get(id).unwrap();

@@ -49,6 +49,7 @@ impl LowerFunction<'_> {
                 lume_mir::Intrinsic::FloatSub { .. } => self.fsub(&args[0], &args[1]),
                 lume_mir::Intrinsic::FloatMul { .. } => self.fmul(&args[0], &args[1]),
                 lume_mir::Intrinsic::FloatDiv { .. } => self.fdiv(&args[0], &args[1]),
+                lume_mir::Intrinsic::FloatNegate { .. } => self.fneg(&args[0]),
 
                 // Integer comparison
                 lume_mir::Intrinsic::IntEq { .. } | lume_mir::Intrinsic::BooleanEq => {
@@ -88,6 +89,10 @@ impl LowerFunction<'_> {
                 lume_mir::Intrinsic::IntAnd { .. } | lume_mir::Intrinsic::BooleanAnd => self.and(&args[0], &args[1]),
                 lume_mir::Intrinsic::IntOr { .. } | lume_mir::Intrinsic::BooleanOr => self.or(&args[0], &args[1]),
                 lume_mir::Intrinsic::IntXor { .. } => self.xor(&args[0], &args[1]),
+                lume_mir::Intrinsic::IntNegate { .. } => self.ineg(&args[0]),
+
+                // Boolean arithmetic
+                lume_mir::Intrinsic::BooleanNot { .. } => self.not(&args[0]),
 
                 lume_mir::Intrinsic::Metadata { metadata } => {
                     let Some(value) = self.reference_static_data(&metadata.full_name) else {

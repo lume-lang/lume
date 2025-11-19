@@ -87,18 +87,21 @@ impl FunctionTransformer<'_, '_> {
                 | lume_mir::Intrinsic::BooleanEq
                 | lume_mir::Intrinsic::BooleanNe
                 | lume_mir::Intrinsic::BooleanAnd
-                | lume_mir::Intrinsic::BooleanOr => lume_mir::Type::boolean(),
+                | lume_mir::Intrinsic::BooleanOr
+                | lume_mir::Intrinsic::BooleanNot => lume_mir::Type::boolean(),
                 lume_mir::Intrinsic::IntAdd { bits, signed }
                 | lume_mir::Intrinsic::IntSub { bits, signed }
                 | lume_mir::Intrinsic::IntMul { bits, signed }
                 | lume_mir::Intrinsic::IntDiv { bits, signed }
                 | lume_mir::Intrinsic::IntAnd { bits, signed }
                 | lume_mir::Intrinsic::IntOr { bits, signed }
-                | lume_mir::Intrinsic::IntXor { bits, signed } => lume_mir::Type::integer(*bits, *signed),
+                | lume_mir::Intrinsic::IntXor { bits, signed }
+                | lume_mir::Intrinsic::IntNegate { bits, signed } => lume_mir::Type::integer(*bits, *signed),
                 lume_mir::Intrinsic::FloatAdd { bits }
                 | lume_mir::Intrinsic::FloatSub { bits }
                 | lume_mir::Intrinsic::FloatMul { bits }
-                | lume_mir::Intrinsic::FloatDiv { bits } => lume_mir::Type::float(*bits),
+                | lume_mir::Intrinsic::FloatDiv { bits }
+                | lume_mir::Intrinsic::FloatNegate { bits } => lume_mir::Type::float(*bits),
                 lume_mir::Intrinsic::Metadata { metadata } => lume_mir::Type {
                     kind: lume_mir::TypeKind::Metadata {
                         inner: metadata.clone(),

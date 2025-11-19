@@ -117,44 +117,107 @@ impl Parser<'_> {
             return self.parse_is(left);
         }
 
-        let operator = match self.consume_any() {
-            t if t.kind.is_operator() => t,
-            t => {
-                return Err(InvalidExpression {
-                    source: self.source.clone(),
-                    range: self.token().index,
-                    actual: t.kind.as_type(),
-                }
-                .into());
-            }
-        };
+        let operator = self.consume_any();
 
         if operator.is_postfix() {
             Ok(self.parse_postfix_expression(left, operator))
-        } else {
+        } else if operator.is_infix() {
             self.parse_infix_expression(left, operator)
+        } else {
+            Err(InvalidExpression {
+                source: self.source.clone(),
+                range: self.token().index,
+                actual: operator.kind.as_type(),
+            }
+            .into())
         }
     }
 
     /// Parses a infix expression at the current cursor position.
     ///
     /// Infix expressions are expressions which appear in the middle of an
-    /// expression, such as infix of postfix operators. In Pratt Parsing,
-    /// this is also called "Led" or "Left Denotation". such as increment or
-    /// decrement operators.
+    /// expression, such as arithmetic operators, binary operators, etc. In
+    /// Pratt Parsing, this is also called "Led" or "Left Denotation".
     #[libftrace::traced(level = Trace, err)]
     fn parse_infix_expression(&mut self, lhs: Expression, operator: Token) -> Result<Expression> {
         let rhs = self.parse_expression_with_precedence(operator.precedence())?;
 
-        if operator.is_binary() {
-            return self.parse_binary_operator_expression(lhs, operator, rhs);
-        }
+        let start = lhs.location().start();
+        let end = rhs.location().end();
 
-        if operator.is_boolean() {
-            return self.parse_boolean_operator_expression(lhs, operator, rhs);
-        }
+        let intrinsic = match operator.kind {
+            // Binary operators
+            TokenKind::BinaryAnd => IntrinsicKind::BinaryAnd {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::BinaryOr => IntrinsicKind::BinaryOr {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::BinaryXor => IntrinsicKind::BinaryXor {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
 
-        self.parse_other_operator_expression(lhs, operator, rhs)
+            // Arithmetic intrinsics
+            TokenKind::Add => IntrinsicKind::Add {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Sub => IntrinsicKind::Sub {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Mul => IntrinsicKind::Mul {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Div => IntrinsicKind::Div {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::And => IntrinsicKind::And {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Or => IntrinsicKind::Or {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+
+            // Comparison operators
+            TokenKind::Equal => IntrinsicKind::Equal {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::NotEqual => IntrinsicKind::NotEqual {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Less => IntrinsicKind::Less {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::LessEqual => IntrinsicKind::LessEqual {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::Greater => IntrinsicKind::Greater {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            TokenKind::GreaterEqual => IntrinsicKind::GreaterEqual {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            },
+            _ => unimplemented!("bug!: unsupported or unimplemented operation: {}", operator.as_type()),
+        };
+
+        Ok(Expression::IntrinsicCall(Box::new(IntrinsicCall {
+            kind: intrinsic,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses a postfix expression at the current cursor position.
@@ -162,117 +225,24 @@ impl Parser<'_> {
     /// Postfix expressions are expressions which appear at the end of an
     /// expression, such as increment or decrement operators.
     #[libftrace::traced(level = Trace, fields(operator))]
-    fn parse_postfix_expression(&mut self, left: Expression, operator: Token) -> Expression {
-        let operator_loc = operator.index.clone();
-
-        let start = left.location().start();
+    fn parse_postfix_expression(&mut self, target: Expression, operator: Token) -> Expression {
+        let start = target.location().start();
         let end = operator.end();
 
-        Expression::IntrinsicCall(Box::new(IntrinsicCall {
-            callee: left,
-            name: Path {
-                name: PathSegment::callable(Identifier {
-                    name: operator.as_type().to_string(),
-                    location: operator_loc.clone().into(),
-                }),
-                root: Vec::new(),
-                location: operator_loc.into(),
+        let intrinsic = match operator.kind {
+            TokenKind::Increment => IntrinsicKind::Increment {
+                target: Box::new(target),
             },
-            arguments: vec![],
+            TokenKind::Decrement => IntrinsicKind::Decrement {
+                target: Box::new(target),
+            },
+            _ => unreachable!(),
+        };
+
+        Expression::IntrinsicCall(Box::new(IntrinsicCall {
+            kind: intrinsic,
             location: (start..end).into(),
         }))
-    }
-
-    /// Parses the given left-hand- and right-hand-side expressions as a binary
-    /// operator expression call.
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_binary_operator_expression(
-        &mut self,
-        lhs: Expression,
-        operator: Token,
-        rhs: Expression,
-    ) -> Result<Expression> {
-        debug_assert!(operator.is_binary());
-
-        let operator_kind = match operator.kind {
-            TokenKind::BinaryAnd => BinaryOperatorKind::And,
-            TokenKind::BinaryOr => BinaryOperatorKind::Or,
-            TokenKind::BinaryXor => BinaryOperatorKind::Xor,
-            kind => panic!("bug!: invalid binary operator token ({kind:?})"),
-        };
-
-        let start = lhs.location().start();
-        let end = rhs.location().end();
-
-        Ok(Expression::Binary(Box::new(Binary {
-            lhs,
-            op: BinaryOperator {
-                kind: operator_kind,
-                location: operator.index.clone().into(),
-            },
-            rhs,
-            location: (start..end).into(),
-        })))
-    }
-
-    /// Parses the given left-hand- and right-hand-side expressions as an
-    /// operator expression call.
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_other_operator_expression(
-        &mut self,
-        lhs: Expression,
-        operator: Token,
-        rhs: Expression,
-    ) -> Result<Expression> {
-        let operator_loc = operator.index.clone();
-
-        let start = lhs.location().start();
-        let end = rhs.location().end();
-
-        Ok(Expression::IntrinsicCall(Box::new(IntrinsicCall {
-            callee: lhs,
-            name: Path {
-                name: PathSegment::callable(Identifier {
-                    name: operator.kind.as_type().to_string(),
-                    location: operator_loc.clone().into(),
-                }),
-                root: Vec::new(),
-                location: operator_loc.into(),
-            },
-            arguments: vec![rhs],
-            location: (start..end).into(),
-        })))
-    }
-
-    /// Parses the given left-hand- and right-hand-side expressions as a boolean
-    /// operator expression call.
-    #[libftrace::traced(level = Trace, err)]
-    fn parse_boolean_operator_expression(
-        &mut self,
-        lhs: Expression,
-        operator: Token,
-        rhs: Expression,
-    ) -> Result<Expression> {
-        debug_assert!(operator.is_boolean());
-
-        let operator_kind = match operator.kind {
-            TokenKind::And => LogicalOperatorKind::And,
-            TokenKind::Or => LogicalOperatorKind::Or,
-            kind => panic!("bug!: invalid boolean operator token ({kind:?})"),
-        };
-
-        let start = lhs.location().start();
-        let end = rhs.location().end();
-
-        Ok(Expression::Logical(Box::new(Logical {
-            lhs,
-            op: LogicalOperator {
-                kind: operator_kind,
-                location: operator.index.clone().into(),
-            },
-            rhs,
-            location: (start..end).into(),
-        })))
     }
 
     /// Parses an expression on the current cursor position, which is nested
@@ -908,42 +878,25 @@ impl Parser<'_> {
             }
         };
 
-        let right = self.parse_expression_with_precedence(UNARY_PRECEDENCE)?;
+        let target = self.parse_expression_with_precedence(UNARY_PRECEDENCE)?;
 
-        // As a quality of life feature, we can apply the unary operator directly to the
-        // expression, if it can be done at parsing time. If not, we create an
-        // ordinary unary expression.
-        if let Expression::Literal(literal) = right {
-            let inner = match *literal {
-                // If the operator is a unary minus and the right-hand side is a number literal, we can negate
-                // the value directly.
-                Literal::Int(mut int_literal) if operator.kind == TokenKind::Sub => {
-                    int_literal.value *= -1;
+        let start = operator.start();
+        let end = target.location().end();
 
-                    Expression::Literal(Box::new(Literal::Int(int_literal)))
-                }
-                Literal::Float(mut float_literal) if operator.kind == TokenKind::Sub => {
-                    float_literal.value *= -1.0;
+        let intrinsic = match operator.kind {
+            TokenKind::Exclamation => IntrinsicKind::Not {
+                target: Box::new(target),
+            },
+            TokenKind::Sub => IntrinsicKind::Negate {
+                target: Box::new(target),
+            },
+            _ => unreachable!(),
+        };
 
-                    Expression::Literal(Box::new(Literal::Float(float_literal)))
-                }
-
-                // If the operator is a unary negation and the right-hand side is a boolean literal, we can negate
-                // the value directly.
-                Literal::Boolean(mut bool_value) if operator.kind == TokenKind::Exclamation => {
-                    bool_value.value = !bool_value.value;
-
-                    Expression::Literal(Box::new(Literal::Boolean(bool_value)))
-                }
-
-                // Otherwise, leave it be.
-                expr => Expression::Literal(Box::new(expr)),
-            };
-
-            return Ok(inner);
-        }
-
-        Ok(right)
+        Ok(Expression::IntrinsicCall(Box::new(IntrinsicCall {
+            kind: intrinsic,
+            location: (start..end).into(),
+        })))
     }
 
     /// Parses some expression, if an equal sign is consumed. Otherwise, returns

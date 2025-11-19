@@ -1279,7 +1279,6 @@ expr_lit_int!(lit_u32, U32, u32);
 #[derive(Hash, Debug, Clone, PartialEq)]
 pub enum ExpressionKind {
     Assignment(Assignment),
-    Binary(Binary),
     Cast(Cast),
     Construct(Construct),
 
@@ -1307,7 +1306,6 @@ pub enum ExpressionKind {
     If(If),
     Is(Is),
     Literal(Literal),
-    Logical(Logical),
     Member(Member),
     Scope(Scope),
     Switch(Switch),
@@ -1351,20 +1349,20 @@ impl CallExpression<'_> {
     }
 
     #[inline]
-    pub fn name(&self) -> &Identifier {
+    pub fn name(&self) -> Identifier {
         match self {
-            Self::Instanced(call) => call.name.name(),
-            Self::Static(call) => call.name.name(),
-            Self::Intrinsic(call) => call.name.name(),
+            Self::Instanced(call) => call.name.name().to_owned(),
+            Self::Static(call) => call.name.name().to_owned(),
+            Self::Intrinsic(call) => call.name(),
         }
     }
 
     #[inline]
-    pub fn arguments(&self) -> &[NodeId] {
+    pub fn arguments(&self) -> Vec<NodeId> {
         match self {
-            Self::Instanced(call) => &call.arguments,
-            Self::Static(call) => &call.arguments,
-            Self::Intrinsic(call) => &call.arguments,
+            Self::Instanced(call) => call.arguments.clone(),
+            Self::Static(call) => call.arguments.clone(),
+            Self::Intrinsic(call) => call.kind.arguments(),
         }
     }
 
@@ -1373,7 +1371,7 @@ impl CallExpression<'_> {
         match self {
             Self::Instanced(call) => call.type_arguments(),
             Self::Static(call) => call.type_arguments(),
-            Self::Intrinsic(call) => call.type_arguments(),
+            Self::Intrinsic(_) => &[],
         }
     }
 
@@ -1403,28 +1401,6 @@ pub struct Assignment {
     pub id: NodeId,
     pub target: NodeId,
     pub value: NodeId,
-    pub location: Location,
-}
-
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperatorKind {
-    And,
-    Or,
-    Xor,
-}
-
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
-pub struct BinaryOperator {
-    pub kind: BinaryOperatorKind,
-    pub location: Location,
-}
-
-#[derive(Location, Hash, Debug, Clone, PartialEq)]
-pub struct Binary {
-    pub id: NodeId,
-    pub lhs: NodeId,
-    pub op: BinaryOperator,
-    pub rhs: NodeId,
     pub location: Location,
 }
 
@@ -1487,23 +1463,118 @@ impl InstanceCall {
 #[derive(Location, Hash, Debug, Clone, PartialEq)]
 pub struct IntrinsicCall {
     pub id: NodeId,
-    pub name: PathSegment,
-    pub arguments: Vec<NodeId>,
+    pub kind: IntrinsicKind,
     pub location: Location,
 }
 
 impl IntrinsicCall {
-    /// Returns the callee expression of the intrinsic call.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the intrinsic call has no arguments.
-    pub fn callee(&self) -> NodeId {
-        *self.arguments.first().unwrap()
+    pub fn name(&self) -> Identifier {
+        Identifier {
+            name: self.kind.name().to_string(),
+            location: self.location,
+        }
+    }
+}
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub enum IntrinsicKind {
+    // Arithmetic intrinsics
+    Add { lhs: NodeId, rhs: NodeId },
+    Sub { lhs: NodeId, rhs: NodeId },
+    Mul { lhs: NodeId, rhs: NodeId },
+    Div { lhs: NodeId, rhs: NodeId },
+    And { lhs: NodeId, rhs: NodeId },
+    Or { lhs: NodeId, rhs: NodeId },
+    Negate { target: NodeId },
+    Increment { target: NodeId },
+    Decrement { target: NodeId },
+
+    // Logical intrinsics
+    BinaryAnd { lhs: NodeId, rhs: NodeId },
+    BinaryOr { lhs: NodeId, rhs: NodeId },
+    BinaryXor { lhs: NodeId, rhs: NodeId },
+    Not { target: NodeId },
+
+    // Comparison intrinsics
+    Equal { lhs: NodeId, rhs: NodeId },
+    NotEqual { lhs: NodeId, rhs: NodeId },
+    Less { lhs: NodeId, rhs: NodeId },
+    LessEqual { lhs: NodeId, rhs: NodeId },
+    Greater { lhs: NodeId, rhs: NodeId },
+    GreaterEqual { lhs: NodeId, rhs: NodeId },
+}
+
+impl IntrinsicKind {
+    pub fn name(&self) -> &'static str {
+        match self {
+            Self::Add { .. } => "Add",
+            Self::Sub { .. } => "Sub",
+            Self::Mul { .. } => "Mul",
+            Self::Div { .. } => "Div",
+            Self::And { .. } => "And",
+            Self::Or { .. } => "Or",
+            Self::Negate { .. } => "Negate",
+            Self::Increment { .. } => "Increment",
+            Self::Decrement { .. } => "Decrement",
+            Self::BinaryAnd { .. } => "BinaryAnd",
+            Self::BinaryOr { .. } => "BinaryOr",
+            Self::BinaryXor { .. } => "BinaryXor",
+            Self::Not { .. } => "Not",
+            Self::Equal { .. } => "Equal",
+            Self::NotEqual { .. } => "NotEqual",
+            Self::Less { .. } => "Less",
+            Self::LessEqual { .. } => "LessEqual",
+            Self::Greater { .. } => "Greater",
+            Self::GreaterEqual { .. } => "GreaterEqual",
+        }
     }
 
-    pub fn type_arguments(&self) -> &[Type] {
-        self.name.type_arguments()
+    pub fn callee(&self) -> NodeId {
+        match self {
+            Self::Add { lhs, .. }
+            | Self::Sub { lhs, .. }
+            | Self::Mul { lhs, .. }
+            | Self::Div { lhs, .. }
+            | Self::And { lhs, .. }
+            | Self::Or { lhs, .. }
+            | Self::BinaryAnd { lhs, .. }
+            | Self::BinaryOr { lhs, .. }
+            | Self::BinaryXor { lhs, .. }
+            | Self::Equal { lhs, .. }
+            | Self::NotEqual { lhs, .. }
+            | Self::Less { lhs, .. }
+            | Self::LessEqual { lhs, .. }
+            | Self::Greater { lhs, .. }
+            | Self::GreaterEqual { lhs, .. } => *lhs,
+            Self::Negate { target }
+            | Self::Increment { target }
+            | Self::Decrement { target }
+            | Self::Not { target } => *target,
+        }
+    }
+
+    pub fn arguments(&self) -> Vec<NodeId> {
+        match self {
+            Self::Add { lhs, rhs }
+            | Self::Sub { lhs, rhs }
+            | Self::Mul { lhs, rhs }
+            | Self::Div { lhs, rhs }
+            | Self::And { lhs, rhs }
+            | Self::Or { lhs, rhs }
+            | Self::BinaryAnd { lhs, rhs }
+            | Self::BinaryOr { lhs, rhs }
+            | Self::BinaryXor { lhs, rhs }
+            | Self::Equal { lhs, rhs }
+            | Self::NotEqual { lhs, rhs }
+            | Self::Less { lhs, rhs }
+            | Self::LessEqual { lhs, rhs }
+            | Self::Greater { lhs, rhs }
+            | Self::GreaterEqual { lhs, rhs } => vec![*lhs, *rhs],
+            Self::Negate { target }
+            | Self::Increment { target }
+            | Self::Decrement { target }
+            | Self::Not { target } => vec![*target],
+        }
     }
 }
 
@@ -1618,27 +1689,6 @@ pub struct StringLiteral {
 pub struct BooleanLiteral {
     pub id: NodeId,
     pub value: bool,
-}
-
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalOperatorKind {
-    And,
-    Or,
-}
-
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct LogicalOperator {
-    pub kind: LogicalOperatorKind,
-    pub location: Location,
-}
-
-#[derive(Hash, Debug, Clone, PartialEq)]
-pub struct Logical {
-    pub id: NodeId,
-    pub lhs: NodeId,
-    pub op: LogicalOperator,
-    pub rhs: NodeId,
-    pub location: Location,
 }
 
 #[derive(Location, Hash, Debug, Clone, PartialEq)]

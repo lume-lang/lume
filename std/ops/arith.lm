@@ -1,0 +1,25 @@
+namespace std::ops
+
+/// Trait for performing the arithmetic addition operator, `+`.
+![lang_item(name = "add_trait")]
+pub trait Add<T> {
+    fn add(self, other: T) -> T;
+}
+
+/// Trait for performing the arithmetic subtraction operator, `-`.
+![lang_item(name = "sub_trait")]
+pub trait Sub<T> {
+    fn sub(self, other: T) -> T;
+}
+
+/// Trait for performing the arithmetic multiplication operator, `*`.
+![lang_item(name = "mul_trait")]
+pub trait Mul<T> {
+    fn mul(self, other: T) -> T;
+}
+
+/// Trait for performing the arithmetic division operator, `/`.
+![lang_item(name = "div_trait")]
+pub trait Div<T> {
+    fn div(self, other: T) -> T;
+}

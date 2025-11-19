@@ -490,4 +490,67 @@ impl TyInferCtx {
     pub fn hir_is_local_node(&self, node: NodeId) -> bool {
         self.hir.is_local_node(node)
     }
+
+    /// Gets the name of the `![lang_item]` attribute and corresponding method,
+    /// matching the given intrinsic.
+    #[libftrace::traced(level = Trace)]
+    pub fn lang_item_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> (&'static str, &'static str) {
+        match intrinsic {
+            lume_hir::IntrinsicKind::Add { .. } => ("add_trait", "add"),
+            lume_hir::IntrinsicKind::Sub { .. } => ("sub_trait", "sub"),
+            lume_hir::IntrinsicKind::Mul { .. } => ("mul_trait", "mul"),
+            lume_hir::IntrinsicKind::Div { .. } => ("div_trait", "div"),
+            lume_hir::IntrinsicKind::And { .. } => ("and_trait", "and"),
+            lume_hir::IntrinsicKind::Or { .. } => ("or_trait", "or"),
+            lume_hir::IntrinsicKind::Negate { .. } => ("negate_trait", "negate"),
+            lume_hir::IntrinsicKind::Increment { .. } => ("increment_trait", "increment"),
+            lume_hir::IntrinsicKind::Decrement { .. } => ("decrement_trait", "decrement"),
+            lume_hir::IntrinsicKind::BinaryAnd { .. } => ("band_trait", "band"),
+            lume_hir::IntrinsicKind::BinaryOr { .. } => ("bor_trait", "bor"),
+            lume_hir::IntrinsicKind::BinaryXor { .. } => ("bxor_trait", "bxor"),
+            lume_hir::IntrinsicKind::Not { .. } => ("not_trait", "not"),
+            lume_hir::IntrinsicKind::Equal { .. } => ("equal_trait", "eq"),
+            lume_hir::IntrinsicKind::NotEqual { .. } => ("equal_trait", "ne"),
+            lume_hir::IntrinsicKind::Less { .. } => ("cmp_trait", "lt"),
+            lume_hir::IntrinsicKind::LessEqual { .. } => ("cmp_trait", "le"),
+            lume_hir::IntrinsicKind::Greater { .. } => ("cmp_trait", "gt"),
+            lume_hir::IntrinsicKind::GreaterEqual { .. } => ("cmp_trait", "gt"),
+        }
+    }
+
+    /// Gets the human-readable name of the operation, which is performed by the
+    /// given operation.
+    #[libftrace::traced(level = Trace)]
+    pub fn operation_name_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> &'static str {
+        match intrinsic {
+            lume_hir::IntrinsicKind::Add { .. } => "addition",
+            lume_hir::IntrinsicKind::Sub { .. } => "subtraction",
+            lume_hir::IntrinsicKind::Mul { .. } => "multiplication",
+            lume_hir::IntrinsicKind::Div { .. } => "division",
+            lume_hir::IntrinsicKind::And { .. } => "logical AND",
+            lume_hir::IntrinsicKind::Or { .. } => "logical OR",
+            lume_hir::IntrinsicKind::Negate { .. } => "negation",
+            lume_hir::IntrinsicKind::Increment { .. } => "increment",
+            lume_hir::IntrinsicKind::Decrement { .. } => "decrement",
+            lume_hir::IntrinsicKind::BinaryAnd { .. } => "binary AND",
+            lume_hir::IntrinsicKind::BinaryOr { .. } => "binary OR",
+            lume_hir::IntrinsicKind::BinaryXor { .. } => "binary XOR",
+            lume_hir::IntrinsicKind::Not { .. } => "binary NOT",
+            lume_hir::IntrinsicKind::Equal { .. } => "equality",
+            lume_hir::IntrinsicKind::NotEqual { .. } => "inequality",
+            lume_hir::IntrinsicKind::Less { .. }
+            | lume_hir::IntrinsicKind::LessEqual { .. }
+            | lume_hir::IntrinsicKind::Greater { .. }
+            | lume_hir::IntrinsicKind::GreaterEqual { .. } => "comparison",
+        }
+    }
+
+    /// Gets the name of the type which defines the given intrinsic.
+    #[libftrace::traced(level = Trace)]
+    pub fn type_name_of_intrinsic(&self, intrinsic: &lume_hir::IntrinsicKind) -> Option<&lume_hir::Path> {
+        let (lang_item, _) = self.lang_item_of_intrinsic(intrinsic);
+        let item_def = self.lang_item(lang_item)?;
+
+        Some(&self.tdb().type_(item_def)?.name)
+    }
 }

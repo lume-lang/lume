@@ -719,6 +719,12 @@ impl<'ctx> LowerFunction<'ctx> {
         self.builder.ins().sdiv(x_val, y_val)
     }
 
+    pub(crate) fn ineg(&mut self, val: &lume_mir::Operand) -> Value {
+        let val = self.cg_operand(val);
+
+        self.builder.ins().ineg(val)
+    }
+
     pub(crate) fn and(&mut self, x: &lume_mir::Operand, y: &lume_mir::Operand) -> Value {
         let x_val = self.cg_operand(x);
         let y_val = self.cg_operand(y);
@@ -738,6 +744,12 @@ impl<'ctx> LowerFunction<'ctx> {
         let y_val = self.cg_operand(y);
 
         self.builder.ins().bxor(x_val, y_val)
+    }
+
+    pub(crate) fn not(&mut self, val: &lume_mir::Operand) -> Value {
+        let val = self.cg_operand(val);
+
+        self.builder.ins().bnot(val)
     }
 
     pub(crate) fn icast(&mut self, reg: RegisterId, to: u8) -> Value {
@@ -796,6 +808,12 @@ impl<'ctx> LowerFunction<'ctx> {
         let y_val = self.cg_operand(y);
 
         self.builder.ins().fdiv(x_val, y_val)
+    }
+
+    pub(crate) fn fneg(&mut self, val: &lume_mir::Operand) -> Value {
+        let val = self.cg_operand(val);
+
+        self.builder.ins().fneg(val)
     }
 
     pub(crate) fn fcast(&mut self, reg: RegisterId, to: u8) -> Value {

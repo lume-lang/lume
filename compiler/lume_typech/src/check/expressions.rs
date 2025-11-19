@@ -1,6 +1,5 @@
 use error_snippet::Result;
 use indexmap::IndexSet;
-use lume_hir::Path;
 use lume_span::NodeId;
 use lume_types::TypeRef;
 
@@ -239,12 +238,6 @@ impl TyCheckCtx {
 
                 self.assignment_expression(expr)
             }
-            lume_hir::ExpressionKind::Binary(expr) => {
-                self.expression(expr.lhs)?;
-                self.expression(expr.rhs)?;
-
-                self.binary_expression(expr)
-            }
             lume_hir::ExpressionKind::Cast(cast) => {
                 self.expression(cast.source)?;
 
@@ -272,11 +265,11 @@ impl TyCheckCtx {
                 self.call_expression(lume_hir::CallExpression::Instanced(call))
             }
             lume_hir::ExpressionKind::IntrinsicCall(call) => {
-                for arg in &call.arguments {
-                    self.expression(*arg)?;
+                for arg in call.kind.arguments() {
+                    self.expression(arg)?;
                 }
 
-                self.call_expression(lume_hir::CallExpression::Intrinsic(call))
+                self.intrinsic_call_expression(call)
             }
             lume_hir::ExpressionKind::If(cond) => {
                 for case in &cond.cases {
@@ -308,12 +301,6 @@ impl TyCheckCtx {
                 self.expression(is.target)?;
 
                 self.is_expression(is)
-            }
-            lume_hir::ExpressionKind::Logical(expr) => {
-                self.expression(expr.lhs)?;
-                self.expression(expr.rhs)?;
-
-                self.logical_expression(expr)
             }
             lume_hir::ExpressionKind::Member(expr) => {
                 self.expression(expr.callee)?;
@@ -375,36 +362,6 @@ impl TyCheckCtx {
                 value_loc: value_expr.location,
                 target_ty: self.new_named_type(&target, false)?.to_string(),
                 value_ty: self.new_named_type(&value, false)?.to_string(),
-            }
-            .into());
-        }
-
-        Ok(())
-    }
-
-    /// Asserts that the binary expression is performed on values, which
-    /// actually support binary expressions. For instance, given the
-    /// following statement:
-    ///
-    /// ```lm
-    /// let _ = "Hello, world!" ^ 16;
-    /// ```
-    ///
-    /// this method would raise an error, since [`String`] is not an integer
-    /// type, making binary expressions invalid.
-    fn binary_expression(&self, expr: &lume_hir::Binary) -> Result<()> {
-        let lhs = self.type_of(expr.lhs)?;
-        let rhs = self.type_of(expr.rhs)?;
-
-        // NOTE: We're checking for equality - not compatibility.
-        //       These types MUST be the same.
-        if lhs != rhs {
-            return Err(NonMatchingBinaryOp {
-                source: expr.location,
-                lhs: lhs.location,
-                rhs: rhs.location,
-                lhs_ty: self.new_named_type(&lhs, false)?.to_string(),
-                rhs_ty: self.new_named_type(&rhs, false)?.to_string(),
             }
             .into());
         }
@@ -605,33 +562,21 @@ impl TyCheckCtx {
         Ok(())
     }
 
-    /// Asserts that the logical expression is performed on boolean values,
-    /// since only boolean values can be tested in logical expressions.
+    /// Asserts that the intrinsic operation is implemented for the given
+    /// callee, and possibly arguments.
     #[libftrace::traced(level = Trace, err)]
-    fn logical_expression(&self, expr: &lume_hir::Logical) -> Result<()> {
-        let lhs = self.type_of(expr.lhs)?;
-        let rhs = self.type_of(expr.rhs)?;
+    fn intrinsic_call_expression(&self, expr: &lume_hir::IntrinsicCall) -> Result<()> {
+        let (trait_name, _) = self.lang_item_of_intrinsic(&expr.kind);
 
-        if self.type_ref_name(&lhs)? != &Path::boolean() {
-            let lhs_expr = self.hir().expect_expression(expr.lhs)?;
-
-            return Err(BooleanOperationOnNonBoolean {
-                source: lhs_expr.location,
-                expected: Path::boolean().to_string(),
-                found: self.new_named_type(&lhs, false)?.to_string(),
-            }
-            .into());
-        }
-
-        if self.type_ref_name(&rhs)? != &Path::boolean() {
-            let rhs_expr = self.hir().expect_expression(expr.rhs)?;
-
-            return Err(BooleanOperationOnNonBoolean {
-                source: rhs_expr.location,
-                expected: Path::boolean().to_string(),
-                found: self.new_named_type(&rhs, false)?.to_string(),
-            }
-            .into());
+        if self.lookup_intrinsic_method(expr)?.is_none() {
+            self.dcx().emit(
+                lume_infer::errors::IntrinsicNotImplemented {
+                    source: expr.location,
+                    trait_name: format!("{trait_name:+}"),
+                    operation: self.operation_name_of_intrinsic(&expr.kind),
+                }
+                .into(),
+            );
         }
 
         Ok(())

@@ -917,7 +917,6 @@ node_location!(PredicateLoop);
 pub enum Expression {
     Array(Box<Array>),
     Assignment(Box<Assignment>),
-    Binary(Box<Binary>),
     Call(Box<Call>),
     Cast(Box<Cast>),
     Construct(Box<Construct>),
@@ -925,7 +924,6 @@ pub enum Expression {
     IntrinsicCall(Box<IntrinsicCall>),
     Is(Box<Is>),
     Literal(Box<Literal>),
-    Logical(Box<Logical>),
     Member(Box<Member>),
     Range(Box<Range>),
     Scope(Box<Scope>),
@@ -940,7 +938,6 @@ impl Node for Expression {
         match self {
             Self::Array(e) => &e.location,
             Self::Assignment(e) => &e.location,
-            Self::Binary(e) => &e.location,
             Self::Call(e) => &e.location,
             Self::Cast(e) => &e.location,
             Self::Construct(e) => &e.location,
@@ -948,7 +945,6 @@ impl Node for Expression {
             Self::IntrinsicCall(e) => e.location(),
             Self::Is(e) => &e.location,
             Self::Literal(e) => e.location(),
-            Self::Logical(e) => &e.location,
             Self::Member(e) => &e.location,
             Self::Range(e) => &e.location,
             Self::Scope(e) => &e.location,
@@ -976,31 +972,6 @@ pub struct Assignment {
 
 node_location!(Assignment);
 
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BinaryOperatorKind {
-    And,
-    Or,
-    Xor,
-}
-
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct BinaryOperator {
-    pub kind: BinaryOperatorKind,
-    pub location: Location,
-}
-
-node_location!(BinaryOperator);
-
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Binary {
-    pub lhs: Expression,
-    pub op: BinaryOperator,
-    pub rhs: Expression,
-    pub location: Location,
-}
-
-node_location!(Binary);
-
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Call {
     pub callee: Option<Expression>,
@@ -1013,13 +984,39 @@ node_location!(Call);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct IntrinsicCall {
-    pub callee: Expression,
-    pub name: Path,
-    pub arguments: Vec<Expression>,
+    pub kind: IntrinsicKind,
     pub location: Location,
 }
 
 node_location!(IntrinsicCall);
+
+#[derive(Hash, Debug, Clone, PartialEq, Eq)]
+pub enum IntrinsicKind {
+    // Arithmetic intrinsics
+    Add { lhs: Box<Expression>, rhs: Box<Expression> },
+    Sub { lhs: Box<Expression>, rhs: Box<Expression> },
+    Mul { lhs: Box<Expression>, rhs: Box<Expression> },
+    Div { lhs: Box<Expression>, rhs: Box<Expression> },
+    And { lhs: Box<Expression>, rhs: Box<Expression> },
+    Or { lhs: Box<Expression>, rhs: Box<Expression> },
+    Negate { target: Box<Expression> },
+    Increment { target: Box<Expression> },
+    Decrement { target: Box<Expression> },
+
+    // Logical intrinsics
+    BinaryAnd { lhs: Box<Expression>, rhs: Box<Expression> },
+    BinaryOr { lhs: Box<Expression>, rhs: Box<Expression> },
+    BinaryXor { lhs: Box<Expression>, rhs: Box<Expression> },
+    Not { target: Box<Expression> },
+
+    // Comparison intrinsics
+    Equal { lhs: Box<Expression>, rhs: Box<Expression> },
+    NotEqual { lhs: Box<Expression>, rhs: Box<Expression> },
+    Less { lhs: Box<Expression>, rhs: Box<Expression> },
+    LessEqual { lhs: Box<Expression>, rhs: Box<Expression> },
+    Greater { lhs: Box<Expression>, rhs: Box<Expression> },
+    GreaterEqual { lhs: Box<Expression>, rhs: Box<Expression> },
+}
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Cast {
@@ -1138,30 +1135,6 @@ pub struct BooleanLiteral {
 }
 
 node_location!(BooleanLiteral);
-
-#[derive(Hash, Debug, Clone, Copy, PartialEq, Eq)]
-pub enum LogicalOperatorKind {
-    And,
-    Or,
-}
-
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct LogicalOperator {
-    pub kind: LogicalOperatorKind,
-    pub location: Location,
-}
-
-node_location!(LogicalOperator);
-
-#[derive(Hash, Debug, Clone, PartialEq, Eq)]
-pub struct Logical {
-    pub lhs: Expression,
-    pub op: LogicalOperator,
-    pub rhs: Expression,
-    pub location: Location,
-}
-
-node_location!(Logical);
 
 #[derive(Hash, Debug, Clone, PartialEq, Eq)]
 pub struct Member {
