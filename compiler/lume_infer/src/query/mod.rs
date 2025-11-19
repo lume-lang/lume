@@ -225,6 +225,16 @@ impl TyInferCtx {
     /// Attempts to get the kind of an integer literal expression.
     #[cached_query(result)]
     pub fn kind_of_int(&self, lit: &lume_hir::IntLiteral) -> Result<lume_hir::IntKind> {
+        // Prevents stack-overflows when attempting to infer the literal kind in some
+        // situations. If we've already attempted to lock, we're in a loop and
+        // should return the default.
+        //
+        // TODO: This is a hacky workaround, until we get around to adding
+        //       an effective cycle-handling implementation in `architect.`
+        let Ok(_guard) = self.nested_inference_lock.try_write() else {
+            return Ok(lume_hir::IntKind::I32);
+        };
+
         let Some(guessed_type) = self.expected_type_of(lit.id)? else {
             return Ok(lume_hir::IntKind::I32);
         };
@@ -245,6 +255,16 @@ impl TyInferCtx {
     /// Attempts to get the kind of an floating-point literal expression.
     #[cached_query(result)]
     pub fn kind_of_float(&self, lit: &lume_hir::FloatLiteral) -> Result<lume_hir::FloatKind> {
+        // Prevents stack-overflows when attempting to infer the literal kind in some
+        // situations. If we've already attempted to lock, we're in a loop and
+        // should return the default.
+        //
+        // TODO: This is a hacky workaround, until we get around to adding
+        //       an effective cycle-handling implementation in `architect.`
+        let Ok(_guard) = self.nested_inference_lock.try_write() else {
+            return Ok(lume_hir::FloatKind::F64);
+        };
+
         let Some(guessed_type) = self.expected_type_of(lit.id)? else {
             return Ok(lume_hir::FloatKind::F64);
         };
