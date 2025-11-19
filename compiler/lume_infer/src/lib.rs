@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::fmt::Debug;
 use std::ops::Deref;
+use std::sync::RwLock;
 
 use error_snippet::Result;
 use lume_architect::DatabaseContext;
@@ -50,6 +51,8 @@ pub struct TyInferCtx {
 
     /// Defines a mapping any single node and their parent node.
     ancestry: BTreeMap<NodeId, NodeId>,
+
+    nested_inference_lock: RwLock<()>,
 }
 
 impl TyInferCtx {
@@ -59,6 +62,7 @@ impl TyInferCtx {
             tcx,
             hir,
             ancestry: BTreeMap::new(),
+            nested_inference_lock: RwLock::new(()),
         }
     }
 
