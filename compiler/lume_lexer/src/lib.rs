@@ -776,7 +776,7 @@ fn lex_string<'src>(
                 lex.bump(1);
                 break;
             }
-            Some(_) => lex.bump(1),
+            Some(c) => lex.bump(c.len_utf8()),
         }
     }
 
