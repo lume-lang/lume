@@ -41,12 +41,14 @@ impl TyCheckCtx {
 
         // Check for direct trait implementations on the target type.
         for use_ in self.tdb().uses_on(ty) {
-            if &use_.trait_ == trait_id {
-                // Make sure the given "trait" is actually a trait.
-                self.tdb().ty_expect_trait(use_.trait_.instance_of)?;
-
-                return Ok(true);
+            if use_.trait_.instance_of != trait_id.instance_of {
+                continue;
             }
+
+            // Make sure the given "trait" is actually a trait.
+            self.tdb().ty_expect_trait(use_.trait_.instance_of)?;
+
+            return Ok(true);
         }
 
         // If no direct implementations exist, attempt to find any blanket
