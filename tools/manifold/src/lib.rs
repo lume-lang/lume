@@ -297,15 +297,17 @@ mod test {
     fn manifold_tests() -> lume_errors::Result<()> {
         let dcx = DiagCtx::new();
 
-        if manifold_entry(Config::default(), dcx.clone()).unwrap() == 0 {
-            Ok(())
-        } else {
-            let mut renderer = error_snippet::GraphicalRenderer::new();
-            renderer.use_colors = true;
-            renderer.highlight_source = true;
-
-            dcx.render_stderr(&mut renderer);
-            Err(dcx.ensure_untainted().unwrap_err())
+        match manifold_entry(Config::default(), dcx.clone()) {
+            Ok(exit_code) if exit_code == 0 => return Ok(()),
+            Err(err) => dcx.emit(err),
+            Ok(_) => {}
         }
+
+        let mut renderer = error_snippet::GraphicalRenderer::new();
+        renderer.use_colors = true;
+        renderer.highlight_source = true;
+
+        dcx.render_stderr(&mut renderer);
+        dcx.ensure_untainted()
     }
 }
