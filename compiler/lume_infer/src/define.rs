@@ -1167,7 +1167,9 @@ impl TyInferCtx {
 
                     call.name.place_type_arguments(replacement);
                 }
-                lume_hir::ExpressionKind::IntrinsicCall(_) => continue,
+                lume_hir::ExpressionKind::IntrinsicCall(call) => {
+                    self.probe_callable_intrinsic(call)?;
+                }
                 lume_hir::ExpressionKind::StaticCall(call) => {
                     let callable = self.probe_callable_static(call)?;
 
