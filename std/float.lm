@@ -3,7 +3,8 @@ namespace std
 import std::ops (Add, Sub, Mul, Div)
 import std::ops (Equal, Compare, Negate)
 
-/// Represents an 32-bit single-precision floating-point number, which is precise to ~7 decimal places.
+/// Represents an 32-bit single-precision floating-point number, which is
+/// precise to ~7 decimal places, as defined in IEEE 754-2008.
 pub struct builtin Float { }
 
 use Add<Float> in Float {
@@ -38,7 +39,8 @@ use Negate<Float> in Float {
     fn external negate(self) -> Float
 }
 
-/// Represents an 64-bit double-precision floating-point number, which is precise to ~16 decimal places.
+/// Represents an 64-bit double-precision floating-point number, which is
+    /// precise to ~16 decimal places, as defined in IEEE 754-2008.
 pub struct builtin Double { }
 
 use Add<Double> in Double {

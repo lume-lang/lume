@@ -1,24 +1,36 @@
 namespace std::ops
 
 /// Trait for performing the arithmetic addition operator, `+`.
+///
+/// Whenever the `+` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "add_trait")]
 pub trait Add<T> {
     fn add(self, other: T) -> T;
 }
 
 /// Trait for performing the arithmetic subtraction operator, `-`.
+///
+/// Whenever the `-` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "sub_trait")]
 pub trait Sub<T> {
     fn sub(self, other: T) -> T;
 }
 
 /// Trait for performing the arithmetic multiplication operator, `*`.
+///
+/// Whenever the `*` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "mul_trait")]
 pub trait Mul<T> {
     fn mul(self, other: T) -> T;
 }
 
 /// Trait for performing the arithmetic division operator, `/`.
+///
+/// Whenever the `/` operator is used on a value, the compiler looks to
+/// see if this trait is implemented, given the correct type argument.
 ![lang_item(name = "div_trait")]
 pub trait Div<T> {
     fn div(self, other: T) -> T;
